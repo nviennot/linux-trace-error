@@ -495,7 +495,12 @@ config DEBUG_MISC
 	help
 	  Say Y here if you need to enable miscellaneous debug code that should
 	  be under a more specific debug option but isn't.
-
+config TRACE_ERROR
+	bool "Trace syscall errors"
+	default y
+	help
+    Say Y here to have /proc/n/last_error to shows the likely provenance of
+    a system call error
 
 menu "Memory Debugging"
 

@@ -3136,6 +3136,20 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
 }
 #endif /* CONFIG_STACKLEAK_METRICS */
 
+static int proc_pid_last_err(struct seq_file *m, struct pid_namespace *ns,
+				struct pid *pid, struct task_struct *task)
+{
+	if (task->last_err.file && task->last_err.errno) {
+		seq_printf(m, "%s:%d %d\n",
+			   task->last_err.file,
+			   task->last_err.line,
+			   task->last_err.errno);
+	} else {
+		seq_printf(m, "\n");
+	}
+	return 0;
+}
+
 /*
  * Thread groups
  */
@@ -3248,6 +3262,9 @@ static const struct pid_entry tgid_base_stuff[] = {
 #endif
 #ifdef CONFIG_PROC_PID_ARCH_STATUS
 	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
+#endif
+#ifdef CONFIG_TRACE_ERROR
+	ONE("last_error",  S_IRUGO, proc_pid_last_err),
 #endif
 };
 

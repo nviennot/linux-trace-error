@@ -130,6 +130,8 @@ KASAN_SANITIZE_stackleak.o := n
 KCSAN_SANITIZE_stackleak.o := n
 KCOV_INSTRUMENT_stackleak.o := n
 
+obj-$(CONFIG_TRACE_ERROR) += trace_error.o
+
 $(obj)/configs.o: $(obj)/config_data.gz
 
 targets += config_data.gz

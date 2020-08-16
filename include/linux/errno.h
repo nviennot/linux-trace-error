@@ -3,7 +3,7 @@
 #define _LINUX_ERRNO_H
 
 #include <uapi/linux/errno.h>
-
+#include <linux/trace_error.h>
 
 /*
  * These should never be seen by user programs.  To return one of ERESTART*

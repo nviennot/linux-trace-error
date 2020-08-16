@@ -6,6 +6,7 @@
 #include <linux/types.h>
 
 #include <asm/errno.h>
+#include <linux/trace_error.h>
 
 /*
  * Kernel pointers have redundant information, so we can use a
