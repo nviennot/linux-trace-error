@@ -809,7 +809,7 @@ static int snd_ensoniq_trigger(struct snd_pcm_substream *substream, int cmd)
 				what |= ES_P2_PAUSE;
 				snd_pcm_trigger_done(s, substream);
 			} else if (s == ensoniq->capture_substream)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		spin_lock(&ensoniq->reg_lock);
 		if (cmd == SNDRV_PCM_TRIGGER_PAUSE_PUSH)
@@ -847,7 +847,7 @@ static int snd_ensoniq_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1778,7 +1778,7 @@ static int snd_ensoniq_create_gameport(struct ensoniq *ensoniq, int dev)
 
 	switch (io_port) {
 	case 0:
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	case 1: /* auto_detect */
 		for (io_port = 0x200; io_port <= 0x218; io_port += 8)
@@ -1787,7 +1787,7 @@ static int snd_ensoniq_create_gameport(struct ensoniq *ensoniq, int dev)
 		if (io_port > 0x218) {
 			dev_warn(ensoniq->card->dev,
 				 "no gameport ports available\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		break;
 
@@ -1796,7 +1796,7 @@ static int snd_ensoniq_create_gameport(struct ensoniq *ensoniq, int dev)
 			dev_warn(ensoniq->card->dev,
 				 "gameport io port %#x in use\n",
 			       io_port);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		break;
 	}
@@ -1839,7 +1839,7 @@ static void snd_ensoniq_free_gameport(struct ensoniq *ensoniq)
 	}
 }
 #else
-static inline int snd_ensoniq_create_gameport(struct ensoniq *ensoniq, long port) { return -ENOSYS; }
+static inline int snd_ensoniq_create_gameport(struct ensoniq *ensoniq, long port) { return -ERR(ENOSYS); }
 static inline void snd_ensoniq_free_gameport(struct ensoniq *ensoniq) { }
 #endif /* SUPPORT_JOYSTICK */
 
@@ -2068,7 +2068,7 @@ static int snd_ensoniq_create(struct snd_card *card,
 			KBUILD_MODNAME, ensoniq)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_ensoniq_free(ensoniq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	ensoniq->irq = pci->irq;
 	card->sync_irq = ensoniq->irq;
@@ -2077,7 +2077,7 @@ static int snd_ensoniq_create(struct snd_card *card,
 				16, &ensoniq->dma_bug) < 0) {
 		dev_err(card->dev, "unable to allocate space for phantom area - dma_bug\n");
 		snd_ensoniq_free(ensoniq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 #endif
 	pci_set_master(pci);
@@ -2354,10 +2354,10 @@ static int snd_audiopci_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

@@ -54,7 +54,7 @@ static struct atmel_pdmic_pdata *atmel_pdmic_dt_init(struct device *dev)
 
 	if (!np) {
 		dev_err(dev, "device node not found\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
@@ -67,19 +67,19 @@ static struct atmel_pdmic_pdata *atmel_pdmic_dt_init(struct device *dev)
 	if (of_property_read_u32(np, "atmel,mic-min-freq",
 				 &pdata->mic_min_freq)) {
 		dev_err(dev, "failed to get mic-min-freq\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (of_property_read_u32(np, "atmel,mic-max-freq",
 				 &pdata->mic_max_freq)) {
 		dev_err(dev, "failed to get mic-max-freq\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (pdata->mic_max_freq < pdata->mic_min_freq) {
 		dev_err(dev,
 			"mic-max-freq should not be less than mic-min-freq\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (of_property_read_s32(np, "atmel,mic-offset", &pdata->mic_offset))
@@ -318,7 +318,7 @@ static int pdmic_put_mic_volsw(struct snd_kcontrol *kcontrol,
 	val = ucontrol->value.integer.value[0];
 
 	if (val > max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = snd_soc_component_update_bits(component, PDMIC_DSPR1, PDMIC_DSPR1_DGAIN_MASK,
 			 mic_gain_table[val].dgain << PDMIC_DSPR1_DGAIN_SHIFT);
@@ -387,7 +387,7 @@ atmel_pdmic_codec_dai_hw_params(struct snd_pcm_substream *substream,
 	if (params_channels(params) != 1) {
 		dev_err(component->dev,
 			"only supports one channel\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((fs < rate_min) || (fs > rate_max)) {
@@ -395,7 +395,7 @@ atmel_pdmic_codec_dai_hw_params(struct snd_pcm_substream *substream,
 			"sample rate is %dHz, min rate is %dHz, max rate is %dHz\n",
 			fs, rate_min, rate_max);
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (bits) {
@@ -408,7 +408,7 @@ atmel_pdmic_codec_dai_hw_params(struct snd_pcm_substream *substream,
 			     << PDMIC_DSPR0_SIZE_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((fs << 7) > (rate_max << 6)) {
@@ -474,7 +474,7 @@ static int atmel_pdmic_codec_dai_trigger(struct snd_pcm_substream *substream,
 		val = PDMIC_CR_ENPDM_DIS << PDMIC_CR_ENPDM_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, PDMIC_CR, PDMIC_CR_ENPDM_MASK, val);

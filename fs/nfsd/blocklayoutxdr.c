@@ -48,7 +48,7 @@ nfsd4_block_encode_volume(struct xdr_stream *xdr, struct pnfs_block_volume *b)
 		len = 4 + 4 + 8 + 4 + (XDR_QUADLEN(b->simple.sig_len) << 2);
 		p = xdr_reserve_space(xdr, len);
 		if (!p)
-			return -ETOOSMALL;
+			return -ERR(ETOOSMALL);
 
 		*p++ = cpu_to_be32(b->type);
 		*p++ = cpu_to_be32(1);	/* single signature */
@@ -59,7 +59,7 @@ nfsd4_block_encode_volume(struct xdr_stream *xdr, struct pnfs_block_volume *b)
 		len = 4 + 4 + 4 + 4 + (XDR_QUADLEN(b->scsi.designator_len) << 2) + 8;
 		p = xdr_reserve_space(xdr, len);
 		if (!p)
-			return -ETOOSMALL;
+			return -ERR(ETOOSMALL);
 
 		*p++ = cpu_to_be32(b->type);
 		*p++ = cpu_to_be32(b->scsi.code_set);
@@ -68,7 +68,7 @@ nfsd4_block_encode_volume(struct xdr_stream *xdr, struct pnfs_block_volume *b)
 		p = xdr_encode_hyper(p, b->scsi.pr_key);
 		break;
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	return len;
@@ -111,19 +111,19 @@ nfsd4_block_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
 
 	if (len < sizeof(u32)) {
 		dprintk("%s: extent array too small: %u\n", __func__, len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	len -= sizeof(u32);
 	if (len % PNFS_BLOCK_EXTENT_SIZE) {
 		dprintk("%s: extent array invalid: %u\n", __func__, len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nr_iomaps = be32_to_cpup(p++);
 	if (nr_iomaps != len / PNFS_BLOCK_EXTENT_SIZE) {
 		dprintk("%s: extent array size mismatch: %u/%u\n",
 			__func__, len, nr_iomaps);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iomaps = kcalloc(nr_iomaps, sizeof(*iomaps), GFP_KERNEL);
@@ -171,7 +171,7 @@ nfsd4_block_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
 	return nr_iomaps;
 fail:
 	kfree(iomaps);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int
@@ -183,7 +183,7 @@ nfsd4_scsi_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
 
 	if (len < sizeof(u32)) {
 		dprintk("%s: extent array too small: %u\n", __func__, len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nr_iomaps = be32_to_cpup(p++);
@@ -191,7 +191,7 @@ nfsd4_scsi_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
 	if (len != expected) {
 		dprintk("%s: extent array size mismatch: %u/%u\n",
 			__func__, len, expected);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iomaps = kcalloc(nr_iomaps, sizeof(*iomaps), GFP_KERNEL);
@@ -222,5 +222,5 @@ nfsd4_scsi_decode_layoutupdate(__be32 *p, u32 len, struct iomap **iomapp,
 	return nr_iomaps;
 fail:
 	kfree(iomaps);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

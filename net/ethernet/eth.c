@@ -293,9 +293,9 @@ int eth_prepare_mac_addr_change(struct net_device *dev, void *p)
 	struct sockaddr *addr = p;
 
 	if (!(dev->priv_flags & IFF_LIVE_ADDR_CHANGE) && netif_running(dev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	return 0;
 }
 EXPORT_SYMBOL(eth_prepare_mac_addr_change);
@@ -338,7 +338,7 @@ EXPORT_SYMBOL(eth_mac_addr);
 int eth_validate_addr(struct net_device *dev)
 {
 	if (!is_valid_ether_addr(dev->dev_addr))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	return 0;
 }
@@ -465,7 +465,7 @@ int eth_gro_complete(struct sk_buff *skb, int nhoff)
 	struct ethhdr *eh = (struct ethhdr *)(skb->data + nhoff);
 	__be16 type = eh->h_proto;
 	struct packet_offload *ptype;
-	int err = -ENOSYS;
+	int err = -ERR(ENOSYS);
 
 	if (skb->encapsulation)
 		skb_set_inner_mac_header(skb, nhoff);
@@ -514,7 +514,7 @@ int eth_platform_get_mac_address(struct device *dev, u8 *mac_addr)
 		addr = arch_get_platform_mac_address();
 
 	if (!addr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ether_addr_copy(mac_addr, addr);
 
@@ -549,7 +549,7 @@ int nvmem_get_mac_address(struct device *dev, void *addrbuf)
 
 	if (len != ETH_ALEN || !is_valid_ether_addr(mac)) {
 		kfree(mac);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ether_addr_copy(addrbuf, mac);

@@ -249,7 +249,7 @@ process_fetch_insn(struct fetch_insn *code, struct pt_regs *regs, void *dest,
 		val = translate_user_vaddr(code->immediate);
 		break;
 	default:
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 	}
 	code++;
 
@@ -444,12 +444,12 @@ static int append_trace_uprobe(struct trace_uprobe *tu, struct trace_uprobe *to)
 		/* Note that argument starts index = 2 */
 		trace_probe_log_set_index(ret + 1);
 		trace_probe_log_err(0, DIFF_ARG_TYPE);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	if (trace_uprobe_has_same_uprobe(to, tu)) {
 		trace_probe_log_set_index(0);
 		trace_probe_log_err(0, SAME_PROBE);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/* Append to existing event */
@@ -480,7 +480,7 @@ static int validate_ref_ctr_offset(struct trace_uprobe *new)
 		    new->offset == tmp->offset &&
 		    new->ref_ctr_offset != tmp->ref_ctr_offset) {
 			pr_warn("Reference counter offset mismatch.");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -505,7 +505,7 @@ static int register_trace_uprobe(struct trace_uprobe *tu)
 		if (is_ret_probe(tu) != is_ret_probe(old_tu)) {
 			trace_probe_log_set_index(0);
 			trace_probe_log_err(0, DIFF_PROBE_TYPE);
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 		} else {
 			ret = append_trace_uprobe(tu, old_tu);
 		}
@@ -551,17 +551,17 @@ static int trace_uprobe_create(int argc, const char **argv)
 	case 'p':
 		break;
 	default:
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 	}
 
 	if (argc < 2)
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 
 	if (argv[0][1] == ':')
 		event = &argv[0][2];
 
 	if (!strchr(argv[1], '/'))
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 
 	filename = kstrdup(argv[1], GFP_KERNEL);
 	if (!filename)
@@ -571,7 +571,7 @@ static int trace_uprobe_create(int argc, const char **argv)
 	arg = strrchr(filename, ':');
 	if (!arg || !isdigit(arg[1])) {
 		kfree(filename);
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 	}
 
 	trace_probe_log_init("trace_uprobe", argc, argv);
@@ -587,7 +587,7 @@ static int trace_uprobe_create(int argc, const char **argv)
 	}
 	if (!d_is_reg(path.dentry)) {
 		trace_probe_log_err(0, NO_REGULAR_FILE);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail_address_parse;
 	}
 
@@ -596,13 +596,13 @@ static int trace_uprobe_create(int argc, const char **argv)
 	if (rctr) {
 		rctr_end = strchr(rctr, ')');
 		if (!rctr_end) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			rctr_end = rctr + strlen(rctr);
 			trace_probe_log_err(rctr_end - filename,
 					    REFCNT_OPEN_BRACE);
 			goto fail_address_parse;
 		} else if (rctr_end[1] != '\0') {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			trace_probe_log_err(rctr_end + 1 - filename,
 					    BAD_REFCNT_SUFFIX);
 			goto fail_address_parse;
@@ -711,7 +711,7 @@ static int create_or_delete_trace_uprobe(int argc, char **argv)
 		return dyn_event_release(argc, argv, &trace_uprobe_ops);
 
 	ret = trace_uprobe_create(argc, (const char **)argv);
-	return ret == -ECANCELED ? -EINVAL : ret;
+	return ret == -ERR(ECANCELED) ? -ERR(EINVAL) : ret;
 }
 
 static int trace_uprobe_release(struct dyn_event *ev)
@@ -1083,20 +1083,20 @@ static int probe_event_enable(struct trace_event_call *call,
 
 	tp = trace_probe_primary_from_call(call);
 	if (WARN_ON_ONCE(!tp))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	enabled = trace_probe_is_enabled(tp);
 
 	/* This may also change "enabled" state */
 	if (file) {
 		if (trace_probe_test_flag(tp, TP_FLAG_PROFILE))
-			return -EINTR;
+			return -ERR(EINTR);
 
 		ret = trace_probe_add_file(tp, file);
 		if (ret < 0)
 			return ret;
 	} else {
 		if (trace_probe_test_flag(tp, TP_FLAG_TRACE))
-			return -EINTR;
+			return -ERR(EINTR);
 
 		trace_probe_set_flag(tp, TP_FLAG_PROFILE);
 	}
@@ -1167,7 +1167,7 @@ static int uprobe_event_define_fields(struct trace_event_call *event_call)
 
 	tu = trace_uprobe_primary_from_call(event_call);
 	if (unlikely(!tu))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (is_ret_probe(tu)) {
 		DEFINE_FIELD(unsigned long, vaddr[0], FIELD_STRING_FUNC, 0);
@@ -1263,7 +1263,7 @@ static int uprobe_perf_close(struct trace_event_call *call,
 
 	tp = trace_probe_primary_from_call(call);
 	if (WARN_ON_ONCE(!tp))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	tu = container_of(tp, struct trace_uprobe, tp);
 	if (trace_uprobe_filter_remove(tu->tp.event->filter, event))
@@ -1288,7 +1288,7 @@ static int uprobe_perf_open(struct trace_event_call *call,
 
 	tp = trace_probe_primary_from_call(call);
 	if (WARN_ON_ONCE(!tp))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	tu = container_of(tp, struct trace_uprobe, tp);
 	if (trace_uprobe_filter_add(tu->tp.event->filter, event))
@@ -1414,7 +1414,7 @@ int bpf_get_uprobe_info(const struct perf_event *event, u32 *fd_type,
 	else
 		tu = trace_uprobe_primary_from_call(event->tp_event);
 	if (!tu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*fd_type = is_ret_probe(tu) ? BPF_FD_TYPE_URETPROBE
 				    : BPF_FD_TYPE_UPROBE;
@@ -1578,7 +1578,7 @@ create_local_trace_uprobe(char *name, unsigned long offs,
 
 	if (!d_is_reg(path.dentry)) {
 		path_put(&path);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/*

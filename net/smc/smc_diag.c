@@ -86,7 +86,7 @@ static int __smc_diag_dump(struct sock *sk, struct sk_buff *skb,
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			cb->nlh->nlmsg_type, sizeof(*r), NLM_F_MULTI);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	r = nlmsg_data(nlh);
 	smc_diag_msg_common_fill(r, sk);
@@ -187,7 +187,7 @@ static int __smc_diag_dump(struct sock *sk, struct sk_buff *skb,
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int smc_diag_dump_proto(struct proto *prot, struct sk_buff *skb,

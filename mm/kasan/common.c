@@ -587,7 +587,7 @@ int kasan_module_alloc(void *addr, size_t size)
 	shadow_size = round_up(scaled_size, PAGE_SIZE);
 
 	if (WARN_ON(!PAGE_ALIGNED(shadow_start)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = __vmalloc_node_range(shadow_size, 1, shadow_start,
 			shadow_start + shadow_size,

@@ -118,7 +118,7 @@ static int max9850_hw_params(struct snd_pcm_substream *substream,
 	u8 sf, da;
 
 	if (!max9850->sysclk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* lrclk_div = 2^22 * rate / iclk with iclk = mclk / sf */
 	sf = (snd_soc_component_read32(component, MAX9850_CLOCK) >> 2) + 1;
@@ -141,7 +141,7 @@ static int max9850_hw_params(struct snd_pcm_substream *substream,
 		da = 0x3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, MAX9850_DIGITAL_AUDIO, 0x3, da);
 
@@ -162,7 +162,7 @@ static int max9850_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	else if (freq <= 40000000)
 		snd_soc_component_write(component, MAX9850_CLOCK, 0x8);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max9850->sysclk = freq;
 	return 0;
@@ -181,7 +181,7 @@ static int max9850_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -195,7 +195,7 @@ static int max9850_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_LEFT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -212,7 +212,7 @@ static int max9850_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		da |= MAX9850_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set da */

@@ -259,7 +259,7 @@ fail:
 out:
 	rcu_read_unlock();
 
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 int perf_output_begin_forward(struct perf_output_handle *handle,
@@ -535,7 +535,7 @@ int perf_aux_output_skip(struct perf_output_handle *handle, unsigned long size)
 	struct perf_buffer *rb = handle->rb;
 
 	if (size > handle->size)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	rb->aux_head += size;
 
@@ -670,7 +670,7 @@ int rb_alloc_aux(struct perf_buffer *rb, struct perf_event *event,
 	int ret = -ENOMEM, max_order;
 
 	if (!has_aux(event))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * We need to start with the max_order that fits in nr_pages,
@@ -684,7 +684,7 @@ int rb_alloc_aux(struct perf_buffer *rb, struct perf_event *event,
 	 */
 	if (!overwrite) {
 		if (!max_order)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		max_order--;
 	}

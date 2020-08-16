@@ -59,7 +59,7 @@ struct device_node *of_graph_get_remote_node(const struct device_node *node,
 static inline int of_graph_parse_endpoint(const struct device_node *node,
 					struct of_endpoint *endpoint)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int of_graph_get_endpoint_count(const struct device_node *np)

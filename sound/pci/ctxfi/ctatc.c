@@ -144,7 +144,7 @@ static int ct_map_audio_buffer(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 	apcm->vm_block = vm->map(vm, apcm->substream, runtime->dma_bytes);
 
 	if (!apcm->vm_block)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -233,7 +233,7 @@ static int select_rom(unsigned int pitch)
 		/* 0 <= pitch <= 8 */
 		return 0;
 	} else {
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 }
 
@@ -872,7 +872,7 @@ spdif_passthru_playback_setup(struct ct_atc *atc, struct ct_atc_pcm *apcm)
 		iec958_con_fs = IEC958_AES3_CON_FS_32000;
 		break;
 	default:
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	mutex_lock(&atc->atc_mutex);
@@ -1269,7 +1269,7 @@ static int atc_identify_card(struct ct_atc *atc, unsigned int ssid)
 		list = subsys_20k2_list;
 		break;
 	default:
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (ssid) {
 		vendor_id = ssid >> 16;
@@ -1284,7 +1284,7 @@ static int atc_identify_card(struct ct_atc *atc, unsigned int ssid)
 			dev_err(atc->card->dev,
 				"Device %04x:%04x is black-listed\n",
 				vendor_id, device_id);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		atc->model = p->value;
 	} else {

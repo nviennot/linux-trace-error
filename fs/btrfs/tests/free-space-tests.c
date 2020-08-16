@@ -338,13 +338,13 @@ check_num_extents_and_bitmaps(const struct btrfs_block_group *cache,
 		test_err(
 		"incorrect # of extent entries in the cache: %d, expected %d",
 			 cache->free_space_ctl->free_extents, num_extents);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (cache->free_space_ctl->total_bitmaps != num_bitmaps) {
 		test_err(
 		"incorrect # of extent entries in the cache: %d, expected %d",
 			 cache->free_space_ctl->total_bitmaps, num_bitmaps);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -361,7 +361,7 @@ static int check_cache_empty(struct btrfs_block_group *cache)
 	 */
 	if (cache->free_space_ctl->free_space != 0) {
 		test_err("cache free space is not 0");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* And any allocation request, no matter how small, should fail now. */
@@ -370,7 +370,7 @@ static int check_cache_empty(struct btrfs_block_group *cache)
 	if (offset != 0) {
 		test_err("space allocation did not fail, returned offset: %llu",
 			 offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* And no extent nor bitmap entries in the cache anymore. */
@@ -466,11 +466,11 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm that only those 2 ranges are marked as free. */
 	if (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_128K)) {
 		test_err("free space range missing");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (!test_check_exists(cache, SZ_128M + SZ_512K, SZ_256K)) {
 		test_err("free space range missing");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -480,7 +480,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	if (test_check_exists(cache, SZ_128M + 768 * SZ_1K,
 			      SZ_128M - 768 * SZ_1K)) {
 		test_err("bitmap region not removed from space cache");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -489,7 +489,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (test_check_exists(cache, SZ_128M + SZ_256K, SZ_256K)) {
 		test_err("invalid bitmap region marked as free");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -498,7 +498,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (test_check_exists(cache, SZ_128M, SZ_256K)) {
 		test_err("invalid bitmap region marked as free");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -514,7 +514,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm the region is marked as free. */
 	if (!test_check_exists(cache, SZ_128M, SZ_512K)) {
 		test_err("bitmap region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -558,7 +558,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm the region is marked as free. */
 	if (!test_check_exists(cache, SZ_128M - SZ_128K, SZ_128K)) {
 		test_err("extent region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -586,12 +586,12 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (!test_check_exists(cache, SZ_128M - SZ_256K, SZ_1M)) {
 		test_err("expected region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (cache->free_space_ctl->free_space != (SZ_1M + sectorsize)) {
 		test_err("cache free space is not 1Mb + %u", sectorsize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	offset = btrfs_find_space_for_alloc(cache,
@@ -601,7 +601,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 		test_err(
 	"failed to allocate 1Mb from space cache, returned offset is: %llu",
 			 offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -614,7 +614,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 
 	if (cache->free_space_ctl->free_space != sectorsize) {
 		test_err("cache free space is not %u", sectorsize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	offset = btrfs_find_space_for_alloc(cache,
@@ -623,7 +623,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	if (offset != (SZ_128M + SZ_16M)) {
 		test_err("failed to allocate %u, returned offset : %llu",
 			 sectorsize, offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = check_cache_empty(cache);
@@ -674,11 +674,11 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm that only those 2 ranges are marked as free. */
 	if (!test_check_exists(cache, SZ_128M + SZ_128K, SZ_128K)) {
 		test_err("free space range missing");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_256K)) {
 		test_err("free space range missing");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -687,7 +687,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (test_check_exists(cache, 0, SZ_128M - 768 * SZ_1K)) {
 		test_err("bitmap region not removed from space cache");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -696,7 +696,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) {
 		test_err("invalid bitmap region marked as free");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -712,7 +712,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm the region is marked as free. */
 	if (!test_check_exists(cache, SZ_128M - SZ_512K, SZ_512K)) {
 		test_err("bitmap region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -748,7 +748,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	/* Confirm the region is marked as free. */
 	if (!test_check_exists(cache, SZ_128M, SZ_128K)) {
 		test_err("extent region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -776,12 +776,12 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	 */
 	if (!test_check_exists(cache, SZ_128M - 768 * SZ_1K, SZ_1M)) {
 		test_err("expected region not marked as free");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (cache->free_space_ctl->free_space != (SZ_1M + 2 * sectorsize)) {
 		test_err("cache free space is not 1Mb + %u", 2 * sectorsize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	offset = btrfs_find_space_for_alloc(cache, 0, SZ_1M, 0,
@@ -790,7 +790,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 		test_err(
 	"failed to allocate 1Mb from space cache, returned offset is: %llu",
 			 offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -803,7 +803,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 
 	if (cache->free_space_ctl->free_space != 2 * sectorsize) {
 		test_err("cache free space is not %u", 2 * sectorsize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	offset = btrfs_find_space_for_alloc(cache,
@@ -812,7 +812,7 @@ test_steal_space_from_bitmap_to_extent(struct btrfs_block_group *cache,
 	if (offset != SZ_32M) {
 		test_err("failed to allocate %u, offset: %llu",
 			 2 * sectorsize, offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = check_cache_empty(cache);

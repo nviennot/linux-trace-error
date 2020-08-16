@@ -71,7 +71,7 @@ retry:
 	} else {
 		pr_err_ratelimited("get acl %llx.%llx failed, err=%d\n",
 				   ceph_vinop(inode), size);
-		acl = ERR_PTR(-EIO);
+		acl = ERR_PTR(-ERR(EIO));
 	}
 
 	kfree(value);
@@ -92,7 +92,7 @@ int ceph_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 	umode_t new_mode = inode->i_mode, old_mode = inode->i_mode;
 
 	if (ceph_snap(inode) != CEPH_NOSNAP) {
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
@@ -107,13 +107,13 @@ int ceph_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 		break;
 	case ACL_TYPE_DEFAULT:
 		if (!S_ISDIR(inode->i_mode)) {
-			ret = acl ? -EINVAL : 0;
+			ret = acl ? -ERR(EINVAL) : 0;
 			goto out;
 		}
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 

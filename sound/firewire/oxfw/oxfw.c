@@ -246,7 +246,7 @@ static int oxfw_probe(struct fw_unit *unit,
 	struct snd_oxfw *oxfw;
 
 	if (entry->vendor_id == VENDOR_LOUD && !detect_loud_models(unit))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Allocate this independent of sound card instance. */
 	oxfw = devm_kzalloc(&unit->device, sizeof(struct snd_oxfw), GFP_KERNEL);

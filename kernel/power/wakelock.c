@@ -172,10 +172,10 @@ static struct wakelock *wakelock_lookup_add(const char *name, size_t len,
 			node = &(*node)->rb_right;
 	}
 	if (!add_if_not_found)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (wakelocks_limit_exceeded())
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	/* Not found, we have to add a new one. */
 	wl = kzalloc(sizeof(*wl), GFP_KERNEL);
@@ -212,20 +212,20 @@ int pm_wake_lock(const char *buf)
 	int ret = 0;
 
 	if (!capable(CAP_BLOCK_SUSPEND))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	while (*str && !isspace(*str))
 		str++;
 
 	len = str - buf;
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (*str && *str != '\n') {
 		/* Find out if there's a valid timeout string appended. */
 		ret = kstrtou64(skip_spaces(str), 10, &timeout_ns);
 		if (ret)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	mutex_lock(&wakelocks_lock);
@@ -258,17 +258,17 @@ int pm_wake_unlock(const char *buf)
 	int ret = 0;
 
 	if (!capable(CAP_BLOCK_SUSPEND))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	len = strlen(buf);
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buf[len-1] == '\n')
 		len--;
 
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&wakelocks_lock);
 

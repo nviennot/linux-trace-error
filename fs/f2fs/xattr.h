@@ -141,13 +141,13 @@ static inline int f2fs_setxattr(struct inode *inode, int index,
 		const char *name, const void *value, size_t size,
 		struct page *page, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int f2fs_getxattr(struct inode *inode, int index,
 			const char *name, void *buffer,
 			size_t buffer_size, struct page *dpage)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int f2fs_init_xattr_caches(struct f2fs_sb_info *sbi) { return 0; }
 static inline void f2fs_destroy_xattr_caches(struct f2fs_sb_info *sbi) { }

@@ -186,13 +186,13 @@ static inline int vga_switcheroo_register_audio_client(struct pci_dev *pdev,
 	struct pci_dev *vga_dev) { return 0; }
 static inline void vga_switcheroo_unregister_handler(void) {}
 static inline enum vga_switcheroo_handler_flags_t vga_switcheroo_handler_flags(void) { return 0; }
-static inline int vga_switcheroo_lock_ddc(struct pci_dev *pdev) { return -ENODEV; }
-static inline int vga_switcheroo_unlock_ddc(struct pci_dev *pdev) { return -ENODEV; }
+static inline int vga_switcheroo_lock_ddc(struct pci_dev *pdev) { return -ERR(ENODEV); }
+static inline int vga_switcheroo_unlock_ddc(struct pci_dev *pdev) { return -ERR(ENODEV); }
 static inline int vga_switcheroo_process_delayed_switch(void) { return 0; }
 static inline bool vga_switcheroo_client_probe_defer(struct pci_dev *pdev) { return false; }
 static inline enum vga_switcheroo_state vga_switcheroo_get_client_state(struct pci_dev *dev) { return VGA_SWITCHEROO_ON; }
 
-static inline int vga_switcheroo_init_domain_pm_ops(struct device *dev, struct dev_pm_domain *domain) { return -EINVAL; }
+static inline int vga_switcheroo_init_domain_pm_ops(struct device *dev, struct dev_pm_domain *domain) { return -ERR(EINVAL); }
 static inline void vga_switcheroo_fini_domain_pm_ops(struct device *dev) {}
 
 #endif

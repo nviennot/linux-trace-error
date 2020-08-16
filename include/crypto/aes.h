@@ -42,7 +42,7 @@ static inline int aes_check_keylen(unsigned int keylen)
 	case AES_KEYSIZE_256:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -1560,7 +1560,7 @@ static int write_partial_message_data(struct ceph_connection *con)
 	dout("%s %p msg %p\n", __func__, con, msg);
 
 	if (!msg->num_data_items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Iterate through each page that contains data to be
@@ -1759,7 +1759,7 @@ static int read_partial_connect(struct ceph_connection *con)
 		if (size > con->auth->authorizer_reply_buf_len) {
 			pr_err("authorizer reply too big: %d > %zu\n", size,
 			       con->auth->authorizer_reply_buf_len);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1849,7 +1849,7 @@ static int ceph_pton(const char *str, size_t len, struct ceph_entity_addr *addr,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -1881,7 +1881,7 @@ static int ceph_dns_resolve_name(const char *name, size_t namelen,
 	}
 
 	if (end <= name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* do dns_resolve upcall */
 	ip_len = dns_query(current->nsproxy->net_ns,
@@ -1889,7 +1889,7 @@ static int ceph_dns_resolve_name(const char *name, size_t namelen,
 	if (ip_len > 0)
 		ret = ceph_pton(ip_addr, ip_len, addr, -1, NULL);
 	else
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 
 	kfree(ip_addr);
 
@@ -1904,7 +1904,7 @@ static int ceph_dns_resolve_name(const char *name, size_t namelen,
 static inline int ceph_dns_resolve_name(const char *name, size_t namelen,
 		struct ceph_entity_addr *addr, char delim, const char **ipend)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -1932,7 +1932,7 @@ int ceph_parse_ips(const char *c, const char *end,
 		   struct ceph_entity_addr *addr,
 		   int max_count, int *count)
 {
-	int i, ret = -EINVAL;
+	int i, ret = -ERR(EINVAL);
 	const char *p = c;
 
 	dout("parse_ips on '%.*s'\n", (int)(end-c), c);
@@ -1949,7 +1949,7 @@ int ceph_parse_ips(const char *c, const char *end,
 		ret = ceph_parse_server_name(p, end - p, &addr[i], delim, &ipend);
 		if (ret)
 			goto bad;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 		p = ipend;
 
@@ -2147,7 +2147,7 @@ static int process_connect(struct ceph_connection *con)
 			con->ops->peer_reset(con);
 		mutex_lock(&con->mutex);
 		if (con->state != CON_STATE_NEGOTIATING)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		break;
 
 	case CEPH_MSGR_TAG_RETRY_SESSION:
@@ -2319,7 +2319,7 @@ static int read_partial_msg_data(struct ceph_connection *con)
 	int ret;
 
 	if (!msg->num_data_items)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (do_datacrc)
 		crc = con->in_data_crc;
@@ -2378,18 +2378,18 @@ static int read_partial_message(struct ceph_connection *con)
 	if (cpu_to_le32(crc) != con->in_hdr.crc) {
 		pr_err("read_partial_message bad hdr crc %u != expected %u\n",
 		       crc, con->in_hdr.crc);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	front_len = le32_to_cpu(con->in_hdr.front_len);
 	if (front_len > CEPH_MSG_MAX_FRONT_LEN)
-		return -EIO;
+		return -ERR(EIO);
 	middle_len = le32_to_cpu(con->in_hdr.middle_len);
 	if (middle_len > CEPH_MSG_MAX_MIDDLE_LEN)
-		return -EIO;
+		return -ERR(EIO);
 	data_len = le32_to_cpu(con->in_hdr.data_len);
 	if (data_len > CEPH_MSG_MAX_DATA_LEN)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* verify seq# */
 	seq = le64_to_cpu(con->in_hdr.seq);
@@ -2406,7 +2406,7 @@ static int read_partial_message(struct ceph_connection *con)
 		pr_err("read_partial_message bad seq %lld expected %lld\n",
 		       seq, con->in_seq + 1);
 		con->error_msg = "bad message sequence # for incoming message";
-		return -EBADE;
+		return -ERR(EBADE);
 	}
 
 	/* allocate message? */
@@ -2485,25 +2485,25 @@ static int read_partial_message(struct ceph_connection *con)
 	if (con->in_front_crc != le32_to_cpu(m->footer.front_crc)) {
 		pr_err("read_partial_message %p front crc %u != exp. %u\n",
 		       m, con->in_front_crc, m->footer.front_crc);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 	if (con->in_middle_crc != le32_to_cpu(m->footer.middle_crc)) {
 		pr_err("read_partial_message %p middle crc %u != exp %u\n",
 		       m, con->in_middle_crc, m->footer.middle_crc);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 	if (do_datacrc &&
 	    (m->footer.flags & CEPH_MSG_FOOTER_NOCRC) == 0 &&
 	    con->in_data_crc != le32_to_cpu(m->footer.data_crc)) {
 		pr_err("read_partial_message %p data crc %u != exp. %u\n", m,
 		       con->in_data_crc, le32_to_cpu(m->footer.data_crc));
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	if (need_sign && con->ops->check_message_signature &&
 	    con->ops->check_message_signature(m)) {
 		pr_err("read_partial_message %p signature check failed\n", m);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	return 1; /* done! */
@@ -2753,7 +2753,7 @@ more:
 				con->error_msg = "bad crc/signature";
 				/* fall through */
 			case -EBADE:
-				ret = -EIO;
+				ret = -ERR(EIO);
 				break;
 			case -EIO:
 				con->error_msg = "io error";
@@ -2808,13 +2808,13 @@ static int queue_con_delay(struct ceph_connection *con, unsigned long delay)
 {
 	if (!con->ops->get(con)) {
 		dout("%s %p ref count 0\n", __func__, con);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (!queue_delayed_work(ceph_msgr_wq, &con->work, delay)) {
 		dout("%s %p - already queued\n", __func__, con);
 		con->ops->put(con);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	dout("%s %p %lu\n", __func__, con, delay);
@@ -3435,7 +3435,7 @@ static int ceph_con_in_msg_alloc(struct ceph_connection *con, int *skip)
 	if (con->state != CON_STATE_OPEN) {
 		if (msg)
 			ceph_msg_put(msg);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (msg) {
 		BUG_ON(*skip);

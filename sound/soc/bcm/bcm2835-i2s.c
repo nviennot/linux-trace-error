@@ -235,7 +235,7 @@ static int bcm2835_i2s_set_dai_bclk_ratio(struct snd_soc_dai *dai,
 	}
 
 	if (ratio > BCM2835_I2S_MAX_FRAME_LENGTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->tdm_slots = 2;
 	dev->rx_mask = 0x03;
@@ -254,7 +254,7 @@ static int bcm2835_i2s_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (slots) {
 		if (slots < 0 || width < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Limit masks to available slots */
 		rx_mask &= GENMASK(slots - 1, 0);
@@ -266,10 +266,10 @@ static int bcm2835_i2s_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		 */
 		if (hweight_long((unsigned long) rx_mask) != 2
 		    || hweight_long((unsigned long) tx_mask) != 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (slots * width > BCM2835_I2S_MAX_FRAME_LENGTH)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	dev->tdm_slots = slots;
@@ -381,7 +381,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	/* Check if data fits into slots */
 	if (data_length > slot_width)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check if CPU is bit clock master */
 	switch (dev->fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -394,7 +394,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 		bit_clock_master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check if CPU is frame sync master */
@@ -408,7 +408,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 		frame_sync_master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock should only be set up here if CPU is clock master */
@@ -442,7 +442,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 	case SND_SOC_DAIFMT_I2S:
 		/* I2S mode needs an even number of slots */
 		if (slots & 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Use I2S-style logical slot numbering: even slots
@@ -459,7 +459,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	case SND_SOC_DAIFMT_LEFT_J:
 		if (slots & 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		odd_slot_offset = slots >> 1;
 		data_delay = 0;
@@ -468,11 +468,11 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	case SND_SOC_DAIFMT_RIGHT_J:
 		if (slots & 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Odd frame lengths aren't supported */
 		if (frame_length & 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		odd_slot_offset = slots >> 1;
 		data_delay = slot_width - data_length;
@@ -490,7 +490,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 		frame_start_falling_edge = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bcm2835_i2s_calc_channel_pos(&rx_ch1_pos, &rx_ch2_pos,
@@ -555,7 +555,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 	case SND_SOC_DAIFMT_IB_IF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* FSI selects frame start on falling edge */
@@ -571,7 +571,7 @@ static int bcm2835_i2s_hw_params(struct snd_pcm_substream *substream,
 			mode |= BCM2835_I2S_FSI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(dev->i2s_regmap, BCM2835_I2S_MODE_A_REG, mode);
@@ -684,7 +684,7 @@ static int bcm2835_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		bcm2835_i2s_stop(dev, substream, dai);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -860,7 +860,7 @@ static int bcm2835_i2s_probe(struct platform_device *pdev)
 	addr = of_get_address(pdev->dev.of_node, 0, NULL, NULL);
 	if (!addr) {
 		dev_err(&pdev->dev, "could not get DMA-register address\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dma_base = be32_to_cpup(addr);
 

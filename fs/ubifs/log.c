@@ -179,7 +179,7 @@ int ubifs_add_bud_to_log(struct ubifs_info *c, int jhead, int lnum, int offs)
 	mutex_lock(&c->log_mutex);
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_unlock;
 	}
 
@@ -188,7 +188,7 @@ int ubifs_add_bud_to_log(struct ubifs_info *c, int jhead, int lnum, int offs)
 		dbg_log("not enough log space - %lld, required %d",
 			empty_log_bytes(c), c->min_log_bytes);
 		ubifs_commit_required(c);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out_unlock;
 	}
 
@@ -205,7 +205,7 @@ int ubifs_add_bud_to_log(struct ubifs_info *c, int jhead, int lnum, int offs)
 		dbg_log("bud bytes %lld (%lld max), require commit",
 			c->bud_bytes, c->max_bud_bytes);
 		ubifs_commit_required(c);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out_unlock;
 	}
 
@@ -706,7 +706,7 @@ int ubifs_consolidate_log(struct ubifs_info *c)
 	vfree(buf);
 	if (write_lnum == c->lhead_lnum) {
 		ubifs_err(c, "log is too full");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* Unmap remaining LEBs */
 	lnum = write_lnum;
@@ -754,7 +754,7 @@ static int dbg_check_bud_bytes(struct ubifs_info *c)
 	if (c->bud_bytes != bud_bytes) {
 		ubifs_err(c, "bad bud_bytes %lld, calculated %lld",
 			  c->bud_bytes, bud_bytes);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	spin_unlock(&c->buds_lock);
 

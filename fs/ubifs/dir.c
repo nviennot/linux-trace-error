@@ -89,7 +89,7 @@ struct inode *ubifs_new_inode(struct ubifs_info *c, struct inode *dir,
 		}
 
 		if (!fscrypt_has_encryption_key(dir))
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 
 		encrypted = true;
 	}
@@ -153,7 +153,7 @@ struct inode *ubifs_new_inode(struct ubifs_info *c, struct inode *dir,
 			ubifs_err(c, "out of inode numbers");
 			make_bad_inode(inode);
 			iput(inode);
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		ubifs_warn(c, "running out of inode numbers (current %lu, max %u)",
 			   (unsigned long)c->highest_inum, INUM_WATERMARK);
@@ -190,9 +190,9 @@ static int dbg_check_name(const struct ubifs_info *c,
 	if (!dbg_is_chk_gen(c))
 		return 0;
 	if (le16_to_cpu(dent->nlen) != fname_len(nm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (memcmp(dent->name, fname_name(nm), fname_len(nm)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -215,7 +215,7 @@ static struct dentry *ubifs_lookup(struct inode *dir, struct dentry *dentry,
 		return ERR_PTR(err);
 
 	if (fname_len(&nm) > UBIFS_MAX_NLEN) {
-		inode = ERR_PTR(-ENAMETOOLONG);
+		inode = ERR_PTR(-ERR(ENAMETOOLONG));
 		goto done;
 	}
 
@@ -244,7 +244,7 @@ static struct dentry *ubifs_lookup(struct inode *dir, struct dentry *dentry,
 	}
 
 	if (dbg_check_name(c, dent, &nm)) {
-		inode = ERR_PTR(-EINVAL);
+		inode = ERR_PTR(-ERR(EINVAL));
 		goto done;
 	}
 
@@ -267,7 +267,7 @@ static struct dentry *ubifs_lookup(struct inode *dir, struct dentry *dentry,
 		ubifs_warn(c, "Inconsistent encryption contexts: %lu/%lu",
 			   dir->i_ino, inode->i_ino);
 		iput(inode);
-		inode = ERR_PTR(-EPERM);
+		inode = ERR_PTR(-ERR(EPERM));
 	}
 
 done:
@@ -858,7 +858,7 @@ int ubifs_check_dir_empty(struct inode *dir)
 			err = 0;
 	} else {
 		kfree(dent);
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 	}
 	return err;
 }
@@ -1546,7 +1546,7 @@ static int ubifs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct ubifs_info *c = old_dir->i_sb->s_fs_info;
 
 	if (flags & ~(RENAME_NOREPLACE | RENAME_WHITEOUT | RENAME_EXCHANGE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ubifs_assert(c, inode_is_locked(old_dir));
 	ubifs_assert(c, inode_is_locked(new_dir));
@@ -1619,7 +1619,7 @@ int ubifs_getattr(const struct path *path, struct kstat *stat,
 static int ubifs_dir_open(struct inode *dir, struct file *file)
 {
 	if (IS_ENCRYPTED(dir))
-		return fscrypt_get_encryption_info(dir) ? -EACCES : 0;
+		return fscrypt_get_encryption_info(dir) ? -ERR(EACCES) : 0;
 
 	return 0;
 }

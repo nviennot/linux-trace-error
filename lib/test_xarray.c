@@ -1714,7 +1714,7 @@ static int xarray_checks(void)
 	check_workingset(&array, 4096);
 
 	printk("XArray: %u of %u tests passed\n", tests_passed, tests_run);
-	return (tests_run == tests_passed) ? 0 : -EINVAL;
+	return (tests_run == tests_passed) ? 0 : -ERR(EINVAL);
 }
 
 static void xarray_exit(void)

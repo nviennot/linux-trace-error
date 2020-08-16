@@ -146,13 +146,13 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
 		return PTR_ERR(page);
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(page, "%d", &new_value) != 1)
 		goto out;
 
@@ -251,10 +251,10 @@ static int sel_mmap_handle_status(struct file *filp,
 
 	/* only allows one page from the head */
 	if (vma->vm_pgoff > 0 || size != PAGE_SIZE)
-		return -EIO;
+		return -ERR(EIO);
 	/* disallow writable mapping */
 	if (vma->vm_flags & VM_WRITE)
-		return -EPERM;
+		return -ERR(EPERM);
 	/* disallow mprotect() turns it into writable */
 	vma->vm_flags &= ~VM_MAYWRITE;
 
@@ -293,13 +293,13 @@ static ssize_t sel_write_disable(struct file *file, const char __user *buf,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
 		return PTR_ERR(page);
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(page, "%d", &new_value) != 1)
 		goto out;
 
@@ -393,7 +393,7 @@ static int sel_open_policy(struct inode *inode, struct file *filp)
 	if (rc)
 		goto err;
 
-	rc = -EBUSY;
+	rc = -ERR(EBUSY);
 	if (fsi->policy_opened)
 		goto err;
 
@@ -491,7 +491,7 @@ static int sel_mmap_policy(struct file *filp, struct vm_area_struct *vma)
 		vma->vm_flags &= ~VM_MAYWRITE;
 
 		if (vma->vm_flags & VM_WRITE)
-			return -EACCES;
+			return -ERR(EACCES);
 	}
 
 	vma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
@@ -550,7 +550,7 @@ static ssize_t sel_write_load(struct file *file, const char __user *buf,
 		goto out;
 
 	/* No partial writes. */
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (*ppos != 0)
 		goto out;
 
@@ -613,7 +613,7 @@ static ssize_t sel_write_context(struct file *file, char *buf, size_t size)
 	if (length)
 		goto out;
 
-	length = -ERANGE;
+	length = -ERR(ERANGE);
 	if (len > SIMPLE_TRANSACTION_LIMIT) {
 		pr_err("SELinux: %s:  context size (%u) exceeds "
 			"payload max\n", __func__, len);
@@ -658,13 +658,13 @@ static ssize_t sel_write_checkreqprot(struct file *file, const char __user *buf,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
 		return PTR_ERR(page);
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(page, "%u", &new_value) != 1)
 		goto out;
 
@@ -711,7 +711,7 @@ static ssize_t sel_write_validatetrans(struct file *file,
 		goto out;
 
 	/* No partial writes. */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (*ppos != 0)
 		goto out;
 
@@ -735,7 +735,7 @@ static ssize_t sel_write_validatetrans(struct file *file,
 	if (!taskcon)
 		goto out;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (sscanf(req, "%s %s %hu %s", oldcon, newcon, &tclass, taskcon) != 4)
 		goto out;
 
@@ -792,7 +792,7 @@ static ssize_t selinux_transaction_write(struct file *file, const char __user *b
 	ssize_t rv;
 
 	if (ino >= ARRAY_SIZE(write_op) || !write_op[ino])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = simple_transaction_get(file, buf, size);
 	if (IS_ERR(data))
@@ -845,7 +845,7 @@ static ssize_t sel_write_access(struct file *file, char *buf, size_t size)
 	if (!tcon)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(buf, "%s %s %hu", scon, tcon, &tclass) != 3)
 		goto out;
 
@@ -905,7 +905,7 @@ static ssize_t sel_write_create(struct file *file, char *buf, size_t size)
 	if (!namebuf)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	nargs = sscanf(buf, "%s %s %hu %s", scon, tcon, &tclass, namebuf);
 	if (nargs < 3 || nargs > 4)
 		goto out;
@@ -957,7 +957,7 @@ static ssize_t sel_write_create(struct file *file, char *buf, size_t size)
 	if (length)
 		goto out;
 
-	length = -ERANGE;
+	length = -ERR(ERANGE);
 	if (len > SIMPLE_TRANSACTION_LIMIT) {
 		pr_err("SELinux: %s:  context size (%u) exceeds "
 			"payload max\n", __func__, len);
@@ -1002,7 +1002,7 @@ static ssize_t sel_write_relabel(struct file *file, char *buf, size_t size)
 	if (!tcon)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(buf, "%s %s %hu", scon, tcon, &tclass) != 3)
 		goto out;
 
@@ -1022,7 +1022,7 @@ static ssize_t sel_write_relabel(struct file *file, char *buf, size_t size)
 	if (length)
 		goto out;
 
-	length = -ERANGE;
+	length = -ERR(ERANGE);
 	if (len > SIMPLE_TRANSACTION_LIMIT)
 		goto out;
 
@@ -1063,7 +1063,7 @@ static ssize_t sel_write_user(struct file *file, char *buf, size_t size)
 	if (!user)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(buf, "%s %s", con, user) != 2)
 		goto out;
 
@@ -1085,7 +1085,7 @@ static ssize_t sel_write_user(struct file *file, char *buf, size_t size)
 		}
 		if ((length + len) >= SIMPLE_TRANSACTION_LIMIT) {
 			kfree(newcon);
-			length = -ERANGE;
+			length = -ERR(ERANGE);
 			goto out;
 		}
 		memcpy(ptr, newcon, len);
@@ -1128,7 +1128,7 @@ static ssize_t sel_write_member(struct file *file, char *buf, size_t size)
 	if (!tcon)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(buf, "%s %s %hu", scon, tcon, &tclass) != 3)
 		goto out;
 
@@ -1148,7 +1148,7 @@ static ssize_t sel_write_member(struct file *file, char *buf, size_t size)
 	if (length)
 		goto out;
 
-	length = -ERANGE;
+	length = -ERR(ERANGE);
 	if (len > SIMPLE_TRANSACTION_LIMIT) {
 		pr_err("SELinux: %s:  context size (%u) exceeds "
 			"payload max\n", __func__, len);
@@ -1188,7 +1188,7 @@ static ssize_t sel_read_bool(struct file *filep, char __user *buf,
 
 	mutex_lock(&fsi->mutex);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (index >= fsi->bool_num || strcmp(name,
 					     fsi->bool_pending_names[index]))
 		goto out_unlock;
@@ -1231,7 +1231,7 @@ static ssize_t sel_write_bool(struct file *filep, const char __user *buf,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
@@ -1246,12 +1246,12 @@ static ssize_t sel_write_bool(struct file *filep, const char __user *buf,
 	if (length)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (index >= fsi->bool_num || strcmp(name,
 					     fsi->bool_pending_names[index]))
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(page, "%d", &new_value) != 1)
 		goto out;
 
@@ -1287,7 +1287,7 @@ static ssize_t sel_commit_bools_write(struct file *filep,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
@@ -1302,7 +1302,7 @@ static ssize_t sel_commit_bools_write(struct file *filep,
 	if (length)
 		goto out;
 
-	length = -EINVAL;
+	length = -ERR(EINVAL);
 	if (sscanf(page, "%d", &new_value) != 1)
 		goto out;
 
@@ -1379,7 +1379,7 @@ static int sel_make_bools(struct selinux_fs_info *fsi)
 			goto out;
 		}
 
-		ret = -ENAMETOOLONG;
+		ret = -ERR(ENAMETOOLONG);
 		len = snprintf(page, PAGE_SIZE, "/%s/%s", BOOL_DIR_NAME, names[i]);
 		if (len >= PAGE_SIZE) {
 			dput(dentry);
@@ -1458,13 +1458,13 @@ static ssize_t sel_write_avc_cache_threshold(struct file *file,
 
 	/* No partial writes. */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = memdup_user_nul(buf, count);
 	if (IS_ERR(page))
 		return PTR_ERR(page);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (sscanf(page, "%u", &new_value) != 1)
 		goto out;
 

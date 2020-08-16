@@ -117,7 +117,7 @@ static void *nft_bitmap_get(const struct net *net, const struct nft_set *set,
 
 		return be;
 	}
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static int nft_bitmap_insert(const struct net *net, const struct nft_set *set,
@@ -132,7 +132,7 @@ static int nft_bitmap_insert(const struct net *net, const struct nft_set *set,
 	be = nft_bitmap_elem_find(set, new, genmask);
 	if (be) {
 		*ext = &be->ext;
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	nft_bitmap_location(set, nft_set_ext_key(&new->ext), &idx, &off);

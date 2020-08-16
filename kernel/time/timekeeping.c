@@ -1003,7 +1003,7 @@ static int scale64_check_overflow(u64 mult, u64 div, u64 *base)
 
 	if (((int)sizeof(u64)*8 - fls64(mult) < fls64(tmp)) ||
 	    ((int)sizeof(u64)*8 - fls64(mult) < fls64(rem)))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	tmp *= mult;
 
 	rem = div64_u64(rem * mult, div);
@@ -1148,7 +1148,7 @@ int get_device_system_crosststamp(int (*get_time_fn)
 		 * timekeeper clocksource
 		 */
 		if (tk->tkr_mono.clock != system_counterval.cs)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		cycles = system_counterval.cycles;
 
 		/*
@@ -1196,7 +1196,7 @@ int get_device_system_crosststamp(int (*get_time_fn)
 		    !cycle_between(history_begin->cycles,
 				   system_counterval.cycles, cycles) ||
 		    history_begin->cs_was_changed_seq != cs_was_changed_seq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		partial_history_cycles = cycles - system_counterval.cycles;
 		total_history_cycles = cycles - history_begin->cycles;
 		discontinuity =
@@ -1228,7 +1228,7 @@ int do_settimeofday64(const struct timespec64 *ts)
 	int ret = 0;
 
 	if (!timespec64_valid_settod(ts))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	raw_spin_lock_irqsave(&timekeeper_lock, flags);
 	write_seqcount_begin(&tk_core.seq);
@@ -1240,7 +1240,7 @@ int do_settimeofday64(const struct timespec64 *ts)
 	ts_delta.tv_nsec = ts->tv_nsec - xt.tv_nsec;
 
 	if (timespec64_compare(&tk->wall_to_monotonic, &ts_delta) > 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1277,7 +1277,7 @@ static int timekeeping_inject_offset(const struct timespec64 *ts)
 	int ret = 0;
 
 	if (ts->tv_nsec < 0 || ts->tv_nsec >= NSEC_PER_SEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	raw_spin_lock_irqsave(&timekeeper_lock, flags);
 	write_seqcount_begin(&tk_core.seq);
@@ -1288,7 +1288,7 @@ static int timekeeping_inject_offset(const struct timespec64 *ts)
 	tmp = timespec64_add(tk_xtime(tk), *ts);
 	if (timespec64_compare(&tk->wall_to_monotonic, ts) > 0 ||
 	    !timespec64_valid_settod(&tmp)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -2248,14 +2248,14 @@ static int timekeeping_validate_timex(const struct __kernel_timex *txc)
 	if (txc->modes & ADJ_ADJTIME) {
 		/* singleshot must not be used with any other mode bits */
 		if (!(txc->modes & ADJ_OFFSET_SINGLESHOT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!(txc->modes & ADJ_OFFSET_READONLY) &&
 		    !capable(CAP_SYS_TIME))
-			return -EPERM;
+			return -ERR(EPERM);
 	} else {
 		/* In order to modify anything, you gotta be super-user! */
 		if (txc->modes && !capable(CAP_SYS_TIME))
-			return -EPERM;
+			return -ERR(EPERM);
 		/*
 		 * if the quartz is off by more than 10% then
 		 * something is VERY wrong!
@@ -2263,13 +2263,13 @@ static int timekeeping_validate_timex(const struct __kernel_timex *txc)
 		if (txc->modes & ADJ_TICK &&
 		    (txc->tick <  900000/USER_HZ ||
 		     txc->tick > 1100000/USER_HZ))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (txc->modes & ADJ_SETOFFSET) {
 		/* In order to inject time, you gotta be super-user! */
 		if (!capable(CAP_SYS_TIME))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		/*
 		 * Validate if a timespec/timeval used to inject a time
@@ -2280,14 +2280,14 @@ static int timekeeping_validate_timex(const struct __kernel_timex *txc)
 		 * we can't have more nanoseconds/microseconds than a second.
 		 */
 		if (txc->time.tv_usec < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (txc->modes & ADJ_NANO) {
 			if (txc->time.tv_usec >= NSEC_PER_SEC)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} else {
 			if (txc->time.tv_usec >= USEC_PER_SEC)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -2297,9 +2297,9 @@ static int timekeeping_validate_timex(const struct __kernel_timex *txc)
 	 */
 	if ((txc->modes & ADJ_FREQUENCY) && (BITS_PER_LONG == 64)) {
 		if (LLONG_MIN / PPM_SCALE > txc->freq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (LLONG_MAX / PPM_SCALE < txc->freq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;

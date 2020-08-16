@@ -355,25 +355,25 @@ static inline int cgroup_bpf_prog_attach(const union bpf_attr *attr,
 					 enum bpf_prog_type ptype,
 					 struct bpf_prog *prog)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int cgroup_bpf_prog_detach(const union bpf_attr *attr,
 					 enum bpf_prog_type ptype)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int cgroup_bpf_link_attach(const union bpf_attr *attr,
 					 struct bpf_prog *prog)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int cgroup_bpf_prog_query(const union bpf_attr *attr,
 					union bpf_attr __user *uattr)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void bpf_cgroup_storage_set(

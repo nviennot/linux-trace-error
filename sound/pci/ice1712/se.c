@@ -437,7 +437,7 @@ static int se200pci_cont_enum_info(struct snd_kcontrol *kc,
 	n = kc->private_value;
 	c = se200pci_get_enum_count(n);
 	if (!c)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_ctl_enum_info(uinfo, 1, c, se200pci_cont[n].member);
 }
 
@@ -566,7 +566,7 @@ static int se200pci_cont_enum_put(struct snd_kcontrol *kc,
 
 	vol1 = uc->value.enumerated.item[0];
 	if (vol1 >= se200pci_get_enum_count(n))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (spec->vol[n].ch1 != vol1) {
 		spec->vol[n].ch1 = vol1;
 		se200pci_cont_update(ice, n);
@@ -615,7 +615,7 @@ static int se200pci_add_controls(struct snd_ice1712 *ice)
 			break;
 		default:
 			snd_BUG();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		err = snd_ctl_add(ice->card, snd_ctl_new1(&cont, ice));
 		if (err < 0)
@@ -681,7 +681,7 @@ static int se_init(struct snd_ice1712 *ice)
 		return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int se_add_controls(struct snd_ice1712 *ice)

@@ -91,7 +91,7 @@ static int read_mmp_block(struct super_block *sb, struct buffer_head **bh,
 	submit_bh(REQ_OP_READ, REQ_META | REQ_PRIO, *bh);
 	wait_on_buffer(*bh);
 	if (!buffer_uptodate(*bh)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto warn_exit;
 	}
 	mmp = (struct mmp_struct *)((*bh)->b_data);
@@ -224,7 +224,7 @@ static int kmmpd(void *data)
 					     " multiply mounted.");
 				ext4_error_err(sb, EBUSY, "abort");
 				put_bh(bh_check);
-				retval = -EBUSY;
+				retval = -ERR(EBUSY);
 				goto exit_thread;
 			}
 			put_bh(bh_check);

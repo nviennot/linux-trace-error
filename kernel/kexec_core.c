@@ -171,11 +171,11 @@ int sanity_check_segment_list(struct kimage *image)
 		mstart = image->segment[i].mem;
 		mend   = mstart + image->segment[i].memsz;
 		if (mstart > mend)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		if ((mstart & ~PAGE_MASK) || (mend & ~PAGE_MASK))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		if (mend >= KEXEC_DESTINATION_MEMORY_LIMIT)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 	}
 
 	/* Verify our destination addresses do not overlap.
@@ -196,7 +196,7 @@ int sanity_check_segment_list(struct kimage *image)
 			pend   = pstart + image->segment[j].memsz;
 			/* Do the segments overlap ? */
 			if ((mend > pstart) && (mstart < pend))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -207,7 +207,7 @@ int sanity_check_segment_list(struct kimage *image)
 	 */
 	for (i = 0; i < nr_segments; i++) {
 		if (image->segment[i].bufsz > image->segment[i].memsz)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/*
@@ -217,13 +217,13 @@ int sanity_check_segment_list(struct kimage *image)
 	 */
 	for (i = 0; i < nr_segments; i++) {
 		if (PAGE_COUNT(image->segment[i].memsz) > nr_pages / 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		total_pages += PAGE_COUNT(image->segment[i].memsz);
 	}
 
 	if (total_pages > nr_pages / 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Verify we have good destination addresses.  Normally
@@ -244,7 +244,7 @@ int sanity_check_segment_list(struct kimage *image)
 			/* Ensure we are within the crash kernel limits */
 			if ((mstart < phys_to_boot_phys(crashk_res.start)) ||
 			    (mend > phys_to_boot_phys(crashk_res.end)))
-				return -EADDRNOTAVAIL;
+				return -ERR(EADDRNOTAVAIL);
 		}
 	}
 
@@ -1019,14 +1019,14 @@ int crash_shrink_memory(unsigned long new_size)
 	mutex_lock(&kexec_mutex);
 
 	if (kexec_crash_image) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto unlock;
 	}
 	start = crashk_res.start;
 	end = crashk_res.end;
 	old_size = (end == 0) ? 0 : end - start + 1;
 	if (new_size >= old_size) {
-		ret = (new_size == old_size) ? 0 : -EINVAL;
+		ret = (new_size == old_size) ? 0 : -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -1127,9 +1127,9 @@ int kernel_kexec(void)
 	int error = 0;
 
 	if (!mutex_trylock(&kexec_mutex))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (!kexec_image) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto Unlock;
 	}
 
@@ -1139,7 +1139,7 @@ int kernel_kexec(void)
 		pm_prepare_console();
 		error = freeze_processes();
 		if (error) {
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 			goto Restore_console;
 		}
 		suspend_console();

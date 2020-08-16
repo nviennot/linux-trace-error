@@ -35,7 +35,7 @@ static int ieee802154_nl_fill_phy(struct sk_buff *msg, u32 portid,
 	pr_debug("%s\n", __func__);
 
 	if (!buf)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	hdr = genlmsg_put(msg, 0, seq, &nl802154_family, flags,
 			  IEEE802154_LIST_PHY);
@@ -65,7 +65,7 @@ nla_put_failure:
 	genlmsg_cancel(msg, hdr);
 out:
 	kfree(buf);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int ieee802154_list_phy(struct sk_buff *skb, struct genl_info *info)
@@ -76,20 +76,20 @@ int ieee802154_list_phy(struct sk_buff *skb, struct genl_info *info)
 	struct sk_buff *msg;
 	struct wpan_phy *phy;
 	const char *name;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 
 	pr_debug("%s\n", __func__);
 
 	if (!info->attrs[IEEE802154_ATTR_PHY_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_PHY_NAME]);
 	if (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
-		return -EINVAL; /* phy name should be null-terminated */
+		return -ERR(EINVAL); /* phy name should be null-terminated */
 
 	phy = wpan_phy_find(name);
 	if (!phy)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!msg)
@@ -164,7 +164,7 @@ int ieee802154_add_iface(struct sk_buff *skb, struct genl_info *info)
 	struct wpan_phy *phy;
 	const char *name;
 	const char *devname;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct net_device *dev;
 	int type = __IEEE802154_DEV_INVALID;
 	unsigned char name_assign_type;
@@ -172,17 +172,17 @@ int ieee802154_add_iface(struct sk_buff *skb, struct genl_info *info)
 	pr_debug("%s\n", __func__);
 
 	if (!info->attrs[IEEE802154_ATTR_PHY_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_PHY_NAME]);
 	if (name[nla_len(info->attrs[IEEE802154_ATTR_PHY_NAME]) - 1] != '\0')
-		return -EINVAL; /* phy name should be null-terminated */
+		return -ERR(EINVAL); /* phy name should be null-terminated */
 
 	if (info->attrs[IEEE802154_ATTR_DEV_NAME]) {
 		devname = nla_data(info->attrs[IEEE802154_ATTR_DEV_NAME]);
 		if (devname[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1]
 				!= '\0')
-			return -EINVAL; /* phy name should be null-terminated */
+			return -ERR(EINVAL); /* phy name should be null-terminated */
 		name_assign_type = NET_NAME_USER;
 	} else  {
 		devname = "wpan%d";
@@ -190,11 +190,11 @@ int ieee802154_add_iface(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	if (strlen(devname) >= IFNAMSIZ)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	phy = wpan_phy_find(name);
 	if (!phy)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	msg = ieee802154_nl_new_reply(info, 0, IEEE802154_ADD_IFACE);
 	if (!msg)
@@ -203,14 +203,14 @@ int ieee802154_add_iface(struct sk_buff *skb, struct genl_info *info)
 	if (info->attrs[IEEE802154_ATTR_HW_ADDR] &&
 	    nla_len(info->attrs[IEEE802154_ATTR_HW_ADDR]) !=
 			IEEE802154_ADDR_LEN) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto nla_put_failure;
 	}
 
 	if (info->attrs[IEEE802154_ATTR_DEV_TYPE]) {
 		type = nla_get_u8(info->attrs[IEEE802154_ATTR_DEV_TYPE]);
 		if (type >= __IEEE802154_DEV_MAX) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto nla_put_failure;
 		}
 	}
@@ -272,13 +272,13 @@ int ieee802154_del_iface(struct sk_buff *skb, struct genl_info *info)
 	pr_debug("%s\n", __func__);
 
 	if (!info->attrs[IEEE802154_ATTR_DEV_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(info->attrs[IEEE802154_ATTR_DEV_NAME]);
 	if (name[nla_len(info->attrs[IEEE802154_ATTR_DEV_NAME]) - 1] != '\0')
-		return -EINVAL; /* name should be null-terminated */
+		return -ERR(EINVAL); /* name should be null-terminated */
 
-	rc = -ENODEV;
+	rc = -ERR(ENODEV);
 	dev = dev_get_by_name(genl_info_net(info), name);
 	if (!dev)
 		return rc;
@@ -289,7 +289,7 @@ int ieee802154_del_iface(struct sk_buff *skb, struct genl_info *info)
 	BUG_ON(!phy);
 	get_device(&phy->dev);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	/* phy name is optional, but should be checked if it's given */
 	if (info->attrs[IEEE802154_ATTR_PHY_NAME]) {
 		struct wpan_phy *phy2;
@@ -311,7 +311,7 @@ int ieee802154_del_iface(struct sk_buff *skb, struct genl_info *info)
 		}
 	}
 
-	rc = -ENOBUFS;
+	rc = -ERR(ENOBUFS);
 
 	msg = ieee802154_nl_new_reply(info, 0, IEEE802154_DEL_IFACE);
 	if (!msg)

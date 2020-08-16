@@ -55,7 +55,7 @@ static int tcf_csum_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_CSUM_MAX, nla, csum_policy,
 					  NULL);
@@ -63,7 +63,7 @@ static int tcf_csum_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (tb[TCA_CSUM_PARMS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	parm = nla_data(tb[TCA_CSUM_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
@@ -80,7 +80,7 @@ static int tcf_csum_init(struct net *net, struct nlattr *nla,
 			return 0;
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	} else {
 		return err;

@@ -284,7 +284,7 @@ int __aa_path_perm(const char *op, struct aa_profile *profile, const char *name,
 		return 0;
 	aa_str_perms(profile->file.dfa, profile->file.start, name, cond, perms);
 	if (request & ~perms->allow)
-		e = -EACCES;
+		e = -ERR(EACCES);
 	return aa_audit_file(profile, perms, op, request, name, NULL, NULL,
 			     cond->uid, NULL, e);
 }
@@ -387,7 +387,7 @@ static int profile_path_link(struct aa_profile *profile,
 	if (error)
 		goto audit;
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	/* aa_str_perms - handles the case of the dfa being NULL */
 	state = aa_str_perms(profile->file.dfa, profile->file.start, lname,
 			     cond, &lperms);

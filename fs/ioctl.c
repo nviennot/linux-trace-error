@@ -40,14 +40,14 @@
  */
 long vfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
-	int error = -ENOTTY;
+	int error = -ERR(ENOTTY);
 
 	if (!filp->f_op->unlocked_ioctl)
 		goto out;
 
 	error = filp->f_op->unlocked_ioctl(filp, cmd, arg);
 	if (error == -ENOIOCTLCMD)
-		error = -ENOTTY;
+		error = -ERR(ENOTTY);
  out:
 	return error;
 }
@@ -61,20 +61,20 @@ static int ioctl_fibmap(struct file *filp, int __user *p)
 	sector_t block;
 
 	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = get_user(ur_block, p);
 	if (error)
 		return error;
 
 	if (ur_block < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	block = ur_block;
 	error = bmap(inode, &block);
 
 	if (block > INT_MAX) {
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 		pr_warn_ratelimited("[%s/%d] FS: %s File: %pD4 would truncate fibmap result\n",
 				    current->comm, task_pid_nr(current),
 				    sb->s_id, filp);
@@ -169,9 +169,9 @@ int fiemap_prep(struct inode *inode, struct fiemap_extent_info *fieinfo,
 	int ret = 0;
 
 	if (*len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (start > maxbytes)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	/*
 	 * Shrink request scope to what the fs can actually handle.
@@ -184,7 +184,7 @@ int fiemap_prep(struct inode *inode, struct fiemap_extent_info *fieinfo,
 	incompat_flags = fieinfo->fi_flags & ~supported_flags;
 	if (incompat_flags) {
 		fieinfo->fi_flags = incompat_flags;
-		return -EBADR;
+		return -ERR(EBADR);
 	}
 
 	if (fieinfo->fi_flags & FIEMAP_FLAG_SYNC)
@@ -201,13 +201,13 @@ static int ioctl_fiemap(struct file *filp, struct fiemap __user *ufiemap)
 	int error;
 
 	if (!inode->i_op->fiemap)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (copy_from_user(&fiemap, ufiemap, sizeof(fiemap)))
 		return -EFAULT;
 
 	if (fiemap.fm_extent_count > FIEMAP_MAX_EXTENTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fieinfo.fi_flags = fiemap.fm_flags;
 	fieinfo.fi_extents_max = fiemap.fm_extent_count;
@@ -232,8 +232,8 @@ static long ioctl_file_clone(struct file *dst_file, unsigned long srcfd,
 	int ret;
 
 	if (!src_file.file)
-		return -EBADF;
-	ret = -EXDEV;
+		return -ERR(EBADF);
+	ret = -ERR(EXDEV);
 	if (src_file.file->f_path.mnt != dst_file->f_path.mnt)
 		goto fdput;
 	cloned = vfs_clone_file_range(src_file.file, off, dst_file, destoff,
@@ -241,7 +241,7 @@ static long ioctl_file_clone(struct file *dst_file, unsigned long srcfd,
 	if (cloned < 0)
 		ret = cloned;
 	else if (olen && cloned != olen)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	else
 		ret = 0;
 fdput:
@@ -424,7 +424,7 @@ static int __generic_block_fiemap(struct inode *inode,
 		}
 		cond_resched();
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -488,7 +488,7 @@ static int ioctl_preallocate(struct file *filp, int mode, void __user *argp)
 		sr.l_start += i_size_read(inode);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return vfs_fallocate(filp, mode | FALLOC_FL_KEEP_SIZE, sr.l_start,
@@ -517,7 +517,7 @@ static int compat_ioctl_preallocate(struct file *file, int mode,
 		sr.l_start += i_size_read(inode);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return vfs_fallocate(file, mode | FALLOC_FL_KEEP_SIZE, sr.l_start, sr.l_len);
@@ -539,7 +539,7 @@ static int file_ioctl(struct file *filp, unsigned int cmd, int __user *p)
 		return ioctl_preallocate(filp, FALLOC_FL_ZERO_RANGE, p);
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static int ioctl_fionbio(struct file *filp, int __user *argp)
@@ -582,7 +582,7 @@ static int ioctl_fioasync(unsigned int fd, struct file *filp,
 			/* fasync() adjusts filp->f_flags */
 			error = filp->f_op->fasync(fd, filp, on);
 		else
-			error = -ENOTTY;
+			error = -ERR(ENOTTY);
 	}
 	return error < 0 ? error : 0;
 }
@@ -592,11 +592,11 @@ static int ioctl_fsfreeze(struct file *filp)
 	struct super_block *sb = file_inode(filp)->i_sb;
 
 	if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* If filesystem doesn't support freeze feature, return. */
 	if (sb->s_op->freeze_fs == NULL && sb->s_op->freeze_super == NULL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Freeze */
 	if (sb->s_op->freeze_super)
@@ -609,7 +609,7 @@ static int ioctl_fsthaw(struct file *filp)
 	struct super_block *sb = file_inode(filp)->i_sb;
 
 	if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Thaw */
 	if (sb->s_op->thaw_super)
@@ -693,7 +693,7 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
 					    -EFAULT : 0;
 		}
 
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	case FIFREEZE:
 		return ioctl_fsfreeze(filp);
@@ -707,7 +707,7 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
 	case FIGETBSZ:
 		/* anon_bdev filesystems may not have a block size */
 		if (!inode->i_sb->s_blocksize)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return put_user(inode->i_sb->s_blocksize, (int __user *)argp);
 
@@ -733,7 +733,7 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
 		break;
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 int ksys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
@@ -742,7 +742,7 @@ int ksys_ioctl(unsigned int fd, unsigned int cmd, unsigned long arg)
 	int error;
 
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	error = security_file_ioctl(f.file, cmd, arg);
 	if (error)
@@ -789,7 +789,7 @@ SYSCALL_DEFINE3(ioctl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 long compat_ptr_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	if (!file->f_op->unlocked_ioctl)
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	return file->f_op->unlocked_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
 }

@@ -35,7 +35,7 @@ static int msdos_format_name(const unsigned char *name, int len,
 			name++;
 			len--;
 		} else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	/*
 	 * disallow names that _really_ start with a dot
@@ -46,13 +46,13 @@ static int msdos_format_name(const unsigned char *name, int len,
 		c = *name++;
 		len--;
 		if (opts->name_check != 'r' && strchr(bad_chars, c))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (opts->name_check == 's' && strchr(bad_if_strict, c))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (c >= 'A' && c <= 'Z' && opts->name_check == 's')
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (c < ' ' || c == ':' || c == '\\')
-			return -EINVAL;
+			return -ERR(EINVAL);
 	/*
 	 * 0xE5 is legal as a first character, but we must substitute
 	 * 0x05 because 0xE5 marks deleted files.  Yes, DOS really
@@ -69,12 +69,12 @@ static int msdos_format_name(const unsigned char *name, int len,
 		*walk = (!opts->nocase && c >= 'a' && c <= 'z') ? c - 32 : c;
 	}
 	if (space)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (opts->name_check == 's' && len && c != '.') {
 		c = *name++;
 		len--;
 		if (c != '.')
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	while (c != '.' && len--)
 		c = *name++;
@@ -85,19 +85,19 @@ static int msdos_format_name(const unsigned char *name, int len,
 			c = *name++;
 			len--;
 			if (opts->name_check != 'r' && strchr(bad_chars, c))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (opts->name_check == 's' &&
 			    strchr(bad_if_strict, c))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (c < ' ' || c == ':' || c == '\\')
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (c == '.') {
 				if (opts->name_check == 's')
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			}
 			if (c >= 'A' && c <= 'Z' && opts->name_check == 's')
-				return -EINVAL;
+				return -ERR(EINVAL);
 			space = c == ' ';
 			if (!opts->nocase && c >= 'a' && c <= 'z')
 				*walk++ = c - 32;
@@ -105,9 +105,9 @@ static int msdos_format_name(const unsigned char *name, int len,
 				*walk++ = c;
 		}
 		if (space)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (opts->name_check == 's' && len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	while (walk - res < MSDOS_NAME)
 		*walk++ = ' ';
@@ -125,16 +125,16 @@ static int msdos_find(struct inode *dir, const unsigned char *name, int len,
 
 	err = msdos_format_name(name, len, msdos_name, &sbi->options);
 	if (err)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = fat_scan(dir, msdos_name, sinfo);
 	if (!err && sbi->options.dotsOK) {
 		if (name[0] == '.') {
 			if (!(sinfo->de->attr & ATTR_HIDDEN))
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 		} else {
 			if (sinfo->de->attr & ATTR_HIDDEN)
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 		}
 		if (err)
 			brelse(sinfo->bh);
@@ -281,7 +281,7 @@ static int msdos_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	/* Have to do it due to foo vs. .foo conflicts */
 	if (!fat_scan(dir, msdos_name, &sinfo)) {
 		brelse(sinfo.bh);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -358,7 +358,7 @@ static int msdos_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	/* foo vs .foo situation */
 	if (!fat_scan(dir, msdos_name, &sinfo)) {
 		brelse(sinfo.bh);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -443,7 +443,7 @@ static int do_msdos_rename(struct inode *old_dir, unsigned char *old_name,
 
 	err = fat_scan(old_dir, old_name, &old_sinfo);
 	if (err) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -451,7 +451,7 @@ static int do_msdos_rename(struct inode *old_dir, unsigned char *old_name,
 	update_dotdot = (is_dir && old_dir != new_dir);
 	if (update_dotdot) {
 		if (fat_get_dotdot_entry(old_inode, &dotdot_bh, &dotdot_de)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 	}
@@ -462,7 +462,7 @@ static int do_msdos_rename(struct inode *old_dir, unsigned char *old_name,
 		if (!new_inode) {
 			/* "foo" -> ".foo" case. just change the ATTR_HIDDEN */
 			if (sinfo.de != old_sinfo.de) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 			if (is_hid)
@@ -602,7 +602,7 @@ static int msdos_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int err, is_hid;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&MSDOS_SB(sb)->s_lock);
 

@@ -287,7 +287,7 @@ int ipc_addid(struct ipc_ids *ids, struct kern_ipc_perm *new, int limit)
 		limit = ipc_mni;
 
 	if (ids->in_use >= limit)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	idr_preload(GFP_KERNEL);
 
@@ -369,7 +369,7 @@ static int ipc_check_perms(struct ipc_namespace *ns,
 	int err;
 
 	if (ipcperms(ns, ipcp, params->flg))
-		err = -EACCES;
+		err = -ERR(EACCES);
 	else {
 		err = ops->associate(ipcp, params->flg);
 		if (!err)
@@ -409,14 +409,14 @@ static int ipcget_public(struct ipc_namespace *ns, struct ipc_ids *ids,
 	if (ipcp == NULL) {
 		/* key not used */
 		if (!(flg & IPC_CREAT))
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 		else
 			err = ops->getnew(ns, params);
 	} else {
 		/* ipc object has been locked by ipc_findkey() */
 
 		if (flg & IPC_CREAT && flg & IPC_EXCL)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		else {
 			err = 0;
 			if (ops->more_checks)
@@ -597,7 +597,7 @@ struct kern_ipc_perm *ipc_obtain_object_idr(struct ipc_ids *ids, int id)
 
 	out = idr_find(&ids->ipcs_idr, idx);
 	if (!out)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return out;
 }
@@ -621,7 +621,7 @@ struct kern_ipc_perm *ipc_obtain_object_check(struct ipc_ids *ids, int id)
 		goto out;
 
 	if (ipc_checkid(out, id))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 out:
 	return out;
 }
@@ -655,7 +655,7 @@ int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
 	kuid_t uid = make_kuid(current_user_ns(), in->uid);
 	kgid_t gid = make_kgid(current_user_ns(), in->gid);
 	if (!uid_valid(uid) || !gid_valid(gid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	out->uid = uid;
 	out->gid = gid;
@@ -690,7 +690,7 @@ struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
 					struct ipc64_perm *perm, int extra_perm)
 {
 	kuid_t euid;
-	int err = -EPERM;
+	int err = -ERR(EPERM);
 	struct kern_ipc_perm *ipcp;
 
 	ipcp = ipc_obtain_object_check(ids, id);

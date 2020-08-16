@@ -21,7 +21,7 @@
 static ssize_t binary_sysctl(const int *name, int nlen,
 	void __user *oldval, size_t oldlen, void __user *newval, size_t newlen)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static void deprecated_sysctl_warning(const int *name, int nlen)
@@ -83,7 +83,7 @@ static ssize_t do_sysctl(int __user *args_name, int nlen,
 
 	/* Check args->nlen. */
 	if (nlen < 0 || nlen > CTL_MAXNAME)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 	/* Read in the sysctl name for simplicity */
 	for (i = 0; i < nlen; i++)
 		if (get_user(name[i], args_name + i))

@@ -417,7 +417,7 @@ static int fscache_acquire_non_index_cookie(struct fscache_cookie *cookie,
 		up_read(&fscache_addremove_sem);
 		fscache_stat(&fscache_n_acquires_no_cache);
 		_leave(" = -ENOMEDIUM [no cache]");
-		return -ENOMEDIUM;
+		return -ERR(ENOMEDIUM);
 	}
 
 	_debug("cache %s", cache->tag->name);
@@ -467,7 +467,7 @@ static int fscache_acquire_non_index_cookie(struct fscache_cookie *cookie,
 unavailable:
 	up_read(&fscache_addremove_sem);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -526,7 +526,7 @@ static int fscache_alloc_object(struct fscache_cache *cache,
 	return 0;
 
 object_already_extant:
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 	if (fscache_object_is_dying(object) ||
 	    fscache_cache_is_broken(object)) {
 		spin_unlock(&cookie->lock);
@@ -563,11 +563,11 @@ static int fscache_attach_object(struct fscache_cookie *cookie,
 
 	/* there may be multiple initial creations of this object, but we only
 	 * want one */
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	hlist_for_each_entry(p, &cookie->backing_objects, cookie_link) {
 		if (p->cache == object->cache) {
 			if (fscache_object_is_dying(p))
-				ret = -ENOBUFS;
+				ret = -ERR(ENOBUFS);
 			goto cant_attach_object;
 		}
 	}
@@ -578,7 +578,7 @@ static int fscache_attach_object(struct fscache_cookie *cookie,
 			     cookie_link) {
 		if (p->cache == object->cache) {
 			if (fscache_object_is_dying(p)) {
-				ret = -ENOBUFS;
+				ret = -ERR(ENOBUFS);
 				spin_unlock(&cookie->parent->lock);
 				goto cant_attach_object;
 			}
@@ -898,7 +898,7 @@ int __fscache_check_consistency(struct fscache_cookie *cookie,
 	ASSERTCMP(cookie->type, ==, FSCACHE_COOKIE_TYPE_DATAFILE);
 
 	if (fscache_wait_for_deferred_lookup(cookie) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	if (hlist_empty(&cookie->backing_objects))
 		return 0;
@@ -955,6 +955,6 @@ inconsistent:
 		__fscache_wake_unused_cookie(cookie);
 	kfree(op);
 	_leave(" = -ESTALE");
-	return -ESTALE;
+	return -ERR(ESTALE);
 }
 EXPORT_SYMBOL(__fscache_check_consistency);

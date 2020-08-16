@@ -110,7 +110,7 @@ static int __fifo_init(struct Qdisc *sch, struct nlattr *opt,
 		struct tc_fifo_qopt *ctl = nla_data(opt);
 
 		if (nla_len(opt) < sizeof(*ctl))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sch->limit = ctl->limit;
 	}

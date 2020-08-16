@@ -83,7 +83,7 @@ static int tokenize_input(const char __user *from, size_t count,
 
 	ret = simple_write_to_buffer(buf, count, ppos, from, count);
 	if (ret != count) {
-		ret = ret >= 0 ? -EIO : ret;
+		ret = ret >= 0 ? -ERR(EIO) : ret;
 		goto exit;
 	}
 
@@ -106,7 +106,7 @@ static ssize_t probe_points_read(struct file *file,
 
 	if (sdev->extractor_stream_tag == SOF_PROBE_INVALID_NODE_ID) {
 		dev_warn(sdev->dev, "no extractor stream running\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	buf = kzalloc(PAGE_SIZE, GFP_KERNEL);
@@ -146,7 +146,7 @@ static ssize_t probe_points_write(struct file *file,
 
 	if (sdev->extractor_stream_tag == SOF_PROBE_INVALID_NODE_ID) {
 		dev_warn(sdev->dev, "no extractor stream running\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	ret = tokenize_input(from, count, ppos, &tkns, &num_tkns);
@@ -154,7 +154,7 @@ static ssize_t probe_points_write(struct file *file,
 		return ret;
 	bytes = sizeof(*tkns) * num_tkns;
 	if (!num_tkns || (bytes % sizeof(*desc))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -186,14 +186,14 @@ static ssize_t probe_points_remove_write(struct file *file,
 
 	if (sdev->extractor_stream_tag == SOF_PROBE_INVALID_NODE_ID) {
 		dev_warn(sdev->dev, "no extractor stream running\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	ret = tokenize_input(from, count, ppos, &tkns, &num_tkns);
 	if (ret < 0)
 		return ret;
 	if (!num_tkns) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -368,7 +368,7 @@ static ssize_t sof_dfsentry_write(struct file *file, const char __user *buffer,
 	dentry = file->f_path.dentry;
 	if (strcmp(dentry->d_name.name, "ipc_flood_count") &&
 	    strcmp(dentry->d_name.name, "ipc_flood_duration_ms")) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -467,7 +467,7 @@ static ssize_t sof_dfsentry_read(struct file *file, char __user *buffer,
 
 	/* validate position & count */
 	if (pos < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos >= size || !count)
 		return 0;
 	/* find the minimum. min() is not used since it adds sparse warnings */
@@ -514,7 +514,7 @@ static ssize_t sof_dfsentry_read(struct file *file, char __user *buffer,
 			dev_err(sdev->dev,
 				"error: debugfs entry cannot be read in DSP D3\n");
 			kfree(buf);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		memcpy_fromio(buf, dfse->io_mem + pos, size);
@@ -553,7 +553,7 @@ int snd_sof_debugfs_io_item(struct snd_sof_dev *sdev,
 	struct snd_sof_dfsentry *dfse;
 
 	if (!sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dfse = devm_kzalloc(sdev->dev, sizeof(*dfse), GFP_KERNEL);
 	if (!dfse)
@@ -595,7 +595,7 @@ int snd_sof_debugfs_buf_item(struct snd_sof_dev *sdev,
 	struct snd_sof_dfsentry *dfse;
 
 	if (!sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dfse = devm_kzalloc(sdev->dev, sizeof(*dfse), GFP_KERNEL);
 	if (!dfse)

@@ -84,18 +84,18 @@ static s32 vmci_transport_error_to_vsock_error(s32 vmci_error)
 		return -ENOMEM;
 	case VMCI_ERROR_DUPLICATE_ENTRY:
 	case VMCI_ERROR_ALREADY_EXISTS:
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 	case VMCI_ERROR_NO_ACCESS:
-		return -EPERM;
+		return -ERR(EPERM);
 	case VMCI_ERROR_NO_RESOURCES:
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	case VMCI_ERROR_INVALID_RESOURCE:
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 	case VMCI_ERROR_INVALID_ARGS:
 	default:
 		break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static u32 vmci_transport_peer_rid(u32 peer_cid)
@@ -286,10 +286,10 @@ vmci_transport_send_control_pkt(struct sock *sk,
 	vsk = vsock_sk(sk);
 
 	if (!vsock_addr_bound(&vsk->local_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!vsock_addr_bound(&vsk->remote_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return vmci_transport_alloc_send_control_pkt(&vsk->local_addr,
 						     &vsk->remote_addr,
@@ -322,7 +322,7 @@ static int vmci_transport_send_reset(struct sock *sk,
 	vsk = vsock_sk(sk);
 
 	if (!vsock_addr_bound(&vsk->local_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (vsock_addr_bound(&vsk->remote_addr)) {
 		dst_ptr = &vsk->remote_addr;
@@ -831,7 +831,7 @@ static void vmci_transport_handle_detach(struct sock *sk)
 				 */
 
 				sk->sk_state = TCP_CLOSE;
-				sk->sk_err = ECONNRESET;
+				sk->sk_err = ERR(ECONNRESET);
 				sk->sk_error_report(sk);
 				return;
 			}
@@ -969,7 +969,7 @@ static int vmci_transport_recv_listen(struct sock *sk,
 			break;
 		default:
 			vmci_transport_send_reset(pending, pkt);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 
 		if (err < 0)
@@ -988,12 +988,12 @@ static int vmci_transport_recv_listen(struct sock *sk,
 	if (!(pkt->type == VMCI_TRANSPORT_PACKET_TYPE_REQUEST ||
 	      pkt->type == VMCI_TRANSPORT_PACKET_TYPE_REQUEST2)) {
 		vmci_transport_reply_reset(pkt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (pkt->u.size == 0) {
 		vmci_transport_reply_reset(pkt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If this socket can't accommodate this connection request, we send a
@@ -1002,7 +1002,7 @@ static int vmci_transport_recv_listen(struct sock *sk,
 	 */
 	if (sk->sk_ack_backlog >= sk->sk_max_ack_backlog) {
 		vmci_transport_reply_reset(pkt);
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 	}
 
 	pending = vsock_create_connected(sk);
@@ -1058,7 +1058,7 @@ static int vmci_transport_recv_listen(struct sock *sk,
 			pending, &version, true))
 			err = vmci_transport_send_negotiate(pending, qp_size);
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 
 	} else {
 		/* Handle a REQUEST2 (or override) */
@@ -1084,10 +1084,10 @@ static int vmci_transport_recv_listen(struct sock *sk,
 							qp_size,
 							active_proto_version);
 			else
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 
@@ -1147,16 +1147,16 @@ vmci_transport_recv_connecting_server(struct sock *listener,
 	case VMCI_TRANSPORT_PACKET_TYPE_OFFER:
 		if (vmci_handle_is_invalid(pkt->u.handle)) {
 			vmci_transport_send_reset(pending, pkt);
-			skerr = EPROTO;
-			err = -EINVAL;
+			skerr = ERR(EPROTO);
+			err = -ERR(EINVAL);
 			goto destroy;
 		}
 		break;
 	default:
 		/* Close and cleanup the connection. */
 		vmci_transport_send_reset(pending, pkt);
-		skerr = EPROTO;
-		err = pkt->type == VMCI_TRANSPORT_PACKET_TYPE_RST ? 0 : -EINVAL;
+		skerr = ERR(EPROTO);
+		err = pkt->type == VMCI_TRANSPORT_PACKET_TYPE_RST ? 0 : -ERR(EINVAL);
 		goto destroy;
 	}
 
@@ -1288,8 +1288,8 @@ vmci_transport_recv_connecting_client(struct sock *sk,
 		if (vmci_handle_is_invalid(pkt->u.handle) ||
 		    !vmci_handle_is_equal(pkt->u.handle,
 					  vmci_trans(vsk)->qp_handle)) {
-			skerr = EPROTO;
-			err = -EINVAL;
+			skerr = ERR(EPROTO);
+			err = -ERR(EINVAL);
 			goto destroy;
 		}
 
@@ -1314,8 +1314,8 @@ vmci_transport_recv_connecting_client(struct sock *sk,
 		    || vmci_trans(vsk)->produce_size != 0
 		    || vmci_trans(vsk)->consume_size != 0
 		    || vmci_trans(vsk)->detach_sub_id != VMCI_INVALID_ID) {
-			skerr = EPROTO;
-			err = -EINVAL;
+			skerr = ERR(EPROTO);
+			err = -ERR(EINVAL);
 
 			goto destroy;
 		}
@@ -1348,7 +1348,7 @@ vmci_transport_recv_connecting_client(struct sock *sk,
 		if (vsk->ignore_connecting_rst) {
 			vsk->ignore_connecting_rst = false;
 		} else {
-			skerr = ECONNRESET;
+			skerr = ERR(ECONNRESET);
 			err = 0;
 			goto destroy;
 		}
@@ -1356,8 +1356,8 @@ vmci_transport_recv_connecting_client(struct sock *sk,
 		break;
 	default:
 		/* Close and cleanup the connection. */
-		skerr = EPROTO;
-		err = -EINVAL;
+		skerr = ERR(EPROTO);
+		err = -ERR(EINVAL);
 		goto destroy;
 	}
 
@@ -1400,7 +1400,7 @@ static int vmci_transport_recv_connecting_client_negotiate(
 	/* Verify that we're OK with the proposed queue pair size */
 	if (pkt->u.size < vsk->buffer_min_size ||
 	    pkt->u.size > vsk->buffer_max_size) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto destroy;
 	}
 
@@ -1429,7 +1429,7 @@ static int vmci_transport_recv_connecting_client_negotiate(
 		version = pkt->proto;
 
 	if (!vmci_transport_proto_to_notify_struct(sk, &version, old_proto)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto destroy;
 	}
 
@@ -1564,7 +1564,7 @@ static int vmci_transport_recv_connected(struct sock *sk,
 				sk, pkt, false, NULL, NULL,
 				&pkt_processed);
 		if (!pkt_processed)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		break;
 	}
@@ -1674,7 +1674,7 @@ static int vmci_transport_dgram_bind(struct vsock_sock *vsk,
 			VMCI_INVALID_ID : addr->svm_port;
 
 	if (port <= LAST_RESERVED_PORT && !capable(CAP_NET_BIND_SERVICE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	flags = addr->svm_cid == VMADDR_CID_ANY ?
 				VMCI_FLAG_ANYCID_DG_HND : 0;
@@ -1701,10 +1701,10 @@ static int vmci_transport_dgram_enqueue(
 	struct vmci_datagram *dg;
 
 	if (len > VMCI_MAX_DG_PAYLOAD_SIZE)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (!vmci_transport_allow_dgram(vsk, remote_addr->svm_cid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Allocate a buffer for the user's message and our packet header. */
 	dg = kmalloc(len + sizeof(*dg), GFP_KERNEL);
@@ -1740,7 +1740,7 @@ static int vmci_transport_dgram_dequeue(struct vsock_sock *vsk,
 	noblock = flags & MSG_DONTWAIT;
 
 	if (flags & MSG_OOB || flags & MSG_ERRQUEUE)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Retrieve the head sk_buff from the socket's receive queue. */
 	err = 0;
@@ -1756,7 +1756,7 @@ static int vmci_transport_dgram_dequeue(struct vsock_sock *vsk,
 	payload_len = dg->payload_size;
 	/* Ensure the sk_buff matches the payload size claimed in the packet. */
 	if (payload_len != skb->len - sizeof(*dg)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

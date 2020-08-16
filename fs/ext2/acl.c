@@ -26,14 +26,14 @@ ext2_acl_from_disk(const void *value, size_t size)
 	if (!value)
 		return NULL;
 	if (size < sizeof(ext2_acl_header))
-		 return ERR_PTR(-EINVAL);
+		 return ERR_PTR(-ERR(EINVAL));
 	if (((ext2_acl_header *)value)->a_version !=
 	    cpu_to_le32(EXT2_ACL_VERSION))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	value = (char *)value + sizeof(ext2_acl_header);
 	count = ext2_acl_count(size);
 	if (count < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (count == 0)
 		return NULL;
 	acl = posix_acl_alloc(count, GFP_KERNEL);
@@ -82,7 +82,7 @@ ext2_acl_from_disk(const void *value, size_t size)
 
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /*
@@ -134,7 +134,7 @@ ext2_acl_to_disk(const struct posix_acl *acl, size_t *size)
 
 fail:
 	kfree(ext_acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /*
@@ -192,11 +192,11 @@ __ext2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 		case ACL_TYPE_DEFAULT:
 			name_index = EXT2_XATTR_INDEX_POSIX_ACL_DEFAULT;
 			if (!S_ISDIR(inode->i_mode))
-				return acl ? -EACCES : 0;
+				return acl ? -ERR(EACCES) : 0;
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
  	if (acl) {
 		value = ext2_acl_to_disk(acl, &size);

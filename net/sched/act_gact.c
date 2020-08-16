@@ -69,7 +69,7 @@ static int tcf_gact_init(struct net *net, struct nlattr *nla,
 #endif
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_GACT_MAX, nla, gact_policy,
 					  NULL);
@@ -77,22 +77,22 @@ static int tcf_gact_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (tb[TCA_GACT_PARMS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	parm = nla_data(tb[TCA_GACT_PARMS]);
 	index = parm->index;
 
 #ifndef CONFIG_GACT_PROB
 	if (tb[TCA_GACT_PROB] != NULL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 #else
 	if (tb[TCA_GACT_PROB]) {
 		p_parm = nla_data(tb[TCA_GACT_PROB]);
 		if (p_parm->ptype >= MAX_RAND)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (TC_ACT_EXT_CMP(p_parm->paction, TC_ACT_GOTO_CHAIN)) {
 			NL_SET_ERR_MSG(extack,
 				       "goto chain not allowed on fallback");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 #endif
@@ -111,7 +111,7 @@ static int tcf_gact_init(struct net *net, struct nlattr *nla,
 			return 0;
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	} else {
 		return err;

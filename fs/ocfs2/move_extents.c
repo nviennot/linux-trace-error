@@ -305,7 +305,7 @@ static int ocfs2_defrag_extent(struct ocfs2_move_extents_context *context,
 		mlog(0, "len_claimed: %u, len: %u\n", new_len, *len);
 		if (!partial) {
 			context->range->me_flags &= ~OCFS2_MOVE_EXT_FL_COMPLETE;
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			need_free = 1;
 			goto out_commit;
 		}
@@ -391,7 +391,7 @@ static int ocfs2_find_victim_alloc_group(struct inode *inode,
 	ret = ocfs2_lookup_ino_from_name(osb->sys_root_inode, namebuf,
 					 strlen(namebuf), &blkno);
 	if (ret) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -414,7 +414,7 @@ static int ocfs2_find_victim_alloc_group(struct inode *inode,
 	if ((vict_blkno < le64_to_cpu(rec->c_blkno)) ||
 	    (vict_blkno >= ((u64)le32_to_cpu(ac_dinode->id1.bitmap1.i_total) <<
 				bits_per_unit))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -461,7 +461,7 @@ static int ocfs2_find_victim_alloc_group(struct inode *inode,
 		} while (le64_to_cpu(bg->bg_next_group));
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 out:
 	brelse(ac_bh);
 
@@ -515,7 +515,7 @@ static int ocfs2_validate_and_adjust_move_goal(struct inode *inode,
 	 */
 	if ((le16_to_cpu(bg->bg_bits) - goal_bit) * osb->s_clustersize <
 								range->me_len) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	/*
@@ -636,7 +636,7 @@ static int ocfs2_move_extent(struct ocfs2_move_extents_context *context,
 					       OCFS2_INVALID_SLOT);
 	if (!gb_inode) {
 		mlog(ML_ERROR, "unable to get global_bitmap inode\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -676,7 +676,7 @@ static int ocfs2_move_extent(struct ocfs2_move_extents_context *context,
 	ocfs2_probe_alloc_group(inode, gd_bh, &goal_bit, len, move_max_hop,
 				new_phys_cpos);
 	if (!*new_phys_cpos) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out_commit;
 	}
 
@@ -911,7 +911,7 @@ static int ocfs2_move_extents(struct ocfs2_move_extents_context *context)
 	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	inode_lock(inode);
 
@@ -991,19 +991,19 @@ int ocfs2_ioctl_move_extents(struct file *filp, void __user *argp)
 	struct ocfs2_move_extents_context *context;
 
 	if (!argp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	status = mnt_want_write_file(filp);
 	if (status)
 		return status;
 
 	if ((!S_ISREG(inode->i_mode)) || !(filp->f_mode & FMODE_WRITE)) {
-		status = -EPERM;
+		status = -ERR(EPERM);
 		goto out_drop;
 	}
 
 	if (inode->i_flags & (S_IMMUTABLE|S_APPEND)) {
-		status = -EPERM;
+		status = -ERR(EPERM);
 		goto out_drop;
 	}
 
@@ -1023,7 +1023,7 @@ int ocfs2_ioctl_move_extents(struct file *filp, void __user *argp)
 	}
 
 	if (range.me_start > i_size_read(inode)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto out_free;
 	}
 

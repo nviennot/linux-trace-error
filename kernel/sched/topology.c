@@ -204,7 +204,7 @@ int sched_energy_aware_handler(struct ctl_table *table, int write,
 	int ret, state;
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 	if (!ret && write) {

@@ -105,7 +105,7 @@ static struct sk_buff *esp6_gro_receive(struct list_head *head,
 	 * the error handling and frees the resources on error. */
 	xfrm_input(skb, IPPROTO_ESP, spi, -2);
 
-	return ERR_PTR(-EINPROGRESS);
+	return ERR_PTR(-ERR(EINPROGRESS));
 out_reset:
 	secpath_reset(skb);
 out:
@@ -153,7 +153,7 @@ static struct sk_buff *xfrm6_transport_gso_segment(struct xfrm_state *x,
 						   netdev_features_t features)
 {
 	const struct net_offload *ops;
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	struct xfrm_offload *xo = xfrm_offload(skb);
 
 	skb->transport_header += x->props.header_len;
@@ -169,7 +169,7 @@ static struct sk_buff *xfrm6_beet_gso_segment(struct xfrm_state *x,
 					      netdev_features_t features)
 {
 	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	const struct net_offload *ops;
 	u8 proto = xo->proto;
 
@@ -219,7 +219,7 @@ static struct sk_buff *xfrm6_outer_mode_gso_segment(struct xfrm_state *x,
 		return xfrm6_beet_gso_segment(x, skb, features);
 	}
 
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static struct sk_buff *esp6_gso_segment(struct sk_buff *skb,
@@ -233,10 +233,10 @@ static struct sk_buff *esp6_gso_segment(struct sk_buff *skb,
 	struct sec_path *sp;
 
 	if (!xo)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_ESP))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	sp = skb_sec_path(skb);
 	x = sp->xvec[sp->len - 1];
@@ -244,10 +244,10 @@ static struct sk_buff *esp6_gso_segment(struct sk_buff *skb,
 	esph = ip_esp_hdr(skb);
 
 	if (esph->spi != x->id.spi)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (!pskb_may_pull(skb, sizeof(*esph) + crypto_aead_ivsize(aead)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	__skb_pull(skb, sizeof(*esph) + crypto_aead_ivsize(aead));
 
@@ -269,7 +269,7 @@ static int esp6_input_tail(struct xfrm_state *x, struct sk_buff *skb)
 	struct xfrm_offload *xo = xfrm_offload(skb);
 
 	if (!pskb_may_pull(skb, sizeof(struct ip_esp_hdr) + crypto_aead_ivsize(aead)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(xo->flags & CRYPTO_DONE))
 		skb->ip_summed = CHECKSUM_NONE;
@@ -294,7 +294,7 @@ static int esp6_xmit(struct xfrm_state *x, struct sk_buff *skb,  netdev_features
 	xo = xfrm_offload(skb);
 
 	if (!xo)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(features & NETIF_F_HW_ESP) || x->xso.dev != skb->dev) {
 		xo->flags |= CRYPTO_FALLBACK;
@@ -378,7 +378,7 @@ static int __init esp6_offload_init(void)
 {
 	if (xfrm_register_type_offload(&esp6_type_offload, AF_INET6) < 0) {
 		pr_info("%s: can't add xfrm type offload\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	return inet6_add_offload(&esp6_offload, IPPROTO_ESP);

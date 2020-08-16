@@ -116,11 +116,11 @@ static int __register_pstore_device(struct pstore_device_info *dev)
 	lockdep_assert_held(&pstore_blk_lock);
 
 	if (!dev || !dev->total_size || !dev->read || !dev->write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* someone already registered before */
 	if (pstore_zone_info)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	pstore_zone_info = kzalloc(sizeof(struct pstore_zone_info), GFP_KERNEL);
 	if (!pstore_zone_info)
@@ -219,17 +219,17 @@ EXPORT_SYMBOL_GPL(unregister_pstore_device);
 static struct block_device *psblk_get_bdev(void *holder,
 					   struct bdev_info *info)
 {
-	struct block_device *bdev = ERR_PTR(-ENODEV);
+	struct block_device *bdev = ERR_PTR(-ERR(ENODEV));
 	fmode_t mode = FMODE_READ | FMODE_WRITE;
 	sector_t nr_sects;
 
 	lockdep_assert_held(&pstore_blk_lock);
 
 	if (pstore_zone_info)
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 
 	if (!blkdev[0])
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (holder)
 		mode |= FMODE_EXCL;
@@ -239,7 +239,7 @@ static struct block_device *psblk_get_bdev(void *holder,
 
 		devt = name_to_dev_t(blkdev);
 		if (devt == 0)
-			return ERR_PTR(-ENODEV);
+			return ERR_PTR(-ERR(ENODEV));
 		bdev = blkdev_get_by_dev(devt, mode, holder);
 		if (IS_ERR(bdev))
 			return bdev;
@@ -249,7 +249,7 @@ static struct block_device *psblk_get_bdev(void *holder,
 	if (!nr_sects) {
 		pr_err("not enough space for '%s'\n", blkdev);
 		blkdev_put(bdev, mode);
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 	}
 
 	if (info) {
@@ -284,7 +284,7 @@ static ssize_t psblk_generic_blk_read(char *buf, size_t bytes, loff_t pos)
 	struct kvec iov = {.iov_base = buf, .iov_len = bytes};
 
 	if (!bdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	memset(&file, 0, sizeof(struct file));
 	file.f_mapping = bdev->bd_inode->i_mapping;
@@ -310,11 +310,11 @@ static ssize_t psblk_generic_blk_write(const char *buf, size_t bytes,
 	struct kvec iov = {.iov_base = (void *)buf, .iov_len = bytes};
 
 	if (!bdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Console/Ftrace backend may handle buffer until flush dirty zones */
 	if (in_interrupt() || irqs_disabled())
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	memset(&file, 0, sizeof(struct file));
 	file.f_mapping = bdev->bd_inode->i_mapping;
@@ -347,7 +347,7 @@ static ssize_t psblk_blk_panic_write(const char *buf, size_t size,
 	int ret;
 
 	if (!blkdev_panic_write)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* size and off must align to SECTOR_SIZE for block device */
 	ret = blkdev_panic_write(buf, off >> SECTOR_SHIFT,
@@ -355,7 +355,7 @@ static ssize_t psblk_blk_panic_write(const char *buf, size_t size,
 	/* try next zone */
 	if (ret == -ENOMSG)
 		return ret;
-	return ret ? -EIO : size;
+	return ret ? -ERR(EIO) : size;
 }
 
 static int __register_pstore_blk(struct pstore_blk_info *info)
@@ -365,7 +365,7 @@ static int __register_pstore_blk(struct pstore_blk_info *info)
 	struct pstore_device_info dev;
 	struct bdev_info binfo;
 	void *holder = blkdev;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	lockdep_assert_held(&pstore_blk_lock);
 
@@ -382,7 +382,7 @@ static int __register_pstore_blk(struct pstore_blk_info *info)
 			    MAJOR(binfo.devt) != info->major)) {
 		pr_debug("invalid major %u (expect %u)\n",
 				info->major, MAJOR(binfo.devt));
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err_put_bdev;
 	}
 

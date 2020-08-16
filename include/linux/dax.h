@@ -174,7 +174,7 @@ static inline struct page *dax_layout_busy_page(struct address_space *mapping)
 static inline int dax_writeback_mapping_range(struct address_space *mapping,
 		struct dax_device *dax_dev, struct writeback_control *wbc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline dax_entry_t dax_lock_page(struct page *page)

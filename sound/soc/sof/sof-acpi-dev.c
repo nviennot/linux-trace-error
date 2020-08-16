@@ -131,7 +131,7 @@ static int sof_acpi_probe(struct platform_device *pdev)
 
 	desc = device_get_match_data(dev);
 	if (!desc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 #if IS_ENABLED(CONFIG_SND_SOC_SOF_BAYTRAIL)
 	if (desc == &sof_acpi_baytrail_desc && soc_intel_is_byt_cr(pdev))
@@ -142,7 +142,7 @@ static int sof_acpi_probe(struct platform_device *pdev)
 	ops = desc->ops;
 	if (!ops) {
 		dev_err(dev, "error: no matching ACPI descriptor ops\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sof_pdata->desc = desc;

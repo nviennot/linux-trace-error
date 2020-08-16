@@ -65,7 +65,7 @@ static int exfat_sync_fs(struct super_block *sb, int wait)
 	if (test_and_clear_bit(EXFAT_SB_DIRTY, &sbi->s_state)) {
 		sync_blockdev(sb->s_bdev);
 		if (exfat_set_vol_flags(sb, VOL_CLEAN))
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 	mutex_unlock(&sbi->s_lock);
 	return err;
@@ -81,7 +81,7 @@ static int exfat_statfs(struct dentry *dentry, struct kstatfs *buf)
 		mutex_lock(&sbi->s_lock);
 		if (exfat_count_used_clusters(sb, &sbi->used_clusters)) {
 			mutex_unlock(&sbi->s_lock);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		mutex_unlock(&sbi->s_lock);
 	}
@@ -288,7 +288,7 @@ static int exfat_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		 * unusual.
 		 */
 		if (result.int_32 < -24 * 60 || result.int_32 > 24 * 60)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		opts->time_offset = result.int_32;
 		break;
 	case Opt_utf8:
@@ -297,7 +297,7 @@ static int exfat_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	case Opt_codepage:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -335,12 +335,12 @@ static int exfat_read_root(struct inode *inode)
 
 	exfat_chain_set(&cdir, sbi->root_dir, 0, ALLOC_FAT_CHAIN);
 	if (exfat_count_num_clusters(sb, &cdir, &num_clu))
-		return -EIO;
+		return -ERR(EIO);
 	i_size_write(inode, num_clu << sbi->cluster_size_bits);
 
 	num_subdirs = exfat_count_dir_entries(sb, &cdir);
 	if (num_subdirs < 0)
-		return -EIO;
+		return -ERR(EIO);
 	set_nlink(inode, num_subdirs + EXFAT_MIN_SUBDIR);
 
 	inode->i_uid = sbi->options.fs_uid;
@@ -372,13 +372,13 @@ static int exfat_calibrate_blocksize(struct super_block *sb, int logical_sect)
 	if (!is_power_of_2(logical_sect) ||
 	    logical_sect < 512 || logical_sect > 4096) {
 		exfat_err(sb, "bogus logical sector size %u", logical_sect);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (logical_sect < sb->s_blocksize) {
 		exfat_err(sb, "logical sector size too small for device (logical sector size = %u)",
 			  logical_sect);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (logical_sect > sb->s_blocksize) {
@@ -388,13 +388,13 @@ static int exfat_calibrate_blocksize(struct super_block *sb, int logical_sect)
 		if (!sb_set_blocksize(sb, logical_sect)) {
 			exfat_err(sb, "unable to set blocksize %u",
 				  logical_sect);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		sbi->boot_bh = sb_bread(sb, 0);
 		if (!sbi->boot_bh) {
 			exfat_err(sb, "unable to read boot sector (logical sector size = %lu)",
 				  sb->s_blocksize);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return 0;
@@ -412,19 +412,19 @@ static int exfat_read_boot_sector(struct super_block *sb)
 	sbi->boot_bh = sb_bread(sb, 0);
 	if (!sbi->boot_bh) {
 		exfat_err(sb, "unable to read boot sector");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	p_boot = (struct boot_sector *)sbi->boot_bh->b_data;
 
 	/* check the validity of BOOT */
 	if (le16_to_cpu((p_boot->signature)) != BOOT_SIGNATURE) {
 		exfat_err(sb, "invalid boot record signature");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (memcmp(p_boot->fs_name, STR_EXFAT, BOOTSEC_FS_NAME_LEN)) {
 		exfat_err(sb, "invalid fs_name"); /* fs_name may unprintable */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -432,11 +432,11 @@ static int exfat_read_boot_sector(struct super_block *sb)
 	 * from FAT volume.
 	 */
 	if (memchr_inv(p_boot->must_be_zero, 0, sizeof(p_boot->must_be_zero)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (p_boot->num_fats != 1 && p_boot->num_fats != 2) {
 		exfat_err(sb, "bogus number of FAT structure");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sbi->sect_per_clus = 1 << p_boot->sect_per_clus_bits;
@@ -467,12 +467,12 @@ static int exfat_read_boot_sector(struct super_block *sb)
 	if (sbi->num_FAT_sectors << p_boot->sect_size_bits <
 	    sbi->num_clusters * 4) {
 		exfat_err(sb, "bogus fat length");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (sbi->data_start_sector <
 	    sbi->FAT1_start_sector + sbi->num_FAT_sectors * p_boot->num_fats) {
 		exfat_err(sb, "bogus data start sector");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (sbi->vol_flag & VOL_DIRTY)
 		exfat_warn(sb, "Volume was not properly unmounted. Some data may be corrupt. Please run fsck.");
@@ -485,7 +485,7 @@ static int exfat_read_boot_sector(struct super_block *sb)
 
 	/* check logical sector size */
 	if (exfat_calibrate_blocksize(sb, 1 << p_boot->sect_size_bits))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -501,7 +501,7 @@ static int exfat_verify_boot_region(struct super_block *sb)
 	for (sn = 0; sn < 11; sn++) {
 		bh = sb_bread(sb, sn);
 		if (!bh)
-			return -EIO;
+			return -ERR(EIO);
 
 		if (sn != 0 && sn <= 8) {
 			/* extended boot sector sub-regions */
@@ -519,7 +519,7 @@ static int exfat_verify_boot_region(struct super_block *sb)
 	/* boot checksum sub-regions */
 	bh = sb_bread(sb, sn);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 
 	for (i = 0; i < sb->s_blocksize; i += sizeof(u32)) {
 		p_chksum = (__le32 *)&bh->b_data[i];
@@ -527,7 +527,7 @@ static int exfat_verify_boot_region(struct super_block *sb)
 			exfat_err(sb, "Invalid boot checksum (boot checksum : 0x%08x, checksum : 0x%08x)",
 				  le32_to_cpu(*p_chksum), chksum);
 			brelse(bh);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	brelse(bh);
@@ -624,7 +624,7 @@ static int exfat_fill_super(struct super_block *sb, struct fs_context *fc)
 		if (!sbi->nls_io) {
 			exfat_err(sb, "IO charset %s not found",
 				  sbi->options.iocharset);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto free_table;
 		}
 	}

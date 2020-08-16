@@ -173,22 +173,22 @@ static int gssp_call(struct net *net, struct rpc_message *msg)
 
 	clnt = get_gssp_clnt(sn);
 	if (!clnt)
-		return -EIO;
+		return -ERR(EIO);
 	status = rpc_call_sync(clnt, msg, 0);
 	if (status < 0) {
 		dprintk("gssp: rpc_call returned error %d\n", -status);
 		switch (status) {
 		case -EPROTONOSUPPORT:
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			break;
 		case -ECONNREFUSED:
 		case -ETIMEDOUT:
 		case -ENOTCONN:
-			status = -EAGAIN;
+			status = -ERR(EAGAIN);
 			break;
 		case -ERESTARTSYS:
 			if (signalled ())
-				status = -EINTR;
+				status = -ERR(EINTR);
 			break;
 		default:
 			break;

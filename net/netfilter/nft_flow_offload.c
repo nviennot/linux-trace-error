@@ -42,7 +42,7 @@ static int nft_flow_route(const struct nft_pktinfo *pkt,
 
 	nf_route(nft_net(pkt), &other_dst, &fl, false, nft_pf(pkt));
 	if (!other_dst)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	route->tuple[dir].dst		= this_dst;
 	route->tuple[!dir].dst		= other_dst;
@@ -167,7 +167,7 @@ static int nft_flow_offload_init(const struct nft_ctx *ctx,
 	struct nft_flowtable *flowtable;
 
 	if (!tb[NFTA_FLOW_TABLE_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	flowtable = nft_flowtable_lookup(ctx->table, tb[NFTA_FLOW_TABLE_NAME],
 					 genmask);

@@ -53,7 +53,7 @@ static struct dentry *ufs_lookup(struct inode * dir, struct dentry *dentry, unsi
 	ino_t ino;
 	
 	if (dentry->d_name.len > UFS_MAXNAMLEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	ino = ufs_inode_by_name(dir, &dentry->d_name);
 	if (ino)
@@ -91,7 +91,7 @@ static int ufs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev
 	int err;
 
 	if (!old_valid_dev(rdev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode = ufs_new_inode(dir, mode);
 	err = PTR_ERR(inode);
@@ -113,7 +113,7 @@ static int ufs_symlink (struct inode * dir, struct dentry * dentry,
 	struct inode * inode;
 
 	if (l > sb->s_blocksize)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	inode = ufs_new_inode(dir, S_IFLNK | S_IRWXUGO);
 	err = PTR_ERR(inode);
@@ -207,7 +207,7 @@ static int ufs_unlink(struct inode *dir, struct dentry *dentry)
 	struct inode * inode = d_inode(dentry);
 	struct ufs_dir_entry *de;
 	struct page *page;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	de = ufs_find_entry(dir, &dentry->d_name, &page);
 	if (!de)
@@ -227,7 +227,7 @@ out:
 static int ufs_rmdir (struct inode * dir, struct dentry *dentry)
 {
 	struct inode * inode = d_inode(dentry);
-	int err= -ENOTEMPTY;
+	int err= -ERR(ENOTEMPTY);
 
 	if (ufs_empty_dir (inode)) {
 		err = ufs_unlink(dir, dentry);
@@ -250,17 +250,17 @@ static int ufs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct ufs_dir_entry * dir_de = NULL;
 	struct page *old_page;
 	struct ufs_dir_entry *old_de;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_de = ufs_find_entry(old_dir, &old_dentry->d_name, &old_page);
 	if (!old_de)
 		goto out;
 
 	if (S_ISDIR(old_inode->i_mode)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		dir_de = ufs_dotdot(old_inode, &dir_page);
 		if (!dir_de)
 			goto out_old;
@@ -270,11 +270,11 @@ static int ufs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		struct page *new_page;
 		struct ufs_dir_entry *new_de;
 
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 		if (dir_de && !ufs_empty_dir(new_inode))
 			goto out_dir;
 
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		new_de = ufs_find_entry(new_dir, &new_dentry->d_name, &new_page);
 		if (!new_de)
 			goto out_dir;

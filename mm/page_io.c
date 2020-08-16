@@ -236,7 +236,7 @@ out:
 	return ret;
 bad_bmap:
 	pr_err("swapon: swapfile has holes\n");
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out;
 }
 

@@ -118,7 +118,7 @@ static int a2mp_command_rej(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct a2mp_cmd_rej *rej = (void *) skb->data;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*rej))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("ident %d reason %d", hdr->ident, le16_to_cpu(rej->reason));
 
@@ -138,7 +138,7 @@ static int a2mp_discover_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct hci_dev *hdev;
 
 	if (len < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_pull(skb, sizeof(*req));
 
@@ -149,7 +149,7 @@ static int a2mp_discover_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	/* check that packet is not broken for now */
 	while (ext_feat & A2MP_FEAT_EXT) {
 		if (len < sizeof(ext_feat))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ext_feat = get_unaligned_le16(skb->data);
 		BT_DBG("efm 0x%4.4x", ext_feat);
@@ -197,7 +197,7 @@ static int a2mp_discover_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	bool found = false;
 
 	if (len < sizeof(*rsp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len -= sizeof(*rsp);
 	skb_pull(skb, sizeof(*rsp));
@@ -209,7 +209,7 @@ static int a2mp_discover_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	/* check that packet is not broken for now */
 	while (ext_feat & A2MP_FEAT_EXT) {
 		if (len < sizeof(ext_feat))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ext_feat = get_unaligned_le16(skb->data);
 		BT_DBG("efm 0x%4.4x", ext_feat);
@@ -297,7 +297,7 @@ static int a2mp_getinfo_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	int err = 0;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("id %d", req->id);
 
@@ -337,12 +337,12 @@ static int a2mp_getinfo_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct amp_ctrl *ctrl;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*rsp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("id %d status 0x%2.2x", rsp->id, rsp->status);
 
 	if (rsp->status)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctrl = amp_ctrl_add(mgr, rsp->id);
 	if (!ctrl)
@@ -364,7 +364,7 @@ static int a2mp_getampassoc_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct amp_mgr *tmp;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("id %d", req->id);
 
@@ -410,7 +410,7 @@ static int a2mp_getampassoc_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	size_t assoc_len;
 
 	if (len < sizeof(*rsp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	assoc_len = len - sizeof(*rsp);
 
@@ -418,7 +418,7 @@ static int a2mp_getampassoc_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	       assoc_len);
 
 	if (rsp->status)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Save remote ASSOC data */
 	ctrl = amp_ctrl_lookup(mgr, rsp->id);
@@ -442,7 +442,7 @@ static int a2mp_getampassoc_rsp(struct amp_mgr *mgr, struct sk_buff *skb,
 	/* Create Phys Link */
 	hdev = hci_dev_get(rsp->id);
 	if (!hdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hcon = phylink_add(hdev, mgr, rsp->id, true);
 	if (!hcon)
@@ -471,7 +471,7 @@ static int a2mp_createphyslink_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct amp_ctrl *ctrl;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("local_id %d, remote_id %d", req->local_id, req->remote_id);
 
@@ -549,7 +549,7 @@ static int a2mp_discphyslink_req(struct amp_mgr *mgr, struct sk_buff *skb,
 	struct hci_conn *hcon;
 
 	if (le16_to_cpu(hdr->len) < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("local_id %d remote_id %d", req->local_id, req->remote_id);
 
@@ -612,7 +612,7 @@ static int a2mp_chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
 		skb_pull(skb, sizeof(*hdr));
 
 		if (len > skb->len || !hdr->ident) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -667,7 +667,7 @@ static int a2mp_chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
 
 		default:
 			BT_ERR("Unknown A2MP sig cmd 0x%2.2x", hdr->code);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 	}

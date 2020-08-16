@@ -215,7 +215,7 @@ static int nfs_callback_up_net(int minorversion, struct svc_serv *serv,
 	else if (xprt->ops->bc_setup)
 		set_bc_enabled(serv);
 	else
-		ret = -EPROTONOSUPPORT;
+		ret = -ERR(EPROTONOSUPPORT);
 
 	if (ret < 0) {
 		printk(KERN_ERR "NFS: callback service start failed\n");
@@ -284,7 +284,7 @@ static struct svc_serv *nfs_callback_create_svc(int minorversion)
 	}
 
 	if (sv_ops == NULL)
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 
 	/*
 	 * Sanity check: if there's no task,

@@ -61,7 +61,7 @@ static int batadv_socket_open(struct inode *inode, struct file *file)
 	struct batadv_socket_client *socket_client;
 
 	if (!try_module_get(THIS_MODULE))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	batadv_debugfs_deprecated(file, "");
 
@@ -84,7 +84,7 @@ static int batadv_socket_open(struct inode *inode, struct file *file)
 		pr_err("Error - can't add another packet client: maximum number of clients reached\n");
 		kfree(socket_client);
 		module_put(THIS_MODULE);
-		return -EXFULL;
+		return -ERR(EXFULL);
 	}
 
 	INIT_LIST_HEAD(&socket_client->queue_list);
@@ -130,10 +130,10 @@ static ssize_t batadv_socket_read(struct file *file, char __user *buf,
 	int error;
 
 	if ((file->f_flags & O_NONBLOCK) && socket_client->queue_len == 0)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (!buf || count < sizeof(struct batadv_icmp_packet))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = wait_event_interruptible(socket_client->queue_wait,
 					 socket_client->queue_len);
@@ -178,7 +178,7 @@ static ssize_t batadv_socket_write(struct file *file, const char __user *buff,
 	if (len < sizeof(struct batadv_icmp_header)) {
 		batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 			   "Error - can't send packet from char device: invalid packet size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
@@ -211,7 +211,7 @@ static ssize_t batadv_socket_write(struct file *file, const char __user *buff,
 	if (icmp_header->packet_type != BATADV_ICMP) {
 		batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 			   "Error - can't send packet from char device: got bogus packet type (expected: BAT_ICMP)\n");
-		len = -EINVAL;
+		len = -ERR(EINVAL);
 		goto free_skb;
 	}
 
@@ -220,7 +220,7 @@ static ssize_t batadv_socket_write(struct file *file, const char __user *buff,
 		if (len < sizeof(struct batadv_icmp_packet)) {
 			batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 				   "Error - can't send packet from char device: invalid packet size\n");
-			len = -EINVAL;
+			len = -ERR(EINVAL);
 			goto free_skb;
 		}
 
@@ -252,7 +252,7 @@ static ssize_t batadv_socket_write(struct file *file, const char __user *buff,
 	default:
 		batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 			   "Error - can't send packet from char device: got unknown message type\n");
-		len = -EINVAL;
+		len = -ERR(EINVAL);
 		goto free_skb;
 	}
 

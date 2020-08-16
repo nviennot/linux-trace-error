@@ -60,7 +60,7 @@ int ubifs_decrypt(const struct inode *inode, struct ubifs_data_node *dn,
 
 	if (clen <= 0 || clen > UBIFS_BLOCK_SIZE || clen > dlen) {
 		ubifs_err(c, "bad compr_size: %i", clen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ubifs_assert(c, dlen <= UBIFS_BLOCK_SIZE);

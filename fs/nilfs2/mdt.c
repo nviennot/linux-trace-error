@@ -81,7 +81,7 @@ static int nilfs_mdt_create_block(struct inode *inode, unsigned long block,
 	if (unlikely(!bh))
 		goto failed_unlock;
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (buffer_uptodate(bh))
 		goto failed_bh;
 
@@ -122,13 +122,13 @@ nilfs_mdt_submit_block(struct inode *inode, unsigned long blkoff,
 	if (unlikely(!bh))
 		goto failed;
 
-	ret = -EEXIST; /* internal code */
+	ret = -ERR(EEXIST); /* internal code */
 	if (buffer_uptodate(bh))
 		goto out;
 
 	if (mode_flags & REQ_RAHEAD) {
 		if (!trylock_buffer(bh)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto failed_bh;
 		}
 	} else /* mode == READ */
@@ -197,7 +197,7 @@ static int nilfs_mdt_read_block(struct inode *inode, unsigned long block,
 	wait_on_buffer(first_bh);
 
  out_no_wait:
-	err = -EIO;
+	err = -ERR(EIO);
 	if (!buffer_uptodate(first_bh)) {
 		nilfs_msg(inode->i_sb, KERN_ERR,
 			  "I/O error reading meta-data file (ino=%lu, block-offset=%lu)",
@@ -289,7 +289,7 @@ int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
 	int ret;
 
 	if (unlikely(start > end))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	ret = nilfs_mdt_read_block(inode, start, true, out_bh);
 	if (!ret) {
@@ -306,7 +306,7 @@ int nilfs_mdt_find_block(struct inode *inode, unsigned long start,
 			if (!ret)
 				*blkoff = next;
 		} else {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 	}
 out:
@@ -364,7 +364,7 @@ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
 
 	page = find_lock_page(inode->i_mapping, index);
 	if (!page)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	wait_on_page_writeback(page);
 
@@ -382,7 +382,7 @@ int nilfs_mdt_forget_block(struct inode *inode, unsigned long block)
 
 	if (still_dirty ||
 	    invalidate_inode_pages2_range(inode->i_mapping, index, index) != 0)
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	return ret;
 }
 
@@ -413,7 +413,7 @@ nilfs_mdt_write_page(struct page *page, struct writeback_control *wbc)
 		 */
 		nilfs_clear_dirty_page(page, false);
 		unlock_page(page);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	redirty_page_for_writepage(wbc, page);

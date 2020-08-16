@@ -318,7 +318,7 @@ static int sof_card_late_probe(struct snd_soc_card *card)
 	int ret, i = 0;
 
 	if (list_empty(&ctx->hdmi_pcm_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctx->common_hdmi_codec_drv) {
 		pcm = list_first_entry(&ctx->hdmi_pcm_list, struct hdmi_pcm,
@@ -568,7 +568,7 @@ static int snd_cml_rt1011_probe(struct platform_device *pdev)
 				rt1011_dais_confs[i].name_prefix = "TR";
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			rt1011_dais_components[i].name = devm_kasprintf(&pdev->dev,
 								GFP_KERNEL,

@@ -181,7 +181,7 @@ static int cs35l35_wait_for_pdn(struct cs35l35_private *cs35l35)
 					  msecs_to_jiffies(100));
 	if (ret == 0) {
 		dev_err(cs35l35->dev, "PDN_DONE did not complete\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	return 0;
@@ -228,7 +228,7 @@ static int cs35l35_sdin_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -380,7 +380,7 @@ static int cs35l35_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		cs35l35->slave_mode = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -393,7 +393,7 @@ static int cs35l35_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		cs35l35->i2s_mode = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -459,7 +459,7 @@ static int cs35l35_get_clk_config(int sysclk, int srate)
 			cs35l35_clk_ctl[i].srate == srate)
 			return cs35l35_clk_ctl[i].clk_cfg;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs35l35_hw_params(struct snd_pcm_substream *substream,
@@ -480,7 +480,7 @@ static int cs35l35_hw_params(struct snd_pcm_substream *substream,
 	if (clk_ctl < 0) {
 		dev_err(component->dev, "Invalid CLK:Rate %d:%d\n",
 			cs35l35->sysclk, srate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(cs35l35->regmap, CS35L35_CLK_CTL2,
@@ -529,7 +529,7 @@ static int cs35l35_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(component->dev, "Unsupported Width %d\n",
 				params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		regmap_update_bits(cs35l35->regmap,
 				CS35L35_AUDIN_DEPTH_CTL,
@@ -552,7 +552,7 @@ static int cs35l35_hw_params(struct snd_pcm_substream *substream,
 		if ((cs35l35->sclk / srate) % 4) {
 			dev_err(component->dev, "Unsupported sclk/fs ratio %d:%d\n",
 					cs35l35->sclk, srate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		sp_sclks = ((cs35l35->sclk / srate) / 4) - 1;
 
@@ -565,7 +565,7 @@ static int cs35l35_hw_params(struct snd_pcm_substream *substream,
 				break;
 			default:
 				dev_err(component->dev, "ratio not supported\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		} else {
 			/* Only certain ratios supported in I2S MASTER Mode */
@@ -575,7 +575,7 @@ static int cs35l35_hw_params(struct snd_pcm_substream *substream,
 				break;
 			default:
 				dev_err(component->dev, "ratio not supported\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		ret = regmap_update_bits(cs35l35->regmap,
@@ -728,7 +728,7 @@ static int cs35l35_component_set_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid CLK Source\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -746,7 +746,7 @@ static int cs35l35_component_set_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid CLK Frequency Input : %d\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(cs35l35->regmap, CS35L35_CLK_CTL1,
@@ -825,7 +825,7 @@ static int cs35l35_boost_inductor(struct cs35l35_private *cs35l35,
 	default:
 		dev_err(cs35l35->dev, "Invalid Inductor Value %d uH\n",
 			inductor);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1261,7 +1261,7 @@ static int cs35l35_handle_of_data(struct i2c_client *i2c_client,
 		if (val32 < 2600 || val32 > 9000) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Voltage %d mV\n", val32);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		pdata->bst_vctl = ((val32 - 2600) / 100) + 1;
 	}
@@ -1271,7 +1271,7 @@ static int cs35l35_handle_of_data(struct i2c_client *i2c_client,
 		if (val32 < 1680 || val32 > 4480) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Peak Current %u mA\n", val32);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		pdata->bst_ipk = ((val32 - 1680) / 110) | CS35L35_VALID_PDATA;
@@ -1282,7 +1282,7 @@ static int cs35l35_handle_of_data(struct i2c_client *i2c_client,
 		pdata->boost_ind = val32;
 	} else {
 		dev_err(&i2c_client->dev, "Inductor not specified.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_property_read_u32(np, "cirrus,sp-drv-strength", &val32) >= 0)
@@ -1564,7 +1564,7 @@ static int cs35l35_i2c_probe(struct i2c_client *i2c_client,
 	if (devid != CS35L35_CHIP_ID) {
 		dev_err(dev, "CS35L35 Device ID (%X). Expected ID %X\n",
 			devid, CS35L35_CHIP_ID);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 

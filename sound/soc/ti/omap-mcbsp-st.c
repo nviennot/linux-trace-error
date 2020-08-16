@@ -158,7 +158,7 @@ static int omap_mcbsp_st_set_chgain(struct omap_mcbsp *mcbsp, int channel,
 	int ret = 0;
 
 	if (!st_data)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	spin_lock_irq(&mcbsp->lock);
 	if (channel == 0)
@@ -166,7 +166,7 @@ static int omap_mcbsp_st_set_chgain(struct omap_mcbsp *mcbsp, int channel,
 	else if (channel == 1)
 		st_data->ch1gain = chgain;
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	if (st_data->enabled)
 		omap_mcbsp_st_chgain(mcbsp);
@@ -182,7 +182,7 @@ static int omap_mcbsp_st_get_chgain(struct omap_mcbsp *mcbsp, int channel,
 	int ret = 0;
 
 	if (!st_data)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	spin_lock_irq(&mcbsp->lock);
 	if (channel == 0)
@@ -190,7 +190,7 @@ static int omap_mcbsp_st_get_chgain(struct omap_mcbsp *mcbsp, int channel,
 	else if (channel == 1)
 		*chgain = st_data->ch1gain;
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	spin_unlock_irq(&mcbsp->lock);
 
 	return ret;
@@ -201,7 +201,7 @@ static int omap_mcbsp_st_enable(struct omap_mcbsp *mcbsp)
 	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
 	if (!st_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irq(&mcbsp->lock);
 	st_data->enabled = 1;
@@ -217,7 +217,7 @@ static int omap_mcbsp_st_disable(struct omap_mcbsp *mcbsp)
 	int ret = 0;
 
 	if (!st_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irq(&mcbsp->lock);
 	omap_mcbsp_st_stop(mcbsp);
@@ -232,7 +232,7 @@ static int omap_mcbsp_st_is_enabled(struct omap_mcbsp *mcbsp)
 	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
 	if (!st_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return st_data->enabled;
 }
@@ -271,11 +271,11 @@ static ssize_t st_taps_store(struct device *dev,
 	do {
 		status = sscanf(buf, "%d%n", &val, &tmp);
 		if (status < 0 || status == 0) {
-			size = -EINVAL;
+			size = -ERR(EINVAL);
 			goto out;
 		}
 		if (val < -32768 || val > 32767) {
-			size = -EINVAL;
+			size = -ERR(EINVAL);
 			goto out;
 		}
 		st_data->taps[i++] = val;
@@ -511,6 +511,6 @@ int omap_mcbsp_st_add_controls(struct snd_soc_pcm_runtime *rtd, int port_id)
 		break;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(omap_mcbsp_st_add_controls);

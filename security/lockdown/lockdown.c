@@ -26,7 +26,7 @@ static const enum lockdown_reason lockdown_levels[] = {LOCKDOWN_NONE,
 static int lock_kernel_down(const char *where, enum lockdown_reason level)
 {
 	if (kernel_locked_down >= level)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	kernel_locked_down = level;
 	pr_notice("Kernel is locked down from %s; see man kernel_lockdown.7\n",
@@ -37,14 +37,14 @@ static int lock_kernel_down(const char *where, enum lockdown_reason level)
 static int __init lockdown_param(char *level)
 {
 	if (!level)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(level, "integrity") == 0)
 		lock_kernel_down("command line", LOCKDOWN_INTEGRITY_MAX);
 	else if (strcmp(level, "confidentiality") == 0)
 		lock_kernel_down("command line", LOCKDOWN_CONFIDENTIALITY_MAX);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -59,13 +59,13 @@ static int lockdown_is_locked_down(enum lockdown_reason what)
 {
 	if (WARN(what >= LOCKDOWN_CONFIDENTIALITY_MAX,
 		 "Invalid lockdown reason"))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (kernel_locked_down >= what) {
 		if (lockdown_reasons[what])
 			pr_notice("Lockdown: %s: %s is restricted; see man kernel_lockdown.7\n",
 				  current->comm, lockdown_reasons[what]);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	return 0;
@@ -117,7 +117,7 @@ static ssize_t lockdown_write(struct file *file, const char __user *buf,
 			      size_t n, loff_t *ppos)
 {
 	char *state;
-	int i, len, err = -EINVAL;
+	int i, len, err = -ERR(EINVAL);
 
 	state = memdup_user_nul(buf, n);
 	if (IS_ERR(state))

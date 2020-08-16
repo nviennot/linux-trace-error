@@ -92,7 +92,7 @@ static int arizona_spk_ev(struct snd_soc_dapm_widget *w,
 		if (val & ARIZONA_SPK_OVERHEAT_STS) {
 			dev_crit(arizona->dev,
 				 "Speaker not enabled due to temperature\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		regmap_update_bits_async(arizona->regmap,
@@ -1088,7 +1088,7 @@ int arizona_hp_ev(struct snd_soc_dapm_widget *w, struct snd_kcontrol *kcontrol,
 	case SND_SOC_DAPM_POST_PMD:
 		return arizona_out_ev(w, kcontrol, event);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Store the desired state for the HP outputs */
@@ -1290,7 +1290,7 @@ static int arizona_set_opclk(struct snd_soc_component *component,
 		refclk = priv->asyncclk;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (refclk % 8000)
@@ -1318,7 +1318,7 @@ static int arizona_set_opclk(struct snd_soc_component *component,
 	}
 
 	dev_err(component->dev, "Unable to generate %dHz OPCLK\n", freq);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int arizona_clk_ev(struct snd_soc_dapm_widget *w,
@@ -1388,7 +1388,7 @@ int arizona_set_sysclk(struct snd_soc_component *component, int clk_id,
 	case ARIZONA_CLK_ASYNC_OPCLK:
 		return arizona_set_opclk(component, clk_id, freq);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -1424,7 +1424,7 @@ int arizona_set_sysclk(struct snd_soc_component *component, int clk_id,
 		*clk = freq;
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*clk = freq;
@@ -1458,7 +1458,7 @@ static int arizona_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
 				!= SND_SOC_DAIFMT_CBM_CFM) {
 			arizona_aif_err(dai, "DSP_B not valid in slave mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		mode = ARIZONA_FMT_DSP_MODE_B;
 		break;
@@ -1469,14 +1469,14 @@ static int arizona_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		if ((fmt & SND_SOC_DAIFMT_MASTER_MASK)
 				!= SND_SOC_DAIFMT_CBM_CFM) {
 			arizona_aif_err(dai, "LEFT_J not valid in slave mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		mode = ARIZONA_FMT_LEFT_JUSTIFIED_MODE;
 		break;
 	default:
 		arizona_aif_err(dai, "Unsupported DAI format %d\n",
 				fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1495,7 +1495,7 @@ static int arizona_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		arizona_aif_err(dai, "Unsupported master mode %d\n",
 				fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1512,7 +1512,7 @@ static int arizona_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		lrclk |= ARIZONA_AIF1TX_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits_async(arizona->regmap, base + ARIZONA_AIF_BCLK_CTRL,
@@ -1691,7 +1691,7 @@ static int arizona_hw_params_rate(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(arizona_sr_vals)) {
 		arizona_aif_err(dai, "Unsupported sample rate %dHz\n",
 				params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	sr_val = i;
 
@@ -1744,7 +1744,7 @@ static int arizona_hw_params_rate(struct snd_pcm_substream *substream,
 		break;
 	default:
 		arizona_aif_err(dai, "Invalid clock %d\n", dai_priv->clk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1831,7 +1831,7 @@ static int arizona_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(arizona_44k1_bclk_rates)) {
 		arizona_aif_err(dai, "Unsupported sample rate %dHz\n",
 				params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	lrclk = rates[bclk] / params_rate(params);
@@ -1920,7 +1920,7 @@ static int arizona_dai_set_sysclk(struct snd_soc_dai *dai,
 	case ARIZONA_CLK_ASYNCCLK:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (clk_id == dai_priv->clk)
@@ -1929,7 +1929,7 @@ static int arizona_dai_set_sysclk(struct snd_soc_dai *dai,
 	if (snd_soc_dai_active(dai)) {
 		dev_err(component->dev, "Can't change clock on active DAI %d\n",
 			dai->id);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	dev_dbg(component->dev, "Setting AIF%d to %s\n", dai->id + 1,
@@ -2003,7 +2003,7 @@ static int arizona_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 
 	/* Only support TDM for the physical AIFs */
 	if (dai->id > ARIZONA_MAX_AIF)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (slots == 0) {
 		tx_mask = (1 << tx_max_chan) - 1;
@@ -2110,21 +2110,21 @@ static int arizona_validate_fll(struct arizona_fll *fll,
 	if (fll->fout && Fout != fll->fout) {
 		arizona_fll_err(fll,
 				"Can't change output on active FLL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (Fref / ARIZONA_FLL_MAX_REFDIV > ARIZONA_FLL_MAX_FREF) {
 		arizona_fll_err(fll,
 				"Can't scale %dMHz in to <=13.5MHz\n",
 				Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	Fvco_min = ARIZONA_FLL_MIN_FVCO * fll->vco_mult;
 	if (Fout * ARIZONA_FLL_MAX_OUTDIV < Fvco_min) {
 		arizona_fll_err(fll, "No FLL_OUTDIV for Fout=%uHz\n",
 				Fout);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2143,7 +2143,7 @@ static int arizona_find_fratio(unsigned int Fref, int *fratio)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int arizona_calc_fratio(struct arizona_fll *fll,
@@ -2163,7 +2163,7 @@ static int arizona_calc_fratio(struct arizona_fll *fll,
 		cfg->refdiv++;
 
 		if (div > ARIZONA_FLL_MAX_REFDIV)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Find an appropriate FLL_FRATIO */
@@ -2265,7 +2265,7 @@ static int arizona_calc_fll(struct arizona_fll *fll,
 	while (fll->fout * div < ARIZONA_FLL_MIN_FVCO * fll->vco_mult) {
 		div++;
 		if (div > ARIZONA_FLL_MAX_OUTDIV)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	target = fll->fout * div / fll->vco_mult;
 	cfg->outdiv = div;
@@ -2312,7 +2312,7 @@ static int arizona_calc_fll(struct arizona_fll *fll,
 	if (i == ARRAY_SIZE(fll_gains)) {
 		arizona_fll_err(fll, "Unable to find gain for Fref=%uHz\n",
 				Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	arizona_fll_dbg(fll, "N=%d THETA=%d LAMBDA=%d\n",
@@ -2471,7 +2471,7 @@ static int arizona_enable_fll(struct arizona_fll *fll)
 					 ARIZONA_FLL1_SYNC_ENA, 0);
 	} else {
 		arizona_fll_err(fll, "No clocks provided\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (already_enabled && !!sync_enabled != use_sync)
@@ -2664,7 +2664,7 @@ int arizona_set_output_mode(struct snd_soc_component *component, int output,
 	unsigned int reg, val;
 
 	if (output < 1 || output > 6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reg = ARIZONA_OUTPUT_PATH_CONFIG_1L + (output - 1) * 8;
 
@@ -2745,7 +2745,7 @@ int arizona_eq_coeff_put(struct snd_kcontrol *kcontrol,
 	    arizona_eq_filter_unstable(true, data[12], data[13]) ||
 	    arizona_eq_filter_unstable(false, data[16], data[17])) {
 		dev_err(arizona->dev, "Rejecting unstable EQ coefficients\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2774,7 +2774,7 @@ int arizona_lhpf_coeff_put(struct snd_kcontrol *kcontrol,
 
 	if (abs(val) >= 4096) {
 		dev_err(arizona->dev, "Rejecting unstable LHPF coefficients\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_bytes_put(kcontrol, ucontrol);

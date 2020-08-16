@@ -368,7 +368,7 @@ static int setup_bdle(struct hdac_bus *bus,
 		int chunk;
 
 		if (azx_dev->frags >= AZX_MAX_BDL_ENTRIES)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		addr = snd_sgbuf_get_addr(dmab, ofs);
 		/* program the address field of the BDL entry */
@@ -467,7 +467,7 @@ int snd_hdac_stream_setup_periods(struct hdac_stream *azx_dev)
  error:
 	dev_err(bus->dev, "Too many BDL entries: buffer=%d, period=%d\n",
 		azx_dev->bufsize, period_bytes);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(snd_hdac_stream_setup_periods);
 
@@ -489,7 +489,7 @@ int snd_hdac_stream_set_params(struct hdac_stream *azx_dev,
 	int err;
 
 	if (!substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 	bufsize = snd_pcm_lib_buffer_bytes(substream);
 	period_bytes = snd_pcm_lib_period_bytes(substream);
@@ -682,7 +682,7 @@ int snd_hdac_dsp_prepare(struct hdac_stream *azx_dev, unsigned int format,
 	spin_lock_irq(&bus->reg_lock);
 	if (azx_dev->running || azx_dev->locked) {
 		spin_unlock_irq(&bus->reg_lock);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto unlock;
 	}
 	azx_dev->locked = true;

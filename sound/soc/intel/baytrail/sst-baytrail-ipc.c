@@ -446,7 +446,7 @@ int sst_byt_stream_free(struct sst_byt *byt, struct sst_byt_stream *stream)
 	if (ret < 0) {
 		dev_err(byt->dev, "ipc: free stream %d failed\n",
 			stream->str_id);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	stream->commited = false;
@@ -612,7 +612,7 @@ int sst_byt_dsp_wait_for_ready(struct device *dev, struct sst_pdata *pdata)
 				 msecs_to_jiffies(IPC_BOOT_MSECS));
 	if (err == 0) {
 		dev_err(byt->dev, "ipc: error DSP boot timeout\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	dev_dbg(byt->dev, "dsp rebooted\n");
@@ -707,7 +707,7 @@ int sst_byt_dsp_init(struct device *dev, struct sst_pdata *pdata)
 	/* init SST shim */
 	byt->dsp = sst_dsp_new(dev, &byt_dev, pdata);
 	if (byt->dsp == NULL) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto dsp_new_err;
 	}
 
@@ -718,7 +718,7 @@ int sst_byt_dsp_init(struct device *dev, struct sst_pdata *pdata)
 
 	byt_sst_fw = sst_fw_new(byt->dsp, pdata->fw, byt);
 	if (byt_sst_fw  == NULL) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		dev_err(dev, "error: failed to load firmware\n");
 		goto fw_err;
 	}
@@ -728,7 +728,7 @@ int sst_byt_dsp_init(struct device *dev, struct sst_pdata *pdata)
 	err = wait_event_timeout(byt->boot_wait, byt->boot_complete,
 				 msecs_to_jiffies(IPC_BOOT_MSECS));
 	if (err == 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		dev_err(byt->dev, "ipc: error DSP boot timeout\n");
 		goto boot_err;
 	}

@@ -304,13 +304,13 @@ int l2tp_session_register(struct l2tp_session *session,
 
 	write_lock_bh(&tunnel->hlist_lock);
 	if (!tunnel->acpt_newsess) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto err_tlock;
 	}
 
 	hlist_for_each_entry(session_walk, head, hlist)
 		if (session_walk->session_id == session->session_id) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto err_tlock;
 		}
 
@@ -327,7 +327,7 @@ int l2tp_session_register(struct l2tp_session *session,
 			if (session_walk->session_id == session->session_id &&
 			    (session_walk->tunnel->encap == L2TP_ENCAPTYPE_IP ||
 			     tunnel->encap == L2TP_ENCAPTYPE_IP)) {
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 				goto err_tlock_pnlock;
 			}
 
@@ -1289,7 +1289,7 @@ static int l2tp_tunnel_sock_create(struct net *net,
 				struct l2tp_tunnel_cfg *cfg,
 				struct socket **sockp)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct socket *sock = NULL;
 	struct udp_port_cfg udp_conf;
 
@@ -1450,20 +1450,20 @@ static int l2tp_validate_socket(const struct sock *sk, const struct net *net,
 				enum l2tp_encap_type encap)
 {
 	if (!net_eq(sock_net(sk), net))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sk->sk_type != SOCK_DGRAM)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if (sk->sk_family != PF_INET && sk->sk_family != PF_INET6)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if ((encap == L2TP_ENCAPTYPE_UDP && sk->sk_protocol != IPPROTO_UDP) ||
 	    (encap == L2TP_ENCAPTYPE_IP && sk->sk_protocol != IPPROTO_L2TP))
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if (sk->sk_user_data)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -1501,7 +1501,7 @@ int l2tp_tunnel_register(struct l2tp_tunnel *tunnel, struct net *net,
 		if (tunnel_walk->tunnel_id == tunnel->tunnel_id) {
 			spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
 
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto err_sock;
 		}
 	}

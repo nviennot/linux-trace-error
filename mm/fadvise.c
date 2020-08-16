@@ -41,11 +41,11 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 
 	inode = file_inode(file);
 	if (S_ISFIFO(inode->i_mode))
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	mapping = file->f_mapping;
 	if (!mapping || len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bdi = inode_to_bdi(mapping->host);
 
@@ -60,7 +60,7 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 			/* no bad return value, but ignore advice */
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 	}
@@ -171,7 +171,7 @@ int generic_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -194,7 +194,7 @@ int ksys_fadvise64_64(int fd, loff_t offset, loff_t len, int advice)
 	int ret;
 
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	ret = vfs_fadvise(f.file, offset, len, advice);
 

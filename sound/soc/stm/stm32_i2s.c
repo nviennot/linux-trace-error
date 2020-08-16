@@ -359,7 +359,7 @@ static int stm32_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported protocol %#x\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock strobing */
@@ -379,7 +379,7 @@ static int stm32_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported strobing %#x\n",
 			fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock master masks */
@@ -393,7 +393,7 @@ static int stm32_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported mode %#x\n",
 			fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i2s->fmt = fmt;
@@ -482,7 +482,7 @@ static int stm32_i2s_configure_clock(struct snd_soc_dai *cpu_dai,
 
 	if (((div == 1) && odd) || (div > I2S_CGFR_I2SDIV_MAX)) {
 		dev_err(cpu_dai->dev, "Wrong divider setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!div && !odd)
@@ -520,7 +520,7 @@ static int stm32_i2s_configure(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Unexpected format %d", format);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (STM32_I2S_IS_SLAVE(i2s)) {
@@ -682,7 +682,7 @@ static int stm32_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 				   cfg1_mask, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -813,13 +813,13 @@ static int stm32_i2s_parse_dt(struct platform_device *pdev,
 	int irq, ret;
 
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	of_id = of_match_device(stm32_i2s_ids, &pdev->dev);
 	if (of_id)
 		i2s->regmap_conf = (const struct regmap_config *)of_id->data;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	i2s->base = devm_ioremap_resource(&pdev->dev, res);
@@ -961,7 +961,7 @@ static int stm32_i2s_probe(struct platform_device *pdev)
 		if (!FIELD_GET(I2S_HWCFGR_I2S_SUPPORT_MASK, val)) {
 			dev_err(&pdev->dev,
 				"Device does not support i2s mode\n");
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto error;
 		}
 

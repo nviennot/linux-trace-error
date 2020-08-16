@@ -230,7 +230,7 @@ int btrfs_init_space_info(struct btrfs_fs_info *fs_info)
 
 	disk_super = fs_info->super_copy;
 	if (!btrfs_super_root(disk_super))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	features = btrfs_super_incompat_flags(disk_super);
 	if (features & BTRFS_FEATURE_INCOMPAT_MIXED_GROUPS)
@@ -634,7 +634,7 @@ static int may_commit_transaction(struct btrfs_fs_info *fs_info,
 
 	trans = (struct btrfs_trans_handle *)current->journal_info;
 	if (trans)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	spin_lock(&space_info->lock);
 	cur_free_bytes = btrfs_space_info_used(space_info, true);
@@ -707,7 +707,7 @@ commit:
 	return btrfs_commit_transaction(trans);
 enospc:
 	btrfs_end_transaction(trans);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /*
@@ -787,7 +787,7 @@ static void flush_space(struct btrfs_fs_info *fs_info,
 		ret = may_commit_transaction(fs_info, space_info);
 		break;
 	default:
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		break;
 	}
 
@@ -946,7 +946,7 @@ static bool maybe_fail_all_tickets(struct btrfs_fs_info *fs_info,
 				   ticket->bytes);
 
 		remove_ticket(space_info, ticket);
-		ticket->error = -ENOSPC;
+		ticket->error = -ERR(ENOSPC);
 		wake_up(&ticket->wait);
 
 		/*
@@ -1110,7 +1110,7 @@ static void wait_reserve_ticket(struct btrfs_fs_info *fs_info,
 			 * (bytes_may_use counter of our space_info).
 			 */
 			remove_ticket(space_info, ticket);
-			ticket->error = -EINTR;
+			ticket->error = -ERR(EINTR);
 			break;
 		}
 		spin_unlock(&space_info->lock);
@@ -1176,7 +1176,7 @@ static int handle_reserve_ticket(struct btrfs_fs_info *fs_info,
 		}
 
 		if (!ret)
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 	}
 	spin_unlock(&space_info->lock);
 	ASSERT(list_empty(&ticket->list));
@@ -1228,7 +1228,7 @@ static int __reserve_metadata_bytes(struct btrfs_fs_info *fs_info,
 	ASSERT(!current->journal_info || flush != BTRFS_RESERVE_FLUSH_ALL);
 
 	spin_lock(&space_info->lock);
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	used = btrfs_space_info_used(space_info, true);
 
 	/*

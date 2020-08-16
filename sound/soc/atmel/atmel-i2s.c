@@ -293,7 +293,7 @@ static int atmel_i2s_get_gck_param(struct atmel_i2s_dev *dev, int fs)
 
 	if (!dev->gclk) {
 		dev_err(dev->dev, "cannot generate the I2S Master Clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -331,7 +331,7 @@ static int atmel_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dev->dev, "unsupported bus format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dev->fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -351,7 +351,7 @@ static int atmel_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dev->dev, "unsupported master/slave mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_channels(params)) {
@@ -365,7 +365,7 @@ static int atmel_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dev->dev, "unsupported number of audio channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_format(params)) {
@@ -399,7 +399,7 @@ static int atmel_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dev->dev, "unsupported size/endianness for audio samples\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_write(dev->regmap, ATMEL_I2SC_MR, mr);
@@ -437,7 +437,7 @@ static int atmel_i2s_switch_mck_generator(struct atmel_i2s_dev *dev,
 	}
 
 	if (!dev->gck_param)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gclk_rate = dev->gck_param->mck * (dev->gck_param->imckdiv + 1);
 
@@ -485,7 +485,7 @@ static int atmel_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		mck_enabled = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Read the Mode Register to retrieve the master/slave state. */
@@ -595,7 +595,7 @@ static int atmel_i2s_probe(struct platform_device *pdev)
 	struct regmap *regmap;
 	void __iomem *base;
 	int irq;
-	int err = -ENXIO;
+	int err = -ERR(ENXIO);
 	unsigned int pcm_flags = 0;
 	unsigned int version;
 

@@ -53,7 +53,7 @@ int sk_msg_alloc(struct sock *sk, struct sk_msg *msg, int len,
 			sge->length += use;
 		} else {
 			if (sk_msg_full(msg)) {
-				ret = -ENOSPC;
+				ret = -ERR(ENOSPC);
 				break;
 			}
 
@@ -88,7 +88,7 @@ int sk_msg_clone(struct sock *sk, struct sk_msg *dst, struct sk_msg *src,
 		off -= sge->length;
 		sk_msg_iter_var_next(i);
 		if (i == src->sg.end && off)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		sge = sk_msg_elem(src, i);
 	}
 
@@ -109,7 +109,7 @@ int sk_msg_clone(struct sock *sk, struct sk_msg *dst, struct sk_msg *src,
 			sge_off = sge->offset + off;
 			sk_msg_page_add(dst, sg_page(sge), sge_len, sge_off);
 		} else {
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 
 		off = 0;
@@ -117,7 +117,7 @@ int sk_msg_clone(struct sock *sk, struct sk_msg *dst, struct sk_msg *src,
 		sk_mem_charge(sk, sge_len);
 		sk_msg_iter_var_next(i);
 		if (i == src->sg.end && len)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		sge = sk_msg_elem(src, i);
 	}
 
@@ -357,7 +357,7 @@ EXPORT_SYMBOL_GPL(sk_msg_zerocopy_from_iter);
 int sk_msg_memcopy_from_iter(struct sock *sk, struct iov_iter *from,
 			     struct sk_msg *msg, u32 bytes)
 {
-	int ret = -ENOSPC, i = msg->sg.curr;
+	int ret = -ERR(ENOSPC), i = msg->sg.curr;
 	struct scatterlist *sge;
 	u32 copy, buf_size;
 	void *to;
@@ -405,10 +405,10 @@ static int sk_psock_skb_ingress(struct sk_psock *psock, struct sk_buff *skb)
 
 	msg = kzalloc(sizeof(*msg), __GFP_NOWARN | GFP_ATOMIC);
 	if (unlikely(!msg))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	if (!sk_rmem_schedule(sk, skb, skb->len)) {
 		kfree(msg);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	sk_msg_init(msg);
@@ -464,7 +464,7 @@ static void sk_psock_backlog(struct work_struct *work)
 start:
 		ingress = tcp_skb_bpf_ingress(skb);
 		do {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			if (likely(psock->sk->sk_socket))
 				ret = sk_psock_handle_skb(psock, skb, off,
 							  len, ingress);

@@ -41,7 +41,7 @@ static inline void dnotify_flush(struct file *filp, fl_owner_t id)
 
 static inline int fcntl_dirnotify(int fd, struct file *filp, unsigned long arg)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #endif /* CONFIG_DNOTIFY */

@@ -816,7 +816,7 @@ ieee80211_prep_tdls_encap_data(struct wiphy *wiphy, struct net_device *dev,
 		tf->u.chan_switch_resp.status_code = cpu_to_le16(status_code);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -851,7 +851,7 @@ ieee80211_prep_tdls_direct(struct wiphy *wiphy, struct net_device *dev,
 								 status_code));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -911,7 +911,7 @@ ieee80211_tdls_build_mgmt_packet_data(struct ieee80211_sub_if_data *sdata,
 						 skb);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 
@@ -977,7 +977,7 @@ ieee80211_tdls_prep_mgmt_packet(struct wiphy *wiphy, struct net_device *dev,
 		/* any value is ok */
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 
@@ -994,7 +994,7 @@ ieee80211_tdls_prep_mgmt_packet(struct wiphy *wiphy, struct net_device *dev,
 						    extra_ies_len, oper_class,
 						    chandef);
 	if (!skb) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
@@ -1080,7 +1080,7 @@ ieee80211_tdls_mgmt_setup(struct wiphy *wiphy, struct net_device *dev,
 	    smps_mode != IEEE80211_SMPS_OFF) {
 		tdls_dbg(sdata, "Aborting TDLS setup due to SMPS mode %d\n",
 			 smps_mode);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	mutex_lock(&local->mtx);
@@ -1088,7 +1088,7 @@ ieee80211_tdls_mgmt_setup(struct wiphy *wiphy, struct net_device *dev,
 	/* we don't support concurrent TDLS peer setups */
 	if (!is_zero_ether_addr(sdata->u.mgd.tdls_peer) &&
 	    !ether_addr_equal(sdata->u.mgd.tdls_peer, peer)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -1103,7 +1103,7 @@ ieee80211_tdls_mgmt_setup(struct wiphy *wiphy, struct net_device *dev,
 		rcu_read_lock();
 		if (!sta_info_get(sdata, peer)) {
 			rcu_read_unlock();
-			ret = -ENOLINK;
+			ret = -ERR(ENOLINK);
 			goto out_unlock;
 		}
 		rcu_read_unlock();
@@ -1193,12 +1193,12 @@ int ieee80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
 	int ret;
 
 	if (!(wiphy->flags & WIPHY_FLAG_SUPPORTS_TDLS))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	/* make sure we are in managed mode, and associated */
 	if (sdata->vif.type != NL80211_IFTYPE_STATION ||
 	    !sdata->u.mgd.associated)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (action_code) {
 	case WLAN_TDLS_SETUP_REQUEST:
@@ -1235,7 +1235,7 @@ int ieee80211_tdls_mgmt(struct wiphy *wiphy, struct net_device *dev,
 						      extra_ies_len, 0, NULL);
 		break;
 	default:
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		break;
 	}
 
@@ -1347,10 +1347,10 @@ int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 	int ret;
 
 	if (!(wiphy->flags & WIPHY_FLAG_SUPPORTS_TDLS))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (sdata->vif.type != NL80211_IFTYPE_STATION)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (oper) {
 	case NL80211_TDLS_ENABLE_LINK:
@@ -1360,7 +1360,7 @@ int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 	case NL80211_TDLS_SETUP:
 	case NL80211_TDLS_DISCOVERY_REQ:
 		/* We don't support in-driver setup/teardown/discovery */
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	/* protect possible bss_conf changes and avoid concurrency in
@@ -1374,7 +1374,7 @@ int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 	case NL80211_TDLS_ENABLE_LINK:
 		if (sdata->vif.csa_active) {
 			tdls_dbg(sdata, "TDLS: disallow link during CSA\n");
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			break;
 		}
 
@@ -1382,7 +1382,7 @@ int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 		sta = sta_info_get(sdata, peer);
 		if (!sta) {
 			mutex_unlock(&local->sta_mtx);
-			ret = -ENOLINK;
+			ret = -ERR(ENOLINK);
 			break;
 		}
 
@@ -1420,7 +1420,7 @@ int ieee80211_tdls_oper(struct wiphy *wiphy, struct net_device *dev,
 		iee80211_tdls_recalc_chanctx(sdata, NULL);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 
@@ -1568,7 +1568,7 @@ ieee80211_tdls_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 
 	if (chandef->chan->freq_offset)
 		/* this may work, but is untested */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&local->sta_mtx);
 	sta = sta_info_get(sdata, addr);
@@ -1576,21 +1576,21 @@ ieee80211_tdls_channel_switch(struct wiphy *wiphy, struct net_device *dev,
 		tdls_dbg(sdata,
 			 "Invalid TDLS peer %pM for channel switch request\n",
 			 addr);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (!test_sta_flag(sta, WLAN_STA_TDLS_CHAN_SWITCH)) {
 		tdls_dbg(sdata, "TDLS channel switch unsupported by %pM\n",
 			 addr);
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		goto out;
 	}
 
 	skb = ieee80211_tdls_ch_sw_tmpl_get(sta, oper_class, chandef,
 					    &ch_sw_tm_ie);
 	if (!skb) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1699,7 +1699,7 @@ ieee80211_process_tdls_channel_switch_resp(struct ieee80211_sub_if_data *sdata,
 	if (skb->len < baselen) {
 		tdls_dbg(sdata, "TDLS channel switch resp too short: %d\n",
 			 skb->len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&local->sta_mtx);
@@ -1707,7 +1707,7 @@ ieee80211_process_tdls_channel_switch_resp(struct ieee80211_sub_if_data *sdata,
 	if (!sta || !test_sta_flag(sta, WLAN_STA_TDLS_PEER_AUTH)) {
 		tdls_dbg(sdata, "TDLS chan switch from non-peer sta %pM\n",
 			 tf->sa);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1723,13 +1723,13 @@ ieee80211_process_tdls_channel_switch_resp(struct ieee80211_sub_if_data *sdata,
 			       NULL, NULL);
 	if (elems.parse_error) {
 		tdls_dbg(sdata, "Invalid IEs in TDLS channel switch resp\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!elems.ch_sw_timing || !elems.lnk_id) {
 		tdls_dbg(sdata, "TDLS channel switch resp - missing IEs\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1738,7 +1738,7 @@ ieee80211_process_tdls_channel_switch_resp(struct ieee80211_sub_if_data *sdata,
 		!memcmp(elems.lnk_id->init_sta, sdata->vif.addr, ETH_ALEN);
 	if (local_initiator == sta->sta.tdls_initiator) {
 		tdls_dbg(sdata, "TDLS chan switch invalid lnk-id initiator\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1748,7 +1748,7 @@ ieee80211_process_tdls_channel_switch_resp(struct ieee80211_sub_if_data *sdata,
 	params.tmpl_skb =
 		ieee80211_tdls_ch_sw_resp_tmpl_get(sta, &params.ch_sw_tm_ie);
 	if (!params.tmpl_skb) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1792,7 +1792,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 	if (skb->len < baselen) {
 		tdls_dbg(sdata, "TDLS channel switch req too short: %d\n",
 			 skb->len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	target_channel = tf->u.chan_switch_req.target_channel;
@@ -1820,7 +1820,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 	if (freq == 0) {
 		tdls_dbg(sdata, "Invalid channel in TDLS chan switch: %d\n",
 			 target_channel);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chan = ieee80211_get_channel(sdata->local->hw.wiphy, freq);
@@ -1828,19 +1828,19 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 		tdls_dbg(sdata,
 			 "Unsupported channel for TDLS chan switch: %d\n",
 			 target_channel);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ieee802_11_parse_elems(tf->u.chan_switch_req.variable,
 			       skb->len - baselen, false, &elems, NULL, NULL);
 	if (elems.parse_error) {
 		tdls_dbg(sdata, "Invalid IEs in TDLS channel switch req\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!elems.ch_sw_timing || !elems.lnk_id) {
 		tdls_dbg(sdata, "TDLS channel switch req - missing IEs\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!elems.sec_chan_offs) {
@@ -1865,7 +1865,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 	if (!cfg80211_reg_can_beacon_relax(sdata->local->hw.wiphy, &chandef,
 					   sdata->wdev.iftype)) {
 		tdls_dbg(sdata, "TDLS chan switch to forbidden channel\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&local->sta_mtx);
@@ -1873,7 +1873,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 	if (!sta || !test_sta_flag(sta, WLAN_STA_TDLS_PEER_AUTH)) {
 		tdls_dbg(sdata, "TDLS chan switch from non-peer sta %pM\n",
 			 tf->sa);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1884,7 +1884,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 		!memcmp(elems.lnk_id->init_sta, sdata->vif.addr, ETH_ALEN);
 	if (local_initiator == sta->sta.tdls_initiator) {
 		tdls_dbg(sdata, "TDLS chan switch invalid lnk-id initiator\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1892,7 +1892,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 	if (!sta->sta.ht_cap.ht_supported && elems.sec_chan_offs &&
 	    elems.sec_chan_offs->sec_chan_offs) {
 		tdls_dbg(sdata, "TDLS chan switch - wide chan unsupported\n");
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		goto out;
 	}
 
@@ -1904,7 +1904,7 @@ ieee80211_process_tdls_channel_switch_req(struct ieee80211_sub_if_data *sdata,
 		ieee80211_tdls_ch_sw_resp_tmpl_get(sta,
 						   &params.ch_sw_tm_ie);
 	if (!params.tmpl_skb) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

@@ -247,7 +247,7 @@ static inline int drv_set_key(struct ieee80211_local *local,
 
 	sdata = get_bss_sdata(sdata);
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_set_key(local, cmd, sdata, sta, key);
 	ret = local->ops->set_key(&local->hw, cmd, &sdata->vif, sta, key);
@@ -286,7 +286,7 @@ static inline int drv_hw_scan(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_hw_scan(local, sdata);
 	ret = local->ops->hw_scan(&local->hw, &sdata->vif, req);
@@ -318,7 +318,7 @@ drv_sched_scan_start(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_sched_scan_start(local, sdata);
 	ret = local->ops->sched_scan_start(&local->hw, &sdata->vif,
@@ -335,7 +335,7 @@ static inline int drv_sched_scan_stop(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_sched_scan_stop(local, sdata);
 	ret = local->ops->sched_scan_stop(&local->hw, &sdata->vif);
@@ -370,7 +370,7 @@ static inline void drv_sw_scan_complete(struct ieee80211_local *local,
 static inline int drv_get_stats(struct ieee80211_local *local,
 				struct ieee80211_low_level_stats *stats)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
@@ -428,7 +428,7 @@ static inline int drv_set_coverage_class(struct ieee80211_local *local,
 	if (local->ops->set_coverage_class)
 		local->ops->set_coverage_class(&local->hw, value);
 	else
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 
 	trace_drv_return_int(local, ret);
 	return ret;
@@ -459,7 +459,7 @@ static inline int drv_sta_add(struct ieee80211_local *local,
 
 	sdata = get_bss_sdata(sdata);
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_sta_add(local, sdata, sta);
 	if (local->ops->sta_add)
@@ -603,7 +603,7 @@ int drv_ampdu_action(struct ieee80211_local *local,
 static inline int drv_get_survey(struct ieee80211_local *local, int idx,
 				struct survey_info *survey)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	trace_drv_get_survey(local, idx, survey);
 
@@ -655,7 +655,7 @@ static inline void drv_channel_switch(struct ieee80211_local *local,
 static inline int drv_set_antenna(struct ieee80211_local *local,
 				  u32 tx_ant, u32 rx_ant)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 	might_sleep();
 	if (local->ops->set_antenna)
 		ret = local->ops->set_antenna(&local->hw, tx_ant, rx_ant);
@@ -666,7 +666,7 @@ static inline int drv_set_antenna(struct ieee80211_local *local,
 static inline int drv_get_antenna(struct ieee80211_local *local,
 				  u32 *tx_ant, u32 *rx_ant)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 	might_sleep();
 	if (local->ops->get_antenna)
 		ret = local->ops->get_antenna(&local->hw, tx_ant, rx_ant);
@@ -710,7 +710,7 @@ drv_cancel_remain_on_channel(struct ieee80211_local *local,
 static inline int drv_set_ringparam(struct ieee80211_local *local,
 				    u32 tx, u32 rx)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	might_sleep();
 
@@ -751,12 +751,12 @@ static inline int drv_set_bitrate_mask(struct ieee80211_local *local,
 				       struct ieee80211_sub_if_data *sdata,
 				       const struct cfg80211_bitrate_mask *mask)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_set_bitrate_mask(local, sdata, mask);
 	if (local->ops->set_bitrate_mask)
@@ -855,7 +855,7 @@ drv_mgd_protect_tdls_discover(struct ieee80211_local *local,
 static inline int drv_add_chanctx(struct ieee80211_local *local,
 				  struct ieee80211_chanctx *ctx)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
@@ -905,7 +905,7 @@ static inline int drv_assign_vif_chanctx(struct ieee80211_local *local,
 	int ret = 0;
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_assign_vif_chanctx(local, sdata, ctx);
 	if (local->ops->assign_vif_chanctx) {
@@ -950,7 +950,7 @@ static inline int drv_start_ap(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_start_ap(local, sdata, &sdata->vif.bss_conf);
 	if (local->ops->start_ap)
@@ -1033,7 +1033,7 @@ drv_pre_channel_switch(struct ieee80211_sub_if_data *sdata,
 	int ret = 0;
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_pre_channel_switch(local, sdata, ch_switch);
 	if (local->ops->pre_channel_switch)
@@ -1050,7 +1050,7 @@ drv_post_channel_switch(struct ieee80211_sub_if_data *sdata)
 	int ret = 0;
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_post_channel_switch(local, sdata);
 	if (local->ops->post_channel_switch)
@@ -1095,7 +1095,7 @@ static inline int drv_join_ibss(struct ieee80211_local *local,
 
 	might_sleep();
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_join_ibss(local, sdata, &sdata->vif.bss_conf);
 	if (local->ops->join_ibss)
@@ -1136,7 +1136,7 @@ static inline int drv_get_txpower(struct ieee80211_local *local,
 	int ret;
 
 	if (!local->ops->get_txpower)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = local->ops->get_txpower(&local->hw, &sdata->vif, dbm);
 	trace_drv_get_txpower(local, sdata, *dbm, ret);
@@ -1155,10 +1155,10 @@ drv_tdls_channel_switch(struct ieee80211_local *local,
 
 	might_sleep();
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!local->ops->tdls_channel_switch)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	trace_drv_tdls_channel_switch(local, sdata, sta, oper_class, chandef);
 	ret = local->ops->tdls_channel_switch(&local->hw, &sdata->vif, sta,
@@ -1234,7 +1234,7 @@ drv_get_ftm_responder_stats(struct ieee80211_local *local,
 			    struct ieee80211_sub_if_data *sdata,
 			    struct cfg80211_ftm_responder_stats *ftm_stats)
 {
-	u32 ret = -EOPNOTSUPP;
+	u32 ret = -ERR(EOPNOTSUPP);
 
 	if (local->ops->get_ftm_responder_stats)
 		ret = local->ops->get_ftm_responder_stats(&local->hw,
@@ -1249,11 +1249,11 @@ static inline int drv_start_pmsr(struct ieee80211_local *local,
 				 struct ieee80211_sub_if_data *sdata,
 				 struct cfg80211_pmsr_request *request)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_start_pmsr(local, sdata);
 
@@ -1316,7 +1316,7 @@ static inline int drv_nan_change_conf(struct ieee80211_local *local,
 	check_sdata_in_driver(sdata);
 
 	if (!local->ops->nan_change_conf)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	trace_drv_nan_change_conf(local, sdata, conf, changes);
 	ret = local->ops->nan_change_conf(&local->hw, &sdata->vif, conf,
@@ -1336,7 +1336,7 @@ static inline int drv_add_nan_func(struct ieee80211_local *local,
 	check_sdata_in_driver(sdata);
 
 	if (!local->ops->add_nan_func)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	trace_drv_add_nan_func(local, sdata, nan_func);
 	ret = local->ops->add_nan_func(&local->hw, &sdata->vif, nan_func);

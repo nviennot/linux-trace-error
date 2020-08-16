@@ -327,7 +327,7 @@ int __init rfkill_handler_init(void)
 		rfkill_master_switch_op = RFKILL_GLOBAL_OP_UNLOCK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_init(&rfkill_op_lock);

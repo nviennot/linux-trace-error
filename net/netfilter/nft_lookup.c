@@ -69,7 +69,7 @@ static int nft_lookup_init(const struct nft_ctx *ctx,
 
 	if (tb[NFTA_LOOKUP_SET] == NULL ||
 	    tb[NFTA_LOOKUP_SREG] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	set = nft_set_lookup_global(ctx->net, ctx->table, tb[NFTA_LOOKUP_SET],
 				    tb[NFTA_LOOKUP_SET_ID], genmask);
@@ -85,20 +85,20 @@ static int nft_lookup_init(const struct nft_ctx *ctx,
 		flags = ntohl(nla_get_be32(tb[NFTA_LOOKUP_FLAGS]));
 
 		if (flags & ~NFT_LOOKUP_F_INV)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (flags & NFT_LOOKUP_F_INV) {
 			if (set->flags & NFT_SET_MAP)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			priv->invert = true;
 		}
 	}
 
 	if (tb[NFTA_LOOKUP_DREG] != NULL) {
 		if (priv->invert)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!(set->flags & NFT_SET_MAP))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		priv->dreg = nft_parse_register(tb[NFTA_LOOKUP_DREG]);
 		err = nft_validate_register_store(ctx, priv->dreg, NULL,
@@ -106,7 +106,7 @@ static int nft_lookup_init(const struct nft_ctx *ctx,
 		if (err < 0)
 			return err;
 	} else if (set->flags & NFT_SET_MAP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->binding.flags = set->flags & NFT_SET_MAP;
 

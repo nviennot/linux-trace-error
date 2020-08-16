@@ -23,9 +23,9 @@ static int ncsi_validate_aen_pkt(struct ncsi_aen_pkt_hdr *h,
 	__be32 *pchecksum;
 
 	if (h->common.revision != NCSI_PKT_REVISION)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ntohs(h->common.length) != payload)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Validate checksum, which might be zeroes if the
 	 * sender doesn't support checksum according to NCSI
@@ -38,7 +38,7 @@ static int ncsi_validate_aen_pkt(struct ncsi_aen_pkt_hdr *h,
 	checksum = ncsi_calculate_checksum((unsigned char *)h,
 					   sizeof(*h) + payload - 4);
 	if (*pchecksum != htonl(checksum))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -59,7 +59,7 @@ static int ncsi_aen_handler_lsc(struct ncsi_dev_priv *ndp,
 	/* Find the NCSI channel */
 	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update the link status */
 	lsc = (struct ncsi_aen_lsc_pkt *)h;
@@ -146,7 +146,7 @@ static int ncsi_aen_handler_cr(struct ncsi_dev_priv *ndp,
 	/* Find the NCSI channel */
 	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irqsave(&nc->lock, flags);
 	if (!list_empty(&nc->link) ||
@@ -180,7 +180,7 @@ static int ncsi_aen_handler_hncdsc(struct ncsi_dev_priv *ndp,
 	/* Find the NCSI channel */
 	ncsi_find_package_and_channel(ndp, h->common.channel, NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irqsave(&nc->lock, flags);
 	ncm = &nc->modes[NCSI_MODE_LINK];
@@ -223,7 +223,7 @@ int ncsi_aen_handler(struct ncsi_dev_priv *ndp, struct sk_buff *skb)
 	if (!nah) {
 		netdev_warn(ndp->ndev.dev, "Invalid AEN (0x%x) received\n",
 			    h->type);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	ret = ncsi_validate_aen_pkt(h, nah->payload);

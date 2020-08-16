@@ -182,7 +182,7 @@ static int usb_stream_hwdep_open(struct snd_hwdep *hw, struct file *file)
 	struct usb_interface *iface;
 	snd_printdd(KERN_DEBUG "%p %p\n", hw, file);
 	if (hw->used >= 2)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!us122l->first)
 		us122l->first = file;
@@ -234,7 +234,7 @@ static int usb_stream_hwdep_mmap(struct snd_hwdep *hw,
 	s = us122l->sk.s;
 	read = offset < s->read_size;
 	if (read && area->vm_flags & VM_WRITE) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out;
 	}
 	snd_printdd(KERN_DEBUG "%lu %u\n", size,
@@ -243,7 +243,7 @@ static int usb_stream_hwdep_mmap(struct snd_hwdep *hw,
 	if (size > PAGE_ALIGN(read ? s->read_size : s->write_size)) {
 		snd_printk(KERN_WARNING "%lu > %u\n", size,
 			   read ? s->read_size : s->write_size);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -373,13 +373,13 @@ static int usb_stream_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 	bool high_speed;
 
 	if (cmd != SNDRV_USB_STREAM_IOCTL_SET_PARAMS)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	if (copy_from_user(&cfg, (void __user *)arg, sizeof(cfg)))
 		return -EFAULT;
 
 	if (cfg.version != USB_STREAM_INTERFACE_VERSION)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	high_speed = us122l->dev->speed == USB_SPEED_HIGH;
 	if ((cfg.sample_rate != 44100 && cfg.sample_rate != 48000  &&
@@ -387,7 +387,7 @@ static int usb_stream_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 	      (cfg.sample_rate != 88200 && cfg.sample_rate != 96000))) ||
 	    cfg.frame_size != 6 ||
 	    cfg.period_frames > 0x3000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cfg.sample_rate) {
 	case 44100:
@@ -403,7 +403,7 @@ static int usb_stream_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 	if (!high_speed)
 		min_period_frames <<= 1;
 	if (cfg.period_frames < min_period_frames)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_power_wait(hw->card, SNDRV_CTL_POWER_D0);
 
@@ -413,7 +413,7 @@ static int usb_stream_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 		us122l->master = file;
 	else if (us122l->master != file) {
 		if (!s || memcmp(&cfg, &s->cfg, sizeof(cfg))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto unlock;
 		}
 		us122l->slave = file;
@@ -422,7 +422,7 @@ static int usb_stream_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 	    s->state == usb_stream_xrun) {
 		us122l_stop(us122l);
 		if (!us122l_start(us122l, cfg.sample_rate, cfg.period_frames))
-			err = -EIO;
+			err = -ERR(EIO);
 		else
 			err = 1;
 	}
@@ -527,7 +527,7 @@ static int usx2y_create_card(struct usb_device *device,
 		if (enable[dev] && !snd_us122l_card_used[dev])
 			break;
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	err = snd_card_new(&intf->dev, index[dev], id[dev], THIS_MODULE,
 			   sizeof(struct us122l), &card);
 	if (err < 0)
@@ -567,7 +567,7 @@ static int us122l_usb_probe(struct usb_interface *intf,
 
 	if (!us122l_create_card(card)) {
 		snd_card_free(card);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = snd_card_register(card);
@@ -592,7 +592,7 @@ static int snd_us122l_probe(struct usb_interface *intf,
 	if (id->driver_info & US122L_FLAG_US144 &&
 			device->speed == USB_SPEED_HIGH) {
 		snd_printk(KERN_ERR "disable ehci-hcd to run US-144 \n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	snd_printdd(KERN_DEBUG"%p:%i\n",

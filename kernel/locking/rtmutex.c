@@ -485,7 +485,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
 		}
 		put_task_struct(task);
 
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 	}
 
 	/*
@@ -599,7 +599,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
 	if (lock == orig_lock || rt_mutex_owner(lock) == top_task) {
 		debug_rt_mutex_deadlock(chwalk, orig_waiter, lock);
 		raw_spin_unlock(&lock->wait_lock);
-		ret = -EDEADLK;
+		ret = -ERR(EDEADLK);
 		goto out_unlock_pi;
 	}
 
@@ -945,7 +945,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
 	 * situation.
 	 */
 	if (owner == task)
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 
 	raw_spin_lock(&task->pi_lock);
 	waiter->task = task;
@@ -1180,9 +1180,9 @@ __rt_mutex_slowlock(struct rt_mutex *lock, int state,
 		if (likely(state == TASK_INTERRUPTIBLE)) {
 			/* Signal pending? */
 			if (signal_pending(current))
-				ret = -EINTR;
+				ret = -ERR(EINTR);
 			if (timeout && !timeout->task)
-				ret = -ETIMEDOUT;
+				ret = -ERR(ETIMEDOUT);
 			if (ret)
 				break;
 		}

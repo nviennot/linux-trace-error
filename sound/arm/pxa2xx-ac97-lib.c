@@ -45,11 +45,11 @@ extern void pxa27x_configure_ac97reset(int reset_gpio, bool to_gpio);
 
 int pxa2xx_ac97_read(int slot, unsigned short reg)
 {
-	int val = -ENODEV;
+	int val = -ERR(ENODEV);
 	volatile u32 *reg_addr;
 
 	if (slot > 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&car_mutex);
 
@@ -70,7 +70,7 @@ int pxa2xx_ac97_read(int slot, unsigned short reg)
 	    !((GSR | gsr_bits) & GSR_SDONE)) {
 		printk(KERN_ERR "%s: read error (ac97_reg=%d GSR=%#lx)\n",
 				__func__, reg, GSR | gsr_bits);
-		val = -ETIMEDOUT;
+		val = -ERR(ETIMEDOUT);
 		goto out;
 	}
 
@@ -107,7 +107,7 @@ int pxa2xx_ac97_write(int slot, unsigned short reg, unsigned short val)
 	    !((GSR | gsr_bits) & GSR_CDONE)) {
 		printk(KERN_ERR "%s: write error (ac97_reg=%d GSR=%#lx)\n",
 				__func__, reg, GSR | gsr_bits);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	mutex_unlock(&car_mutex);

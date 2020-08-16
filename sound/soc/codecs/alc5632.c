@@ -683,7 +683,7 @@ static int alc5632_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	u16 reg;
 
 	if (pll_id < ALC5632_PLL_FR_MCLK || pll_id > ALC5632_PLL_FR_VBCLK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Disable PLL power */
 	snd_soc_component_update_bits(component, ALC5632_PWR_MANAG_ADD2,
@@ -735,11 +735,11 @@ static int alc5632_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!pll_div)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* choose MCLK/BCLK/VBCLK */
 	snd_soc_component_write(component, ALC5632_GPCR2, gbl_clk);
@@ -781,7 +781,7 @@ static int get_coeff(struct snd_soc_component *component, int rate)
 		if (coeff_div[i].fs * rate == alc5632->sysclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -806,7 +806,7 @@ static int alc5632_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		alc5632->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int alc5632_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -824,7 +824,7 @@ static int alc5632_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface = ALC5632_DAI_SDP_SLAVE_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -842,7 +842,7 @@ static int alc5632_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= ALC5632_DAI_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -858,7 +858,7 @@ static int alc5632_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_NB_IF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_write(component, ALC5632_DAI_CONTROL, iface);
@@ -886,7 +886,7 @@ static int alc5632_pcm_hw_params(struct snd_pcm_substream *substream,
 		iface |= ALC5632_DAI_I2S_DL_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface & srate */
@@ -894,7 +894,7 @@ static int alc5632_pcm_hw_params(struct snd_pcm_substream *substream,
 	rate = params_rate(params);
 	coeff = get_coeff(component, rate);
 	if (coeff < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	coeff = coeff_div[coeff].regvalue;
 	snd_soc_component_write(component, ALC5632_DAC_CLK_CTRL1, coeff);
@@ -1057,7 +1057,7 @@ static int alc5632_probe(struct snd_soc_component *component)
 			ARRAY_SIZE(alc5632_vol_snd_controls));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1123,7 +1123,7 @@ static int alc5632_i2c_probe(struct i2c_client *client,
 	if (ret1 != 0 || ret2 != 0) {
 		dev_err(&client->dev,
 		"Failed to read chip ID: ret1=%d, ret2=%d\n", ret1, ret2);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	vid2 >>= 8;
@@ -1131,7 +1131,7 @@ static int alc5632_i2c_probe(struct i2c_client *client,
 	if ((vid1 != 0x10EC) || (vid2 != id->driver_data)) {
 		dev_err(&client->dev,
 		"Device is not a ALC5632: VID1=0x%x, VID2=0x%x\n", vid1, vid2);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = alc5632_reset(alc5632->regmap);
@@ -1146,7 +1146,7 @@ static int alc5632_i2c_probe(struct i2c_client *client,
 		alc5632_dai.name = "alc5632-hifi";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = devm_snd_soc_register_component(&client->dev,

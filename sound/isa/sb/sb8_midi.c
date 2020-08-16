@@ -59,7 +59,7 @@ static int snd_sb8dsp_midi_input_open(struct snd_rawmidi_substream *substream)
 	spin_lock_irqsave(&chip->open_lock, flags);
 	if (chip->open & ~valid_open_flags) {
 		spin_unlock_irqrestore(&chip->open_lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	chip->open |= SB_OPEN_MIDI_INPUT;
 	chip->midi_substream_input = substream;
@@ -86,7 +86,7 @@ static int snd_sb8dsp_midi_output_open(struct snd_rawmidi_substream *substream)
 	spin_lock_irqsave(&chip->open_lock, flags);
 	if (chip->open & ~valid_open_flags) {
 		spin_unlock_irqrestore(&chip->open_lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	chip->open |= SB_OPEN_MIDI_OUTPUT;
 	chip->midi_substream_output = substream;

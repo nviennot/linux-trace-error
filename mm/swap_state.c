@@ -819,7 +819,7 @@ static ssize_t vma_ra_enabled_store(struct kobject *kobj,
 	else if (!strncmp(buf, "false", 5) || !strncmp(buf, "0", 1))
 		enable_vma_readahead = false;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }

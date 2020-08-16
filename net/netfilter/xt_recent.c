@@ -333,29 +333,29 @@ static int recent_mt_check(const struct xt_mtchk_param *par,
 #endif
 	unsigned int nstamp_mask;
 	unsigned int i;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	net_get_random_once(&hash_rnd, sizeof(hash_rnd));
 
 	if (info->check_set & ~XT_RECENT_VALID_FLAGS) {
 		pr_info_ratelimited("Unsupported userspace flags (%08x)\n",
 				    info->check_set);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (hweight8(info->check_set &
 		     (XT_RECENT_SET | XT_RECENT_REMOVE |
 		      XT_RECENT_CHECK | XT_RECENT_UPDATE)) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((info->check_set & (XT_RECENT_SET | XT_RECENT_REMOVE)) &&
 	    (info->seconds || info->hit_count ||
 	    (info->check_set & XT_RECENT_MODIFIERS)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((info->check_set & XT_RECENT_REAP) && !info->seconds)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->hit_count >= XT_RECENT_MAX_NSTAMPS) {
 		pr_info_ratelimited("hitcount (%u) is larger than allowed maximum (%u)\n",
 				    info->hit_count, XT_RECENT_MAX_NSTAMPS - 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ret = xt_check_proc_name(info->name, sizeof(info->name));
 	if (ret)
@@ -401,7 +401,7 @@ static int recent_mt_check(const struct xt_mtchk_param *par,
 	gid = make_kgid(&init_user_ns, ip_list_gid);
 	if (!uid_valid(uid) || !gid_valid(gid)) {
 		recent_table_free(t);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	pde = proc_create_data(t->name, ip_list_perms, recent_net->xt_recent,
@@ -568,7 +568,7 @@ recent_mt_proc_write(struct file *file, const char __user *input,
 
 	/* Strict protocol! */
 	if (*loff != 0)
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 	switch (*c) {
 	case '/': /* flush table */
 		spin_lock_bh(&recent_lock);
@@ -583,7 +583,7 @@ recent_mt_proc_write(struct file *file, const char __user *input,
 		break;
 	default:
 		pr_info_ratelimited("Need \"+ip\", \"-ip\" or \"/\"\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	++c;
@@ -597,7 +597,7 @@ recent_mt_proc_write(struct file *file, const char __user *input,
 	}
 
 	if (!succ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&recent_lock);
 	e = recent_entry_lookup(t, &addr, family, 0);
@@ -733,7 +733,7 @@ static int __init recent_mt_init(void)
 	BUILD_BUG_ON_NOT_POWER_OF_2(XT_RECENT_MAX_NSTAMPS);
 
 	if (!ip_list_tot || ip_pkt_list_tot >= XT_RECENT_MAX_NSTAMPS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ip_list_hash_size = 1 << fls(ip_list_tot);
 
 	err = register_pernet_subsys(&recent_net_ops);

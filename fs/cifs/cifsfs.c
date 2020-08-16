@@ -290,7 +290,7 @@ static long cifs_fallocate(struct file *file, int mode, loff_t off, loff_t len)
 	if (server->ops->fallocate)
 		return server->ops->fallocate(file, tcon, mode, off, len);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int cifs_permission(struct inode *inode, int mask)
@@ -301,7 +301,7 @@ static int cifs_permission(struct inode *inode, int mask)
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_PERM) {
 		if ((mask & MAY_EXEC) && !execute_ok(inode))
-			return -EACCES;
+			return -ERR(EACCES);
 		else
 			return 0;
 	} else /* file mode might have been restricted at mount time
@@ -740,7 +740,7 @@ cifs_get_root(struct smb_vol *vol, struct super_block *sb)
 
 		if (!S_ISDIR(dir->i_mode)) {
 			dput(dentry);
-			dentry = ERR_PTR(-ENOTDIR);
+			dentry = ERR_PTR(-ERR(ENOTDIR));
 			break;
 		}
 
@@ -993,7 +993,7 @@ cifs_setlease(struct file *file, long arg, struct file_lock **lease, void **priv
 	struct cifsFileInfo *cfile = file->private_data;
 
 	if (!(S_ISREG(inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check if file is oplocked if this is request for new lease */
 	if (arg == F_UNLCK ||
@@ -1012,7 +1012,7 @@ cifs_setlease(struct file *file, long arg, struct file_lock **lease, void **priv
 		 */
 		return generic_setlease(file, arg, lease, priv);
 	else
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 }
 
 struct file_system_type cifs_fs_type = {
@@ -1078,14 +1078,14 @@ static loff_t cifs_remap_file_range(struct file *src_file, loff_t off,
 	int rc;
 
 	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_dbg(FYI, "clone range\n");
 
 	xid = get_xid();
 
 	if (!src_file->private_data || !dst_file->private_data) {
-		rc = -EBADF;
+		rc = -ERR(EBADF);
 		cifs_dbg(VFS, "missing cifsFileInfo on copy range src file\n");
 		goto out;
 	}
@@ -1112,7 +1112,7 @@ static loff_t cifs_remap_file_range(struct file *src_file, loff_t off,
 		rc = target_tcon->ses->server->ops->duplicate_extents(xid,
 			smb_file_src, smb_file_target, off, len, destoff);
 	else
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 
 	/* force revalidate of size and timestamps of target file now
 	   that target is updated on the server */
@@ -1141,12 +1141,12 @@ ssize_t cifs_file_copychunk_range(unsigned int xid,
 	cifs_dbg(FYI, "copychunk range\n");
 
 	if (!src_file->private_data || !dst_file->private_data) {
-		rc = -EBADF;
+		rc = -ERR(EBADF);
 		cifs_dbg(VFS, "missing cifsFileInfo on copy range src file\n");
 		goto out;
 	}
 
-	rc = -EXDEV;
+	rc = -ERR(EXDEV);
 	smb_file_target = dst_file->private_data;
 	smb_file_src = src_file->private_data;
 	src_tcon = tlink_tcon(smb_file_src->tlink);
@@ -1157,7 +1157,7 @@ ssize_t cifs_file_copychunk_range(unsigned int xid,
 		goto out;
 	}
 
-	rc = -EOPNOTSUPP;
+	rc = -ERR(EOPNOTSUPP);
 	if (!target_tcon->ses->server->ops->copychunk_range)
 		goto out;
 
@@ -1213,7 +1213,7 @@ static ssize_t cifs_copy_file_range(struct file *src_file, loff_t off,
 	struct cifsFileInfo *cfile = dst_file->private_data;
 
 	if (cfile->swapfile)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	rc = cifs_file_copychunk_range(xid, src_file, off, dst_file, destoff,
 					len, flags);

@@ -35,7 +35,7 @@ int __init tfrc_tx_packet_history_init(void)
 	tfrc_tx_hist_slab = kmem_cache_create("tfrc_tx_hist",
 					      sizeof(struct tfrc_tx_hist_entry),
 					      0, SLAB_HWCACHE_ALIGN, NULL);
-	return tfrc_tx_hist_slab == NULL ? -ENOBUFS : 0;
+	return tfrc_tx_hist_slab == NULL ? -ERR(ENOBUFS) : 0;
 }
 
 void tfrc_tx_packet_history_exit(void)
@@ -51,7 +51,7 @@ int tfrc_tx_hist_add(struct tfrc_tx_hist_entry **headp, u64 seqno)
 	struct tfrc_tx_hist_entry *entry = kmem_cache_alloc(tfrc_tx_hist_slab, gfp_any());
 
 	if (entry == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	entry->seqno = seqno;
 	entry->stamp = ktime_get_real();
 	entry->next  = *headp;
@@ -83,7 +83,7 @@ int __init tfrc_rx_packet_history_init(void)
 	tfrc_rx_hist_slab = kmem_cache_create("tfrc_rxh_cache",
 					      sizeof(struct tfrc_rx_hist_entry),
 					      0, SLAB_HWCACHE_ALIGN, NULL);
-	return tfrc_rx_hist_slab == NULL ? -ENOBUFS : 0;
+	return tfrc_rx_hist_slab == NULL ? -ERR(ENOBUFS) : 0;
 }
 
 void tfrc_rx_packet_history_exit(void)
@@ -349,7 +349,7 @@ out_free:
 		kmem_cache_free(tfrc_rx_hist_slab, h->ring[i]);
 		h->ring[i] = NULL;
 	}
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 void tfrc_rx_hist_purge(struct tfrc_rx_hist *h)

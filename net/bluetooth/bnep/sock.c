@@ -64,7 +64,7 @@ static int do_bnep_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 	switch (cmd) {
 	case BNEPCONNADD:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&ca, argp, sizeof(ca)))
 			return -EFAULT;
@@ -75,7 +75,7 @@ static int do_bnep_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 
 		if (nsock->sk->sk_state != BT_CONNECTED) {
 			sockfd_put(nsock);
-			return -EBADFD;
+			return -ERR(EBADFD);
 		}
 		ca.device[sizeof(ca.device)-1] = 0;
 
@@ -90,7 +90,7 @@ static int do_bnep_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 
 	case BNEPCONNDEL:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&cd, argp, sizeof(cd)))
 			return -EFAULT;
@@ -102,7 +102,7 @@ static int do_bnep_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 			return -EFAULT;
 
 		if (cl.cnum <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = bnep_get_connlist(&cl);
 		if (!err && copy_to_user(argp, &cl, sizeof(cl)))
@@ -127,7 +127,7 @@ static int do_bnep_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -154,7 +154,7 @@ static int bnep_sock_compat_ioctl(struct socket *sock, unsigned int cmd, unsigne
 		cl.ci = compat_ptr(uci);
 
 		if (cl.cnum <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = bnep_get_connlist(&cl);
 
@@ -204,7 +204,7 @@ static int bnep_sock_create(struct net *net, struct socket *sock, int protocol,
 	BT_DBG("sock %p", sock);
 
 	if (sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sk = sk_alloc(net, PF_BLUETOOTH, GFP_ATOMIC, &bnep_proto, kern);
 	if (!sk)

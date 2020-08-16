@@ -79,7 +79,7 @@ int sidtab_set_initial(struct sidtab *s, u32 sid, struct context *context)
 	int rc;
 
 	if (sid == 0 || sid > SECINITSID_NUM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	isid = &s->isids[sid - 1];
 
@@ -285,7 +285,7 @@ int sidtab_context_to_sid(struct sidtab *s, struct context *context,
 	convert = s->convert;
 
 	/* bail out if we already reached max entries */
-	rc = -EOVERFLOW;
+	rc = -ERR(EOVERFLOW);
 	if (count >= SIDTAB_MAX)
 		goto out_unlock;
 
@@ -416,7 +416,7 @@ int sidtab_convert(struct sidtab *s, struct sidtab_convert_params *params)
 	/* concurrent policy loads are not allowed */
 	if (s->convert) {
 		spin_unlock_irqrestore(&s->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	count = s->count;
@@ -571,13 +571,13 @@ int sidtab_sid2str_get(struct sidtab *s, struct sidtab_entry *entry,
 	int rc = 0;
 
 	if (entry->context.len)
-		return -ENOENT; /* do not cache invalid contexts */
+		return -ERR(ENOENT); /* do not cache invalid contexts */
 
 	rcu_read_lock();
 
 	cache = rcu_dereference(entry->cache);
 	if (!cache) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 	} else {
 		*out_len = cache->len;
 		if (out) {

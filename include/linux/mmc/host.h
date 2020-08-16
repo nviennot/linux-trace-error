@@ -539,7 +539,7 @@ static inline int mmc_regulator_set_ocr(struct mmc_host *mmc,
 static inline int mmc_regulator_set_vqmmc(struct mmc_host *mmc,
 					  struct mmc_ios *ios)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

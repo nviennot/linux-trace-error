@@ -585,7 +585,7 @@ batadv_recv_handler_register(u8 packet_type,
 
 	if (curr != batadv_recv_unhandled_packet &&
 	    curr != batadv_recv_unhandled_unicast_packet)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	batadv_rx_handler[packet_type] = recv_handler;
 	return 0;

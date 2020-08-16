@@ -101,7 +101,7 @@ static int stm32_sai_sync_conf_provider(struct stm32_sai_data *sai, int synco)
 			sai->pdev->dev.of_node,
 			prev_synco == STM_SAI_SYNC_OUT_A ? "A" : "B");
 		stm32_sai_pclk_disable(&sai->pdev->dev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel_relaxed(FIELD_PREP(SAI_GCR_SYNCOUT_MASK, synco), sai->base);
@@ -123,14 +123,14 @@ static int stm32_sai_set_sync(struct stm32_sai_data *sai_client,
 		dev_err(&sai_client->pdev->dev,
 			"Device not found for node %pOFn\n", np_provider);
 		of_node_put(np_provider);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sai_provider = platform_get_drvdata(pdev);
 	if (!sai_provider) {
 		dev_err(&sai_client->pdev->dev,
 			"SAI sync provider data not found\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -169,7 +169,7 @@ static int stm32_sai_probe(struct platform_device *pdev)
 		memcpy(&sai->conf, (const struct stm32_sai_conf *)of_id->data,
 		       sizeof(struct stm32_sai_conf));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!STM_SAI_IS_F4(sai)) {
 		sai->pclk = devm_clk_get(&pdev->dev, "pclk");

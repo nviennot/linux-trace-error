@@ -26,7 +26,7 @@ int snd_soc_component_set_sysclk(struct snd_soc_component *component,
 		return component->driver->set_sysclk(component, clk_id, source,
 						     freq, dir);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 EXPORT_SYMBOL_GPL(snd_soc_component_set_sysclk);
 
@@ -48,7 +48,7 @@ int snd_soc_component_set_pll(struct snd_soc_component *component, int pll_id,
 		return component->driver->set_pll(component, pll_id, source,
 						  freq_in, freq_out);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(snd_soc_component_set_pll);
 
@@ -290,7 +290,7 @@ int snd_soc_component_set_jack(struct snd_soc_component *component,
 	if (component->driver->set_jack)
 		return component->driver->set_jack(component, jack, data);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 EXPORT_SYMBOL_GPL(snd_soc_component_set_jack);
 
@@ -299,7 +299,7 @@ int snd_soc_component_module_get(struct snd_soc_component *component,
 {
 	if (component->driver->module_get_upon_open == !!upon_open &&
 	    !try_module_get(component->dev->driver->owner))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -401,7 +401,7 @@ int snd_soc_component_of_xlate_dai_id(struct snd_soc_component *component,
 	if (component->driver->of_xlate_dai_id)
 		return component->driver->of_xlate_dai_id(component, ep);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 int snd_soc_component_of_xlate_dai_name(struct snd_soc_component *component,
@@ -411,7 +411,7 @@ int snd_soc_component_of_xlate_dai_name(struct snd_soc_component *component,
 	if (component->driver->of_xlate_dai_name)
 		return component->driver->of_xlate_dai_name(component,
 						     args, dai_name);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 int snd_soc_pcm_component_pointer(struct snd_pcm_substream *substream)
@@ -476,7 +476,7 @@ int snd_soc_pcm_component_copy_user(struct snd_pcm_substream *substream,
 			return component->driver->copy_user(
 				component, substream, channel, pos, buf, bytes);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct page *snd_soc_pcm_component_page(struct snd_pcm_substream *substream,
@@ -513,7 +513,7 @@ int snd_soc_pcm_component_mmap(struct snd_pcm_substream *substream,
 			return component->driver->mmap(component,
 						       substream, vma);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int snd_soc_pcm_component_new(struct snd_soc_pcm_runtime *rtd)

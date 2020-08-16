@@ -96,12 +96,12 @@ int devm_hwspin_lock_register(struct device *dev,
  */
 static inline struct hwspinlock *hwspin_lock_request(void)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct hwspinlock *hwspin_lock_request_specific(unsigned int id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline int hwspin_lock_free(struct hwspinlock *hwlock)
@@ -151,14 +151,14 @@ int devm_hwspin_lock_free(struct device *dev, struct hwspinlock *hwlock)
 
 static inline struct hwspinlock *devm_hwspin_lock_request(struct device *dev)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline
 struct hwspinlock *devm_hwspin_lock_request_specific(struct device *dev,
 						     unsigned int id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 #endif /* !CONFIG_HWSPINLOCK */

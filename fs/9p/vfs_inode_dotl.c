@@ -901,7 +901,7 @@ v9fs_vfs_get_link_dotl(struct dentry *dentry,
 	int retval;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	p9_debug(P9_DEBUG_VFS, "%pd\n", dentry);
 

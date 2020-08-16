@@ -515,7 +515,7 @@ static struct nft_pipapo_elem *pipapo_get(const struct net *net,
 					  const struct nft_set *set,
 					  const u8 *data, u8 genmask)
 {
-	struct nft_pipapo_elem *ret = ERR_PTR(-ENOENT);
+	struct nft_pipapo_elem *ret = ERR_PTR(-ERR(ENOENT));
 	struct nft_pipapo *priv = nft_set_priv(set);
 	struct nft_pipapo_match *m = priv->clone;
 	unsigned long *res_map, *fill_map = NULL;
@@ -1183,10 +1183,10 @@ static int nft_pipapo_insert(const struct net *net, const struct nft_set *set,
 		if (!memcmp(start, dup_key->data, sizeof(*dup_key->data)) &&
 		    !memcmp(end, dup_end->data, sizeof(*dup_end->data))) {
 			*ext2 = &dup->ext;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 	}
 
 	if (PTR_ERR(dup) == -ENOENT) {
@@ -1198,7 +1198,7 @@ static int nft_pipapo_insert(const struct net *net, const struct nft_set *set,
 		if (IS_ERR(dup))
 			return PTR_ERR(dup);
 		*ext2 = &dup->ext;
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 	}
 
 	/* Validate */
@@ -1206,11 +1206,11 @@ static int nft_pipapo_insert(const struct net *net, const struct nft_set *set,
 		const u8 *start_p = start, *end_p = end;
 
 		if (f->rules >= (unsigned long)NFT_PIPAPO_RULE0_MAX)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 		if (memcmp(start_p, end_p,
 			   f->groups / NFT_PIPAPO_GROUPS_PER_BYTE(f)) > 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		start_p += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);
 		end_p += NFT_PIPAPO_GROUPS_PADDED_SIZE(f);

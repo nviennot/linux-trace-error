@@ -1234,7 +1234,7 @@ static int chipio_send(struct hda_codec *codec,
 		msleep(20);
 	} while (time_before(jiffies, timeout));
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -1283,7 +1283,7 @@ static int chipio_write_data(struct hda_codec *codec, unsigned int data)
 
 	/*If no error encountered, automatically increment the address
 	as per chip behaviour*/
-	spec->curr_chip_addx = (res != -EIO) ?
+	spec->curr_chip_addx = (res != -ERR(EIO)) ?
 					(spec->curr_chip_addx + 4) : ~0U;
 	return res;
 }
@@ -1299,7 +1299,7 @@ static int chipio_write_data_multiple(struct hda_codec *codec,
 
 	if (data == NULL) {
 		codec_dbg(codec, "chipio_write_data null ptr\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	while ((count-- != 0) && (status == 0))
@@ -1334,7 +1334,7 @@ static int chipio_read_data(struct hda_codec *codec, unsigned int *data)
 
 	/*If no error encountered, automatically increment the address
 	as per chip behaviour*/
-	spec->curr_chip_addx = (res != -EIO) ?
+	spec->curr_chip_addx = (res != -ERR(EIO)) ?
 					(spec->curr_chip_addx + 4) : ~0U;
 	return res;
 }
@@ -1621,7 +1621,7 @@ static int dspio_send(struct hda_codec *codec, unsigned int reg,
 		msleep(20);
 	} while (time_before(jiffies, timeout));
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -1670,7 +1670,7 @@ error:
 	mutex_unlock(&spec->chipio_mutex);
 
 	return (status == VENDOR_STATUS_DSPIO_SCP_COMMAND_QUEUE_FULL) ?
-			-EIO : 0;
+			-ERR(EIO) : 0;
 }
 
 /*
@@ -1683,7 +1683,7 @@ static int dspio_write_multiple(struct hda_codec *codec,
 	unsigned int count;
 
 	if (buffer == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	count = 0;
 	while (count < size) {
@@ -1707,7 +1707,7 @@ static int dspio_read(struct hda_codec *codec, unsigned int *data)
 	status = dspio_send(codec, VENDOR_DSPIO_STATUS, 0);
 	if (status == -EIO ||
 	    status == VENDOR_STATUS_DSPIO_SCP_RESPONSE_QUEUE_EMPTY)
-		return -EIO;
+		return -ERR(EIO);
 
 	*data = snd_hda_codec_read(codec, WIDGET_DSP_CTRL, 0,
 				   VENDOR_DSPIO_SCP_READ_DATA, 0);
@@ -1827,7 +1827,7 @@ static int dspio_get_response_data(struct hda_codec *codec)
 	unsigned int count;
 
 	if (dspio_read(codec, &data) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if ((data & 0x00ffffff) == spec->wait_scp_header) {
 		spec->scp_resp_header = data;
@@ -1838,7 +1838,7 @@ static int dspio_get_response_data(struct hda_codec *codec)
 		return 0;
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -1872,11 +1872,11 @@ static int dspio_send_scp_message(struct hda_codec *codec,
 	total_size = (scp_send_size * 4);
 
 	if (send_buf_size < total_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_flag || device_flag) {
 		if (!return_buf || return_buf_size < 4 || !bytes_returned)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		spec->wait_scp_header = *((unsigned int *)send_buf);
 
@@ -1912,7 +1912,7 @@ static int dspio_send_scp_message(struct hda_codec *codec,
 			*bytes_returned = (spec->scp_resp_count + 1) * 4;
 			status = 0;
 		} else {
-			status = -EIO;
+			status = -ERR(EIO);
 		}
 		spec->wait_scp = 0;
 	}
@@ -1948,16 +1948,16 @@ static int dspio_scp(struct hda_codec *codec,
 	memset(&scp_reply, 0, sizeof(scp_reply));
 
 	if ((len != 0 && data == NULL) || (len > SCP_MAX_DATA_WORDS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dir == SCP_GET && reply == NULL) {
 		codec_dbg(codec, "dspio_scp get but has no buffer\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (reply != NULL && (reply_len == NULL || (*reply_len == 0))) {
 		codec_dbg(codec, "dspio_scp bad resp buf len parms\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	scp_send.hdr = make_scp_header(mod_id, src_id, (dir == SCP_GET), req,
@@ -1994,20 +1994,20 @@ static int dspio_scp(struct hda_codec *codec,
 
 		if (*reply_len < ret_size*sizeof(unsigned int)) {
 			codec_dbg(codec, "reply too long for buf\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (ret_size != reply_data_size) {
 			codec_dbg(codec, "RetLen and HdrLen .NE.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (!reply) {
 			codec_dbg(codec, "NULL reply\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else {
 			*reply_len = ret_size*sizeof(unsigned int);
 			memcpy(reply, scp_reply.data, *reply_len);
 		}
 	} else {
 		codec_dbg(codec, "reply ill-formed or errflag set\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return status;
@@ -2057,7 +2057,7 @@ static int dspio_alloc_dma_chan(struct hda_codec *codec, unsigned int *dma_chan)
 
 	if ((*dma_chan + 1) == 0) {
 		codec_dbg(codec, "no free dma channels to allocate\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	codec_dbg(codec, "dspio_alloc_dma_chan: chan=%d\n", *dma_chan);
@@ -2142,7 +2142,7 @@ static int dsp_reset(struct hda_codec *codec)
 
 	if (!retry) {
 		codec_dbg(codec, "dsp_reset timeout\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -2198,19 +2198,19 @@ static int dsp_dma_setup_common(struct hda_codec *codec,
 
 	if (dma_chan >= DSPDMAC_DMA_CFG_CHANNEL_COUNT) {
 		codec_dbg(codec, "dma chan num invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dsp_is_dma_active(codec, dma_chan)) {
 		codec_dbg(codec, "dma already active\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	dsp_addx = dsp_chip_to_dsp_addx(chip_addx, &code, &yram);
 
 	if (dsp_addx == INVALID_CHIP_ADDRESS) {
 		codec_dbg(codec, "invalid chip addr\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chnl_prop = DSPDMAC_CHNLPROP_AC_MASK;
@@ -2317,13 +2317,13 @@ static int dsp_dma_setup(struct hda_codec *codec,
 
 	if (count > max_dma_count) {
 		codec_dbg(codec, "count too big\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dsp_addx = dsp_chip_to_dsp_addx(chip_addx, &code, &yram);
 	if (dsp_addx == INVALID_CHIP_ADDRESS) {
 		codec_dbg(codec, "invalid chip addr\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	codec_dbg(codec, "   dsp_dma_setup()    start reg pgm\n");
@@ -2536,7 +2536,7 @@ static int dsp_allocate_ports(struct hda_codec *codec,
 
 	if ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) {
 		codec_dbg(codec, "bad rate multiple\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	status = dsp_allocate_router_ports(codec, num_chans,
@@ -2560,7 +2560,7 @@ static int dsp_allocate_ports_format(struct hda_codec *codec,
 
 	if ((rate_multi != 1) && (rate_multi != 2) && (rate_multi != 4)) {
 		codec_dbg(codec, "bad rate multiple\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	num_chans = get_hdafmt_chs(fmt) + 1;
@@ -2750,7 +2750,7 @@ static int dspxfr_hci_write(struct hda_codec *codec,
 
 	if (fls == NULL || fls->chip_addr != g_chip_addr_magic_value) {
 		codec_dbg(codec, "hci_write invalid params\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	count = fls->count;
@@ -2811,7 +2811,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 	bool dma_active;
 
 	if (fls == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (is_hci_prog_list_seg(fls)) {
 		hci_write = fls;
 		fls = get_next_seg_ptr(fls);
@@ -2824,7 +2824,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 
 	if (fls == NULL || dma_engine == NULL || port_map_mask == 0) {
 		codec_dbg(codec, "Invalid Params\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	data = fls->data;
@@ -2840,7 +2840,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 	    !X_RANGE_ALL(chip_addx, words_to_write) &&
 	    !Y_RANGE_ALL(chip_addx, words_to_write)) {
 		codec_dbg(codec, "Invalid chip_addx Params\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	buffer_size_words = (unsigned int)dma_get_buffer_size(dma_engine) /
@@ -2850,7 +2850,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 
 	if (buffer_addx == NULL) {
 		codec_dbg(codec, "dma_engine buffer NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma_get_converter_format(dma_engine, &hda_format);
@@ -2863,7 +2863,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 
 	if (hda_frame_size_words == 0) {
 		codec_dbg(codec, "frmsz zero\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	buffer_size_words = min(buffer_size_words,
@@ -2878,7 +2878,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 
 	if (buffer_size_words < hda_frame_size_words) {
 		codec_dbg(codec, "dspxfr_one_seg:failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	remainder_words = words_to_write % hda_frame_size_words;
@@ -2914,7 +2914,7 @@ static int dspxfr_one_seg(struct hda_codec *codec,
 			return status;
 		if (!dsp_is_dma_active(codec, dma_chan)) {
 			codec_dbg(codec, "dspxfr:DMA did not start\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		status = dma_set_state(dma_engine, DMA_STATE_RUN);
 		if (status < 0)
@@ -2995,7 +2995,7 @@ static int dspxfr_image(struct hda_codec *codec,
 	unsigned int port_map_mask;
 
 	if (fls_data == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dma_engine = kzalloc(sizeof(*dma_engine), GFP_KERNEL);
 	if (!dma_engine)
@@ -3059,7 +3059,7 @@ static int dspxfr_image(struct hda_codec *codec,
 	while ((fls_data != NULL) && !is_last(fls_data)) {
 		if (!is_valid(fls_data)) {
 			codec_dbg(codec, "FLS check fail\n");
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			goto exit;
 		}
 		status = dspxfr_one_seg(codec, fls_data, reloc,

@@ -31,7 +31,7 @@ static inline int proto_ports_offset(int proto)
 	case IPPROTO_AH:	/* SPI */
 		return 4;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

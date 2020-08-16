@@ -505,7 +505,7 @@ static int snd_als300_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	default:
 		snd_als300_dbgplay("TRIGGER INVALID\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->reg_lock);
 	return ret;
@@ -629,7 +629,7 @@ static int snd_als300_create(struct snd_card *card,
 		dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(28)) < 0) {
 		dev_err(card->dev, "error setting 28bit DMA mask\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	pci_set_master(pci);
 
@@ -661,7 +661,7 @@ static int snd_als300_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_als300_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -729,10 +729,10 @@ static int snd_als300_probe(struct pci_dev *pci,
 	int err, chip_type;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

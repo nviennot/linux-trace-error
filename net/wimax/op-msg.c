@@ -218,7 +218,7 @@ ssize_t wimax_msg_len(struct sk_buff *msg)
 			      WIMAX_GNL_MSG_DATA);
 	if (nla == NULL) {
 		pr_err("Cannot find attribute WIMAX_GNL_MSG_DATA\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return nla_len(nla);
 }
@@ -326,7 +326,7 @@ int wimax_gnl_doit_msg_from_user(struct sk_buff *skb, struct genl_info *info)
 
 	might_sleep();
 	d_fnstart(3, NULL, "(skb %p info %p)\n", skb, info);
-	result = -ENODEV;
+	result = -ERR(ENODEV);
 	if (info->attrs[WIMAX_GNL_MSG_IFIDX] == NULL) {
 		pr_err("WIMAX_GNL_MSG_FROM_USER: can't find IFIDX attribute\n");
 		goto error_no_wimax_dev;
@@ -338,7 +338,7 @@ int wimax_gnl_doit_msg_from_user(struct sk_buff *skb, struct genl_info *info)
 	dev = wimax_dev_to_dev(wimax_dev);
 
 	/* Unpack arguments */
-	result = -EINVAL;
+	result = -ERR(EINVAL);
 	if (info->attrs[WIMAX_GNL_MSG_DATA] == NULL) {
 		dev_err(dev, "WIMAX_GNL_MSG_FROM_USER: can't find MSG_DATA "
 			"attribute\n");
@@ -365,7 +365,7 @@ int wimax_gnl_doit_msg_from_user(struct sk_buff *skb, struct genl_info *info)
 		result = 0;
 	if (result < 0)
 		goto error_not_ready;
-	result = -ENOSYS;
+	result = -ERR(ENOSYS);
 	if (wimax_dev->op_msg_from_user == NULL)
 		goto error_noop;
 

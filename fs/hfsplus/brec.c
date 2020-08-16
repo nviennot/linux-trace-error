@@ -280,7 +280,7 @@ static struct hfs_bnode *hfs_bnode_split(struct hfs_find_data *fd)
 		hfs_bnode_put(new_node);
 		if (next_node)
 			hfs_bnode_put(next_node);
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 	}
 
 	if (fd->record + 1 < num_recs) {
@@ -373,7 +373,7 @@ again:
 		return PTR_ERR(parent);
 	__hfs_brec_find(parent, fd, hfs_find_rec_by_key);
 	if (fd->record < 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hfs_bnode_dump(parent);
 	rec = fd->record;
 

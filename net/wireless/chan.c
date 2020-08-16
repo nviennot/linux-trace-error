@@ -427,7 +427,7 @@ static int cfg80211_get_chans_dfs_required(struct wiphy *wiphy,
 	for (freq = start_freq; freq <= end_freq; freq += MHZ_TO_KHZ(20)) {
 		c = ieee80211_get_channel_khz(wiphy, freq);
 		if (!c)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (c->flags & IEEE80211_CHAN_RADAR)
 			return 1;
@@ -444,7 +444,7 @@ int cfg80211_chandef_dfs_required(struct wiphy *wiphy,
 	int ret;
 
 	if (WARN_ON(!cfg80211_chandef_valid(chandef)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (iftype) {
 	case NL80211_IFTYPE_ADHOC:
@@ -453,7 +453,7 @@ int cfg80211_chandef_dfs_required(struct wiphy *wiphy,
 	case NL80211_IFTYPE_MESH_POINT:
 		width = cfg80211_chandef_get_width(chandef);
 		if (width < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = cfg80211_get_chans_dfs_required(wiphy,
 					ieee80211_chandef_to_khz(chandef),
@@ -513,14 +513,14 @@ static int cfg80211_get_chans_dfs_usable(struct wiphy *wiphy,
 	for (freq = start_freq; freq <= end_freq; freq += MHZ_TO_KHZ(20)) {
 		c = ieee80211_get_channel_khz(wiphy, freq);
 		if (!c)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (c->flags & IEEE80211_CHAN_DISABLED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (c->flags & IEEE80211_CHAN_RADAR) {
 			if (c->dfs_state == NL80211_DFS_UNAVAILABLE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (c->dfs_state == NL80211_DFS_USABLE)
 				count++;
@@ -1166,9 +1166,9 @@ int cfg80211_set_monitor_channel(struct cfg80211_registered_device *rdev,
 				 struct cfg80211_chan_def *chandef)
 {
 	if (!rdev->ops->set_monitor_channel)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!cfg80211_has_monitors_only(rdev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return rdev_set_monitor_channel(rdev, chandef);
 }

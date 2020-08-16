@@ -83,7 +83,7 @@ static int rxkad_init_connection_security(struct rxrpc_connection *conn)
 		conn->security_size = sizeof(struct rxkad_level2_hdr);
 		break;
 	default:
-		ret = -EKEYREJECTED;
+		ret = -ERR(EKEYREJECTED);
 		goto error;
 	}
 
@@ -248,7 +248,7 @@ static int rxkad_secure_packet_encrypt(const struct rxrpc_call *call,
 	crypto_skcipher_encrypt(req);
 
 	/* we want to encrypt the skbuff in-place */
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 	if (skb_shinfo(skb)->nr_frags > 16)
 		goto out;
 
@@ -337,7 +337,7 @@ static int rxkad_secure_packet(struct rxrpc_call *call,
 						  sechdr, req);
 		break;
 	default:
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		break;
 	}
 
@@ -419,7 +419,7 @@ static int rxkad_verify_packet_1(struct rxrpc_call *call, struct sk_buff *skb,
 protocol_error:
 	if (aborted)
 		rxrpc_send_abort_packet(call);
-	return -EPROTO;
+	return -ERR(EPROTO);
 }
 
 /*
@@ -513,7 +513,7 @@ static int rxkad_verify_packet_2(struct rxrpc_call *call, struct sk_buff *skb,
 protocol_error:
 	if (aborted)
 		rxrpc_send_abort_packet(call);
-	return -EPROTO;
+	return -ERR(EPROTO);
 
 nomem:
 	_leave(" = -ENOMEM");
@@ -580,13 +580,13 @@ static int rxkad_verify_packet(struct rxrpc_call *call, struct sk_buff *skb,
 	case RXRPC_SECURITY_ENCRYPT:
 		return rxkad_verify_packet_2(call, skb, offset, len, seq, req);
 	default:
-		return -ENOANO;
+		return -ERR(ENOANO);
 	}
 
 protocol_error:
 	if (aborted)
 		rxrpc_send_abort_packet(call);
-	return -EPROTO;
+	return -ERR(EPROTO);
 }
 
 /*
@@ -693,7 +693,7 @@ static int rxkad_issue_challenge(struct rxrpc_connection *conn)
 	if (ret < 0) {
 		trace_rxrpc_tx_fail(conn->debug_id, serial, ret,
 				    rxrpc_tx_point_rxkad_challenge);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	conn->params.peer->last_tx_at = ktime_get_seconds();
@@ -751,7 +751,7 @@ static int rxkad_send_response(struct rxrpc_connection *conn,
 	if (ret < 0) {
 		trace_rxrpc_tx_fail(conn->debug_id, serial, ret,
 				    rxrpc_tx_point_rxkad_response);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	conn->params.peer->last_tx_at = ktime_get_seconds();
@@ -848,7 +848,7 @@ static int rxkad_respond_to_challenge(struct rxrpc_connection *conn,
 		goto protocol_error;
 
 	abort_code = RXKADLEVELFAIL;
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 	if (conn->params.security_level < min_level)
 		goto other_error;
 
@@ -882,7 +882,7 @@ static int rxkad_respond_to_challenge(struct rxrpc_connection *conn,
 
 protocol_error:
 	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
-	ret = -EPROTO;
+	ret = -ERR(EPROTO);
 other_error:
 	*_abort_code = abort_code;
 	return ret;
@@ -1014,13 +1014,13 @@ static int rxkad_decrypt_ticket(struct rxrpc_connection *conn,
 	/* check the ticket is in date */
 	if (issue > now) {
 		abort_code = RXKADNOAUTH;
-		ret = -EKEYREJECTED;
+		ret = -ERR(EKEYREJECTED);
 		goto other_error;
 	}
 
 	if (issue < now - life) {
 		abort_code = RXKADEXPIRED;
-		ret = -EKEYEXPIRED;
+		ret = -ERR(EKEYEXPIRED);
 		goto other_error;
 	}
 
@@ -1038,7 +1038,7 @@ static int rxkad_decrypt_ticket(struct rxrpc_connection *conn,
 bad_ticket:
 	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
 	abort_code = RXKADBADTICKET;
-	ret = -EPROTO;
+	ret = -ERR(EPROTO);
 other_error:
 	*_abort_code = abort_code;
 	return ret;
@@ -1226,7 +1226,7 @@ protocol_error:
 	kfree(response);
 	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial, eproto);
 	*_abort_code = abort_code;
-	return -EPROTO;
+	return -ERR(EPROTO);
 
 temporary_error_free_ticket:
 	kfree(ticket);

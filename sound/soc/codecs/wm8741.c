@@ -201,7 +201,7 @@ static int wm8741_hw_params(struct snd_pcm_substream *substream,
 	if (!wm8741->sysclk) {
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init or in hw_params\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Find a supported LRCLK rate */
@@ -213,7 +213,7 @@ static int wm8741_hw_params(struct snd_pcm_substream *substream,
 	if (i == wm8741->sysclk_constraints->count) {
 		dev_err(component->dev, "LRCLK %d unsupported with MCLK %d\n",
 			params_rate(params), wm8741->sysclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* bit size */
@@ -233,7 +233,7 @@ static int wm8741_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_dbg(component->dev, "wm8741_hw_params:    Unsupported bit size param = %d",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* oversampling rate */
@@ -293,7 +293,7 @@ static int wm8741_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8741->sysclk_constraints = &constraints_36864;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8741->sysclk = freq;
@@ -311,7 +311,7 @@ static int wm8741_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -332,7 +332,7 @@ static int wm8741_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface = 0x1C;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -349,7 +349,7 @@ static int wm8741_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x30;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -426,7 +426,7 @@ static int wm8741_configure(struct snd_soc_component *component)
 				wm8741->pdata.diff_mode << WM8741_DIFF_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Change some default settings - latch VU */
@@ -464,7 +464,7 @@ static int wm8741_add_controls(struct snd_soc_component *component)
 				ARRAY_SIZE(wm8741_snd_controls_mono_right));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

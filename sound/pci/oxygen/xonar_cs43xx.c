@@ -435,7 +435,7 @@ int get_xonar_cs43xx_model(struct oxygen *chip,
 		chip->model.init = xonar_dx_init;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

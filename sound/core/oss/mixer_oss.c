@@ -37,10 +37,10 @@ static int snd_mixer_oss_open(struct inode *inode, struct file *file)
 	card = snd_lookup_oss_minor_data(iminor(inode),
 					 SNDRV_OSS_DEVICE_TYPE_MIXER);
 	if (card == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (card->mixer_oss == NULL) {
 		snd_card_unref(card);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	err = snd_card_file_add(card, file);
 	if (err < 0) {
@@ -116,7 +116,7 @@ static int snd_mixer_oss_caps(struct snd_mixer_oss_file *fmixer)
 	int result = 0;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	if (mixer->get_recsrc && mixer->put_recsrc)
 		result |= SOUND_CAP_EXCL_INPUT;
 	return result;
@@ -129,7 +129,7 @@ static int snd_mixer_oss_devmask(struct snd_mixer_oss_file *fmixer)
 	int result = 0, chn;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	for (chn = 0; chn < 31; chn++) {
 		pslot = &mixer->slots[chn];
 		if (pslot->put_volume || pslot->put_recsrc)
@@ -145,7 +145,7 @@ static int snd_mixer_oss_stereodevs(struct snd_mixer_oss_file *fmixer)
 	int result = 0, chn;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	for (chn = 0; chn < 31; chn++) {
 		pslot = &mixer->slots[chn];
 		if (pslot->put_volume && pslot->stereo)
@@ -160,7 +160,7 @@ static int snd_mixer_oss_recmask(struct snd_mixer_oss_file *fmixer)
 	int result = 0;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	if (mixer->put_recsrc && mixer->get_recsrc) {	/* exclusive */
 		result = mixer->mask_recsrc;
 	} else {
@@ -181,7 +181,7 @@ static int snd_mixer_oss_get_recsrc(struct snd_mixer_oss_file *fmixer)
 	int result = 0;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	if (mixer->put_recsrc && mixer->get_recsrc) {	/* exclusive */
 		int err;
 		unsigned int index;
@@ -213,7 +213,7 @@ static int snd_mixer_oss_set_recsrc(struct snd_mixer_oss_file *fmixer, int recsr
 	int result = 0;
 
 	if (mixer == NULL)
-		return -EIO;
+		return -ERR(EIO);
 	if (mixer->get_recsrc && mixer->put_recsrc) {	/* exclusive input */
 		if (recsrc & ~mixer->oss_recsrc)
 			recsrc &= ~mixer->oss_recsrc;
@@ -249,7 +249,7 @@ static int snd_mixer_oss_get_volume(struct snd_mixer_oss_file *fmixer, int slot)
 	int result = 0, left, right;
 
 	if (mixer == NULL || slot > 30)
-		return -EIO;
+		return -ERR(EIO);
 	pslot = &mixer->slots[slot];
 	left = pslot->volume[0];
 	right = pslot->volume[1];
@@ -258,9 +258,9 @@ static int snd_mixer_oss_get_volume(struct snd_mixer_oss_file *fmixer, int slot)
 	if (!pslot->stereo)
 		right = left;
 	if (snd_BUG_ON(left < 0 || left > 100))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_BUG_ON(right < 0 || right > 100))
-		return -EIO;
+		return -ERR(EIO);
 	if (result >= 0) {
 		pslot->volume[0] = left;
 		pslot->volume[1] = right;
@@ -277,7 +277,7 @@ static int snd_mixer_oss_set_volume(struct snd_mixer_oss_file *fmixer,
 	int result = 0, left = volume & 0xff, right = (volume >> 8) & 0xff;
 
 	if (mixer == NULL || slot > 30)
-		return -EIO;
+		return -ERR(EIO);
 	pslot = &mixer->slots[slot];
 	if (left > 100)
 		left = 100;
@@ -301,7 +301,7 @@ static int snd_mixer_oss_ioctl1(struct snd_mixer_oss_file *fmixer, unsigned int 
 	int tmp;
 
 	if (snd_BUG_ON(!fmixer))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (((cmd >> 8) & 0xff) == 'M') {
 		switch (cmd) {
 		case SOUND_MIXER_INFO:
@@ -359,7 +359,7 @@ static int snd_mixer_oss_ioctl1(struct snd_mixer_oss_file *fmixer, unsigned int 
 			return tmp;
 		return put_user(tmp, p);
 	}
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static long snd_mixer_oss_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -372,9 +372,9 @@ int snd_mixer_oss_ioctl_card(struct snd_card *card, unsigned int cmd, unsigned l
 	struct snd_mixer_oss_file fmixer;
 	
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (card->mixer_oss == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	memset(&fmixer, 0, sizeof(fmixer));
 	fmixer.card = card;
 	fmixer.mixer = card->mixer_oss;
@@ -806,7 +806,7 @@ static int snd_mixer_oss_get_recsrc2(struct snd_mixer_oss_file *fmixer, unsigned
 	down_read(&card->controls_rwsem);
 	kctl = snd_mixer_oss_test_id(mixer, "Capture Source", 0);
 	if (! kctl) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto __unlock;
 	}
 	if ((err = kctl->info(kctl, uinfo)) < 0)
@@ -857,7 +857,7 @@ static int snd_mixer_oss_put_recsrc2(struct snd_mixer_oss_file *fmixer, unsigned
 	down_read(&card->controls_rwsem);
 	kctl = snd_mixer_oss_test_id(mixer, "Capture Source", 0);
 	if (! kctl) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto __unlock;
 	}
 	if ((err = kctl->info(kctl, uinfo)) < 0)
@@ -1321,7 +1321,7 @@ static int snd_mixer_oss_free1(void *private)
 		return 0;
 	card = mixer->card;
 	if (snd_BUG_ON(mixer != card->mixer_oss))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	card->mixer_oss = NULL;
 	for (idx = 0; idx < SNDRV_OSS_MAX_MIXERS; idx++) {
 		struct snd_mixer_oss_slot *chn = &mixer->slots[idx];

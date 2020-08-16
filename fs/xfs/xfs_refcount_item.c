@@ -381,7 +381,7 @@ xfs_refcount_update_finish_item(
 		       refc->ri_type == XFS_REFCOUNT_DECREASE);
 		refc->ri_startblock = new_fsb;
 		refc->ri_blockcount = new_aglen;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	kmem_free(refc);
 	return error;

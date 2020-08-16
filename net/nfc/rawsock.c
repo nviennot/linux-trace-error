@@ -84,7 +84,7 @@ static int rawsock_connect(struct socket *sock, struct sockaddr *_addr,
 
 	if (!addr || len < sizeof(struct sockaddr_nfc) ||
 	    addr->sa_family != AF_NFC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("addr dev_idx=%u target_idx=%u protocol=%u\n",
 		 addr->dev_idx, addr->target_idx, addr->nfc_protocol);
@@ -92,19 +92,19 @@ static int rawsock_connect(struct socket *sock, struct sockaddr *_addr,
 	lock_sock(sk);
 
 	if (sock->state == SS_CONNECTED) {
-		rc = -EISCONN;
+		rc = -ERR(EISCONN);
 		goto error;
 	}
 
 	dev = nfc_get_device(addr->dev_idx);
 	if (!dev) {
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 		goto error;
 	}
 
 	if (addr->target_idx > dev->target_next_idx - 1 ||
 	    addr->target_idx < dev->target_next_idx - dev->n_targets) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -209,10 +209,10 @@ static int rawsock_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	pr_debug("sock=%p sk=%p len=%zu\n", sock, sk, len);
 
 	if (msg->msg_namelen)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (sock->state != SS_CONNECTED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	skb = nfc_alloc_send_skb(dev, sk, msg->msg_flags, len, &rc);
 	if (skb == NULL)
@@ -330,7 +330,7 @@ static int rawsock_create(struct net *net, struct socket *sock,
 	pr_debug("sock=%p\n", sock);
 
 	if ((sock->type != SOCK_SEQPACKET) && (sock->type != SOCK_RAW))
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	if (sock->type == SOCK_RAW)
 		sock->ops = &rawsock_raw_ops;

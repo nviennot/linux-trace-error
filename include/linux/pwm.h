@@ -231,7 +231,7 @@ pwm_set_relative_duty_cycle(struct pwm_state *state, unsigned int duty_cycle,
 			    unsigned int scale)
 {
 	if (!scale || duty_cycle > scale)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	state->duty_cycle = DIV_ROUND_CLOSEST_ULL((u64)duty_cycle *
 						  state->period,
@@ -332,10 +332,10 @@ static inline int pwm_config(struct pwm_device *pwm, int duty_ns,
 	struct pwm_state state;
 
 	if (!pwm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (duty_ns < 0 || period_ns < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pwm_get_state(pwm, &state);
 	if (state.duty_cycle == duty_ns && state.period == period_ns)
@@ -357,7 +357,7 @@ static inline int pwm_enable(struct pwm_device *pwm)
 	struct pwm_state state;
 
 	if (!pwm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pwm_get_state(pwm, &state);
 	if (state.enabled)
@@ -418,7 +418,7 @@ void devm_pwm_put(struct device *dev, struct pwm_device *pwm);
 #else
 static inline struct pwm_device *pwm_request(int pwm_id, const char *label)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void pwm_free(struct pwm_device *pwm)
@@ -428,30 +428,30 @@ static inline void pwm_free(struct pwm_device *pwm)
 static inline int pwm_apply_state(struct pwm_device *pwm,
 				  const struct pwm_state *state)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int pwm_adjust_config(struct pwm_device *pwm)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int pwm_config(struct pwm_device *pwm, int duty_ns,
 			     int period_ns)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int pwm_capture(struct pwm_device *pwm,
 			      struct pwm_capture *result,
 			      unsigned long timeout)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int pwm_enable(struct pwm_device *pwm)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void pwm_disable(struct pwm_device *pwm)
@@ -460,7 +460,7 @@ static inline void pwm_disable(struct pwm_device *pwm)
 
 static inline int pwm_set_chip_data(struct pwm_device *pwm, void *data)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void *pwm_get_chip_data(struct pwm_device *pwm)
@@ -470,37 +470,37 @@ static inline void *pwm_get_chip_data(struct pwm_device *pwm)
 
 static inline int pwmchip_add(struct pwm_chip *chip)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int pwmchip_add_inversed(struct pwm_chip *chip)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int pwmchip_remove(struct pwm_chip *chip)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct pwm_device *pwm_request_from_chip(struct pwm_chip *chip,
 						       unsigned int index,
 						       const char *label)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct pwm_device *pwm_get(struct device *dev,
 					 const char *consumer)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct pwm_device *of_pwm_get(struct device *dev,
 					    struct device_node *np,
 					    const char *con_id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void pwm_put(struct pwm_device *pwm)
@@ -510,21 +510,21 @@ static inline void pwm_put(struct pwm_device *pwm)
 static inline struct pwm_device *devm_pwm_get(struct device *dev,
 					      const char *consumer)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct pwm_device *devm_of_pwm_get(struct device *dev,
 						 struct device_node *np,
 						 const char *con_id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct pwm_device *
 devm_fwnode_pwm_get(struct device *dev, struct fwnode_handle *fwnode,
 		    const char *con_id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void devm_pwm_put(struct device *dev, struct pwm_device *pwm)

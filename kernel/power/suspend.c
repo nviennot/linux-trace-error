@@ -345,7 +345,7 @@ static int suspend_prepare(suspend_state_t state)
 	int error, nr_calls = 0;
 
 	if (!sleep_state_supported(state))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	pm_prepare_console();
 
@@ -441,7 +441,7 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 			trace_suspend_resume(TPS("machine_suspend"),
 				state, false);
 		} else if (*wakeup) {
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 		}
 		syscore_resume();
 	}
@@ -479,7 +479,7 @@ int suspend_devices_and_enter(suspend_state_t state)
 	bool wakeup = false;
 
 	if (!sleep_state_supported(state))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	pm_suspend_target_state = state;
 
@@ -553,14 +553,14 @@ static int enter_state(suspend_state_t state)
 #ifdef CONFIG_PM_DEBUG
 		if (pm_test_level != TEST_NONE && pm_test_level <= TEST_CPUS) {
 			pr_warn("Unsupported test mode for suspend to idle, please choose none/freezer/devices/platform.\n");
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 #endif
 	} else if (!valid_state(state)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!mutex_trylock(&system_transition_mutex))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (state == PM_SUSPEND_TO_IDLE)
 		s2idle_begin();
@@ -607,7 +607,7 @@ int pm_suspend(suspend_state_t state)
 	int error;
 
 	if (state <= PM_SUSPEND_ON || state >= PM_SUSPEND_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_info("suspend entry (%s)\n", mem_sleep_labels[state]);
 	error = enter_state(state);

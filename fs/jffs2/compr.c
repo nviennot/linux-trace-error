@@ -293,7 +293,7 @@ int jffs2_decompress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 		}
 		pr_warn("compression type 0x%02x not available\n", comprtype);
 		spin_unlock(&jffs2_compressor_list_lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }

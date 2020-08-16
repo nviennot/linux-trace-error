@@ -56,7 +56,7 @@ int gpmc_omap_onenand_set_timings(struct device *dev, int cs, int freq,
 				  int latency,
 				  struct gpmc_onenand_info *info)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_OMAP_GPMC */
 

@@ -402,7 +402,7 @@ static int tnc_read_hashed_node(struct ubifs_info *c, struct ubifs_zbranch *zbr,
 		 * Negative return codes stay as-is.
 		 */
 		if (err == 0)
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 		else if (err == 1)
 			err = 0;
 	} else {
@@ -615,7 +615,7 @@ static int tnc_next(struct ubifs_info *c, struct ubifs_znode **zn, int *n)
 
 		zp = znode->parent;
 		if (!zp)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		nn = znode->iip + 1;
 		znode = zp;
 		if (nn < znode->child_cnt) {
@@ -659,7 +659,7 @@ static int tnc_prev(struct ubifs_info *c, struct ubifs_znode **zn, int *n)
 
 		zp = znode->parent;
 		if (!zp)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		nn = znode->iip - 1;
 		znode = zp;
 		if (nn >= 0) {
@@ -756,7 +756,7 @@ static int resolve_collision(struct ubifs_info *c, const union ubifs_key *key,
 						/* Should be impossible */
 						ubifs_assert(c, 0);
 						if (err == -ENOENT)
-							err = -EINVAL;
+							err = -ERR(EINVAL);
 						return err;
 					}
 					ubifs_assert(c, *n == 0);
@@ -930,7 +930,7 @@ static int fallible_resolve_collision(struct ubifs_info *c,
 						/* Should be impossible */
 						ubifs_assert(c, 0);
 						if (err == -ENOENT)
-							err = -EINVAL;
+							err = -ERR(EINVAL);
 						return err;
 					}
 					ubifs_assert(c, *n == 0);
@@ -1449,7 +1449,7 @@ again:
 	mutex_lock(&c->tnc_mutex);
 	found = ubifs_lookup_level0(c, key, &znode, &n);
 	if (!found) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	} else if (found < 0) {
 		err = found;
@@ -1533,7 +1533,7 @@ int ubifs_tnc_get_bu_keys(struct ubifs_info *c, struct bu_info *bu)
 		len = znode->zbranch[n].len;
 		/* The buffer must be big enough for at least 1 node */
 		if (len > bu->buf_len) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		/* Add this key */
@@ -1556,7 +1556,7 @@ int ubifs_tnc_get_bu_keys(struct ubifs_info *c, struct bu_info *bu)
 		/* See if there is another data key for this file */
 		if (key_inum(c, key) != key_inum(c, &bu->key) ||
 		    key_type(c, key) != UBIFS_DATA_KEY) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto out;
 		}
 		if (lnum < 0) {
@@ -1565,7 +1565,7 @@ int ubifs_tnc_get_bu_keys(struct ubifs_info *c, struct bu_info *bu)
 			offs = ALIGN(zbr->offs + zbr->len, 8);
 			len = zbr->len;
 			if (len > bu->buf_len) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 		} else {
@@ -1731,7 +1731,7 @@ static int validate_data_node(struct ubifs_info *c, void *buf,
 	return 0;
 
 out_err:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 out:
 	ubifs_err(c, "bad node at LEB %d:%d", zbr->lnum, zbr->offs);
 	ubifs_dump_node(c, buf);
@@ -1759,7 +1759,7 @@ int ubifs_tnc_bulk_read(struct ubifs_info *c, struct bu_info *bu)
 	len += bu->zbranch[bu->cnt - 1].len - offs;
 	if (len > bu->buf_len) {
 		ubifs_err(c, "buffer too small %d vs %d", bu->buf_len, len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Do the read */
@@ -1771,7 +1771,7 @@ int ubifs_tnc_bulk_read(struct ubifs_info *c, struct bu_info *bu)
 
 	/* Check for a race with GC */
 	if (maybe_leb_gced(c, lnum, bu->gc_seq))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (err && err != -EBADMSG) {
 		ubifs_err(c, "failed to read from LEB %d:%d, error %d",
@@ -1816,7 +1816,7 @@ static int do_lookup_nm(struct ubifs_info *c, const union ubifs_key *key,
 	mutex_lock(&c->tnc_mutex);
 	found = ubifs_lookup_level0(c, key, &znode, &n);
 	if (!found) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out_unlock;
 	} else if (found < 0) {
 		err = found;
@@ -1830,7 +1830,7 @@ static int do_lookup_nm(struct ubifs_info *c, const union ubifs_key *key,
 	if (unlikely(err < 0))
 		goto out_unlock;
 	if (err == 0) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out_unlock;
 	}
 
@@ -1901,7 +1901,7 @@ static int search_dh_cookie(struct ubifs_info *c, const union ubifs_key *key,
 
 		if (key_inum(c, dkey) != key_inum(c, key) ||
 		    key_type(c, dkey) != key_type(c, key)) {
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		err = tnc_read_hashed_node(c, zbr, dent);
@@ -1964,7 +1964,7 @@ int ubifs_tnc_lookup_dh(struct ubifs_info *c, const union ubifs_key *key,
 	const struct ubifs_dent_node *dent = node;
 
 	if (!c->double_hash)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * We assume that in most of the cases there are no name collisions and
@@ -2701,7 +2701,7 @@ int ubifs_tnc_remove_dh(struct ubifs_info *c, const union ubifs_key *key,
 	struct ubifs_zbranch *zbr;
 
 	if (!c->double_hash)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&c->tnc_mutex);
 	err = lookup_level0_dirty(c, key, &znode, &n);
@@ -3013,7 +3013,7 @@ struct ubifs_dent_node *ubifs_tnc_next_ent(struct ubifs_info *c,
 	dkey = &zbr->key;
 	if (key_inum(c, dkey) != key_inum(c, key) ||
 	    key_type(c, dkey) != type) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out_free;
 	}
 
@@ -3186,7 +3186,7 @@ static struct ubifs_znode *lookup_znode(struct ubifs_info *c,
 	 * they are valid.
 	 */
 	if (level < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* Get the root znode */
 	znode = c->zroot.znode;
@@ -3522,7 +3522,7 @@ out_dump:
 	mutex_unlock(&c->tnc_mutex);
 	ubifs_dump_inode(c, inode);
 	dump_stack();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 out_unlock:
 	mutex_unlock(&c->tnc_mutex);

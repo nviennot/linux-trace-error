@@ -82,7 +82,7 @@ static ssize_t fuse_conn_limit_write(struct file *file, const char __user *buf,
 	int err;
 
 	if (*ppos)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = kstrtoul_from_user(buf, count, 0, &t);
 	if (err)
@@ -92,7 +92,7 @@ static ssize_t fuse_conn_limit_write(struct file *file, const char __user *buf,
 		limit = min(limit, global_limit);
 
 	if (t > limit)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*val = t;
 

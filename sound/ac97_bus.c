@@ -71,7 +71,7 @@ int snd_ac97_reset(struct snd_ac97 *ac97, bool try_warm, unsigned int id,
 	if (snd_ac97_check_id(ac97, id, id_mask))
 		return 0;
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 EXPORT_SYMBOL_GPL(snd_ac97_reset);
 

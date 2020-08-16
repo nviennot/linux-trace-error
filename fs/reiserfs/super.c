@@ -1466,7 +1466,7 @@ static int reiserfs_remount(struct super_block *s, int *mount_flags, char *arg)
 			if (qf_names[i] != REISERFS_SB(s)->s_qf_names[i])
 				kfree(qf_names[i]);
 #endif
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_err_unlock;
 	}
 #ifdef CONFIG_QUOTA
@@ -1905,7 +1905,7 @@ static int reiserfs_fill_super(struct super_block *s, void *data, int silent)
 	struct reiserfs_super_block *rs;
 	char *jdev_name;
 	struct reiserfs_sb_info *sbi;
-	int errval = -EINVAL;
+	int errval = -ERR(EINVAL);
 	char *qf_names[REISERFS_MAXQUOTAS] = {};
 	unsigned int qfmt = 0;
 
@@ -2006,7 +2006,7 @@ static int reiserfs_fill_super(struct super_block *s, void *data, int silent)
 		goto error_unlocked;
 	}
 
-	errval = -EINVAL;
+	errval = -ERR(EINVAL);
 #ifdef CONFIG_REISERFS_CHECK
 	SWARN(silent, s, "", "CONFIG_REISERFS_CHECK is set ON");
 	SWARN(silent, s, "", "- it is slow mode for debugging.");
@@ -2393,13 +2393,13 @@ static int reiserfs_quota_on(struct super_block *sb, int type, int format_id,
 
 	reiserfs_write_lock(sb);
 	if (!(REISERFS_SB(sb)->s_mount_opt & (1 << opt))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	/* Quotafile not on the same filesystem? */
 	if (path->dentry->d_sb != sb) {
-		err = -EXDEV;
+		err = -ERR(EXDEV);
 		goto out;
 	}
 	inode = d_inode(path->dentry);
@@ -2413,7 +2413,7 @@ static int reiserfs_quota_on(struct super_block *sb, int type, int format_id,
 			reiserfs_warning(sb, "super-6520",
 				"Unpacking tail of quota file failed"
 				" (%d). Cannot turn on quotas.", err);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		mark_inode_dirty(inode);
@@ -2522,7 +2522,7 @@ static ssize_t reiserfs_quota_read(struct super_block *sb, int type, char *data,
 		else {
 			bh = sb_bread(sb, tmp_bh.b_blocknr);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 			memcpy(data, bh->b_data + offset, tocopy);
 			brelse(bh);
 		}
@@ -2551,7 +2551,7 @@ static ssize_t reiserfs_quota_write(struct super_block *sb, int type,
 	if (!current->journal_info) {
 		printk(KERN_WARNING "reiserfs: Quota write (off=%llu, len=%llu) cancelled because transaction is not started.\n",
 			(unsigned long long)off, (unsigned long long)len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	while (towrite > 0) {
 		tocopy = sb->s_blocksize - offset < towrite ?
@@ -2567,7 +2567,7 @@ static ssize_t reiserfs_quota_write(struct super_block *sb, int type,
 		else
 			bh = sb_getblk(sb, tmp_bh.b_blocknr);
 		if (!bh) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		lock_buffer(bh);

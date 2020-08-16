@@ -180,7 +180,7 @@ static int zx_tdm_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Unknown master/slave format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -212,7 +212,7 @@ static int zx_tdm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(socdai->dev, "Unknown data format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = zx_tdm_readl(tdm, REG_TIMING_CTRL);
@@ -272,7 +272,7 @@ static int zx_tdm_trigger(struct snd_pcm_substream *substream, int cmd,
 			zx_tdm_tx_en(zx_tdm, false);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

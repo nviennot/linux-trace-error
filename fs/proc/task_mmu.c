@@ -136,7 +136,7 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 
 	priv->task = get_proc_task(priv->inode);
 	if (!priv->task)
-		return ERR_PTR(-ESRCH);
+		return ERR_PTR(-ERR(ESRCH));
 
 	mm = priv->mm;
 	if (!mm || !mmget_not_zero(mm)) {
@@ -149,7 +149,7 @@ static void *m_start(struct seq_file *m, loff_t *ppos)
 		mmput(mm);
 		put_task_struct(priv->task);
 		priv->task = NULL;
-		return ERR_PTR(-EINTR);
+		return ERR_PTR(-ERR(EINTR));
 	}
 
 	hold_task_mempolicy(priv);
@@ -837,11 +837,11 @@ static int show_smaps_rollup(struct seq_file *m, void *v)
 
 	priv->task = get_proc_task(priv->inode);
 	if (!priv->task)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	mm = priv->mm;
 	if (!mm || !mmget_not_zero(mm)) {
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 		goto out_put_task;
 	}
 
@@ -1127,11 +1127,11 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 		return rv;
 	type = (enum clear_refs_types)itype;
 	if (type < CLEAR_REFS_ALL || type >= CLEAR_REFS_LAST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	task = get_proc_task(file_inode(file));
 	if (!task)
-		return -ESRCH;
+		return -ERR(ESRCH);
 	mm = get_task_mm(task);
 	if (mm) {
 		struct mmu_notifier_range range;
@@ -1141,7 +1141,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 
 		if (type == CLEAR_REFS_MM_HIWATER_RSS) {
 			if (mmap_write_lock_killable(mm)) {
-				count = -EINTR;
+				count = -ERR(EINTR);
 				goto out_mm;
 			}
 
@@ -1155,7 +1155,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 		}
 
 		if (mmap_read_lock_killable(mm)) {
-			count = -EINTR;
+			count = -ERR(EINTR);
 			goto out_mm;
 		}
 		tlb_gather_mmu(&tlb, mm, 0, -1);
@@ -1165,7 +1165,7 @@ static ssize_t clear_refs_write(struct file *file, const char __user *buf,
 					continue;
 				mmap_read_unlock(mm);
 				if (mmap_write_lock_killable(mm)) {
-					count = -EINTR;
+					count = -ERR(EINTR);
 					goto out_mm;
 				}
 				/*
@@ -1521,7 +1521,7 @@ static ssize_t pagemap_read(struct file *file, char __user *buf,
 	if (!mm || !mmget_not_zero(mm))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	/* file position must be aligned */
 	if ((*ppos % PM_ENTRY_BYTES) || (count % PM_ENTRY_BYTES))
 		goto out_mm;

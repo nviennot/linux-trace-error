@@ -266,7 +266,7 @@ xlog_grant_head_wait(
 	return 0;
 shutdown:
 	list_del_init(&tic->t_queue);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -360,7 +360,7 @@ xfs_log_regrant(
 	int			error = 0;
 
 	if (XLOG_FORCED_SHUTDOWN(log))
-		return -EIO;
+		return -ERR(EIO);
 
 	XFS_STATS_INC(mp, xs_try_logspace);
 
@@ -428,7 +428,7 @@ xfs_log_reserve(
 	ASSERT(client == XFS_TRANSACTION || client == XFS_LOG);
 
 	if (XLOG_FORCED_SHUTDOWN(log))
-		return -EIO;
+		return -ERR(EIO);
 
 	XFS_STATS_INC(mp, xs_try_logspace);
 
@@ -497,7 +497,7 @@ xlog_state_release_iclog(
 	lockdep_assert_held(&log->l_icloglock);
 
 	if (iclog->ic_state == XLOG_STATE_IOERROR)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (atomic_dec_and_test(&iclog->ic_refcnt) &&
 	    __xlog_state_release_iclog(log, iclog)) {
@@ -583,24 +583,24 @@ xfs_log_mount(
 		xfs_warn(mp,
 		"Log size %d blocks too small, minimum size is %d blocks",
 			 mp->m_sb.sb_logblocks, min_logfsbs);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	} else if (mp->m_sb.sb_logblocks > XFS_MAX_LOG_BLOCKS) {
 		xfs_warn(mp,
 		"Log size %d blocks too large, maximum size is %lld blocks",
 			 mp->m_sb.sb_logblocks, XFS_MAX_LOG_BLOCKS);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	} else if (XFS_FSB_TO_B(mp, mp->m_sb.sb_logblocks) > XFS_MAX_LOG_BYTES) {
 		xfs_warn(mp,
 		"log size %lld bytes too large, maximum size is %lld bytes",
 			 XFS_FSB_TO_B(mp, mp->m_sb.sb_logblocks),
 			 XFS_MAX_LOG_BYTES);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	} else if (mp->m_sb.sb_logsunit > 1 &&
 		   mp->m_sb.sb_logsunit % mp->m_sb.sb_blocksize) {
 		xfs_warn(mp,
 		"log stripe unit %u bytes must be a multiple of block size",
 			 mp->m_sb.sb_logsunit);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		fatal = true;
 	}
 	if (error) {
@@ -782,7 +782,7 @@ xlog_wait_on_iclog(
 	}
 
 	if (XLOG_FORCED_SHUTDOWN(log))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -1185,7 +1185,7 @@ xlog_ioend_work(
 #ifdef DEBUG
 	/* treat writes with injected CRC errors as failed */
 	if (iclog->ic_fail_crc)
-		error = -EIO;
+		error = -ERR(EIO);
 #endif
 
 	/*
@@ -1465,7 +1465,7 @@ xlog_commit_record(
 	int	error;
 
 	if (XLOG_FORCED_SHUTDOWN(log))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xlog_write(log, &vec, ticket, lsn, iclog, XLOG_COMMIT_TRANS,
 			   false);
@@ -1642,7 +1642,7 @@ xlog_map_iclog_data(
 		size_t		len = min_t(size_t, count, PAGE_SIZE - off);
 
 		if (bio_add_page(bio, page, len, off) != len)
-			return -EIO;
+			return -ERR(EIO);
 
 		data += len;
 		count -= len;
@@ -2369,7 +2369,7 @@ xlog_write(
 
 			ophdr = xlog_write_setup_ophdr(log, ptr, ticket, flags);
 			if (!ophdr)
-				return -EIO;
+				return -ERR(EIO);
 
 			xlog_write_adv_cnt(&ptr, &len, &log_offset,
 					   sizeof(struct xlog_op_header));
@@ -2857,7 +2857,7 @@ restart:
 	spin_lock(&log->l_icloglock);
 	if (XLOG_FORCED_SHUTDOWN(log)) {
 		spin_unlock(&log->l_icloglock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	iclog = log->l_iclog;
@@ -3176,7 +3176,7 @@ out_unlock:
 	return 0;
 out_error:
 	spin_unlock(&log->l_icloglock);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int
@@ -3224,7 +3224,7 @@ __xfs_log_force_lsn(
 
 			xlog_wait(&iclog->ic_prev->ic_write_wait,
 					&log->l_icloglock);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		atomic_inc(&iclog->ic_refcnt);
 		xlog_state_switch_iclogs(log, iclog, 0);
@@ -3241,7 +3241,7 @@ out_unlock:
 	return 0;
 out_error:
 	spin_unlock(&log->l_icloglock);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*

@@ -66,7 +66,7 @@ int qcom_snd_parse_of(struct snd_soc_card *card)
 
 		if (!cpu) {
 			dev_err(dev, "%s: Can't find cpu DT node\n", link->name);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -91,7 +91,7 @@ int qcom_snd_parse_of(struct snd_soc_card *card)
 					0);
 			if (!link->platforms->of_node) {
 				dev_err(card->dev, "%s: platform dai not found\n", link->name);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto err;
 			}
 

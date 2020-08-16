@@ -242,7 +242,7 @@ static int ep93xx_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -257,7 +257,7 @@ static int ep93xx_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -314,7 +314,7 @@ static int ep93xx_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
@@ -358,7 +358,7 @@ static int ep93xx_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id,
 	struct ep93xx_i2s_info *info = snd_soc_dai_get_drvdata(cpu_dai);
 
 	if (dir == SND_SOC_CLOCK_IN || clk_id != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return clk_set_rate(info->mclk, freq);
 }
@@ -443,7 +443,7 @@ static int ep93xx_i2s_probe(struct platform_device *pdev)
 	if (IS_ENABLED(CONFIG_SND_EP93XX_SOC_I2S_WATCHDOG)) {
 		int irq = platform_get_irq(pdev, 0);
 		if (irq <= 0)
-			return irq < 0 ? irq : -ENODEV;
+			return irq < 0 ? irq : -ERR(ENODEV);
 
 		err = devm_request_irq(&pdev->dev, irq, ep93xx_i2s_interrupt, 0,
 				       pdev->name, info);

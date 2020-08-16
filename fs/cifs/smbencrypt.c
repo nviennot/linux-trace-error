@@ -65,7 +65,7 @@ smbhash(unsigned char *out, const unsigned char *in, unsigned char *key)
 
 	if (fips_enabled) {
 		cifs_dbg(VFS, "FIPS compliance enabled: DES not permitted\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	des_expand_key(&ctx, key2, DES_KEY_SIZE);

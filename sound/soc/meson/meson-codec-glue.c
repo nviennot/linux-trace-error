@@ -103,11 +103,11 @@ int meson_codec_glue_output_startup(struct snd_pcm_substream *substream,
 		meson_codec_glue_output_get_input_data(dai->capture_widget);
 
 	if (!in_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (WARN_ON(!rtd->dai_link->params)) {
 		dev_warn(dai->dev, "codec2codec link expected\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Replace link params with the input params */

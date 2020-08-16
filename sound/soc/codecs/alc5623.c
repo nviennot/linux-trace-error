@@ -526,7 +526,7 @@ static int alc5623_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	u16 reg;
 
 	if (pll_id < ALC5623_PLL_FR_MCLK || pll_id > ALC5623_PLL_FR_BCK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Disable PLL power */
 	snd_soc_component_update_bits(component, ALC5623_PWR_MANAG_ADD2,
@@ -564,11 +564,11 @@ static int alc5623_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!pll_div)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_write(component, ALC5623_GLOBAL_CLK_CTRL_REG, gbl_clk);
 	snd_soc_component_write(component, ALC5623_PLL_CTRL, pll_div);
@@ -608,7 +608,7 @@ static int get_coeff(struct snd_soc_component *component, int rate)
 		if (coeff_div[i].fs * rate == alc5623->sysclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -632,7 +632,7 @@ static int alc5623_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		alc5623->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int alc5623_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -650,7 +650,7 @@ static int alc5623_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface = ALC5623_DAI_SDP_SLAVE_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -671,7 +671,7 @@ static int alc5623_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= ALC5623_DAI_I2S_DF_PCM | ALC5623_DAI_I2S_PCM_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -687,7 +687,7 @@ static int alc5623_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_NB_IF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_write(component, ALC5623_DAI_CONTROL, iface);
@@ -719,7 +719,7 @@ static int alc5623_pcm_hw_params(struct snd_pcm_substream *substream,
 		iface |= ALC5623_DAI_I2S_DL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface & srate */
@@ -727,7 +727,7 @@ static int alc5623_pcm_hw_params(struct snd_pcm_substream *substream,
 	rate = params_rate(params);
 	coeff = get_coeff(component, rate);
 	if (coeff < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	coeff = coeff_div[coeff].regvalue;
 	dev_dbg(component->dev, "%s: sysclk=%d,rate=%d,coeff=0x%04x\n",
@@ -915,7 +915,7 @@ static int alc5623_probe(struct snd_soc_component *component)
 			ARRAY_SIZE(alc5623_vol_snd_controls));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_add_component_controls(component, alc5623_snd_controls,
@@ -940,7 +940,7 @@ static int alc5623_probe(struct snd_soc_component *component)
 					ARRAY_SIZE(intercon_spk));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1013,7 +1013,7 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 		dev_err(&client->dev, "Expected %x:%lx, got %x:%x\n",
 				0x10ec, id->driver_data,
 				vid1, vid2);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_dbg(&client->dev, "Found codec id : alc56%02x\n", vid2);
@@ -1046,7 +1046,7 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 		alc5623_dai.name = "alc5623-hifi";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i2c_set_clientdata(client, alc5623);

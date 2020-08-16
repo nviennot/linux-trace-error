@@ -217,20 +217,20 @@ int mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 	/* If cache is unresolved, don't try to parse IIF and OIF */
 	if (c->mfc_parent >= MAXVIFS) {
 		rtm->rtm_flags |= RTNH_F_UNRESOLVED;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (VIF_EXISTS(mrt, c->mfc_parent) &&
 	    nla_put_u32(skb, RTA_IIF,
 			mrt->vif_table[c->mfc_parent].dev->ifindex) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (c->mfc_flags & MFC_OFFLOAD)
 		rtm->rtm_flags |= RTNH_F_OFFLOAD;
 
 	mp_attr = nla_nest_start_noflag(skb, RTA_MULTIPATH);
 	if (!mp_attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (ct = c->mfc_un.res.minvif; ct < c->mfc_un.res.maxvif; ct++) {
 		if (VIF_EXISTS(mrt, ct) && c->mfc_un.res.ttls[ct] < 255) {
@@ -239,7 +239,7 @@ int mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 			nhp = nla_reserve_nohdr(skb, sizeof(*nhp));
 			if (!nhp) {
 				nla_nest_cancel(skb, mp_attr);
-				return -EMSGSIZE;
+				return -ERR(EMSGSIZE);
 			}
 
 			nhp->rtnh_flags = 0;
@@ -261,7 +261,7 @@ int mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 	if (nla_put_64bit(skb, RTA_MFC_STATS, sizeof(mfcs), &mfcs, RTA_PAD) ||
 	    nla_put_u64_64bit(skb, RTA_EXPIRES, jiffies_to_clock_t(lastuse),
 			      RTA_PAD))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm->rtm_type = RTN_MULTICAST;
 	return 1;

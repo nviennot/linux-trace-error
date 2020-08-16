@@ -632,7 +632,7 @@ static int adau1761_setup_digmic_jackdetect(struct snd_soc_component *component)
 			val |= pdata->jackdetect_debounce_time << 6;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (pdata->jackdetect_active_low)
 			val |= ADAU1761_DIGMIC_JACKDETECT_ACTIVE_LOW;
@@ -663,7 +663,7 @@ static int adau1761_setup_digmic_jackdetect(struct snd_soc_component *component)
 		val |= ADAU1761_DIGMIC_JACKDETECT_DIGMIC;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(adau->regmap, ADAU1761_DIGMIC_JACKDETECT, val);
@@ -700,7 +700,7 @@ static int adau1761_setup_headphone_mode(struct snd_soc_component *component)
 			ADAU1761_PLAY_HP_RIGHT_VOL_MODE_HP);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mode == ADAU1761_OUTPUT_MODE_HEADPHONE_CAPLESS) {
@@ -812,7 +812,7 @@ static int adau1761_component_probe(struct snd_soc_component *component)
 			ADAU1761_PLAY_LINE_RIGHT_VOL_MODE_HP);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = adau1761_setup_headphone_mode(component);

@@ -139,12 +139,12 @@ static struct afs_vldb_entry *afs_vl_lookup_vldb(struct afs_cell *cell,
 						 const char *volname,
 						 size_t volnamesz)
 {
-	struct afs_vldb_entry *vldb = ERR_PTR(-EDESTADDRREQ);
+	struct afs_vldb_entry *vldb = ERR_PTR(-ERR(EDESTADDRREQ));
 	struct afs_vl_cursor vc;
 	int ret;
 
 	if (!afs_begin_vlserver_operation(&vc, cell, key))
-		return ERR_PTR(-ERESTARTSYS);
+		return ERR_PTR(-ERR(ERESTARTSYS));
 
 	while (afs_select_vlserver(&vc)) {
 		vldb = afs_vl_get_entry_by_name_u(&vc, volname, volnamesz);
@@ -195,7 +195,7 @@ struct afs_volume *afs_create_volume(struct afs_fs_context *params)
 	}
 
 	/* Make the final decision on the type we want */
-	volume = ERR_PTR(-ENOMEDIUM);
+	volume = ERR_PTR(-ERR(ENOMEDIUM));
 	if (params->force) {
 		if (!(vldb->flags & type_mask))
 			goto error;
@@ -407,7 +407,7 @@ wait:
 	retries++;
 	if (retries == 4) {
 		_leave(" = -ESTALE");
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 	goto retry;
 }

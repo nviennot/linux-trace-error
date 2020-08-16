@@ -73,15 +73,15 @@ int ipv6_sock_ac_join(struct sock *sk, int ifindex, const struct in6_addr *addr)
 	ASSERT_RTNL();
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (ipv6_addr_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ifindex)
 		dev = __dev_get_by_index(net, ifindex);
 
 	if (ipv6_chk_addr_and_flags(net, addr, dev, true, 0, IFA_F_TENTATIVE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pac = sock_kmalloc(sk, sizeof(struct ipv6_ac_socklist), GFP_KERNEL);
 	if (!pac)
@@ -97,7 +97,7 @@ int ipv6_sock_ac_join(struct sock *sk, int ifindex, const struct in6_addr *addr)
 			dev = rt->dst.dev;
 			ip6_rt_put(rt);
 		} else if (ishost) {
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 			goto error;
 		} else {
 			/* router, no matching interface: just pick one */
@@ -107,16 +107,16 @@ int ipv6_sock_ac_join(struct sock *sk, int ifindex, const struct in6_addr *addr)
 	}
 
 	if (!dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto error;
 	}
 
 	idev = __in6_dev_get(dev);
 	if (!idev) {
 		if (ifindex)
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 		else
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 		goto error;
 	}
 	/* reset ishost, now that we have a specific device */
@@ -131,7 +131,7 @@ int ipv6_sock_ac_join(struct sock *sk, int ifindex, const struct in6_addr *addr)
 	 */
 	if (!ipv6_chk_prefix(addr, dev)) {
 		if (ishost)
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 		if (err)
 			goto error;
 	}
@@ -169,7 +169,7 @@ int ipv6_sock_ac_drop(struct sock *sk, int ifindex, const struct in6_addr *addr)
 		prev_pac = pac;
 	}
 	if (!pac)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (prev_pac)
 		prev_pac->acl_next = pac->acl_next;
 	else
@@ -292,7 +292,7 @@ int __ipv6_dev_ac_inc(struct inet6_dev *idev, const struct in6_addr *addr)
 
 	write_lock_bh(&idev->lock);
 	if (idev->dead) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -357,7 +357,7 @@ int __ipv6_dev_ac_dec(struct inet6_dev *idev, const struct in6_addr *addr)
 	}
 	if (!aca) {
 		write_unlock_bh(&idev->lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (--aca->aca_users > 0) {
 		write_unlock_bh(&idev->lock);
@@ -383,7 +383,7 @@ static int ipv6_dev_ac_dec(struct net_device *dev, const struct in6_addr *addr)
 	struct inet6_dev *idev = __in6_dev_get(dev);
 
 	if (!idev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return __ipv6_dev_ac_dec(idev, addr);
 }
 

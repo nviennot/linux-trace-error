@@ -213,13 +213,13 @@ static int acct_on(struct filename *pathname)
 	if (!S_ISREG(file_inode(file)->i_mode)) {
 		kfree(acct);
 		filp_close(file, NULL);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	if (!(file->f_mode & FMODE_CAN_WRITE)) {
 		kfree(acct);
 		filp_close(file, NULL);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	internal = mnt_clone_internal(&file->f_path);
 	if (IS_ERR(internal)) {
@@ -275,7 +275,7 @@ SYSCALL_DEFINE1(acct, const char __user *, name)
 	int error = 0;
 
 	if (!capable(CAP_SYS_PACCT))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (name) {
 		struct filename *tmp = getname(name);

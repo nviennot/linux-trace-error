@@ -102,7 +102,7 @@ static int oxygen_ac97_wait(struct oxygen *chip, unsigned int mask)
 	 * the AC'97 interrupt to be enabled.
 	 */
 	status |= oxygen_read8(chip, OXYGEN_AC97_INTERRUPT_STATUS);
-	return status & mask ? 0 : -EIO;
+	return status & mask ? 0 : -ERR(EIO);
 }
 
 /*
@@ -197,7 +197,7 @@ static int oxygen_wait_spi(struct oxygen *chip)
 			return 0;
 	}
 	dev_err(chip->card->dev, "oxygen: SPI wait timeout\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int oxygen_write_spi(struct oxygen *chip, u8 control, unsigned int data)

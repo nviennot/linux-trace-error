@@ -503,7 +503,7 @@ static int validate_sb(struct ubifs_info *c, struct ubifs_sb_node *sup)
 failed:
 	ubifs_err(c, "bad superblock, error %d", err);
 	ubifs_dump_node(c, sup);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -544,12 +544,12 @@ static int authenticate_sb_node(struct ubifs_info *c,
 
 	if (c->authenticated && !authenticated) {
 		ubifs_err(c, "authenticated FS forced, but found FS without authentication");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!c->authenticated && authenticated) {
 		ubifs_err(c, "authenticated FS found, but no key given");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ubifs_msg(c, "Mounting in %sauthenticated mode",
@@ -559,20 +559,20 @@ static int authenticate_sb_node(struct ubifs_info *c,
 		return 0;
 
 	if (!IS_ENABLED(CONFIG_UBIFS_FS_AUTHENTICATION))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	hash_algo = le16_to_cpu(sup->hash_algo);
 	if (hash_algo >= HASH_ALGO__LAST) {
 		ubifs_err(c, "superblock uses unknown hash algo %d",
 			  hash_algo);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (strcmp(hash_algo_name[hash_algo], c->auth_hash_name)) {
 		ubifs_err(c, "This filesystem uses %s for hashing,"
 			     " but %s is specified", hash_algo_name[hash_algo],
 			     c->auth_hash_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -588,7 +588,7 @@ static int authenticate_sb_node(struct ubifs_info *c,
 			return err;
 		if (ubifs_check_hmac(c, hmac_wkm, sup->hmac_wkm)) {
 			ubifs_err(c, "provided key does not fit");
-			return -ENOKEY;
+			return -ERR(ENOKEY);
 		}
 		err = ubifs_node_verify_hmac(c, sup, sizeof(*sup),
 					     offsetof(struct ubifs_sb_node,
@@ -663,9 +663,9 @@ int ubifs_read_superblock(struct ubifs_info *c)
 				  UBIFS_RO_COMPAT_VERSION);
 			if (c->ro_compat_version <= UBIFS_RO_COMPAT_VERSION) {
 				ubifs_msg(c, "only R/O mounting is possible");
-				err = -EROFS;
+				err = -ERR(EROFS);
 			} else
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -680,7 +680,7 @@ int ubifs_read_superblock(struct ubifs_info *c)
 	if (c->fmt_version < 3) {
 		ubifs_err(c, "on-flash format version %d is not supported",
 			  c->fmt_version);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -704,7 +704,7 @@ int ubifs_read_superblock(struct ubifs_info *c)
 		break;
 	default:
 		ubifs_err(c, "unsupported key format");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -738,14 +738,14 @@ int ubifs_read_superblock(struct ubifs_info *c)
 	if ((sup_flags & ~UBIFS_FLG_MASK) != 0) {
 		ubifs_err(c, "Unknown feature flags found: %#x",
 			  sup_flags & ~UBIFS_FLG_MASK);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!IS_ENABLED(CONFIG_FS_ENCRYPTION) && c->encrypted) {
 		ubifs_err(c, "file system contains encrypted files but UBIFS"
 			     " was built without crypto support.");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -929,17 +929,17 @@ int ubifs_enable_encryption(struct ubifs_info *c)
 	struct ubifs_sb_node *sup = c->sup_node;
 
 	if (!IS_ENABLED(CONFIG_FS_ENCRYPTION))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (c->encrypted)
 		return 0;
 
 	if (c->ro_mount || c->ro_media)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (c->fmt_version < 5) {
 		ubifs_err(c, "on-flash format version 5 is needed for encryption");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sup->flags |= cpu_to_le32(UBIFS_FLG_ENCRYPTION);

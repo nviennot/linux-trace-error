@@ -42,7 +42,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != MONA))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -212,7 +212,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	/* Now, check to see if the required ASIC is loaded */
 	if (rate >= 88200) {
 		if (chip->digital_mode == DIGITAL_MODE_ADAT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (chip->device_id == DEVICE_ID_56361)
 			asic = FW_MONA_361_1_ASIC96;
 		else
@@ -280,7 +280,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	default:
 		dev_err(chip->card->dev,
 			"set_sample_rate: %d invalid!\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	control_reg |= clock;
@@ -303,7 +303,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 
 	/* Prevent two simultaneous calls to switch_asic() */
 	if (atomic_read(&chip->opencount))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/* Mask off the clock select bits */
 	control_reg = le32_to_cpu(chip->comm_page->control_register) &
@@ -316,7 +316,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		return set_sample_rate(chip, chip->sample_rate);
 	case ECHO_CLOCK_SPDIF:
 		if (chip->digital_mode == DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		spin_unlock_irq(&chip->lock);
 		err = switch_asic(chip, clocks_from_dsp &
 				  GML_CLOCK_DETECT_BIT_SPDIF96);
@@ -345,14 +345,14 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 	case ECHO_CLOCK_ADAT:
 		dev_dbg(chip->card->dev, "Set Mona clock to ADAT\n");
 		if (chip->digital_mode != DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		control_reg |= GML_ADAT_CLOCK;
 		control_reg &= ~GML_DOUBLE_SPEED_MODE;
 		break;
 	default:
 		dev_err(chip->card->dev,
 			"Input clock 0x%x not supported for Mona\n", clock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chip->input_clock = clock;
@@ -381,7 +381,7 @@ static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
 	default:
 		dev_err(chip->card->dev,
 			"Digital mode not supported: %d\n", mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irq(&chip->lock);

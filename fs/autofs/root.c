@@ -93,7 +93,7 @@ static int autofs_dir_open(struct inode *inode, struct file *file)
 	spin_lock(&sbi->lookup_lock);
 	if (!path_is_mountpoint(&file->f_path) && simple_empty(dentry)) {
 		spin_unlock(&sbi->lookup_lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	spin_unlock(&sbi->lookup_lock);
 
@@ -199,7 +199,7 @@ static struct dentry *autofs_lookup_expiring(struct dentry *dentry,
 
 		if (rcu_walk) {
 			spin_unlock(&sbi->lookup_lock);
-			return ERR_PTR(-ECHILD);
+			return ERR_PTR(-ERR(ECHILD));
 		}
 
 		ino = list_entry(p, struct autofs_info, expiring);
@@ -245,7 +245,7 @@ static int autofs_mount_wait(const struct path *path, bool rcu_walk)
 
 	if (ino->flags & AUTOFS_INF_PENDING) {
 		if (rcu_walk)
-			return -ECHILD;
+			return -ERR(ECHILD);
 		pr_debug("waiting for mount name=%pd\n", path->dentry);
 		status = autofs_wait(sbi, path, NFY_MOUNT);
 		pr_debug("mount wait done status=%d\n", status);
@@ -389,7 +389,7 @@ done:
 	/* Mount succeeded, check if we ended up with a new dentry */
 	dentry = autofs_mountpoint_changed(path);
 	if (!dentry)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	return NULL;
 }
@@ -406,13 +406,13 @@ static int autofs_d_manage(const struct path *path, bool rcu_walk)
 	/* The daemon never waits. */
 	if (autofs_oz_mode(sbi)) {
 		if (!path_is_mountpoint(path))
-			return -EISDIR;
+			return -ERR(EISDIR);
 		return 0;
 	}
 
 	/* Wait for pending expires */
 	if (do_expire_wait(path, rcu_walk) == -ECHILD)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	/*
 	 * This dentry may be under construction so wait on mount
@@ -438,11 +438,11 @@ static int autofs_d_manage(const struct path *path, bool rcu_walk)
 			return 0;
 		inode = d_inode_rcu(dentry);
 		if (inode && S_ISLNK(inode->i_mode))
-			return -EISDIR;
+			return -ERR(EISDIR);
 		if (list_empty(&dentry->d_subdirs))
 			return 0;
 		if (!simple_empty(dentry))
-			return -EISDIR;
+			return -ERR(EISDIR);
 		return 0;
 	}
 
@@ -463,7 +463,7 @@ static int autofs_d_manage(const struct path *path, bool rcu_walk)
 		 */
 		if ((!path_is_mountpoint(path) && !simple_empty(dentry)) ||
 		    (d_really_is_positive(dentry) && d_is_symlink(dentry)))
-			status = -EISDIR;
+			status = -ERR(EISDIR);
 	}
 	spin_unlock(&sbi->fs_lock);
 
@@ -482,7 +482,7 @@ static struct dentry *autofs_lookup(struct inode *dir,
 
 	/* File name too long to exist */
 	if (dentry->d_name.len > NAME_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	sbi = autofs_sbi(dir->i_sb);
 
@@ -502,7 +502,7 @@ static struct dentry *autofs_lookup(struct inode *dir,
 		 * to create directories within the file system.
 		 */
 		if (!autofs_oz_mode(sbi) && !IS_ROOT(dentry->d_parent))
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 
 		ino = autofs_new_ino(sbi);
 		if (!ino)
@@ -538,14 +538,14 @@ static int autofs_dir_symlink(struct inode *dir,
 	pr_debug("%s <- %pd\n", symname, dentry);
 
 	if (!autofs_oz_mode(sbi))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* autofs_oz_mode() needs to allow path walks when the
 	 * autofs mount is catatonic but the state of an autofs
 	 * file system needs to be preserved over restarts.
 	 */
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	BUG_ON(!ino);
 
@@ -600,14 +600,14 @@ static int autofs_dir_unlink(struct inode *dir, struct dentry *dentry)
 	struct autofs_info *p_ino;
 
 	if (!autofs_oz_mode(sbi))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* autofs_oz_mode() needs to allow path walks when the
 	 * autofs mount is catatonic but the state of an autofs
 	 * file system needs to be preserved over restarts.
 	 */
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	ino->count--;
 	p_ino = autofs_dentry_ino(dentry->d_parent);
@@ -682,17 +682,17 @@ static int autofs_dir_rmdir(struct inode *dir, struct dentry *dentry)
 	pr_debug("dentry %p, removing %pd\n", dentry, dentry);
 
 	if (!autofs_oz_mode(sbi))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* autofs_oz_mode() needs to allow path walks when the
 	 * autofs mount is catatonic but the state of an autofs
 	 * file system needs to be preserved over restarts.
 	 */
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (ino->count != 1)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	spin_lock(&sbi->lookup_lock);
 	__autofs_add_expiring(dentry);
@@ -724,14 +724,14 @@ static int autofs_dir_mkdir(struct inode *dir,
 	struct inode *inode;
 
 	if (!autofs_oz_mode(sbi))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* autofs_oz_mode() needs to allow path walks when the
 	 * autofs mount is catatonic but the state of an autofs
 	 * file system needs to be preserved over restarts.
 	 */
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	pr_debug("dentry %p, creating %pd\n", dentry, dentry);
 
@@ -867,16 +867,17 @@ static int autofs_root_ioctl_unlocked(struct inode *inode, struct file *filp,
 
 	if (_IOC_TYPE(cmd) != _IOC_TYPE(AUTOFS_IOC_FIRST) ||
 	     _IOC_NR(cmd) - _IOC_NR(AUTOFS_IOC_FIRST) >= AUTOFS_IOC_COUNT)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	if (!autofs_oz_mode(sbi) && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case AUTOFS_IOC_READY:	/* Wait queue: go ahead and retry */
 		return autofs_wait_release(sbi, (autofs_wqt_t) arg, 0);
 	case AUTOFS_IOC_FAIL:	/* Wait queue: fail with ENOENT */
-		return autofs_wait_release(sbi, (autofs_wqt_t) arg, -ENOENT);
+		return autofs_wait_release(sbi, (autofs_wqt_t) arg,
+					   -ERR(ENOENT));
 	case AUTOFS_IOC_CATATONIC: /* Enter catatonic mode (daemon shutdown) */
 		autofs_catatonic_mode(sbi);
 		return 0;
@@ -903,7 +904,7 @@ static int autofs_root_ioctl_unlocked(struct inode *inode, struct file *filp,
 					   filp->f_path.mnt, sbi, p);
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

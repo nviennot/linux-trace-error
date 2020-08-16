@@ -2156,7 +2156,7 @@ static inline
 int netdev_set_prio_tc_map(struct net_device *dev, u8 prio, u8 tc)
 {
 	if (tc >= dev->num_tc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->prio_tc_map[prio & TC_BITMASK] = tc & TC_BITMASK;
 	return 0;

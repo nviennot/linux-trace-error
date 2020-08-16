@@ -494,7 +494,7 @@ static int snd_emu10k1x_pcm_trigger(struct snd_pcm_substream *substream,
 		snd_emu10k1x_ptr_write(emu, TRIGGER_CHANNEL, 0, snd_emu10k1x_ptr_read(emu, TRIGGER_CHANNEL, 0) & ~(TRIGGER_CHANNEL_0<<channel));
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -586,7 +586,7 @@ static int snd_emu10k1x_pcm_hw_params_capture(struct snd_pcm_substream *substrea
 
 	if (! epcm->voice) {
 		if (epcm->emu->capture_voice.use)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		epcm->voice = &epcm->emu->capture_voice;
 		epcm->voice->epcm = epcm;
 		epcm->voice->use = 1;
@@ -652,7 +652,7 @@ static int snd_emu10k1x_pcm_trigger_capture(struct snd_pcm_substream *substream,
 		snd_emu10k1x_ptr_write(emu, TRIGGER_CHANNEL, 0, snd_emu10k1x_ptr_read(emu, TRIGGER_CHANNEL, 0) & ~(TRIGGER_CAPTURE));
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -898,7 +898,7 @@ static int snd_emu10k1x_create(struct snd_card *card,
 	    pci_set_consistent_dma_mask(pci, DMA_BIT_MASK(28)) < 0) {
 		dev_err(card->dev, "error to set 28bit mask DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -920,14 +920,14 @@ static int snd_emu10k1x_create(struct snd_card *card,
 		dev_err(card->dev, "cannot allocate the port 0x%lx\n",
 			chip->port);
 		snd_emu10k1x_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (request_irq(pci->irq, snd_emu10k1x_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "cannot grab irq %d\n", pci->irq);
 		snd_emu10k1x_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1314,7 +1314,7 @@ static int snd_emu10k1x_midi_input_open(struct snd_rawmidi_substream *substream)
 	
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1X_MIDI_MODE_INPUT;
 	midi->substream_input = substream;
@@ -1330,7 +1330,7 @@ static int snd_emu10k1x_midi_input_open(struct snd_rawmidi_substream *substream)
 	return 0;
 
 error_out:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_emu10k1x_midi_output_open(struct snd_rawmidi_substream *substream)
@@ -1341,7 +1341,7 @@ static int snd_emu10k1x_midi_output_open(struct snd_rawmidi_substream *substream
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1X_MIDI_MODE_OUTPUT;
 	midi->substream_output = substream;
@@ -1357,7 +1357,7 @@ static int snd_emu10k1x_midi_output_open(struct snd_rawmidi_substream *substream
 	return 0;
 
 error_out:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_emu10k1x_midi_input_close(struct snd_rawmidi_substream *substream)
@@ -1369,7 +1369,7 @@ static int snd_emu10k1x_midi_input_close(struct snd_rawmidi_substream *substream
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1x_intr_disable(emu, midi->rx_enable);
 	midi->midi_mode &= ~EMU10K1X_MIDI_MODE_INPUT;
@@ -1392,7 +1392,7 @@ static int snd_emu10k1x_midi_output_close(struct snd_rawmidi_substream *substrea
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1x_intr_disable(emu, midi->tx_enable);
 	midi->midi_mode &= ~EMU10K1X_MIDI_MODE_OUTPUT;
@@ -1533,10 +1533,10 @@ static int snd_emu10k1x_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

@@ -277,19 +277,19 @@ int ntfs_nlstoucs(const ntfs_volume *vol, const char *ins,
 		return -ENOMEM;
 	} /* else if (!ins) */
 	ntfs_error(vol->sb, "Received NULL pointer.");
-	return -EINVAL;
+	return -ERR(EINVAL);
 name_err:
 	kmem_cache_free(ntfs_name_cache, ucs);
 	if (wc_len < 0) {
 		ntfs_error(vol->sb, "Name using character set %s contains "
 				"characters that cannot be converted to "
 				"Unicode.", nls->charset);
-		i = -EILSEQ;
+		i = -ERR(EILSEQ);
 	} else /* if (o >= NTFS_MAX_NAME_LEN) */ {
 		ntfs_error(vol->sb, "Name is too long (maximum length for a "
 				"name on NTFS is %d Unicode characters.",
 				NTFS_MAX_NAME_LEN);
-		i = -ENAMETOOLONG;
+		i = -ERR(ENAMETOOLONG);
 	}
 	return i;
 }
@@ -331,7 +331,7 @@ int ntfs_ucstonls(const ntfs_volume *vol, const ntfschar *ins,
 		ns = *outs;
 		ns_len = outs_len;
 		if (ns && !ns_len) {
-			wc = -ENAMETOOLONG;
+			wc = -ERR(ENAMETOOLONG);
 			goto conversion_err;
 		}
 		if (!ns) {
@@ -368,7 +368,7 @@ retry:			wc = nls->uni2char(le16_to_cpu(ins[i]), ns + o,
 		return o;
 	} /* else (!ins) */
 	ntfs_error(vol->sb, "Received NULL pointer.");
-	return -EINVAL;
+	return -ERR(EINVAL);
 conversion_err:
 	ntfs_error(vol->sb, "Unicode name contains characters that cannot be "
 			"converted to character set %s.  You might want to "
@@ -376,7 +376,7 @@ conversion_err:
 	if (ns != *outs)
 		kfree(ns);
 	if (wc != -ENAMETOOLONG)
-		wc = -EILSEQ;
+		wc = -ERR(EILSEQ);
 	return wc;
 mem_err_out:
 	ntfs_error(vol->sb, "Failed to allocate name!");

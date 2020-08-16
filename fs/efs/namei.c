@@ -80,14 +80,14 @@ static struct inode *efs_nfs_get_inode(struct super_block *sb, u64 ino,
 	struct inode *inode;
 
 	if (ino == 0)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	inode = efs_iget(sb, ino);
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 
 	if (generation && inode->i_generation != generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return inode;
@@ -109,7 +109,7 @@ struct dentry *efs_fh_to_parent(struct super_block *sb, struct fid *fid,
 
 struct dentry *efs_get_parent(struct dentry *child)
 {
-	struct dentry *parent = ERR_PTR(-ENOENT);
+	struct dentry *parent = ERR_PTR(-ERR(ENOENT));
 	efs_ino_t ino;
 
 	ino = efs_find_entry(d_inode(child), "..", 2);

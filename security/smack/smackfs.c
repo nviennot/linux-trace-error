@@ -334,7 +334,7 @@ static int smk_fill_rule(const char *subject, const char *object,
 		skp = smk_find_entry(cp);
 		kfree(cp);
 		if (skp == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		rule->smk_subject = skp;
 
 		cp = smk_parse_smack(object, len);
@@ -343,7 +343,7 @@ static int smk_fill_rule(const char *subject, const char *object,
 		skp = smk_find_entry(cp);
 		kfree(cp);
 		if (skp == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		rule->smk_object = skp;
 	}
 
@@ -401,7 +401,7 @@ static ssize_t smk_parse_long_rule(char *data, struct smack_parsed_rule *rule,
 
 		if (data[cnt] == '\0')
 			/* Unexpected end of data */
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tok[i] = data + cnt;
 
@@ -457,14 +457,14 @@ static ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
 	 * Enough data must be present.
 	 */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (format == SMK_FIXED24_FMT) {
 		/*
 		 * Minor hack for backward compatibility
 		 */
 		if (count < SMK_OLOADLEN || count > SMK_LOADLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (count >= PAGE_SIZE) {
 			count = PAGE_SIZE - 1;
@@ -484,7 +484,7 @@ static ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
 		while (count > 0 && (data[count - 1] != '\n'))
 			--count;
 		if (count == 0) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -502,7 +502,7 @@ static ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
 			if (rc < 0)
 				goto out;
 			if (rc == 0) {
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 				goto out;
 			}
 			cnt += rc;
@@ -663,7 +663,7 @@ static ssize_t smk_write_load(struct file *file, const char __user *buf,
 	 * Enough data must be present.
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return smk_write_rules_list(file, buf, count, ppos, NULL, NULL,
 				    SMK_FIXED24_FMT);
@@ -837,7 +837,7 @@ static ssize_t smk_set_cipso(struct file *file, const char __user *buf,
 	int maplevel;
 	unsigned int cat;
 	int catlen;
-	ssize_t rc = -EINVAL;
+	ssize_t rc = -ERR(EINVAL);
 	char *data = NULL;
 	char *rule;
 	int ret;
@@ -849,12 +849,12 @@ static ssize_t smk_set_cipso(struct file *file, const char __user *buf,
 	 * Enough data must be present.
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (format == SMK_FIXED24_FMT &&
 	    (count < SMK_CIPSOMIN || count > SMK_CIPSOMAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -879,7 +879,7 @@ static ssize_t smk_set_cipso(struct file *file, const char __user *buf,
 		rule += strlen(skp->smk_known) + 1;
 
 	if (rule > data + count) {
-		rc = -EOVERFLOW;
+		rc = -ERR(EOVERFLOW);
 		goto out;
 	}
 
@@ -889,7 +889,7 @@ static ssize_t smk_set_cipso(struct file *file, const char __user *buf,
 
 	rule += SMK_DIGITLEN;
 	if (rule > data + count) {
-		rc = -EOVERFLOW;
+		rc = -ERR(EOVERFLOW);
 		goto out;
 	}
 
@@ -1156,11 +1156,11 @@ static ssize_t smk_write_net4addr(struct file *file, const char __user *buf,
 	 * "<addr, as a.b.c.d><space><label>"
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (count < SMK_NETLBLADDRMIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -1178,14 +1178,14 @@ static ssize_t smk_write_net4addr(struct file *file, const char __user *buf,
 		rc = sscanf(data, "%hhd.%hhd.%hhd.%hhd %s",
 			&host[0], &host[1], &host[2], &host[3], smack);
 		if (rc != 5) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto free_out;
 		}
 		m = BEBITS;
 		masks = 32;
 	}
 	if (masks > BEBITS) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_out;
 	}
 
@@ -1203,7 +1203,7 @@ static ssize_t smk_write_net4addr(struct file *file, const char __user *buf,
 		 * Only the -CIPSO option is supported for IPv4
 		 */
 		if (strcmp(smack, SMACK_CIPSO_OPTION) != 0) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto free_out;
 		}
 	}
@@ -1416,11 +1416,11 @@ static ssize_t smk_write_net6addr(struct file *file, const char __user *buf,
 	 * "<addr, as a:b:c:d:e:f:g:h><space><label>"
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (count < SMK_NETLBLADDRMIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -1442,17 +1442,17 @@ static ssize_t smk_write_net6addr(struct file *file, const char __user *buf,
 				&scanned[3], &scanned[4], &scanned[5],
 				&scanned[6], &scanned[7], smack);
 		if (i != 9) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto free_out;
 		}
 	}
 	if (mask > 128) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_out;
 	}
 	for (i = 0; i < 8; i++) {
 		if (scanned[i] > 0xffff) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto free_out;
 		}
 		newname.s6_addr16[i] = htons(scanned[i]);
@@ -1472,7 +1472,7 @@ static ssize_t smk_write_net6addr(struct file *file, const char __user *buf,
 		 * Only -DELETE is supported for IPv6
 		 */
 		if (strcmp(smack, SMACK_DELETE_OPTION) != 0) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto free_out;
 		}
 	}
@@ -1587,10 +1587,10 @@ static ssize_t smk_write_doi(struct file *file, const char __user *buf,
 	int i;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count >= sizeof(temp) || count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(temp, buf, count) != 0)
 		return -EFAULT;
@@ -1598,7 +1598,7 @@ static ssize_t smk_write_doi(struct file *file, const char __user *buf,
 	temp[count] = '\0';
 
 	if (sscanf(temp, "%d", &i) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	smk_cipso_doi_value = i;
 
@@ -1654,10 +1654,10 @@ static ssize_t smk_write_direct(struct file *file, const char __user *buf,
 	int i;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count >= sizeof(temp) || count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(temp, buf, count) != 0)
 		return -EFAULT;
@@ -1665,7 +1665,7 @@ static ssize_t smk_write_direct(struct file *file, const char __user *buf,
 	temp[count] = '\0';
 
 	if (sscanf(temp, "%d", &i) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Don't do anything if the value hasn't actually changed.
@@ -1732,10 +1732,10 @@ static ssize_t smk_write_mapped(struct file *file, const char __user *buf,
 	int i;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count >= sizeof(temp) || count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(temp, buf, count) != 0)
 		return -EFAULT;
@@ -1743,7 +1743,7 @@ static ssize_t smk_write_mapped(struct file *file, const char __user *buf,
 	temp[count] = '\0';
 
 	if (sscanf(temp, "%d", &i) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Don't do anything if the value hasn't actually changed.
@@ -1799,7 +1799,7 @@ static ssize_t smk_read_ambient(struct file *filp, char __user *buf,
 					     smack_net_ambient->smk_known,
 					     asize);
 	else
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 
 	mutex_unlock(&smack_ambient_lock);
 
@@ -1824,7 +1824,7 @@ static ssize_t smk_write_ambient(struct file *file, const char __user *buf,
 	int rc = count;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -1995,7 +1995,7 @@ static ssize_t smk_write_onlycap(struct file *file, const char __user *buf,
 	int rc;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -2048,7 +2048,7 @@ static ssize_t smk_read_unconfined(struct file *filp, char __user *buf,
 					size_t cn, loff_t *ppos)
 {
 	char *smack = "";
-	ssize_t rc = -EINVAL;
+	ssize_t rc = -ERR(EINVAL);
 	int asize;
 
 	if (*ppos != 0)
@@ -2082,7 +2082,7 @@ static ssize_t smk_write_unconfined(struct file *file, const char __user *buf,
 	int rc = count;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -2158,10 +2158,10 @@ static ssize_t smk_write_logging(struct file *file, const char __user *buf,
 	int i;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count >= sizeof(temp) || count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(temp, buf, count) != 0)
 		return -EFAULT;
@@ -2169,9 +2169,9 @@ static ssize_t smk_write_logging(struct file *file, const char __user *buf,
 	temp[count] = '\0';
 
 	if (sscanf(temp, "%d", &i) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i < 0 || i > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	log_policy = i;
 	return count;
 }
@@ -2278,7 +2278,7 @@ static ssize_t smk_user_access(struct file *file, const char __user *buf,
 
 	if (format == SMK_FIXED24_FMT) {
 		if (count < SMK_LOADLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		res = smk_parse_rule(data, &rule, 0);
 	} else {
 		/*
@@ -2378,7 +2378,7 @@ static ssize_t smk_write_load2(struct file *file, const char __user *buf,
 	 * Must have privilege.
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return smk_write_rules_list(file, buf, count, ppos, NULL, NULL,
 				    SMK_LONG_FMT);
@@ -2504,13 +2504,13 @@ static ssize_t smk_write_revoke_subj(struct file *file, const char __user *buf,
 	int rc = count;
 
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count == 0 || count > SMK_LONGLABEL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user(buf, count);
 	if (IS_ERR(data))
@@ -2574,7 +2574,7 @@ static ssize_t smk_write_change_rule(struct file *file, const char __user *buf,
 	 * Must have privilege.
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return smk_write_rules_list(file, buf, count, ppos, NULL, NULL,
 				    SMK_CHANGE_FMT);
@@ -2600,7 +2600,7 @@ static ssize_t smk_read_syslog(struct file *filp, char __user *buf,
 				size_t cn, loff_t *ppos)
 {
 	struct smack_known *skp;
-	ssize_t rc = -EINVAL;
+	ssize_t rc = -ERR(EINVAL);
 	int asize;
 
 	if (*ppos != 0)
@@ -2637,7 +2637,7 @@ static ssize_t smk_write_syslog(struct file *file, const char __user *buf,
 	int rc = count;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -2729,13 +2729,13 @@ static ssize_t smk_write_relabel_self(struct file *file, const char __user *buf,
 	 * Must have privilege.
 	 */
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * Enough data must be present.
 	 */
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user_nul(buf, count);
 	if (IS_ERR(data))
@@ -2799,10 +2799,10 @@ static ssize_t smk_write_ptrace(struct file *file, const char __user *buf,
 	int i;
 
 	if (!smack_privileged(CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (*ppos != 0 || count >= sizeof(temp) || count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(temp, buf, count) != 0)
 		return -EFAULT;
@@ -2810,9 +2810,9 @@ static ssize_t smk_write_ptrace(struct file *file, const char __user *buf,
 	temp[count] = '\0';
 
 	if (sscanf(temp, "%d", &i) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i < SMACK_PTRACE_DEFAULT || i > SMACK_PTRACE_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	smack_ptrace_rule = i;
 
 	return count;

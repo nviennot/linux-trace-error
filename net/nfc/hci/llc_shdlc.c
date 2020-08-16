@@ -435,7 +435,7 @@ static void llc_shdlc_rcv_u_frame(struct llc_shdlc *shdlc,
 			 * Chip wants to reset link. This is unexpected and
 			 * unsupported.
 			 */
-			shdlc->hard_fault = -ECONNRESET;
+			shdlc->hard_fault = -ERR(ECONNRESET);
 			break;
 		default:
 			break;
@@ -620,7 +620,7 @@ static void llc_shdlc_sm_work(struct work_struct *work)
 		if (shdlc->connect_tries++ < 5)
 			r = llc_shdlc_connect_initiate(shdlc);
 		else
-			r = -ETIME;
+			r = -ERR(ETIME);
 		if (r < 0) {
 			llc_shdlc_connect_complete(shdlc, r);
 		} else {
@@ -726,7 +726,7 @@ static void llc_shdlc_recv_frame(struct llc_shdlc *shdlc, struct sk_buff *skb)
 {
 	if (skb == NULL) {
 		pr_err("NULL Frame -> link is dead\n");
-		shdlc->hard_fault = -EREMOTEIO;
+		shdlc->hard_fault = -ERR(EREMOTEIO);
 	} else {
 		SHDLC_DUMP_SKB("incoming frame", skb);
 		skb_queue_tail(&shdlc->rcv_q, skb);

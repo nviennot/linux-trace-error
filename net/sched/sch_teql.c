@@ -171,10 +171,10 @@ static int teql_qdisc_init(struct Qdisc *sch, struct nlattr *opt,
 	struct teql_sched_data *q = qdisc_priv(sch);
 
 	if (dev->hard_header_len > m->dev->hard_header_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (m->dev == dev)
-		return -ELOOP;
+		return -ERR(ELOOP);
 
 	q->m = m;
 
@@ -189,7 +189,7 @@ static int teql_qdisc_init(struct Qdisc *sch, struct nlattr *opt,
 			    (m->dev->flags & IFF_MULTICAST &&
 			     !(dev->flags & IFF_MULTICAST)) ||
 			    dev->mtu < m->dev->mtu)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} else {
 			if (!(dev->flags&IFF_POINTOPOINT))
 				m->dev->flags &= ~IFF_POINTOPOINT;
@@ -222,7 +222,7 @@ __teql_resolve(struct sk_buff *skb, struct sk_buff *skb_res,
 
 	n = dst_neigh_lookup_skb(dst, skb);
 	if (!n)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (dst->dev != dev) {
 		struct neighbour *mn;
@@ -243,9 +243,9 @@ __teql_resolve(struct sk_buff *skb, struct sk_buff *skb_res,
 				      haddr, NULL, skb->len);
 
 		if (err < 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 	} else {
-		err = (skb_res == NULL) ? -EAGAIN : 1;
+		err = (skb_res == NULL) ? -ERR(EAGAIN) : 1;
 	}
 	neigh_release(n);
 	return err;
@@ -260,7 +260,7 @@ static inline int teql_resolve(struct sk_buff *skb,
 	int res;
 
 	if (rcu_access_pointer(txq->qdisc) == &noop_qdisc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!dev->header_ops || !dst)
 		return 0;
@@ -358,7 +358,7 @@ static int teql_master_open(struct net_device *dev)
 	unsigned int flags = IFF_NOARP | IFF_MULTICAST;
 
 	if (m->slaves == NULL)
-		return -EUNATCH;
+		return -ERR(EUNATCH);
 
 	flags = FMASK;
 
@@ -367,12 +367,12 @@ static int teql_master_open(struct net_device *dev)
 		struct net_device *slave = qdisc_dev(q);
 
 		if (slave == NULL)
-			return -EUNATCH;
+			return -ERR(EUNATCH);
 
 		if (slave->mtu < mtu)
 			mtu = slave->mtu;
 		if (slave->hard_header_len > LL_MAX_HEADER)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* If all the slaves are BROADCAST, master is BROADCAST
 		   If all the slaves are PtP, master is PtP
@@ -418,7 +418,7 @@ static int teql_master_mtu(struct net_device *dev, int new_mtu)
 	if (q) {
 		do {
 			if (new_mtu > qdisc_dev(q)->mtu)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} while ((q = NEXT_SLAVE(q)) != m->slaves);
 	}
 
@@ -469,7 +469,7 @@ MODULE_PARM_DESC(max_equalizers, "Max number of link equalizers");
 static int __init teql_init(void)
 {
 	int i;
-	int err = -ENODEV;
+	int err = -ERR(ENODEV);
 
 	for (i = 0; i < max_equalizers; i++) {
 		struct net_device *dev;

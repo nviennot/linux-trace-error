@@ -718,7 +718,7 @@ int ocfs2_resmap_resv_bits(struct ocfs2_reservation_map *resmap,
 			   int *cstart, int *clen)
 {
 	if (resv == NULL || ocfs2_resmap_disabled(resmap))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	spin_lock(&resv_lock);
 

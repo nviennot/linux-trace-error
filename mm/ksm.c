@@ -738,7 +738,7 @@ again:
 	if (flags == GET_KSM_PAGE_TRYLOCK) {
 		if (!trylock_page(page)) {
 			put_page(page);
-			return ERR_PTR(-EBUSY);
+			return ERR_PTR(-ERR(EBUSY));
 		}
 	} else if (flags == GET_KSM_PAGE_LOCK)
 		lock_page(page);
@@ -850,7 +850,7 @@ static int unmerge_ksm_pages(struct vm_area_struct *vma,
 		if (ksm_test_exit(vma->vm_mm))
 			break;
 		if (signal_pending(current))
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 		else
 			err = break_ksm(vma, addr);
 	}
@@ -890,7 +890,7 @@ static int remove_stable_node(struct stable_node *stable_node)
 	 * between ksm_exit() and exit_mmap(). Just refuse to let
 	 * merge_across_nodes/max_page_sharing be switched.
 	 */
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	if (!page_mapped(page)) {
 		/*
 		 * The stable node did not yet appear stale to get_ksm_page(),
@@ -947,7 +947,7 @@ static int remove_all_stable_nodes(void)
 						struct stable_node, node);
 			if (remove_stable_node_chain(stable_node,
 						     root_stable_tree + nid)) {
-				err = -EBUSY;
+				err = -ERR(EBUSY);
 				break;	/* proceed to next nid */
 			}
 			cond_resched();
@@ -955,7 +955,7 @@ static int remove_all_stable_nodes(void)
 	}
 	list_for_each_entry_safe(stable_node, next, &migrate_nodes, list) {
 		if (remove_stable_node(stable_node))
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		cond_resched();
 	}
 	return err;
@@ -1676,7 +1676,7 @@ again:
 						 GET_KSM_PAGE_TRYLOCK);
 
 			if (PTR_ERR(tree_page) == -EBUSY)
-				return ERR_PTR(-EBUSY);
+				return ERR_PTR(-ERR(EBUSY));
 
 			if (unlikely(!tree_page))
 				/*
@@ -2865,7 +2865,7 @@ static ssize_t sleep_millisecs_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &msecs);
 	if (err || msecs > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ksm_thread_sleep_millisecs = msecs;
 	wake_up_interruptible(&ksm_iter_wait);
@@ -2889,7 +2889,7 @@ static ssize_t pages_to_scan_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &nr_pages);
 	if (err || nr_pages > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ksm_thread_pages_to_scan = nr_pages;
 
@@ -2911,9 +2911,9 @@ static ssize_t run_store(struct kobject *kobj, struct kobj_attribute *attr,
 
 	err = kstrtoul(buf, 10, &flags);
 	if (err || flags > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags > KSM_RUN_UNMERGE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * KSM_RUN_MERGE sets ksmd running, and 0 stops it running.
@@ -2963,13 +2963,13 @@ static ssize_t merge_across_nodes_store(struct kobject *kobj,
 	if (err)
 		return err;
 	if (knob > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&ksm_thread_mutex);
 	wait_while_offlining();
 	if (ksm_merge_across_nodes != knob) {
 		if (ksm_pages_shared || remove_all_stable_nodes())
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		else if (root_stable_tree == one_stable_tree) {
 			struct rb_root *buf;
 			/*
@@ -3017,7 +3017,7 @@ static ssize_t use_zero_pages_store(struct kobject *kobj,
 
 	err = kstrtobool(buf, &value);
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ksm_use_zero_pages = value;
 
@@ -3047,7 +3047,7 @@ static ssize_t max_page_sharing_store(struct kobject *kobj,
 	 * negative.
 	 */
 	if (knob < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (READ_ONCE(ksm_max_page_sharing) == knob)
 		return count;
@@ -3056,7 +3056,7 @@ static ssize_t max_page_sharing_store(struct kobject *kobj,
 	wait_while_offlining();
 	if (ksm_max_page_sharing != knob) {
 		if (ksm_pages_shared || remove_all_stable_nodes())
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		else
 			ksm_max_page_sharing = knob;
 	}
@@ -3136,7 +3136,7 @@ stable_node_chains_prune_millisecs_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &msecs);
 	if (err || msecs > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ksm_stable_node_chains_prune_millisecs = msecs;
 

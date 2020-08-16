@@ -172,7 +172,7 @@ nf_flow_table_offload_add_cb(struct nf_flowtable *flow_table,
 	down_write(&flow_table->flow_block_lock);
 	block_cb = flow_block_cb_lookup(block, cb, cb_priv);
 	if (block_cb) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto unlock;
 	}
 

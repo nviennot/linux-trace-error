@@ -151,27 +151,27 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
 static inline int fsverity_ioctl_enable(struct file *filp,
 					const void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* measure.c */
 
 static inline int fsverity_ioctl_measure(struct file *filp, void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* open.c */
 
 static inline int fsverity_file_open(struct inode *inode, struct file *filp)
 {
-	return IS_VERITY(inode) ? -EOPNOTSUPP : 0;
+	return IS_VERITY(inode) ? -ERR(EOPNOTSUPP) : 0;
 }
 
 static inline int fsverity_prepare_setattr(struct dentry *dentry,
 					   struct iattr *attr)
 {
-	return IS_VERITY(d_inode(dentry)) ? -EOPNOTSUPP : 0;
+	return IS_VERITY(d_inode(dentry)) ? -ERR(EOPNOTSUPP) : 0;
 }
 
 static inline void fsverity_cleanup_inode(struct inode *inode)

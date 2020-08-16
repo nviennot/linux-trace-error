@@ -918,7 +918,7 @@ batadv_dat_cache_dump_entry(struct sk_buff *msg, u32 portid,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_DAT_CACHE);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	genl_dump_check_consistent(cb, hdr);
 
@@ -931,7 +931,7 @@ batadv_dat_cache_dump_entry(struct sk_buff *msg, u32 portid,
 	    nla_put_u16(msg, BATADV_ATTR_DAT_CACHE_VID, dat_entry->vid) ||
 	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS, msecs)) {
 		genlmsg_cancel(msg, hdr);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	genlmsg_end(msg, hdr);
@@ -970,7 +970,7 @@ batadv_dat_cache_dump_bucket(struct sk_buff *msg, u32 portid,
 			spin_unlock_bh(&hash->list_locks[bucket]);
 			*idx_skip = idx;
 
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 
 skip:
@@ -1004,11 +1004,11 @@ int batadv_dat_cache_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ifindex = batadv_netlink_get_ifindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -1017,7 +1017,7 @@ int batadv_dat_cache_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1545,25 +1545,25 @@ batadv_dat_check_dhcp(struct sk_buff *skb, __be16 proto, __be32 *ip_src)
 	} *dhcp_h, _dhcp_h;
 
 	if (proto != htons(ETH_P_IP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!batadv_dat_check_dhcp_ipudp(skb, ip_src))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	offset = skb_transport_offset(skb) + sizeof(struct udphdr);
 	if (skb->len < offset + sizeof(struct batadv_dhcp_packet))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dhcp_h = skb_header_pointer(skb, offset, sizeof(_dhcp_h), &_dhcp_h);
 	if (!dhcp_h || dhcp_h->htype != BATADV_HTYPE_ETHERNET ||
 	    dhcp_h->hlen != ETH_ALEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	offset += offsetof(struct batadv_dhcp_packet, magic);
 
 	magic = skb_header_pointer(skb, offset, sizeof(_magic), &_magic);
 	if (!magic || get_unaligned(magic) != htonl(BATADV_DHCP_MAGIC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return dhcp_h->op;
 }
@@ -1607,13 +1607,13 @@ static int batadv_dat_get_dhcp_message_type(struct sk_buff *skb)
 	/* Option Overload Code not supported */
 	if (!tl || tl->type != BATADV_DHCP_OPT_MSG_TYPE ||
 	    tl->len != sizeof(_type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	offset += sizeof(_tl);
 
 	type = skb_header_pointer(skb, offset, sizeof(_type), &_type);
 	if (!type)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return *type;
 }

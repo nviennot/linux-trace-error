@@ -153,7 +153,7 @@ int ntfs_map_runlist_nolock(ntfs_inode *ni, VCN vcn, ntfs_attr_search_ctx *ctx)
 				CASE_SENSITIVE, vcn, NULL, 0, ctx);
 		if (unlikely(err)) {
 			if (err == -ENOENT)
-				err = -EIO;
+				err = -ERR(EIO);
 			goto err_out;
 		}
 		BUG_ON(!ctx->attr->non_resident);
@@ -167,7 +167,7 @@ int ntfs_map_runlist_nolock(ntfs_inode *ni, VCN vcn, ntfs_attr_search_ctx *ctx)
 	 */
 	end_vcn = sle64_to_cpu(a->data.non_resident.highest_vcn) + 1;
 	if (unlikely(vcn && vcn >= end_vcn)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto err_out;
 	}
 	rl = ntfs_mapping_pairs_decompress(ni->vol, a, ni->runlist.rl);
@@ -464,7 +464,7 @@ runlist_element *ntfs_attr_find_vcn_nolock(ntfs_inode *ni, const VCN vcn,
 		read_lock_irqsave(&ni->size_lock, flags);
 		if (!ni->allocated_size) {
 			read_unlock_irqrestore(&ni->size_lock, flags);
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 		}
 		read_unlock_irqrestore(&ni->size_lock, flags);
 	}
@@ -483,9 +483,9 @@ retry_remap:
 		}
 		if (likely(rl->lcn != LCN_RL_NOT_MAPPED)) {
 			if (likely(rl->lcn == LCN_ENOENT))
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 			else
-				err = -EIO;
+				err = -ERR(EIO);
 		}
 	}
 	if (!err && !is_retry) {
@@ -507,9 +507,9 @@ retry_remap:
 			}
 		}
 		if (err == -EINVAL)
-			err = -EIO;
+			err = -ERR(EIO);
 	} else if (!err)
-		err = -EIO;
+		err = -ERR(EIO);
 	if (err != -ENOENT)
 		ntfs_error(ni->vol->sb, "Failed with error code %i.", err);
 	return ERR_PTR(err);
@@ -598,7 +598,7 @@ static int ntfs_attr_find(const ATTR_TYPE type, const ntfschar *name,
 		ctx->attr = a;
 		if (unlikely(le32_to_cpu(a->type) > le32_to_cpu(type) ||
 				a->type == AT_END))
-			return -ENOENT;
+			return -ERR(ENOENT);
 		if (unlikely(!a->length))
 			break;
 		if (a->type != type)
@@ -610,7 +610,7 @@ static int ntfs_attr_find(const ATTR_TYPE type, const ntfschar *name,
 		if (!name) {
 			/* The search failed if the found attribute is named. */
 			if (a->name_length)
-				return -ENOENT;
+				return -ERR(ENOENT);
 		} else if (!ntfs_are_names_equal(name, name_len,
 			    (ntfschar*)((u8*)a + le16_to_cpu(a->name_offset)),
 			    a->name_length, ic, upcase, upcase_len)) {
@@ -626,7 +626,7 @@ static int ntfs_attr_find(const ATTR_TYPE type, const ntfschar *name,
 			 * matching attribute.
 			 */
 			if (rc == -1)
-				return -ENOENT;
+				return -ERR(ENOENT);
 			/* If the strings are not equal, continue search. */
 			if (rc)
 				continue;
@@ -636,7 +636,7 @@ static int ntfs_attr_find(const ATTR_TYPE type, const ntfschar *name,
 					a->name_length, 1, CASE_SENSITIVE,
 					upcase, upcase_len);
 			if (rc == -1)
-				return -ENOENT;
+				return -ERR(ENOENT);
 			if (rc)
 				continue;
 		}
@@ -667,14 +667,14 @@ static int ntfs_attr_find(const ATTR_TYPE type, const ntfschar *name,
 				if (val_len == avl)
 					return 0;
 				if (val_len < avl)
-					return -ENOENT;
+					return -ERR(ENOENT);
 			} else if (rc < 0)
-				return -ENOENT;
+				return -ERR(ENOENT);
 		}
 	}
 	ntfs_error(vol->sb, "Inode is corrupt.  Run chkdsk.");
 	NVolSetErrors(vol);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**
@@ -970,7 +970,7 @@ static int ntfs_external_attr_find(const ATTR_TYPE type,
 						"reference in attribute list "
 						"of base inode 0x%lx.%s",
 						base_ni->mft_no, es);
-				err = -EIO;
+				err = -ERR(EIO);
 				break;
 			}
 		} else { /* Mft references do not match. */
@@ -997,7 +997,7 @@ static int ntfs_external_attr_find(const ATTR_TYPE type,
 							base_ni->mft_no, es);
 					err = PTR_ERR(ctx->mrec);
 					if (err == -ENOENT)
-						err = -EIO;
+						err = -ERR(EIO);
 					/* Cause @ctx to be sanitized below. */
 					ni = NULL;
 					break;
@@ -1071,7 +1071,7 @@ do_next_attr:
 		ntfs_error(vol->sb, "Base inode 0x%lx contains corrupt "
 				"attribute list attribute.%s", base_ni->mft_no,
 				es);
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	if (ni != base_ni) {
 		if (ni)
@@ -1336,17 +1336,17 @@ int ntfs_attr_size_bounds_check(const ntfs_volume *vol, const ATTR_TYPE type,
 	 * listed in $AttrDef.
 	 */
 	if (unlikely(type == AT_ATTRIBUTE_LIST && size > 256 * 1024))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	/* Get the $AttrDef entry for the attribute @type. */
 	ad = ntfs_attr_find_in_attrdef(vol, type);
 	if (unlikely(!ad))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/* Do the bounds check. */
 	if (((sle64_to_cpu(ad->min_size) > 0) &&
 			size < sle64_to_cpu(ad->min_size)) ||
 			((sle64_to_cpu(ad->max_size) > 0) && size >
 			sle64_to_cpu(ad->max_size)))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	return 0;
 }
 
@@ -1368,10 +1368,10 @@ int ntfs_attr_can_be_non_resident(const ntfs_volume *vol, const ATTR_TYPE type)
 	/* Find the attribute definition record in $AttrDef. */
 	ad = ntfs_attr_find_in_attrdef(vol, type);
 	if (unlikely(!ad))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/* Check the flags and return the result. */
 	if (ad->flags & ATTR_DEF_RESIDENT)
-		return -EPERM;
+		return -ERR(EPERM);
 	return 0;
 }
 
@@ -1396,7 +1396,7 @@ int ntfs_attr_can_be_non_resident(const ntfs_volume *vol, const ATTR_TYPE type)
 int ntfs_attr_can_be_resident(const ntfs_volume *vol, const ATTR_TYPE type)
 {
 	if (type == AT_INDEX_ALLOCATION)
-		return -EPERM;
+		return -ERR(EPERM);
 	return 0;
 }
 
@@ -1430,7 +1430,7 @@ int ntfs_attr_record_resize(MFT_RECORD *m, ATTR_RECORD *a, u32 new_size)
 				le32_to_cpu(a->length) + new_size;
 		/* Not enough space in this mft record. */
 		if (new_muse > le32_to_cpu(m->bytes_allocated))
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		/* Move attributes following @a to their new location. */
 		memmove((u8*)a + new_size, (u8*)a + le32_to_cpu(a->length),
 				le32_to_cpu(m->bytes_in_use) - ((u8*)a -
@@ -1470,7 +1470,7 @@ int ntfs_resident_attr_value_resize(MFT_RECORD *m, ATTR_RECORD *a,
 	/* Resize the resident part of the attribute record. */
 	if (ntfs_attr_record_resize(m, a,
 			le16_to_cpu(a->data.resident.value_offset) + new_size))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	/*
 	 * The resize succeeded!  If we made the attribute value bigger, clear
 	 * the area between the old size and @new_size.
@@ -1611,7 +1611,7 @@ int ntfs_attr_make_non_resident(ntfs_inode *ni, const u32 data_size)
 			CASE_SENSITIVE, 0, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	m = ctx->mrec;
@@ -1824,7 +1824,7 @@ page_err_out:
 		put_page(page);
 	}
 	if (err == -EINVAL)
-		err = -EIO;
+		err = -ERR(EIO);
 	return err;
 }
 
@@ -1961,9 +1961,9 @@ retry_extend:
 		}
 		/* Translate error code to be POSIX conformant for write(2). */
 		if (err == -ERANGE)
-			err = -EFBIG;
+			err = -ERR(EFBIG);
 		else
-			err = -EIO;
+			err = -ERR(EIO);
 		return err;
 	}
 	if (!NInoAttr(ni))
@@ -2017,7 +2017,7 @@ retry_extend:
 			CASE_SENSITIVE, vcn, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	m = ctx->mrec;
@@ -2085,7 +2085,7 @@ retry_extend:
 					"with error code %i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
 		if (err != -ENOMEM)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto conv_err_out;
 	}
 	/* TODO: Not implemented from here, abort. */
@@ -2103,7 +2103,7 @@ retry_extend:
 					"non-resident.  This case is not "
 					"implemented yet.");
 	}
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	goto conv_err_out;
 #if 0
 	// TODO: Attempt to make other attributes non-resident.
@@ -2180,7 +2180,7 @@ skip_sparse:
 						(unsigned)le32_to_cpu(ni->type),
 						err);
 			if (err != -ENOMEM)
-				err = -EIO;
+				err = -ERR(EIO);
 			goto err_out;
 		}
 		ni->runlist.rl = rl;
@@ -2215,7 +2215,7 @@ first_alloc:
 					"failed with error code %i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
 		if (err != -ENOMEM && err != -ENOSPC)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	rl = ntfs_runlists_merge(ni->runlist.rl, rl2);
@@ -2228,7 +2228,7 @@ first_alloc:
 					"with error code %i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
 		if (err != -ENOMEM)
-			err = -EIO;
+			err = -ERR(EIO);
 		if (ntfs_cluster_free_from_rl(vol, rl2)) {
 			ntfs_error(vol->sb, "Failed to release allocated "
 					"cluster(s) in error code path.  Run "
@@ -2260,7 +2260,7 @@ first_alloc:
 					"mapping pairs failed with error code "
 					"%i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto undo_alloc;
 	}
 	/* Extend the attribute record to fit the bigger mapping pairs array. */
@@ -2280,7 +2280,7 @@ first_alloc:
 					"record for the extended attribute "
 					"record.  This case is not "
 					"implemented yet.");
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto undo_alloc;
 	}
 	mp_rebuilt = true;
@@ -2295,7 +2295,7 @@ first_alloc:
 					"because building the mapping pairs "
 					"failed with error code %i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto undo_alloc;
 	}
 	/* Update the highest_vcn. */
@@ -2366,7 +2366,7 @@ restore_undo_alloc:
 				"error code %i.", vi->i_ino,
 				(unsigned)le32_to_cpu(ni->type), err);
 	if (err == -ENOENT)
-		err = -EIO;
+		err = -ERR(EIO);
 	ntfs_attr_reinit_search_ctx(ctx);
 	if (ntfs_attr_lookup(ni->type, ni->name, ni->name_len, CASE_SENSITIVE,
 			allocated_size >> vol->cluster_size_bits, NULL, 0,
@@ -2507,7 +2507,7 @@ int ntfs_attr_set(ntfs_inode *ni, const s64 ofs, const s64 cnt, const u8 val)
 	/* If the end is outside the inode size return -ESPIPE. */
 	if (unlikely(end > i_size_read(VFS_I(ni)))) {
 		ntfs_error(vol->sb, "Request exceeds end of attribute.");
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 	}
 	end >>= PAGE_SHIFT;
 	/* If there is a first partial page, need to do it the slow way. */

@@ -1346,70 +1346,70 @@ static inline int regmap_write(struct regmap *map, unsigned int reg,
 			       unsigned int val)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_write_async(struct regmap *map, unsigned int reg,
 				     unsigned int val)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_raw_write(struct regmap *map, unsigned int reg,
 				   const void *val, size_t val_len)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_raw_write_async(struct regmap *map, unsigned int reg,
 					 const void *val, size_t val_len)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_noinc_write(struct regmap *map, unsigned int reg,
 				    const void *val, size_t val_len)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_bulk_write(struct regmap *map, unsigned int reg,
 				    const void *val, size_t val_count)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_read(struct regmap *map, unsigned int reg,
 			      unsigned int *val)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_raw_read(struct regmap *map, unsigned int reg,
 				  void *val, size_t val_len)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_noinc_read(struct regmap *map, unsigned int reg,
 				    void *val, size_t val_len)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_bulk_read(struct regmap *map, unsigned int reg,
 				   void *val, size_t val_count)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_update_bits_base(struct regmap *map, unsigned int reg,
@@ -1417,28 +1417,28 @@ static inline int regmap_update_bits_base(struct regmap *map, unsigned int reg,
 					  bool *change, bool async, bool force)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_set_bits(struct regmap *map,
 				  unsigned int reg, unsigned int bits)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_clear_bits(struct regmap *map,
 				    unsigned int reg, unsigned int bits)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_test_bits(struct regmap *map,
 				   unsigned int reg, unsigned int bits)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_field_update_bits_base(struct regmap_field *field,
@@ -1446,7 +1446,7 @@ static inline int regmap_field_update_bits_base(struct regmap_field *field,
 					bool *change, bool async, bool force)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_fields_update_bits_base(struct regmap_field *field,
@@ -1455,45 +1455,45 @@ static inline int regmap_fields_update_bits_base(struct regmap_field *field,
 				   bool *change, bool async, bool force)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_get_val_bytes(struct regmap *map)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_get_max_register(struct regmap *map)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_get_reg_stride(struct regmap *map)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regcache_sync(struct regmap *map)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regcache_sync_region(struct regmap *map, unsigned int min,
 				       unsigned int max)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regcache_drop_region(struct regmap *map, unsigned int min,
 				       unsigned int max)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void regcache_cache_only(struct regmap *map, bool enable)
@@ -1521,14 +1521,14 @@ static inline int regmap_register_patch(struct regmap *map,
 					int num_regs)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regmap_parse_val(struct regmap *map, const void *buf,
 				unsigned int *val)
 {
 	WARN_ONCE(1, "regmap API is disabled");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct regmap *dev_get_regmap(struct device *dev,

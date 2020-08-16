@@ -1067,7 +1067,7 @@ int mm_account_pinned_pages(struct mmpin *mmp, size_t size)
 		old_pg = atomic_long_read(&user->locked_vm);
 		new_pg = old_pg + num_pg;
 		if (new_pg > max_pg)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 	} while (atomic_long_cmpxchg(&user->locked_vm, old_pg, new_pg) !=
 		 old_pg);
 
@@ -1284,7 +1284,7 @@ int skb_zerocopy_iter_stream(struct sock *sk, struct sk_buff *skb,
 	 * TCP appends to an skb, but zerocopy_realloc triggered a new alloc.
 	 */
 	if (orig_uarg && uarg != orig_uarg)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	err = __zerocopy_sg_from_iter(sk, skb, &msg->msg_iter, len);
 	if (err == -EFAULT || (err == -EMSGSIZE && skb->len == orig_len)) {
@@ -1316,7 +1316,7 @@ static int skb_zerocopy_clone(struct sk_buff *nskb, struct sk_buff *orig,
 			if (skb_uarg(nskb) == skb_uarg(orig))
 				return 0;
 			if (skb_copy_ubufs(nskb, GFP_ATOMIC))
-				return -EIO;
+				return -ERR(EIO);
 		}
 		skb_zcopy_set(nskb, skb_uarg(orig), NULL);
 	}
@@ -1346,7 +1346,7 @@ int skb_copy_ubufs(struct sk_buff *skb, gfp_t gfp_mask)
 	u32 d_off;
 
 	if (skb_shared(skb) || skb_unclone(skb, gfp_mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!num_frags)
 		goto release;
@@ -3595,7 +3595,7 @@ int skb_append_pagefrags(struct sk_buff *skb, struct page *page,
 		get_page(page);
 		skb_fill_page_desc(skb, i, page, offset, size);
 	} else {
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	return 0;
@@ -3708,7 +3708,7 @@ EXPORT_SYMBOL_GPL(skb_segment_list);
 int skb_gro_receive_list(struct sk_buff *p, struct sk_buff *skb)
 {
 	if (unlikely(p->len + skb->len >= 65536))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (NAPI_GRO_CB(p)->last == p)
 		skb_shinfo(p)->frag_list = skb;
@@ -3782,7 +3782,7 @@ struct sk_buff *skb_segment(struct sk_buff *head_skb,
 	__skb_push(head_skb, doffset);
 	proto = skb_network_protocol(head_skb, &dummy);
 	if (unlikely(!proto))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	sg = !!(features & NETIF_F_SG);
 	csum = !!can_checksum_protocol(features, proto);
@@ -3984,7 +3984,7 @@ normal:
 				net_warn_ratelimited(
 					"skb_segment: too many frags: %u %u\n",
 					pos, mss);
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto err;
 			}
 
@@ -4090,7 +4090,7 @@ int skb_gro_receive(struct sk_buff *p, struct sk_buff *skb)
 	struct sk_buff *lp;
 
 	if (unlikely(p->len + len >= 65536 || NAPI_GRO_CB(skb)->flush))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	lp = NAPI_GRO_CB(p)->last;
 	pinfo = skb_shinfo(lp);
@@ -4270,7 +4270,7 @@ __skb_to_sgvec(struct sk_buff *skb, struct scatterlist *sg, int offset, int len,
 	int elt = 0;
 
 	if (unlikely(recursion_level >= 24))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (copy > 0) {
 		if (copy > len)
@@ -4291,7 +4291,7 @@ __skb_to_sgvec(struct sk_buff *skb, struct scatterlist *sg, int offset, int len,
 		if ((copy = end - offset) > 0) {
 			skb_frag_t *frag = &skb_shinfo(skb)->frags[i];
 			if (unlikely(elt && sg_is_last(&sg[elt - 1])))
-				return -EMSGSIZE;
+				return -ERR(EMSGSIZE);
 
 			if (copy > len)
 				copy = len;
@@ -4313,7 +4313,7 @@ __skb_to_sgvec(struct sk_buff *skb, struct scatterlist *sg, int offset, int len,
 		end = start + frag_iter->len;
 		if ((copy = end - offset) > 0) {
 			if (unlikely(elt && sg_is_last(&sg[elt - 1])))
-				return -EMSGSIZE;
+				return -ERR(EMSGSIZE);
 
 			if (copy > len)
 				copy = len;
@@ -4614,7 +4614,7 @@ static void __skb_complete_tx_timestamp(struct sk_buff *skb,
 
 	serr = SKB_EXT_ERR(skb);
 	memset(serr, 0, sizeof(*serr));
-	serr->ee.ee_errno = ENOMSG;
+	serr->ee.ee_errno = ERR(ENOMSG);
 	serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 	serr->ee.ee_info = tstype;
 	serr->opt_stats = opt_stats;
@@ -4737,7 +4737,7 @@ void skb_complete_wifi_ack(struct sk_buff *skb, bool acked)
 
 	serr = SKB_EXT_ERR(skb);
 	memset(serr, 0, sizeof(*serr));
-	serr->ee.ee_errno = ENOMSG;
+	serr->ee.ee_errno = ERR(ENOMSG);
 	serr->ee.ee_origin = SO_EE_ORIGIN_TXSTATUS;
 
 	/* Take a reference to prevent skb_orphan() from freeing the socket,
@@ -4798,7 +4798,7 @@ static int skb_maybe_pull_tail(struct sk_buff *skb, unsigned int len,
 		return -ENOMEM;
 
 	if (skb_headlen(skb) < len)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	return 0;
 }
@@ -4859,7 +4859,7 @@ static int skb_checksum_setup_ipv4(struct sk_buff *skb, bool recalculate)
 
 	off = ip_hdrlen(skb);
 
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 
 	if (fragment)
 		goto out;
@@ -4968,7 +4968,7 @@ static int skb_checksum_setup_ipv6(struct sk_buff *skb, bool recalculate)
 		}
 	}
 
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 
 	if (!done || fragment)
 		goto out;
@@ -5006,7 +5006,7 @@ int skb_checksum_setup(struct sk_buff *skb, bool recalculate)
 		break;
 
 	default:
-		err = -EPROTO;
+		err = -ERR(EPROTO);
 		break;
 	}
 
@@ -5470,7 +5470,7 @@ int __skb_vlan_pop(struct sk_buff *skb, u16 *vlan_tci)
 	if (WARN_ONCE(offset,
 		      "__skb_vlan_pop got skb with skb->data not at mac header (offset %d)\n",
 		      offset)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = skb_ensure_writable(skb, VLAN_ETH_HLEN);
@@ -5542,7 +5542,7 @@ int skb_vlan_push(struct sk_buff *skb, __be16 vlan_proto, u16 vlan_tci)
 		if (WARN_ONCE(offset,
 			      "skb_vlan_push got skb with skb->data not at mac header (offset %d)\n",
 			      offset)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		err = __vlan_insert_tag(skb, skb->vlan_proto,
@@ -5595,11 +5595,11 @@ int skb_mpls_push(struct sk_buff *skb, __be32 mpls_lse, __be16 mpls_proto,
 	int err;
 
 	if (unlikely(!eth_p_mpls(mpls_proto)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Networking stack does not allow simultaneous Tunnel and MPLS GSO. */
 	if (skb->encapsulation)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = skb_cow_head(skb, MPLS_HLEN);
 	if (unlikely(err))
@@ -5689,7 +5689,7 @@ int skb_mpls_update_lse(struct sk_buff *skb, __be32 mpls_lse)
 	int err;
 
 	if (unlikely(!eth_p_mpls(skb->protocol)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = skb_ensure_writable(skb, skb->mac_len + MPLS_HLEN);
 	if (unlikely(err))
@@ -5722,12 +5722,12 @@ int skb_mpls_dec_ttl(struct sk_buff *skb)
 	u8 ttl;
 
 	if (unlikely(!eth_p_mpls(skb->protocol)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lse = be32_to_cpu(mpls_hdr(skb)->label_stack_entry);
 	ttl = (lse & MPLS_LS_TTL_MASK) >> MPLS_LS_TTL_SHIFT;
 	if (!--ttl)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lse &= ~MPLS_LS_TTL_MASK;
 	lse |= ttl << MPLS_LS_TTL_SHIFT;
@@ -5759,14 +5759,14 @@ struct sk_buff *alloc_skb_with_frags(unsigned long header_len,
 	struct page *page;
 	int i;
 
-	*errcode = -EMSGSIZE;
+	*errcode = -ERR(EMSGSIZE);
 	/* Note this test could be relaxed, if we succeed to allocate
 	 * high order pages...
 	 */
 	if (npages > MAX_SKB_FRAGS)
 		return NULL;
 
-	*errcode = -ENOBUFS;
+	*errcode = -ERR(ENOBUFS);
 	skb = alloc_skb(header_len, gfp_mask);
 	if (!skb)
 		return NULL;

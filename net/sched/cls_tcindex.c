@@ -205,7 +205,7 @@ static int tcindex_delete(struct tcf_proto *tp, void *arg, bool *last,
 	pr_debug("tcindex_delete(tp %p,arg %p),p %p\n", tp, arg, p);
 	if (p->perfect) {
 		if (!r->res.class)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	} else {
 		int i;
 
@@ -217,7 +217,7 @@ static int tcindex_delete(struct tcf_proto *tp, void *arg, bool *last,
 					goto found;
 			}
 		}
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 found:
 		rcu_assign_pointer(*walk, rtnl_dereference(f->next));
@@ -397,7 +397,7 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 	if (old_r)
 		cr = r->res;
 
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 
 	/* Hash already allocated, make sure that we still meet the
 	 * requirements for the allocated hash.
@@ -410,7 +410,7 @@ tcindex_set_parms(struct net *net, struct tcf_proto *tp, unsigned long base,
 		goto errout_alloc;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[TCA_TCINDEX_FALL_THROUGH])
 		cp->fall_through = nla_get_u32(tb[TCA_TCINDEX_FALL_THROUGH]);
 

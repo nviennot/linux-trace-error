@@ -42,7 +42,7 @@ static int vx_mic_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 	unsigned int val = ucontrol->value.integer.value[0];
 
 	if (val > MIC_LEVEL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&_chip->mixer_mutex);
 	if (chip->mic_level != ucontrol->value.integer.value[0]) {
 		vx_set_mic_level(_chip, ucontrol->value.integer.value[0]);

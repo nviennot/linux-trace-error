@@ -113,7 +113,7 @@ int
 svc_auth_register(rpc_authflavor_t flavor, struct auth_ops *aops)
 {
 	struct auth_ops *old;
-	int rv = -EINVAL;
+	int rv = -ERR(EINVAL);
 
 	if (flavor < RPC_AUTH_MAXFLAVOR) {
 		old = cmpxchg((struct auth_ops ** __force)&authtab[flavor], NULL, aops);

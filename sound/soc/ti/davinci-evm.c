@@ -393,7 +393,7 @@ static int davinci_evm_probe(struct platform_device *pdev)
 	match = of_match_device(of_match_ptr(davinci_evm_dt_ids), &pdev->dev);
 	if (!match) {
 		dev_err(&pdev->dev, "Error: No device match found\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dai = (struct snd_soc_dai_link *) match->data;
@@ -402,11 +402,11 @@ static int davinci_evm_probe(struct platform_device *pdev)
 
 	dai->codecs->of_node = of_parse_phandle(np, "ti,audio-codec", 0);
 	if (!dai->codecs->of_node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dai->cpus->of_node = of_parse_phandle(np, "ti,mcasp-controller", 0);
 	if (!dai->cpus->of_node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dai->platforms->of_node = dai->cpus->of_node;
 
@@ -435,7 +435,7 @@ static int davinci_evm_probe(struct platform_device *pdev)
 		if (!drvdata->mclk) {
 			dev_err(&pdev->dev,
 				"No clock or clock rate defined.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		drvdata->sysclk = clk_get_rate(drvdata->mclk);
 	} else if (drvdata->mclk) {
@@ -503,7 +503,7 @@ static int __init evm_init(void)
 		evm_snd_dev_data = &da850_snd_soc_card;
 		index = 0;
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	evm_snd_device = platform_device_alloc("soc-audio", index);
 	if (!evm_snd_device)

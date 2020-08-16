@@ -123,7 +123,7 @@ static ssize_t bpf_seq_read(struct file *file, char __user *buf, size_t size,
 		seq->count = 0;
 	} else if (err < 0 || seq_has_overflowed(seq)) {
 		if (!err)
-			err = -E2BIG;
+			err = -ERR(E2BIG);
 		seq->op->stop(seq, p);
 		seq->count = 0;
 		goto done;
@@ -158,7 +158,7 @@ static ssize_t bpf_seq_read(struct file *file, char __user *buf, size_t size,
 			seq->count = offs;
 			if (offs == 0) {
 				if (!err)
-					err = -E2BIG;
+					err = -ERR(E2BIG);
 				seq->op->stop(seq, p);
 				goto done;
 			}
@@ -175,7 +175,7 @@ stop:
 		} else {
 			seq->count = offs;
 			if (offs == 0) {
-				err = -E2BIG;
+				err = -ERR(E2BIG);
 				goto done;
 			}
 		}
@@ -336,14 +336,14 @@ static int bpf_iter_link_replace(struct bpf_link *link,
 
 	mutex_lock(&link_mutex);
 	if (old_prog && link->prog != old_prog) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_unlock;
 	}
 
 	if (link->prog->type != new_prog->type ||
 	    link->prog->expected_attach_type != new_prog->expected_attach_type ||
 	    link->prog->aux->attach_btf_id != new_prog->aux->attach_btf_id) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -376,7 +376,7 @@ int bpf_iter_link_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 	int err;
 
 	if (attr->link_create.target_fd || attr->link_create.flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	prog_btf_id = prog->aux->attach_btf_id;
 	mutex_lock(&targets_mutex);
@@ -388,7 +388,7 @@ int bpf_iter_link_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 	}
 	mutex_unlock(&targets_mutex);
 	if (!existed)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	link = kzalloc(sizeof(*link), GFP_USER | __GFP_NOWARN);
 	if (!link)
@@ -468,7 +468,7 @@ int bpf_iter_new_fd(struct bpf_link *link)
 	int err, fd;
 
 	if (link->ops != &bpf_iter_link_lops)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	flags = O_RDONLY | O_CLOEXEC;
 	fd = get_unused_fd_flags(flags);
@@ -535,5 +535,5 @@ int bpf_iter_run_prog(struct bpf_prog *prog, void *ctx)
 	 * The bpf_iter_run_prog() return value
 	 * will be seq_ops->show() return value.
 	 */
-	return ret == 0 ? 0 : -EAGAIN;
+	return ret == 0 ? 0 : -ERR(EAGAIN);
 }

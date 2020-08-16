@@ -70,7 +70,7 @@ EXPORT_SYMBOL_GPL(snd_soc_dai_set_sysclk);
 int snd_soc_dai_set_clkdiv(struct snd_soc_dai *dai,
 			   int div_id, int div)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->set_clkdiv)
@@ -116,7 +116,7 @@ EXPORT_SYMBOL_GPL(snd_soc_dai_set_pll);
  */
 int snd_soc_dai_set_bclk_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->set_bclk_ratio)
@@ -135,7 +135,7 @@ EXPORT_SYMBOL_GPL(snd_soc_dai_set_bclk_ratio);
  */
 int snd_soc_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->set_fmt)
@@ -161,7 +161,7 @@ static int snd_soc_xlate_tdm_slot_mask(unsigned int slots,
 		return 0;
 
 	if (!slots)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*tx_mask = (1 << slots) - 1;
 	*rx_mask = (1 << slots) - 1;
@@ -196,7 +196,7 @@ int snd_soc_dai_set_tdm_slot(struct snd_soc_dai *dai,
 			     unsigned int tx_mask, unsigned int rx_mask,
 			     int slots, int slot_width)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->xlate_tdm_slot_mask)
@@ -232,7 +232,7 @@ int snd_soc_dai_set_channel_map(struct snd_soc_dai *dai,
 				unsigned int tx_num, unsigned int *tx_slot,
 				unsigned int rx_num, unsigned int *rx_slot)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->set_channel_map)
@@ -256,7 +256,7 @@ int snd_soc_dai_get_channel_map(struct snd_soc_dai *dai,
 				unsigned int *tx_num, unsigned int *tx_slot,
 				unsigned int *rx_num, unsigned int *rx_slot)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->get_channel_map)
@@ -275,7 +275,7 @@ EXPORT_SYMBOL_GPL(snd_soc_dai_get_channel_map);
  */
 int snd_soc_dai_set_tristate(struct snd_soc_dai *dai, int tristate)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->set_tristate)
@@ -296,7 +296,7 @@ EXPORT_SYMBOL_GPL(snd_soc_dai_set_tristate);
 int snd_soc_dai_digital_mute(struct snd_soc_dai *dai, int mute,
 			     int direction)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dai->driver->ops &&
 	    dai->driver->ops->mute_stream)
@@ -372,7 +372,7 @@ snd_pcm_sframes_t snd_soc_dai_delay(struct snd_soc_dai *dai,
 int snd_soc_dai_compress_new(struct snd_soc_dai *dai,
 			     struct snd_soc_pcm_runtime *rtd, int num)
 {
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 	if (dai->driver->compress_new)
 		ret = dai->driver->compress_new(rtd, num);
 	return soc_dai_ret(dai, ret);

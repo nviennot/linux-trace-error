@@ -159,7 +159,7 @@ static int es8328_put_deemph(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = es8328_set_deemph(component);
 	if (ret < 0)
@@ -489,7 +489,7 @@ static int es8328_hw_params(struct snd_pcm_substream *substream,
 	if (es8328->master) {
 		if (!es8328->sysclk_constraints) {
 			dev_err(component->dev, "No MCLK configured\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		for (i = 0; i < es8328->sysclk_constraints->count; i++)
@@ -501,7 +501,7 @@ static int es8328_hw_params(struct snd_pcm_substream *substream,
 			dev_err(component->dev,
 				"LRCLK %d unsupported with current clock\n",
 				params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ratio = es8328->mclk_ratios[i];
 	} else {
@@ -530,7 +530,7 @@ static int es8328_hw_params(struct snd_pcm_substream *substream,
 		wl = 4;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -575,7 +575,7 @@ static int es8328_set_sysclk(struct snd_soc_dai *codec_dai,
 		es8328->mclk_ratios = ratios_12288;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	es8328->mclkdiv2 = mclkdiv2;
@@ -605,7 +605,7 @@ static int es8328_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		es8328->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -623,12 +623,12 @@ static int es8328_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		adc_mode |= ES8328_ADCCONTROL4_ADCFORMAT_LJUST;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, ES8328_DACCONTROL1,
 			ES8328_DACCONTROL1_DACFORMAT_MASK, dac_mode);

@@ -44,11 +44,11 @@ static long __validate_layout(struct ceph_mds_client *mdsc,
 	    (l->stripe_unit & ~PAGE_MASK) ||
 	    ((unsigned)l->stripe_unit != 0 &&
 	     ((unsigned)l->object_size % (unsigned)l->stripe_unit)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* make sure it's a valid data pool */
 	mutex_lock(&mdsc->mutex);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (i = 0; i < mdsc->mdsmap->m_num_data_pg_pools; i++)
 		if (mdsc->mdsmap->m_data_pg_pools[i] == l->data_pool) {
 			err = 0;
@@ -291,5 +291,5 @@ long ceph_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		return ceph_ioctl_syncio(file);
 	}
 
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }

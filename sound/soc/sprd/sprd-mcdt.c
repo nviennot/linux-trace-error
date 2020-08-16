@@ -579,13 +579,13 @@ int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size)
 		dev_err(mcdt->dev,
 			"Can not write data when DMA mode enabled\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sprd_mcdt_chan_fifo_sts(mcdt, chan->id, MCDT_DAC_FIFO_REAL_FULL)) {
 		dev_err(mcdt->dev, "Channel fifo is full now\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	avail = sprd_mcdt_dac_fifo_avail(mcdt, chan->id);
@@ -593,7 +593,7 @@ int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size)
 		dev_err(mcdt->dev,
 			"Data size is larger than the available fifo size\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	while (i++ < words)
@@ -629,13 +629,13 @@ int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size)
 	if (chan->dma_enable) {
 		dev_err(mcdt->dev, "Can not read data when DMA mode enabled\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sprd_mcdt_chan_fifo_sts(mcdt, chan->id, MCDT_ADC_FIFO_REAL_EMPTY)) {
 		dev_err(mcdt->dev, "Channel fifo is empty\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	avail = sprd_mcdt_adc_fifo_avail(mcdt, chan->id);
@@ -680,7 +680,7 @@ int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
 	if (chan->dma_enable || chan->int_enable) {
 		dev_err(mcdt->dev, "Failed to set interrupt mode.\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (chan->type) {
@@ -704,7 +704,7 @@ int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
 
 	default:
 		dev_err(mcdt->dev, "Unsupported channel type\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	if (!ret) {
@@ -784,7 +784,7 @@ int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
 	    dma_chan > SPRD_MCDT_DMA_CH4) {
 		dev_err(mcdt->dev, "Failed to set DMA mode\n");
 		spin_unlock_irqrestore(&mcdt->lock, flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (chan->type) {
@@ -808,7 +808,7 @@ int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
 
 	default:
 		dev_err(mcdt->dev, "Unsupported channel type\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	if (!ret)

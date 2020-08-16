@@ -52,7 +52,7 @@ static int nilfs_warn_segment_error(struct super_block *sb, int err)
 	switch (err) {
 	case NILFS_SEG_FAIL_IO:
 		nilfs_msg(sb, KERN_ERR, "I/O error reading segment");
-		return -EIO;
+		return -ERR(EIO);
 	case NILFS_SEG_FAIL_MAGIC:
 		msg = "Magic number mismatch";
 		break;
@@ -73,10 +73,10 @@ static int nilfs_warn_segment_error(struct super_block *sb, int err)
 		break;
 	default:
 		nilfs_msg(sb, KERN_ERR, "unrecognized segment error %d", err);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	nilfs_msg(sb, KERN_WARNING, "invalid segment: %s", msg);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -109,7 +109,7 @@ static int nilfs_compute_checksum(struct the_nilfs *nilfs,
 
 			bh = __bread(nilfs->ns_bdev, ++start, blocksize);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 			check_bytes -= size;
 			size = min_t(u64, check_bytes, blocksize);
 			crc = crc32_le(crc, bh->b_data, size);
@@ -310,7 +310,7 @@ static int nilfs_scan_dsync_log(struct the_nilfs *nilfs, sector_t start_blocknr,
 	u32 nfinfo, sumbytes;
 	sector_t blocknr;
 	ino_t ino;
-	int err = -EIO;
+	int err = -ERR(EIO);
 
 	nfinfo = le32_to_cpu(sum->ss_nfinfo);
 	if (!nfinfo)
@@ -479,7 +479,7 @@ static int nilfs_recovery_copy_block(struct the_nilfs *nilfs,
 
 	bh_org = __bread(nilfs->ns_bdev, rb->blocknr, nilfs->ns_blocksize);
 	if (unlikely(!bh_org))
-		return -EIO;
+		return -ERR(EIO);
 
 	kaddr = kmap_atomic(page);
 	memcpy(kaddr + bh_offset(bh_org), bh_org->b_data, bh_org->b_size);
@@ -595,14 +595,14 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 		brelse(bh_sum);
 		bh_sum = nilfs_read_log_header(nilfs, pseg_start, &sum);
 		if (!bh_sum) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto failed;
 		}
 
 		ret = nilfs_validate_log(nilfs, seg_seq, bh_sum, sum);
 		if (ret) {
 			if (ret == NILFS_SEG_FAIL_IO) {
-				err = -EIO;
+				err = -ERR(EIO);
 				goto failed;
 			}
 			goto strayed;
@@ -679,7 +679,7 @@ static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
 	return err;
 
  confused:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
  failed:
 	nilfs_msg(sb, KERN_ERR,
 		  "error %d roll-forwarding partial segment at blocknr = %llu",

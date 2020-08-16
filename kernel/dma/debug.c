@@ -970,7 +970,7 @@ core_initcall(dma_debug_init);
 static __init int dma_debug_cmdline(char *str)
 {
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strncmp(str, "off", 3) == 0) {
 		pr_info("debugging disabled on kernel command line\n");
@@ -983,7 +983,7 @@ static __init int dma_debug_cmdline(char *str)
 static __init int dma_debug_entries_cmdline(char *str)
 {
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!get_option(&str, &nr_prealloc_entries))
 		nr_prealloc_entries = PREALLOC_DMA_DEBUG_ENTRIES;
 	return 0;

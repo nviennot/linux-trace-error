@@ -530,7 +530,7 @@ static int nau8810_calc_pll(unsigned int pll_in,
 	int i, scal_sel;
 
 	if (pll_in > NAU_PLL_REF_MAX || pll_in < NAU_PLL_REF_MIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f2_max = 0;
 	scal_sel = ARRAY_SIZE(nau8810_mclk_scaler);
@@ -544,7 +544,7 @@ static int nau8810_calc_pll(unsigned int pll_in,
 		}
 	}
 	if (ARRAY_SIZE(nau8810_mclk_scaler) == scal_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pll_param->mclk_scaler = scal_sel;
 	f2 = f2_max;
 
@@ -616,7 +616,7 @@ static int nau8810_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -632,7 +632,7 @@ static int nau8810_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		ctrl1_val |= NAU8810_AIFMT_PCM_A;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -648,7 +648,7 @@ static int nau8810_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		ctrl1_val |= NAU8810_FSP_IF;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8810->regmap, NAU8810_REG_IFACE,
@@ -666,7 +666,7 @@ static int nau8810_mclk_clkdiv(struct nau8810 *nau8810, int rate)
 
 	if (!nau8810->sysclk) {
 		dev_err(nau8810->dev, "Make mclk div configuration fail because of invalid system clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Configure the master clock prescaler div to make system
@@ -712,7 +712,7 @@ static int nau8810_pcm_hw_params(struct snd_pcm_substream *substream,
 		else if (bclk_fs <= 128)
 			bclk_div = NAU8810_BCLKDIV_2;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		regmap_update_bits(nau8810->regmap, NAU8810_REG_CLOCK,
 			NAU8810_BCLKSEL_MASK, bclk_div);
 	}

@@ -1027,7 +1027,8 @@ static inline bool __rxrpc_abort_eproto(struct rxrpc_call *call,
 	struct rxrpc_skb_priv *sp = rxrpc_skb(skb);
 
 	trace_rxrpc_rx_eproto(call, sp->hdr.serial, eproto_why);
-	return rxrpc_abort_call(why, call, sp->hdr.seq, abort_code, -EPROTO);
+	return rxrpc_abort_call(why, call, sp->hdr.seq, abort_code,
+				-ERR(EPROTO));
 }
 
 #define rxrpc_abort_eproto(call, skb, eproto_why, abort_why, abort_code) \

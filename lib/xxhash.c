@@ -273,7 +273,7 @@ int xxh32_update(struct xxh32_state *state, const void *input, const size_t len)
 	const uint8_t *const b_end = p + len;
 
 	if (input == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	state->total_len_32 += (uint32_t)len;
 	state->large_len |= (len >= 16) | (state->total_len_32 >= 16);
@@ -380,7 +380,7 @@ int xxh64_update(struct xxh64_state *state, const void *input, const size_t len)
 	const uint8_t *const b_end = p + len;
 
 	if (input == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	state->total_len += len;
 

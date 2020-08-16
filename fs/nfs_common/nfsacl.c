@@ -109,7 +109,7 @@ int nfsacl_encode(struct xdr_buf *buf, unsigned int base, struct inode *inode,
 
 	if (entries > NFS_ACL_MAX_ENTRIES ||
 	    xdr_encode_word(buf, base, entries))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (encode_entries && acl && acl->a_count == 3) {
 		struct posix_acl *acl2 = &aclbuf.acl;
 
@@ -153,7 +153,7 @@ xdr_nfsace_decode(struct xdr_array2_desc *desc, void *elem)
 
 	if (!nfsacl_desc->acl) {
 		if (desc->array_len > NFS_ACL_MAX_ENTRIES)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nfsacl_desc->acl = posix_acl_alloc(desc->array_len, GFP_KERNEL);
 		if (!nfsacl_desc->acl)
 			return -ENOMEM;
@@ -169,25 +169,25 @@ xdr_nfsace_decode(struct xdr_array2_desc *desc, void *elem)
 		case ACL_USER:
 			entry->e_uid = make_kuid(&init_user_ns, id);
 			if (!uid_valid(entry->e_uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case ACL_GROUP:
 			entry->e_gid = make_kgid(&init_user_ns, id);
 			if (!gid_valid(entry->e_gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case ACL_USER_OBJ:
 		case ACL_GROUP_OBJ:
 		case ACL_OTHER:
 			if (entry->e_perm & ~S_IRWXO)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case ACL_MASK:
 			/* Solaris sometimes sets additional bits in the mask */
 			entry->e_perm &= S_IRWXO;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -276,7 +276,7 @@ int nfsacl_decode(struct xdr_buf *buf, unsigned int base, unsigned int *aclcnt,
 
 	if (xdr_decode_word(buf, base, &entries) ||
 	    entries > NFS_ACL_MAX_ENTRIES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	nfsacl_desc.desc.array_maxlen = entries;
 	err = xdr_decode_array2(buf, base + 4, &nfsacl_desc.desc);
 	if (err)
@@ -285,7 +285,7 @@ int nfsacl_decode(struct xdr_buf *buf, unsigned int base, unsigned int *aclcnt,
 		if (entries != nfsacl_desc.desc.array_len ||
 		    posix_acl_from_nfsacl(nfsacl_desc.acl) != 0) {
 			posix_acl_release(nfsacl_desc.acl);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*pacl = nfsacl_desc.acl;
 	}

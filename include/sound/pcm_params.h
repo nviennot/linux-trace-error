@@ -162,7 +162,7 @@ static inline int snd_mask_refine(struct snd_mask *mask,
 	snd_mask_copy(&old, mask);
 	snd_mask_intersect(mask, v);
 	if (snd_mask_empty(mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return !snd_mask_eq(mask, &old);
 }
 
@@ -188,7 +188,7 @@ static inline int snd_mask_refine_min(struct snd_mask *mask, unsigned int val)
 		return 0;
 	snd_mask_reset_range(mask, 0, val - 1);
 	if (snd_mask_empty(mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 
@@ -198,7 +198,7 @@ static inline int snd_mask_refine_max(struct snd_mask *mask, unsigned int val)
 		return 0;
 	snd_mask_reset_range(mask, val + 1, SNDRV_MASK_BITS);
 	if (snd_mask_empty(mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 
@@ -208,7 +208,7 @@ static inline int snd_mask_refine_set(struct snd_mask *mask, unsigned int val)
 	changed = !snd_mask_single(mask);
 	snd_mask_leave(mask, val);
 	if (snd_mask_empty(mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return changed;
 }
 
@@ -286,7 +286,7 @@ static inline int snd_interval_setinteger(struct snd_interval *i)
 	if (i->integer)
 		return 0;
 	if (i->openmin && i->openmax && i->min == i->max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i->integer = 1;
 	return 1;
 }

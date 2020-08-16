@@ -43,7 +43,7 @@ static int nft_compat_chain_validate_dependency(const struct nft_ctx *ctx,
 		if (ctx->family != NFPROTO_BRIDGE)
 			type = NFT_CHAIN_T_NAT;
 		if (basechain->type->type != type)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -201,11 +201,11 @@ static int nft_parse_compat(const struct nlattr *attr, u16 *proto, bool *inv)
 		return err;
 
 	if (!tb[NFTA_RULE_COMPAT_PROTO] || !tb[NFTA_RULE_COMPAT_FLAGS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	flags = ntohl(nla_get_be32(tb[NFTA_RULE_COMPAT_FLAGS]));
 	if (flags & ~NFT_RULE_COMPAT_F_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags & NFT_RULE_COMPAT_F_INV)
 		*inv = true;
 
@@ -242,7 +242,7 @@ nft_target_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 
 	/* The standard target cannot be used */
 	if (!target->target)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -316,7 +316,7 @@ static int nft_target_validate(const struct nft_ctx *ctx,
 
 		hook_mask = 1 << ops->hooknum;
 		if (target->hooks && !(hook_mask & target->hooks))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = nft_compat_chain_validate_dependency(ctx, target->table);
 		if (ret < 0)
@@ -557,7 +557,7 @@ static int nft_match_validate(const struct nft_ctx *ctx,
 
 		hook_mask = 1 << ops->hooknum;
 		if (match->hooks && !(hook_mask & match->hooks))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = nft_compat_chain_validate_dependency(ctx, match->table);
 		if (ret < 0)
@@ -614,7 +614,7 @@ static int nfnl_compat_get_rcu(struct net *net, struct sock *nfnl,
 	if (tb[NFTA_COMPAT_NAME] == NULL ||
 	    tb[NFTA_COMPAT_REV] == NULL ||
 	    tb[NFTA_COMPAT_TYPE] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(tb[NFTA_COMPAT_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_COMPAT_REV]));
@@ -638,11 +638,11 @@ static int nfnl_compat_get_rcu(struct net *net, struct sock *nfnl,
 	default:
 		pr_err("nft_compat: unsupported protocol %d\n",
 			nfmsg->nfgen_family);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!try_module_get(THIS_MODULE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_unlock();
 	try_then_request_module(xt_find_revision(nfmsg->nfgen_family, name,
@@ -675,7 +675,7 @@ static int nfnl_compat_get_rcu(struct net *net, struct sock *nfnl,
 out_put:
 	rcu_read_lock();
 	module_put(THIS_MODULE);
-	return ret == -EAGAIN ? -ENOBUFS : ret;
+	return ret == -ERR(EAGAIN) ? -ERR(ENOBUFS) : ret;
 }
 
 static const struct nla_policy nfnl_compat_policy_get[NFTA_COMPAT_MAX+1] = {
@@ -714,7 +714,7 @@ nft_match_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_MATCH_NAME] == NULL ||
 	    tb[NFTA_MATCH_REV] == NULL ||
 	    tb[NFTA_MATCH_INFO] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	mt_name = nla_data(tb[NFTA_MATCH_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_MATCH_REV]));
@@ -722,10 +722,10 @@ nft_match_select_ops(const struct nft_ctx *ctx,
 
 	match = xt_request_find_match(family, mt_name, rev);
 	if (IS_ERR(match))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	if (match->matchsize > nla_len(tb[NFTA_MATCH_INFO])) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -793,7 +793,7 @@ nft_target_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_TARGET_NAME] == NULL ||
 	    tb[NFTA_TARGET_REV] == NULL ||
 	    tb[NFTA_TARGET_INFO] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	tg_name = nla_data(tb[NFTA_TARGET_NAME]);
 	rev = ntohl(nla_get_be32(tb[NFTA_TARGET_REV]));
@@ -802,19 +802,19 @@ nft_target_select_ops(const struct nft_ctx *ctx,
 	if (strcmp(tg_name, XT_ERROR_TARGET) == 0 ||
 	    strcmp(tg_name, XT_STANDARD_TARGET) == 0 ||
 	    strcmp(tg_name, "standard") == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	target = xt_request_find_target(family, tg_name, rev);
 	if (IS_ERR(target))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	if (!target->target) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
 	if (target->targetsize > nla_len(tb[NFTA_TARGET_INFO])) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 

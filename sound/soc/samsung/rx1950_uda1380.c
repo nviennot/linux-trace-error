@@ -173,7 +173,7 @@ static int rx1950_hw_params(struct snd_pcm_substream *substream,
 	default:
 		printk(KERN_ERR "%s: rate %d is not supported\n",
 			__func__, rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* select clock source */
@@ -219,7 +219,7 @@ static int __init rx1950_init(void)
 	int ret;
 
 	if (!machine_is_rx1950())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* configure some gpios */
 	ret = gpio_request(S3C2410_GPA(1), "speaker-power");

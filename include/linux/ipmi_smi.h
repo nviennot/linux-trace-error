@@ -182,13 +182,13 @@ static inline int ipmi_demangle_device_id(uint8_t netfn, uint8_t cmd,
 					  struct ipmi_device_id *id)
 {
 	if (data_len < 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (netfn != IPMI_NETFN_APP_RESPONSE || cmd != IPMI_GET_DEVICE_ID_CMD)
 		/* Strange, didn't get the response we expected. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (data[0] != 0)
 		/* That's odd, it shouldn't be able to fail. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data++;
 	data_len--;

@@ -116,7 +116,7 @@ static int cfservl_modemcmd(struct cflayer *layr, enum caif_modemcmd ctrl)
 			if (cfpkt_add_head(pkt, &flow_on, 1) < 0) {
 				pr_err("Packet is erroneous!\n");
 				cfpkt_destroy(pkt);
-				return -EPROTO;
+				return -ERR(EPROTO);
 			}
 			info = cfpkt_info(pkt);
 			info->channel_id = service->layer.id;
@@ -137,7 +137,7 @@ static int cfservl_modemcmd(struct cflayer *layr, enum caif_modemcmd ctrl)
 			if (cfpkt_add_head(pkt, &flow_off, 1) < 0) {
 				pr_err("Packet is erroneous!\n");
 				cfpkt_destroy(pkt);
-				return -EPROTO;
+				return -ERR(EPROTO);
 			}
 			info = cfpkt_info(pkt);
 			info->channel_id = service->layer.id;
@@ -149,7 +149,7 @@ static int cfservl_modemcmd(struct cflayer *layr, enum caif_modemcmd ctrl)
 	default:
 	  break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void cfsrvl_release(struct cflayer *layer)
@@ -178,7 +178,7 @@ void cfsrvl_init(struct cfsrvl *service,
 bool cfsrvl_ready(struct cfsrvl *service, int *err)
 {
 	if (!service->open) {
-		*err = -ENOTCONN;
+		*err = -ERR(ENOTCONN);
 		return false;
 	}
 	return true;

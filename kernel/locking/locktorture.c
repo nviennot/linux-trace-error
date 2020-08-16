@@ -855,7 +855,7 @@ static int __init lock_torture_init(void)
 	};
 
 	if (!torture_init_begin(torture_type, verbose))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Process args and tell the world that the torturer is on the job. */
 	for (i = 0; i < ARRAY_SIZE(torture_ops); i++) {
@@ -870,13 +870,13 @@ static int __init lock_torture_init(void)
 		for (i = 0; i < ARRAY_SIZE(torture_ops); i++)
 			pr_alert(" %s", torture_ops[i]->name);
 		pr_alert("\n");
-		firsterr = -EINVAL;
+		firsterr = -ERR(EINVAL);
 		goto unwind;
 	}
 
 	if (nwriters_stress == 0 && nreaders_stress == 0) {
 		pr_alert("lock-torture: must run at least one locking thread\n");
-		firsterr = -EINVAL;
+		firsterr = -ERR(EINVAL);
 		goto unwind;
 	}
 

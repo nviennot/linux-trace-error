@@ -88,7 +88,7 @@ static int expkey_parse(struct cache_detail *cd, char *mesg, int mlen)
 	struct svc_expkey *ek = NULL;
 
 	if (mesg[mlen - 1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mesg[mlen-1] = 0;
 
 	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
@@ -96,17 +96,17 @@ static int expkey_parse(struct cache_detail *cd, char *mesg, int mlen)
 	if (!buf)
 		goto out;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
 		goto out;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	dom = auth_domain_find(buf);
 	if (!dom)
 		goto out;
 	dprintk("found domain %s\n", buf);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if ((len=qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
 		goto out;
 	fsidtype = simple_strtoul(buf, &ep, 10);
@@ -137,7 +137,7 @@ static int expkey_parse(struct cache_detail *cd, char *mesg, int mlen)
 		goto out;
 
 	/* now we want a pathname, or empty meaning NEGATIVE  */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	len = qword_get(&mesg, buf, PAGE_SIZE);
 	if (len < 0)
 		goto out;
@@ -379,7 +379,7 @@ static int check_export(struct inode *inode, int *flags, unsigned char *uuid)
 	if (!S_ISDIR(inode->i_mode) &&
 	    !S_ISLNK(inode->i_mode) &&
 	    !S_ISREG(inode->i_mode))
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	/*
 	 * Mountd should never pass down a writeable V4ROOT export, but,
@@ -399,13 +399,13 @@ static int check_export(struct inode *inode, int *flags, unsigned char *uuid)
 	    !(*flags & NFSEXP_FSID) &&
 	    uuid == NULL) {
 		dprintk("exp_export: export of non-dev fs without fsid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!inode->i_sb->s_export_op ||
 	    !inode->i_sb->s_export_op->fh_to_dentry) {
 		dprintk("exp_export: export of invalid fs type.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -422,14 +422,14 @@ fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc)
 
 	/* more than one fsloc */
 	if (fsloc->locations)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* listsize */
 	err = get_uint(mesg, &fsloc->locations_count);
 	if (err)
 		return err;
 	if (fsloc->locations_count > MAX_FS_LOCATIONS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (fsloc->locations_count == 0)
 		return 0;
 
@@ -440,7 +440,7 @@ fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc)
 		return -ENOMEM;
 	for (i=0; i < fsloc->locations_count; i++) {
 		/* colon separated host list */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		len = qword_get(mesg, buf, PAGE_SIZE);
 		if (len <= 0)
 			goto out_free_all;
@@ -448,7 +448,7 @@ fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc)
 		fsloc->locations[i].hosts = kstrdup(buf, GFP_KERNEL);
 		if (!fsloc->locations[i].hosts)
 			goto out_free_all;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		/* slash separated path component list */
 		len = qword_get(mesg, buf, PAGE_SIZE);
 		if (len <= 0)
@@ -462,7 +462,7 @@ fsloc_parse(char **mesg, char *buf, struct nfsd4_fs_locations *fsloc)
 	err = get_int(mesg, &migrated);
 	if (err)
 		goto out_free_all;
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (migrated < 0 || migrated > 1)
 		goto out_free_all;
 	fsloc->migrated = migrated;
@@ -480,13 +480,13 @@ static int secinfo_parse(char **mesg, char *buf, struct svc_export *exp)
 
 	/* more than one secinfo */
 	if (exp->ex_nflavors)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = get_uint(mesg, &listsize);
 	if (err)
 		return err;
 	if (listsize > MAX_SECINFO_LIST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (f = exp->ex_flavors; f < exp->ex_flavors + listsize; f++) {
 		err = get_uint(mesg, &f->pseudoflavor);
@@ -503,7 +503,7 @@ static int secinfo_parse(char **mesg, char *buf, struct svc_export *exp)
 			return err;
 		/* Only some flags are allowed to differ between flavors: */
 		if (~NFSEXP_SECINFO_FLAGS & (f->flags ^ exp->ex_flags))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	exp->ex_nflavors = listsize;
 	return 0;
@@ -523,12 +523,12 @@ nfsd_uuid_parse(char **mesg, char *buf, unsigned char **puuid)
 
 	/* more than one uuid */
 	if (*puuid)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* expect a 16 byte uuid encoded as \xXXXX... */
 	len = qword_get(mesg, buf, PAGE_SIZE);
 	if (len != EX_UUID_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*puuid = kmemdup(buf, EX_UUID_LEN, GFP_KERNEL);
 	if (*puuid == NULL)
@@ -548,7 +548,7 @@ static int svc_export_parse(struct cache_detail *cd, char *mesg, int mlen)
 	int an_int;
 
 	if (mesg[mlen-1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mesg[mlen-1] = 0;
 
 	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
@@ -556,18 +556,18 @@ static int svc_export_parse(struct cache_detail *cd, char *mesg, int mlen)
 		return -ENOMEM;
 
 	/* client */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	len = qword_get(&mesg, buf, PAGE_SIZE);
 	if (len <= 0)
 		goto out;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	dom = auth_domain_find(buf);
 	if (!dom)
 		goto out;
 
 	/* path */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if ((len = qword_get(&mesg, buf, PAGE_SIZE)) <= 0)
 		goto out1;
 
@@ -580,7 +580,7 @@ static int svc_export_parse(struct cache_detail *cd, char *mesg, int mlen)
 	exp.ex_devid_map = NULL;
 
 	/* expiry */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	exp.h.expiry_time = get_expiry(&mesg);
 	if (exp.h.expiry_time == 0)
 		goto out3;
@@ -648,7 +648,7 @@ static int svc_export_parse(struct cache_detail *cd, char *mesg, int mlen)
 		 * sees errors from check_export we therefore need to
 		 * delay these checks till after check_export:
 		 */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!uid_valid(exp.ex_anon_uid))
 			goto out4;
 		if (!gid_valid(exp.ex_anon_gid))
@@ -841,7 +841,7 @@ exp_find_key(struct cache_detail *cd, struct auth_domain *clp, int fsid_type,
 	int err;
 	
 	if (!clp)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	key.ek_client = clp;
 	key.ek_fsidtype = fsid_type;
@@ -866,7 +866,7 @@ exp_get_by_name(struct cache_detail *cd, struct auth_domain *clp,
 	int err;
 
 	if (!clp)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	key.ex_client = clp;
 	key.ex_path = *path;
@@ -922,7 +922,7 @@ exp_rootfh(struct net *net, struct auth_domain *clp, char *name,
 	struct nfsd_net		*nn = net_generic(net, nfsd_net_id);
 	struct cache_detail	*cd = nn->svc_export_cache;
 
-	err = -EPERM;
+	err = -ERR(EPERM);
 	/* NB: we probably ought to check that it's NUL-terminated */
 	if (kern_path(name, 0, &path)) {
 		printk("nfsd: exp_rootfh path not found %s", name);
@@ -944,7 +944,7 @@ exp_rootfh(struct net *net, struct auth_domain *clp, char *name,
 	 */
 	fh_init(&fh, maxsize);
 	if (fh_compose(&fh, exp, path.dentry, NULL))
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else
 		err = 0;
 	memcpy(f, &fh.fh_handle, sizeof(struct knfsd_fh));
@@ -1017,7 +1017,7 @@ __be32 check_nfsd_access(struct svc_export *exp, struct svc_rqst *rqstp)
 struct svc_export *
 rqst_exp_get_by_name(struct svc_rqst *rqstp, struct path *path)
 {
-	struct svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
+	struct svc_export *gssexp, *exp = ERR_PTR(-ERR(ENOENT));
 	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
 	struct cache_detail *cd = nn->svc_export_cache;
 
@@ -1048,7 +1048,7 @@ gss:
 struct svc_export *
 rqst_exp_find(struct svc_rqst *rqstp, int fsid_type, u32 *fsidv)
 {
-	struct svc_export *gssexp, *exp = ERR_PTR(-ENOENT);
+	struct svc_export *gssexp, *exp = ERR_PTR(-ERR(ENOENT));
 	struct nfsd_net *nn = net_generic(SVC_NET(rqstp), nfsd_net_id);
 	struct cache_detail *cd = nn->svc_export_cache;
 

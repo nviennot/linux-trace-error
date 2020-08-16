@@ -254,7 +254,7 @@ int gfs2_meta_read(struct gfs2_glock *gl, u64 blkno, int flags,
 	if (unlikely(gfs2_withdrawn(sdp)) &&
 	    (!sdp->sd_jdesc || gl != sdp->sd_jinode_gl)) {
 		*bhp = NULL;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*bhp = bh = gfs2_getbuf(gl, blkno, CREATE);
@@ -294,7 +294,7 @@ int gfs2_meta_read(struct gfs2_glock *gl, u64 blkno, int flags,
 			gfs2_io_error_bh_wd(sdp, bh);
 		brelse(bh);
 		*bhp = NULL;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -311,7 +311,7 @@ int gfs2_meta_read(struct gfs2_glock *gl, u64 blkno, int flags,
 int gfs2_meta_wait(struct gfs2_sbd *sdp, struct buffer_head *bh)
 {
 	if (unlikely(gfs2_withdrawn(sdp)))
-		return -EIO;
+		return -ERR(EIO);
 
 	wait_on_buffer(bh);
 
@@ -319,10 +319,10 @@ int gfs2_meta_wait(struct gfs2_sbd *sdp, struct buffer_head *bh)
 		struct gfs2_trans *tr = current->journal_info;
 		if (tr && test_bit(TR_TOUCHED, &tr->tr_flags))
 			gfs2_io_error_bh_wd(sdp, bh);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (unlikely(gfs2_withdrawn(sdp)))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -416,7 +416,7 @@ int gfs2_meta_indirect_buffer(struct gfs2_inode *ip, int height, u64 num,
 	ret = gfs2_meta_read(gl, num, DIO_WAIT, rahead, &bh);
 	if (ret == 0 && gfs2_metatype_check(sdp, bh, mtype)) {
 		brelse(bh);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else {
 		*bhp = bh;
 	}

@@ -3393,7 +3393,7 @@ static inline int calculate_order(unsigned int size)
 	order = slab_order(size, 1, MAX_ORDER, 1);
 	if (order < MAX_ORDER)
 		return order;
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static void
@@ -3762,7 +3762,7 @@ static int kmem_cache_open(struct kmem_cache *s, slab_flags_t flags)
 
 	free_kmem_cache_nodes(s);
 error:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void list_slab_objects(struct kmem_cache *s, struct page *page,
@@ -5036,7 +5036,7 @@ static ssize_t order_store(struct kmem_cache *s,
 		return err;
 
 	if (order > slub_max_order || order < slub_min_order)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	calculate_sizes(s, order);
 	return length;
@@ -5083,7 +5083,7 @@ static ssize_t cpu_partial_store(struct kmem_cache *s, const char *buf,
 	if (err)
 		return err;
 	if (objects && !kmem_cache_has_cpu_partial(s))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slub_set_cpu_partial(s, objects);
 	flush_all(s);
@@ -5249,7 +5249,7 @@ static ssize_t trace_store(struct kmem_cache *s, const char *buf,
 	 * cache into an umergeable one.
 	 */
 	if (s->refcount > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s->flags &= ~SLAB_TRACE;
 	if (buf[0] == '1') {
@@ -5269,7 +5269,7 @@ static ssize_t red_zone_store(struct kmem_cache *s,
 				const char *buf, size_t length)
 {
 	if (any_slab_objects(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	s->flags &= ~SLAB_RED_ZONE;
 	if (buf[0] == '1') {
@@ -5289,7 +5289,7 @@ static ssize_t poison_store(struct kmem_cache *s,
 				const char *buf, size_t length)
 {
 	if (any_slab_objects(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	s->flags &= ~SLAB_POISON;
 	if (buf[0] == '1') {
@@ -5309,7 +5309,7 @@ static ssize_t store_user_store(struct kmem_cache *s,
 				const char *buf, size_t length)
 {
 	if (any_slab_objects(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	s->flags &= ~SLAB_STORE_USER;
 	if (buf[0] == '1') {
@@ -5329,7 +5329,7 @@ static ssize_t validate_show(struct kmem_cache *s, char *buf)
 static ssize_t validate_store(struct kmem_cache *s,
 			const char *buf, size_t length)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (buf[0] == '1') {
 		ret = validate_slab_cache(s);
@@ -5343,7 +5343,7 @@ SLAB_ATTR(validate);
 static ssize_t alloc_calls_show(struct kmem_cache *s, char *buf)
 {
 	if (!(s->flags & SLAB_STORE_USER))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	return list_locations(s, buf, TRACK_ALLOC);
 }
 SLAB_ATTR_RO(alloc_calls);
@@ -5351,7 +5351,7 @@ SLAB_ATTR_RO(alloc_calls);
 static ssize_t free_calls_show(struct kmem_cache *s, char *buf)
 {
 	if (!(s->flags & SLAB_STORE_USER))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	return list_locations(s, buf, TRACK_FREE);
 }
 SLAB_ATTR_RO(free_calls);
@@ -5367,7 +5367,7 @@ static ssize_t failslab_store(struct kmem_cache *s, const char *buf,
 							size_t length)
 {
 	if (s->refcount > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s->flags &= ~SLAB_FAILSLAB;
 	if (buf[0] == '1')
@@ -5388,7 +5388,7 @@ static ssize_t shrink_store(struct kmem_cache *s,
 	if (buf[0] == '1')
 		kmem_cache_shrink_all(s);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return length;
 }
 SLAB_ATTR(shrink);
@@ -5409,7 +5409,7 @@ static ssize_t remote_node_defrag_ratio_store(struct kmem_cache *s,
 	if (err)
 		return err;
 	if (ratio > 100)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	s->remote_node_defrag_ratio = ratio * 10;
 
@@ -5588,7 +5588,7 @@ static ssize_t slab_attr_show(struct kobject *kobj,
 	s = to_slab(kobj);
 
 	if (!attribute->show)
-		return -EIO;
+		return -ERR(EIO);
 
 	err = attribute->show(s, buf);
 
@@ -5607,7 +5607,7 @@ static ssize_t slab_attr_store(struct kobject *kobj,
 	s = to_slab(kobj);
 
 	if (!attribute->store)
-		return -EIO;
+		return -ERR(EIO);
 
 	err = attribute->store(s, buf, len);
 #ifdef CONFIG_MEMCG
@@ -5927,7 +5927,7 @@ static int __init slab_sysfs_init(void)
 	if (!slab_kset) {
 		mutex_unlock(&slab_mutex);
 		pr_err("Cannot register slab subsystem.\n");
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	slab_state = FULL;
@@ -5991,6 +5991,6 @@ void slabinfo_show_stats(struct seq_file *m, struct kmem_cache *s)
 ssize_t slabinfo_write(struct file *file, const char __user *buffer,
 		       size_t count, loff_t *ppos)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 #endif /* CONFIG_SLUB_DEBUG */

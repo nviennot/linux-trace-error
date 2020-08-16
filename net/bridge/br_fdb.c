@@ -520,7 +520,7 @@ static int fdb_insert(struct net_bridge *br, struct net_bridge_port *source,
 	struct net_bridge_fdb_entry *fdb;
 
 	if (!is_valid_ether_addr(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fdb = br_fdb_find(br, addr, vid);
 	if (fdb) {
@@ -634,7 +634,7 @@ static int fdb_fill_info(struct sk_buff *skb, const struct net_bridge *br,
 
 	nlh = nlmsg_put(skb, portid, seq, type, sizeof(*ndm), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family	 = AF_BRIDGE;
@@ -672,7 +672,7 @@ static int fdb_fill_info(struct sk_buff *skb, const struct net_bridge *br,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static inline size_t fdb_nlmsg_size(void)
@@ -690,7 +690,7 @@ static void fdb_notify(struct net_bridge *br,
 {
 	struct net *net = dev_net(br->dev);
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	if (swdev_notify)
 		br_switchdev_fdb_notify(fdb, type);
@@ -780,7 +780,7 @@ int br_fdb_get(struct sk_buff *skb,
 	f = br_fdb_find_rcu(br, addr, vid);
 	if (!f) {
 		NL_SET_ERR_MSG(extack, "Fdb entry not found");
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto errout;
 	}
 
@@ -804,21 +804,21 @@ static int fdb_add_entry(struct net_bridge *br, struct net_bridge_port *source,
 	if (source && !(state & NUD_PERMANENT) && !(state & NUD_NOARP) &&
 	    !(source->state == BR_STATE_LEARNING ||
 	      source->state == BR_STATE_FORWARDING))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!source && !(state & NUD_PERMANENT)) {
 		pr_info("bridge: RTM_NEWNEIGH %s without NUD_PERMANENT\n",
 			br->dev->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (is_sticky && (state & NUD_PERMANENT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fdb = br_fdb_find(br, addr, vid);
 	if (fdb == NULL) {
 		if (!(flags & NLM_F_CREATE))
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		fdb = fdb_create(br, source, addr, vid, 0);
 		if (!fdb)
@@ -827,7 +827,7 @@ static int fdb_add_entry(struct net_bridge *br, struct net_bridge_port *source,
 		modified = true;
 	} else {
 		if (flags & NLM_F_EXCL)
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		if (fdb->dst != source) {
 			fdb->dst = source;
@@ -879,7 +879,7 @@ static int __br_fdb_add(struct ndmsg *ndm, struct net_bridge *br,
 		if (!p) {
 			pr_info("bridge: RTM_NEWNEIGH %s with NTF_USE is not supported\n",
 				br->dev->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!nbp_state_should_learn(p))
 			return 0;
@@ -917,12 +917,12 @@ int br_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 
 	if (!(ndm->ndm_state & (NUD_PERMANENT|NUD_NOARP|NUD_REACHABLE))) {
 		pr_info("bridge: RTM_NEWNEIGH with invalid state %#x\n", ndm->ndm_state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (is_zero_ether_addr(addr)) {
 		pr_info("bridge: RTM_NEWNEIGH with invalid ether address\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev->priv_flags & IFF_EBRIDGE) {
@@ -933,7 +933,7 @@ int br_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 		if (!p) {
 			pr_info("bridge: RTM_NEWNEIGH %s not a bridge port\n",
 				dev->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		br = p->br;
 		vg = nbp_vlan_group(p);
@@ -943,7 +943,7 @@ int br_fdb_add(struct ndmsg *ndm, struct nlattr *tb[],
 		v = br_vlan_find(vg, vid);
 		if (!v || !br_vlan_should_use(v)) {
 			pr_info("bridge: RTM_NEWNEIGH with unconfigured vlan %d on %s\n", vid, dev->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* VID was specified, so use it. */
@@ -978,7 +978,7 @@ static int fdb_delete_by_addr_and_port(struct net_bridge *br,
 
 	fdb = br_fdb_find(br, addr, vlan);
 	if (!fdb || fdb->dst != p)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	fdb_delete(br, fdb, true);
 
@@ -1017,7 +1017,7 @@ int br_fdb_delete(struct ndmsg *ndm, struct nlattr *tb[],
 		if (!p) {
 			pr_info("bridge: RTM_DELNEIGH %s not a bridge port\n",
 				dev->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		vg = nbp_vlan_group(p);
 		br = p->br;
@@ -1027,12 +1027,12 @@ int br_fdb_delete(struct ndmsg *ndm, struct nlattr *tb[],
 		v = br_vlan_find(vg, vid);
 		if (!v) {
 			pr_info("bridge: RTM_DELNEIGH with unconfigured vlan %d on %s\n", vid, dev->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		err = __br_fdb_delete(br, p, addr, vid);
 	} else {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		err &= __br_fdb_delete(br, p, addr, 0);
 		if (!vg || !vg->num_vlans)
 			return err;
@@ -1166,7 +1166,7 @@ int br_fdb_external_learn_del(struct net_bridge *br, struct net_bridge_port *p,
 	if (fdb && test_bit(BR_FDB_ADDED_BY_EXT_LEARN, &fdb->flags))
 		fdb_delete(br, fdb, swdev_notify);
 	else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	spin_unlock_bh(&br->hash_lock);
 

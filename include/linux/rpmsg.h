@@ -139,7 +139,7 @@ __poll_t rpmsg_poll(struct rpmsg_endpoint *ept, struct file *filp,
 
 static inline int register_rpmsg_device(struct rpmsg_device *dev)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline void unregister_rpmsg_device(struct rpmsg_device *dev)
@@ -154,7 +154,7 @@ static inline int __register_rpmsg_driver(struct rpmsg_driver *drv,
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline void unregister_rpmsg_driver(struct rpmsg_driver *drv)
@@ -177,7 +177,7 @@ static inline struct rpmsg_endpoint *rpmsg_create_ept(struct rpmsg_device *rpdev
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline int rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
@@ -185,7 +185,7 @@ static inline int rpmsg_send(struct rpmsg_endpoint *ept, void *data, int len)
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len,
@@ -194,7 +194,7 @@ static inline int rpmsg_sendto(struct rpmsg_endpoint *ept, void *data, int len,
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 
 }
 
@@ -204,7 +204,7 @@ static inline int rpmsg_send_offchannel(struct rpmsg_endpoint *ept, u32 src,
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
@@ -212,7 +212,7 @@ static inline int rpmsg_trysend(struct rpmsg_endpoint *ept, void *data, int len)
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data,
@@ -221,7 +221,7 @@ static inline int rpmsg_trysendto(struct rpmsg_endpoint *ept, void *data,
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src,
@@ -230,7 +230,7 @@ static inline int rpmsg_trysend_offchannel(struct rpmsg_endpoint *ept, u32 src,
 	/* This shouldn't be possible */
 	WARN_ON(1);
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline __poll_t rpmsg_poll(struct rpmsg_endpoint *ept,

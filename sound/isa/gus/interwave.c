@@ -219,7 +219,7 @@ static int snd_interwave_detect_stb(struct snd_interwave *iwcard,
 	}
 	if (iwcard->i2c_res == NULL) {
 		snd_printk(KERN_ERR "interwave: can't grab i2c bus port\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sprintf(name, "InterWave-%i", card->number);
@@ -249,14 +249,14 @@ static int snd_interwave_detect(struct snd_interwave *iwcard,
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) {
 		snd_printdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	udelay(160);
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
 	udelay(160);
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) {
 		snd_printdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	spin_lock_irqsave(&gus->reg_lock, flags);
 	rev1 = snd_gf1_look8(gus, SNDRV_GF1_GB_VERSION_NUMBER);
@@ -278,7 +278,7 @@ static int snd_interwave_detect(struct snd_interwave *iwcard,
 #endif
 	}
 	snd_printdd("[0x%lx] InterWave check - failed\n", gus->gf1.port);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static irqreturn_t snd_interwave_interrupt(int irq, void *dev_id)
@@ -545,12 +545,12 @@ static int snd_interwave_pnp(int dev, struct snd_interwave *iwcard,
 
 	iwcard->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (iwcard->dev == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 #ifdef SNDRV_STB
 	iwcard->devtc = pnp_request_card_device(card, id->devs[1].id, NULL);
 	if (iwcard->devtc == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 #endif
 	/* Synth & Codec initialization */
 	pdev = iwcard->dev;
@@ -563,7 +563,7 @@ static int snd_interwave_pnp(int dev, struct snd_interwave *iwcard,
 	if (pnp_port_start(pdev, 0) + 0x100 != pnp_port_start(pdev, 1) ||
 	    pnp_port_start(pdev, 0) + 0x10c != pnp_port_start(pdev, 2)) {
 		snd_printk(KERN_ERR "PnP configure failure (wrong ports)\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	port[dev] = pnp_port_start(pdev, 0);
 	dma1[dev] = pnp_dma(pdev, 0);
@@ -664,7 +664,7 @@ static int snd_interwave_probe(struct snd_card *card, int dev)
 	if (request_irq(xirq, snd_interwave_interrupt, 0,
 			"InterWave", iwcard)) {
 		snd_printk(KERN_ERR PFX "unable to grab IRQ %d\n", xirq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	iwcard->irq = xirq;
 	card->sync_irq = iwcard->irq;
@@ -794,19 +794,19 @@ static int snd_interwave_isa_probe(struct device *pdev,
 	if (irq[dev] == SNDRV_AUTO_IRQ) {
 		if ((irq[dev] = snd_legacy_find_free_irq(possible_irqs)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1[dev] == SNDRV_AUTO_DMA) {
 		if ((dma1[dev] = snd_legacy_find_free_dma(possible_dmas)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma2[dev] == SNDRV_AUTO_DMA) {
 		if ((dma2[dev] = snd_legacy_find_free_dma(possible_dmas)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free DMA2\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -854,7 +854,7 @@ static int snd_interwave_pnp_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 				
 	res = snd_interwave_card_new(&pcard->card->dev, dev, &card);
 	if (res < 0)

@@ -205,7 +205,7 @@ static void *m_start(struct seq_file *m, loff_t *pos)
 	/* pin the task and mm whilst we play with them */
 	priv->task = get_proc_task(priv->inode);
 	if (!priv->task)
-		return ERR_PTR(-ESRCH);
+		return ERR_PTR(-ERR(ESRCH));
 
 	mm = priv->mm;
 	if (!mm || !mmget_not_zero(mm))
@@ -213,7 +213,7 @@ static void *m_start(struct seq_file *m, loff_t *pos)
 
 	if (mmap_read_lock_killable(mm)) {
 		mmput(mm);
-		return ERR_PTR(-EINTR);
+		return ERR_PTR(-ERR(EINTR));
 	}
 
 	/* start from the Nth VMA */

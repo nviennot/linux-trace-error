@@ -171,7 +171,7 @@ int digital_in_iso_dep_pull_sod(struct nfc_digital_dev *ddev,
 	u8 block_type;
 
 	if (skb->len < 1)
-		return -EIO;
+		return -ERR(EIO);
 
 	pcb = *skb->data;
 	block_type = DIGITAL_ISO_DEP_PCB_TYPE(pcb);
@@ -179,12 +179,12 @@ int digital_in_iso_dep_pull_sod(struct nfc_digital_dev *ddev,
 	/* No support fo R-block nor S-block */
 	if (block_type != DIGITAL_ISO_DEP_I_BLOCK) {
 		pr_err("ISO_DEP R-block and S-block not supported\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (DIGITAL_ISO_DEP_BLOCK_HAS_DID(pcb)) {
 		pr_err("DID field in ISO_DEP PCB not supported\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	skb_pull(skb, 1);
@@ -200,7 +200,7 @@ int digital_in_iso_dep_push_sod(struct nfc_digital_dev *ddev,
 	 * not be greater than remote FSC
 	 */
 	if (skb->len + 3 > ddev->target_fsc)
-		return -EIO;
+		return -ERR(EIO);
 
 	skb_push(skb, 1);
 
@@ -226,7 +226,7 @@ static void digital_in_recv_ats(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len < 2) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -292,7 +292,7 @@ static void digital_in_recv_sel_res(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len != DIGITAL_SEL_RES_LEN) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -322,7 +322,7 @@ static void digital_in_recv_sel_res(struct nfc_digital_dev *ddev, void *arg,
 		 */
 		goto exit_free_skb;
 	} else {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto exit;
 	}
 
@@ -401,7 +401,7 @@ static void digital_in_recv_sdd_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len < DIGITAL_SDD_RES_LEN) {
 		PROTOCOL_ERR("4.7.2.8");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -412,7 +412,7 @@ static void digital_in_recv_sdd_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (bcc != sdd_res->bcc) {
 		PROTOCOL_ERR("4.7.2.6");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -482,7 +482,7 @@ static void digital_in_recv_sens_res(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len < sizeof(u16)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -496,7 +496,7 @@ static void digital_in_recv_sens_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (!DIGITAL_SENS_RES_IS_VALID(target->sens_res)) {
 		PROTOCOL_ERR("4.6.3.3");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -552,7 +552,7 @@ int digital_in_recv_mifare_res(struct sk_buff *resp)
 	if (resp->len == DIGITAL_MIFARE_READ_RES_LEN + DIGITAL_CRC_LEN) {
 		if (digital_skb_check_crc_a(resp)) {
 			PROTOCOL_ERR("9.4.1.2");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		return 0;
@@ -565,7 +565,7 @@ int digital_in_recv_mifare_res(struct sk_buff *resp)
 	}
 
 	/* NACK and any other responses are treated as error. */
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static void digital_in_recv_attrib_res(struct nfc_digital_dev *ddev, void *arg,
@@ -583,7 +583,7 @@ static void digital_in_recv_attrib_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len < sizeof(*attrib_res)) {
 		PROTOCOL_ERR("12.6.2");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -591,7 +591,7 @@ static void digital_in_recv_attrib_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (attrib_res->mbli_did & 0x0f) {
 		PROTOCOL_ERR("12.6.2.1");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -654,7 +654,7 @@ static void digital_in_recv_sensb_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len != sizeof(*sensb_res)) {
 		PROTOCOL_ERR("5.6.2.1");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -662,19 +662,19 @@ static void digital_in_recv_sensb_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (sensb_res->cmd != DIGITAL_CMD_SENSB_RES) {
 		PROTOCOL_ERR("5.6.2");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
 	if (!(sensb_res->proto_info[1] & BIT(0))) {
 		PROTOCOL_ERR("5.6.2.12");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
 	if (sensb_res->proto_info[1] & BIT(3)) {
 		PROTOCOL_ERR("5.6.2.16");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -750,7 +750,7 @@ static void digital_in_recv_sensf_res(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len < DIGITAL_SENSF_RES_MIN_LENGTH) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -847,7 +847,7 @@ static void digital_in_recv_iso15693_inv_res(struct nfc_digital_dev *ddev,
 	}
 
 	if (resp->len != sizeof(*res)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out_free_skb;
 	}
 
@@ -855,7 +855,7 @@ static void digital_in_recv_iso15693_inv_res(struct nfc_digital_dev *ddev,
 
 	if (!DIGITAL_ISO15693_RES_IS_VALID(res->flags)) {
 		PROTOCOL_ERR("ISO15693 - 10.3.1");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_free_skb;
 	}
 
@@ -1030,7 +1030,7 @@ static void digital_tg_recv_sdd_req(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len < 2 || sdd_req[0] != DIGITAL_CMD_SEL_REQ_CL1 ||
 	    sdd_req[1] != DIGITAL_SDD_REQ_SEL_PAR) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -1089,7 +1089,7 @@ void digital_tg_recv_sens_req(struct nfc_digital_dev *ddev, void *arg,
 
 	if (!resp->len || (sens_req != DIGITAL_CMD_SENS_REQ &&
 	    sens_req != DIGITAL_CMD_ALL_REQ)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -1187,7 +1187,7 @@ void digital_tg_recv_sensf_req(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len != sizeof(struct digital_sensf_req) + 1) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -1195,7 +1195,7 @@ void digital_tg_recv_sensf_req(struct nfc_digital_dev *ddev, void *arg,
 	sensf_req = (struct digital_sensf_req *)resp->data;
 
 	if (sensf_req->cmd != DIGITAL_CMD_SENSF_REQ) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 

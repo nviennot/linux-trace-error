@@ -29,7 +29,7 @@ static int vboxsf_dir_open(struct inode *inode, struct file *file)
 		goto err_free_dir_info;
 
 	if (params.result != SHFL_FILE_EXISTS) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto err_close;
 	}
 
@@ -194,12 +194,12 @@ const struct file_operations vboxsf_dir_fops = {
 static int vboxsf_dentry_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (d_really_is_positive(dentry))
 		return vboxsf_inode_revalidate(dentry) == 0;
 	else
-		return vboxsf_stat_dentry(dentry, NULL) == -ENOENT;
+		return vboxsf_stat_dentry(dentry, NULL) == -ERR(ENOENT);
 }
 
 const struct dentry_operations vboxsf_dentry_ops = {
@@ -221,7 +221,7 @@ static struct dentry *vboxsf_dir_lookup(struct inode *parent,
 
 	err = vboxsf_stat_dentry(dentry, &fsinfo);
 	if (err) {
-		inode = (err == -ENOENT) ? NULL : ERR_PTR(err);
+		inode = (err == -ERR(ENOENT)) ? NULL : ERR_PTR(err);
 	} else {
 		inode = vboxsf_new_inode(parent->i_sb);
 		if (!IS_ERR(inode))
@@ -274,7 +274,7 @@ static int vboxsf_dir_create(struct inode *parent, struct dentry *dentry,
 		return err;
 
 	if (params.result != SHFL_FILE_CREATED)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	vboxsf_close(sbi->root, params.handle);
 
@@ -346,7 +346,7 @@ static int vboxsf_dir_rename(struct inode *old_parent,
 	int err;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_path = vboxsf_path_from_dentry(sbi, old_dentry);
 	if (IS_ERR(old_path))
@@ -402,7 +402,7 @@ static int vboxsf_dir_symlink(struct inode *parent, struct dentry *dentry,
 	__putname(path);
 	if (err) {
 		/* -EROFS means symlinks are note support -> -EPERM */
-		return (err == -EROFS) ? -EPERM : err;
+		return (err == -ERR(EROFS)) ? -ERR(EPERM) : err;
 	}
 
 	err = vboxsf_dir_instantiate(parent, dentry, &info);

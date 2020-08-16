@@ -129,7 +129,7 @@ int tick_is_broadcast_device(struct clock_event_device *dev)
 
 int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq)
 {
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	if (tick_is_broadcast_device(dev)) {
 		raw_spin_lock(&tick_broadcast_lock);
@@ -248,10 +248,10 @@ int tick_receive_broadcast(void)
 	struct clock_event_device *evt = td->evtdev;
 
 	if (!evt)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!evt->event_handler)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	evt->event_handler(evt);
 	return 0;
@@ -687,7 +687,7 @@ static int broadcast_needs_cpu(struct clock_event_device *bc, int cpu)
 		return 0;
 	if (bc->next_event == KTIME_MAX)
 		return 0;
-	return bc->bound_on == cpu ? -EBUSY : 0;
+	return bc->bound_on == cpu ? -ERR(EBUSY) : 0;
 }
 
 static void broadcast_shutdown_local(struct clock_event_device *bc,
@@ -718,7 +718,7 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 	 * into deep idle.
 	 */
 	if (!tick_broadcast_device.evtdev)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dev = this_cpu_ptr(&tick_cpu_device)->evtdev;
 
@@ -745,7 +745,7 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 		if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) {
 			/* If it is a hrtimer based broadcast, return busy */
 			if (bc->features & CLOCK_EVT_FEAT_HRTIMER)
-				ret = -EBUSY;
+				ret = -ERR(EBUSY);
 			goto out;
 		}
 
@@ -766,7 +766,7 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 			 * idle.
 			 */
 			if (cpumask_test_cpu(cpu, tick_broadcast_force_mask)) {
-				ret = -EBUSY;
+				ret = -ERR(EBUSY);
 			} else if (dev->next_event < bc->next_event) {
 				tick_broadcast_set_event(bc, cpu, dev->next_event);
 				/*
@@ -996,7 +996,7 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 	struct clock_event_device *bc = tick_broadcast_device.evtdev;
 
 	if (!bc || (bc->features & CLOCK_EVT_FEAT_HRTIMER))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }

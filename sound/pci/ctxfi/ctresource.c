@@ -39,7 +39,7 @@ get_resource(u8 *rscs, unsigned int amount,
 
 	if (i >= amount) {
 		/* Can not find sufficient contiguous resources */
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Mark the contiguous bits in resource bit-map as used */
@@ -75,7 +75,7 @@ int mgr_get_resource(struct rsc_mgr *mgr, unsigned int n, unsigned int *ridx)
 	int err;
 
 	if (n > mgr->avail)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = get_resource(mgr->rscs, mgr->amount, n, ridx);
 	if (!err)
@@ -160,7 +160,7 @@ rsc_init(struct rsc *rsc, u32 idx, enum RSCTYP type, u32 msr, struct hw *hw)
 	default:
 		dev_err(((struct hw *)hw)->card->dev,
 			"Invalid resource type value %d!\n", type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (err) {
@@ -231,7 +231,7 @@ int rsc_mgr_init(struct rsc_mgr *mgr, enum RSCTYP type,
 	default:
 		dev_err(hw->card->dev,
 			"Invalid resource type value %d!\n", type);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 

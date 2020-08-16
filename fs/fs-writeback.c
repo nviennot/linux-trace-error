@@ -927,7 +927,7 @@ int cgroup_writeback_by_id(u64 bdi_id, int memcg_id, unsigned long nr,
 	/* lookup bdi and memcg */
 	bdi = bdi_get_by_id(bdi_id);
 	if (!bdi)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	rcu_read_lock();
 	memcg_css = css_from_id(memcg_id, &memory_cgrp_subsys);
@@ -935,7 +935,7 @@ int cgroup_writeback_by_id(u64 bdi_id, int memcg_id, unsigned long nr,
 		memcg_css = NULL;
 	rcu_read_unlock();
 	if (!memcg_css) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_bdi_put;
 	}
 
@@ -945,7 +945,7 @@ int cgroup_writeback_by_id(u64 bdi_id, int memcg_id, unsigned long nr,
 	 */
 	wb = wb_get_lookup(bdi, memcg_css);
 	if (!wb) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_css_put;
 	}
 

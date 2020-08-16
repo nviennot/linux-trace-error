@@ -176,7 +176,7 @@ static int __xlate_proc_name(const char *name, struct proc_dir_entry **ret,
 		de = pde_subdir_find(de, cp, next - cp);
 		if (!de) {
 			WARN(1, "name '%s'\n", name);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		cp = next + 1;
 	}
@@ -225,7 +225,7 @@ void proc_free_inum(unsigned int inum)
 static int proc_misc_d_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (atomic_read(&PDE(d_inode(dentry))->in_use) < 0)
 		return 0; /* revalidate */
@@ -263,7 +263,7 @@ struct dentry *proc_lookup_de(struct inode *dir, struct dentry *dentry,
 		return d_splice_alias(inode, dentry);
 	}
 	read_unlock(&proc_subdir_lock);
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 struct dentry *proc_lookup(struct inode *dir, struct dentry *dentry,
@@ -272,7 +272,7 @@ struct dentry *proc_lookup(struct inode *dir, struct dentry *dentry,
 	struct proc_fs_info *fs_info = proc_sb_info(dir->i_sb);
 
 	if (fs_info->pidonly == PROC_PIDONLY_ON)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	return proc_lookup_de(dir, dentry, PDE(dir));
 }
@@ -713,20 +713,20 @@ int remove_proc_subtree(const char *name, struct proc_dir_entry *parent)
 	write_lock(&proc_subdir_lock);
 	if (__xlate_proc_name(name, &parent, &fn) != 0) {
 		write_unlock(&proc_subdir_lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	len = strlen(fn);
 
 	root = pde_subdir_find(parent, fn, len);
 	if (!root) {
 		write_unlock(&proc_subdir_lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (unlikely(pde_is_permanent(root))) {
 		write_unlock(&proc_subdir_lock);
 		WARN(1, "removing permanent /proc entry '%s/%s'",
 			root->parent->name, root->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	rb_erase(&root->subdir_node, &parent->subdir);
 
@@ -738,7 +738,7 @@ int remove_proc_subtree(const char *name, struct proc_dir_entry *parent)
 				write_unlock(&proc_subdir_lock);
 				WARN(1, "removing permanent /proc entry '%s/%s'",
 					next->parent->name, next->name);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			rb_erase(&next->subdir_node, &de->subdir);
 			de = next;
@@ -795,9 +795,9 @@ ssize_t proc_simple_write(struct file *f, const char __user *ubuf, size_t size,
 	int ret;
 
 	if (!pde->write)
-		return -EACCES;
+		return -ERR(EACCES);
 	if (size == 0 || size > PAGE_SIZE - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	buf = memdup_user_nul(ubuf, size);
 	if (IS_ERR(buf))
 		return PTR_ERR(buf);

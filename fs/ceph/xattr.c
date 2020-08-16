@@ -129,7 +129,7 @@ static int ceph_fmt_xattr(char *val, size_t size, const char *fmt, ...)
 	/* Sanity check */
 	if (size && ret + 1 > sizeof(buf)) {
 		WARN_ONCE(true, "Returned length too big (%d)", ret);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	if (ret <= size)
@@ -247,7 +247,7 @@ static ssize_t ceph_vxattrcb_dir_rctime(struct ceph_inode_info *ci, char *val,
 /* dir pin */
 static bool ceph_vxattrcb_dir_pin_exists(struct ceph_inode_info *ci)
 {
-	return ci->i_dir_pin != -ENODATA;
+	return ci->i_dir_pin != -ERR(ENODATA);
 }
 
 static ssize_t ceph_vxattrcb_dir_pin(struct ceph_inode_info *ci, char *val,
@@ -466,9 +466,9 @@ static int __set_xattr(struct ceph_inode_info *ci,
 		int err = 0;
 
 		if (xattr && (flags & XATTR_CREATE))
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		else if (!xattr && (flags & XATTR_REPLACE))
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 		if (err) {
 			kfree(name);
 			kfree(val);
@@ -577,7 +577,7 @@ static int __remove_xattr(struct ceph_inode_info *ci,
 			  struct ceph_inode_xattr *xattr)
 {
 	if (!xattr)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	rb_erase(&xattr->node, &ci->i_xattrs.index);
 
@@ -699,7 +699,7 @@ start:
 			xattrs = NULL;
 			goto start;
 		}
-		err = -EIO;
+		err = -ERR(EIO);
 		while (numattr--) {
 			ceph_decode_32_safe(&p, end, len, bad);
 			namelen = len;
@@ -839,11 +839,11 @@ ssize_t __ceph_getxattr(struct inode *inode, const char *name, void *value,
 		err = ceph_do_getattr(inode, mask, true);
 		if (err)
 			return err;
-		err = -ENODATA;
+		err = -ERR(ENODATA);
 		if (!(vxattr->exists_cb && !vxattr->exists_cb(ci))) {
 			err = vxattr->getxattr_cb(ci, value, size);
 			if (size && size < err)
-				err = -ERANGE;
+				err = -ERR(ERANGE);
 		}
 		return err;
 	}
@@ -863,7 +863,7 @@ ssize_t __ceph_getxattr(struct inode *inode, const char *name, void *value,
 		if (current->journal_info) {
 			pr_warn_ratelimited("sync getxattr %p "
 					    "during filling trace\n", inode);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		/* get xattrs from mds (if we don't already have them) */
@@ -877,12 +877,12 @@ ssize_t __ceph_getxattr(struct inode *inode, const char *name, void *value,
 	if (err < 0)
 		goto out;
 
-	err = -ENODATA;  /* == ENOATTR */
+	err = -ERR(ENODATA);  /* == ENOATTR */
 	xattr = __get_xattr(ci, name);
 	if (!xattr)
 		goto out;
 
-	err = -ERANGE;
+	err = -ERR(ERANGE);
 	if (size && size < xattr->val_len)
 		goto out;
 
@@ -930,7 +930,7 @@ ssize_t ceph_listxattr(struct dentry *dentry, char *names, size_t size)
 	namelen = ci->i_xattrs.names_size + ci->i_xattrs.count;
 	if (!len_only) {
 		if (namelen > size) {
-			err = -ERANGE;
+			err = -ERR(ERANGE);
 			goto out;
 		}
 		names = __copy_xattr_names(ci, names);
@@ -1028,12 +1028,12 @@ int __ceph_setxattr(struct inode *inode, const char *name,
 	bool lock_snap_rwsem = false;
 
 	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	vxattr = ceph_match_vxattr(inode, name);
 	if (vxattr) {
 		if (vxattr->flags & VXATTR_FLAG_READONLY)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		if (value && !strncmp(vxattr->name, "ceph.quota", 10))
 			check_realm = true;
 	}
@@ -1131,7 +1131,7 @@ do_sync_unlocked:
 	if (current->journal_info) {
 		pr_warn_ratelimited("sync setxattr %p "
 				    "during filling trace\n", inode);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	} else {
 		err = ceph_sync_setxattr(inode, name, value, size, flags);
 		if (err >= 0 && check_realm) {
@@ -1140,7 +1140,7 @@ do_sync_unlocked:
 			if ((ci->i_max_files || ci->i_max_bytes) &&
 			    !(ci->i_snap_realm &&
 			      ci->i_snap_realm->ino == ci->i_vino.ino))
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 			spin_unlock(&ci->i_ceph_lock);
 		}
 	}
@@ -1157,7 +1157,7 @@ static int ceph_get_xattr_handler(const struct xattr_handler *handler,
 				  const char *name, void *value, size_t size)
 {
 	if (!ceph_is_valid_xattr(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return __ceph_getxattr(inode, name, value, size);
 }
 
@@ -1167,7 +1167,7 @@ static int ceph_set_xattr_handler(const struct xattr_handler *handler,
 				  size_t size, int flags)
 {
 	if (!ceph_is_valid_xattr(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return __ceph_setxattr(inode, name, value, size, flags);
 }
 

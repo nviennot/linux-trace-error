@@ -56,11 +56,11 @@ static int l2cap_validate_bredr_psm(u16 psm)
 {
 	/* PSM must be odd and lsb of upper byte must be 0 */
 	if ((psm & 0x0101) != 0x0001)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Restrict usage of well-known PSMs */
 	if (psm < L2CAP_PSM_DYN_START && !capable(CAP_NET_BIND_SERVICE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 }
@@ -69,11 +69,11 @@ static int l2cap_validate_le_psm(u16 psm)
 {
 	/* Valid LE_PSM ranges are defined only until 0x00ff */
 	if (psm > L2CAP_PSM_LE_DYN_END)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Restrict fixed, SIG assigned PSM values to CAP_NET_BIND_SERVICE */
 	if (psm < L2CAP_PSM_LE_DYN_START && !capable(CAP_NET_BIND_SERVICE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 }
@@ -89,29 +89,29 @@ static int l2cap_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 
 	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&la, 0, sizeof(la));
 	len = min_t(unsigned int, sizeof(la), alen);
 	memcpy(&la, addr, len);
 
 	if (la.l2_cid && la.l2_psm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!bdaddr_type_is_valid(la.l2_bdaddr_type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bdaddr_type_is_le(la.l2_bdaddr_type)) {
 		/* We only allow ATT user space socket */
 		if (la.l2_cid &&
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	lock_sock(sk);
 
 	if (sk->sk_state != BT_OPEN) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
@@ -184,17 +184,17 @@ static int l2cap_sock_connect(struct socket *sock, struct sockaddr *addr,
 
 	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&la, 0, sizeof(la));
 	len = min_t(unsigned int, sizeof(la), alen);
 	memcpy(&la, addr, len);
 
 	if (la.l2_cid && la.l2_psm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!bdaddr_type_is_valid(la.l2_bdaddr_type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check that the socket wasn't bound to something that
 	 * conflicts with the address given to connect(). If chan->src
@@ -211,7 +211,7 @@ static int l2cap_sock_connect(struct socket *sock, struct sockaddr *addr,
 		 */
 		if (chan->scid != L2CAP_CID_ATT ||
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* We don't have the hdev available here to make a
 		 * better decision on random vs public, but since all
@@ -223,13 +223,13 @@ static int l2cap_sock_connect(struct socket *sock, struct sockaddr *addr,
 	}
 
 	if (chan->src_type != BDADDR_BREDR && la.l2_bdaddr_type == BDADDR_BREDR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bdaddr_type_is_le(la.l2_bdaddr_type)) {
 		/* We only allow ATT user space socket */
 		if (la.l2_cid &&
 		    la.l2_cid != cpu_to_le16(L2CAP_CID_ATT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (chan->psm && bdaddr_type_is_le(chan->src_type) && !chan->mode)
@@ -261,12 +261,12 @@ static int l2cap_sock_listen(struct socket *sock, int backlog)
 	lock_sock(sk);
 
 	if (sk->sk_state != BT_BOUND) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
 	if (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -276,7 +276,7 @@ static int l2cap_sock_listen(struct socket *sock, int backlog)
 		break;
 	case L2CAP_MODE_EXT_FLOWCTL:
 		if (!enable_ecred) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto done;
 		}
 		break;
@@ -286,7 +286,7 @@ static int l2cap_sock_listen(struct socket *sock, int backlog)
 			break;
 		/* fall through */
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -325,7 +325,7 @@ static int l2cap_sock_accept(struct socket *sock, struct socket *newsock,
 	add_wait_queue_exclusive(sk_sleep(sk), &wait);
 	while (1) {
 		if (sk->sk_state != BT_LISTEN) {
-			err = -EBADFD;
+			err = -ERR(EBADFD);
 			break;
 		}
 
@@ -334,7 +334,7 @@ static int l2cap_sock_accept(struct socket *sock, struct socket *newsock,
 			break;
 
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		}
 
@@ -375,7 +375,7 @@ static int l2cap_sock_getname(struct socket *sock, struct sockaddr *addr,
 	if (peer && sk->sk_state != BT_CONNECTED &&
 	    sk->sk_state != BT_CONNECT && sk->sk_state != BT_CONNECT2 &&
 	    sk->sk_state != BT_CONFIG)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	memset(la, 0, sizeof(struct sockaddr_l2));
 	addr->sa_family = AF_BLUETOOTH;
@@ -410,7 +410,7 @@ static int l2cap_get_mode(struct l2cap_chan *chan)
 		return BT_MODE_EXT_FLOWCTL;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
@@ -438,7 +438,7 @@ static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
 		 */
 		if (bdaddr_type_is_le(chan->src_type) &&
 		    chan->scid != L2CAP_CID_ATT) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -449,7 +449,7 @@ static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
 		case L2CAP_MODE_STREAMING:
 			break;
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -509,7 +509,7 @@ static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
 		if (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
 		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -524,7 +524,7 @@ static int l2cap_sock_getsockopt_old(struct socket *sock, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -548,7 +548,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 		return l2cap_sock_getsockopt_old(sock, optname, optval, optlen);
 
 	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
@@ -560,7 +560,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
 		    chan->chan_type != L2CAP_CHAN_FIXED &&
 		    chan->chan_type != L2CAP_CHAN_RAW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -582,7 +582,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_DEFER_SETUP:
 		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -602,7 +602,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 	case BT_POWER:
 		if (sk->sk_type != SOCK_SEQPACKET && sk->sk_type != SOCK_STREAM
 		    && sk->sk_type != SOCK_RAW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -621,12 +621,12 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_SNDMTU:
 		if (!bdaddr_type_is_le(chan->src_type)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (sk->sk_state != BT_CONNECTED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -636,7 +636,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_RCVMTU:
 		if (!bdaddr_type_is_le(chan->src_type)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -646,7 +646,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_PHY:
 		if (sk->sk_state != BT_CONNECTED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -658,12 +658,12 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_MODE:
 		if (!enable_ecred) {
-			err = -ENOPROTOOPT;
+			err = -ERR(ENOPROTOOPT);
 			break;
 		}
 
 		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -678,7 +678,7 @@ static int l2cap_sock_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -718,12 +718,12 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 	switch (optname) {
 	case L2CAP_OPTIONS:
 		if (bdaddr_type_is_le(chan->src_type)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (sk->sk_state == BT_CONNECTED) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -742,12 +742,12 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 		}
 
 		if (opts.txwin_size > L2CAP_DEFAULT_EXT_WINDOW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (!l2cap_valid_mtu(chan, opts.imtu)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -762,7 +762,7 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 				break;
 			/* fall through */
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -788,7 +788,7 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 		}
 
 		if (opt & L2CAP_LM_FIPS) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -811,7 +811,7 @@ static int l2cap_sock_setsockopt_old(struct socket *sock, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -824,33 +824,33 @@ static int l2cap_set_mode(struct l2cap_chan *chan, u8 mode)
 	switch (mode) {
 	case BT_MODE_BASIC:
 		if (bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mode = L2CAP_MODE_BASIC;
 		clear_bit(CONF_STATE2_DEVICE, &chan->conf_state);
 		break;
 	case BT_MODE_ERTM:
 		if (!disable_ertm || bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mode = L2CAP_MODE_ERTM;
 		break;
 	case BT_MODE_STREAMING:
 		if (!disable_ertm || bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mode = L2CAP_MODE_STREAMING;
 		break;
 	case BT_MODE_LE_FLOWCTL:
 		if (!bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mode = L2CAP_MODE_LE_FLOWCTL;
 		break;
 	case BT_MODE_EXT_FLOWCTL:
 		/* TODO: Add support for ECRED PDUs to BR/EDR */
 		if (!bdaddr_type_is_le(chan->src_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mode = L2CAP_MODE_EXT_FLOWCTL;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chan->mode = mode;
@@ -875,7 +875,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		return l2cap_sock_setsockopt_old(sock, optname, optval, optlen);
 
 	if (level != SOL_BLUETOOTH)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	lock_sock(sk);
 
@@ -884,7 +884,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
 		    chan->chan_type != L2CAP_CHAN_FIXED &&
 		    chan->chan_type != L2CAP_CHAN_RAW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -898,7 +898,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 
 		if (sec.level < BT_SECURITY_LOW ||
 		    sec.level > BT_SECURITY_FIPS) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -912,7 +912,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		/* change security for LE channels */
 		if (chan->scid == L2CAP_CID_ATT) {
 			if (smp_conn_security(conn->hcon, sec.level)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 
@@ -929,13 +929,13 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 			else
 				sk->sk_state_change(sk);
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		break;
 
 	case BT_DEFER_SETUP:
 		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -960,7 +960,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		}
 
 		if (opt > BT_FLUSHABLE_ON) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -969,7 +969,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 			/* proceed further only when we have l2cap_conn and
 			   No Flush support in the LM */
 			if (!conn || !lmp_no_flush_capable(conn->hcon->hdev)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 		}
@@ -983,7 +983,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 	case BT_POWER:
 		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED &&
 		    chan->chan_type != L2CAP_CHAN_RAW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -1008,13 +1008,13 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		}
 
 		if (opt > BT_CHANNEL_POLICY_AMP_PREFERRED) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (chan->mode != L2CAP_MODE_ERTM &&
 		    chan->mode != L2CAP_MODE_STREAMING) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 
@@ -1028,25 +1028,25 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 
 	case BT_SNDMTU:
 		if (!bdaddr_type_is_le(chan->src_type)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		/* Setting is not supported as it's the remote side that
 		 * decides this.
 		 */
-		err = -EPERM;
+		err = -ERR(EPERM);
 		break;
 
 	case BT_RCVMTU:
 		if (!bdaddr_type_is_le(chan->src_type)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (chan->mode == L2CAP_MODE_LE_FLOWCTL &&
 		    sk->sk_state == BT_CONNECTED) {
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 			break;
 		}
 
@@ -1065,19 +1065,19 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 
 	case BT_MODE:
 		if (!enable_ecred) {
-			err = -ENOPROTOOPT;
+			err = -ERR(ENOPROTOOPT);
 			break;
 		}
 
 		BT_DBG("sk->sk_state %u", sk->sk_state);
 
 		if (sk->sk_state != BT_BOUND) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		if (chan->chan_type != L2CAP_CHAN_CONN_ORIENTED) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -1097,7 +1097,7 @@ static int l2cap_sock_setsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1119,10 +1119,10 @@ static int l2cap_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 		return err;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (sk->sk_state != BT_CONNECTED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	lock_sock(sk);
 	err = bt_sock_wait_ready(sk, msg->msg_flags);
@@ -1252,7 +1252,7 @@ static int __l2cap_wait_ack(struct sock *sk, struct l2cap_chan *chan)
 			break;
 
 		if (time_after(jiffies, timeout)) {
-			err = -ENOLINK;
+			err = -ERR(ENOLINK);
 			break;
 		}
 
@@ -1826,10 +1826,10 @@ static int l2cap_sock_create(struct net *net, struct socket *sock, int protocol,
 
 	if (sock->type != SOCK_SEQPACKET && sock->type != SOCK_STREAM &&
 	    sock->type != SOCK_DGRAM && sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	sock->ops = &l2cap_sock_ops;
 

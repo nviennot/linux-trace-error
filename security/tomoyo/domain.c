@@ -35,7 +35,7 @@ int tomoyo_update_policy(struct tomoyo_acl_head *new_entry, const int size,
 						 const struct tomoyo_acl_head
 						 *))
 {
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
+	int error = param->is_delete ? -ERR(ENOENT) : -ENOMEM;
 	struct tomoyo_acl_head *entry;
 	struct list_head *list = param->list;
 
@@ -100,14 +100,14 @@ int tomoyo_update_domain(struct tomoyo_acl_info *new_entry, const int size,
 						 const bool))
 {
 	const bool is_delete = param->is_delete;
-	int error = is_delete ? -ENOENT : -ENOMEM;
+	int error = is_delete ? -ERR(ENOENT) : -ENOMEM;
 	struct tomoyo_acl_info *entry;
 	struct list_head * const list = param->list;
 
 	if (param->data[0]) {
 		new_entry->cond = tomoyo_get_condition(param);
 		if (!new_entry->cond)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * Domain transition preference is allowed for only
 		 * "file execute" entries.
@@ -243,7 +243,7 @@ int tomoyo_write_transition_control(struct tomoyo_acl_param *param,
 				    const u8 type)
 {
 	struct tomoyo_transition_control e = { .type = type };
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
+	int error = param->is_delete ? -ERR(ENOENT) : -ENOMEM;
 	char *program = param->data;
 	char *domainname = strstr(program, " from ");
 
@@ -257,7 +257,7 @@ int tomoyo_write_transition_control(struct tomoyo_acl_param *param,
 	}
 	if (program && strcmp(program, "any")) {
 		if (!tomoyo_correct_path(program))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		e.program = tomoyo_get_name(program);
 		if (!e.program)
 			goto out;
@@ -403,13 +403,13 @@ static bool tomoyo_same_aggregator(const struct tomoyo_acl_head *a,
 int tomoyo_write_aggregator(struct tomoyo_acl_param *param)
 {
 	struct tomoyo_aggregator e = { };
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
+	int error = param->is_delete ? -ERR(ENOENT) : -ENOMEM;
 	const char *original_name = tomoyo_read_token(param);
 	const char *aggregated_name = tomoyo_read_token(param);
 
 	if (!tomoyo_correct_word(original_name) ||
 	    !tomoyo_correct_path(aggregated_name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	e.original_name = tomoyo_get_name(original_name);
 	e.aggregated_name = tomoyo_get_name(aggregated_name);
 	if (!e.original_name || !e.aggregated_name ||
@@ -672,7 +672,7 @@ static int tomoyo_environ(struct tomoyo_execve *ee)
 			if (c)
 				continue;
 			if (tomoyo_env_perm(r, arg_ptr)) {
-				error = -EPERM;
+				error = -ERR(EPERM);
 				break;
 			}
 			if (!--envp_count) {
@@ -725,7 +725,7 @@ int tomoyo_find_next_domain(struct linux_binprm *bprm)
 	ee->r.obj = &ee->obj;
 	ee->obj.path1 = bprm->file->f_path;
 	/* Get symlink's pathname of program. */
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	exename.name = tomoyo_realpath_nofollow(original_name);
 	if (!exename.name)
 		goto out;

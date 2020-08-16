@@ -122,7 +122,7 @@ static int lochnagar_sc_check_fmt(struct snd_soc_dai *dai, unsigned int fmt,
 	tar |= SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF;
 
 	if ((fmt & ~SND_SOC_DAIFMT_CLOCK_MASK) != tar)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

@@ -115,7 +115,7 @@ static int i2sbus_get_and_fixup_rsrc(struct device_node *np, int index,
 				     int layout, struct resource *res)
 {
 	struct device_node *parent;
-	int pindex, rc = -ENXIO;
+	int pindex, rc = -ERR(ENXIO);
 	const u32 *reg;
 
 	/* Machines with layout 76 and 36 (K2 based) have a weird device
@@ -137,7 +137,7 @@ static int i2sbus_get_and_fixup_rsrc(struct device_node *np, int index,
 		goto bail;
 	reg = of_get_property(np, "reg", NULL);
 	if (reg == NULL) {
-		rc = -ENXIO;
+		rc = -ERR(ENXIO);
 		goto bail;
 	}
 	res->start += reg[index * 2];
@@ -213,7 +213,7 @@ static int i2sbus_add_dev(struct macio_dev *macio,
 	 * either as the second one in that case is just a modem. */
 	if (!ok) {
 		kfree(dev);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	mutex_init(&dev->lock);
@@ -338,7 +338,7 @@ static int i2sbus_probe(struct macio_dev* dev, const struct of_device_id *match)
 		return err;
 	if (!control) {
 		printk(KERN_ERR "i2sbus_control_init API breakage\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	while ((np = of_get_next_child(dev->ofdev.dev.of_node, np))) {
@@ -351,7 +351,7 @@ static int i2sbus_probe(struct macio_dev* dev, const struct of_device_id *match)
 	if (!got) {
 		/* found none, clean up */
 		i2sbus_control_destroy(control);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_set_drvdata(&dev->ofdev.dev, control);

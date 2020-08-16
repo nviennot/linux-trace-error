@@ -308,7 +308,7 @@ static int get_ctl_value_v1(struct usb_mixer_elem_info *cval, int request,
 
 	err = snd_usb_lock_shutdown(chip);
 	if (err < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	while (timeout-- > 0) {
 		idx = mixer_ctrl_intf(cval->head.mixer) | (cval->head.id << 8);
@@ -326,7 +326,7 @@ static int get_ctl_value_v1(struct usb_mixer_elem_info *cval, int request,
 	usb_audio_dbg(chip,
 		"cannot get ctl value: req = %#x, wValue = %#x, wIndex = %#x, type = %d\n",
 		request, validx, idx, cval->val_type);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
  out:
 	snd_usb_unlock_shutdown(chip);
@@ -355,7 +355,7 @@ static int get_ctl_value_v2(struct usb_mixer_elem_info *cval, int request,
 
 	memset(buf, 0, sizeof(buf));
 
-	ret = snd_usb_lock_shutdown(chip) ? -EIO : 0;
+	ret = snd_usb_lock_shutdown(chip) ? -ERR(EIO) : 0;
 	if (ret)
 		goto error;
 
@@ -389,7 +389,7 @@ error:
 		val = buf + sizeof(__u16) + val_size * 2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*value_ret = convert_signed_value(cval,
@@ -467,7 +467,7 @@ int snd_usb_mixer_set_ctl_value(struct usb_mixer_elem_info *cval,
 		/* FIXME */
 		if (request != UAC_SET_CUR) {
 			usb_audio_dbg(chip, "RANGE setting not yet supported\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		request = UAC2_CS_CUR;
@@ -481,7 +481,7 @@ int snd_usb_mixer_set_ctl_value(struct usb_mixer_elem_info *cval,
 
 	err = snd_usb_lock_shutdown(chip);
 	if (err < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	while (timeout-- > 0) {
 		idx = mixer_ctrl_intf(cval->head.mixer) | (cval->head.id << 8);
@@ -498,7 +498,7 @@ int snd_usb_mixer_set_ctl_value(struct usb_mixer_elem_info *cval,
 	}
 	usb_audio_dbg(chip, "cannot set ctl value: req = %#x, wValue = %#x, wIndex = %#x, type = %d, data = %#x/%#x\n",
 		      request, validx, idx, cval->val_type, buf[0], buf[1]);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
  out:
 	snd_usb_unlock_shutdown(chip);
@@ -728,7 +728,7 @@ static int get_cluster_channels_v3(struct mixer_build *state, unsigned int clust
 	if (err < 0)
 		goto error;
 	if (err != sizeof(c_header)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 
@@ -959,7 +959,7 @@ static int __check_input_term(struct mixer_build *state, int id,
 	for (;;) {
 		/* a loop in the terminal chain? */
 		if (test_and_set_bit(id, state->termbitmap))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		p1 = find_audio_control_unit(state, id);
 		if (!p1)
@@ -1014,10 +1014,10 @@ static int __check_input_term(struct mixer_build *state, int id,
 		case PTYPE(UAC_VERSION_3, UAC3_CLOCK_SOURCE):
 			return parse_term_uac3_clock_source(state, term, p1, id);
 		default:
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 
@@ -1226,7 +1226,7 @@ static int get_min_max_with_quirks(struct usb_mixer_elem_info *cval,
 				      "%d:%d: cannot get min/max values for control %d (id %d)\n",
 				   cval->head.id, mixer_ctrl_intf(cval->head.mixer),
 							       cval->control, cval->head.id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (get_ctl_value(cval, UAC_GET_RES,
 				  (cval->control << 8) | minchn,
@@ -1299,7 +1299,7 @@ no_res_check:
 			cval->dBmin = 0;
 		if (cval->dBmin > cval->dBmax) {
 			/* totally crap, return an error */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1439,7 +1439,7 @@ static int mixer_ctl_connector_get(struct snd_kcontrol *kcontrol,
 
 	validx = cval->control << 8 | 0;
 
-	ret = snd_usb_lock_shutdown(chip) ? -EIO : 0;
+	ret = snd_usb_lock_shutdown(chip) ? -ERR(EIO) : 0;
 	if (ret)
 		goto error;
 
@@ -1841,7 +1841,7 @@ static int parse_clock_source_unit(struct mixer_build *state, int unitid,
 	int ret;
 
 	if (state->mixer->protocol != UAC_VERSION_2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The only property of this unit we are interested in is the
@@ -2550,7 +2550,7 @@ static int mixer_ctl_selector_info(struct snd_kcontrol *kcontrol,
 	const char **itemlist = (const char **)kcontrol->private_value;
 
 	if (snd_BUG_ON(!itemlist))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_ctl_enum_info(uinfo, 1, cval->max, itemlist);
 }
 
@@ -2773,7 +2773,7 @@ static int parse_audio_unit(struct mixer_build *state, int unitid)
 	p1 = find_audio_control_unit(state, unitid);
 	if (!p1) {
 		usb_audio_err(state->chip, "unit %d not found!\n", unitid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!snd_usb_validate_audio_desc(p1, protocol)) {
@@ -2818,7 +2818,7 @@ static int parse_audio_unit(struct mixer_build *state, int unitid)
 		usb_audio_err(state->chip,
 			      "unit %u: unexpected type 0x%02x\n",
 			      unitid, p1[2]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -2986,7 +2986,7 @@ static int snd_usb_mixer_controls_badd(struct usb_mixer_interface *mixer,
 		num = iface->num_altsetting;
 
 		if (num < 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * The number of Channels in an AudioStreaming interface
@@ -2999,7 +2999,7 @@ static int snd_usb_mixer_controls_badd(struct usb_mixer_interface *mixer,
 		altsd = get_iface_desc(alts);
 
 		if (altsd->bNumEndpoints < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* check direction */
 		dir_in = (get_endpoint(alts, 0)->bEndpointAddress & USB_DIR_IN);
@@ -3010,7 +3010,7 @@ static int snd_usb_mixer_controls_badd(struct usb_mixer_interface *mixer,
 			usb_audio_err(mixer->chip,
 				"incorrect wMaxPacketSize 0x%x for BADD profile\n",
 				maxpacksize);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		case UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_16:
 		case UAC3_BADD_EP_MAXPSIZE_ASYNC_MONO_16:
 		case UAC3_BADD_EP_MAXPSIZE_SYNC_MONO_24:
@@ -3042,16 +3042,16 @@ static int snd_usb_mixer_controls_badd(struct usb_mixer_interface *mixer,
 	}
 
 	if (!map->id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (f = uac3_badd_profiles; f->name; f++) {
 		if (badd_profile == f->subclass)
 			break;
 	}
 	if (!f->name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!uac3_badd_func_has_valid_channels(mixer, f, c_chmask, p_chmask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	st_chmask = f->st_chmask;
 
 	/* Playback */

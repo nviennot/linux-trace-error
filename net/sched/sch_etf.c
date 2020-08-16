@@ -56,17 +56,17 @@ static inline int validate_input_params(struct tc_etf_qopt *qopt,
 	 */
 	if (qopt->clockid < 0) {
 		NL_SET_ERR_MSG(extack, "Dynamic clockids are not supported");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	if (qopt->clockid != CLOCK_TAI) {
 		NL_SET_ERR_MSG(extack, "Invalid clockid. CLOCK_TAI must be used");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (qopt->delta < 0) {
 		NL_SET_ERR_MSG(extack, "Delta must be positive");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -328,7 +328,7 @@ static int etf_enable_offload(struct net_device *dev, struct etf_sched_data *q,
 
 	if (!ops->ndo_setup_tc) {
 		NL_SET_ERR_MSG(extack, "Specified device does not support ETF offload");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	etf.queue = q->queue;
@@ -355,7 +355,7 @@ static int etf_init(struct Qdisc *sch, struct nlattr *opt,
 	if (!opt) {
 		NL_SET_ERR_MSG(extack,
 			       "Missing ETF qdisc options which are mandatory");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_ETF_MAX, opt, etf_policy,
@@ -365,7 +365,7 @@ static int etf_init(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!tb[TCA_ETF_PARMS]) {
 		NL_SET_ERR_MSG(extack, "Missing mandatory ETF parameters");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	qopt = nla_data(tb[TCA_ETF_PARMS]);
@@ -409,7 +409,7 @@ static int etf_init(struct Qdisc *sch, struct nlattr *opt,
 		break;
 	default:
 		NL_SET_ERR_MSG(extack, "Clockid is not supported");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	qdisc_watchdog_init_clockid(&q->watchdog, sch, q->clockid);

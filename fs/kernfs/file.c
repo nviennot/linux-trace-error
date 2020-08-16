@@ -110,7 +110,7 @@ static void *kernfs_seq_start(struct seq_file *sf, loff_t *ppos)
 	 */
 	mutex_lock(&of->mutex);
 	if (!kernfs_get_active(of->kn))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	ops = kernfs_ops(of->kn);
 	if (ops->seq_start) {
@@ -202,7 +202,7 @@ static ssize_t kernfs_file_direct_read(struct kernfs_open_file *of,
 	 */
 	mutex_lock(&of->mutex);
 	if (!kernfs_get_active(of->kn)) {
-		len = -ENODEV;
+		len = -ERR(ENODEV);
 		mutex_unlock(&of->mutex);
 		goto out_free;
 	}
@@ -212,7 +212,7 @@ static ssize_t kernfs_file_direct_read(struct kernfs_open_file *of,
 	if (ops->read)
 		len = ops->read(of, buf, len, *ppos);
 	else
-		len = -EINVAL;
+		len = -ERR(EINVAL);
 
 	kernfs_put_active(of->kn);
 	mutex_unlock(&of->mutex);
@@ -280,7 +280,7 @@ static ssize_t kernfs_fop_write(struct file *file, const char __user *user_buf,
 	if (of->atomic_write_len) {
 		len = count;
 		if (len > of->atomic_write_len)
-			return -E2BIG;
+			return -ERR(E2BIG);
 	} else {
 		len = min_t(size_t, count, PAGE_SIZE);
 	}
@@ -306,7 +306,7 @@ static ssize_t kernfs_fop_write(struct file *file, const char __user *user_buf,
 	mutex_lock(&of->mutex);
 	if (!kernfs_get_active(of->kn)) {
 		mutex_unlock(&of->mutex);
-		len = -ENODEV;
+		len = -ERR(ENODEV);
 		goto out_free;
 	}
 
@@ -314,7 +314,7 @@ static ssize_t kernfs_fop_write(struct file *file, const char __user *user_buf,
 	if (ops->write)
 		len = ops->write(of, buf, len, *ppos);
 	else
-		len = -EINVAL;
+		len = -ERR(EINVAL);
 
 	kernfs_put_active(of->kn);
 	mutex_unlock(&of->mutex);
@@ -397,12 +397,12 @@ static int kernfs_vma_access(struct vm_area_struct *vma, unsigned long addr,
 	int ret;
 
 	if (!of->vm_ops)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!kernfs_get_active(of->kn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (of->vm_ops->access)
 		ret = of->vm_ops->access(vma, addr, buf, len, write);
 
@@ -422,7 +422,7 @@ static int kernfs_vma_set_policy(struct vm_area_struct *vma,
 		return 0;
 
 	if (!kernfs_get_active(of->kn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = 0;
 	if (of->vm_ops->set_policy)
@@ -480,11 +480,11 @@ static int kernfs_fop_mmap(struct file *file, struct vm_area_struct *vma)
 	 * comment in kernfs_file_open() for more details.
 	 */
 	if (!(of->kn->flags & KERNFS_HAS_MMAP))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&of->mutex);
 
-	rc = -ENODEV;
+	rc = -ERR(ENODEV);
 	if (!kernfs_get_active(of->kn))
 		goto out_unlock;
 
@@ -501,7 +501,7 @@ static int kernfs_fop_mmap(struct file *file, struct vm_area_struct *vma)
 	if (vma->vm_file != file)
 		goto out_put;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (of->mmapped && of->vm_ops != vma->vm_ops)
 		goto out_put;
 
@@ -509,7 +509,7 @@ static int kernfs_fop_mmap(struct file *file, struct vm_area_struct *vma)
 	 * It is not possible to successfully wrap close.
 	 * So error if someone is trying to use close.
 	 */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (vma->vm_ops && vma->vm_ops->close)
 		goto out_put;
 
@@ -620,10 +620,10 @@ static int kernfs_fop_open(struct inode *inode, struct file *file)
 	const struct kernfs_ops *ops;
 	struct kernfs_open_file *of;
 	bool has_read, has_write, has_mmap;
-	int error = -EACCES;
+	int error = -ERR(EACCES);
 
 	if (!kernfs_get_active(kn))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = kernfs_ops(kn);
 
@@ -677,7 +677,7 @@ static int kernfs_fop_open(struct inode *inode, struct file *file)
 	 */
 	of->atomic_write_len = ops->atomic_write_len;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	/*
 	 * ->seq_show is incompatible with ->prealloc,
 	 * as seq_read does its own allocation.

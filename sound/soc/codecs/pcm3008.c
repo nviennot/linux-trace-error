@@ -111,7 +111,7 @@ static int pcm3008_codec_probe(struct platform_device *pdev)
 	int ret;
 
 	if (!setup)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* DEM1  DEM0  DE-EMPHASIS_MODE
 	 * Low   Low   De-emphasis 44.1 kHz ON

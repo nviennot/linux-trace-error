@@ -184,7 +184,7 @@ static int pppol2tp_recvmsg(struct socket *sock, struct msghdr *msg,
 	struct sk_buff *skb;
 	struct sock *sk = sock->sk;
 
-	err = -EIO;
+	err = -ERR(EIO);
 	if (sk->sk_state & PPPOX_BOUND)
 		goto end;
 
@@ -279,12 +279,12 @@ static int pppol2tp_sendmsg(struct socket *sock, struct msghdr *m,
 	struct l2tp_tunnel *tunnel;
 	int uhlen;
 
-	error = -ENOTCONN;
+	error = -ERR(ENOTCONN);
 	if (sock_flag(sk, SOCK_DEAD) || !(sk->sk_state & PPPOX_CONNECTED))
 		goto error;
 
 	/* Get session and tunnel contexts */
-	error = -EBADF;
+	error = -ERR(EBADF);
 	session = pppol2tp_sock_to_session(sk);
 	if (session == NULL)
 		goto error;
@@ -436,7 +436,7 @@ static int pppol2tp_release(struct socket *sock)
 	if (!sk)
 		return 0;
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	lock_sock(sk);
 	if (sock_flag(sk, SOCK_DEAD) != 0)
 		goto error;
@@ -574,7 +574,7 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		const struct sockaddr_pppol2tp *sa_v2in4 = sa;
 
 		if (sa_v2in4->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		info->version = 2;
 		info->fd = sa_v2in4->pppol2tp.fd;
@@ -590,7 +590,7 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		const struct sockaddr_pppol2tpv3 *sa_v3in4 = sa;
 
 		if (sa_v3in4->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		info->version = 3;
 		info->fd = sa_v3in4->pppol2tp.fd;
@@ -606,7 +606,7 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		const struct sockaddr_pppol2tpin6 *sa_v2in6 = sa;
 
 		if (sa_v2in6->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		info->version = 2;
 		info->fd = sa_v2in6->pppol2tp.fd;
@@ -622,7 +622,7 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		const struct sockaddr_pppol2tpv3in6 *sa_v3in6 = sa;
 
 		if (sa_v3in6->sa_protocol != PX_PROTO_OL2TP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		info->version = 3;
 		info->fd = sa_v3in6->pppol2tp.fd;
@@ -634,7 +634,7 @@ static int pppol2tp_sockaddr_get_info(const void *sa, int sa_len,
 		break;
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -681,17 +681,17 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 	lock_sock(sk);
 
 	/* Check for already bound sockets */
-	error = -EBUSY;
+	error = -ERR(EBUSY);
 	if (sk->sk_state & PPPOX_CONNECTED)
 		goto end;
 
 	/* We don't supporting rebinding anyway */
-	error = -EALREADY;
+	error = -ERR(EALREADY);
 	if (sk->sk_user_data)
 		goto end; /* socket is already attached */
 
 	/* Don't bind if tunnel_id is 0 */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!info.tunnel_id)
 		goto end;
 
@@ -714,7 +714,7 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 			 * a kernel socket.
 			 */
 			if (info.fd < 0) {
-				error = -EBADF;
+				error = -ERR(EBADF);
 				goto end;
 			}
 
@@ -738,7 +738,7 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 		}
 	} else {
 		/* Error if we can't find the tunnel */
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		if (tunnel == NULL)
 			goto end;
 
@@ -755,7 +755,7 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 		drop_refcnt = true;
 
 		if (session->pwtype != L2TP_PWTYPE_PPP) {
-			error = -EPROTOTYPE;
+			error = -ERR(EPROTOTYPE);
 			goto end;
 		}
 
@@ -769,7 +769,7 @@ static int pppol2tp_connect(struct socket *sock, struct sockaddr *uservaddr,
 					      lockdep_is_held(&ps->sk_lock)) ||
 		    ps->__sk) {
 			mutex_unlock(&ps->sk_lock);
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 			goto end;
 		}
 	} else {
@@ -869,7 +869,7 @@ static int pppol2tp_session_create(struct net *net, struct l2tp_tunnel *tunnel,
 
 	/* Error if tunnel socket is not prepped */
 	if (!tunnel->sock) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto err;
 	}
 
@@ -911,13 +911,13 @@ static int pppol2tp_getname(struct socket *sock, struct sockaddr *uaddr,
 	struct inet_sock *inet;
 	struct pppol2tp_session *pls;
 
-	error = -ENOTCONN;
+	error = -ERR(ENOTCONN);
 	if (sk == NULL)
 		goto end;
 	if (!(sk->sk_state & PPPOX_CONNECTED))
 		goto end;
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	session = pppol2tp_sock_to_session(sk);
 	if (session == NULL)
 		goto end;
@@ -1048,11 +1048,11 @@ static int pppol2tp_tunnel_copy_stats(struct pppol2tp_ioc_stats *stats,
 	 */
 	session = l2tp_tunnel_get_session(tunnel, stats->session_id);
 	if (!session)
-		return -EBADR;
+		return -ERR(EBADR);
 
 	if (session->pwtype != L2TP_PWTYPE_PPP) {
 		l2tp_session_dec_refcount(session);
-		return -EBADR;
+		return -ERR(EBADR);
 	}
 
 	pppol2tp_copy_stats(stats, &session->stats);
@@ -1072,11 +1072,11 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 	case PPPIOCGFLAGS:
 		session = sock->sk->sk_user_data;
 		if (!session)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 
 		/* Not defined for tunnels */
 		if (!session->session_id && !session->peer_session_id)
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 
 		if (put_user(0, (int __user *)arg))
 			return -EFAULT;
@@ -1086,11 +1086,11 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 	case PPPIOCSFLAGS:
 		session = sock->sk->sk_user_data;
 		if (!session)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 
 		/* Not defined for tunnels */
 		if (!session->session_id && !session->peer_session_id)
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 
 		if (!access_ok((int __user *)arg, sizeof(int)))
 			return -EFAULT;
@@ -1099,7 +1099,7 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 	case PPPIOCGL2TPSTATS:
 		session = sock->sk->sk_user_data;
 		if (!session)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 
 		/* Session 0 represents the parent tunnel */
 		if (!session->session_id && !session->peer_session_id) {
@@ -1129,7 +1129,7 @@ static int pppol2tp_ioctl(struct socket *sock, unsigned int cmd,
 		break;
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -1161,7 +1161,7 @@ static int pppol2tp_tunnel_setsockopt(struct sock *sk,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1179,7 +1179,7 @@ static int pppol2tp_session_setsockopt(struct sock *sk,
 	switch (optname) {
 	case PPPOL2TP_SO_RECVSEQ:
 		if ((val != 0) && (val != 1)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		session->recv_seq = !!val;
@@ -1190,7 +1190,7 @@ static int pppol2tp_session_setsockopt(struct sock *sk,
 
 	case PPPOL2TP_SO_SENDSEQ:
 		if ((val != 0) && (val != 1)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		session->send_seq = !!val;
@@ -1208,7 +1208,7 @@ static int pppol2tp_session_setsockopt(struct sock *sk,
 
 	case PPPOL2TP_SO_LNSMODE:
 		if ((val != 0) && (val != 1)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		session->lns_mode = !!val;
@@ -1231,7 +1231,7 @@ static int pppol2tp_session_setsockopt(struct sock *sk,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1253,20 +1253,20 @@ static int pppol2tp_setsockopt(struct socket *sock, int level, int optname,
 	int err;
 
 	if (level != SOL_PPPOL2TP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
 
-	err = -ENOTCONN;
+	err = -ERR(ENOTCONN);
 	if (sk->sk_user_data == NULL)
 		goto end;
 
 	/* Get session context from the socket */
-	err = -EBADF;
+	err = -ERR(EBADF);
 	session = pppol2tp_sock_to_session(sk);
 	if (session == NULL)
 		goto end;
@@ -1302,7 +1302,7 @@ static int pppol2tp_tunnel_getsockopt(struct sock *sk,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1349,7 +1349,7 @@ static int pppol2tp_session_getsockopt(struct sock *sk,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 	}
 
 	return err;
@@ -1370,7 +1370,7 @@ static int pppol2tp_getsockopt(struct socket *sock, int level, int optname,
 	int err;
 
 	if (level != SOL_PPPOL2TP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
@@ -1378,14 +1378,14 @@ static int pppol2tp_getsockopt(struct socket *sock, int level, int optname,
 	len = min_t(unsigned int, len, sizeof(int));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	err = -ENOTCONN;
+	err = -ERR(ENOTCONN);
 	if (sk->sk_user_data == NULL)
 		goto end;
 
 	/* Get the session context */
-	err = -EBADF;
+	err = -ERR(EBADF);
 	session = pppol2tp_sock_to_session(sk);
 	if (session == NULL)
 		goto end;

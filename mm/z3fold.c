@@ -1099,10 +1099,10 @@ static int z3fold_alloc(struct z3fold_pool *pool, size_t size, gfp_t gfp,
 	bool can_sleep = gfpflags_allow_blocking(gfp);
 
 	if (!size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (size > PAGE_SIZE)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (size > PAGE_SIZE - ZHDR_SIZE_ALIGNED - CHUNK_SIZE)
 		bud = HEADLESS;
@@ -1350,12 +1350,12 @@ static int z3fold_reclaim_page(struct z3fold_pool *pool, unsigned int retries)
 	spin_lock(&pool->lock);
 	if (!pool->ops || !pool->ops->evict || retries == 0) {
 		spin_unlock(&pool->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < retries; i++) {
 		if (list_empty(&pool->lru)) {
 			spin_unlock(&pool->lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		list_for_each_prev(pos, &pool->lru) {
 			page = list_entry(pos, struct page, lru);
@@ -1478,7 +1478,7 @@ next:
 		spin_lock(&pool->lock);
 	}
 	spin_unlock(&pool->lock);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /**
@@ -1619,15 +1619,15 @@ static int z3fold_page_migrate(struct address_space *mapping, struct page *newpa
 	pool = zhdr_to_pool(zhdr);
 
 	if (!z3fold_page_trylock(zhdr)) {
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (zhdr->mapped_count != 0 || zhdr->foreign_handles != 0) {
 		z3fold_page_unlock(zhdr);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (work_pending(&zhdr->work)) {
 		z3fold_page_unlock(zhdr);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	new_zhdr = page_address(newpage);
 	memcpy(new_zhdr, zhdr, PAGE_SIZE);
@@ -1705,7 +1705,7 @@ static int z3fold_zpool_evict(struct z3fold_pool *pool, unsigned long handle)
 	if (pool->zpool && pool->zpool_ops && pool->zpool_ops->evict)
 		return pool->zpool_ops->evict(pool->zpool, handle);
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 }
 
 static const struct z3fold_ops z3fold_zpool_ops = {
@@ -1746,7 +1746,7 @@ static int z3fold_zpool_shrink(void *pool, unsigned int pages,
 			unsigned int *reclaimed)
 {
 	unsigned int total = 0;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	while (total < pages) {
 		ret = z3fold_reclaim_page(pool, 8);

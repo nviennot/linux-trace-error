@@ -97,7 +97,7 @@ int nfc_hci_send_event(struct nfc_hci_dev *hdev, u8 gate, u8 event,
 
 	pipe = hdev->gate2pipe[gate];
 	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	return nfc_hci_hcp_message_tx(hdev, pipe, NFC_HCI_HCP_EVENT, event,
 				      param, param_len, NULL, NULL, 0);
@@ -118,7 +118,7 @@ int nfc_hci_send_cmd(struct nfc_hci_dev *hdev, u8 gate, u8 cmd,
 
 	pipe = hdev->gate2pipe[gate];
 	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	return nfc_hci_execute_cmd(hdev, pipe, cmd, param, param_len, skb);
 }
@@ -134,7 +134,7 @@ int nfc_hci_send_cmd_async(struct nfc_hci_dev *hdev, u8 gate, u8 cmd,
 
 	pipe = hdev->gate2pipe[gate];
 	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	return nfc_hci_execute_cmd_async(hdev, pipe, cmd, param, param_len,
 					 cb, cb_context);
@@ -274,7 +274,7 @@ int nfc_hci_disconnect_gate(struct nfc_hci_dev *hdev, u8 gate)
 	pr_debug("\n");
 
 	if (pipe == NFC_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	r = nfc_hci_close_pipe(hdev, pipe);
 	if (r < 0)
@@ -320,7 +320,7 @@ int nfc_hci_connect_gate(struct nfc_hci_dev *hdev, u8 dest_host, u8 dest_gate,
 		return 0;
 
 	if (hdev->gate2pipe[dest_gate] != NFC_HCI_INVALID_PIPE)
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 
 	if (pipe != NFC_HCI_INVALID_PIPE)
 		goto open_pipe;

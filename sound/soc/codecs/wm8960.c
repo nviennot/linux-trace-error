@@ -210,7 +210,7 @@ static int wm8960_put_deemph(struct snd_kcontrol *kcontrol,
 	unsigned int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8960->deemph = deemph;
 
@@ -529,7 +529,7 @@ static int wm8960_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -549,7 +549,7 @@ static int wm8960_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -566,7 +566,7 @@ static int wm8960_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface */
@@ -704,7 +704,7 @@ int wm8960_configure_pll(struct snd_soc_component *component, int freq_in,
 	lrclk = wm8960->lrclk;
 	closest = freq_in;
 
-	best_freq_out = -EINVAL;
+	best_freq_out = -ERR(EINVAL);
 	*sysclk_idx = *dac_idx = *bclk_idx = -1;
 
 	for (i = 0; i < ARRAY_SIZE(sysclk_divs); ++i) {
@@ -754,7 +754,7 @@ static int wm8960_configure_clocking(struct snd_soc_component *component)
 
 	if (wm8960->clk_id != WM8960_SYSCLK_MCLK && !wm8960->freq_in) {
 		dev_err(component->dev, "No MCLK configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	freq_in = wm8960->freq_in;
@@ -772,7 +772,7 @@ static int wm8960_configure_clocking(struct snd_soc_component *component)
 		freq_out = wm8960->sysclk;
 	} else {
 		dev_err(component->dev, "No SYSCLK configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wm8960->clk_id != WM8960_SYSCLK_PLL) {
@@ -781,7 +781,7 @@ static int wm8960_configure_clocking(struct snd_soc_component *component)
 			goto configure_clock;
 		} else if (wm8960->clk_id != WM8960_SYSCLK_AUTO) {
 			dev_err(component->dev, "failed to configure clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -840,7 +840,7 @@ static int wm8960_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "unsupported width %d\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8960->lrclk = params_rate(params);
@@ -1155,7 +1155,7 @@ static int pll_factors(unsigned int source, unsigned int target,
 
 	if ((Ndiv < 6) || (Ndiv > 12)) {
 		pr_err("WM8960 PLL: Unsupported N=%d\n", Ndiv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pll_div->n = Ndiv;
@@ -1265,7 +1265,7 @@ static int wm8960_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8960_ADDCTL1, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1297,7 +1297,7 @@ static int wm8960_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 	case WM8960_SYSCLK_AUTO:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8960->sysclk = freq;

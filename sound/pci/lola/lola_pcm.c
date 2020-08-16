@@ -106,7 +106,7 @@ static int lola_stream_wait_for_fifo(struct lola *chip,
 		msleep(1);
 	}
 	dev_warn(chip->card->dev, "FIFO not ready (stream %d)\n", str->dsd);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* sync for FIFO ready/empty for all linked streams;
@@ -144,7 +144,7 @@ static int lola_sync_wait_for_fifo(struct lola *chip,
 		msleep(1);
 	}
 	dev_warn(chip->card->dev, "FIFO not ready (pending %d)\n", pending - 1);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* finish pause - prepare for a new resume */
@@ -217,7 +217,7 @@ static int lola_pcm_open(struct snd_pcm_substream *substream)
 	mutex_lock(&chip->open_mutex);
 	if (str->opened) {
 		mutex_unlock(&chip->open_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	str->substream = substream;
 	str->master = NULL;
@@ -312,7 +312,7 @@ static int setup_bdle(struct snd_pcm_substream *substream,
 		int chunk;
 
 		if (str->frags >= LOLA_MAX_BDL_ENTRIES)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		addr = snd_pcm_sgbuf_get_addr(substream, ofs);
 		/* program the address field of the BDL entry */
@@ -361,7 +361,7 @@ static int lola_setup_periods(struct lola *chip, struct lola_pcm *pcm,
  error:
 	dev_err(chip->card->dev, "Too many BDL entries: buffer=%d, period=%d\n",
 		   str->bufsize, period_bytes);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static unsigned int lola_get_format_verb(struct snd_pcm_substream *substream)
@@ -430,7 +430,7 @@ static int lola_setup_controller(struct lola *chip, struct lola_pcm *pcm,
 	dma_addr_t bdl;
 
 	if (str->prepared)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set up BDL */
 	bdl = pcm->bdl.addr + LOLA_BDL_ENTRY_SIZE * str->index;
@@ -462,7 +462,7 @@ static int lola_pcm_prepare(struct snd_pcm_substream *substream)
 	lola_cleanup_slave_streams(pcm, str);
 	if (str->index + runtime->channels > pcm->num_streams) {
 		mutex_unlock(&chip->open_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 1; i < runtime->channels; i++) {
 		str[i].master = str;
@@ -521,7 +521,7 @@ static int lola_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		start = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -645,7 +645,7 @@ static int lola_init_stream(struct lola *chip, struct lola_stream *str,
 			dev_err(chip->card->dev,
 				"Invalid wcaps 0x%x for 0x%x\n",
 			       val, nid);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		/* test TYPE and bits 0..11 (no test bit9 : Digital = 0/1)
@@ -655,7 +655,7 @@ static int lola_init_stream(struct lola *chip, struct lola_stream *str,
 			dev_err(chip->card->dev,
 				"Invalid wcaps 0x%x for 0x%x\n",
 			       val, nid);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/* test bit9:DIGITAL and bit12:SRC_PRESENT*/
 		if ((val & 0x00001200) == 0x00001200)
@@ -673,7 +673,7 @@ static int lola_init_stream(struct lola *chip, struct lola_stream *str,
 	if (!(val & 1)) {
 		dev_err(chip->card->dev,
 			"Invalid formats 0x%x for 0x%x", val, nid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

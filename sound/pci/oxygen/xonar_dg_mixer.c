@@ -128,7 +128,7 @@ static int hp_stereo_volume_put(struct snd_kcontrol *ctl,
 	long new2 = val->value.integer.value[1];
 
 	if ((new1 > 255) || (new1 < 0) || (new2 > 255) || (new2 < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->mutex);
 	if ((data->cs4245_shadow[CS4245_DAC_A_CTRL] != ~new1) ||
@@ -169,7 +169,7 @@ static int hp_mute_put(struct snd_kcontrol *ctl,
 	int changed;
 
 	if (val->value.integer.value[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mutex);
 	data->cs4245_shadow[CS4245_DAC_CTRL_1] &= ~CS4245_MUTE_DAC;
 	data->cs4245_shadow[CS4245_DAC_CTRL_1] |=
@@ -232,7 +232,7 @@ static int input_vol_put(struct snd_kcontrol *ctl,
 	    value->value.integer.value[0] > 2 * 12 ||
 	    value->value.integer.value[1] < 2 * -12 ||
 	    value->value.integer.value[1] > 2 * 12)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mutex);
 	changed = data->input_vol[idx][0] != value->value.integer.value[0] ||
 		  data->input_vol[idx][1] != value->value.integer.value[1];
@@ -297,7 +297,7 @@ static int input_sel_put(struct snd_kcontrol *ctl,
 	int ret;
 
 	if (value->value.enumerated.item[0] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->mutex);
 	changed = value->value.enumerated.item[0] != data->input_sel;

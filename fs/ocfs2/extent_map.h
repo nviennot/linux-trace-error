@@ -68,7 +68,7 @@ static inline int ocfs2_read_virt_block(struct inode *inode, u64 v_block,
 
 	if (bh == NULL) {
 		printk("ocfs2: bh == NULL\n");
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 

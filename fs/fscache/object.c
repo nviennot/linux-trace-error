@@ -775,7 +775,7 @@ static int fscache_get_object(struct fscache_object *object,
 	int ret;
 
 	fscache_stat(&fscache_n_cop_grab_object);
-	ret = object->cache->ops->grab_object(object, why) ? 0 : -EAGAIN;
+	ret = object->cache->ops->grab_object(object, why) ? 0 : -ERR(EAGAIN);
 	fscache_stat_d(&fscache_n_cop_grab_object);
 	return ret;
 }

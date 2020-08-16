@@ -136,7 +136,7 @@ int line6_midibuf_read(struct midi_buffer *this, unsigned char *data,
 
 	/* we need to be able to store at least a 3 byte MIDI message */
 	if (length < 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (midibuf_is_empty(this))
 		return 0;

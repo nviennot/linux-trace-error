@@ -64,14 +64,14 @@ static int nft_connlimit_do_init(const struct nft_ctx *ctx,
 	u32 flags, limit;
 
 	if (!tb[NFTA_CONNLIMIT_COUNT])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	limit = ntohl(nla_get_be32(tb[NFTA_CONNLIMIT_COUNT]));
 
 	if (tb[NFTA_CONNLIMIT_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFTA_CONNLIMIT_FLAGS]));
 		if (flags & ~NFT_CONNLIMIT_F_INV)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		if (flags & NFT_CONNLIMIT_F_INV)
 			invert = true;
 	}

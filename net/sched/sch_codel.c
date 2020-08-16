@@ -139,7 +139,7 @@ static int codel_change(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_CODEL_MAX, opt,
 					  codel_policy, NULL);

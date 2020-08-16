@@ -206,7 +206,7 @@ static int sta529_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_rate(params)) {
@@ -229,7 +229,7 @@ static int sta529_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -280,7 +280,7 @@ static int sta529_set_dai_fmt(struct snd_soc_dai *codec_dai, u32 fmt)
 		mode = RIGHT_J_DATA_FORMAT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, STA529_S2PCFG0, DATA_FORMAT_MSK, mode);

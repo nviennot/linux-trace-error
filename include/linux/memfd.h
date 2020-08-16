@@ -9,7 +9,7 @@ extern long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg);
 #else
 static inline long memfd_fcntl(struct file *f, unsigned int c, unsigned long a)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

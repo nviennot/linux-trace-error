@@ -243,10 +243,10 @@ static int device_user_lock(struct dlm_user_proc *proc,
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!params->castaddr || !params->lksb) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -296,7 +296,7 @@ static int device_user_unlock(struct dlm_user_proc *proc,
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	ua = kzalloc(sizeof(struct dlm_user_args), GFP_NOFS);
 	if (!ua)
@@ -324,7 +324,7 @@ static int device_user_deadlock(struct dlm_user_proc *proc,
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = dlm_user_deadlock(ls, params->flags, params->lkid);
 
@@ -385,7 +385,7 @@ static int device_user_purge(struct dlm_user_proc *proc,
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = dlm_user_purge(ls, proc, params->nodeid, params->pid);
 
@@ -400,7 +400,7 @@ static int device_create_lockspace(struct dlm_lspace_params *params)
 	int error;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = dlm_new_lockspace(params->name, dlm_config.ci_cluster_name, params->flags,
 				  DLM_USER_LVB_LEN, NULL, NULL, NULL,
@@ -410,7 +410,7 @@ static int device_create_lockspace(struct dlm_lspace_params *params)
 
 	ls = dlm_find_lockspace_local(lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = dlm_device_register(ls, params->name);
 	dlm_put_lockspace(ls);
@@ -430,11 +430,11 @@ static int device_remove_lockspace(struct dlm_lspace_params *params)
 	int error, force = 0;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ls = dlm_find_lockspace_device(params->minor);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (params->flags & DLM_USER_LSFLG_FORCEFREE)
 		force = 2;
@@ -472,7 +472,7 @@ static int check_version(struct dlm_write_request *req)
 		       DLM_DEVICE_VERSION_MAJOR,
 		       DLM_DEVICE_VERSION_MINOR,
 		       DLM_DEVICE_VERSION_PATCH);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -510,21 +510,21 @@ static ssize_t device_write(struct file *file, const char __user *buf,
 #else
 	if (count < sizeof(struct dlm_write_request))
 #endif
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * can't compare against COMPAT/dlm_write_request32 because
 	 * we don't yet know if is64bit is zero
 	 */
 	if (count > sizeof(struct dlm_write_request) + DLM_RESNAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kbuf = memdup_user_nul(buf, count);
 	if (IS_ERR(kbuf))
 		return PTR_ERR(kbuf);
 
 	if (check_version(kbuf)) {
-		error = -EBADE;
+		error = -ERR(EBADE);
 		goto out_free;
 	}
 
@@ -557,11 +557,11 @@ static ssize_t device_write(struct file *file, const char __user *buf,
 	/* do we really need this? can a write happen after a close? */
 	if ((kbuf->cmd == DLM_USER_LOCK || kbuf->cmd == DLM_USER_UNLOCK) &&
 	    (proc && test_bit(DLM_PROC_FLAGS_CLOSING, &proc->flags))) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_free;
 	}
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 
 	switch (kbuf->cmd)
 	{
@@ -634,7 +634,7 @@ static int device_open(struct inode *inode, struct file *file)
 
 	ls = dlm_find_lockspace_device(iminor(inode));
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	proc = kzalloc(sizeof(struct dlm_user_proc), GFP_NOFS);
 	if (!proc) {
@@ -661,7 +661,7 @@ static int device_close(struct inode *inode, struct file *file)
 
 	ls = dlm_find_lockspace_local(proc->lockspace);
 	if (!ls)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	set_bit(DLM_PROC_FLAGS_CLOSING, &proc->flags);
 
@@ -790,7 +790,7 @@ static ssize_t device_read(struct file *file, char __user *buf, size_t count,
 
 	if (!proc) {
 		log_print("non-version read from control device %zu", count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 #ifdef CONFIG_COMPAT
@@ -798,19 +798,19 @@ static ssize_t device_read(struct file *file, char __user *buf, size_t count,
 #else
 	if (count < sizeof(struct dlm_lock_result))
 #endif
-		return -EINVAL;
+		return -ERR(EINVAL);
 
  try_another:
 
 	/* do we really need this? can a read happen after a close? */
 	if (test_bit(DLM_PROC_FLAGS_CLOSING, &proc->flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&proc->asts_spin);
 	if (list_empty(&proc->asts)) {
 		if (file->f_flags & O_NONBLOCK) {
 			spin_unlock(&proc->asts_spin);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 
 		add_wait_queue(&proc->wait, &wait);
@@ -828,7 +828,7 @@ static ssize_t device_read(struct file *file, char __user *buf, size_t count,
 
 		if (signal_pending(current)) {
 			spin_unlock(&proc->asts_spin);
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		}
 	}
 

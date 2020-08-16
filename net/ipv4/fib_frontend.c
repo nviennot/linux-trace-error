@@ -409,9 +409,9 @@ last_resort:
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 e_rpf:
-	return -EXDEV;
+	return -ERR(EXDEV);
 }
 
 /* Ignore rp_filter for packets protected by IPsec. */
@@ -434,7 +434,7 @@ int fib_validate_source(struct sk_buff *skb, __be32 src, __be32 dst,
 		    fib4_has_custom_rules(net))
 			goto full_check;
 		if (inet_lookup_ifaddr_rcu(net, src))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 ok:
 		*itag = 0;
@@ -472,7 +472,7 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 	cfg->fc_nlinfo.nl_net = net;
 
 	if (rt->rt_dst.sa_family != AF_INET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	/*
 	 * Check mask for validity:
@@ -489,11 +489,11 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 
 		if (rt->rt_genmask.sa_family != AF_INET) {
 			if (mask || rt->rt_genmask.sa_family)
-				return -EAFNOSUPPORT;
+				return -ERR(EAFNOSUPPORT);
 		}
 
 		if (bad_mask(mask, addr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		plen = inet_mask_len(mask);
 	}
@@ -532,7 +532,7 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 			*colon = 0;
 		dev = __dev_get_by_name(net, devname);
 		if (!dev)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		cfg->fc_oif = dev->ifindex;
 		cfg->fc_table = l3mdev_fib_table(dev);
 		if (colon) {
@@ -541,7 +541,7 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 
 			in_dev = __in_dev_get_rtnl(dev);
 			if (!in_dev)
-				return -ENODEV;
+				return -ERR(ENODEV);
 
 			*colon = ':';
 
@@ -553,7 +553,7 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 			rcu_read_unlock();
 
 			if (!ifa)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			cfg->fc_prefsrc = ifa->ifa_local;
 		}
 	}
@@ -574,7 +574,7 @@ static int rtentry_to_fib_config(struct net *net, int cmd, struct rtentry *rt,
 		return 0;
 
 	if (rt->rt_flags & RTF_GATEWAY && !cfg->fc_gw_family)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cfg->fc_scope == RT_SCOPE_NOWHERE)
 		cfg->fc_scope = RT_SCOPE_LINK;
@@ -616,7 +616,7 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, struct rtentry *rt)
 	case SIOCADDRT:		/* Add a route */
 	case SIOCDELRT:		/* Delete a route */
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		rtnl_lock();
 		err = rtentry_to_fib_config(net, cmd, rt, &cfg);
@@ -629,14 +629,14 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, struct rtentry *rt)
 					err = fib_table_delete(net, tb, &cfg,
 							       NULL);
 				else
-					err = -ESRCH;
+					err = -ERR(ESRCH);
 			} else {
 				tb = fib_new_table(net, cfg.fc_table);
 				if (tb)
 					err = fib_table_insert(net, tb,
 							       &cfg, NULL);
 				else
-					err = -ENOBUFS;
+					err = -ERR(ENOBUFS);
 			}
 
 			/* allocated by rtentry_to_fib_config() */
@@ -645,7 +645,7 @@ int ip_rt_ioctl(struct net *net, unsigned int cmd, struct rtentry *rt)
 		rtnl_unlock();
 		return err;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 const struct nla_policy rtm_ipv4_policy[RTA_MAX + 1] = {
@@ -679,7 +679,7 @@ int fib_gw_from_via(struct fib_config *cfg, struct nlattr *nla,
 
 	if (nla_len(nla) < offsetof(struct rtvia, rtvia_addr)) {
 		NL_SET_ERR_MSG(extack, "Invalid attribute length for RTA_VIA");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	via = nla_data(nla);
@@ -689,7 +689,7 @@ int fib_gw_from_via(struct fib_config *cfg, struct nlattr *nla,
 	case AF_INET:
 		if (alen != sizeof(__be32)) {
 			NL_SET_ERR_MSG(extack, "Invalid IPv4 address in RTA_VIA");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cfg->fc_gw_family = AF_INET;
 		cfg->fc_gw4 = *((__be32 *)via->rtvia_addr);
@@ -698,18 +698,18 @@ int fib_gw_from_via(struct fib_config *cfg, struct nlattr *nla,
 #ifdef CONFIG_IPV6
 		if (alen != sizeof(struct in6_addr)) {
 			NL_SET_ERR_MSG(extack, "Invalid IPv6 address in RTA_VIA");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cfg->fc_gw_family = AF_INET6;
 		cfg->fc_gw6 = *((struct in6_addr *)via->rtvia_addr);
 #else
 		NL_SET_ERR_MSG(extack, "IPv6 support not enabled in kernel");
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 		break;
 	default:
 		NL_SET_ERR_MSG(extack, "Unsupported address family in RTA_VIA");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -747,7 +747,7 @@ static int rtm_to_fib_config(struct net *net, struct sk_buff *skb,
 
 	if (cfg->fc_type > RTN_MAX) {
 		NL_SET_ERR_MSG(extack, "Invalid route type");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -817,7 +817,7 @@ static int rtm_to_fib_config(struct net *net, struct sk_buff *skb,
 		    cfg->fc_encap || cfg->fc_mp) {
 			NL_SET_ERR_MSG(extack,
 				       "Nexthop specification and nexthop id are mutually exclusive");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -846,14 +846,14 @@ static int inet_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	if (cfg.fc_nh_id && !nexthop_find_by_id(net, cfg.fc_nh_id)) {
 		NL_SET_ERR_MSG(extack, "Nexthop id does not exist");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
 	tb = fib_get_table(net, cfg.fc_table);
 	if (!tb) {
 		NL_SET_ERR_MSG(extack, "FIB table does not exist");
-		err = -ESRCH;
+		err = -ERR(ESRCH);
 		goto errout;
 	}
 
@@ -876,7 +876,7 @@ static int inet_rtm_newroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	tb = fib_new_table(net, cfg.fc_table);
 	if (!tb) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errout;
 	}
 
@@ -900,19 +900,19 @@ int ip_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG(extack, "Invalid header for FIB dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rtm = nlmsg_data(nlh);
 	if (rtm->rtm_dst_len || rtm->rtm_src_len  || rtm->rtm_tos   ||
 	    rtm->rtm_scope) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for FIB dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rtm->rtm_flags & ~(RTM_F_CLONED | RTM_F_PREFIX)) {
 		NL_SET_ERR_MSG(extack, "Invalid flags for FIB dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (rtm->rtm_flags & RTM_F_CLONED)
 		filter->dump_routes = false;
@@ -943,11 +943,11 @@ int ip_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 			ifindex = nla_get_u32(tb[i]);
 			filter->dev = __dev_get_by_index(net, ifindex);
 			if (!filter->dev)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -994,7 +994,7 @@ static int inet_dump_fib(struct sk_buff *skb, struct netlink_callback *cb)
 				return skb->len;
 
 			NL_SET_ERR_MSG(cb->extack, "ipv4: FIB table does not exist");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		rcu_read_lock();
@@ -1331,7 +1331,7 @@ static void nl_fib_lookup(struct net *net, struct fib_result_nl *frn)
 
 	tb = fib_get_table(net, frn->tb_id_in);
 
-	frn->err = -ENOENT;
+	frn->err = -ERR(ENOENT);
 	if (tb) {
 		local_bh_disable();
 
@@ -1387,7 +1387,7 @@ static int __net_init nl_fib_lookup_init(struct net *net)
 
 	sk = netlink_kernel_create(net, NETLINK_FIB_LOOKUP, &cfg);
 	if (!sk)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	net->ipv4.fibnl = sk;
 	return 0;
 }

@@ -298,7 +298,7 @@ msg_bytes_ready:
 			ret = err;
 			goto out;
 		}
-		copied = -EAGAIN;
+		copied = -ERR(EAGAIN);
 	}
 	ret = copied;
 out:
@@ -382,7 +382,7 @@ more_data:
 		sk_msg_free_partial(sk, msg, tosend);
 		sk_msg_apply_bytes(psock, tosend);
 		*copied -= (tosend + delta);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	if (likely(!ret)) {
@@ -595,7 +595,7 @@ static int tcp_bpf_assert_proto_ops(struct proto *ops)
 	 */
 	return ops->recvmsg  == tcp_recvmsg &&
 	       ops->sendmsg  == tcp_sendmsg &&
-	       ops->sendpage == tcp_sendpage ? 0 : -ENOTSUPP;
+	       ops->sendpage == tcp_sendpage ? 0 : -ERR(ENOTSUPP);
 }
 
 struct proto *tcp_bpf_get_proto(struct sock *sk, struct sk_psock *psock)
@@ -607,7 +607,7 @@ struct proto *tcp_bpf_get_proto(struct sock *sk, struct sk_psock *psock)
 		struct proto *ops = READ_ONCE(sk->sk_prot);
 
 		if (tcp_bpf_assert_proto_ops(ops))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		tcp_bpf_check_v6_needs_rebuild(sk, ops);
 	}

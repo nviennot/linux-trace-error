@@ -93,14 +93,14 @@ struct inode *bfs_iget(struct super_block *sb, unsigned long ino)
 
 error:
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static struct bfs_inode *find_inode(struct super_block *sb, u16 ino, struct buffer_head **p)
 {
 	if ((ino < BFS_ROOT_INO) || (ino > BFS_SB(sb)->si_lasti)) {
 		printf("Bad inode number %s:%08x\n", sb->s_id, ino);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	ino -= BFS_ROOT_INO;
@@ -108,7 +108,7 @@ static struct bfs_inode *find_inode(struct super_block *sb, u16 ino, struct buff
 	*p = sb_bread(sb, 1 + ino / BFS_INODES_PER_BLOCK);
 	if (!*p) {
 		printf("Unable to read inode %s:%08x\n", sb->s_id, ino);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	return (struct bfs_inode *)(*p)->b_data +  ino % BFS_INODES_PER_BLOCK;
@@ -153,7 +153,7 @@ static int bfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	if (wbc->sync_mode == WB_SYNC_ALL) {
 		sync_dirty_buffer(bh);
 		if (buffer_req(bh) && !buffer_uptodate(bh))
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 	brelse(bh);
 	mutex_unlock(&info->bfs_lock);
@@ -316,7 +316,7 @@ static int bfs_fill_super(struct super_block *s, void *data, int silent)
 	struct inode *inode;
 	unsigned i;
 	struct bfs_sb_info *info;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	unsigned long i_sblock, i_eblock, i_eoff, s_size;
 
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
@@ -380,7 +380,7 @@ static int bfs_fill_super(struct super_block *s, void *data, int silent)
 	bh = sb_bread(s, info->si_blocks - 1);
 	if (!bh) {
 		printf("Last block not available on %s: %lu\n", s->s_id, info->si_blocks - 1);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out2;
 	}
 	brelse(bh);
@@ -418,7 +418,7 @@ static int bfs_fill_super(struct super_block *s, void *data, int silent)
 			printf("Inode 0x%08x corrupted on %s\n", i, s->s_id);
 
 			brelse(bh);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out2;
 		}
 

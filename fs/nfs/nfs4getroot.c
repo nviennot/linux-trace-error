@@ -30,7 +30,7 @@ int nfs4_get_rootfh(struct nfs_server *server, struct nfs_fh *mntfh, bool auth_p
 			|| !S_ISDIR(fsinfo.fattr->mode)) {
 		printk(KERN_ERR "nfs4_get_rootfh:"
 		       " getroot encountered non-directory\n");
-		ret = -ENOTDIR;
+		ret = -ERR(ENOTDIR);
 		goto out;
 	}
 

@@ -1375,7 +1375,7 @@ int tcp_fragment(struct sock *sk, enum tcp_queue tcp_queue,
 	u8 flags;
 
 	if (WARN_ON(len > skb->len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nsize = skb_headlen(skb) - len;
 	if (nsize < 0)
@@ -3651,7 +3651,7 @@ int tcp_connect(struct sock *sk)
 	tcp_call_bpf(sk, BPF_SOCK_OPS_TCP_CONNECT_CB, 0, NULL);
 
 	if (inet_csk(sk)->icsk_af_ops->rebuild_header(sk))
-		return -EHOSTUNREACH; /* Routing failure or similar. */
+		return -ERR(EHOSTUNREACH); /* Routing failure or similar. */
 
 	tcp_connect_init(sk);
 
@@ -3662,7 +3662,7 @@ int tcp_connect(struct sock *sk)
 
 	buff = sk_stream_alloc_skb(sk, 0, sk->sk_allocation, true);
 	if (unlikely(!buff))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	tcp_init_nondata_skb(buff, tp->write_seq++, TCPHDR_SYN);
 	tcp_mstamp_refresh(tp);

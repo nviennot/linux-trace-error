@@ -260,7 +260,7 @@ static int lx_message_send_atomic(struct lx6464es *chip, struct lx_rmh *rmh)
 
 	if (lx_dsp_reg_read(chip, eReg_CSM) & (Reg_CSM_MC | Reg_CSM_MR)) {
 		dev_err(chip->card->dev, "PIOSendMessage eReg_CSM %x\n", reg);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* write command */
@@ -300,11 +300,11 @@ polling_successful:
 	switch (reg) {
 	case ED_DSP_TIMED_OUT:
 		dev_warn(chip->card->dev, "lx_message_send: dsp timeout\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 
 	case ED_DSP_CRASHED:
 		dev_warn(chip->card->dev, "lx_message_send: dsp crashed\n");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	lx_message_dump(rmh);
@@ -635,7 +635,7 @@ static int lx_pipe_wait_for_state(struct lx6464es *chip, u32 pipe,
 		mdelay(1);
 	}
 
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 int lx_pipe_wait_for_start(struct lx6464es *chip, u32 pipe, int is_capture)

@@ -166,7 +166,7 @@ static int snd_pmac_awacs_put_volume(struct snd_kcontrol *kcontrol,
 	vol[0] = ucontrol->value.integer.value[0];
 	vol[1] = ucontrol->value.integer.value[1];
 	if (vol[0] > 0x0f || vol[1] > 0x0f)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (inverted) {
 		vol[0] = 0x0f - vol[0];
 		vol[1] = 0x0f - vol[1];
@@ -414,7 +414,7 @@ static int snd_pmac_awacs_put_tone_amp(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.integer.value[0];
 	if (val > 14)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (val != amp->amp_tone[index]) {
 		amp->amp_tone[index] = val;
 		awacs_amp_set_tone(amp, amp->amp_tone[0], amp->amp_tone[1]);
@@ -452,7 +452,7 @@ static int snd_pmac_awacs_put_master_amp(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.integer.value[0];
 	if (val > 99)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (val != amp->amp_master) {
 		amp->amp_master = val;
 		awacs_amp_set_master(amp, amp->amp_master);

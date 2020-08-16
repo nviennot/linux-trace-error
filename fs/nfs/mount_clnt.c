@@ -172,7 +172,7 @@ int nfs_mount(struct nfs_mount_request *info)
 			info->dirpath);
 
 	if (strlen(info->dirpath) > MNTPATHLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (info->noresvport)
 		args.flags |= RPC_CLNT_CREATE_NONPRIVPORT;
@@ -328,7 +328,7 @@ static int decode_status(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 	status = be32_to_cpup(p);
 
 	for (i = 0; i < ARRAY_SIZE(mnt_errtbl); i++) {
@@ -339,7 +339,7 @@ static int decode_status(struct xdr_stream *xdr, struct mountres *res)
 	}
 
 	dprintk("NFS: unrecognized MNT status code: %u\n", status);
-	res->errno = -EACCES;
+	res->errno = -ERR(EACCES);
 	return 0;
 }
 
@@ -350,7 +350,7 @@ static int decode_fhandle(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, NFS2_FHSIZE);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	fh->size = NFS2_FHSIZE;
 	memcpy(fh->data, p, NFS2_FHSIZE);
@@ -378,7 +378,7 @@ static int decode_fhs_status(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 	status = be32_to_cpup(p);
 
 	for (i = 0; i < ARRAY_SIZE(mnt3_errtbl); i++) {
@@ -389,7 +389,7 @@ static int decode_fhs_status(struct xdr_stream *xdr, struct mountres *res)
 	}
 
 	dprintk("NFS: unrecognized MNT3 status code: %u\n", status);
-	res->errno = -EACCES;
+	res->errno = -ERR(EACCES);
 	return 0;
 }
 
@@ -401,15 +401,15 @@ static int decode_fhandle3(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	size = be32_to_cpup(p);
 	if (size > NFS3_FHSIZE || size == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	p = xdr_inline_decode(xdr, size);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	fh->size = size;
 	memcpy(fh->data, p, size);
@@ -428,7 +428,7 @@ static int decode_auth_flavors(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 	entries = be32_to_cpup(p);
 	dprintk("NFS: received %u auth flavors\n", entries);
 	if (entries > NFS_MAX_SECFLAVORS)
@@ -436,7 +436,7 @@ static int decode_auth_flavors(struct xdr_stream *xdr, struct mountres *res)
 
 	p = xdr_inline_decode(xdr, 4 * entries);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (entries > *count)
 		entries = *count;
@@ -462,7 +462,7 @@ static int mnt_xdr_dec_mountres3(struct rpc_rqst *req,
 		return status;
 	status = decode_fhandle3(xdr, res);
 	if (unlikely(status != 0)) {
-		res->errno = -EBADHANDLE;
+		res->errno = -ERR(EBADHANDLE);
 		return 0;
 	}
 	return decode_auth_flavors(xdr, res);

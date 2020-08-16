@@ -261,7 +261,7 @@ static u32 gfs2_bitfit(const u8 *buf, const unsigned int len,
 static int gfs2_rbm_from_block(struct gfs2_rbm *rbm, u64 block)
 {
 	if (!rgrp_contains_block(rbm->rgd, block))
-		return -E2BIG;
+		return -ERR(E2BIG);
 	rbm->bii = 0;
 	rbm->offset = block - rbm->rgd->rd_data0;
 	/* Check if the block is within the first block */
@@ -744,7 +744,7 @@ static int compute_bitstructs(struct gfs2_rgrpd *rgd)
 	int x;
 
 	if (!length)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rgd->rd_bits = kcalloc(length, sizeof(struct gfs2_bitmap), GFP_NOFS);
 	if (!rgd->rd_bits)
@@ -792,7 +792,7 @@ static int compute_bitstructs(struct gfs2_rgrpd *rgd)
 
 	if (bytes_left) {
 		gfs2_consist_rgrpd(rgd);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	bi = rgd->rd_bits + (length - 1);
 	if ((bi->bi_start + bi->bi_bytes) * GFS2_NBBY != rgd->rd_data) {
@@ -810,7 +810,7 @@ static int compute_bitstructs(struct gfs2_rgrpd *rgd)
 			rgd->rd_bitbytes,
 			bi->bi_start, bi->bi_bytes, bi->bi_offset);
 		gfs2_consist_rgrpd(rgd);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -859,7 +859,7 @@ static int rgd_insert(struct gfs2_rgrpd *rgd)
 		else if (rgd->rd_addr > cur->rd_addr)
 			newn = &((*newn)->rb_right);
 		else
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	rb_link_node(&rgd->rd_node, parent, newn);
@@ -1186,7 +1186,7 @@ static int gfs2_rgrp_bh_get(struct gfs2_rgrpd *rgd)
 			goto fail;
 		if (gfs2_metatype_check(sdp, bi->bi_bh, y ? GFS2_METATYPE_RB :
 					      GFS2_METATYPE_RG)) {
-			error = -EIO;
+			error = -ERR(EIO);
 			goto fail;
 		}
 	}
@@ -1208,7 +1208,7 @@ static int gfs2_rgrp_bh_get(struct gfs2_rgrpd *rgd)
 	else if (sdp->sd_args.ar_rgrplvb) {
 		if (!gfs2_rgrp_lvb_valid(rgd)){
 			gfs2_consist_rgrpd(rgd);
-			error = -EIO;
+			error = -ERR(EIO);
 			goto fail;
 		}
 		if (rgd->rd_rgl->rl_unlinked == 0)
@@ -1343,7 +1343,7 @@ fail:
 	if (sdp->sd_args.ar_discard)
 		fs_warn(sdp, "error %d on discard request, turning discards off for this filesystem\n", rv);
 	sdp->sd_args.ar_discard = 0;
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**
@@ -1372,10 +1372,10 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
 	unsigned bs_shift = sdp->sd_sb.sb_bsize_shift;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!blk_queue_discard(q))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (copy_from_user(&r, argp, sizeof(r)))
 		return -EFAULT;
@@ -1390,14 +1390,14 @@ int gfs2_fitrim(struct file *filp, void __user *argp)
 		       q->limits.discard_granularity) >> bs_shift;
 
 	if (end <= start || minlen > sdp->sd_max_rg_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rgd = gfs2_blk2rgrpd(sdp, start, 0);
 	rgd_end = gfs2_blk2rgrpd(sdp, end, 0);
 
 	if ((gfs2_rgrpd_get_first(sdp) == gfs2_rgrpd_get_next(rgd_end))
 	    && (start > rgd_end->rd_data0 + rgd_end->rd_data))
-		return -EINVAL; /* start is beyond the end of the fs */
+		return -ERR(EINVAL); /* start is beyond the end of the fs */
 
 	while (1) {
 
@@ -1765,7 +1765,7 @@ next_iter:
 	}
 
 	if (minext == NULL || state != GFS2_BLKST_FREE)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* If the extent was too small, and it's smaller than the smallest
 	   to have failed before, remember for future reference that it's
@@ -1782,7 +1782,7 @@ next_iter:
 		return 0;
 	}
 
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -2011,7 +2011,7 @@ int gfs2_inplace_reserve(struct gfs2_inode *ip, struct gfs2_alloc_parms *ap)
 	if (sdp->sd_args.ar_rgrplvb)
 		flags |= GL_SKIP;
 	if (gfs2_assert_warn(sdp, ap->target))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (gfs2_rs_active(rs)) {
 		begin = rs->rs_rbm.rgd;
 	} else if (rs->rs_rbm.rgd &&
@@ -2024,7 +2024,7 @@ int gfs2_inplace_reserve(struct gfs2_inode *ip, struct gfs2_alloc_parms *ap)
 	if (S_ISDIR(ip->i_inode.i_mode) && (ap->aflags & GFS2_AF_ORLOV))
 		skip = gfs2_orlov_skip(ip);
 	if (rs->rs_rbm.rgd == NULL)
-		return -EBADSLT;
+		return -ERR(EBADSLT);
 
 	while (loops < 3) {
 		rg_locked = 1;
@@ -2121,7 +2121,7 @@ next_rgrp:
 				       GFS2_LFC_INPLACE_RESERVE);
 	}
 
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -2419,7 +2419,7 @@ int gfs2_alloc_blocks(struct gfs2_inode *ip, u64 *bn, unsigned int *nblocks,
 
 rgrp_error:
 	gfs2_rgrp_error(rbm.rgd);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**
@@ -2521,7 +2521,7 @@ int gfs2_check_blk_type(struct gfs2_sbd *sdp, u64 no_addr, unsigned int type)
 	struct gfs2_rgrpd *rgd;
 	struct gfs2_holder rgd_gh;
 	struct gfs2_rbm rbm;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	rgd = gfs2_blk2rgrpd(sdp, no_addr, 1);
 	if (!rgd)
@@ -2537,7 +2537,7 @@ int gfs2_check_blk_type(struct gfs2_sbd *sdp, u64 no_addr, unsigned int type)
 		goto fail;
 
 	if (gfs2_testbit(&rbm, false) != type)
-		error = -ESTALE;
+		error = -ERR(ESTALE);
 
 	gfs2_glock_dq_uninit(&rgd_gh);
 fail:

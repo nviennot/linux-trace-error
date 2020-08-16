@@ -182,7 +182,7 @@ static int inet_autobind(struct sock *sk)
 	if (!inet->inet_num) {
 		if (sk->sk_prot->get_port(sk, 0)) {
 			release_sock(sk);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		inet->inet_sport = htons(inet->inet_num);
 	}
@@ -201,7 +201,7 @@ int inet_listen(struct socket *sock, int backlog)
 
 	lock_sock(sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_STREAM)
 		goto out;
 
@@ -257,13 +257,13 @@ static int inet_create(struct net *net, struct socket *sock, int protocol,
 	int err;
 
 	if (protocol < 0 || protocol >= IPPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock->state = SS_UNCONNECTED;
 
 	/* Look for the requested type/protocol pair. */
 lookup_protocol:
-	err = -ESOCKTNOSUPPORT;
+	err = -ERR(ESOCKTNOSUPPORT);
 	rcu_read_lock();
 	list_for_each_entry_rcu(answer, &inetsw[sock->type], list) {
 
@@ -281,7 +281,7 @@ lookup_protocol:
 			if (IPPROTO_IP == answer->protocol)
 				break;
 		}
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 	}
 
 	if (unlikely(err)) {
@@ -306,7 +306,7 @@ lookup_protocol:
 			goto out_rcu_unlock;
 	}
 
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (sock->type == SOCK_RAW && !kern &&
 	    !ns_capable(net->user_ns, CAP_NET_RAW))
 		goto out_rcu_unlock;
@@ -318,7 +318,7 @@ lookup_protocol:
 
 	WARN_ON(!answer_prot->slab);
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	sk = sk_alloc(net, PF_INET, GFP_KERNEL, answer_prot, kern);
 	if (!sk)
 		goto out;
@@ -442,7 +442,7 @@ int inet_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		return sk->sk_prot->bind(sk, uaddr, addr_len);
 	}
 	if (addr_len < sizeof(struct sockaddr_in))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* BPF prog is run before any checks are done so that if the prog
 	 * changes context in a wrong way it will be caught.
@@ -470,7 +470,7 @@ int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		/* Compatibility games : accept AF_UNSPEC (mapped to AF_INET)
 		 * only if s_addr is INADDR_ANY.
 		 */
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		if (addr->sin_family != AF_UNSPEC ||
 		    addr->sin_addr.s_addr != htonl(INADDR_ANY))
 			goto out;
@@ -486,7 +486,7 @@ int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 	 * (ie. your servers still start up even if your ISDN link
 	 *  is temporarily down)
 	 */
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 	if (!inet_can_nonlocal_bind(net, inet) &&
 	    addr->sin_addr.s_addr != htonl(INADDR_ANY) &&
 	    chk_addr_ret != RTN_LOCAL &&
@@ -495,7 +495,7 @@ int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		goto out;
 
 	snum = ntohs(addr->sin_port);
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (snum && inet_port_requires_bind_service(net, snum) &&
 	    !ns_capable(net->user_ns, CAP_NET_BIND_SERVICE))
 		goto out;
@@ -511,7 +511,7 @@ int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		lock_sock(sk);
 
 	/* Check these errors (active socket, double bind). */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sk->sk_state != TCP_CLOSE || inet->inet_num)
 		goto out_release_sock;
 
@@ -524,7 +524,7 @@ int __inet_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		      (flags & BIND_FORCE_ADDRESS_NO_PORT))) {
 		if (sk->sk_prot->get_port(sk, snum)) {
 			inet->inet_saddr = inet->inet_rcv_saddr = 0;
-			err = -EADDRINUSE;
+			err = -ERR(EADDRINUSE);
 			goto out_release_sock;
 		}
 		if (!(flags & BIND_FROM_BPF)) {
@@ -559,7 +559,7 @@ int inet_dgram_connect(struct socket *sock, struct sockaddr *uaddr,
 	int err;
 
 	if (addr_len < sizeof(uaddr->sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (uaddr->sa_family == AF_UNSPEC)
 		return sk->sk_prot->disconnect(sk, flags);
 
@@ -570,7 +570,7 @@ int inet_dgram_connect(struct socket *sock, struct sockaddr *uaddr,
 	}
 
 	if (!inet_sk(sk)->inet_num && inet_autobind(sk))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	return sk->sk_prot->connect(sk, uaddr, addr_len);
 }
 EXPORT_SYMBOL(inet_dgram_connect);
@@ -621,7 +621,7 @@ int __inet_stream_connect(struct socket *sock, struct sockaddr *uaddr,
 	 */
 	if (uaddr) {
 		if (addr_len < sizeof(uaddr->sa_family))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (uaddr->sa_family == AF_UNSPEC) {
 			err = sk->sk_prot->disconnect(sk, flags);
@@ -632,20 +632,20 @@ int __inet_stream_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	switch (sock->state) {
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	case SS_CONNECTED:
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out;
 	case SS_CONNECTING:
 		if (inet_sk(sk)->defer_connect)
-			err = is_sendmsg ? -EINPROGRESS : -EISCONN;
+			err = is_sendmsg ? -ERR(EINPROGRESS) : -ERR(EISCONN);
 		else
-			err = -EALREADY;
+			err = -ERR(EALREADY);
 		/* Fall out of switch with err, set for this state */
 		break;
 	case SS_UNCONNECTED:
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		if (sk->sk_state != TCP_CLOSE)
 			goto out;
 
@@ -668,7 +668,7 @@ int __inet_stream_connect(struct socket *sock, struct sockaddr *uaddr,
 		 * difference is that return value in non-blocking
 		 * case is EINPROGRESS, rather than EALREADY.
 		 */
-		err = -EINPROGRESS;
+		err = -ERR(EINPROGRESS);
 		break;
 	}
 
@@ -705,7 +705,7 @@ out:
 	return err;
 
 sock_error:
-	err = sock_error(sk) ? : -ECONNABORTED;
+	err = sock_error(sk) ? : -ERR(ECONNABORTED);
 	sock->state = SS_UNCONNECTED;
 	if (sk->sk_prot->disconnect(sk, flags))
 		sock->state = SS_DISCONNECTING;
@@ -733,7 +733,7 @@ int inet_accept(struct socket *sock, struct socket *newsock, int flags,
 		bool kern)
 {
 	struct sock *sk1 = sock->sk;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct sock *sk2 = sk1->sk_prot->accept(sk1, flags, &err, kern);
 
 	if (!sk2)
@@ -771,7 +771,7 @@ int inet_getname(struct socket *sock, struct sockaddr *uaddr,
 		if (!inet->inet_dport ||
 		    (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_SYN_SENT)) &&
 		     peer == 1))
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		sin->sin_port = inet->inet_dport;
 		sin->sin_addr.s_addr = inet->inet_daddr;
 	} else {
@@ -798,7 +798,7 @@ int inet_send_prepare(struct sock *sk)
 	/* We may need to bind the socket. */
 	if (!inet_sk(sk)->inet_num && !sk->sk_prot->no_autobind &&
 	    inet_autobind(sk))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return 0;
 }
@@ -809,7 +809,7 @@ int inet_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 	struct sock *sk = sock->sk;
 
 	if (unlikely(inet_send_prepare(sk)))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return INDIRECT_CALL_2(sk->sk_prot->sendmsg, tcp_sendmsg, udp_sendmsg,
 			       sk, msg, size);
@@ -822,7 +822,7 @@ ssize_t inet_sendpage(struct socket *sock, struct page *page, int offset,
 	struct sock *sk = sock->sk;
 
 	if (unlikely(inet_send_prepare(sk)))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (sk->sk_prot->sendpage)
 		return sk->sk_prot->sendpage(sk, page, offset, size, flags);
@@ -863,7 +863,7 @@ int inet_shutdown(struct socket *sock, int how)
 		       1->2 bit 2 snds.
 		       2->3 */
 	if ((how & ~SHUTDOWN_MASK) || !how)	/* MAXINT->0 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sock->state == SS_CONNECTING) {
@@ -876,7 +876,7 @@ int inet_shutdown(struct socket *sock, int how)
 
 	switch (sk->sk_state) {
 	case TCP_CLOSE:
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		/* Hack to wake up other listeners, who can poll for
 		   EPOLLHUP, even on eg. unconnected UDP sockets -- RR */
 		fallthrough;
@@ -934,7 +934,7 @@ int inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		err = ip_rt_ioctl(net, cmd, &rt);
 		break;
 	case SIOCRTMSG:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	case SIOCDARP:
 	case SIOCGARP:
@@ -967,7 +967,7 @@ int inet_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		if (sk->sk_prot->ioctl)
 			err = sk->sk_prot->ioctl(sk, cmd, arg);
 		else
-			err = -ENOIOCTLCMD;
+			err = -ERR(ENOIOCTLCMD);
 		break;
 	}
 	return err;
@@ -1006,7 +1006,7 @@ static int inet_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned lon
 		return inet_compat_routing_ioctl(sk, cmd, argp);
 	default:
 		if (!sk->sk_prot->compat_ioctl)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		return sk->sk_prot->compat_ioctl(sk, cmd, arg);
 	}
 }
@@ -1330,7 +1330,7 @@ struct sk_buff *inet_gso_segment(struct sk_buff *skb,
 				 netdev_features_t features)
 {
 	bool udpfrag = false, fixedid = false, gso_partial, encap;
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	const struct net_offload *ops;
 	unsigned int offset = 0;
 	struct iphdr *iph;
@@ -1364,7 +1364,7 @@ struct sk_buff *inet_gso_segment(struct sk_buff *skb,
 
 	skb_reset_transport_header(skb);
 
-	segs = ERR_PTR(-EPROTONOSUPPORT);
+	segs = ERR_PTR(-ERR(EPROTONOSUPPORT));
 
 	if (!skb->encapsulation || encap) {
 		udpfrag = !!(skb_shinfo(skb)->gso_type & SKB_GSO_UDP);
@@ -1427,7 +1427,7 @@ static struct sk_buff *ipip_gso_segment(struct sk_buff *skb,
 					netdev_features_t features)
 {
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP4))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return inet_gso_segment(skb, features);
 }
@@ -1605,7 +1605,7 @@ int inet_recv_error(struct sock *sk, struct msghdr *msg, int len, int *addr_len)
 	if (sk->sk_family == AF_INET6)
 		return pingv6_ops.ipv6_recv_error(sk, msg, len, addr_len);
 #endif
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 INDIRECT_CALLABLE_DECLARE(int tcp4_gro_complete(struct sk_buff *, int));
@@ -1616,7 +1616,7 @@ int inet_gro_complete(struct sk_buff *skb, int nhoff)
 	struct iphdr *iph = (struct iphdr *)(skb->data + nhoff);
 	const struct net_offload *ops;
 	int proto = iph->protocol;
-	int err = -ENOSYS;
+	int err = -ERR(ENOSYS);
 
 	if (skb->encapsulation) {
 		skb_set_inner_protocol(skb, cpu_to_be16(ETH_P_IP));

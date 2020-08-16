@@ -303,7 +303,7 @@ int netdev_name_node_alt_create(struct net_device *dev, const char *name)
 
 	name_node = netdev_name_node_lookup(net, name);
 	if (name_node)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	name_node = netdev_name_node_alloc(dev, name);
 	if (!name_node)
 		return -ENOMEM;
@@ -330,12 +330,12 @@ int netdev_name_node_alt_destroy(struct net_device *dev, const char *name)
 
 	name_node = netdev_name_node_lookup(net, name);
 	if (!name_node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/* lookup might have found our primary name or a name belonging
 	 * to another device.
 	 */
 	if (name_node == dev->name_node || name_node->dev != dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	__netdev_name_node_alt_destroy(name_node);
 
@@ -831,13 +831,13 @@ int dev_fill_metadata_dst(struct net_device *dev, struct sk_buff *skb)
 	struct ip_tunnel_info *info;
 
 	if (!dev->netdev_ops  || !dev->netdev_ops->ndo_fill_metadata_dst)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info = skb_tunnel_info_unclone(skb);
 	if (!info)
 		return -ENOMEM;
 	if (unlikely(!(info->mode & IP_TUNNEL_INFO_TX)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return dev->netdev_ops->ndo_fill_metadata_dst(dev, skb);
 }
@@ -1025,7 +1025,7 @@ int netdev_get_name(struct net *net, char *name, int ifindex)
 
 	dev = dev_get_by_index_rcu(net, ifindex);
 	if (!dev) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -1174,7 +1174,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 	struct net_device *d;
 
 	if (!dev_valid_name(name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p = strchr(name, '%');
 	if (p) {
@@ -1184,7 +1184,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 		 * characters.
 		 */
 		if (p[1] != 'd' || strchr(p + 2, '%'))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Use one page as a bit array of possible slots */
 		inuse = (unsigned long *) get_zeroed_page(GFP_ATOMIC);
@@ -1215,7 +1215,7 @@ static int __dev_alloc_name(struct net *net, const char *name, char *buf)
 	 * when the name is long and there isn't enough space left
 	 * for the digits, or if all bits are used.
 	 */
-	return -ENFILE;
+	return -ERR(ENFILE);
 }
 
 static int dev_alloc_name_ns(struct net *net,
@@ -1258,12 +1258,12 @@ static int dev_get_valid_name(struct net *net, struct net_device *dev,
 	BUG_ON(!net);
 
 	if (!dev_valid_name(name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strchr(name, '%'))
 		return dev_alloc_name_ns(net, dev, name);
 	else if (__dev_get_by_name(net, name))
-		return -EEXIST;
+		return -ERR(EEXIST);
 	else if (dev->name != name)
 		strlcpy(dev->name, name, IFNAMSIZ);
 
@@ -1305,7 +1305,7 @@ int dev_change_name(struct net_device *dev, const char *newname)
 	 */
 	if (dev->flags & IFF_UP &&
 	    likely(!(dev->priv_flags & IFF_LIVE_RENAME_OK)))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	down_write(&devnet_rename_sem);
 
@@ -1386,7 +1386,7 @@ int dev_set_alias(struct net_device *dev, const char *alias, size_t len)
 	struct dev_ifalias *new_alias = NULL;
 
 	if (len >= IFALIASZ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (len) {
 		new_alias = kmalloc(sizeof(*new_alias) + len + 1, GFP_KERNEL);
@@ -1493,7 +1493,7 @@ static int __dev_open(struct net_device *dev, struct netlink_ext_ack *extack)
 	ASSERT_RTNL();
 
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Block netpoll from trying to do any rx path servicing.
 	 * If we don't do this there is a chance ndo_poll_controller
@@ -2612,14 +2612,14 @@ int __netif_set_xps_queue(struct net_device *dev, const unsigned long *mask,
 		/* Do not allow XPS on subordinate device directly */
 		num_tc = dev->num_tc;
 		if (num_tc < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* If queue belongs to subordinate dev use its map */
 		dev = netdev_get_tx_queue(dev, index)->sb_dev ? : dev;
 
 		tc = netdev_txq_to_tc(dev, index);
 		if (tc < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	mutex_lock(&xps_map_mutex);
@@ -2837,7 +2837,7 @@ EXPORT_SYMBOL(netdev_reset_tc);
 int netdev_set_tc_queue(struct net_device *dev, u8 tc, u16 count, u16 offset)
 {
 	if (tc >= dev->num_tc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_XPS
 	netif_reset_xps_queues(dev, offset, count);
@@ -2851,7 +2851,7 @@ EXPORT_SYMBOL(netdev_set_tc_queue);
 int netdev_set_num_tc(struct net_device *dev, u8 num_tc)
 {
 	if (num_tc > TC_MAX_QUEUE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_XPS
 	netif_reset_xps_queues_gt(dev, 0);
@@ -2887,11 +2887,11 @@ int netdev_bind_sb_channel_queue(struct net_device *dev,
 {
 	/* Make certain the sb_dev and dev are already configured */
 	if (sb_dev->num_tc >= 0 || tc >= dev->num_tc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We cannot hand out queues we don't have */
 	if ((offset + count) > dev->real_num_tx_queues)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Record the mapping */
 	sb_dev->tc_to_txq[tc].count = count;
@@ -2911,7 +2911,7 @@ int netdev_set_sb_channel(struct net_device *dev, u16 channel)
 {
 	/* Do not use a multiqueue device to represent a subordinate channel */
 	if (netif_is_multiqueue(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* We allow channels 1 - 32767 to be used for subordinate channels.
 	 * Channel 0 is meant to be "native" mode and used only to represent
@@ -2919,7 +2919,7 @@ int netdev_set_sb_channel(struct net_device *dev, u16 channel)
 	 * to normal mode after being used as a subordinate channel.
 	 */
 	if (channel > S16_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->num_tc = -channel;
 
@@ -2939,7 +2939,7 @@ int netif_set_real_num_tx_queues(struct net_device *dev, unsigned int txq)
 	disabling = txq < dev->real_num_tx_queues;
 
 	if (txq < 1 || txq > dev->num_tx_queues)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dev->reg_state == NETREG_REGISTERED ||
 	    dev->reg_state == NETREG_UNREGISTERING) {
@@ -2986,7 +2986,7 @@ int netif_set_real_num_rx_queues(struct net_device *dev, unsigned int rxq)
 	int rc;
 
 	if (rxq < 1 || rxq > dev->num_rx_queues)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dev->reg_state == NETREG_REGISTERED) {
 		ASSERT_RTNL();
@@ -3200,7 +3200,7 @@ int skb_checksum_help(struct sk_buff *skb)
 
 	if (unlikely(skb_shinfo(skb)->gso_size)) {
 		skb_warn_bad_offload(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Before computing a checksum, we should make sure no frag could
@@ -3253,7 +3253,7 @@ int skb_crc32c_csum_help(struct sk_buff *skb)
 	start = skb_checksum_start_offset(skb);
 	offset = start + offsetof(struct sctphdr, checksum);
 	if (WARN_ON_ONCE(offset >= skb_headlen(skb))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -3297,13 +3297,13 @@ __be16 skb_network_protocol(struct sk_buff *skb, int *depth)
 struct sk_buff *skb_mac_gso_segment(struct sk_buff *skb,
 				    netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EPROTONOSUPPORT);
+	struct sk_buff *segs = ERR_PTR(-ERR(EPROTONOSUPPORT));
 	struct packet_offload *ptype;
 	int vlan_depth = skb->mac_len;
 	__be16 type = skb_network_protocol(skb, &vlan_depth);
 
 	if (unlikely(!type))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	__skb_pull(skb, vlan_depth);
 
@@ -4148,7 +4148,7 @@ recursion_alert:
 		}
 	}
 
-	rc = -ENETDOWN;
+	rc = -ERR(ENETDOWN);
 	rcu_read_unlock_bh();
 
 	atomic_long_inc(&dev->tx_dropped);
@@ -4999,10 +4999,10 @@ int netdev_rx_handler_register(struct net_device *dev,
 			       void *rx_handler_data)
 {
 	if (netdev_is_rx_handler_busy(dev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (dev->priv_flags & IFF_NO_RX_HANDLER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Note: rx_handler_data must be set before rx_handler */
 	rcu_assign_pointer(dev->rx_handler_data, rx_handler_data);
@@ -5441,7 +5441,7 @@ static int generic_xdp_install(struct net_device *dev, struct netdev_bpf *xdp)
 		 */
 		for (i = 0; i < new->aux->used_map_cnt; i++) {
 			if (dev_map_can_have_prog(new->aux->used_maps[i]))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -5465,7 +5465,7 @@ static int generic_xdp_install(struct net_device *dev, struct netdev_bpf *xdp)
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -5661,7 +5661,7 @@ static int napi_gro_complete(struct napi_struct *napi, struct sk_buff *skb)
 	struct packet_offload *ptype;
 	__be16 type = skb->protocol;
 	struct list_head *head = &offload_base;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	BUILD_BUG_ON(sizeof(struct napi_gro_cb) > sizeof(skb->cb));
 
@@ -7662,22 +7662,22 @@ static int __netdev_upper_dev_link(struct net_device *dev,
 	ASSERT_RTNL();
 
 	if (dev == upper_dev)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* To prevent loops, check if dev is not upper device to upper_dev. */
 	if (__netdev_has_upper_dev(upper_dev, dev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if ((dev->lower_level + upper_dev->upper_level) > MAX_NEST_DEV)
-		return -EMLINK;
+		return -ERR(EMLINK);
 
 	if (!master) {
 		if (__netdev_has_upper_dev(dev, upper_dev))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		master_dev = __netdev_master_upper_dev_get(dev);
 		if (master_dev)
-			return master_dev == upper_dev ? -EEXIST : -EBUSY;
+			return master_dev == upper_dev ? -ERR(EEXIST) : -ERR(EBUSY);
 	}
 
 	ret = call_netdevice_notifiers_info(NETDEV_PRECHANGEUPPER,
@@ -8062,7 +8062,7 @@ static int __dev_set_promiscuity(struct net_device *dev, int inc, bool notify)
 			dev->promiscuity -= inc;
 			pr_warn("%s: promiscuity touches roof, set promiscuity failed. promiscuity feature of device might be broken.\n",
 				dev->name);
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 		}
 	}
 	if (dev->flags != old_flags) {
@@ -8133,7 +8133,7 @@ static int __dev_set_allmulti(struct net_device *dev, int inc, bool notify)
 			dev->allmulti -= inc;
 			pr_warn("%s: allmulti touches roof, set allmulti failed. allmulti feature of device might be broken.\n",
 				dev->name);
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 		}
 	}
 	if (dev->flags ^ old_flags) {
@@ -8375,12 +8375,12 @@ int dev_validate_mtu(struct net_device *dev, int new_mtu,
 	/* MTU must be positive, and in range */
 	if (new_mtu < 0 || new_mtu < dev->min_mtu) {
 		NL_SET_ERR_MSG(extack, "mtu less than device minimum");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev->max_mtu > 0 && new_mtu > dev->max_mtu) {
 		NL_SET_ERR_MSG(extack, "mtu greater than device maximum");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -8406,7 +8406,7 @@ int dev_set_mtu_ext(struct net_device *dev, int new_mtu,
 		return err;
 
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = call_netdevice_notifiers(NETDEV_PRECHANGEMTU, dev);
 	err = notifier_to_errno(err);
@@ -8456,7 +8456,7 @@ int dev_change_tx_queue_len(struct net_device *dev, unsigned long new_len)
 	int res;
 
 	if (new_len != (unsigned int)new_len)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (new_len != orig_len) {
 		dev->tx_queue_len = new_len;
@@ -8524,11 +8524,11 @@ int dev_set_mac_address(struct net_device *dev, struct sockaddr *sa,
 	int err;
 
 	if (!ops->ndo_set_mac_address)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (sa->sa_family != dev->type)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	err = dev_pre_changeaddr_notify(dev, sa->sa_data, extack);
 	if (err)
 		return err;
@@ -8554,9 +8554,9 @@ int dev_change_carrier(struct net_device *dev, bool new_carrier)
 	const struct net_device_ops *ops = dev->netdev_ops;
 
 	if (!ops->ndo_change_carrier)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return ops->ndo_change_carrier(dev, new_carrier);
 }
 EXPORT_SYMBOL(dev_change_carrier);
@@ -8574,7 +8574,7 @@ int dev_get_phys_port_id(struct net_device *dev,
 	const struct net_device_ops *ops = dev->netdev_ops;
 
 	if (!ops->ndo_get_phys_port_id)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return ops->ndo_get_phys_port_id(dev, ppid);
 }
 EXPORT_SYMBOL(dev_get_phys_port_id);
@@ -8631,7 +8631,7 @@ int dev_get_port_parent_id(struct net_device *dev,
 		return err;
 
 	if (!recurse)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	netdev_for_each_lower_dev(dev, lower_dev, iter) {
 		err = dev_get_port_parent_id(lower_dev, ppid, recurse);
@@ -8640,7 +8640,7 @@ int dev_get_port_parent_id(struct net_device *dev,
 		if (!first.id_len)
 			first = *ppid;
 		else if (memcmp(&first, ppid, sizeof(*ppid)))
-			return -ENODATA;
+			return -ERR(ENODATA);
 	}
 
 	return err;
@@ -8679,9 +8679,9 @@ int dev_change_proto_down(struct net_device *dev, bool proto_down)
 	const struct net_device_ops *ops = dev->netdev_ops;
 
 	if (!ops->ndo_change_proto_down)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return ops->ndo_change_proto_down(dev, proto_down);
 }
 EXPORT_SYMBOL(dev_change_proto_down);
@@ -8814,7 +8814,7 @@ int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 	bpf_op = bpf_chk = ops->ndo_bpf;
 	if (!bpf_op && (flags & (XDP_FLAGS_DRV_MODE | XDP_FLAGS_HW_MODE))) {
 		NL_SET_ERR_MSG(extack, "underlying driver does not support XDP in native mode");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	if (!bpf_op || (flags & XDP_FLAGS_SKB_MODE))
 		bpf_op = generic_xdp_install;
@@ -8835,18 +8835,18 @@ int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 
 		if (prog_id != expected_id) {
 			NL_SET_ERR_MSG(extack, "Active program does not match expected");
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	if (fd >= 0) {
 		if (!offload && __dev_xdp_query(dev, bpf_chk, XDP_QUERY_PROG)) {
 			NL_SET_ERR_MSG(extack, "native and generic XDP can't be active at the same time");
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 
 		if ((flags & XDP_FLAGS_UPDATE_IF_NOEXIST) && prog_id) {
 			NL_SET_ERR_MSG(extack, "XDP program already attached");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		prog = bpf_prog_get_type_dev(fd, BPF_PROG_TYPE_XDP,
@@ -8857,13 +8857,13 @@ int dev_change_xdp_fd(struct net_device *dev, struct netlink_ext_ack *extack,
 		if (!offload && bpf_prog_is_dev_bound(prog->aux)) {
 			NL_SET_ERR_MSG(extack, "using device-bound program without HW_MODE flag is not supported");
 			bpf_prog_put(prog);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (prog->expected_attach_type == BPF_XDP_DEVMAP) {
 			NL_SET_ERR_MSG(extack, "BPF_XDP_DEVMAP programs can not be attached to a device");
 			bpf_prog_put(prog);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* prog->aux->id may be 0 for orphaned device-bound progs */
@@ -9364,7 +9364,7 @@ static int netif_alloc_netdev_queues(struct net_device *dev)
 	size_t sz = count * sizeof(*tx);
 
 	if (count < 1 || count > 0xffff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tx = kvzalloc(sz, GFP_KERNEL | __GFP_RETRY_MAYFAIL);
 	if (!tx)
@@ -9444,7 +9444,7 @@ int register_netdevice(struct net_device *dev)
 		ret = dev->netdev_ops->ndo_init(dev);
 		if (ret) {
 			if (ret > 0)
-				ret = -EIO;
+				ret = -ERR(EIO);
 			goto err_free_name;
 		}
 	}
@@ -9454,11 +9454,11 @@ int register_netdevice(struct net_device *dev)
 	    (!dev->netdev_ops->ndo_vlan_rx_add_vid ||
 	     !dev->netdev_ops->ndo_vlan_rx_kill_vid)) {
 		netdev_WARN(dev, "Buggy VLAN acceleration in driver!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_uninit;
 	}
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (!dev->ifindex)
 		dev->ifindex = dev_new_index(net);
 	else if (__dev_get_by_index(net, dev->ifindex))
@@ -9641,7 +9641,7 @@ int register_netdev(struct net_device *dev)
 	int err;
 
 	if (rtnl_lock_killable())
-		return -EINTR;
+		return -ERR(EINTR);
 	err = register_netdevice(dev);
 	rtnl_unlock();
 	return err;
@@ -10159,7 +10159,7 @@ int dev_change_net_namespace(struct net_device *dev, struct net *net, const char
 	ASSERT_RTNL();
 
 	/* Don't allow namespace local devices to be moved. */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (dev->features & NETIF_F_NETNS_LOCAL)
 		goto out;
 
@@ -10175,7 +10175,7 @@ int dev_change_net_namespace(struct net_device *dev, struct net *net, const char
 	/* Pick the destination device name, and ensure
 	 * we can use it in the destination network namespace.
 	 */
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (__dev_get_by_name(net, dev->name)) {
 		/* We get here if we can't use the current device name */
 		if (!pat)

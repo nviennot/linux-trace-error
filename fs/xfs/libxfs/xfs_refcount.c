@@ -1158,7 +1158,7 @@ xfs_refcount_finish_one(
 
 	if (XFS_TEST_ERROR(false, mp,
 			XFS_ERRTAG_REFCOUNT_FINISH_ONE))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * If we haven't gotten a cursor or the cursor AG doesn't match
@@ -1695,7 +1695,7 @@ xfs_refcount_recover_cow_leftovers(
 	int				error;
 
 	if (mp->m_sb.sb_agblocks >= XFS_REFC_COW_START)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	INIT_LIST_HEAD(&debris);
 

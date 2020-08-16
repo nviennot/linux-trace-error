@@ -566,7 +566,7 @@ void tipc_bcast_remove_peer(struct net *net, struct tipc_link *rcv_l)
 int tipc_bclink_reset_stats(struct net *net, struct tipc_link *l)
 {
 	if (!l)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	tipc_bcast_lock(net);
 	tipc_link_reset_stats(l);
@@ -579,11 +579,11 @@ static int tipc_bc_link_set_queue_limits(struct net *net, u32 max_win)
 	struct tipc_link *l = tipc_bc_sndlink(net);
 
 	if (!l)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	if (max_win < BCLINK_WIN_MIN)
 		max_win = BCLINK_WIN_MIN;
 	if (max_win > TIPC_MAX_LINK_WIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tipc_bcast_lock(net);
 	tipc_link_set_queue_limits(l, BCLINK_WIN_MIN, max_win);
 	tipc_bcast_unlock(net);
@@ -597,27 +597,27 @@ static int tipc_bc_link_set_broadcast_mode(struct net *net, u32 bc_mode)
 	switch (bc_mode) {
 	case BCLINK_MODE_BCAST:
 		if (!bb->bcast_support)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 
 		bb->force_bcast = true;
 		bb->force_rcast = false;
 		break;
 	case BCLINK_MODE_RCAST:
 		if (!bb->rcast_support)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 
 		bb->force_bcast = false;
 		bb->force_rcast = true;
 		break;
 	case BCLINK_MODE_SEL:
 		if (!bb->bcast_support || !bb->rcast_support)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 
 		bb->force_bcast = false;
 		bb->force_rcast = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -628,10 +628,10 @@ static int tipc_bc_link_set_broadcast_ratio(struct net *net, u32 bc_ratio)
 	struct tipc_bc_base *bb = tipc_bc_base(net);
 
 	if (!bb->bcast_support || !bb->rcast_support)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (bc_ratio > 100 || bc_ratio <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bb->rc_ratio = bc_ratio;
 	tipc_bcast_lock(net);
@@ -650,7 +650,7 @@ int tipc_nl_bc_link_set(struct net *net, struct nlattr *attrs[])
 	struct nlattr *props[TIPC_NLA_PROP_MAX + 1];
 
 	if (!attrs[TIPC_NLA_LINK_PROP])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tipc_nl_parse_link_prop(attrs[TIPC_NLA_LINK_PROP], props);
 	if (err)
@@ -659,7 +659,7 @@ int tipc_nl_bc_link_set(struct net *net, struct nlattr *attrs[])
 	if (!props[TIPC_NLA_PROP_WIN] &&
 	    !props[TIPC_NLA_PROP_BROADCAST] &&
 	    !props[TIPC_NLA_PROP_BROADCAST_RATIO]) {
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (props[TIPC_NLA_PROP_BROADCAST]) {

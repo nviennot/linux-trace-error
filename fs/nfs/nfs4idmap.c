@@ -279,7 +279,7 @@ static struct key *nfs_idmap_request_key(const char *name, size_t namelen,
 					 const char *type, struct idmap *idmap)
 {
 	char *desc;
-	struct key *rkey = ERR_PTR(-EAGAIN);
+	struct key *rkey = ERR_PTR(-ERR(EAGAIN));
 	ssize_t ret;
 
 	ret = nfs_idmap_get_desc(name, namelen, type, strlen(type), &desc);
@@ -336,7 +336,7 @@ static ssize_t nfs_idmap_get_key(const char *name, size_t namelen,
 	if (ret > 0 && ret <= data_size)
 		memcpy(data, payload->data, ret);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 out_up:
 	rcu_read_unlock();
@@ -356,7 +356,7 @@ static ssize_t nfs_idmap_lookup_name(__u32 id, const char *type, char *buf,
 	id_len = nfs_map_numeric_to_string(id, id_str, sizeof(id_str));
 	ret = nfs_idmap_get_key(id_str, id_len, type, buf, buflen, idmap);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return ret;
 }
 
@@ -371,7 +371,7 @@ static int nfs_idmap_lookup_id(const char *name, size_t namelen, const char *typ
 
 	data_size = nfs_idmap_get_key(name, namelen, type, id_str, NFS_UINT_MAXLEN, idmap);
 	if (data_size <= 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		ret = kstrtol(id_str, 10, &id_long);
 		if (!ret)
@@ -537,7 +537,7 @@ static int nfs_idmap_prepare_message(char *desc, struct idmap *idmap,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -586,7 +586,7 @@ static int nfs_idmap_legacy_upcall(struct key *authkey, void *aux)
 	struct idmap_msg *im;
 	struct idmap *idmap = (struct idmap *)aux;
 	struct key *key = rka->target_key;
-	int ret = -ENOKEY;
+	int ret = -ERR(ENOKEY);
 
 	if (!aux)
 		goto out1;
@@ -606,7 +606,7 @@ static int nfs_idmap_legacy_upcall(struct key *authkey, void *aux)
 	if (ret < 0)
 		goto out2;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	if (!nfs_idmap_prepare_pipe_upcall(idmap, data))
 		goto out2;
 
@@ -635,7 +635,7 @@ static int nfs_idmap_read_and_verify_message(struct idmap_msg *im,
 {
 	char id_str[NFS_UINT_MAXLEN];
 	size_t len;
-	int ret = -ENOKEY;
+	int ret = -ERR(ENOKEY);
 
 	/* ret = -ENOKEY */
 	if (upcall->im_type != im->im_type || upcall->im_conv != im->im_conv)
@@ -656,7 +656,7 @@ static int nfs_idmap_read_and_verify_message(struct idmap_msg *im,
 		ret = nfs_idmap_instantiate(key, authkey, im->im_name, len);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 out:
 	return ret;
@@ -671,7 +671,7 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	struct key *authkey;
 	struct idmap_msg im;
 	size_t namelen_in;
-	int ret = -ENOKEY;
+	int ret = -ERR(ENOKEY);
 
 	/* If instantiation is successful, anyone waiting for key construction
 	 * will have been woken up and someone else may now have used
@@ -684,7 +684,7 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	rka = get_request_key_auth(authkey);
 
 	if (mlen != sizeof(im)) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -694,13 +694,13 @@ idmap_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	}
 
 	if (!(im.im_status & IDMAP_STATUS_SUCCESS)) {
-		ret = -ENOKEY;
+		ret = -ERR(ENOKEY);
 		goto out;
 	}
 
 	namelen_in = strnlen(im.im_name, IDMAP_NAMESZ);
 	if (namelen_in == 0 || namelen_in == IDMAP_NAMESZ) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 }
 
@@ -750,7 +750,7 @@ int nfs_map_name_to_uid(const struct nfs_server *server, const char *name, size_
 	if (ret == 0) {
 		*uid = make_kuid(idmap_userns(idmap), id);
 		if (!uid_valid(*uid))
-			ret = -ERANGE;
+			ret = -ERR(ERANGE);
 	}
 	trace_nfs4_map_name_to_uid(name, namelen, id, ret);
 	return ret;
@@ -767,7 +767,7 @@ int nfs_map_group_to_gid(const struct nfs_server *server, const char *name, size
 	if (ret == 0) {
 		*gid = make_kgid(idmap_userns(idmap), id);
 		if (!gid_valid(*gid))
-			ret = -ERANGE;
+			ret = -ERR(ERANGE);
 	}
 	trace_nfs4_map_group_to_gid(name, namelen, id, ret);
 	return ret;
@@ -776,7 +776,7 @@ int nfs_map_group_to_gid(const struct nfs_server *server, const char *name, size
 int nfs_map_uid_to_name(const struct nfs_server *server, kuid_t uid, char *buf, size_t buflen)
 {
 	struct idmap *idmap = server->nfs_client->cl_idmap;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	__u32 id;
 
 	id = from_kuid_munged(idmap_userns(idmap), uid);
@@ -790,7 +790,7 @@ int nfs_map_uid_to_name(const struct nfs_server *server, kuid_t uid, char *buf, 
 int nfs_map_gid_to_group(const struct nfs_server *server, kgid_t gid, char *buf, size_t buflen)
 {
 	struct idmap *idmap = server->nfs_client->cl_idmap;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	__u32 id;
 
 	id = from_kgid_munged(idmap_userns(idmap), gid);

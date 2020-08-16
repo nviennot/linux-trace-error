@@ -133,7 +133,7 @@ static inline int nfs_readpage_from_fscache(struct nfs_open_context *ctx,
 {
 	if (NFS_I(inode)->fscache)
 		return __nfs_readpage_from_fscache(ctx, inode, page);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -148,7 +148,7 @@ static inline int nfs_readpages_from_fscache(struct nfs_open_context *ctx,
 	if (NFS_I(inode)->fscache)
 		return __nfs_readpages_from_fscache(ctx, inode, mapping, pages,
 						    nr_pages);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -216,7 +216,7 @@ static inline int nfs_readpage_from_fscache(struct nfs_open_context *ctx,
 					    struct inode *inode,
 					    struct page *page)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 static inline int nfs_readpages_from_fscache(struct nfs_open_context *ctx,
 					     struct inode *inode,
@@ -224,7 +224,7 @@ static inline int nfs_readpages_from_fscache(struct nfs_open_context *ctx,
 					     struct list_head *pages,
 					     unsigned *nr_pages)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 static inline void nfs_readpage_to_fscache(struct inode *inode,
 					   struct page *page, int sync) {}

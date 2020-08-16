@@ -330,7 +330,7 @@ int tipc_msg_fragment(struct sk_buff *skb, const struct tipc_msg *hdr,
 	dsz = msg_size(buf_msg(skb));
 	dmax = pktmax - INT_H_SIZE;
 	if (dsz <= dmax || !dmax)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nof_fragms = dsz / dmax + 1;
 	for (pktno = 1; pktno <= nof_fragms; pktno++) {

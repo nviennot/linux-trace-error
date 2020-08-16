@@ -47,7 +47,7 @@ static int acp3x_power_on(void __iomem *acp3x_base)
 		}
 		udelay(1);
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int acp3x_reset(void __iomem *acp3x_base)
@@ -71,7 +71,7 @@ static int acp3x_reset(void __iomem *acp3x_base)
 			return 0;
 		cpu_relax();
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int acp3x_init(void __iomem *acp3x_base)
@@ -117,7 +117,7 @@ static int snd_acp3x_probe(struct pci_dev *pci,
 
 	if (pci_enable_device(pci)) {
 		dev_err(&pci->dev, "pci_enable_device failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = pci_request_regions(pci, "AMD ACP3x audio");
@@ -227,7 +227,7 @@ static int snd_acp3x_probe(struct pci_dev *pci,
 		break;
 	default:
 		dev_err(&pci->dev, "Invalid ACP audio mode : %d\n", val);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto disable_msi;
 	}
 	pm_runtime_set_autosuspend_delay(&pci->dev, 2000);

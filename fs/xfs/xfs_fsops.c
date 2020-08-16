@@ -40,7 +40,7 @@ xfs_growfs_data_private(
 
 	nb = in->newblocks;
 	if (nb < mp->m_sb.sb_dblocks)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((error = xfs_sb_validate_fsb_count(&mp->m_sb, nb)))
 		return error;
 	error = xfs_buf_read_uncached(mp->m_ddev_targp,
@@ -57,7 +57,7 @@ xfs_growfs_data_private(
 		nagcount--;
 		nb = (xfs_rfsblock_t)nagcount * mp->m_sb.sb_agblocks;
 		if (nb < mp->m_sb.sb_dblocks)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	new = nb - mp->m_sb.sb_dblocks;
 	oagcount = mp->m_sb.sb_agcount;
@@ -177,17 +177,17 @@ xfs_growfs_log_private(
 
 	nb = in->newblocks;
 	if (nb < XFS_MIN_LOG_BLOCKS || nb < XFS_B_TO_FSB(mp, XFS_MIN_LOG_BYTES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (nb == mp->m_sb.sb_logblocks &&
 	    in->isint == (mp->m_sb.sb_logstart != 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Moving the log is hard, need new interfaces to sync
 	 * the log first, hold off all activity while moving it.
 	 * Can have shorter or longer log in the same space,
 	 * or transform internal to external log or vice versa.
 	 */
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static int
@@ -200,7 +200,7 @@ xfs_growfs_imaxpct(
 	int			error;
 
 	if (imaxpct > 100)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_growdata,
 			XFS_GROWFS_SPACE_RES(mp), 0, XFS_TRANS_RESERVE, &tp);
@@ -226,7 +226,7 @@ xfs_growfs_data(
 	int			error = 0;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (!mutex_trylock(&mp->m_growlock))
 		return -EWOULDBLOCK;
 
@@ -273,7 +273,7 @@ xfs_growfs_log(
 	int error;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (!mutex_trylock(&mp->m_growlock))
 		return -EWOULDBLOCK;
 	error = xfs_growfs_log_private(mp, in);
@@ -330,7 +330,7 @@ xfs_reserve_blocks(
 	/* If inval is null, report current values and return */
 	if (inval == (uint64_t *)NULL) {
 		if (!outval)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		outval->resblks = mp->m_resblks;
 		outval->resblks_avail = mp->m_resblks_avail;
 		return 0;
@@ -377,7 +377,7 @@ xfs_reserve_blocks(
 	 * blocks before we update the reserve counters. Sample m_fdblocks and
 	 * perform a partial reservation if the request exceeds free space.
 	 */
-	error = -ENOSPC;
+	error = -ERR(ENOSPC);
 	do {
 		free = percpu_counter_sum(&mp->m_fdblocks) -
 						mp->m_alloc_set_aside;
@@ -450,7 +450,7 @@ xfs_fs_goingdown(
 				SHUTDOWN_FORCE_UMOUNT | SHUTDOWN_LOG_IO_ERROR);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

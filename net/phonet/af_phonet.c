@@ -56,7 +56,7 @@ static int pn_socket_create(struct net *net, struct socket *sock, int protocol,
 	int err;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (protocol == 0) {
 		/* Default protocol selection */
@@ -68,7 +68,7 @@ static int pn_socket_create(struct net *net, struct socket *sock, int protocol,
 			protocol = PN_PROTO_PIPE;
 			break;
 		default:
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 		}
 	}
 
@@ -78,9 +78,9 @@ static int pn_socket_create(struct net *net, struct socket *sock, int protocol,
 		pnp = phonet_proto_get(protocol);
 
 	if (pnp == NULL)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 	if (sock->type != pnp->sock_type) {
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 		goto out;
 	}
 
@@ -153,13 +153,13 @@ static int pn_send(struct sk_buff *skb, struct net_device *dev,
 
 	if (skb->len + 2 > 0xffff /* Phonet length field limit */ ||
 	    skb->len + sizeof(struct phonethdr) > dev->mtu) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto drop;
 	}
 
 	/* Broadcast sending is not implemented */
 	if (pn_addr(dst) == PNADDR_BROADCAST) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto drop;
 	}
 
@@ -182,12 +182,12 @@ static int pn_send(struct sk_buff *skb, struct net_device *dev,
 	if (skb->pkt_type == PACKET_LOOPBACK) {
 		skb_reset_mac_header(skb);
 		skb_orphan(skb);
-		err = (irq ? netif_rx(skb) : netif_rx_ni(skb)) ? -ENOBUFS : 0;
+		err = (irq ? netif_rx(skb) : netif_rx_ni(skb)) ? -ERR(ENOBUFS) : 0;
 	} else {
 		err = dev_hard_header(skb, dev, ntohs(skb->protocol),
 					NULL, NULL, skb->len);
 		if (err < 0) {
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			goto drop;
 		}
 		err = dev_queue_xmit(skb);
@@ -241,7 +241,7 @@ int pn_skb_send(struct sock *sk, struct sk_buff *skb,
 	}
 	daddr = pn_addr(dst);
 
-	err = -EHOSTUNREACH;
+	err = -ERR(EHOSTUNREACH);
 	if (sk->sk_bound_dev_if)
 		dev = dev_get_by_index(net, sk->sk_bound_dev_if);
 	else if (phonet_address_lookup(net, daddr) == 0) {
@@ -462,7 +462,7 @@ int __init_or_module phonet_proto_register(unsigned int protocol,
 	int err = 0;
 
 	if (protocol >= PHONET_NPROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = proto_register(pp->prot, 1);
 	if (err)
@@ -470,7 +470,7 @@ int __init_or_module phonet_proto_register(unsigned int protocol,
 
 	mutex_lock(&proto_tab_lock);
 	if (proto_tab[protocol])
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	else
 		rcu_assign_pointer(proto_tab[protocol], pp);
 	mutex_unlock(&proto_tab_lock);

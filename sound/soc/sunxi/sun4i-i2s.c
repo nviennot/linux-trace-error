@@ -253,7 +253,7 @@ static int sun4i_i2s_get_bclk_div(struct sun4i_i2s *i2s,
 			return bdiv->val;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int sun4i_i2s_get_mclk_div(struct sun4i_i2s *i2s,
@@ -271,7 +271,7 @@ static int sun4i_i2s_get_mclk_div(struct sun4i_i2s *i2s,
 			return mdiv->val;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int sun4i_i2s_oversample_rates[] = { 128, 192, 256, 384, 512, 768 };
@@ -320,7 +320,7 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 
 	default:
 		dev_err(dai->dev, "Unsupported sample rate: %u\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_rate(i2s->mod_clk, clk_rate);
@@ -331,7 +331,7 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 	if (!sun4i_i2s_oversample_is_valid(oversample_rate)) {
 		dev_err(dai->dev, "Unsupported oversample rate: %d\n",
 			oversample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_parent_rate = i2s->variant->get_bclk_parent_rate(i2s);
@@ -339,13 +339,13 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 					  rate, slots, slot_width);
 	if (bclk_div < 0) {
 		dev_err(dai->dev, "Unsupported BCLK divider: %d\n", bclk_div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mclk_div = sun4i_i2s_get_mclk_div(i2s, clk_rate, i2s->mclk_freq);
 	if (mclk_div < 0) {
 		dev_err(dai->dev, "Unsupported MCLK divider: %d\n", mclk_div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(i2s->regmap, SUN4I_I2S_CLK_DIV_REG,
@@ -360,10 +360,10 @@ static int sun4i_i2s_set_clk_rate(struct snd_soc_dai *dai,
 static s8 sun4i_i2s_get_sr(const struct sun4i_i2s *i2s, int width)
 {
 	if (width < 16 || width > 24)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (width % 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return (width - 16) / 4;
 }
@@ -371,10 +371,10 @@ static s8 sun4i_i2s_get_sr(const struct sun4i_i2s *i2s, int width)
 static s8 sun4i_i2s_get_wss(const struct sun4i_i2s *i2s, int width)
 {
 	if (width < 16 || width > 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (width % 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return (width - 16) / 4;
 }
@@ -382,10 +382,10 @@ static s8 sun4i_i2s_get_wss(const struct sun4i_i2s *i2s, int width)
 static s8 sun8i_i2s_get_sr_wss(const struct sun4i_i2s *i2s, int width)
 {
 	if (width % 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (width < 8 || width > 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return (width - 8) / 4 + 1;
 }
@@ -452,7 +452,7 @@ static int sun8i_i2s_set_chan_cfg(const struct sun4i_i2s *i2s,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
@@ -497,17 +497,17 @@ static int sun4i_i2s_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported physical sample width: %d\n",
 			params_physical_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	i2s->playback_dma_data.addr_width = width;
 
 	sr = i2s->variant->get_sr(i2s, word_size);
 	if (sr < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wss = i2s->variant->get_wss(i2s, slot_width);
 	if (wss < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_field_write(i2s->field_fmt_wss, wss);
 	regmap_field_write(i2s->field_fmt_sr, sr);
@@ -540,7 +540,7 @@ static int sun4i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		val = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
@@ -563,7 +563,7 @@ static int sun4i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
@@ -582,7 +582,7 @@ static int sun4i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
 			   SUN4I_I2S_CTRL_MODE_MASK, val);
@@ -620,7 +620,7 @@ static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		val = SUN8I_I2S_FMT0_LRCLK_POLARITY_INVERTED;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_FMT0_REG,
@@ -656,7 +656,7 @@ static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
@@ -681,7 +681,7 @@ static int sun8i_i2s_set_soc_fmt(const struct sun4i_i2s *i2s,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, SUN4I_I2S_CTRL_REG,
@@ -807,7 +807,7 @@ static int sun4i_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -819,7 +819,7 @@ static int sun4i_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	if (clk_id != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	i2s->mclk_freq = freq;
 
@@ -833,7 +833,7 @@ static int sun4i_i2s_set_tdm_slot(struct snd_soc_dai *dai,
 	struct sun4i_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	if (slots > 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	i2s->slots = slots;
 	i2s->slot_width = slot_width;
@@ -1204,7 +1204,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 	i2s->variant = of_device_get_match_data(&pdev->dev);
 	if (!i2s->variant) {
 		dev_err(&pdev->dev, "Failed to determine the quirks to use\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	i2s->bus_clk = devm_clk_get(&pdev->dev, "apb");
@@ -1239,7 +1239,7 @@ static int sun4i_i2s_probe(struct platform_device *pdev)
 		if (ret) {
 			dev_err(&pdev->dev,
 				"Failed to deassert the reset control\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

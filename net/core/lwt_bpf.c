@@ -68,13 +68,13 @@ static int run_lwt_bpf(struct sk_buff *skb, struct bpf_lwt_prog *lwt,
 
 	case BPF_DROP:
 		kfree_skb(skb);
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		break;
 
 	default:
 		pr_warn_once("bpf-lwt: Illegal return value %u, expect packet loss\n", ret);
 		kfree_skb(skb);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -85,7 +85,7 @@ static int run_lwt_bpf(struct sk_buff *skb, struct bpf_lwt_prog *lwt,
 
 static int bpf_lwt_input_reroute(struct sk_buff *skb)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (skb->protocol == htons(ETH_P_IP)) {
 		struct net_device *dev = skb_dst(skb)->dev;
@@ -100,7 +100,7 @@ static int bpf_lwt_input_reroute(struct sk_buff *skb)
 		skb_dst_drop(skb);
 		err = ipv6_stub->ipv6_route_input(skb);
 	} else {
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 	}
 
 	if (err)
@@ -129,7 +129,7 @@ static int bpf_input(struct sk_buff *skb)
 
 	if (unlikely(!dst->lwtstate->orig_input)) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return dst->lwtstate->orig_input(skb);
@@ -152,7 +152,7 @@ static int bpf_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 		pr_warn_once("orig_output not set on dst for prog %s\n",
 			     bpf->out.name);
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return dst->lwtstate->orig_output(net, sk, skb);
@@ -177,7 +177,7 @@ static int bpf_lwt_xmit_reroute(struct sk_buff *skb)
 	struct net_device *l3mdev = l3mdev_master_dev_rcu(skb_dst(skb)->dev);
 	int oif = l3mdev ? l3mdev->ifindex : 0;
 	struct dst_entry *dst = NULL;
-	int err = -EAFNOSUPPORT;
+	int err = -ERR(EAFNOSUPPORT);
 	struct sock *sk;
 	struct net *net;
 	bool ipv4;
@@ -285,7 +285,7 @@ static int bpf_xmit(struct sk_buff *skb)
 			 */
 			if (skb->protocol != proto) {
 				kfree_skb(skb);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			/* If the header was expanded, headroom might be too
 			 * small for L2 header to come, expand as needed.
@@ -344,7 +344,7 @@ static int bpf_parse_prog(struct nlattr *attr, struct bpf_lwt_prog *prog,
 		return ret;
 
 	if (!tb[LWT_BPF_PROG_FD] || !tb[LWT_BPF_PROG_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	prog->name = nla_memdup(tb[LWT_BPF_PROG_NAME], GFP_ATOMIC);
 	if (!prog->name)
@@ -378,7 +378,7 @@ static int bpf_build_state(struct net *net, struct nlattr *nla,
 	int ret;
 
 	if (family != AF_INET && family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	ret = nla_parse_nested_deprecated(tb, LWT_BPF_MAX, nla, bpf_nl_policy,
 					  extack);
@@ -386,7 +386,7 @@ static int bpf_build_state(struct net *net, struct nlattr *nla,
 		return ret;
 
 	if (!tb[LWT_BPF_IN] && !tb[LWT_BPF_OUT] && !tb[LWT_BPF_XMIT])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newts = lwtunnel_state_alloc(sizeof(*bpf));
 	if (!newts)
@@ -423,7 +423,7 @@ static int bpf_build_state(struct net *net, struct nlattr *nla,
 		u32 headroom = nla_get_u32(tb[LWT_BPF_XMIT_HEADROOM]);
 
 		if (headroom > LWT_BPF_MAX_HEADROOM) {
-			ret = -ERANGE;
+			ret = -ERR(ERANGE);
 			goto errout;
 		}
 
@@ -451,11 +451,11 @@ static int bpf_fill_lwt_prog(struct sk_buff *skb, int attr,
 
 	nest = nla_nest_start_noflag(skb, attr);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (prog->name &&
 	    nla_put_string(skb, LWT_BPF_PROG_NAME, prog->name))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return nla_nest_end(skb, nest);
 }
@@ -467,7 +467,7 @@ static int bpf_fill_encap_info(struct sk_buff *skb, struct lwtunnel_state *lwt)
 	if (bpf_fill_lwt_prog(skb, LWT_BPF_IN, &bpf->in) < 0 ||
 	    bpf_fill_lwt_prog(skb, LWT_BPF_OUT, &bpf->out) < 0 ||
 	    bpf_fill_lwt_prog(skb, LWT_BPF_XMIT, &bpf->xmit) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -544,7 +544,7 @@ static int handle_gso_encap(struct sk_buff *skb, bool ipv4, int encap_len)
 	 * So at the moment only TCP GSO packets are let through.
 	 */
 	if (!(skb_shinfo(skb)->gso_type & (SKB_GSO_TCPV4 | SKB_GSO_TCPV6)))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (ipv4) {
 		protocol = ip_hdr(skb)->protocol;
@@ -560,7 +560,7 @@ static int handle_gso_encap(struct sk_buff *skb, bool ipv4, int encap_len)
 	case IPPROTO_GRE:
 		next_hdr_offset += sizeof(struct gre_base_hdr);
 		if (next_hdr_offset > encap_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (((struct gre_base_hdr *)next_hdr)->flags & GRE_CSUM)
 			return handle_gso_type(skb, SKB_GSO_GRE_CSUM,
@@ -570,7 +570,7 @@ static int handle_gso_encap(struct sk_buff *skb, bool ipv4, int encap_len)
 	case IPPROTO_UDP:
 		next_hdr_offset += sizeof(struct udphdr);
 		if (next_hdr_offset > encap_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (((struct udphdr *)next_hdr)->check)
 			return handle_gso_type(skb, SKB_GSO_UDP_TUNNEL_CSUM,
@@ -585,7 +585,7 @@ static int handle_gso_encap(struct sk_buff *skb, bool ipv4, int encap_len)
 			return handle_gso_type(skb, SKB_GSO_IPXIP6, encap_len);
 
 	default:
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 	}
 }
 
@@ -596,20 +596,20 @@ int bpf_lwt_push_ip_encap(struct sk_buff *skb, void *hdr, u32 len, bool ingress)
 	int err;
 
 	if (unlikely(len < sizeof(struct iphdr) || len > LWT_BPF_MAX_HEADROOM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* validate protocol and length */
 	iph = (struct iphdr *)hdr;
 	if (iph->version == 4) {
 		ipv4 = true;
 		if (unlikely(len < iph->ihl * 4))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (iph->version == 6) {
 		ipv4 = false;
 		if (unlikely(len < sizeof(struct ipv6hdr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ingress)

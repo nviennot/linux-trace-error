@@ -150,14 +150,14 @@ static int sprd_platform_compr_dma_config(struct snd_soc_component *component,
 
 	if (!dma_params) {
 		dev_err(dev, "no dma parameters setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma->chan = dma_request_slave_channel(dev,
 					      dma_params->chan_name[channel]);
 	if (!dma->chan) {
 		dev_err(dev, "failed to request dma channel\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sgt = sg = devm_kcalloc(dev, sg_num, sizeof(*sg), GFP_KERNEL);
@@ -192,7 +192,7 @@ static int sprd_platform_compr_dma_config(struct snd_soc_component *component,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto config_err;
 	}
 
@@ -427,7 +427,7 @@ static int sprd_platform_compr_trigger(struct snd_soc_component *component,
 
 	if (cstream->direction != SND_COMPRESS_PLAYBACK) {
 		dev_err(dev, "unsupported compress direction\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cmd) {
@@ -504,7 +504,7 @@ static int sprd_platform_compr_trigger(struct snd_soc_component *component,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -649,7 +649,7 @@ sprd_platform_compr_get_codec_caps(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

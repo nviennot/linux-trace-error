@@ -88,7 +88,7 @@ int ieee80211_parse_ch_switch_ie(struct ieee80211_sub_if_data *sdata,
 		sdata_info(sdata,
 			   "BSS %pM switches to unsupported channel (%d MHz), disconnecting\n",
 			   bssid, new_freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sec_chan_offs) {
@@ -171,7 +171,7 @@ int ieee80211_parse_ch_switch_ie(struct ieee80211_sub_if_data *sdata,
 			sdata_info(sdata,
 				   "BSS %pM: CSA has inconsistent channel data, disconnecting\n",
 				   bssid);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		csa_ie->chandef = new_vht_chandef;
 	}

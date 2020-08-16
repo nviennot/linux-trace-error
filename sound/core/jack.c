@@ -322,7 +322,7 @@ int snd_jack_set_key(struct snd_jack *jack, enum snd_jack_types type,
 	WARN_ON(jack->registered);
 
 	if (!keytype || key >= ARRAY_SIZE(jack->key))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	jack->type |= type;
 	jack->key[key] = keytype;

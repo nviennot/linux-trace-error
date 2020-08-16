@@ -40,7 +40,7 @@ static int channels_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_channels)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
 		return ret;
@@ -90,7 +90,7 @@ static int channels_fill_reply(struct sk_buff *skb,
 			  channels->max_combined) ||
 	      nla_put_u32(skb, ETHTOOL_A_CHANNELS_COMBINED_COUNT,
 			  channels->combined_count))))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -151,7 +151,7 @@ int ethnl_set_channels(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!ops->get_channels || !ops->set_channels)
 		goto out_dev;
 
@@ -188,7 +188,7 @@ int ethnl_set_channels(struct sk_buff *skb, struct genl_info *info)
 	else
 		err_attr = NULL;
 	if (err_attr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		NL_SET_ERR_MSG_ATTR(info->extack, err_attr,
 				    "requested channel count exceeds maximum");
 		goto out_ops;
@@ -204,7 +204,7 @@ int ethnl_set_channels(struct sk_buff *skb, struct genl_info *info)
 	if (err_attr) {
 		if (mod_combined)
 			err_attr = tb[ETHTOOL_A_CHANNELS_COMBINED_COUNT];
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		NL_SET_ERR_MSG_ATTR(info->extack, err_attr, "requested channel counts would result in no RX or TX channel being configured");
 		goto out_ops;
 	}
@@ -216,7 +216,7 @@ int ethnl_set_channels(struct sk_buff *skb, struct genl_info *info)
 	    !ethtool_get_max_rxfh_channel(dev, &max_rx_in_use) &&
 	    (channels.combined_count + channels.rx_count) <= max_rx_in_use) {
 		GENL_SET_ERR_MSG(info, "requested channel counts are too low for existing indirection table settings");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Disabling channels, query zero-copy AF_XDP sockets */
@@ -225,7 +225,7 @@ int ethnl_set_channels(struct sk_buff *skb, struct genl_info *info)
 	for (i = from_channel; i < old_total; i++)
 		if (xdp_get_umem_from_qid(dev, i)) {
 			GENL_SET_ERR_MSG(info, "requested channel counts are too low for existing zerocopy AF_XDP sockets");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 	ret = dev->ethtool_ops->set_channels(dev, &channels);

@@ -142,7 +142,7 @@ static int devpts_ptmx_path(struct path *path)
 	sb = path->mnt->mnt_sb;
 	if ((sb->s_magic != DEVPTS_SUPER_MAGIC) ||
 	    (path->mnt->mnt_root != sb->s_root))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -189,7 +189,7 @@ struct vfsmount *devpts_mntget(struct file *filp, struct pts_fs_info *fsi)
 		if (DEVPTS_SB(path.mnt->mnt_sb) == fsi)
 			return path.mnt;
 
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	}
 
 	mntput(path.mnt);
@@ -276,30 +276,30 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
 		switch (token) {
 		case Opt_uid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			uid = make_kuid(current_user_ns(), option);
 			if (!uid_valid(uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->uid = uid;
 			opts->setuid = 1;
 			break;
 		case Opt_gid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			gid = make_kgid(current_user_ns(), option);
 			if (!gid_valid(gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->gid = gid;
 			opts->setgid = 1;
 			break;
 		case Opt_mode:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->mode = option & S_IALLUGO;
 			break;
 		case Opt_ptmxmode:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->ptmxmode = option & S_IALLUGO;
 			break;
 		case Opt_newinstance:
@@ -307,12 +307,12 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
 		case Opt_max:
 			if (match_int(&args[0], &option) ||
 			    option < 0 || option > NR_UNIX98_PTY_MAX)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->max = option;
 			break;
 		default:
 			pr_err("called with bogus options\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -529,7 +529,7 @@ static struct file_system_type devpts_fs_type = {
 
 int devpts_new_index(struct pts_fs_info *fsi)
 {
-	int index = -ENOSPC;
+	int index = -ERR(ENOSPC);
 
 	if (atomic_inc_return(&pty_count) >= (pty_limit -
 			  (fsi->mount_opts.reserve ? 0 : pty_reserve)))

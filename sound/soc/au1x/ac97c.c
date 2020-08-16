@@ -201,7 +201,7 @@ static const struct snd_soc_dai_ops alchemy_ac97c_ops = {
 
 static int au1xac97c_dai_probe(struct snd_soc_dai *dai)
 {
-	return ac97c_workdata ? 0 : -ENODEV;
+	return ac97c_workdata ? 0 : -ERR(ENODEV);
 }
 
 static struct snd_soc_dai_driver au1xac97c_dai_driver = {
@@ -240,26 +240,26 @@ static int au1xac97c_drvprobe(struct platform_device *pdev)
 
 	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!iores)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!devm_request_mem_region(&pdev->dev, iores->start,
 				     resource_size(iores),
 				     pdev->name))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ctx->mmio = devm_ioremap(&pdev->dev, iores->start,
 					 resource_size(iores));
 	if (!ctx->mmio)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	ctx->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	ctx->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
 	/* switch it on */

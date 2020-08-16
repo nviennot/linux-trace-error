@@ -225,7 +225,7 @@ static int snd_toneport_source_put(struct snd_kcontrol *kcontrol,
 
 	source = ucontrol->value.enumerated.item[0];
 	if (source >= ARRAY_SIZE(toneport_source_info))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (source == toneport->source)
 		return 0;
 

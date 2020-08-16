@@ -542,7 +542,7 @@ int dlm_launch_thread(struct dlm_ctxt *dlm)
 	if (IS_ERR(dlm->dlm_thread_task)) {
 		mlog_errno(PTR_ERR(dlm->dlm_thread_task));
 		dlm->dlm_thread_task = NULL;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

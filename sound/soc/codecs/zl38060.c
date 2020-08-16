@@ -192,7 +192,7 @@ static int zl38_load_firmware(struct device *dev, struct regmap *regmap)
 			/* execution address ihex record */
 			err = zl38_fw_send_xaddr(regmap, rec->data);
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		if (err)
 			goto out;
@@ -239,7 +239,7 @@ static int zl38_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		/* firmware default is normal i2s */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -247,7 +247,7 @@ static int zl38_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		/* firmware default is normal bitclock and frame */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -260,7 +260,7 @@ static int zl38_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			return err;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -294,7 +294,7 @@ static int zl38_hw_params(struct snd_pcm_substream *substream,
 		fsrate = CFG_CLK_FSRATE_48KHZ;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = regmap_update_bits(priv->regmap, REG_TDMA_CFG_CLK,
@@ -467,7 +467,7 @@ static int zl38_check_revision(struct device *dev, struct regmap *regmap)
 	if (fw_major != FIRMWARE_MAJOR || fw_minor < FIRMWARE_MINOR) {
 		dev_err(dev, "unsupported firmware. driver supports %d.%d",
 			FIRMWARE_MAJOR, FIRMWARE_MINOR);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -484,7 +484,7 @@ static int zl38_bus_read(void *context,
 	u8 txbuf[4];
 
 	if (reg_size != 2 || val_size > ZL38_MAX_RAW_XFER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	offs = reg_buf8[1] >> 1;
 	page = reg_buf8[0];
@@ -511,7 +511,7 @@ static int zl38_bus_write(void *context, const void *data, size_t count)
 	u8 offs, page;
 
 	if (count > (2 + ZL38_MAX_RAW_XFER) || count < 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val_len = count - 2;
 	offs = data8[1] >> 1;
 	page = data8[0];

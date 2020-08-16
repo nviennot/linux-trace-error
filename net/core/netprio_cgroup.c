@@ -62,7 +62,7 @@ static int extend_netdev_table(struct net_device *dev, u32 target_idx)
 		new_sz *= 2;
 		/* overflowed? */
 		if (WARN_ON(new_sz < PRIOMAP_MIN_SZ))
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 	}
 
 	/* allocate & copy */
@@ -149,7 +149,7 @@ static int cgrp_css_online(struct cgroup_subsys_state *css)
 	int ret = 0;
 
 	if (css->id > NETPRIO_ID_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (!parent_css)
 		return 0;
@@ -201,11 +201,11 @@ static ssize_t write_priomap(struct kernfs_open_file *of,
 	int ret;
 
 	if (sscanf(buf, "%"__stringify(IFNAMSIZ)"s %u", devname, &prio) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = dev_get_by_name(&init_net, devname);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	cgroup_sk_alloc_disable();
 

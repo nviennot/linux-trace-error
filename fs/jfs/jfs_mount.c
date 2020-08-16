@@ -85,7 +85,7 @@ int jfs_mount(struct super_block *sb)
 	ipaimap = diReadSpecial(sb, AGGREGATE_I, 0);
 	if (ipaimap == NULL) {
 		jfs_err("jfs_mount: Failed to read AGGREGATE_I");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto errout20;
 	}
 	sbi->ipaimap = ipaimap;
@@ -105,7 +105,7 @@ int jfs_mount(struct super_block *sb)
 	 */
 	ipbmap = diReadSpecial(sb, BMAP_I, 0);
 	if (ipbmap == NULL) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto errout22;
 	}
 
@@ -136,7 +136,7 @@ int jfs_mount(struct super_block *sb)
 		ipaimap2 = diReadSpecial(sb, AGGREGATE_I, 1);
 		if (!ipaimap2) {
 			jfs_err("jfs_mount: Failed to read AGGREGATE_I");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto errout35;
 		}
 		sbi->ipaimap2 = ipaimap2;
@@ -165,7 +165,7 @@ int jfs_mount(struct super_block *sb)
 	if (ipimap == NULL) {
 		jfs_err("jfs_mount: Failed to read FILESYSTEM_I");
 		/* open fileset secondary inode allocation map */
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto errout40;
 	}
 	jfs_info("jfs_mount: ipimap:0x%p", ipimap);
@@ -235,7 +235,7 @@ int jfs_mount_rw(struct super_block *sb, int remount)
 	 */
 	if (remount) {
 		if (chkSuper(sb) || (sbi->state != FM_CLEAN))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		truncate_inode_pages(sbi->ipimap->i_mapping, 0);
 		truncate_inode_pages(sbi->ipbmap->i_mapping, 0);
@@ -307,7 +307,7 @@ static int chkSuper(struct super_block *sb)
 	/* validate fs signature */
 	if (strncmp(j_sb->s_magic, JFS_MAGIC, 4) ||
 	    le32_to_cpu(j_sb->s_version) > JFS_VERSION) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -315,7 +315,7 @@ static int chkSuper(struct super_block *sb)
 #ifdef _JFS_4K
 	if (bsize != PSIZE) {
 		jfs_err("Currently only 4K block size supported!");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 #endif				/* _JFS_4K */
@@ -351,7 +351,7 @@ static int chkSuper(struct super_block *sb)
 	if (j_sb->s_state != cpu_to_le32(FM_CLEAN) &&
 	    !sb_rdonly(sb)) {
 		jfs_err("jfs_mount: Mount Failure: File System Dirty.");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -460,7 +460,7 @@ int readSuper(struct super_block *sb, struct buffer_head **bpp)
 	if (*bpp)
 		return 0;
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 

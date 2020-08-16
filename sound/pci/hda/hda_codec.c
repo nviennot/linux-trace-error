@@ -182,7 +182,7 @@ int snd_hda_get_conn_list(struct hda_codec *codec, hda_nid_t nid,
 			return p->len;
 		}
 		if (snd_BUG_ON(added))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = read_and_add_raw_conns(codec, nid);
 		if (err < 0)
@@ -214,7 +214,7 @@ int snd_hda_get_connections(struct hda_codec *codec, hda_nid_t nid,
 		if (len > max_conns) {
 			codec_err(codec, "Too many connections %d for NID 0x%x\n",
 				   len, nid);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		memcpy(conn_list, list, len * sizeof(hda_nid_t));
 	}
@@ -401,7 +401,7 @@ int snd_hda_set_dev_select(struct hda_codec *codec, hda_nid_t nid, int dev_id)
 	 * Device List Length is not predictable
 	 */
 	if (num_devices <= dev_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = snd_hda_codec_write(codec, nid, 0,
 			AC_VERB_SET_DEVICE_SEL, dev_id);
@@ -568,7 +568,7 @@ int snd_hda_codec_set_pin_target(struct hda_codec *codec, hda_nid_t nid,
 
 	pin = look_up_pincfg(codec, &codec->init_pins, nid);
 	if (!pin)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pin->target = val;
 	return 0;
 }
@@ -877,9 +877,9 @@ static int snd_hda_codec_device_init(struct hda_bus *bus, struct snd_card *card,
 	dev_dbg(card->dev, "%s: entry\n", __func__);
 
 	if (snd_BUG_ON(!bus))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(codec_addr > HDA_MAX_CODEC_ADDRESS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	codec = kzalloc(sizeof(*codec), GFP_KERNEL);
 	if (!codec)
@@ -934,9 +934,9 @@ int snd_hda_codec_device_new(struct hda_bus *bus, struct snd_card *card,
 	dev_dbg(card->dev, "%s: entry\n", __func__);
 
 	if (snd_BUG_ON(!bus))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(codec_addr > HDA_MAX_CODEC_ADDRESS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	codec->core.dev.release = snd_hda_codec_dev_release;
 	codec->core.exec_verb = codec_exec_verb;
@@ -1357,7 +1357,7 @@ int snd_hda_codec_amp_init(struct hda_codec *codec, hda_nid_t nid, int ch,
 	unsigned int cmd = encode_amp(codec, nid, ch, dir, idx);
 
 	if (!codec->core.regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_hdac_regmap_update_raw_once(&codec->core, cmd, mask, val);
 }
 EXPORT_SYMBOL_GPL(snd_hda_codec_amp_init);
@@ -1423,7 +1423,7 @@ int snd_hda_mixer_amp_volume_info(struct snd_kcontrol *kcontrol,
 		codec_warn(codec,
 			   "num_steps = 0 for NID=0x%x (ctl = %s)\n",
 			   nid, kcontrol->id.name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1632,7 +1632,7 @@ static int find_empty_mixer_ctl_idx(struct hda_codec *codec, const char *name,
 		if (!find_mixer_ctl(codec, name, 0, idx))
 			return idx;
 	}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /**
@@ -1710,7 +1710,7 @@ int snd_hda_add_nid(struct hda_codec *codec, struct snd_kcontrol *kctl,
 	}
 	codec_err(codec, "no NID for mapping control %s:%d:%d\n",
 		  kctl->id.name, kctl->id.index, index);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(snd_hda_add_nid);
 
@@ -1763,7 +1763,7 @@ int snd_hda_lock_devices(struct hda_bus *bus)
 	card->shutdown = 0;
  err_unlock:
 	spin_unlock(&card->files_lock);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(snd_hda_lock_devices);
 
@@ -1796,7 +1796,7 @@ int snd_hda_codec_reset(struct hda_codec *codec)
 	struct hda_bus *bus = codec->bus;
 
 	if (snd_hda_lock_devices(bus) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* OK, let it free */
 	snd_hdac_device_unregister(&codec->core);
@@ -2219,7 +2219,7 @@ static int snd_hda_spdif_default_get(struct snd_kcontrol *kcontrol,
 	struct hda_spdif_out *spdif;
 
 	if (WARN_ON(codec->spdif_out.used <= idx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->spdif_mutex);
 	spdif = snd_array_elem(&codec->spdif_out, idx);
 	ucontrol->value.iec958.status[0] = spdif->status & 0xff;
@@ -2328,7 +2328,7 @@ static int snd_hda_spdif_default_put(struct snd_kcontrol *kcontrol,
 	int change;
 
 	if (WARN_ON(codec->spdif_out.used <= idx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->spdif_mutex);
 	spdif = snd_array_elem(&codec->spdif_out, idx);
 	nid = spdif->nid;
@@ -2356,7 +2356,7 @@ static int snd_hda_spdif_out_switch_get(struct snd_kcontrol *kcontrol,
 	struct hda_spdif_out *spdif;
 
 	if (WARN_ON(codec->spdif_out.used <= idx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->spdif_mutex);
 	spdif = snd_array_elem(&codec->spdif_out, idx);
 	ucontrol->value.integer.value[0] = spdif->ctls & AC_DIG1_ENABLE;
@@ -2386,7 +2386,7 @@ static int snd_hda_spdif_out_switch_put(struct snd_kcontrol *kcontrol,
 	int change;
 
 	if (WARN_ON(codec->spdif_out.used <= idx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->spdif_mutex);
 	spdif = snd_array_elem(&codec->spdif_out, idx);
 	nid = spdif->nid;
@@ -2478,7 +2478,7 @@ int snd_hda_create_dig_out_ctls(struct hda_codec *codec,
 	idx = find_empty_mixer_ctl_idx(codec, "IEC958 Playback Switch", idx);
 	if (idx < 0) {
 		codec_err(codec, "too many IEC958 outputs\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	spdif = snd_array_new(&codec->spdif_out);
 	if (!spdif)
@@ -2707,7 +2707,7 @@ int snd_hda_create_spdif_in_ctls(struct hda_codec *codec, hda_nid_t nid)
 	idx = find_empty_mixer_ctl_idx(codec, "IEC958 Capture Switch", 0);
 	if (idx < 0) {
 		codec_err(codec, "too many IEC958 inputs\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	for (dig_mix = dig_in_ctls; dig_mix->name; dig_mix++) {
 		kctl = snd_ctl_new1(dig_mix, codec);
@@ -3140,12 +3140,12 @@ static int set_pcm_default_values(struct hda_codec *codec,
 		info->ops.close = hda_pcm_default_open_close;
 	if (info->ops.prepare == NULL) {
 		if (snd_BUG_ON(!info->nid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		info->ops.prepare = hda_pcm_default_prepare;
 	}
 	if (info->ops.cleanup == NULL) {
 		if (snd_BUG_ON(!info->nid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		info->ops.cleanup = hda_pcm_default_cleanup;
 	}
 	return 0;
@@ -3177,7 +3177,7 @@ int snd_hda_codec_prepare(struct hda_codec *codec,
 		ret = hinfo->ops.prepare(hinfo, codec, stream, format,
 					 substream);
 	else
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 	if (ret >= 0)
 		purify_inactive_streams(codec);
 	mutex_unlock(&codec->bus->prepare_mutex);
@@ -3228,7 +3228,7 @@ static int get_empty_pcm_device(struct hda_bus *bus, unsigned int type)
 
 	if (type >= HDA_PCM_NTYPES) {
 		dev_err(bus->card->dev, "Invalid PCM type %d\n", type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; audio_idx[type][i] >= 0; i++) {
@@ -3254,7 +3254,7 @@ static int get_empty_pcm_device(struct hda_bus *bus, unsigned int type)
 	dev_warn(bus->card->dev,
 		 "Consider building the kernel with CONFIG_SND_DYNAMIC_MINORS=y\n");
 #endif
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /* call build_pcms ops of the given codec and set up the default parameters */
@@ -3979,7 +3979,7 @@ int snd_hda_add_imux_item(struct hda_codec *codec,
 	int i, label_idx = 0;
 	if (imux->num_items >= HDA_MAX_NUM_INPUTS) {
 		codec_err(codec, "hda_codec: Too many imux items!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < imux->num_items; i++) {
 		if (!strncmp(label, imux->items[i].label, strlen(label)))

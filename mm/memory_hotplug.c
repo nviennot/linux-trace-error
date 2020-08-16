@@ -114,7 +114,7 @@ static struct resource *register_memory_resource(u64 start, u64 size,
 	 * details.
 	 */
 	if (start + size > max_mem_size && system_state < SYSTEM_RUNNING)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 
 	/*
 	 * Request ownership of the new memory range.  This might be
@@ -127,7 +127,7 @@ static struct resource *register_memory_resource(u64 start, u64 size,
 	if (!res) {
 		pr_debug("Unable to reserve System RAM region: %016llx->%016llx\n",
 				start, start + size);
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 	}
 	return res;
 }
@@ -279,7 +279,7 @@ static int check_pfn_span(unsigned long pfn, unsigned long nr_pages,
 			|| !IS_ALIGNED(nr_pages, min_align)) {
 		WARN(1, "Misaligned __%s_pages start: %#lx end: #%lx\n",
 				reason, pfn, pfn + nr_pages - 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -294,7 +294,7 @@ static int check_hotplug_memory_addressable(unsigned long pfn,
 		WARN(1,
 		     "Hotplugged memory exceeds maximum addressable address, range=%#llx-%#llx, maximum=%#llx\n",
 		     (u64)PFN_PHYS(pfn), max_addr, max_allowed);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	return 0;
@@ -315,7 +315,7 @@ int __ref __add_pages(int nid, unsigned long pfn, unsigned long nr_pages,
 	struct vmem_altmap *altmap = params->altmap;
 
 	if (WARN_ON_ONCE(!params->pgprot.pgprot))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = check_hotplug_memory_addressable(pfn, nr_pages);
 	if (err)
@@ -328,7 +328,7 @@ int __ref __add_pages(int nid, unsigned long pfn, unsigned long nr_pages,
 		if (altmap->base_pfn != pfn
 				|| vmem_altmap_offset(altmap) > nr_pages) {
 			pr_warn_once("memory add fail, invalid altmap\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		altmap->alloc = 0;
 	}
@@ -553,7 +553,7 @@ void __remove_pages(unsigned long pfn, unsigned long nr_pages,
 
 int set_online_page_callback(online_page_callback_t callback)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	get_online_mems();
 	mutex_lock(&online_page_callback_lock);
@@ -572,7 +572,7 @@ EXPORT_SYMBOL_GPL(set_online_page_callback);
 
 int restore_online_page_callback(online_page_callback_t callback)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	get_online_mems();
 	mutex_lock(&online_page_callback_lock);
@@ -994,7 +994,7 @@ static int check_hotplug_memory_range(u64 start, u64 size)
 	    !IS_ALIGNED(size, memory_block_size_bytes())) {
 		pr_err("Block size [%#lx] unaligned hotplug range: start %#llx, size %#llx",
 		       memory_block_size_bytes(), start, size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1028,7 +1028,7 @@ int __ref add_memory_resource(int nid, struct resource *res)
 
 	if (!node_possible(nid)) {
 		WARN(1, "node %d was absent from the node_possible_map\n", nid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mem_hotplug_begin();
@@ -1148,7 +1148,7 @@ int add_memory_driver_managed(int nid, u64 start, u64 size,
 	if (!resource_name ||
 	    strstr(resource_name, "System RAM (") != resource_name ||
 	    resource_name[strlen(resource_name) - 1] != ')')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_device_hotplug();
 
@@ -1243,7 +1243,7 @@ static int scan_movable_pages(unsigned long start, unsigned long end,
 		 * they could at least be skipped when offlining memory.
 		 */
 		if (PageOffline(page) && page_count(page))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		if (!PageHuge(page))
 			continue;
@@ -1253,7 +1253,7 @@ static int scan_movable_pages(unsigned long start, unsigned long end,
 		skip = compound_nr(head) - (page - head);
 		pfn += skip - 1;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 found:
 	*movable_pfn = pfn;
 	return 0;
@@ -1481,7 +1481,7 @@ static int __ref __offline_pages(unsigned long start_pfn,
 	walk_system_ram_range(start_pfn, end_pfn - start_pfn, &nr_pages,
 			      count_system_ram_pages_cb);
 	if (nr_pages != end_pfn - start_pfn) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		reason = "memory holes";
 		goto failed_removal;
 	}
@@ -1490,7 +1490,7 @@ static int __ref __offline_pages(unsigned long start_pfn,
 	   we assume this for now. .*/
 	zone = test_pages_in_a_zone(start_pfn, end_pfn);
 	if (!zone) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		reason = "multizone range";
 		goto failed_removal;
 	}
@@ -1521,7 +1521,7 @@ static int __ref __offline_pages(unsigned long start_pfn,
 		pfn = start_pfn;
 		do {
 			if (signal_pending(current)) {
-				ret = -EINTR;
+				ret = -ERR(EINTR);
 				reason = "signal backoff";
 				goto failed_removal_isolated;
 			}
@@ -1633,7 +1633,7 @@ static int check_memblock_offlined_cb(struct memory_block *mem, void *arg)
 		pr_warn("removing memory fails, because memory [%pa-%pa] is onlined\n",
 			&beginpa, &endpa);
 
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	return 0;
 }
@@ -1648,7 +1648,7 @@ static int check_cpu_on_node(pg_data_t *pgdat)
 			 * the cpu on this node isn't removed, and we can't
 			 * offline this node.
 			 */
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -1663,7 +1663,7 @@ static int check_no_memblock_for_node_cb(struct memory_block *mem, void *arg)
 	 * reliable. However, such blocks are always online (e.g., cannot get
 	 * offlined) and, therefore, are still spanned by the node.
 	 */
-	return mem->nid == nid ? -EEXIST : 0;
+	return mem->nid == nid ? -ERR(EEXIST) : 0;
 }
 
 /**
@@ -1817,7 +1817,7 @@ EXPORT_SYMBOL_GPL(remove_memory);
 int offline_and_remove_memory(int nid, u64 start, u64 size)
 {
 	struct memory_block *mem;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (!IS_ALIGNED(start, memory_block_size_bytes()) ||
 	    size != memory_block_size_bytes())

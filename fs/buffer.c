@@ -512,7 +512,7 @@ repeat:
 			spin_unlock(lock);
 			wait_on_buffer(bh);
 			if (!buffer_uptodate(bh))
-				err = -EIO;
+				err = -ERR(EIO);
 			brelse(bh);
 			spin_lock(lock);
 			goto repeat;
@@ -762,7 +762,7 @@ static int fsync_buffers_list(spinlock_t *lock, struct list_head *list)
 		spin_unlock(lock);
 		wait_on_buffer(bh);
 		if (!buffer_uptodate(bh))
-			err = -EIO;
+			err = -ERR(EIO);
 		brelse(bh);
 		spin_lock(lock);
 	}
@@ -1004,7 +1004,7 @@ grow_dev_page(struct block_device *bdev, sector_t block,
 			size);
 	spin_unlock(&inode->i_mapping->private_lock);
 done:
-	ret = (block < end_block) ? 1 : -ENXIO;
+	ret = (block < end_block) ? 1 : -ERR(ENXIO);
 failed:
 	unlock_page(page);
 	put_page(page);
@@ -1037,7 +1037,7 @@ grow_buffers(struct block_device *bdev, sector_t block, int size, gfp_t gfp)
 			"device %pg\n",
 			__func__, (unsigned long long)block,
 			bdev);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* Create a page with the proper size buffers.. */
@@ -2049,7 +2049,7 @@ int __block_write_begin_int(struct page *page, loff_t pos, unsigned len,
 	while(wait_bh > wait) {
 		wait_on_buffer(*--wait_bh);
 		if (!buffer_uptodate(*wait_bh))
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 	if (unlikely(err))
 		page_zero_new_buffers(page, from, to);
@@ -2409,7 +2409,7 @@ static int cont_expand_zero(struct file *file, struct address_space *mapping,
 		balance_dirty_pages_ratelimited(mapping);
 
 		if (fatal_signal_pending(current)) {
-			err = -EINTR;
+			err = -ERR(EINTR);
 			goto out;
 		}
 	}
@@ -2682,7 +2682,7 @@ int nobh_write_begin(struct address_space *mapping,
 		for (bh = head; bh; bh = bh->b_this_page) {
 			wait_on_buffer(bh);
 			if (!buffer_uptodate(bh))
-				ret = -EIO;
+				ret = -ERR(EIO);
 		}
 		if (ret)
 			goto failed;
@@ -2863,7 +2863,7 @@ has_buffers:
 		}
 		lock_page(page);
 		if (!PageUptodate(page)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto unlock;
 		}
 		if (page_has_buffers(page))
@@ -2937,7 +2937,7 @@ int block_truncate_page(struct address_space *mapping,
 		set_buffer_uptodate(bh);
 
 	if (!buffer_uptodate(bh) && !buffer_delay(bh) && !buffer_unwritten(bh)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		ll_rw_block(REQ_OP_READ, 0, 1, &bh);
 		wait_on_buffer(bh);
 		/* Uhhuh. Read error. Complain and punt. */
@@ -3165,7 +3165,7 @@ int __sync_dirty_buffer(struct buffer_head *bh, int op_flags)
 		ret = submit_bh(REQ_OP_WRITE, op_flags, bh);
 		wait_on_buffer(bh);
 		if (!ret && !buffer_uptodate(bh))
-			ret = -EIO;
+			ret = -ERR(EIO);
 	} else {
 		unlock_buffer(bh);
 	}
@@ -3293,7 +3293,7 @@ SYSCALL_DEFINE2(bdflush, int, func, long, data)
 	static int msg_count;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (msg_count < 5) {
 		msg_count++;
@@ -3421,7 +3421,7 @@ int bh_submit_read(struct buffer_head *bh)
 	wait_on_buffer(bh);
 	if (buffer_uptodate(bh))
 		return 0;
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL(bh_submit_read);
 

@@ -726,7 +726,7 @@ xfs_btree_bload_compute_geometry(
 	}
 
 	if (cur->bc_nlevels == XFS_BTREE_MAXLEVELS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	bbl->btree_height = cur->bc_nlevels;
 	if (cur->bc_flags & XFS_BTREE_ROOT_IN_INODE)
@@ -868,7 +868,7 @@ xfs_btree_bload(
 		goto out;
 	if (!list_empty(&buffers_list)) {
 		ASSERT(list_empty(&buffers_list));
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 out:

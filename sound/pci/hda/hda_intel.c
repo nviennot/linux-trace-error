@@ -1063,7 +1063,7 @@ static int azx_resume(struct device *dev)
 		if (pci_enable_msi(chip->pci) < 0)
 			chip->msi = 0;
 	if (azx_acquire_irq(chip, 1) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (chip->driver_caps & AZX_DCAPS_SUSPEND_SPURIOUS_WAKEUP)
 		__azx_runtime_resume(chip, false);
@@ -1164,11 +1164,11 @@ static int azx_runtime_idle(struct device *dev)
 
 	if (!power_save_controller || !azx_has_pm_runtime(chip) ||
 	    azx_bus(chip)->codec_powered || !chip->running)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* ELD notification gets broken when HD-audio bus is off */
 	if (needs_eld_notify_link(chip))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -1886,7 +1886,7 @@ static int azx_first_init(struct azx *chip)
 	bus->remap_addr = pci_ioremap_bar(pci, 0);
 	if (bus->remap_addr == NULL) {
 		dev_err(card->dev, "ioremap error\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (chip->driver_type == AZX_DRIVER_SKL)
@@ -2027,7 +2027,7 @@ static int azx_first_init(struct azx *chip)
 	}
 
 	if (azx_acquire_irq(chip, 0) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	strcpy(card->driver, "HDA-Intel");
 	strlcpy(card->shortname, driver_short_names[chip->driver_type],
@@ -2114,14 +2114,14 @@ static int azx_probe(struct pci_dev *pci,
 
 	if (pci_match_id(driver_blacklist, pci)) {
 		dev_info(&pci->dev, "Skipping the blacklisted device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -2131,7 +2131,7 @@ static int azx_probe(struct pci_dev *pci,
 		err = snd_intel_dsp_driver_probe(pci);
 		if (err != SND_INTEL_DSP_DRIVER_ANY &&
 		    err != SND_INTEL_DSP_DRIVER_LEGACY)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	} else {
 		dev_warn(&pci->dev, "dmic_detect option is deprecated, pass snd-intel-dspcfg.dsp_driver=1 option instead\n");
 	}

@@ -294,7 +294,7 @@ restart:
 		}
 		if (!buffer_dirty(bh)) {
 			if (unlikely(buffer_write_io_error(bh)) && !result)
-				result = -EIO;
+				result = -ERR(EIO);
 			BUFFER_TRACE(bh, "remove from checkpoint");
 			if (__jbd2_journal_remove_checkpoint(jh))
 				/* The transaction was released; we're done */
@@ -355,7 +355,7 @@ restart2:
 			goto restart2;
 		}
 		if (unlikely(buffer_write_io_error(bh)) && !result)
-			result = -EIO;
+			result = -ERR(EIO);
 
 		/*
 		 * Now in whatever state the buffer currently is, we
@@ -399,7 +399,7 @@ int jbd2_cleanup_journal_tail(journal_t *journal)
 	unsigned long	blocknr;
 
 	if (is_journal_aborted(journal))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!jbd2_journal_get_log_tail(journal, &first_tid, &blocknr))
 		return 1;

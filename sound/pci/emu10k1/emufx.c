@@ -360,7 +360,7 @@ static int snd_emu10k1_gpr_ctl_put(struct snd_kcontrol *kcontrol, struct snd_ctl
 			break;
 		case EMU10K1_GPR_TRANSLATION_BASS:
 			if ((ctl->count % 5) != 0 || (ctl->count / 5) != ctl->vcount) {
-				change = -EIO;
+				change = -ERR(EIO);
 				goto __error;
 			}
 			for (j = 0; j < 5; j++)
@@ -368,7 +368,7 @@ static int snd_emu10k1_gpr_ctl_put(struct snd_kcontrol *kcontrol, struct snd_ctl
 			break;
 		case EMU10K1_GPR_TRANSLATION_TREBLE:
 			if ((ctl->count % 5) != 0 || (ctl->count / 5) != ctl->vcount) {
-				change = -EIO;
+				change = -ERR(EIO);
 				goto __error;
 			}
 			for (j = 0; j < 5; j++)
@@ -748,7 +748,7 @@ static int snd_emu10k1_verify_controls(struct snd_emu10k1 *emu,
 		if (err < 0)
 			return err;
 		if (snd_emu10k1_look_for_ctl(emu, &id) == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 	gctl = kmalloc(sizeof(*gctl), GFP_KERNEL);
 	if (! gctl)
@@ -766,13 +766,13 @@ static int snd_emu10k1_verify_controls(struct snd_emu10k1 *emu,
 		down_read(&emu->card->controls_rwsem);
 		if (snd_ctl_find_id(emu->card, gctl_id)) {
 			up_read(&emu->card->controls_rwsem);
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto __error;
 		}
 		up_read(&emu->card->controls_rwsem);
 		if (gctl_id->iface != SNDRV_CTL_ELEM_IFACE_MIXER &&
 		    gctl_id->iface != SNDRV_CTL_ELEM_IFACE_PCM) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto __error;
 		}
 	}
@@ -830,11 +830,11 @@ static int snd_emu10k1_add_controls(struct snd_emu10k1 *emu,
 		gctl_id = (struct snd_ctl_elem_id *)&gctl->id;
 		if (gctl_id->iface != SNDRV_CTL_ELEM_IFACE_MIXER &&
 		    gctl_id->iface != SNDRV_CTL_ELEM_IFACE_PCM) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto __error;
 		}
 		if (!*gctl_id->name) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto __error;
 		}
 		ctl = snd_emu10k1_look_for_ctl(emu, &gctl->id);
@@ -1036,16 +1036,16 @@ static int snd_emu10k1_ipcm_poke(struct snd_emu10k1 *emu,
 	struct snd_emu10k1_fx8010_pcm *pcm;
 
 	if (ipcm->substream >= EMU10K1_FX8010_PCM_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ipcm->substream = array_index_nospec(ipcm->substream,
 					     EMU10K1_FX8010_PCM_COUNT);
 	if (ipcm->channels > 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pcm = &emu->fx8010.pcm[ipcm->substream];
 	mutex_lock(&emu->fx8010.lock);
 	spin_lock_irq(&emu->reg_lock);
 	if (pcm->opened) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto __error;
 	}
 	if (ipcm->channels == 0) {	/* remove */
@@ -1053,7 +1053,7 @@ static int snd_emu10k1_ipcm_poke(struct snd_emu10k1 *emu,
 	} else {
 		/* FIXME: we need to add universal code to the PCM transfer routine */
 		if (ipcm->channels != 2) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto __error;
 		}
 		pcm->valid = 1;
@@ -1084,7 +1084,7 @@ static int snd_emu10k1_ipcm_peek(struct snd_emu10k1 *emu,
 	struct snd_emu10k1_fx8010_pcm *pcm;
 
 	if (ipcm->substream >= EMU10K1_FX8010_PCM_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ipcm->substream = array_index_nospec(ipcm->substream,
 					     EMU10K1_FX8010_PCM_COUNT);
 	pcm = &emu->fx8010.pcm[ipcm->substream];
@@ -1772,7 +1772,7 @@ A_OP(icode, &ptr, iMAC0, A_GPR(var), A_GPR(var), A_GPR(vol), A_EXTIN(input))
 
 	if (gpr > tmp) {
 		snd_BUG();
-		err = -EIO;
+		err = -ERR(EIO);
 		goto __err;
 	}
 	/* clear remaining instruction memory */
@@ -2390,12 +2390,12 @@ static int _snd_emu10k1_init_efx(struct snd_emu10k1 *emu)
 
 	if (gpr > tmp) {
 		snd_BUG();
-		err = -EIO;
+		err = -ERR(EIO);
 		goto __err;
 	}
 	if (i > SND_EMU10K1_GPR_CONTROLS) {
 		snd_BUG();
-		err = -EIO;
+		err = -ERR(EIO);
 		goto __err;
 	}
 	
@@ -2567,7 +2567,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return 0;
 	case SNDRV_EMU10K1_IOCTL_CODE_POKE:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		icode = memdup_user(argp, sizeof(*icode));
 		if (IS_ERR(icode))
@@ -2606,7 +2606,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return res;
 	case SNDRV_EMU10K1_IOCTL_TRAM_SETUP:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (get_user(addr, (unsigned int __user *)argp))
 			return -EFAULT;
 		mutex_lock(&emu->fx8010.lock);
@@ -2615,7 +2615,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return res;
 	case SNDRV_EMU10K1_IOCTL_STOP:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (emu->audigy)
 			snd_emu10k1_ptr_write(emu, A_DBG, 0, emu->fx8010.dbg |= A_DBG_SINGLE_STEP);
 		else
@@ -2623,7 +2623,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return 0;
 	case SNDRV_EMU10K1_IOCTL_CONTINUE:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (emu->audigy)
 			snd_emu10k1_ptr_write(emu, A_DBG, 0, emu->fx8010.dbg = 0);
 		else
@@ -2631,7 +2631,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return 0;
 	case SNDRV_EMU10K1_IOCTL_ZERO_TRAM_COUNTER:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (emu->audigy)
 			snd_emu10k1_ptr_write(emu, A_DBG, 0, emu->fx8010.dbg | A_DBG_ZC);
 		else
@@ -2644,11 +2644,11 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 		return 0;
 	case SNDRV_EMU10K1_IOCTL_SINGLE_STEP:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (get_user(addr, (unsigned int __user *)argp))
 			return -EFAULT;
 		if (addr > 0x1ff)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (emu->audigy)
 			snd_emu10k1_ptr_write(emu, A_DBG, 0, emu->fx8010.dbg |= A_DBG_SINGLE_STEP | addr);
 		else
@@ -2668,7 +2668,7 @@ static int snd_emu10k1_fx8010_ioctl(struct snd_hwdep * hw, struct file *file, un
 			return -EFAULT;
 		return 0;
 	}
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 static int snd_emu10k1_fx8010_release(struct snd_hwdep * hw, struct file *file)

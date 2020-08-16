@@ -120,10 +120,10 @@ static int nci_uart_set_driver(struct tty_struct *tty, unsigned int driver)
 	int ret;
 
 	if (driver >= NCI_UART_DRIVER_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!nci_uart_drivers[driver])
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	nu = kzalloc(sizeof(*nu), GFP_KERNEL);
 	if (!nu)
@@ -144,7 +144,7 @@ static int nci_uart_set_driver(struct tty_struct *tty, unsigned int driver)
 		nu->ops.close(nu);
 		tty->disc_data = NULL;
 		kfree(nu);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	return ret;
 }
@@ -166,7 +166,7 @@ static int nci_uart_tty_open(struct tty_struct *tty)
 	 * hole
 	 */
 	if (!tty->ops->write)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	tty->disc_data = NULL;
 	tty->receive_room = 65536;
@@ -280,7 +280,7 @@ static int nci_uart_tty_ioctl(struct tty_struct *tty, struct file *file,
 		if (!nu)
 			return nci_uart_set_driver(tty, (unsigned int)arg);
 		else
-			return -EBUSY;
+			return -ERR(EBUSY);
 		break;
 	default:
 		err = n_tty_ioctl_helper(tty, file, cmd, arg);
@@ -396,7 +396,7 @@ int nci_uart_register(struct nci_uart *nu)
 {
 	if (!nu || !nu->ops.open ||
 	    !nu->ops.recv || !nu->ops.close)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set the send callback */
 	nu->ops.send = nci_uart_send;
@@ -410,7 +410,7 @@ int nci_uart_register(struct nci_uart *nu)
 	/* Add this driver in the driver list */
 	if (nci_uart_drivers[nu->driver]) {
 		pr_err("driver %d is already registered\n", nu->driver);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	nci_uart_drivers[nu->driver] = nu;
 

@@ -69,7 +69,7 @@ static int dsa_slave_open(struct net_device *dev)
 	int err;
 
 	if (!(master->flags & IFF_UP))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	if (!ether_addr_equal(dev->dev_addr, master->dev_addr)) {
 		err = dev_uc_add(master, dev->dev_addr);
@@ -155,7 +155,7 @@ static int dsa_slave_set_mac_address(struct net_device *dev, void *a)
 	int err;
 
 	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	if (!(dev->flags & IFF_UP))
 		goto out;
@@ -198,7 +198,7 @@ dsa_slave_port_fdb_do_dump(const unsigned char *addr, u16 vid,
 	nlh = nlmsg_put(dump->skb, portid, seq, RTM_NEWNEIGH,
 			sizeof(*ndm), NLM_F_MULTI);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family  = AF_BRIDGE;
@@ -223,7 +223,7 @@ skip:
 
 nla_put_failure:
 	nlmsg_cancel(dump->skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int
@@ -296,7 +296,7 @@ static int dsa_slave_port_attr_set(struct net_device *dev,
 		ret = dsa_port_mrouter(dp->cpu_dp, attr->u.mrouter, trans);
 		break;
 	default:
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		break;
 	}
 
@@ -312,7 +312,7 @@ static int dsa_slave_vlan_add(struct net_device *dev,
 	int err;
 
 	if (obj->orig_dev != dev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (dsa_port_skip_vlan_configuration(dp))
 		return 0;
@@ -352,7 +352,7 @@ static int dsa_slave_port_obj_add(struct net_device *dev,
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		if (obj->orig_dev != dev)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		err = dsa_port_mdb_add(dp, SWITCHDEV_OBJ_PORT_MDB(obj), trans);
 		break;
 	case SWITCHDEV_OBJ_ID_HOST_MDB:
@@ -366,7 +366,7 @@ static int dsa_slave_port_obj_add(struct net_device *dev,
 		err = dsa_slave_vlan_add(dev, obj, trans);
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		break;
 	}
 
@@ -379,7 +379,7 @@ static int dsa_slave_vlan_del(struct net_device *dev,
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 
 	if (obj->orig_dev != dev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (dsa_port_skip_vlan_configuration(dp))
 		return 0;
@@ -399,7 +399,7 @@ static int dsa_slave_port_obj_del(struct net_device *dev,
 	switch (obj->id) {
 	case SWITCHDEV_OBJ_ID_PORT_MDB:
 		if (obj->orig_dev != dev)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		err = dsa_port_mdb_del(dp, SWITCHDEV_OBJ_PORT_MDB(obj));
 		break;
 	case SWITCHDEV_OBJ_ID_HOST_MDB:
@@ -412,7 +412,7 @@ static int dsa_slave_port_obj_del(struct net_device *dev,
 		err = dsa_slave_vlan_del(dev, obj);
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		break;
 	}
 
@@ -431,7 +431,7 @@ static int dsa_slave_get_port_parent_id(struct net_device *dev,
 	 * should be removed with legacy support.
 	 */
 	if (dp->ds->devlink)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ppid->id_len = sizeof(dst->index);
 	memcpy(&ppid->id, &dst->index, ppid->id_len);
@@ -545,7 +545,7 @@ static int dsa_slave_get_regs_len(struct net_device *dev)
 	if (ds->ops->get_regs_len)
 		return ds->ops->get_regs_len(ds, dp->index);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void
@@ -588,7 +588,7 @@ static int dsa_slave_get_eeprom(struct net_device *dev,
 	if (ds->ops->get_eeprom)
 		return ds->ops->get_eeprom(ds, eeprom, data);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int dsa_slave_set_eeprom(struct net_device *dev,
@@ -600,7 +600,7 @@ static int dsa_slave_set_eeprom(struct net_device *dev,
 	if (ds->ops->set_eeprom)
 		return ds->ops->set_eeprom(ds, eeprom, data);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void dsa_slave_get_strings(struct net_device *dev,
@@ -668,7 +668,7 @@ static int dsa_slave_get_sset_count(struct net_device *dev, int sset)
 		return count;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void dsa_slave_get_wol(struct net_device *dev, struct ethtool_wolinfo *w)
@@ -686,7 +686,7 @@ static int dsa_slave_set_wol(struct net_device *dev, struct ethtool_wolinfo *w)
 {
 	struct dsa_port *dp = dsa_slave_to_port(dev);
 	struct dsa_switch *ds = dp->ds;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	phylink_ethtool_set_wol(dp->pl, w);
 
@@ -704,10 +704,10 @@ static int dsa_slave_set_eee(struct net_device *dev, struct ethtool_eee *e)
 
 	/* Port's PHY and MAC both need to be EEE capable */
 	if (!dev->phydev || !dp->pl)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!ds->ops->set_mac_eee)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = ds->ops->set_mac_eee(ds, dp->index, e);
 	if (ret)
@@ -724,10 +724,10 @@ static int dsa_slave_get_eee(struct net_device *dev, struct ethtool_eee *e)
 
 	/* Port's PHY and MAC both need to be EEE capable */
 	if (!dev->phydev || !dp->pl)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!ds->ops->get_mac_eee)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = ds->ops->get_mac_eee(ds, dp->index, e);
 	if (ret)
@@ -820,10 +820,10 @@ static int dsa_slave_get_phys_port_name(struct net_device *dev,
 	 * should be removed with legacy support.
 	 */
 	if (dp->ds->devlink)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (snprintf(name, len, "p%d", dp->index) >= len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -856,19 +856,19 @@ dsa_slave_add_cls_matchall_mirred(struct net_device *dev,
 	int err;
 
 	if (!ds->ops->port_mirror_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!flow_action_basic_hw_stats_check(&cls->rule->action,
 					      cls->common.extack))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	act = &cls->rule->action.entries[0];
 
 	if (!act->dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!dsa_slave_dev_check(act->dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mall_tc_entry = kzalloc(sizeof(*mall_tc_entry), GFP_KERNEL);
 	if (!mall_tc_entry)
@@ -911,24 +911,24 @@ dsa_slave_add_cls_matchall_police(struct net_device *dev,
 	if (!ds->ops->port_policer_add) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Policing offload not implemented");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!ingress) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Only supported on ingress qdisc");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!flow_action_basic_hw_stats_check(&cls->rule->action,
 					      cls->common.extack))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	list_for_each_entry(mall_tc_entry, &p->mall_tc_list, list) {
 		if (mall_tc_entry->type == DSA_PORT_MALL_POLICER) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only one port policer allowed");
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -959,7 +959,7 @@ static int dsa_slave_add_cls_matchall(struct net_device *dev,
 				      struct tc_cls_matchall_offload *cls,
 				      bool ingress)
 {
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 
 	if (cls->common.protocol == htons(ETH_P_ALL) &&
 	    flow_offload_has_one_action(&cls->rule->action) &&
@@ -1007,7 +1007,7 @@ static int dsa_slave_setup_tc_cls_matchall(struct net_device *dev,
 					   bool ingress)
 {
 	if (cls->common.chain_index)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (cls->command) {
 	case TC_CLSMATCHALL_REPLACE:
@@ -1016,7 +1016,7 @@ static int dsa_slave_setup_tc_cls_matchall(struct net_device *dev,
 		dsa_slave_del_cls_matchall(dev, cls);
 		return 0;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 
@@ -1029,7 +1029,7 @@ static int dsa_slave_add_cls_flower(struct net_device *dev,
 	int port = dp->index;
 
 	if (!ds->ops->cls_flower_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->cls_flower_add(ds, port, cls, ingress);
 }
@@ -1043,7 +1043,7 @@ static int dsa_slave_del_cls_flower(struct net_device *dev,
 	int port = dp->index;
 
 	if (!ds->ops->cls_flower_del)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->cls_flower_del(ds, port, cls, ingress);
 }
@@ -1057,7 +1057,7 @@ static int dsa_slave_stats_cls_flower(struct net_device *dev,
 	int port = dp->index;
 
 	if (!ds->ops->cls_flower_stats)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->cls_flower_stats(ds, port, cls, ingress);
 }
@@ -1074,7 +1074,7 @@ static int dsa_slave_setup_tc_cls_flower(struct net_device *dev,
 	case FLOW_CLS_STATS:
 		return dsa_slave_stats_cls_flower(dev, cls, ingress);
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 
@@ -1084,7 +1084,7 @@ static int dsa_slave_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 	struct net_device *dev = cb_priv;
 
 	if (!tc_can_offload(dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (type) {
 	case TC_SETUP_CLSMATCHALL:
@@ -1092,7 +1092,7 @@ static int dsa_slave_setup_tc_block_cb(enum tc_setup_type type, void *type_data,
 	case TC_SETUP_CLSFLOWER:
 		return dsa_slave_setup_tc_cls_flower(dev, type_data, ingress);
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 
@@ -1121,14 +1121,14 @@ static int dsa_slave_setup_tc_block(struct net_device *dev,
 	else if (f->binder_type == FLOW_BLOCK_BINDER_TYPE_CLSACT_EGRESS)
 		cb = dsa_slave_setup_tc_block_cb_eg;
 	else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	f->driver_block_list = &dsa_slave_block_cb_list;
 
 	switch (f->command) {
 	case FLOW_BLOCK_BIND:
 		if (flow_block_cb_is_busy(cb, dev, &dsa_slave_block_cb_list))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		block_cb = flow_block_cb_alloc(cb, dev, dev, NULL);
 		if (IS_ERR(block_cb))
@@ -1140,13 +1140,13 @@ static int dsa_slave_setup_tc_block(struct net_device *dev,
 	case FLOW_BLOCK_UNBIND:
 		block_cb = flow_block_cb_lookup(f->block, cb, dev);
 		if (!block_cb)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		flow_block_cb_remove(block_cb, f);
 		list_del(&block_cb->driver_list);
 		return 0;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 
@@ -1160,7 +1160,7 @@ static int dsa_slave_setup_tc(struct net_device *dev, enum tc_setup_type type,
 		return dsa_slave_setup_tc_block(dev, type_data);
 
 	if (!ds->ops->port_setup_tc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->port_setup_tc(ds, dp->index, type, type_data);
 }
@@ -1200,7 +1200,7 @@ static int dsa_slave_get_rxnfc(struct net_device *dev,
 	struct dsa_switch *ds = dp->ds;
 
 	if (!ds->ops->get_rxnfc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->get_rxnfc(ds, dp->index, nfc, rule_locs);
 }
@@ -1212,7 +1212,7 @@ static int dsa_slave_set_rxnfc(struct net_device *dev,
 	struct dsa_switch *ds = dp->ds;
 
 	if (!ds->ops->set_rxnfc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->set_rxnfc(ds, dp->index, nfc);
 }
@@ -1224,7 +1224,7 @@ static int dsa_slave_get_ts_info(struct net_device *dev,
 	struct dsa_switch *ds = p->dp->ds;
 
 	if (!ds->ops->get_ts_info)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->get_ts_info(ds, p->dp->index, ts);
 }
@@ -1249,7 +1249,7 @@ static int dsa_slave_vlan_rx_add_vid(struct net_device *dev, __be16 proto,
 		 */
 		ret = br_vlan_get_info(dp->bridge_dev, vid, &info);
 		if (ret == 0)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	ret = dsa_port_vid_add(dp, vid, 0);
@@ -1283,7 +1283,7 @@ static int dsa_slave_vlan_rx_kill_vid(struct net_device *dev, __be16 proto,
 		 */
 		ret = br_vlan_get_info(dp->bridge_dev, vid, &info);
 		if (ret == 0)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	/* Do not deprogram the CPU port as it may be shared with other user
@@ -1418,7 +1418,7 @@ static int dsa_slave_change_mtu(struct net_device *dev, int new_mtu)
 	int err, i;
 
 	if (!ds->ops->port_change_mtu)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	for (i = 0; i < ds->num_ports; i++) {
 		int slave_mtu;
@@ -1451,7 +1451,7 @@ static int dsa_slave_change_mtu(struct net_device *dev, int new_mtu)
 	old_master_mtu = master->mtu;
 	new_master_mtu = largest_mtu + cpu_dp->tag_ops->overhead;
 	if (new_master_mtu > mtu_limit)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* If the master MTU isn't over limit, there's no need to check the CPU
 	 * MTU, since that surely isn't either.
@@ -1608,7 +1608,7 @@ static int dsa_slave_phy_connect(struct net_device *slave_dev, int addr)
 	slave_dev->phydev = mdiobus_get_phy(ds->slave_mii_bus, addr);
 	if (!slave_dev->phydev) {
 		netdev_err(slave_dev, "no phy at %d\n", addr);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return phylink_connect_phy(dp->pl, slave_dev->phydev);
@@ -1894,7 +1894,7 @@ static int dsa_slave_upper_vlan_check(struct net_device *dev,
 	    netif_is_bridge_master(info->upper_dev) && info->linking) {
 		NL_SET_ERR_MSG_MOD(ext_ack,
 				   "Cannot enslave VLAN device into VLAN aware bridge");
-		return notifier_from_errno(-EINVAL);
+		return notifier_from_errno(-ERR(EINVAL));
 	}
 
 	return NOTIFY_DONE;

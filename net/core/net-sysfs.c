@@ -42,7 +42,7 @@ static ssize_t netdev_show(const struct device *dev,
 			   ssize_t (*format)(const struct net_device *, char *))
 {
 	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	read_lock(&dev_base_lock);
 	if (dev_isalive(ndev))
@@ -83,7 +83,7 @@ static ssize_t netdev_store(struct device *dev, struct device_attribute *attr,
 	int ret;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = kstrtoul(buf, 0, &new);
 	if (ret)
@@ -129,7 +129,7 @@ static ssize_t name_assign_type_show(struct device *dev,
 				     char *buf)
 {
 	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (ndev->name_assign_type != NET_NAME_UNKNOWN)
 		ret = netdev_show(dev, attr, buf, format_name_assign_type);
@@ -143,7 +143,7 @@ static ssize_t address_show(struct device *dev, struct device_attribute *attr,
 			    char *buf)
 {
 	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	read_lock(&dev_base_lock);
 	if (dev_isalive(ndev))
@@ -160,14 +160,14 @@ static ssize_t broadcast_show(struct device *dev,
 
 	if (dev_isalive(ndev))
 		return sysfs_format_mac(buf, ndev->broadcast, ndev->addr_len);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static DEVICE_ATTR_RO(broadcast);
 
 static int change_carrier(struct net_device *dev, unsigned long new_carrier)
 {
 	if (!netif_running(dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return dev_change_carrier(dev, (bool)new_carrier);
 }
 
@@ -185,7 +185,7 @@ static ssize_t carrier_show(struct device *dev,
 	if (netif_running(netdev))
 		return sprintf(buf, fmt_dec, !!netif_carrier_ok(netdev));
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static DEVICE_ATTR_RW(carrier);
 
@@ -193,7 +193,7 @@ static ssize_t speed_show(struct device *dev,
 			  struct device_attribute *attr, char *buf)
 {
 	struct net_device *netdev = to_net_dev(dev);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -213,7 +213,7 @@ static ssize_t duplex_show(struct device *dev,
 			   struct device_attribute *attr, char *buf)
 {
 	struct net_device *netdev = to_net_dev(dev);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -251,7 +251,7 @@ static ssize_t testing_show(struct device *dev,
 	if (netif_running(netdev))
 		return sprintf(buf, fmt_dec, !!netif_testing(netdev));
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static DEVICE_ATTR_RO(testing);
 
@@ -263,7 +263,7 @@ static ssize_t dormant_show(struct device *dev,
 	if (netif_running(netdev))
 		return sprintf(buf, fmt_dec, !!netif_dormant(netdev));
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static DEVICE_ATTR_RO(dormant);
 
@@ -290,7 +290,7 @@ static ssize_t operstate_show(struct device *dev,
 	read_unlock(&dev_base_lock);
 
 	if (operstate >= ARRAY_SIZE(operstates))
-		return -EINVAL; /* should not happen */
+		return -ERR(EINVAL); /* should not happen */
 
 	return sprintf(buf, "%s\n", operstates[operstate]);
 }
@@ -359,7 +359,7 @@ static ssize_t tx_queue_len_store(struct device *dev,
 				  const char *buf, size_t len)
 {
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return netdev_store(dev, attr, buf, len, dev_change_tx_queue_len);
 }
@@ -376,7 +376,7 @@ static ssize_t gro_flush_timeout_store(struct device *dev,
 				       const char *buf, size_t len)
 {
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return netdev_store(dev, attr, buf, len, change_gro_flush_timeout);
 }
@@ -393,7 +393,7 @@ static ssize_t napi_defer_hard_irqs_store(struct device *dev,
 					  const char *buf, size_t len)
 {
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return netdev_store(dev, attr, buf, len, change_napi_defer_hard_irqs);
 }
@@ -408,7 +408,7 @@ static ssize_t ifalias_store(struct device *dev, struct device_attribute *attr,
 	ssize_t ret = 0;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* ignore trailing newline */
 	if (len >  0 && buf[len - 1] == '\n')
@@ -475,7 +475,7 @@ static ssize_t phys_port_id_show(struct device *dev,
 				 struct device_attribute *attr, char *buf)
 {
 	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -497,7 +497,7 @@ static ssize_t phys_port_name_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
 	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -519,7 +519,7 @@ static ssize_t phys_switch_id_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
 	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -579,7 +579,7 @@ static ssize_t netstat_show(const struct device *d,
 			    unsigned long offset)
 {
 	struct net_device *dev = to_net_dev(d);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	WARN_ON(offset > sizeof(struct rtnl_link_stats64) ||
 		offset % sizeof(u64) != 0);
@@ -691,7 +691,7 @@ static ssize_t rx_queue_attr_show(struct kobject *kobj, struct attribute *attr,
 	struct netdev_rx_queue *queue = to_rx_queue(kobj);
 
 	if (!attribute->show)
-		return -EIO;
+		return -ERR(EIO);
 
 	return attribute->show(queue, buf);
 }
@@ -703,7 +703,7 @@ static ssize_t rx_queue_attr_store(struct kobject *kobj, struct attribute *attr,
 	struct netdev_rx_queue *queue = to_rx_queue(kobj);
 
 	if (!attribute->store)
-		return -EIO;
+		return -ERR(EIO);
 
 	return attribute->store(queue, buf, count);
 }
@@ -733,7 +733,7 @@ static ssize_t show_rps_map(struct netdev_rx_queue *queue, char *buf)
 	rcu_read_unlock();
 	free_cpumask_var(mask);
 
-	return len < PAGE_SIZE ? len : -EINVAL;
+	return len < PAGE_SIZE ? len : -ERR(EINVAL);
 }
 
 static ssize_t store_rps_map(struct netdev_rx_queue *queue,
@@ -745,7 +745,7 @@ static ssize_t store_rps_map(struct netdev_rx_queue *queue,
 	static DEFINE_MUTEX(rps_map_mutex);
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
 		return -ENOMEM;
@@ -825,7 +825,7 @@ static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
 	int rc;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	rc = kstrtoul(buf, 0, &count);
 	if (rc < 0)
@@ -844,12 +844,12 @@ static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
 		 */
 #if BITS_PER_LONG > 32
 		if (mask > (unsigned long)(u32)mask)
-			return -EINVAL;
+			return -ERR(EINVAL);
 #else
 		if (mask > (ULONG_MAX - RPS_DEV_FLOW_TABLE_SIZE(1))
 				/ sizeof(struct rps_dev_flow)) {
 			/* Enforce a limit to prevent overflow */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 #endif
 		table = vmalloc(RPS_DEV_FLOW_TABLE_SIZE(mask + 1));
@@ -1076,7 +1076,7 @@ static ssize_t netdev_queue_attr_show(struct kobject *kobj,
 	struct netdev_queue *queue = to_netdev_queue(kobj);
 
 	if (!attribute->show)
-		return -EIO;
+		return -ERR(EIO);
 
 	return attribute->show(queue, buf);
 }
@@ -1090,7 +1090,7 @@ static ssize_t netdev_queue_attr_store(struct kobject *kobj,
 	struct netdev_queue *queue = to_netdev_queue(kobj);
 
 	if (!attribute->store)
-		return -EIO;
+		return -ERR(EIO);
 
 	return attribute->store(queue, buf, count);
 }
@@ -1130,7 +1130,7 @@ static ssize_t traffic_class_show(struct netdev_queue *queue,
 	int tc;
 
 	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	index = get_netdev_queue_index(queue);
 
@@ -1139,7 +1139,7 @@ static ssize_t traffic_class_show(struct netdev_queue *queue,
 
 	tc = netdev_txq_to_tc(dev, index);
 	if (tc < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We can report the traffic class one of two ways:
 	 * Subordinate device traffic classes are reported with the traffic
@@ -1167,7 +1167,7 @@ static ssize_t tx_maxrate_store(struct netdev_queue *queue,
 	u32 rate = 0;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = kstrtou32(buf, 10, &rate);
 	if (err < 0)
@@ -1176,7 +1176,7 @@ static ssize_t tx_maxrate_store(struct netdev_queue *queue,
 	if (!rtnl_trylock())
 		return restart_syscall();
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (dev->netdev_ops->ndo_set_tx_maxrate)
 		err = dev->netdev_ops->ndo_set_tx_maxrate(dev, index, rate);
 
@@ -1220,7 +1220,7 @@ static ssize_t bql_set(const char *buf, const size_t count,
 		if (err < 0)
 			return err;
 		if (value > DQL_MAX_LIMIT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	*pvalue = value;
@@ -1314,7 +1314,7 @@ static ssize_t xps_cpus_show(struct netdev_queue *queue,
 	unsigned long index;
 
 	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	index = get_netdev_queue_index(queue);
 
@@ -1322,14 +1322,14 @@ static ssize_t xps_cpus_show(struct netdev_queue *queue,
 		/* Do not allow XPS on subordinate device directly */
 		num_tc = dev->num_tc;
 		if (num_tc < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* If queue belongs to subordinate dev use its map */
 		dev = netdev_get_tx_queue(dev, index)->sb_dev ? : dev;
 
 		tc = netdev_txq_to_tc(dev, index);
 		if (tc < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (!zalloc_cpumask_var(&mask, GFP_KERNEL))
@@ -1358,7 +1358,7 @@ static ssize_t xps_cpus_show(struct netdev_queue *queue,
 
 	len = snprintf(buf, PAGE_SIZE, "%*pb\n", cpumask_pr_args(mask));
 	free_cpumask_var(mask);
-	return len < PAGE_SIZE ? len : -EINVAL;
+	return len < PAGE_SIZE ? len : -ERR(EINVAL);
 }
 
 static ssize_t xps_cpus_store(struct netdev_queue *queue,
@@ -1370,10 +1370,10 @@ static ssize_t xps_cpus_store(struct netdev_queue *queue,
 	int err;
 
 	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
 		return -ENOMEM;
@@ -1409,7 +1409,7 @@ static ssize_t xps_rxqs_show(struct netdev_queue *queue, char *buf)
 		num_tc = dev->num_tc;
 		tc = netdev_txq_to_tc(dev, index);
 		if (tc < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	mask = bitmap_zalloc(dev->num_rx_queues, GFP_KERNEL);
 	if (!mask)
@@ -1442,7 +1442,7 @@ out_no_maps:
 	len = bitmap_print_to_pagebuf(false, buf, mask, dev->num_rx_queues);
 	bitmap_free(mask);
 
-	return len < PAGE_SIZE ? len : -EINVAL;
+	return len < PAGE_SIZE ? len : -ERR(EINVAL);
 }
 
 static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
@@ -1454,7 +1454,7 @@ static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
 	int err;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mask = bitmap_zalloc(dev->num_rx_queues, GFP_KERNEL);
 	if (!mask)

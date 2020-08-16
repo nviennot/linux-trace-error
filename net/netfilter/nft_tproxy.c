@@ -191,30 +191,30 @@ static int nft_tproxy_init(const struct nft_ctx *ctx,
 
 	if (!tb[NFTA_TPROXY_FAMILY] ||
 	    (!tb[NFTA_TPROXY_REG_ADDR] && !tb[NFTA_TPROXY_REG_PORT]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->family = ntohl(nla_get_be32(tb[NFTA_TPROXY_FAMILY]));
 
 	switch (ctx->family) {
 	case NFPROTO_IPV4:
 		if (priv->family != NFPROTO_IPV4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 #if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
 	case NFPROTO_IPV6:
 		if (priv->family != NFPROTO_IPV6)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 #endif
 	case NFPROTO_INET:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* Address is specified but the rule family is not set accordingly */
 	if (priv->family == NFPROTO_UNSPEC && tb[NFTA_TPROXY_REG_ADDR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (priv->family) {
 	case NFPROTO_IPV4:
@@ -243,7 +243,7 @@ static int nft_tproxy_init(const struct nft_ctx *ctx,
 #endif
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (tb[NFTA_TPROXY_REG_ADDR]) {

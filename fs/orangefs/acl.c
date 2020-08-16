@@ -25,7 +25,7 @@ struct posix_acl *orangefs_get_acl(struct inode *inode, int type)
 		break;
 	default:
 		gossip_err("orangefs_get_acl: bogus value of type %d\n", type);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	/*
 	 * Rather than incurring a network call just to determine the exact
@@ -78,7 +78,7 @@ static int __orangefs_set_acl(struct inode *inode, struct posix_acl *acl,
 		break;
 	default:
 		gossip_err("%s: invalid type %d!\n", __func__, type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	gossip_debug(GOSSIP_ACL_DEBUG,
@@ -148,7 +148,7 @@ int orangefs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 		return rc;
 
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

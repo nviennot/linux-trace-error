@@ -80,7 +80,7 @@ int sg_nents_for_len(struct scatterlist *sg, u64 len)
 			return nents;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(sg_nents_for_len);
 
@@ -276,10 +276,10 @@ int __sg_alloc_table(struct sg_table *table, unsigned int nents,
 	memset(table, 0, sizeof(*table));
 
 	if (nents == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #ifdef CONFIG_ARCH_NO_SG_CHAIN
 	if (WARN_ON_ONCE(nents > max_ents))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	left = nents;
@@ -396,7 +396,7 @@ int __sg_alloc_table_from_pages(struct sg_table *sgt, struct page **pages,
 	struct scatterlist *s;
 
 	if (WARN_ON(!max_segment || offset_in_page(max_segment)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* compute number of contiguous chunks */
 	chunks = 1;

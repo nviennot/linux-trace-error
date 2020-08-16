@@ -95,7 +95,7 @@ static int p9_xen_create(struct p9_client *client, const char *addr, char *args)
 	struct xen_9pfs_front_priv *priv;
 
 	if (addr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock(&xen_9pfs_lock);
 	list_for_each_entry(priv, &xen_9pfs_devs, list) {
@@ -106,7 +106,7 @@ static int p9_xen_create(struct p9_client *client, const char *addr, char *args)
 		}
 	}
 	read_unlock(&xen_9pfs_lock);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void p9_xen_close(struct p9_client *client)
@@ -152,7 +152,7 @@ static int p9_xen_request(struct p9_client *client, struct p9_req_t *p9_req)
 	}
 	read_unlock(&xen_9pfs_lock);
 	if (!priv || priv->client != client)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	num = p9_req->tc.tag % priv->num_rings;
 	ring = &priv->rings[num];
@@ -400,12 +400,12 @@ static int xen_9pfs_front_probe(struct xenbus_device *dev,
 		return PTR_ERR(versions);
 	if (strcmp(versions, "1")) {
 		kfree(versions);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	kfree(versions);
 	max_rings = xenbus_read_unsigned(dev->otherend, "max-rings", 0);
 	if (max_rings < XEN_9PFS_NUM_RINGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	max_ring_order = xenbus_read_unsigned(dev->otherend,
 					      "max-ring-page-order", 0);
 	if (max_ring_order > XEN_9PFS_RING_ORDER)
@@ -540,7 +540,7 @@ static int p9_trans_xen_init(void)
 	int rc;
 
 	if (!xen_domain())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	pr_info("Initialising Xen transport for 9pfs\n");
 

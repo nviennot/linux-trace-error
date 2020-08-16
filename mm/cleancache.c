@@ -51,7 +51,7 @@ static void cleancache_register_ops_sb(struct super_block *sb, void *unused)
 int cleancache_register_ops(const struct cleancache_ops *ops)
 {
 	if (cmpxchg(&cleancache_ops, NULL, ops))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * A cleancache backend can be built as a module and hence loaded after

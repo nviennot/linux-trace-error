@@ -80,12 +80,12 @@ int psp_check_tee_status(void);
 static inline int psp_tee_process_cmd(enum tee_cmd_id cmd_id, void *buf,
 				      size_t len, u32 *status)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int psp_check_tee_status(void)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif /* CONFIG_CRYPTO_DEV_SP_PSP */
 #endif /* __PSP_TEE_H_ */

@@ -76,7 +76,7 @@ static int fifo_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		fifo_spdif_dcu_enable(component, false);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -127,7 +127,7 @@ static int fifo_spdif_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported physical width %u\n",
 			params_physical_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIU_MEM_IEC958_CONTROL,

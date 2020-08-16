@@ -693,7 +693,7 @@ int tipc_nl_monitor_set_threshold(struct net *net, u32 cluster_size)
 	struct tipc_net *tn = tipc_net(net);
 
 	if (cluster_size > TIPC_CLUSTER_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tn->mon_threshold = cluster_size;
 
@@ -717,7 +717,7 @@ static int __tipc_nl_add_monitor_peer(struct tipc_peer *peer,
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_MON_PEER_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MON_PEER);
 	if (!attrs)
@@ -758,7 +758,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_add_monitor_peer(struct net *net, struct tipc_nl_msg *msg,
@@ -768,7 +768,7 @@ int tipc_nl_add_monitor_peer(struct net *net, struct tipc_nl_msg *msg,
 	struct tipc_peer *peer;
 
 	if (!mon)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock_bh(&mon->lock);
 	peer = mon->self;
@@ -782,7 +782,7 @@ int tipc_nl_add_monitor_peer(struct net *net, struct tipc_nl_msg *msg,
 		if (__tipc_nl_add_monitor_peer(peer, msg)) {
 			*prev_node = peer->addr;
 			read_unlock_bh(&mon->lock);
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	} while ((peer = peer_nxt(peer)) != mon->self);
 	read_unlock_bh(&mon->lock);
@@ -806,7 +806,7 @@ int __tipc_nl_add_monitor(struct net *net, struct tipc_nl_msg *msg,
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_MON_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MON);
 	if (!attrs)
@@ -837,5 +837,5 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }

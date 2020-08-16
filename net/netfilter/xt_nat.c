@@ -19,7 +19,7 @@ static int xt_nat_checkentry_v0(const struct xt_tgchk_param *par)
 
 	if (mr->rangesize != 1) {
 		pr_info_ratelimited("multiple ranges no longer supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return nf_ct_netns_get(par->net, par->family);
 }

@@ -32,7 +32,7 @@
 /* same as fs/bad_inode.c */
 static int coda_return_EIO(void)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 #define CODA_EIO_ERROR ((void *) (coda_return_EIO))
 
@@ -49,7 +49,7 @@ static struct dentry *coda_lookup(struct inode *dir, struct dentry *entry, unsig
 	if (length > CODA_MAXNAMLEN) {
 		pr_err("name too long: lookup, %s %zu\n",
 		       coda_i2s(dir), length);
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	}
 
 	/* control object, create inode on the fly */
@@ -78,7 +78,7 @@ int coda_permission(struct inode *inode, int mask)
 	int error;
 
 	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	mask &= MAY_READ | MAY_WRITE | MAY_EXEC;
  
@@ -86,7 +86,7 @@ int coda_permission(struct inode *inode, int mask)
 		return 0;
 
 	if ((mask & MAY_EXEC) && !execute_ok(inode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (coda_cache_check(inode, mask))
 		return 0;
@@ -142,7 +142,7 @@ static int coda_create(struct inode *dir, struct dentry *de, umode_t mode, bool 
 	struct coda_vattr attrs;
 
 	if (is_root_inode(dir) && coda_iscontrol(name, length))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = venus_create(dir->i_sb, coda_i2f(dir), name, length, 
 				0, mode, &newfid, &attrs);
@@ -174,7 +174,7 @@ static int coda_mkdir(struct inode *dir, struct dentry *de, umode_t mode)
 	struct CodaFid newfid;
 
 	if (is_root_inode(dir) && coda_iscontrol(name, len))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	attrs.va_mode = mode;
 	error = venus_mkdir(dir->i_sb, coda_i2f(dir), 
@@ -208,7 +208,7 @@ static int coda_link(struct dentry *source_de, struct inode *dir_inode,
 	int error;
 
 	if (is_root_inode(dir_inode) && coda_iscontrol(name, len))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = venus_link(dir_inode->i_sb, coda_i2f(inode),
 			   coda_i2f(dir_inode), (const char *)name, len);
@@ -234,11 +234,11 @@ static int coda_symlink(struct inode *dir_inode, struct dentry *de,
 	int error;
 
 	if (is_root_inode(dir_inode) && coda_iscontrol(name, len))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	symlen = strlen(symname);
 	if (symlen > CODA_MAXPATHLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	/*
 	 * This entry is now negative. Since we do not create
@@ -302,7 +302,7 @@ static int coda_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int error;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = venus_rename(old_dir->i_sb, coda_i2f(old_dir),
 			     coda_i2f(new_dir), old_length, new_length,
@@ -383,14 +383,14 @@ static int coda_venus_readdir(struct file *coda_file, struct dir_context *ctx)
 		if (ret < vdir_size || ret < vdir_size + vdir->d_namlen) {
 			pr_err("%s: short read on %s\n",
 			       __func__, coda_f2s(&cii->c_fid));
-			ret = -EBADF;
+			ret = -ERR(EBADF);
 			break;
 		}
 		/* validate whether the directory file actually makes sense */
 		if (vdir->d_reclen < vdir_size + vdir->d_namlen) {
 			pr_err("%s: invalid dir %s\n",
 			       __func__, coda_f2s(&cii->c_fid));
-			ret = -EBADF;
+			ret = -ERR(EBADF);
 			break;
 		}
 
@@ -430,7 +430,7 @@ static int coda_readdir(struct file *coda_file, struct dir_context *ctx)
 
 	if (host_file->f_op->iterate || host_file->f_op->iterate_shared) {
 		struct inode *host_inode = file_inode(host_file);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		if (!IS_DEADDIR(host_inode)) {
 			if (host_file->f_op->iterate_shared) {
 				inode_lock_shared(host_inode);
@@ -457,7 +457,7 @@ static int coda_dentry_revalidate(struct dentry *de, unsigned int flags)
 	struct coda_inode_info *cii;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	inode = d_inode(de);
 	if (!inode || is_root_inode(inode))
@@ -529,7 +529,7 @@ int coda_revalidate_inode(struct inode *inode)
 	if (cii->c_flags & (C_VATTR | C_PURGE | C_FLUSH)) {
 		error = venus_getattr(inode->i_sb, &(cii->c_fid), &attr);
 		if (error)
-			return -EIO;
+			return -ERR(EIO);
 
 		/* this inode may be lost if:
 		   - it's ino changed 
@@ -548,7 +548,7 @@ int coda_revalidate_inode(struct inode *inode)
 		/* the following can happen when a local fid is replaced 
 		   with a global one, here we lose and declare the inode bad */
 		if (inode->i_ino != old_ino)
-			return -EIO;
+			return -ERR(EIO);
 		
 		coda_flag_inode_children(inode, C_FLUSH);
 

@@ -43,7 +43,7 @@ static int daca_init_client(struct pmac_keywest *i2c)
 	/* GCFG: power amp inverted, DAC on */
 	if (i2c_smbus_write_byte_data(i2c->client, DACA_REG_SR, 0x08) < 0 ||
 	    i2c_smbus_write_byte_data(i2c->client, DACA_REG_GCFG, 0x05) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return i2c_smbus_write_block_data(i2c->client, DACA_REG_AVOL,
 					  2, (unsigned char*)&wdata);
 }
@@ -56,7 +56,7 @@ static int daca_set_volume(struct pmac_daca *mix)
 	unsigned char data[2];
   
 	if (! mix->i2c.client)
-		return -ENODEV;
+		return -ERR(ENODEV);
   
 	if (mix->left_vol > DACA_VOL_MAX)
 		data[0] = DACA_VOL_MAX;
@@ -70,7 +70,7 @@ static int daca_set_volume(struct pmac_daca *mix)
 	if (i2c_smbus_write_block_data(mix->i2c.client, DACA_REG_AVOL,
 				       2, data) < 0) {
 		snd_printk(KERN_ERR "failed to set volume \n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -85,7 +85,7 @@ static int daca_get_deemphasis(struct snd_kcontrol *kcontrol,
 	struct snd_pmac *chip = snd_kcontrol_chip(kcontrol);
 	struct pmac_daca *mix;
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	ucontrol->value.integer.value[0] = mix->deemphasis ? 1 : 0;
 	return 0;
 }
@@ -98,7 +98,7 @@ static int daca_put_deemphasis(struct snd_kcontrol *kcontrol,
 	int change;
 
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	change = mix->deemphasis != ucontrol->value.integer.value[0];
 	if (change) {
 		mix->deemphasis = !!ucontrol->value.integer.value[0];
@@ -124,7 +124,7 @@ static int daca_get_volume(struct snd_kcontrol *kcontrol,
 	struct snd_pmac *chip = snd_kcontrol_chip(kcontrol);
 	struct pmac_daca *mix;
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	ucontrol->value.integer.value[0] = mix->left_vol;
 	ucontrol->value.integer.value[1] = mix->right_vol;
 	return 0;
@@ -139,11 +139,11 @@ static int daca_put_volume(struct snd_kcontrol *kcontrol,
 	int change;
 
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	vol[0] = ucontrol->value.integer.value[0];
 	vol[1] = ucontrol->value.integer.value[1];
 	if (vol[0] > DACA_VOL_MAX || vol[1] > DACA_VOL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = mix->left_vol != vol[0] ||
 		mix->right_vol != vol[1];
 	if (change) {
@@ -163,7 +163,7 @@ static int daca_get_amp(struct snd_kcontrol *kcontrol,
 	struct snd_pmac *chip = snd_kcontrol_chip(kcontrol);
 	struct pmac_daca *mix;
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	ucontrol->value.integer.value[0] = mix->amp_on ? 1 : 0;
 	return 0;
 }
@@ -176,7 +176,7 @@ static int daca_put_amp(struct snd_kcontrol *kcontrol,
 	int change;
 
 	if (! (mix = chip->mixer_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	change = mix->amp_on != ucontrol->value.integer.value[0];
 	if (change) {
 		mix->amp_on = !!ucontrol->value.integer.value[0];

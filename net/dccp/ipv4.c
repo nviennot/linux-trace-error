@@ -50,10 +50,10 @@ int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	dp->dccps_role = DCCP_ROLE_CLIENT;
 
 	if (addr_len < sizeof(struct sockaddr_in))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin_family != AF_INET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	nexthop = daddr = usin->sin_addr.s_addr;
 
@@ -61,7 +61,7 @@ int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 					     lockdep_sock_is_held(sk));
 	if (inet_opt != NULL && inet_opt->opt.srr) {
 		if (daddr == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nexthop = inet_opt->opt.faddr;
 	}
 
@@ -77,7 +77,7 @@ int dccp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 
 	if (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) {
 		ip_rt_put(rt);
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 	}
 
 	if (inet_opt == NULL || !inet_opt->opt.srr)
@@ -163,7 +163,7 @@ static inline void dccp_do_pmtu_discovery(struct sock *sk,
 	 * for the case, if this connection will not able to recover.
 	 */
 	if (mtu < dst_mtu(dst) && ip_dont_fragment(sk, dst))
-		sk->sk_err_soft = EMSGSIZE;
+		sk->sk_err_soft = ERR(EMSGSIZE);
 
 	mtu = dst_mtu(dst);
 
@@ -255,7 +255,7 @@ static int dccp_v4_err(struct sk_buff *skb, u32 info)
 				       inet_iif(skb), 0);
 	if (!sk) {
 		__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (sk->sk_state == DCCP_TIME_WAIT) {
@@ -294,7 +294,7 @@ static int dccp_v4_err(struct sk_buff *skb, u32 info)
 		/* Just silently ignore these. */
 		goto out;
 	case ICMP_PARAMETERPROB:
-		err = EPROTO;
+		err = ERR(EPROTO);
 		break;
 	case ICMP_DEST_UNREACH:
 		if (code > NR_ICMP_UNREACH)
@@ -309,7 +309,7 @@ static int dccp_v4_err(struct sk_buff *skb, u32 info)
 		err = icmp_err_convert[code].errno;
 		break;
 	case ICMP_TIME_EXCEEDED:
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		break;
 	default:
 		goto out;
@@ -1014,7 +1014,7 @@ static struct inet_protosw dccp_v4_protosw = {
 static int __net_init dccp_v4_init_net(struct net *net)
 {
 	if (dccp_hashinfo.bhash == NULL)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	return inet_ctl_sock_create(&net->dccp.v4_ctl_sk, PF_INET,
 				    SOCK_DCCP, IPPROTO_DCCP, net);

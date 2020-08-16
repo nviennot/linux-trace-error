@@ -334,7 +334,7 @@ static int svc_rdma_post_chunk_ctxt(struct svc_rdma_chunk_ctxt *cc)
 	int ret;
 
 	if (cc->cc_sqecount > rdma->sc_sq_depth)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	first_wr = NULL;
 	cqe = &cc->cc_cqe;
@@ -372,7 +372,7 @@ static int svc_rdma_post_chunk_ctxt(struct svc_rdma_chunk_ctxt *cc)
 
 	atomic_add(cc->cc_sqecount, &rdma->sc_sq_avail);
 	wake_up(&rdma->sc_send_wait);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 /* Build and DMA-map an SGL that covers one kvec in an xdr_buf
@@ -462,7 +462,7 @@ svc_rdma_build_writes(struct svc_rdma_write_info *info,
 		ret = svc_rdma_rw_ctx_init(rdma, ctxt, seg_offset, seg_handle,
 					   DMA_TO_DEVICE);
 		if (ret < 0)
-			return -EIO;
+			return -ERR(EIO);
 
 		trace_svcrdma_send_wseg(seg_handle, write_len, seg_offset);
 
@@ -483,7 +483,7 @@ svc_rdma_build_writes(struct svc_rdma_write_info *info,
 out_overflow:
 	trace_svcrdma_small_wrch_err(rdma, remaining, info->wi_seg_no,
 				     info->wi_nsegs);
-	return -E2BIG;
+	return -ERR(E2BIG);
 }
 
 /* Send one of an xdr_buf's kvecs by itself. To send a Reply
@@ -666,7 +666,7 @@ static int svc_rdma_build_read_segment(struct svc_rdma_read_info *info,
 	ret = svc_rdma_rw_ctx_init(cc->cc_rdma, ctxt, offset, rkey,
 				   DMA_FROM_DEVICE);
 	if (ret < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	list_add(&ctxt->rw_list, &cc->cc_rwctxts);
 	cc->cc_sqecount += ret;
@@ -674,7 +674,7 @@ static int svc_rdma_build_read_segment(struct svc_rdma_read_info *info,
 
 out_overrun:
 	trace_svcrdma_page_overrun_err(cc->cc_rdma, rqstp, info->ri_pageno);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Walk the segments in the Read chunk starting at @p and construct
@@ -687,7 +687,7 @@ static int svc_rdma_build_read_chunk(struct svc_rqst *rqstp,
 	unsigned int i;
 	int ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	info->ri_chunklen = 0;
 	while (*p++ != xdr_zero && be32_to_cpup(p++) == info->ri_position) {
 		u32 rs_handle, rs_length;

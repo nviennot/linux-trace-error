@@ -21,7 +21,7 @@ static int imx_spdif_audio_probe(struct platform_device *pdev)
 	spdif_np = of_parse_phandle(np, "spdif-controller", 0);
 	if (!spdif_np) {
 		dev_err(&pdev->dev, "failed to find spdif-controller\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto end;
 	}
 

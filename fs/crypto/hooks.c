@@ -44,7 +44,7 @@ int fscrypt_file_open(struct inode *inode, struct file *filp)
 		fscrypt_warn(inode,
 			     "Inconsistent encryption context (parent directory: %lu)",
 			     d_inode(dir)->i_ino);
-		err = -EPERM;
+		err = -ERR(EPERM);
 	}
 	dput(dir);
 	return err;
@@ -62,10 +62,10 @@ int __fscrypt_prepare_link(struct inode *inode, struct inode *dir,
 
 	/* ... in case we looked up ciphertext name before key was added */
 	if (dentry->d_flags & DCACHE_ENCRYPTED_NAME)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	if (!fscrypt_has_permitted_context(dir, inode))
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	return 0;
 }
@@ -88,19 +88,19 @@ int __fscrypt_prepare_rename(struct inode *old_dir, struct dentry *old_dentry,
 	/* ... in case we looked up ciphertext name(s) before key was added */
 	if ((old_dentry->d_flags | new_dentry->d_flags) &
 	    DCACHE_ENCRYPTED_NAME)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	if (old_dir != new_dir) {
 		if (IS_ENCRYPTED(new_dir) &&
 		    !fscrypt_has_permitted_context(new_dir,
 						   d_inode(old_dentry)))
-			return -EXDEV;
+			return -ERR(EXDEV);
 
 		if ((flags & RENAME_EXCHANGE) &&
 		    IS_ENCRYPTED(old_dir) &&
 		    !fscrypt_has_permitted_context(old_dir,
 						   d_inode(new_dentry)))
-			return -EXDEV;
+			return -ERR(EXDEV);
 	}
 	return 0;
 }
@@ -153,13 +153,13 @@ int fscrypt_prepare_setflags(struct inode *inode,
 			return err;
 		ci = inode->i_crypt_info;
 		if (ci->ci_policy.version != FSCRYPT_POLICY_V2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mk = ci->ci_master_key->payload.data[0];
 		down_read(&mk->mk_secret_sem);
 		if (is_master_key_secret_present(&mk->mk_secret))
 			err = fscrypt_derive_dirhash_key(ci, mk);
 		else
-			err = -ENOKEY;
+			err = -ERR(ENOKEY);
 		up_read(&mk->mk_secret_sem);
 		return err;
 	}
@@ -185,7 +185,7 @@ int __fscrypt_prepare_symlink(struct inode *dir, unsigned int len,
 	if (err)
 		return err;
 	if (!fscrypt_has_encryption_key(dir))
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	/*
 	 * Calculate the size of the encrypted symlink and verify it won't
@@ -201,7 +201,7 @@ int __fscrypt_prepare_symlink(struct inode *dir, unsigned int len,
 	if (!fscrypt_fname_encrypted_size(dir, len,
 					  max_len - sizeof(struct fscrypt_symlink_data),
 					  &disk_link->len))
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	disk_link->len += sizeof(struct fscrypt_symlink_data);
 
 	disk_link->name = NULL;
@@ -286,7 +286,7 @@ const char *fscrypt_get_symlink(struct inode *inode, const void *caddr,
 
 	/* This is for encrypted symlinks only */
 	if (WARN_ON(!IS_ENCRYPTED(inode)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* If the decrypted target is already cached, just return it. */
 	pstr.name = READ_ONCE(inode->i_link);
@@ -308,16 +308,16 @@ const char *fscrypt_get_symlink(struct inode *inode, const void *caddr,
 	 */
 
 	if (max_size < sizeof(*sd))
-		return ERR_PTR(-EUCLEAN);
+		return ERR_PTR(-ERR(EUCLEAN));
 	sd = caddr;
 	cstr.name = (unsigned char *)sd->encrypted_path;
 	cstr.len = le16_to_cpu(sd->len);
 
 	if (cstr.len == 0)
-		return ERR_PTR(-EUCLEAN);
+		return ERR_PTR(-ERR(EUCLEAN));
 
 	if (cstr.len + sizeof(*sd) - 1 > max_size)
-		return ERR_PTR(-EUCLEAN);
+		return ERR_PTR(-ERR(EUCLEAN));
 
 	err = fscrypt_fname_alloc_buffer(inode, cstr.len, &pstr);
 	if (err)
@@ -327,7 +327,7 @@ const char *fscrypt_get_symlink(struct inode *inode, const void *caddr,
 	if (err)
 		goto err_kfree;
 
-	err = -EUCLEAN;
+	err = -ERR(EUCLEAN);
 	if (pstr.name[0] == '\0')
 		goto err_kfree;
 

@@ -29,7 +29,7 @@ static ssize_t ieee80211_if_read(
 	ssize_t (*format)(const struct ieee80211_sub_if_data *, char *, int))
 {
 	char buf[200];
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	read_lock(&dev_base_lock);
 	ret = (*format)(sdata, buf, sizeof(buf));
@@ -51,13 +51,13 @@ static ssize_t ieee80211_if_write(
 	ssize_t ret;
 
 	if (count >= sizeof(buf))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (copy_from_user(buf, userbuf, count))
 		return -EFAULT;
 	buf[count] = '\0';
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	rtnl_lock();
 	ret = (*write)(sdata, buf, count);
 	rtnl_unlock();
@@ -247,16 +247,16 @@ static int ieee80211_set_smps(struct ieee80211_sub_if_data *sdata,
 
 	if (!(local->hw.wiphy->features & NL80211_FEATURE_STATIC_SMPS) &&
 	    smps_mode == IEEE80211_SMPS_STATIC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* auto should be dynamic if in PS mode */
 	if (!(local->hw.wiphy->features & NL80211_FEATURE_DYNAMIC_SMPS) &&
 	    (smps_mode == IEEE80211_SMPS_DYNAMIC ||
 	     smps_mode == IEEE80211_SMPS_AUTOMATIC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sdata->vif.type != NL80211_IFTYPE_STATION)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	sdata_lock(sdata);
 	err = __ieee80211_request_smps_mgd(sdata, smps_mode);
@@ -279,7 +279,7 @@ static ssize_t ieee80211_if_fmt_smps(const struct ieee80211_sub_if_data *sdata,
 		return snprintf(buf, buflen, "request: %s\nused: %s\n",
 				smps_modes[sdata->u.mgd.req_smps],
 				smps_modes[sdata->smps_mode]);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static ssize_t ieee80211_if_parse_smps(struct ieee80211_sub_if_data *sdata,
@@ -296,7 +296,7 @@ static ssize_t ieee80211_if_parse_smps(struct ieee80211_sub_if_data *sdata,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 IEEE80211_IF_FILE_RW(smps);
 
@@ -310,10 +310,10 @@ static ssize_t ieee80211_if_parse_tkip_mic_test(
 	__le16 fc;
 
 	if (!mac_pton(buf, addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ieee80211_sdata_running(sdata))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	skb = dev_alloc_skb(local->hw.extra_tx_headroom + 24 + 100);
 	if (!skb)
@@ -338,7 +338,7 @@ static ssize_t ieee80211_if_parse_tkip_mic_test(
 		if (!sdata->u.mgd.associated) {
 			sdata_unlock(sdata);
 			dev_kfree_skb(skb);
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		}
 		memcpy(hdr->addr1, sdata->u.mgd.associated->bssid, ETH_ALEN);
 		memcpy(hdr->addr2, sdata->vif.addr, ETH_ALEN);
@@ -347,7 +347,7 @@ static ssize_t ieee80211_if_parse_tkip_mic_test(
 		break;
 	default:
 		dev_kfree_skb(skb);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	hdr->frame_control = fc;
 
@@ -370,7 +370,7 @@ static ssize_t ieee80211_if_parse_beacon_loss(
 	struct ieee80211_sub_if_data *sdata, const char *buf, int buflen)
 {
 	if (!ieee80211_sdata_running(sdata) || !sdata->vif.bss_conf.assoc)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	ieee80211_beacon_loss(&sdata->vif);
 
@@ -398,7 +398,7 @@ static ssize_t ieee80211_if_parse_uapsd_queues(
 		return ret;
 
 	if (val & ~IEEE80211_WMM_IE_STA_QOSINFO_AC_MASK)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ifmgd->uapsd_queues = val;
 
@@ -423,10 +423,10 @@ static ssize_t ieee80211_if_parse_uapsd_max_sp_len(
 
 	ret = kstrtoul(buf, 0, &val);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val & ~IEEE80211_WMM_IE_STA_QOSINFO_SP_MASK)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ifmgd->uapsd_max_sp_len = val;
 
@@ -547,7 +547,7 @@ static ssize_t ieee80211_if_parse_tsf(
 			else if (buf[0] == '-')
 				tsf_is_delta = -1;
 			else
-				return -EINVAL;
+				return -ERR(EINVAL);
 			buf += 2;
 		}
 		ret = kstrtoull(buf, 10, &tsf);

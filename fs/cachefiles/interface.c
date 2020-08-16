@@ -450,7 +450,7 @@ static int cachefiles_attr_changed(struct fscache_object *_object)
 		return 0;
 
 	if (!object->backer)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ASSERT(d_is_reg(object->backer));
 
@@ -486,7 +486,7 @@ truncate_failed:
 	if (ret == -EIO) {
 		fscache_set_store_limit(&object->fscache, 0);
 		cachefiles_io_error_obj(object, "Size set failed");
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	}
 
 	_leave(" = %d", ret);

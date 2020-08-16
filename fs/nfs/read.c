@@ -274,7 +274,7 @@ static void nfs_readpage_retry(struct rpc_task *task,
 
 	/* For non rpc-based layout drivers, retry-through-MDS */
 	if (!task->tk_ops) {
-		hdr->pnfs_error = -EAGAIN;
+		hdr->pnfs_error = -ERR(EAGAIN);
 		return;
 	}
 
@@ -334,12 +334,12 @@ int nfs_readpage(struct file *file, struct page *page)
 	if (PageUptodate(page))
 		goto out_unlock;
 
-	error = -ESTALE;
+	error = -ERR(ESTALE);
 	if (NFS_STALE(inode))
 		goto out_unlock;
 
 	if (file == NULL) {
-		error = -EBADF;
+		error = -ERR(EBADF);
 		ctx = nfs_find_open_context(inode, NULL, FMODE_READ);
 		if (ctx == NULL)
 			goto out_unlock;
@@ -414,7 +414,7 @@ int nfs_readpages(struct file *filp, struct address_space *mapping,
 	};
 	struct inode *inode = mapping->host;
 	unsigned long npages;
-	int ret = -ESTALE;
+	int ret = -ERR(ESTALE);
 
 	dprintk("NFS: nfs_readpages (%s/%Lu %d)\n",
 			inode->i_sb->s_id,
@@ -428,7 +428,7 @@ int nfs_readpages(struct file *filp, struct address_space *mapping,
 	if (filp == NULL) {
 		desc.ctx = nfs_find_open_context(inode, NULL, FMODE_READ);
 		if (desc.ctx == NULL)
-			return -EBADF;
+			return -ERR(EBADF);
 	} else
 		desc.ctx = get_nfs_open_context(nfs_file_open_context(filp));
 

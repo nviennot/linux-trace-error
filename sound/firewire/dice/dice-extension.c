@@ -161,7 +161,7 @@ int snd_dice_detect_extension_formats(struct snd_dice *dice)
 		for (j = i + 1; j < 9; ++j) {
 			if (pointers[i * 2] == pointers[j * 2]) {
 				// Fallback to limited functionality.
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 				goto end;
 			}
 		}

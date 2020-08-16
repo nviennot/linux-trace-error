@@ -25,7 +25,7 @@ static int sof_nocodec_bes_setup(struct device *dev,
 	int i;
 
 	if (!ops || !links || !card)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set up BE dai_links */
 	for (i = 0; i < link_num; i++) {

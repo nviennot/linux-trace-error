@@ -105,7 +105,7 @@ static int squashfs_bio_read(struct super_block *sb, u64 index, int length,
 			goto out_free_bio;
 		}
 		if (!bio_add_page(bio, page, len, offset)) {
-			error = -EIO;
+			error = -ERR(EIO);
 			goto out_free_bio;
 		}
 		offset = 0;
@@ -161,7 +161,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
 		struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
 
 		if (index + 2 > msblk->bytes_used) {
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out;
 		}
 		res = squashfs_bio_read(sb, index, 2, &bio, &offset);
@@ -169,7 +169,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
 			goto out;
 
 		if (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) {
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out_free_bio;
 		}
 		/* Extract the length of the metadata block */
@@ -179,7 +179,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
 			length |= data[offset + 1] << 8;
 		} else {
 			if (WARN_ON_ONCE(!bio_next_segment(bio, &iter_all))) {
-				res = -EIO;
+				res = -ERR(EIO);
 				goto out_free_bio;
 			}
 			data = page_address(bvec->bv_page) + bvec->bv_offset;
@@ -204,7 +204,7 @@ int squashfs_read_data(struct super_block *sb, u64 index, int length,
 
 	if (compressed) {
 		if (!msblk->stream) {
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out_free_bio;
 		}
 		res = squashfs_decompress(msblk, bio, offset, length, output);

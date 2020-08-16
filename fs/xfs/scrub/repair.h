@@ -8,7 +8,7 @@
 
 static inline int xrep_notsupported(struct xfs_scrub *sc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #ifdef CONFIG_XFS_ONLINE_REPAIR
@@ -66,7 +66,7 @@ static inline int xrep_attempt(
 	struct xfs_inode	*ip,
 	struct xfs_scrub	*sc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void xrep_failure(struct xfs_mount *mp) {}

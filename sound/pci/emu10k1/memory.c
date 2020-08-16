@@ -141,7 +141,7 @@ static int map_memblk(struct snd_emu10k1 *emu, struct snd_emu10k1_memblk *blk)
 		return page;
 	if (page == 0) {
 		dev_err(emu->card->dev, "trying to map zero (reserved) page\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* insert this block in the proper position of mapped list */
 	list_add_tail(&blk->mapped_link, next);
@@ -358,7 +358,7 @@ snd_emu10k1_alloc_pages(struct snd_emu10k1 *emu, struct snd_pcm_substream *subst
 int snd_emu10k1_free_pages(struct snd_emu10k1 *emu, struct snd_util_memblk *blk)
 {
 	if (snd_BUG_ON(!emu || !blk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_emu10k1_synth_free(emu, blk);
 }
 

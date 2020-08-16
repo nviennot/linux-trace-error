@@ -39,6 +39,6 @@ int rxrpc_extract_addr_from_skb(struct sockaddr_rxrpc *srx, struct sk_buff *skb)
 	default:
 		pr_warn_ratelimited("AF_RXRPC: Unknown eth protocol %u\n",
 				    ntohs(skb->protocol));
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 }

@@ -316,7 +316,7 @@ static int set_sample_rate_control(struct snd_soc_component *component, int mclk
 	if (data < 0) {
 		printk(KERN_ERR "%s:Invalid rate %u,%u requested\n",
 				__func__, sample_rate_adc, sample_rate_dac);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_write(component, TLV320AIC23_SRATE, data);
 #ifdef DEBUG
@@ -438,7 +438,7 @@ static int tlv320aic23_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface_reg &= ~TLV320AIC23_MS_MASTER;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 
@@ -459,7 +459,7 @@ static int tlv320aic23_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface_reg |= TLV320AIC23_FOR_LJUST;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 

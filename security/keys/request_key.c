@@ -197,7 +197,7 @@ static int call_sbin_request_key(struct key *authkey, void *aux)
 		/* ret is the exit/wait code */
 		if (test_bit(KEY_FLAG_USER_CONSTRUCT, &key->flags) ||
 		    key_validate(key) < 0)
-			ret = -ENOKEY;
+			ret = -ERR(ENOKEY);
 		else
 			/* ignore any errors from userspace if the key was
 			 * instantiated */
@@ -445,7 +445,7 @@ key_already_present:
 	mutex_unlock(&user->cons_lock);
 	*_key = key;
 	kleave(" = -EINPROGRESS [%d]", key_serial(key));
-	return -EINPROGRESS;
+	return -ERR(EINPROGRESS);
 
 link_check_failed:
 	mutex_unlock(&user->cons_lock);
@@ -484,7 +484,7 @@ static struct key *construct_key_and_link(struct keyring_search_context *ctx,
 	kenter("");
 
 	if (ctx->index_key.type == &key_type_keyring)
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	ret = construct_get_dest_keyring(&dest_keyring);
 	if (ret)
@@ -630,7 +630,7 @@ struct key *request_key_and_link(struct key_type *type,
 	} else  {
 		/* the search failed, but the keyrings were searchable, so we
 		 * should consult userspace if we can */
-		key = ERR_PTR(-ENOKEY);
+		key = ERR_PTR(-ERR(ENOKEY));
 		if (!callout_info)
 			goto error_free;
 
@@ -664,7 +664,7 @@ int wait_for_key_construction(struct key *key, bool intr)
 	ret = wait_on_bit(&key->flags, KEY_FLAG_USER_CONSTRUCT,
 			  intr ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE);
 	if (ret)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	ret = key_read_state(key);
 	if (ret < 0)
 		return ret;
@@ -793,7 +793,7 @@ struct key *request_key_rcu(struct key_type *type,
 	if (IS_ERR(key_ref)) {
 		key = ERR_CAST(key_ref);
 		if (PTR_ERR(key_ref) == -EAGAIN)
-			key = ERR_PTR(-ENOKEY);
+			key = ERR_PTR(-ERR(ENOKEY));
 	} else {
 		key = key_ref_to_ptr(key_ref);
 		cache_requested_key(key);

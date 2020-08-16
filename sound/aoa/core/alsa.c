@@ -20,7 +20,7 @@ int aoa_alsa_init(char *name, struct module *mod, struct device *dev)
 
 	if (aoa_card)
 		/* cannot be EEXIST due to usage in aoa_fabric_register */
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = snd_card_new(dev, index, name, mod, sizeof(struct aoa_card),
 			   &alsa_card);
@@ -87,7 +87,7 @@ int aoa_snd_ctl_add(struct snd_kcontrol* control)
 {
 	int err;
 
-	if (!aoa_card) return -ENODEV;
+	if (!aoa_card) return -ERR(ENODEV);
 
 	err = snd_ctl_add(aoa_card->alsa_card, control);
 	if (err)

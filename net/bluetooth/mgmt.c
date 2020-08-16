@@ -5912,7 +5912,7 @@ static int hci_conn_params_set(struct hci_dev *hdev, bdaddr_t *addr,
 
 	params = hci_conn_params_add(hdev, addr, addr_type);
 	if (!params)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (params->auto_connect == auto_connect)
 		return 0;
@@ -7847,7 +7847,7 @@ static int user_pairing_resp_complete(struct hci_dev *hdev, bdaddr_t *bdaddr,
 
 	cmd = pending_find(opcode, hdev);
 	if (!cmd)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	cmd->cmd_complete(cmd, mgmt_status(status));
 	mgmt_pending_remove(cmd);

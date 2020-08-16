@@ -70,14 +70,14 @@ static int hmm_vma_fault(unsigned long addr, unsigned long end,
 
 	if (required_fault & HMM_NEED_WRITE_FAULT) {
 		if (!(vma->vm_flags & VM_WRITE))
-			return -EPERM;
+			return -ERR(EPERM);
 		fault_flags |= FAULT_FLAG_WRITE;
 	}
 
 	for (; addr < end; addr += PAGE_SIZE)
 		if (handle_mm_fault(vma, addr, fault_flags) & VM_FAULT_ERROR)
 			return -EFAULT;
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static unsigned int hmm_pte_need_fault(const struct hmm_vma_walk *hmm_vma_walk,
@@ -268,7 +268,7 @@ static int hmm_vma_handle_pte(struct mm_walk *walk, unsigned long addr,
 			pte_unmap(ptep);
 			hmm_vma_walk->last = addr;
 			migration_entry_wait(walk->mm, pmdp, addr);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		/* Report error for everything else */
@@ -327,7 +327,7 @@ again:
 		if (hmm_range_need_fault(hmm_vma_walk, hmm_pfns, npages, 0)) {
 			hmm_vma_walk->last = addr;
 			pmd_migration_entry_wait(walk->mm, pmdp);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		return hmm_pfns_fill(start, end, range, 0);
 	}
@@ -569,7 +569,7 @@ int hmm_range_fault(struct hmm_range *range)
 		/* If range is no longer valid force retry. */
 		if (mmu_interval_check_retry(range->notifier,
 					     range->notifier_seq))
-			return -EBUSY;
+			return -ERR(EBUSY);
 		ret = walk_page_range(mm, hmm_vma_walk.last, range->end,
 				      &hmm_walk_ops, &hmm_vma_walk);
 		/*

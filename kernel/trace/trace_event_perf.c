@@ -62,14 +62,14 @@ static int perf_trace_event_perm(struct trace_event_call *tp_event,
 		 * fault handler and its overall trickiness nature.
 		 */
 		if (!p_event->attr.exclude_callchain_user)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Same reason to disable user stack dump as for user space
 		 * callchains above.
 		 */
 		if (p_event->attr.sample_type & PERF_SAMPLE_STACK_USER)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* No tracing, just counting, so no obvious leak */
@@ -218,7 +218,7 @@ int perf_trace_init(struct perf_event *p_event)
 {
 	struct trace_event_call *tp_event;
 	u64 event_id = p_event->attr.config;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	mutex_lock(&event_mutex);
 	list_for_each_entry(tp_event, &ftrace_events, list) {
@@ -259,7 +259,7 @@ int perf_kprobe_init(struct perf_event *p_event, bool is_retprobe)
 			func, u64_to_user_ptr(p_event->attr.kprobe_func),
 			KSYM_NAME_LEN);
 		if (ret == KSYM_NAME_LEN)
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 		if (ret < 0)
 			goto out;
 
@@ -307,16 +307,16 @@ int perf_uprobe_init(struct perf_event *p_event,
 	struct trace_event_call *tp_event;
 
 	if (!p_event->attr.uprobe_path)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	path = strndup_user(u64_to_user_ptr(p_event->attr.uprobe_path),
 			    PATH_MAX);
 	if (IS_ERR(path)) {
 		ret = PTR_ERR(path);
-		return (ret == -EINVAL) ? -E2BIG : ret;
+		return (ret == -ERR(EINVAL)) ? -ERR(E2BIG) : ret;
 	}
 	if (path[0] == '\0') {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -370,7 +370,7 @@ int perf_trace_add(struct perf_event *p_event, int flags)
 
 		pcpu_list = tp_event->perf_events;
 		if (WARN_ON_ONCE(!pcpu_list))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		list = this_cpu_ptr(pcpu_list);
 		hlist_add_head_rcu(&p_event->hlist_entry, list);
@@ -516,6 +516,6 @@ int perf_ftrace_event_register(struct trace_event_call *call,
 		return 1;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_FUNCTION_TRACER */

@@ -38,7 +38,7 @@ static int bfs_readdir(struct file *f, struct dir_context *ctx)
 		printf("Bad f_pos=%08lx for %s:%08lx\n",
 					(unsigned long)ctx->pos,
 					dir->i_sb->s_id, dir->i_ino);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	while (ctx->pos < dir->i_size) {
@@ -92,7 +92,7 @@ static int bfs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 	if (ino > info->si_lasti) {
 		mutex_unlock(&info->bfs_lock);
 		iput(inode);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	set_bit(ino, info->si_imap);
 	info->si_freei--;
@@ -131,7 +131,7 @@ static struct dentry *bfs_lookup(struct inode *dir, struct dentry *dentry,
 	struct bfs_sb_info *info = BFS_SB(dir->i_sb);
 
 	if (dentry->d_name.len > BFS_NAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	mutex_lock(&info->bfs_lock);
 	bh = bfs_find_entry(dir, &dentry->d_name, &de);
@@ -168,7 +168,7 @@ static int bfs_link(struct dentry *old, struct inode *dir,
 
 static int bfs_unlink(struct inode *dir, struct dentry *dentry)
 {
-	int error = -ENOENT;
+	int error = -ERR(ENOENT);
 	struct inode *inode = d_inode(dentry);
 	struct buffer_head *bh;
 	struct bfs_dirent *de;
@@ -207,15 +207,15 @@ static int bfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct buffer_head *old_bh, *new_bh;
 	struct bfs_dirent *old_de, *new_de;
 	struct bfs_sb_info *info;
-	int error = -ENOENT;
+	int error = -ERR(ENOENT);
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_bh = new_bh = NULL;
 	old_inode = d_inode(old_dentry);
 	if (S_ISDIR(old_inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info = BFS_SB(old_inode->i_sb);
 
@@ -225,7 +225,7 @@ static int bfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	if (!old_bh || (le16_to_cpu(old_de->ino) != old_inode->i_ino))
 		goto end_rename;
 
-	error = -EPERM;
+	error = -ERR(EPERM);
 	new_inode = d_inode(new_dentry);
 	new_bh = bfs_find_entry(new_dir, &new_dentry->d_name, &new_de);
 
@@ -276,16 +276,16 @@ static int bfs_add_entry(struct inode *dir, const struct qstr *child, int ino)
 	dprintf("name=%s, namelen=%d\n", name, namelen);
 
 	if (!namelen)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (namelen > BFS_NAMELEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	sblock = BFS_I(dir)->i_sblock;
 	eblock = BFS_I(dir)->i_eblock;
 	for (block = sblock; block <= eblock; block++) {
 		bh = sb_bread(dir->i_sb, block);
 		if (!bh)
-			return -EIO;
+			return -ERR(EIO);
 		for (off = 0; off < BFS_BSIZE; off += BFS_DIRENT_SIZE) {
 			de = (struct bfs_dirent *)(bh->b_data + off);
 			if (!de->ino) {
@@ -307,7 +307,7 @@ static int bfs_add_entry(struct inode *dir, const struct qstr *child, int ino)
 		}
 		brelse(bh);
 	}
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static inline int bfs_namecmp(int len, const unsigned char *name,

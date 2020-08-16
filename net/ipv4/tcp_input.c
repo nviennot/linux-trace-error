@@ -1171,7 +1171,7 @@ static int tcp_match_skb_to_sack(struct sock *sk, struct sk_buff *skb,
 		} else {
 			pkt_len = end_seq - TCP_SKB_CB(skb)->seq;
 			if (pkt_len < mss)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 		/* Round if necessary so that SACKs cover only full MSSes
@@ -4107,15 +4107,15 @@ void tcp_reset(struct sock *sk)
 	/* We want the right error as BSD sees it (and indeed as we do). */
 	switch (sk->sk_state) {
 	case TCP_SYN_SENT:
-		sk->sk_err = ECONNREFUSED;
+		sk->sk_err = ERR(ECONNREFUSED);
 		break;
 	case TCP_CLOSE_WAIT:
-		sk->sk_err = EPIPE;
+		sk->sk_err = ERR(EPIPE);
 		break;
 	case TCP_CLOSE:
 		return;
 	default:
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 	}
 	/* This barrier is coupled with smp_rmb() in tcp_poll() */
 	smp_wmb();

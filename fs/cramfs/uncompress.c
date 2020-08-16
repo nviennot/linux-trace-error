@@ -53,7 +53,7 @@ int cramfs_uncompress_block(void *dst, int dstlen, void *src, int srclen)
 err:
 	pr_err("Error %d while decompressing!\n", err);
 	pr_err("%p(%d)->%p(%d)\n", src, srclen, dst, dstlen);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int cramfs_uncompress_init(void)

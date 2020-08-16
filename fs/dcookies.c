@@ -122,7 +122,7 @@ int get_dcookie(const struct path *path, unsigned long *cookie)
 	mutex_lock(&dcookie_mutex);
 
 	if (!is_live()) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -150,7 +150,7 @@ out:
 static int do_lookup_dcookie(u64 cookie64, char __user *buf, size_t len)
 {
 	unsigned long cookie = (unsigned long)cookie64;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	char * kbuf;
 	char * path;
 	size_t pathlen;
@@ -160,12 +160,12 @@ static int do_lookup_dcookie(u64 cookie64, char __user *buf, size_t len)
 	 * without dir read permission without this
 	 */
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&dcookie_mutex);
 
 	if (!is_live()) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -187,7 +187,7 @@ static int do_lookup_dcookie(u64 cookie64, char __user *buf, size_t len)
 		goto out_free;
 	}
 
-	err = -ERANGE;
+	err = -ERR(ERANGE);
  
 	pathlen = kbuf + PAGE_SIZE - path;
 	if (pathlen <= len) {

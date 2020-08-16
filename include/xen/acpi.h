@@ -72,7 +72,7 @@ static inline int xen_acpi_get_pxm(acpi_handle h)
 		status = acpi_get_parent(handle, &phandle);
 	} while (ACPI_SUCCESS(status));
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 int xen_acpi_notify_hypervisor_sleep(u8 sleep_state,

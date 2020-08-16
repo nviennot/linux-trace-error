@@ -335,7 +335,7 @@ static int wm9705_soc_probe(struct snd_soc_component *component)
 			return PTR_ERR(regmap);
 		}
 	} else {
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	snd_soc_component_set_drvdata(component, wm9705->ac97);

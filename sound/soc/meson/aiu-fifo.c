@@ -70,7 +70,7 @@ int aiu_fifo_trigger(struct snd_pcm_substream *substream, int cmd,
 		aiu_fifo_enable(dai, false);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

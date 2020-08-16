@@ -547,7 +547,7 @@ static int ac97_aux_prepare(struct snd_pcm_substream *substream,
 	snd_soc_component_update_bits(component, AC97_PCI_SID, 0x8000, 0x8000);
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return snd_soc_component_write(component, AC97_PCM_SURR_DAC_RATE, runtime->rate);
 }
@@ -656,7 +656,7 @@ static int wm9712_soc_probe(struct snd_soc_component *component)
 			return PTR_ERR(regmap);
 		}
 	} else {
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	snd_soc_component_init_regmap(component, regmap);

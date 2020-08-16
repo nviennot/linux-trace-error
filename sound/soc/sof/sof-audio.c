@@ -420,7 +420,7 @@ int sof_machine_check(struct snd_sof_dev *sdev)
 
 #if !IS_ENABLED(CONFIG_SND_SOC_SOF_NOCODEC)
 	dev_err(sdev->dev, "error: no matching ASoC machine driver found - aborting probe\n");
-	return -ENODEV;
+	return -ERR(ENODEV);
 #endif
 #if IS_ENABLED(CONFIG_SND_SOC_SOF_FORCE_NOCODEC_MODE)
 nocodec:

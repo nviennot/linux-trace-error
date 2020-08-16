@@ -29,7 +29,7 @@ struct posix_acl *jfs_get_acl(struct inode *inode, int type)
 			ea_name = XATTR_NAME_POSIX_ACL_DEFAULT;
 			break;
 		default:
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	size = __jfs_getxattr(inode, ea_name, NULL, 0);
@@ -69,7 +69,7 @@ static int __jfs_set_acl(tid_t tid, struct inode *inode, int type,
 		ea_name = XATTR_NAME_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (acl) {

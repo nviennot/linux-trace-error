@@ -14,7 +14,7 @@ int bcm47xx_sprom_register_fallbacks(void);
 #else
 static inline int bcm47xx_sprom_register_fallbacks(void)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 };
 #endif
 

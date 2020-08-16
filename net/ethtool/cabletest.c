@@ -29,7 +29,7 @@ static int ethnl_cable_test_started(struct phy_device *phydev, u8 cmd)
 
 	ehdr = ethnl_bcastmsg_put(skb, cmd);
 	if (!ehdr) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -76,7 +76,7 @@ int ethnl_act_cable_test(struct sk_buff *skb, struct genl_info *info)
 
 	dev = req_info.dev;
 	if (!dev->phydev) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_dev_put;
 	}
 
@@ -113,7 +113,7 @@ int ethnl_cable_test_alloc(struct phy_device *phydev, u8 cmd)
 
 	phydev->ehdr = ethnl_bcastmsg_put(phydev->skb, cmd);
 	if (!phydev->ehdr) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -130,7 +130,7 @@ int ethnl_cable_test_alloc(struct phy_device *phydev, u8 cmd)
 	phydev->nest = nla_nest_start(phydev->skb,
 				      ETHTOOL_A_CABLE_TEST_NTF_NEST);
 	if (!phydev->nest) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -163,11 +163,11 @@ EXPORT_SYMBOL_GPL(ethnl_cable_test_finished);
 int ethnl_cable_test_result(struct phy_device *phydev, u8 pair, u8 result)
 {
 	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+	int ret = -ERR(EMSGSIZE);
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_NEST_RESULT);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_RESULT_PAIR, pair))
 		goto err;
@@ -186,12 +186,12 @@ EXPORT_SYMBOL_GPL(ethnl_cable_test_result);
 int ethnl_cable_test_fault_length(struct phy_device *phydev, u8 pair, u32 cm)
 {
 	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+	int ret = -ERR(EMSGSIZE);
 
 	nest = nla_nest_start(phydev->skb,
 			      ETHTOOL_A_CABLE_NEST_FAULT_LENGTH);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_FAULT_LENGTH_PAIR, pair))
 		goto err;
@@ -264,7 +264,7 @@ static int ethnl_act_cable_test_tdr_cfg(const struct nlattr *nest,
 				info->extack,
 				tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_PAIR],
 				"invalid pair parameter");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -272,33 +272,33 @@ static int ethnl_act_cable_test_tdr_cfg(const struct nlattr *nest,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_FIRST],
 				    "invalid first parameter");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cfg->last > MAX_CABLE_LENGTH_CM) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_LAST],
 				    "invalid last parameter");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cfg->first > cfg->last) {
 		NL_SET_ERR_MSG(info->extack, "invalid first/last parameter");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!cfg->step) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP],
 				    "invalid step parameter");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cfg->step > (cfg->last - cfg->first)) {
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[ETHTOOL_A_CABLE_TEST_TDR_CFG_STEP],
 				    "step parameter too big");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -327,7 +327,7 @@ int ethnl_act_cable_test_tdr(struct sk_buff *skb, struct genl_info *info)
 
 	dev = req_info.dev;
 	if (!dev->phydev) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_dev_put;
 	}
 
@@ -360,12 +360,12 @@ int ethnl_cable_test_amplitude(struct phy_device *phydev,
 			       u8 pair, s16 mV)
 {
 	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+	int ret = -ERR(EMSGSIZE);
 
 	nest = nla_nest_start(phydev->skb,
 			      ETHTOOL_A_CABLE_TDR_NEST_AMPLITUDE);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u8(phydev->skb, ETHTOOL_A_CABLE_AMPLITUDE_PAIR, pair))
 		goto err;
@@ -384,11 +384,11 @@ EXPORT_SYMBOL_GPL(ethnl_cable_test_amplitude);
 int ethnl_cable_test_pulse(struct phy_device *phydev, u16 mV)
 {
 	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+	int ret = -ERR(EMSGSIZE);
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_TDR_NEST_PULSE);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u16(phydev->skb, ETHTOOL_A_CABLE_PULSE_mV, mV))
 		goto err;
@@ -406,11 +406,11 @@ int ethnl_cable_test_step(struct phy_device *phydev, u32 first, u32 last,
 			  u32 step)
 {
 	struct nlattr *nest;
-	int ret = -EMSGSIZE;
+	int ret = -ERR(EMSGSIZE);
 
 	nest = nla_nest_start(phydev->skb, ETHTOOL_A_CABLE_TDR_NEST_STEP);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(phydev->skb, ETHTOOL_A_CABLE_STEP_FIRST_DISTANCE,
 			first))

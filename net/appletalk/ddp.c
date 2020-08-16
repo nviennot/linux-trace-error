@@ -282,7 +282,7 @@ static int atif_probe_device(struct atalk_iface *atif)
 	}
 	atif->status &= ~ATIF_PROBE;
 
-	return -EADDRINUSE;	/* Network is full... */
+	return -ERR(EADDRINUSE);	/* Network is full... */
 }
 
 
@@ -328,7 +328,7 @@ static int atif_proxy_probe_device(struct atalk_iface *atif,
 			probe_net = ntohs(atif->nets.nr_firstnet);
 	}
 
-	return -EADDRINUSE;	/* Network is full... */
+	return -ERR(EADDRINUSE);	/* Network is full... */
 }
 
 
@@ -499,7 +499,7 @@ static int atrtr_create(struct rtentry *r, struct net_device *devhint)
 	struct sockaddr_at *ga = (struct sockaddr_at *)&r->rt_gateway;
 	struct atalk_route *rt;
 	struct atalk_iface *iface, *riface;
-	int retval = -EINVAL;
+	int retval = -ERR(EINVAL);
 
 	/*
 	 * Fixme: Raise/Lower a routing change semaphore for these
@@ -543,7 +543,7 @@ static int atrtr_create(struct rtentry *r, struct net_device *devhint)
 		}
 		read_unlock_bh(&atalk_interfaces_lock);
 
-		retval = -ENETUNREACH;
+		retval = -ERR(ENETUNREACH);
 		if (!riface)
 			goto out_unlock;
 
@@ -553,7 +553,7 @@ static int atrtr_create(struct rtentry *r, struct net_device *devhint)
 	if (!rt) {
 		rt = kzalloc(sizeof(*rt), GFP_ATOMIC);
 
-		retval = -ENOBUFS;
+		retval = -ERR(ENOBUFS);
 		if (!rt)
 			goto out_unlock;
 
@@ -594,7 +594,7 @@ static int atrtr_delete(struct atalk_addr *addr)
 		}
 		r = &tmp->next;
 	}
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 out:
 	write_unlock_bh(&atalk_routes_lock);
 	return retval;
@@ -671,7 +671,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 
 	dev = __dev_get_by_name(&init_net, atreq.ifr_name);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	sa = (struct sockaddr_at *)&atreq.ifr_addr;
 	atif = atalk_find_dev(dev);
@@ -679,14 +679,14 @@ static int atif_ioctl(int cmd, void __user *arg)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dev->type != ARPHRD_ETHER &&
 		    dev->type != ARPHRD_LOOPBACK &&
 		    dev->type != ARPHRD_LOCALTLK &&
 		    dev->type != ARPHRD_PPP)
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 
 		nr = (struct atalk_netrange *)&sa->sat_zero[0];
 		add_route = 1;
@@ -710,14 +710,14 @@ static int atif_ioctl(int cmd, void __user *arg)
 		 * EtherTalk phase 1. Anyone wanting to add it go ahead.
 		 */
 		if (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 		if (sa->sat_addr.s_node == ATADDR_BCAST ||
 		    sa->sat_addr.s_node == 254)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (atif) {
 			/* Already setting address */
 			if (atif->status & ATIF_PROBE)
-				return -EBUSY;
+				return -ERR(EBUSY);
 
 			atif->address.s_net  = sa->sat_addr.s_net;
 			atif->address.s_node = sa->sat_addr.s_node;
@@ -738,7 +738,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 		    !(dev->flags & IFF_POINTOPOINT) &&
 		    atif_probe_device(atif) < 0) {
 			atif_drop_device(dev);
-			return -EADDRINUSE;
+			return -ERR(EADDRINUSE);
 		}
 
 		/* Hey it worked - add the direct routes */
@@ -765,7 +765,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 			if (limit - ntohs(nr->nr_firstnet) > 4096) {
 				printk(KERN_WARNING "Too many routes/"
 				       "iface.\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (add_route)
 				for (ct = ntohs(nr->nr_firstnet);
@@ -779,7 +779,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 
 	case SIOCGIFADDR:
 		if (!atif)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 
 		sa->sat_family = AF_APPLETALK;
 		sa->sat_addr = atif->address;
@@ -787,7 +787,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 
 	case SIOCGIFBRDADDR:
 		if (!atif)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 
 		sa->sat_family = AF_APPLETALK;
 		sa->sat_addr.s_net = atif->address.s_net;
@@ -797,23 +797,23 @@ static int atif_ioctl(int cmd, void __user *arg)
 	case SIOCATALKDIFADDR:
 	case SIOCDIFADDR:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		atalk_dev_down(dev);
 		break;
 
 	case SIOCSARP:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * for now, we only support proxy AARP on ELAP;
 		 * we should be able to do it for LocalTalk, too.
 		 */
 		if (dev->type != ARPHRD_ETHER)
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 
 		/*
 		 * atif points to the current interface on this network;
@@ -823,7 +823,7 @@ static int atif_ioctl(int cmd, void __user *arg)
 		 * must exist.
 		 */
 		if (!atif)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 
 		nr = (struct atalk_netrange *)&(atif->nets);
 		/*
@@ -831,18 +831,18 @@ static int atif_ioctl(int cmd, void __user *arg)
 		 * Ethertalk phase 1. Anyone wanting to add it go ahead.
 		 */
 		if (dev->type == ARPHRD_ETHER && nr->nr_phase != 2)
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 
 		if (sa->sat_addr.s_node == ATADDR_BCAST ||
 		    sa->sat_addr.s_node == 254)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Check if the chosen address is used. If so we
 		 * error and ATCP will try another.
 		 */
 		if (atif_proxy_probe_device(atif, &(sa->sat_addr)) < 0)
-			return -EADDRINUSE;
+			return -ERR(EADDRINUSE);
 
 		/*
 		 * We now have an address on the local network, and
@@ -854,11 +854,11 @@ static int atif_ioctl(int cmd, void __user *arg)
 
 	case SIOCDARP:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (sa->sat_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!atif)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 
 		/* give to aarp module to remove proxy entry */
 		aarp_proxy_remove(atif->dev, &(sa->sat_addr));
@@ -881,7 +881,7 @@ static int atrtr_ioctl_addrt(struct rtentry *rt)
 
 		dev = __dev_get_by_name(&init_net, name);
 		if (!dev)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 	return atrtr_create(rt, dev);
 }
@@ -897,14 +897,14 @@ static int atrtr_ioctl(unsigned int cmd, void __user *arg)
 	switch (cmd) {
 	case SIOCDELRT:
 		if (rt.rt_dst.sa_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return atrtr_delete(&((struct sockaddr_at *)
 				      &rt.rt_dst)->sat_addr);
 
 	case SIOCADDRT:
 		return atrtr_ioctl_addrt(&rt);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**************************************************************************\
@@ -1020,10 +1020,10 @@ static int atalk_create(struct net *net, struct socket *sock, int protocol,
 			int kern)
 {
 	struct sock *sk;
-	int rc = -ESOCKTNOSUPPORT;
+	int rc = -ERR(ESOCKTNOSUPPORT);
 
 	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	/*
 	 * We permit SOCK_DGRAM and RAW is an extension. It is trivial to do
@@ -1032,7 +1032,7 @@ static int atalk_create(struct net *net, struct socket *sock, int protocol,
 	if (sock->type != SOCK_RAW && sock->type != SOCK_DGRAM)
 		goto out;
 
-	rc = -EPERM;
+	rc = -ERR(EPERM);
 	if (sock->type == SOCK_RAW && !kern && !capable(CAP_NET_RAW))
 		goto out;
 
@@ -1108,7 +1108,7 @@ static int atalk_pick_and_bind_port(struct sock *sk, struct sockaddr_at *sat)
 try_next_port:;
 	}
 
-	retval = -EBUSY;
+	retval = -ERR(EBUSY);
 out:
 	write_unlock_bh(&atalk_sockets_lock);
 	return retval;
@@ -1119,7 +1119,7 @@ static int atalk_autobind(struct sock *sk)
 	struct atalk_sock *at = at_sk(sk);
 	struct sockaddr_at sat;
 	struct atalk_addr *ap = atalk_find_primary();
-	int n = -EADDRNOTAVAIL;
+	int n = -ERR(EADDRNOTAVAIL);
 
 	if (!ap || ap->s_net == htons(ATADDR_ANYNET))
 		goto out;
@@ -1144,23 +1144,23 @@ static int atalk_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 
 	if (!sock_flag(sk, SOCK_ZAPPED) ||
 	    addr_len != sizeof(struct sockaddr_at))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr->sat_family != AF_APPLETALK)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	lock_sock(sk);
 	if (addr->sat_addr.s_net == htons(ATADDR_ANYNET)) {
 		struct atalk_addr *ap = atalk_find_primary();
 
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		if (!ap)
 			goto out;
 
 		at->src_net  = addr->sat_addr.s_net = ap->s_net;
 		at->src_node = addr->sat_addr.s_node = ap->s_node;
 	} else {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		if (!atalk_find_interface(addr->sat_addr.s_net,
 					  addr->sat_addr.s_node))
 			goto out;
@@ -1177,7 +1177,7 @@ static int atalk_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	} else {
 		at->src_port = addr->sat_port;
 
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		if (atalk_find_or_insert_socket(sk, addr))
 			goto out;
 	}
@@ -1202,12 +1202,12 @@ static int atalk_connect(struct socket *sock, struct sockaddr *uaddr,
 	sock->state = SS_UNCONNECTED;
 
 	if (addr_len != sizeof(*addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	addr = (struct sockaddr_at *)uaddr;
 
 	if (addr->sat_family != AF_APPLETALK)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (addr->sat_addr.s_node == ATADDR_BCAST &&
 	    !sock_flag(sk, SOCK_BROADCAST)) {
@@ -1220,12 +1220,12 @@ static int atalk_connect(struct socket *sock, struct sockaddr *uaddr,
 	}
 
 	lock_sock(sk);
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	if (sock_flag(sk, SOCK_ZAPPED))
 		if (atalk_autobind(sk) < 0)
 			goto out;
 
-	err = -ENETUNREACH;
+	err = -ERR(ENETUNREACH);
 	if (!atrtr_get_dev(&addr->sat_addr))
 		goto out;
 
@@ -1254,7 +1254,7 @@ static int atalk_getname(struct socket *sock, struct sockaddr *uaddr,
 	int err;
 
 	lock_sock(sk);
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (sock_flag(sk, SOCK_ZAPPED))
 		if (atalk_autobind(sk) < 0)
 			goto out;
@@ -1262,7 +1262,7 @@ static int atalk_getname(struct socket *sock, struct sockaddr *uaddr,
 	memset(&sat, 0, sizeof(sat));
 
 	if (peer) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		if (sk->sk_state != TCP_ESTABLISHED)
 			goto out;
 
@@ -1581,31 +1581,31 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	int err;
 
 	if (flags & ~(MSG_DONTWAIT|MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (len > DDP_MAXSZ)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	lock_sock(sk);
 	if (usat) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		if (sock_flag(sk, SOCK_ZAPPED))
 			if (atalk_autobind(sk) < 0)
 				goto out;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (msg->msg_namelen < sizeof(*usat) ||
 		    usat->sat_family != AF_APPLETALK)
 			goto out;
 
-		err = -EPERM;
+		err = -ERR(EPERM);
 		/* netatalk didn't implement this check */
 		if (usat->sat_addr.s_node == ATADDR_BCAST &&
 		    !sock_flag(sk, SOCK_BROADCAST)) {
 			goto out;
 		}
 	} else {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		if (sk->sk_state != TCP_ESTABLISHED)
 			goto out;
 		usat = &local_satalk;
@@ -1631,7 +1631,7 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 		rt = atrtr_find(&at_hint);
 	}
-	err = -ENETUNREACH;
+	err = -ERR(ENETUNREACH);
 	if (!rt)
 		goto out;
 
@@ -1707,7 +1707,7 @@ static int atalk_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 			rt = atrtr_find(&at_lo);
 			if (!rt) {
 				kfree_skb(skb);
-				err = -ENETUNREACH;
+				err = -ERR(ENETUNREACH);
 				goto out;
 			}
 			dev = rt->dev;
@@ -1787,7 +1787,7 @@ out:
  */
 static int atalk_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 {
-	int rc = -ENOIOCTLCMD;
+	int rc = -ERR(ENOIOCTLCMD);
 	struct sock *sk = sock->sk;
 	void __user *argp = (void __user *)arg;
 
@@ -1817,7 +1817,7 @@ static int atalk_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	/* Routing */
 	case SIOCADDRT:
 	case SIOCDELRT:
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		if (capable(CAP_NET_ADMIN))
 			rc = atrtr_ioctl(cmd, argp);
 		break;
@@ -1859,7 +1859,7 @@ static int atalk_compat_routing_ioctl(struct sock *sk, unsigned int cmd,
 	switch (cmd) {
 	case SIOCDELRT:
 		if (rt.rt_dst.sa_family != AF_APPLETALK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return atrtr_delete(&((struct sockaddr_at *)
 				      &rt.rt_dst)->sat_addr);
 
@@ -1867,7 +1867,7 @@ static int atalk_compat_routing_ioctl(struct sock *sk, unsigned int cmd,
 		rt.rt_dev = compat_ptr(rtdev);
 		return atrtr_ioctl_addrt(&rt);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 static int atalk_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
@@ -1888,7 +1888,7 @@ static int atalk_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned lo
 	case SIOCATALKDIFADDR:
 		return atalk_ioctl(sock, cmd, (unsigned long)argp);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 #endif /* CONFIG_COMPAT */

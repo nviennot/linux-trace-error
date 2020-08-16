@@ -164,7 +164,7 @@ static int ida_checks(void)
 	ida_check_conv(&ida);
 
 	printk("IDA: %u of %u tests passed\n", tests_passed, tests_run);
-	return (tests_run != tests_passed) ? 0 : -EINVAL;
+	return (tests_run != tests_passed) ? 0 : -ERR(EINVAL);
 }
 
 static void ida_exit(void)

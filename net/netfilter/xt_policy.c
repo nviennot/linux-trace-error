@@ -151,7 +151,7 @@ static int policy_mt_check(const struct xt_mtchk_param *par)
 	return 0;
 err:
 	pr_info_ratelimited("%s\n", errmsg);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct xt_match policy_mt_reg[] __read_mostly = {

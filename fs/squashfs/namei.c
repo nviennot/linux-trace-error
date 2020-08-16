@@ -146,7 +146,7 @@ static struct dentry *squashfs_lookup(struct inode *dir, struct dentry *dentry,
 	}
 
 	if (len > SQUASHFS_NAME_LEN) {
-		err = -ENAMETOOLONG;
+		err = -ERR(ENAMETOOLONG);
 		goto failed;
 	}
 
@@ -220,7 +220,7 @@ exit_lookup:
 	return d_splice_alias(inode, dentry);
 
 data_error:
-	err = -EIO;
+	err = -ERR(EIO);
 
 read_failure:
 	ERROR("Unable to read directory block [%llx:%x]\n",

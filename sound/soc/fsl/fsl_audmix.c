@@ -91,7 +91,7 @@ static int fsl_audmix_state_trans(struct snd_soc_component *comp,
 	/* Enforce all required TDMs are started */
 	if ((priv->tdms & prm.tdms) != prm.tdms) {
 		dev_dbg(comp->dev, "%s", prm.msg);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (prm.clk) {
@@ -137,14 +137,14 @@ static int fsl_audmix_put_mix_clk_src(struct snd_kcontrol *kcontrol,
 		dev_err(comp->dev,
 			"Started TDM%d needed for config propagation!\n",
 			mix_clk + 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!(priv->tdms & BIT(val))) {
 		dev_err(comp->dev,
 			"The selected clock source has no TDM%d enabled!\n",
 			val + 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_put_enum_double(kcontrol, ucontrol);
@@ -188,7 +188,7 @@ static int fsl_audmix_put_out_src(struct snd_kcontrol *kcontrol,
 		dev_err(comp->dev,
 			"Started TDM%d needed for config propagation!\n",
 			mix_clk + 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check state transition constraints */
@@ -252,7 +252,7 @@ static int fsl_audmix_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_DSP_A:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* For playback the AUDMIX is slave, and for record is master */
@@ -261,7 +261,7 @@ static int fsl_audmix_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -274,7 +274,7 @@ static int fsl_audmix_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctr |= FSL_AUDMIX_CTR_OUTCKPOL(1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= FSL_AUDMIX_CTR_OUTCKPOL_MASK;
@@ -308,7 +308,7 @@ static int fsl_audmix_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 		spin_unlock_irqrestore(&priv->lock, lock_flags);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -470,7 +470,7 @@ static int fsl_audmix_probe(struct platform_device *pdev)
 
 	of_id = of_match_device(fsl_audmix_ids, dev);
 	if (!of_id || !of_id->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mdrv = of_id->data;
 

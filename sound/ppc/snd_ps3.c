@@ -758,7 +758,7 @@ static int snd_ps3_map_mmio(void)
 		pr_info("%s: ioremap 0 failed p=%#lx l=%#lx \n",
 		       __func__, the_card.ps3_dev->m_region->lpar_addr,
 		       the_card.ps3_dev->m_region->len);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	return 0;
@@ -783,13 +783,13 @@ static int snd_ps3_allocate_irq(void)
 	if (ret) {
 		pr_info("%s: device map 1 failed %d\n", __func__,
 			ret);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	mapped = ioremap(lpar_addr, lpar_size);
 	if (!mapped) {
 		pr_info("%s: ioremap 1 failed \n", __func__);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	the_card.audio_irq_outlet = in_be64(mapped);
@@ -897,16 +897,16 @@ static int snd_ps3_driver_probe(struct ps3_system_bus_device *dev)
 	static u64 dummy_mask;
 
 	if (WARN_ON(!firmware_has_feature(FW_FEATURE_PS3_LV1)))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (WARN_ON(dev->match_id != PS3_MATCH_ID_SOUND))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	the_card.ps3_dev = dev;
 
 	ret = ps3_open_hv_device(dev);
 
 	if (ret)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* setup MMIO */
 	ret = lv1_gpu_device_map(2, &lpar_addr, &lpar_size);
@@ -946,7 +946,7 @@ static int snd_ps3_driver_probe(struct ps3_system_bus_device *dev)
 
 	/* irq */
 	if (snd_ps3_allocate_irq()) {
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		goto clean_dma_region;
 	}
 
@@ -1054,7 +1054,7 @@ static int snd_ps3_driver_remove(struct ps3_system_bus_device *dev)
 	int ret;
 	pr_info("%s:start id=%d\n", __func__,  dev->match_id);
 	if (dev->match_id != PS3_MATCH_ID_SOUND)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/*
 	 * ctl and preallocate buffer will be freed in
@@ -1100,7 +1100,7 @@ static int __init snd_ps3_init(void)
 	int ret;
 
 	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	memset(&the_card, 0, sizeof(the_card));
 	spin_lock_init(&the_card.dma_lock);

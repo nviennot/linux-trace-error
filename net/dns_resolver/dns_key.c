@@ -99,12 +99,12 @@ dns_resolver_preparse(struct key_preparsed_payload *prep)
 	const char *data = prep->data, *end, *opt;
 
 	if (datalen <= 1 || !data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (data[0] == 0) {
 		/* It may be a server list. */
 		if (datalen <= sizeof(*bin))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		bin = (const struct dns_payload_header *)data;
 		kenter("[%u,%u],%u", bin->content, bin->version, datalen);
@@ -112,14 +112,14 @@ dns_resolver_preparse(struct key_preparsed_payload *prep)
 			pr_warn_ratelimited(
 				"dns_resolver: Unsupported content type (%u)\n",
 				bin->content);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (bin->version != 1) {
 			pr_warn_ratelimited(
 				"dns_resolver: Unsupported server list version (%u)\n",
 				bin->version);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		result_len = datalen;
@@ -129,7 +129,7 @@ dns_resolver_preparse(struct key_preparsed_payload *prep)
 	kenter("'%*.*s',%u", datalen, datalen, data, datalen);
 
 	if (!data || data[datalen - 1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	datalen--;
 
 	/* deal with any options embedded in the data */
@@ -155,7 +155,7 @@ dns_resolver_preparse(struct key_preparsed_payload *prep)
 			if (opt_len <= 0 || opt_len > sizeof(optval)) {
 				pr_warn_ratelimited("Invalid option length (%d) for dns_resolver key\n",
 						    opt_len);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			eq = memchr(opt, '=', opt_len);
@@ -193,7 +193,7 @@ dns_resolver_preparse(struct key_preparsed_payload *prep)
 		bad_option_value:
 			pr_warn_ratelimited("Option '%*.*s' to dns_resolver key: bad/missing value\n",
 					    opt_nlen, opt_nlen, opt);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} while (opt = next_opt + 1, opt < end);
 	}
 

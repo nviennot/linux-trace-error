@@ -141,7 +141,7 @@ int utf8s_to_utf16s(const u8 *s, int inlen, enum utf16_endian endian,
 		if (*s & 0x80) {
 			size = utf8_to_utf32(s, inlen, &u);
 			if (size < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			s += size;
 			inlen -= size;
 
@@ -237,14 +237,14 @@ int __register_nls(struct nls_table *nls, struct module *owner)
 	struct nls_table ** tmp = &tables;
 
 	if (nls->next)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	nls->owner = owner;
 	spin_lock(&nls_lock);
 	while (*tmp) {
 		if (nls == *tmp) {
 			spin_unlock(&nls_lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		tmp = &(*tmp)->next;
 	}
@@ -269,7 +269,7 @@ int unregister_nls(struct nls_table * nls)
 		tmp = &(*tmp)->next;
 	}
 	spin_unlock(&nls_lock);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct nls_table *find_nls(char *charset)
@@ -502,13 +502,13 @@ static int uni2char(wchar_t uni, unsigned char *out, int boundlen)
 	unsigned char ch = (uni & 0xff00) >> 8;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	uni2charset = page_uni2charset[ch];
 	if (uni2charset && uni2charset[cl])
 		out[0] = uni2charset[cl];
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 
@@ -516,7 +516,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen, wchar_t *uni)
 {
 	*uni = charset2uni[*rawstring];
 	if (*uni == 0x0000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 

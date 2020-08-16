@@ -57,7 +57,7 @@ nilfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 	ino_t ino;
 
 	if (dentry->d_name.len > NILFS_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	ino = nilfs_inode_by_name(dir, &dentry->d_name);
 	inode = ino ? nilfs_iget(dir->i_sb, NILFS_I(dir)->i_root, ino) : NULL;
@@ -134,7 +134,7 @@ static int nilfs_symlink(struct inode *dir, struct dentry *dentry,
 	int err;
 
 	if (l > sb->s_blocksize)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	err = nilfs_transaction_begin(dir->i_sb, &ti, 1);
 	if (err)
@@ -261,13 +261,13 @@ static int nilfs_do_unlink(struct inode *dir, struct dentry *dentry)
 	struct page *page;
 	int err;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	de = nilfs_find_entry(dir, &dentry->d_name, &page);
 	if (!de)
 		goto out;
 
 	inode = d_inode(dentry);
-	err = -EIO;
+	err = -ERR(EIO);
 	if (le64_to_cpu(de->inode) != inode->i_ino)
 		goto out;
 
@@ -319,7 +319,7 @@ static int nilfs_rmdir(struct inode *dir, struct dentry *dentry)
 	if (err)
 		return err;
 
-	err = -ENOTEMPTY;
+	err = -ERR(ENOTEMPTY);
 	if (nilfs_empty_dir(inode)) {
 		err = nilfs_do_unlink(dir, dentry);
 		if (!err) {
@@ -352,19 +352,19 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nilfs_transaction_begin(old_dir->i_sb, &ti, 1);
 	if (unlikely(err))
 		return err;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	old_de = nilfs_find_entry(old_dir, &old_dentry->d_name, &old_page);
 	if (!old_de)
 		goto out;
 
 	if (S_ISDIR(old_inode->i_mode)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		dir_de = nilfs_dotdot(old_inode, &dir_page);
 		if (!dir_de)
 			goto out_old;
@@ -374,11 +374,11 @@ static int nilfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		struct page *new_page;
 		struct nilfs_dir_entry *new_de;
 
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 		if (dir_de && !nilfs_empty_dir(new_inode))
 			goto out_dir;
 
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		new_de = nilfs_find_entry(new_dir, &new_dentry->d_name, &new_page);
 		if (!new_de)
 			goto out_dir;
@@ -442,7 +442,7 @@ static struct dentry *nilfs_get_parent(struct dentry *child)
 
 	ino = nilfs_inode_by_name(d_inode(child), &dotdot);
 	if (!ino)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	root = NILFS_I(d_inode(child))->i_root;
 
@@ -460,11 +460,11 @@ static struct dentry *nilfs_get_dentry(struct super_block *sb, u64 cno,
 	struct inode *inode;
 
 	if (ino < NILFS_FIRST_INO(sb) && ino != NILFS_ROOT_INO)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	root = nilfs_lookup_root(sb->s_fs_info, cno);
 	if (!root)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	inode = nilfs_iget(sb, root, ino);
 	nilfs_put_root(root);
@@ -473,7 +473,7 @@ static struct dentry *nilfs_get_dentry(struct super_block *sb, u64 cno,
 		return ERR_CAST(inode);
 	if (gen && inode->i_generation != gen) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return d_obtain_alias(inode);
 }

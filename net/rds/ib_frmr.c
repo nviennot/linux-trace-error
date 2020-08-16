@@ -134,11 +134,11 @@ static int rds_ib_post_reg_frmr(struct rds_ib_mr *ibmr)
 	ret = ib_map_mr_sg_zbva(frmr->mr, ibmr->sg, ibmr->sg_len,
 				&off, PAGE_SIZE);
 	if (unlikely(ret != ibmr->sg_len))
-		return ret < 0 ? ret : -EINVAL;
+		return ret < 0 ? ret : -ERR(EINVAL);
 
 	if (cmpxchg(&frmr->fr_state,
 		    FRMR_IS_FREE, FRMR_IS_INUSE) != FRMR_IS_FREE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	atomic_inc(&ibmr->ic->i_fastreg_inuse_count);
 
@@ -209,14 +209,14 @@ static int rds_ib_map_frmr(struct rds_ib_device *rds_ibdev,
 					 DMA_BIDIRECTIONAL);
 	if (unlikely(!ibmr->sg_dma_len)) {
 		pr_warn("RDS/IB: %s failed!\n", __func__);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	frmr->sg_byte_len = 0;
 	frmr->dma_npages = 0;
 	len = 0;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	for (i = 0; i < ibmr->sg_dma_len; ++i) {
 		unsigned int dma_len = sg_dma_len(&ibmr->sg[i]);
 		u64 dma_addr = sg_dma_address(&ibmr->sg[i]);
@@ -241,7 +241,7 @@ static int rds_ib_map_frmr(struct rds_ib_device *rds_ibdev,
 	frmr->dma_npages += len >> PAGE_SHIFT;
 
 	if (frmr->dma_npages > ibmr->pool->max_pages) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out_unmap;
 	}
 
@@ -268,7 +268,7 @@ static int rds_ib_post_inv(struct rds_ib_mr *ibmr)
 	struct ib_send_wr *s_wr;
 	struct rds_ib_frmr *frmr = &ibmr->u.frmr;
 	struct rdma_cm_id *i_cm_id = ibmr->ic->i_cm_id;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!i_cm_id || !i_cm_id->qp || !frmr->mr)
 		goto out;
@@ -409,7 +409,7 @@ struct rds_ib_mr *rds_ib_reg_frmr(struct rds_ib_device *rds_ibdev,
 
 	if (!ic) {
 		/* TODO: Add FRWR support for RDS_GET_MR using proxy qp*/
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 
 	do {

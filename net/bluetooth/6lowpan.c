@@ -377,16 +377,16 @@ static int chan_recv_cb(struct l2cap_chan *chan, struct sk_buff *skb)
 
 	peer = lookup_peer(chan->conn);
 	if (!peer)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dev = lookup_dev(chan->conn);
 	if (!dev || !dev->netdev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = recv_pkt(skb, dev->netdev, peer);
 	if (err) {
 		BT_DBG("recv pkt %d", err);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	}
 
 	return err;
@@ -422,7 +422,7 @@ static int setup_header(struct sk_buff *skb, struct net_device *netdev,
 		peer = peer_lookup_dst(dev, &ipv6_daddr, skb);
 		if (!peer) {
 			BT_DBG("no such peer");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		daddr = peer->lladdr;
@@ -447,7 +447,7 @@ static int header_create(struct sk_buff *skb, struct net_device *netdev,
 			 const void *_saddr, unsigned int len)
 {
 	if (type != ETH_P_IPV6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -554,7 +554,7 @@ static netdev_tx_t bt_xmit(struct sk_buff *skb, struct net_device *netdev)
 			       &lowpan_cb(skb)->addr, lowpan_cb(skb)->chan);
 			err = send_pkt(lowpan_cb(skb)->chan, skb, netdev);
 		} else {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 		}
 	} else {
 		/* We need to send the packet to every device behind this
@@ -792,7 +792,7 @@ static void chan_close_cb(struct l2cap_chan *chan)
 	struct lowpan_btle_dev *entry;
 	struct lowpan_btle_dev *dev = NULL;
 	struct lowpan_peer *peer;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	bool last = false, remove = true;
 
 	BT_DBG("chan %p conn %p", chan, chan->conn);
@@ -924,7 +924,7 @@ static int bt_6lowpan_connect(bdaddr_t *addr, u8 dst_type)
 
 	chan = chan_create();
 	if (!chan)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chan->ops = &bt_6lowpan_chan_ops;
 
@@ -946,7 +946,7 @@ static int bt_6lowpan_disconnect(struct l2cap_conn *conn, u8 dst_type)
 
 	peer = lookup_peer(conn);
 	if (!peer)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	BT_DBG("peer %p chan %p", peer, peer->chan);
 
@@ -999,19 +999,19 @@ static int get_l2cap_conn(char *buf, bdaddr_t *addr, u8 *addr_type,
 		   addr_type);
 
 	if (n < 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The LE_PUBLIC address type is ignored because of BDADDR_ANY */
 	hdev = hci_get_route(addr, BDADDR_ANY, BDADDR_LE_PUBLIC);
 	if (!hdev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hci_dev_lock(hdev);
 	hcon = hci_conn_hash_lookup_le(hdev, addr, *addr_type);
 	hci_dev_unlock(hdev);
 
 	if (!hcon)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*conn = (struct l2cap_conn *)hcon->l2cap_data;
 
@@ -1145,12 +1145,12 @@ static ssize_t lowpan_control_write(struct file *fp,
 			struct lowpan_peer *peer;
 
 			if (!is_bt_6lowpan(conn->hcon))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			peer = lookup_peer(conn);
 			if (peer) {
 				BT_DBG("6LoWPAN connection already exists");
-				return -EALREADY;
+				return -ERR(EALREADY);
 			}
 
 			BT_DBG("conn %p dst %pMR type %d user %d", conn,

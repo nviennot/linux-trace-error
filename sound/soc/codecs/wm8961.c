@@ -511,7 +511,7 @@ static int wm8961_hw_params(struct snd_pcm_substream *substream,
 
 	if (!wm8961->sysclk) {
 		dev_err(component->dev, "MCLK has not been specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Find the closest sample rate for the filters */
@@ -534,12 +534,12 @@ static int wm8961_hw_params(struct snd_pcm_substream *substream,
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK && target < 64) {
 		dev_err(component->dev,
 			"SYSCLK must be at least 64*fs for DAC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE && target < 256) {
 		dev_err(component->dev,
 			"SYSCLK must be at least 256*fs for ADC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(wm8961_clk_sys_ratio); i++) {
@@ -548,7 +548,7 @@ static int wm8961_hw_params(struct snd_pcm_substream *substream,
 	}
 	if (i == ARRAY_SIZE(wm8961_clk_sys_ratio)) {
 		dev_err(component->dev, "Unable to generate CLK_SYS_RATE\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(component->dev, "Selected CLK_SYS_RATE of %d for %d/%d=%d\n",
 		wm8961_clk_sys_ratio[i].ratio, wm8961->sysclk, fs,
@@ -574,7 +574,7 @@ static int wm8961_hw_params(struct snd_pcm_substream *substream,
 		reg |= 3 << WM8961_WL_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_write(component, WM8961_AUDIO_INTERFACE_0, reg);
 
@@ -599,7 +599,7 @@ static int wm8961_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	if (freq > 33000000) {
 		dev_err(component->dev, "MCLK must be <33MHz\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (freq > 16500000) {
@@ -633,7 +633,7 @@ static int wm8961_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -658,12 +658,12 @@ static int wm8961_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		case SND_SOC_DAIFMT_IB_NF:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -679,7 +679,7 @@ static int wm8961_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif |= WM8961_BCLKINV | WM8961_LRP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_write(component, WM8961_AUDIO_INTERFACE_0, aif);
@@ -734,7 +734,7 @@ static int wm8961_set_clkdiv(struct snd_soc_dai *dai, int div_id, int div)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -934,7 +934,7 @@ static int wm8961_i2c_probe(struct i2c_client *i2c,
 
 	if (val != 0x1801) {
 		dev_err(&i2c->dev, "Device is not a WM8961: ID=0x%x\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* This isn't volatile - readback doesn't correspond to write */

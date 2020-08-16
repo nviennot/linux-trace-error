@@ -131,7 +131,7 @@ static int hsr_dev_change_mtu(struct net_device *dev, int new_mtu)
 	if (new_mtu > hsr_get_max_mtu(hsr)) {
 		netdev_info(dev, "A HSR master's MTU cannot be greater than the smallest MTU of its slaves minus the HSR Tag length (%d octets).\n",
 			    HSR_HLEN);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev->mtu = new_mtu;

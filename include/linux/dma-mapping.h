@@ -540,13 +540,13 @@ static inline int dma_get_sgtable_attrs(struct device *dev,
 		struct sg_table *sgt, void *cpu_addr, dma_addr_t dma_addr,
 		size_t size, unsigned long attrs)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline int dma_mmap_attrs(struct device *dev, struct vm_area_struct *vma,
 		void *cpu_addr, dma_addr_t dma_addr, size_t size,
 		unsigned long attrs)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline bool dma_can_mmap(struct device *dev)
 {
@@ -558,11 +558,11 @@ static inline int dma_supported(struct device *dev, u64 mask)
 }
 static inline int dma_set_mask(struct device *dev, u64 mask)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 static inline int dma_set_coherent_mask(struct device *dev, u64 mask)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 static inline u64 dma_get_required_mask(struct device *dev)
 {
@@ -637,7 +637,7 @@ static inline int dma_map_sgtable(struct device *dev, struct sg_table *sgt,
 
 	nents = dma_map_sg_attrs(dev, sgt->sgl, sgt->orig_nents, dir, attrs);
 	if (nents <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	sgt->nents = nents;
 	return 0;
 }
@@ -814,7 +814,7 @@ static inline int dma_set_max_seg_size(struct device *dev, unsigned int size)
 		dev->dma_parms->max_segment_size = size;
 		return 0;
 	}
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static inline unsigned long dma_get_seg_boundary(struct device *dev)
@@ -830,7 +830,7 @@ static inline int dma_set_seg_boundary(struct device *dev, unsigned long mask)
 		dev->dma_parms->segment_boundary_mask = mask;
 		return 0;
 	}
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static inline int dma_get_cache_alignment(void)
@@ -849,7 +849,7 @@ static inline int
 dma_declare_coherent_memory(struct device *dev, phys_addr_t phys_addr,
 			    dma_addr_t device_addr, size_t size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_DMA_DECLARE_COHERENT */
 

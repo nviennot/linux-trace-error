@@ -222,7 +222,7 @@ int truncate_inode_page(struct address_space *mapping, struct page *page)
 	VM_BUG_ON_PAGE(PageTail(page), page);
 
 	if (page->mapping != mapping)
-		return -EIO;
+		return -ERR(EIO);
 
 	truncate_cleanup_page(mapping, page);
 	delete_from_page_cache(page);
@@ -235,13 +235,13 @@ int truncate_inode_page(struct address_space *mapping, struct page *page)
 int generic_error_remove_page(struct address_space *mapping, struct page *page)
 {
 	if (!mapping)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Only punch for normal data pages for now.
 	 * Handling other types like directories would need more auditing.
 	 */
 	if (!S_ISREG(mapping->host->i_mode))
-		return -EIO;
+		return -ERR(EIO);
 	return truncate_inode_page(mapping, page);
 }
 EXPORT_SYMBOL(generic_error_remove_page);
@@ -711,7 +711,7 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
 			if (xa_is_value(page)) {
 				if (!invalidate_exceptional_entry2(mapping,
 								   index, page))
-					ret = -EBUSY;
+					ret = -ERR(EBUSY);
 				continue;
 			}
 
@@ -742,7 +742,7 @@ int invalidate_inode_pages2_range(struct address_space *mapping,
 			ret2 = do_launder_page(mapping, page);
 			if (ret2 == 0) {
 				if (!invalidate_complete_page2(mapping, page))
-					ret2 = -EBUSY;
+					ret2 = -ERR(EBUSY);
 			}
 			if (ret2 < 0)
 				ret = ret2;

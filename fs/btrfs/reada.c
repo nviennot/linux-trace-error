@@ -659,7 +659,7 @@ static int reada_tree_block_flagged(struct btrfs_fs_info *fs_info, u64 bytenr,
 
 	if (test_bit(EXTENT_BUFFER_CORRUPT, &buf->bflags)) {
 		free_extent_buffer_stale(buf);
-		return -EIO;
+		return -ERR(EIO);
 	} else if (extent_buffer_uptodate(buf)) {
 		*eb = buf;
 	} else {

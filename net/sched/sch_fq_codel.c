@@ -372,7 +372,7 @@ static int fq_codel_change(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_FQ_CODEL_MAX, opt,
 					  fq_codel_policy, NULL);
@@ -380,11 +380,11 @@ static int fq_codel_change(struct Qdisc *sch, struct nlattr *opt,
 		return err;
 	if (tb[TCA_FQ_CODEL_FLOWS]) {
 		if (q->flows)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		q->flows_cnt = nla_get_u32(tb[TCA_FQ_CODEL_FLOWS]);
 		if (!q->flows_cnt ||
 		    q->flows_cnt > 65536)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	sch_tree_lock(sch);
 

@@ -106,7 +106,7 @@ static int squashfs_fill_super(struct super_block *sb, struct fs_context *fc)
 		goto failed_mount;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	/* Check it is a SQUASHFS superblock */
 	sb->s_magic = le32_to_cpu(sblk->s_magic);
@@ -290,13 +290,13 @@ handle_fragments:
 check_directory_table:
 	/* Sanity check directory_table */
 	if (msblk->directory_table > next_table) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto insanity;
 	}
 
 	/* Sanity check inode_table */
 	if (msblk->inode_table >= msblk->directory_table) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto insanity;
 	}
 

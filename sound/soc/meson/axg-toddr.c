@@ -69,7 +69,7 @@ static int axg_toddr_dai_hw_params(struct snd_pcm_substream *substream,
 		type = 4; /* 2 samples of 32 bits - right justified */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	width = params_width(params);

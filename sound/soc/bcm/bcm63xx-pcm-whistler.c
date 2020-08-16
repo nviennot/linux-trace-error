@@ -109,7 +109,7 @@ static int bcm63xx_pcm_trigger(struct snd_soc_component *component,
 					   0);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	} else {
 		switch (cmd) {
@@ -136,7 +136,7 @@ static int bcm63xx_pcm_trigger(struct snd_soc_component *component,
 					   0);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 	return ret;
@@ -460,7 +460,7 @@ int bcm63xx_soc_platform_probe(struct platform_device *pdev,
 	i2s_priv->r_irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!i2s_priv->r_irq) {
 		dev_err(&pdev->dev, "Unable to get register irq resource.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = devm_request_irq(&pdev->dev, i2s_priv->r_irq->start, i2s_dma_isr,

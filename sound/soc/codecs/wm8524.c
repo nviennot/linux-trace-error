@@ -68,7 +68,7 @@ static int wm8524_startup(struct snd_pcm_substream *substream,
 	if (!wm8524->sysclk) {
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_hw_constraint_list(substream->runtime, 0,
@@ -128,7 +128,7 @@ static int wm8524_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	/* Need at least one supported rate... */
 	if (wm8524->rate_constraint.count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -141,7 +141,7 @@ static int wm8524_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	if (fmt != (SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 		    SND_SOC_DAIFMT_CBS_CFS)) {
 		dev_err(codec_dai->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

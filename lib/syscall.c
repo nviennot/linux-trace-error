@@ -19,7 +19,7 @@ static int collect_syscall(struct task_struct *target, struct syscall_info *info
 	regs = task_pt_regs(target);
 	if (unlikely(!regs)) {
 		put_task_stack(target);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	info->sp = user_stack_pointer(regs);
@@ -69,13 +69,13 @@ int task_current_syscall(struct task_struct *target, struct syscall_info *info)
 
 	state = target->state;
 	if (unlikely(!state))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	ncsw = wait_task_inactive(target, state);
 	if (unlikely(!ncsw) ||
 	    unlikely(collect_syscall(target, info)) ||
 	    unlikely(wait_task_inactive(target, state) != ncsw))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return 0;
 }

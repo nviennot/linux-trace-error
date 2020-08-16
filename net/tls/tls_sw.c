@@ -51,7 +51,7 @@ static int __skb_nsg(struct sk_buff *skb, int offset, int len,
         int elt = 0;
 
         if (unlikely(recursion_level >= 24))
-                return -EMSGSIZE;
+                return -ERR(EMSGSIZE);
 
         if (chunk > 0) {
                 if (chunk > len)
@@ -132,7 +132,7 @@ static int padding_length(struct tls_sw_context_rx *ctx,
 
 		while (content_type == 0) {
 			if (back > rxm->full_len - prot->prepend_size)
-				return -EBADMSG;
+				return -ERR(EBADMSG);
 			err = skb_copy_bits(skb,
 					    rxm->offset + rxm->full_len - back,
 					    &content_type, 1);
@@ -818,7 +818,7 @@ more_data:
 	}
 	if (msg->cork_bytes && msg->cork_bytes > msg->sg.size &&
 	    !enospc && !full_record) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out_err;
 	}
 	msg->cork_bytes = 0;
@@ -865,7 +865,7 @@ more_data:
 		if (msg->sg.size == 0)
 			tls_free_open_rec(sk);
 		*copied -= (send + delta);
-		err = -EACCES;
+		err = -ERR(EACCES);
 	}
 
 	if (likely(!err)) {
@@ -936,7 +936,7 @@ int tls_sw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	int pending;
 
 	if (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
@@ -1257,7 +1257,7 @@ int tls_sw_sendpage_locked(struct sock *sk, struct page *page,
 	if (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 		      MSG_SENDPAGE_NOTLAST | MSG_SENDPAGE_NOPOLICY |
 		      MSG_NO_SHARED_FRAGS))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return tls_sw_do_sendpage(sk, page, offset, size, flags);
 }
@@ -1270,7 +1270,7 @@ int tls_sw_sendpage(struct sock *sk, struct page *page,
 
 	if (flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL |
 		      MSG_SENDPAGE_NOTLAST | MSG_SENDPAGE_NOPOLICY))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&tls_ctx->tx_lock);
 	lock_sock(sk);
@@ -1301,7 +1301,7 @@ static struct sk_buff *tls_wait_data(struct sock *sk, struct sk_psock *psock,
 			return NULL;
 
 		if ((flags & MSG_DONTWAIT) || !timeo) {
-			*err = -EAGAIN;
+			*err = -ERR(EAGAIN);
 			return NULL;
 		}
 
@@ -1423,7 +1423,7 @@ static int decrypt_internal(struct sock *sk, struct sk_buff *skb,
 	}
 
 	if (n_sgin < 1)
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	/* Increment to accommodate AAD */
 	n_sgin = n_sgin + 1;
@@ -1672,7 +1672,7 @@ static int process_rx_list(struct tls_sw_context_rx *ctx,
 			msgc = true;
 			if (ctrl != TLS_RECORD_TYPE_DATA) {
 				if (cerr || msg->msg_flags & MSG_CTRUNC)
-					return -EIO;
+					return -ERR(EIO);
 
 				*cmsg = msgc;
 			}
@@ -1852,7 +1852,7 @@ int tls_sw_recvmsg(struct sock *sk,
 			cmsg = true;
 			if (control != TLS_RECORD_TYPE_DATA) {
 				if (cerr || msg->msg_flags & MSG_CTRUNC) {
-					err = -EIO;
+					err = -ERR(EIO);
 					goto recv_end;
 				}
 			}
@@ -1927,7 +1927,8 @@ recv_end:
 		pending = atomic_read(&ctx->decrypt_pending);
 		spin_unlock_bh(&ctx->decrypt_compl_lock);
 		if (pending) {
-			err = crypto_wait_req(-EINPROGRESS, &ctx->async_wait);
+			err = crypto_wait_req(-ERR(EINPROGRESS),
+					      &ctx->async_wait);
 			if (err) {
 				/* one of async decrypt failed */
 				tls_err_abort(sk, err);
@@ -1995,7 +1996,7 @@ ssize_t tls_sw_splice_read(struct socket *sock,  loff_t *ppos,
 
 		/* splice does not support reading control messages */
 		if (ctx->control != TLS_RECORD_TYPE_DATA) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto splice_read_end;
 		}
 
@@ -2054,7 +2055,7 @@ static int tls_read_size(struct strparser *strp, struct sk_buff *skb)
 
 	/* Sanity-check size of on-stack buffer. */
 	if (WARN_ON(prot->prepend_size > sizeof(header))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto read_failure;
 	}
 
@@ -2074,18 +2075,18 @@ static int tls_read_size(struct strparser *strp, struct sk_buff *skb)
 
 	if (data_len > TLS_MAX_PAYLOAD_SIZE + cipher_overhead +
 	    prot->tail_size) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto read_failure;
 	}
 	if (data_len < cipher_overhead) {
-		ret = -EBADMSG;
+		ret = -ERR(EBADMSG);
 		goto read_failure;
 	}
 
 	/* Note that both TLS1.3 and TLS1.2 use TLS_1_2 version here */
 	if (header[1] != TLS_1_2_VERSION_MINOR ||
 	    header[2] != TLS_1_2_VERSION_MAJOR) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto read_failure;
 	}
 
@@ -2296,7 +2297,7 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 	int rc = 0;
 
 	if (!ctx) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2397,14 +2398,14 @@ int tls_set_sw_offload(struct sock *sk, struct tls_context *ctx, int tx)
 		break;
 	}
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_priv;
 	}
 
 	/* Sanity-check the sizes for stack allocations. */
 	if (iv_size > MAX_IV_SIZE || nonce_size > MAX_IV_SIZE ||
 	    rec_seq_size > TLS_MAX_REC_SEQ_SIZE) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_priv;
 	}
 

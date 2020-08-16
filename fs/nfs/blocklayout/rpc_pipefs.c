@@ -116,7 +116,7 @@ static ssize_t bl_pipe_downcall(struct file *filp, const char __user *src,
 					 nfs_net_id);
 
 	if (mlen != sizeof (struct bl_dev_msg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&nn->bl_mount_reply, src, mlen) != 0)
 		return -EFAULT;
@@ -149,7 +149,7 @@ static struct dentry *nfs4blocklayout_register_sb(struct super_block *sb,
 
 	dir = rpc_d_lookup_sb(sb, NFS_PIPE_DIRNAME);
 	if (dir == NULL)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	dentry = rpc_mkpipe_dentry(dir, "blocklayout", NULL, pipe);
 	dput(dir);
 	return dentry;
@@ -193,7 +193,7 @@ static int rpc_pipefs_event(struct notifier_block *nb, unsigned long event,
 			nfs4blocklayout_unregister_sb(sb, nn->bl_device_pipe);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 	module_put(THIS_MODULE);

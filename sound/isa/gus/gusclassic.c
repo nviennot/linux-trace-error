@@ -77,21 +77,21 @@ static int snd_gusclassic_create(struct snd_card *card,
 		irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (irq[n] < 0) {
 			dev_err(dev, "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1[n] == SNDRV_AUTO_DMA) {
 		dma1[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma1[n] < 0) {
 			dev_err(dev, "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma2[n] == SNDRV_AUTO_DMA) {
 		dma2[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma2[n] < 0) {
 			dev_err(dev, "unable to find a free DMA2\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -116,14 +116,14 @@ static int snd_gusclassic_detect(struct snd_gus_card *gus)
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) {
 		snd_printdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	udelay(160);
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
 	udelay(160);
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) {
 		snd_printdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -155,7 +155,7 @@ static int snd_gusclassic_probe(struct device *dev, unsigned int n)
 	if (error < 0)
 		goto out;
 
-	error = -ENODEV;
+	error = -ERR(ENODEV);
 	if (gus->max_flag || gus->ess_flag) {
 		dev_err(dev, "GUS Classic or ACE soundcard was "
 			"not detected at 0x%lx\n", gus->gf1.port);

@@ -1722,11 +1722,11 @@ int rebind_subsystems(struct cgroup_root *dst_root, u16 ss_mask)
 		 */
 		if (css_next_child(NULL, cgroup_css(&ss->root->cgrp, ss)) &&
 		    !ss->implicit_on_dfl)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		/* can't move between two non-dummy roots either */
 		if (ss->root != &cgrp_dfl_root && dst_root != &cgrp_dfl_root)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	} while_each_subsys_mask();
 
 	do_each_subsys_mask(ss, ssid, ss_mask) {
@@ -1794,7 +1794,7 @@ int cgroup_show_path(struct seq_file *sf, struct kernfs_node *kf_node,
 	spin_unlock_irq(&css_set_lock);
 
 	if (len >= PATH_MAX)
-		len = -ERANGE;
+		len = -ERR(ERANGE);
 	else if (len > 0) {
 		seq_escape(sf, buf, " \t\n\\");
 		len = 0;
@@ -1838,7 +1838,7 @@ static int cgroup2_parse_param(struct fs_context *fc, struct fs_parameter *param
 		ctx->flags |= CGRP_ROOT_MEMORY_RECURSIVE_PROT;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void apply_cgroup_root_flags(unsigned int root_flags)
@@ -2503,7 +2503,7 @@ int cgroup_migrate_vet_dst(struct cgroup *dst_cgrp)
 
 	/* verify @dst_cgrp can host resources */
 	if (!cgroup_is_valid_domain(dst_cgrp->dom_cgrp))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* mixables don't care */
 	if (cgroup_is_mixable(dst_cgrp))
@@ -2518,7 +2518,7 @@ int cgroup_migrate_vet_dst(struct cgroup *dst_cgrp)
 
 	/* apply no-internal-process constraint */
 	if (dst_cgrp->subtree_control)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -2755,7 +2755,7 @@ struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
 	pid_t pid;
 
 	if (kstrtoint(strstrip(buf), 0, &pid) || pid < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * If we migrate a single thread, we don't care about threadgroup
@@ -2777,7 +2777,7 @@ struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
 	if (pid) {
 		tsk = find_task_by_vpid(pid);
 		if (!tsk) {
-			tsk = ERR_PTR(-ESRCH);
+			tsk = ERR_PTR(-ERR(ESRCH));
 			goto out_unlock_threadgroup;
 		}
 	} else {
@@ -2794,7 +2794,7 @@ struct task_struct *cgroup_procs_write_start(char *buf, bool threadgroup,
 	 * cgroup with no rt_runtime allocated.  Just say no.
 	 */
 	if (tsk->no_cgroup_migration || (tsk->flags & PF_NO_SETAFFINITY)) {
-		tsk = ERR_PTR(-EINVAL);
+		tsk = ERR_PTR(-ERR(EINVAL));
 		goto out_unlock_threadgroup;
 	}
 
@@ -3181,7 +3181,7 @@ static int cgroup_vet_subtree_control_enable(struct cgroup *cgrp, u16 enable)
 
 	/* can @cgrp host any resources? */
 	if (!cgroup_is_valid_domain(cgrp->dom_cgrp))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* mixables don't care */
 	if (cgroup_is_mixable(cgrp))
@@ -3190,7 +3190,7 @@ static int cgroup_vet_subtree_control_enable(struct cgroup *cgrp, u16 enable)
 	if (domain_enable) {
 		/* can't enable domain controllers inside a thread subtree */
 		if (cgroup_is_thread_root(cgrp) || cgroup_is_threaded(cgrp))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	} else {
 		/*
 		 * Threaded controllers can handle internal competitions
@@ -3206,7 +3206,7 @@ static int cgroup_vet_subtree_control_enable(struct cgroup *cgrp, u16 enable)
 	 * child cgroups competing against tasks.
 	 */
 	if (cgroup_has_tasks(cgrp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -3242,17 +3242,17 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 				disable |= 1 << ssid;
 				enable &= ~(1 << ssid);
 			} else {
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		} while_each_subsys_mask();
 		if (ssid == CGROUP_SUBSYS_COUNT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	cgrp = cgroup_kn_lock_live(of->kn, true);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	for_each_subsys(ss, ssid) {
 		if (enable & (1 << ssid)) {
@@ -3262,7 +3262,7 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 			}
 
 			if (!(cgroup_control(cgrp) & (1 << ssid))) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				goto out_unlock;
 			}
 		} else if (disable & (1 << ssid)) {
@@ -3274,7 +3274,7 @@ static ssize_t cgroup_subtree_control_write(struct kernfs_open_file *of,
 			/* a child has it enabled? */
 			cgroup_for_each_live_child(child, cgrp) {
 				if (child->subtree_control & (1 << ssid)) {
-					ret = -EBUSY;
+					ret = -ERR(EBUSY);
 					goto out_unlock;
 				}
 			}
@@ -3338,12 +3338,12 @@ static int cgroup_enable_threaded(struct cgroup *cgrp)
 	 */
 	if (cgroup_is_populated(cgrp) ||
 	    cgrp->subtree_control & ~cgrp_dfl_threaded_ss_mask)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* we're joining the parent's domain, ensure its validity */
 	if (!cgroup_is_valid_domain(dom_cgrp) ||
 	    !cgroup_can_be_thread_root(dom_cgrp))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * The following shouldn't cause actual migrations and should
@@ -3387,12 +3387,12 @@ static ssize_t cgroup_type_write(struct kernfs_open_file *of, char *buf,
 
 	/* only switching to threaded mode is supported */
 	if (strcmp(strstrip(buf), "threaded"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* drain dying csses before we re-apply (threaded) subtree control */
 	cgrp = cgroup_kn_lock_live(of->kn, true);
 	if (!cgrp)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* threaded can only be enabled */
 	ret = cgroup_enable_threaded(cgrp);
@@ -3431,11 +3431,11 @@ static ssize_t cgroup_max_descendants_write(struct kernfs_open_file *of,
 	}
 
 	if (descendants < 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	cgrp->max_descendants = descendants;
 
@@ -3474,11 +3474,11 @@ static ssize_t cgroup_max_depth_write(struct kernfs_open_file *of,
 	}
 
 	if (depth < 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	cgrp->max_depth = depth;
 
@@ -3571,7 +3571,7 @@ static ssize_t cgroup_pressure_write(struct kernfs_open_file *of, char *buf,
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	cgroup_get(cgrp);
 	cgroup_kn_unlock(of->kn);
@@ -3643,11 +3643,11 @@ static ssize_t cgroup_freeze_write(struct kernfs_open_file *of,
 		return ret;
 
 	if (freeze < 0 || freeze > 1)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	cgroup_freeze(cgrp, freeze);
 
@@ -3691,7 +3691,7 @@ static ssize_t cgroup_file_write(struct kernfs_open_file *of, char *buf,
 	if ((cgrp->root->flags & CGRP_ROOT_NS_DELEGATE) &&
 	    !(cft->flags & CFTYPE_NS_DELEGATABLE) &&
 	    ns != &init_cgroup_ns && ns->root_cset->dfl_cgrp == cgrp)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (cft->write)
 		return cft->write(of, buf, nbytes, off);
@@ -3717,7 +3717,7 @@ static ssize_t cgroup_file_write(struct kernfs_open_file *of, char *buf,
 		if (!ret)
 			ret = cft->write_s64(css, cft, v);
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret ?: nbytes;
@@ -3762,7 +3762,7 @@ static int cgroup_seqfile_show(struct seq_file *m, void *arg)
 	else if (cft->read_s64)
 		seq_printf(m, "%lld\n", cft->read_s64(css, cft));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -3974,7 +3974,7 @@ static int cgroup_rm_cftypes_locked(struct cftype *cfts)
 	lockdep_assert_held(&cgroup_mutex);
 
 	if (!cfts || !cfts[0].ss)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	list_del(&cfts->node);
 	cgroup_apply_cftypes(cfts, false);
@@ -4621,7 +4621,7 @@ static void *__cgroup_procs_start(struct seq_file *s, loff_t *pos,
 	 */
 	if (!it) {
 		if (WARN_ON_ONCE((*pos)))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		it = kzalloc(sizeof(*it), GFP_KERNEL);
 		if (!it)
@@ -4648,7 +4648,7 @@ static void *cgroup_procs_start(struct seq_file *s, loff_t *pos)
 	 * They're always empty anyway.
 	 */
 	if (cgroup_is_threaded(cgrp))
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	return __cgroup_procs_start(s, pos, CSS_TASK_ITER_PROCS |
 					    CSS_TASK_ITER_THREADED);
@@ -4702,7 +4702,7 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
 	if ((cgrp_dfl_root.flags & CGRP_ROOT_NS_DELEGATE) &&
 	    (!cgroup_is_descendant(src_cgrp, ns->root_cset->dfl_cgrp) ||
 	     !cgroup_is_descendant(dst_cgrp, ns->root_cset->dfl_cgrp)))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -4722,7 +4722,7 @@ static int cgroup_attach_permissions(struct cgroup *src_cgrp,
 		return ret;
 
 	if (!threadgroup && (src_cgrp->dom_cgrp != dst_cgrp->dom_cgrp))
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 
 	return ret;
 }
@@ -4737,7 +4737,7 @@ static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
 
 	dst_cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!dst_cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	task = cgroup_procs_write_start(buf, true, &locked);
 	ret = PTR_ERR_OR_ZERO(task);
@@ -4781,7 +4781,7 @@ static ssize_t cgroup_threads_write(struct kernfs_open_file *of,
 
 	dst_cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!dst_cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	task = cgroup_procs_write_start(buf, false, &locked);
 	ret = PTR_ERR_OR_ZERO(task);
@@ -5324,14 +5324,14 @@ int cgroup_mkdir(struct kernfs_node *parent_kn, const char *name, umode_t mode)
 
 	/* do not accept '\n' to prevent making /proc/<pid>/cgroup unparsable */
 	if (strchr(name, '\n'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parent = cgroup_kn_lock_live(parent_kn, false);
 	if (!parent)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!cgroup_check_hierarchy_limits(parent)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out_unlock;
 	}
 
@@ -5490,7 +5490,7 @@ static int cgroup_destroy_locked(struct cgroup *cgrp)
 	 * holding cgroup_mutex.
 	 */
 	if (cgroup_is_populated(cgrp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * Make sure there's no live children.  We can't test emptiness of
@@ -5498,7 +5498,7 @@ static int cgroup_destroy_locked(struct cgroup *cgrp)
 	 * drained; otherwise, "rmdir parent/child parent" may fail.
 	 */
 	if (css_has_online_children(&cgrp->self))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * Mark @cgrp and the associated csets dead.  The former prevents
@@ -5857,7 +5857,7 @@ int proc_cgroup_show(struct seq_file *m, struct pid_namespace *ns,
 			retval = cgroup_path_ns_locked(cgrp, buf, PATH_MAX,
 						current->nsproxy->cgroup_ns);
 			if (retval >= PATH_MAX)
-				retval = -ENAMETOOLONG;
+				retval = -ERR(ENAMETOOLONG);
 			if (retval < 0)
 				goto out_unlock;
 
@@ -5906,7 +5906,7 @@ static struct cgroup *cgroup_get_from_file(struct file *f)
 	cgrp = css->cgroup;
 	if (!cgroup_on_dfl(cgrp)) {
 		cgroup_put(cgrp);
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 	}
 
 	return cgrp;
@@ -5954,7 +5954,7 @@ static int cgroup_css_set_fork(struct kernel_clone_args *kargs)
 
 	f = fget_raw(kargs->cgroup);
 	if (!f) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto err;
 	}
 	sb = f->f_path.dentry->d_sb;
@@ -5967,7 +5967,7 @@ static int cgroup_css_set_fork(struct kernel_clone_args *kargs)
 	}
 
 	if (cgroup_is_dead(dst_cgrp)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 
@@ -6278,7 +6278,7 @@ struct cgroup_subsys_state *css_tryget_online_from_dir(struct dentry *dentry,
 	/* is @dentry a cgroup dir? */
 	if ((s_type != &cgroup_fs_type && s_type != &cgroup2_fs_type) ||
 	    !kn || kernfs_type(kn) != KERNFS_DIR)
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	rcu_read_lock();
 
@@ -6292,7 +6292,7 @@ struct cgroup_subsys_state *css_tryget_online_from_dir(struct dentry *dentry,
 		css = cgroup_css(cgrp, ss);
 
 	if (!css || !css_tryget_online(css))
-		css = ERR_PTR(-ENOENT);
+		css = ERR_PTR(-ERR(ENOENT));
 
 	rcu_read_unlock();
 	return css;
@@ -6334,11 +6334,11 @@ struct cgroup *cgroup_get_from_path(const char *path)
 			cgrp = kn->priv;
 			cgroup_get_live(cgrp);
 		} else {
-			cgrp = ERR_PTR(-ENOTDIR);
+			cgrp = ERR_PTR(-ERR(ENOTDIR));
 		}
 		kernfs_put(kn);
 	} else {
-		cgrp = ERR_PTR(-ENOENT);
+		cgrp = ERR_PTR(-ERR(ENOENT));
 	}
 
 	mutex_unlock(&cgroup_mutex);
@@ -6362,7 +6362,7 @@ struct cgroup *cgroup_get_from_fd(int fd)
 
 	f = fget_raw(fd);
 	if (!f)
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	cgrp = cgroup_get_from_file(f);
 	fput(f);
@@ -6398,9 +6398,9 @@ int cgroup_parse_float(const char *input, unsigned dec_shift, s64 *v)
 	int fstart = 0, fend = 0, flen;
 
 	if (!sscanf(input, "%lld.%n%lld%n", &whole, &fstart, &frac, &fend))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (frac < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	flen = fend > fstart ? fend - fstart : 0;
 	if (flen < dec_shift)

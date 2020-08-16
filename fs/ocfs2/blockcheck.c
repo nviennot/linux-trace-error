@@ -417,7 +417,7 @@ int ocfs2_block_check_validate(void *data, size_t blocksize,
 	mlog(ML_ERROR, "Fixed CRC32 failed: stored: 0x%x, computed 0x%x\n",
 	     (unsigned int)bc_crc32e, (unsigned int)crc);
 
-	rc = -EIO;
+	rc = -ERR(EIO);
 
 out:
 	bc->bc_crc32e = cpu_to_le32(bc_crc32e);
@@ -548,7 +548,7 @@ int ocfs2_block_check_validate_bhs(struct buffer_head **bhs, int nr,
 	mlog(ML_ERROR, "Fixed CRC32 failed: stored: %u, computed %u\n",
 	     (unsigned int)bc_crc32e, (unsigned int)crc);
 
-	rc = -EIO;
+	rc = -ERR(EIO);
 
 out:
 	bc->bc_crc32e = cpu_to_le32(bc_crc32e);

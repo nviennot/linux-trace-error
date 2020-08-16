@@ -173,7 +173,7 @@ static int nft_nat_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 	if (tb[NFTA_NAT_TYPE] == NULL ||
 	    (tb[NFTA_NAT_REG_ADDR_MIN] == NULL &&
 	     tb[NFTA_NAT_REG_PROTO_MIN] == NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (ntohl(nla_get_be32(tb[NFTA_NAT_TYPE]))) {
 	case NFT_NAT_SNAT:
@@ -183,15 +183,15 @@ static int nft_nat_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 		priv->type = NF_NAT_MANIP_DST;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (tb[NFTA_NAT_FAMILY] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	family = ntohl(nla_get_be32(tb[NFTA_NAT_FAMILY]));
 	if (ctx->family != NFPROTO_INET && ctx->family != family)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (family) {
 	case NFPROTO_IPV4:
@@ -201,7 +201,7 @@ static int nft_nat_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 		alen = sizeof_field(struct nf_nat_range, min_addr.ip6);
 		break;
 	default:
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 	priv->family = family;
 
@@ -254,7 +254,7 @@ static int nft_nat_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 	if (tb[NFTA_NAT_FLAGS]) {
 		priv->flags |= ntohl(nla_get_be32(tb[NFTA_NAT_FLAGS]));
 		if (priv->flags & ~NF_NAT_RANGE_MASK)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	}
 
 	return nf_ct_netns_get(ctx->net, family);

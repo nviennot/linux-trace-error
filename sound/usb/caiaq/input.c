@@ -534,14 +534,14 @@ static int snd_usb_caiaq_input_open(struct input_dev *idev)
 	struct snd_usb_caiaqdev *cdev = input_get_drvdata(idev);
 
 	if (!cdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cdev->chip.usb_id) {
 	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_TRAKTORKONTROLX1):
 	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_TRAKTORKONTROLS4):
 	case USB_ID(USB_VID_NATIVEINSTRUMENTS, USB_PID_MASCHINECONTROLLER):
 		if (usb_submit_urb(cdev->ep4_in_urb, GFP_KERNEL) != 0)
-			return -EIO;
+			return -ERR(EIO);
 		break;
 	}
 

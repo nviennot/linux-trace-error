@@ -299,7 +299,7 @@ int snd_cs4236_create(struct snd_card *card,
 		snd_printk(KERN_ERR "please, specify control port "
 			   "for CS4236+ chips\n");
 		snd_device_free(card, chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	ver1 = snd_cs4236_ctrl_in(chip, 1);
 	ver2 = snd_cs4236_ext_in(chip, CS4236_VERSION);
@@ -309,7 +309,7 @@ int snd_cs4236_create(struct snd_card *card,
 		snd_printk(KERN_ERR "CS4236+ chip detected, but "
 			   "control port 0x%lx is not valid\n", cport);
 		snd_device_free(card, chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_cs4236_ctrl_out(chip, 0, 0x00);
 	snd_cs4236_ctrl_out(chip, 2, 0xff);
@@ -1023,7 +1023,7 @@ int snd_cs4236_mixer(struct snd_wss *chip)
 	const struct snd_kcontrol_new *kcontrol;
 
 	if (snd_BUG_ON(!chip || !chip->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = chip->card;
 	strcpy(card->mixername, snd_wss_chip_id(chip));
 

@@ -1663,7 +1663,7 @@ static int cs4215_init(struct snd_dbri *dbri)
 
 	if (!(reg2 & (D_PIO0 | D_PIO2))) {
 		printk(KERN_ERR "DBRI: no mmcodec found.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	cs4215_setup_pipes(dbri);
@@ -1677,7 +1677,7 @@ static int cs4215_init(struct snd_dbri *dbri)
 	if (cs4215_setctrl(dbri) == -1 || dbri->mm.version == 0xff) {
 		dprintk(D_MM, "CS4215 failed probe at offset %d\n",
 			dbri->mm.offset);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	dprintk(D_MM, "Found CS4215 at offset %d\n", dbri->mm.offset);
 
@@ -2193,7 +2193,7 @@ static int snd_dbri_trigger(struct snd_pcm_substream *substream, int cmd)
 		reset_pipe(dbri, info->pipe);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -2270,7 +2270,7 @@ static int snd_cs4215_get_volume(struct snd_kcontrol *kcontrol,
 	struct dbri_streaminfo *info;
 
 	if (snd_BUG_ON(!dbri))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info = &dbri->stream_info[kcontrol->private_value];
 
 	ucontrol->value.integer.value[0] = info->left_gain;
@@ -2291,10 +2291,10 @@ static int snd_cs4215_put_volume(struct snd_kcontrol *kcontrol,
 	vol[1] = ucontrol->value.integer.value[1];
 	if (kcontrol->private_value == DBRI_PLAY) {
 		if (vol[0] > DBRI_MAX_VOLUME || vol[1] > DBRI_MAX_VOLUME)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (vol[0] > DBRI_MAX_GAIN || vol[1] > DBRI_MAX_GAIN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (info->left_gain != vol[0]) {
@@ -2339,7 +2339,7 @@ static int snd_cs4215_get_single(struct snd_kcontrol *kcontrol,
 	int invert = (kcontrol->private_value >> 24) & 1;
 
 	if (snd_BUG_ON(!dbri))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (elem < 4)
 		ucontrol->value.integer.value[0] =
@@ -2366,7 +2366,7 @@ static int snd_cs4215_put_single(struct snd_kcontrol *kcontrol,
 	unsigned short val;
 
 	if (snd_BUG_ON(!dbri))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val = (ucontrol->value.integer.value[0] & mask);
 	if (invert == 1)
@@ -2443,7 +2443,7 @@ static int snd_dbri_mixer(struct snd_card *card)
 	struct snd_dbri *dbri;
 
 	if (snd_BUG_ON(!card || !card->private_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dbri = card->private_data;
 
 	strcpy(card->mixername, card->shortname);
@@ -2545,7 +2545,7 @@ static int snd_dbri_create(struct snd_card *card,
 		printk(KERN_ERR "DBRI: could not allocate registers\n");
 		dma_free_coherent(&op->dev, sizeof(struct dbri_dma),
 				  (void *)dbri->dma, dbri->dma_dvma);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	err = request_irq(dbri->irq, snd_dbri_interrupt, IRQF_SHARED,
@@ -2596,16 +2596,16 @@ static int dbri_probe(struct platform_device *op)
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	irq = op->archdata.irqs[0];
 	if (irq <= 0) {
 		printk(KERN_ERR "DBRI-%d: No IRQ.\n", dev);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	err = snd_card_new(&op->dev, index[dev], id[dev], THIS_MODULE,

@@ -70,7 +70,7 @@ static int si476x_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	u16 format = 0;
 
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_DSP_A:
@@ -89,7 +89,7 @@ static int si476x_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		format |= SI476X_DAUDIO_MODE_LEFT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -102,7 +102,7 @@ static int si476x_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			format |= SI476X_DAUDIO_MODE_IB;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -122,11 +122,11 @@ static int si476x_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			format |= SI476X_DAUDIO_MODE_IF;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	si476x_core_lock(core);
@@ -155,7 +155,7 @@ static int si476x_codec_hw_params(struct snd_pcm_substream *substream,
 	rate = params_rate(params);
 	if (rate < 32000 || rate > 48000) {
 		dev_err(dai->component->dev, "Rate: %d is not supported\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -172,7 +172,7 @@ static int si476x_codec_hw_params(struct snd_pcm_substream *substream,
 		width = SI476X_PCM_FORMAT_S24_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	si476x_core_lock(core);

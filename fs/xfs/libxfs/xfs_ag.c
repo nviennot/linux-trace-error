@@ -554,7 +554,7 @@ xfs_ag_get_geometry(
 	int			error;
 
 	if (agno >= mp->m_sb.sb_agcount)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Lock the AG headers. */
 	error = xfs_ialloc_read_agi(mp, NULL, agno, &agi_bp);

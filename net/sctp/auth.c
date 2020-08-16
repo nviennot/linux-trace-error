@@ -766,7 +766,7 @@ int sctp_auth_ep_add_chunkid(struct sctp_endpoint *ep, __u8 chunk_id)
 	param_len = ntohs(p->param_hdr.length);
 	nchunks = param_len - sizeof(struct sctp_paramhdr);
 	if (nchunks == SCTP_NUM_CHUNK_TYPES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p->chunks[nchunks] = chunk_id;
 	p->param_hdr.length = htons(param_len + 1);
@@ -788,17 +788,17 @@ int sctp_auth_ep_set_hmacs(struct sctp_endpoint *ep,
 		id = hmacs->shmac_idents[i];
 
 		if (id > SCTP_AUTH_HMAC_ID_MAX)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		if (SCTP_AUTH_HMAC_ID_SHA1 == id)
 			has_sha1 = 1;
 
 		if (!sctp_hmac_list[id].hmac_name)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	}
 
 	if (!has_sha1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < hmacs->shmac_num_idents; i++)
 		ep->auth_hmacs_list->hmac_ids[i] =
@@ -827,11 +827,11 @@ int sctp_auth_set_key(struct sctp_endpoint *ep,
 	 */
 	if (asoc) {
 		if (!asoc->peer.auth_capable)
-			return -EACCES;
+			return -ERR(EACCES);
 		sh_keys = &asoc->endpoint_shared_keys;
 	} else {
 		if (!ep->auth_enable)
-			return -EACCES;
+			return -ERR(EACCES);
 		sh_keys = &ep->endpoint_shared_keys;
 	}
 
@@ -876,11 +876,11 @@ int sctp_auth_set_active_key(struct sctp_endpoint *ep,
 	/* The key identifier MUST correst to an existing key */
 	if (asoc) {
 		if (!asoc->peer.auth_capable)
-			return -EACCES;
+			return -ERR(EACCES);
 		sh_keys = &asoc->endpoint_shared_keys;
 	} else {
 		if (!ep->auth_enable)
-			return -EACCES;
+			return -ERR(EACCES);
 		sh_keys = &ep->endpoint_shared_keys;
 	}
 
@@ -892,7 +892,7 @@ int sctp_auth_set_active_key(struct sctp_endpoint *ep,
 	}
 
 	if (!found || key->deactivated)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (asoc) {
 		asoc->active_key_id = key_id;
@@ -916,16 +916,16 @@ int sctp_auth_del_key_id(struct sctp_endpoint *ep,
 	 */
 	if (asoc) {
 		if (!asoc->peer.auth_capable)
-			return -EACCES;
+			return -ERR(EACCES);
 		if (asoc->active_key_id == key_id)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sh_keys = &asoc->endpoint_shared_keys;
 	} else {
 		if (!ep->auth_enable)
-			return -EACCES;
+			return -ERR(EACCES);
 		if (ep->active_key_id == key_id)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sh_keys = &ep->endpoint_shared_keys;
 	}
@@ -938,7 +938,7 @@ int sctp_auth_del_key_id(struct sctp_endpoint *ep,
 	}
 
 	if (!found)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Delete the shared key */
 	list_del_init(&key->key_list);
@@ -959,16 +959,16 @@ int sctp_auth_deact_key_id(struct sctp_endpoint *ep,
 	 */
 	if (asoc) {
 		if (!asoc->peer.auth_capable)
-			return -EACCES;
+			return -ERR(EACCES);
 		if (asoc->active_key_id == key_id)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sh_keys = &asoc->endpoint_shared_keys;
 	} else {
 		if (!ep->auth_enable)
-			return -EACCES;
+			return -ERR(EACCES);
 		if (ep->active_key_id == key_id)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sh_keys = &ep->endpoint_shared_keys;
 	}
@@ -981,7 +981,7 @@ int sctp_auth_deact_key_id(struct sctp_endpoint *ep,
 	}
 
 	if (!found)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* refcnt == 1 and !list_empty mean it's not being used anywhere
 	 * and deactivated will be set, so it's time to notify userland

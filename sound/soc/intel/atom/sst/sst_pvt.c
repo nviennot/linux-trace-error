@@ -90,14 +90,14 @@ int sst_wait_interruptible(struct intel_sst_drv *sst_drv_ctx,
 		if (block->ret_code < 0) {
 			dev_err(sst_drv_ctx->dev,
 				"stream failed %d\n", block->ret_code);
-			retval = -EBUSY;
+			retval = -ERR(EBUSY);
 		} else {
 			dev_dbg(sst_drv_ctx->dev, "event up\n");
 			retval = 0;
 		}
 	} else {
 		dev_err(sst_drv_ctx->dev, "signal interrupted\n");
-		retval = -EINTR;
+		retval = -ERR(EINTR);
 	}
 	return retval;
 
@@ -140,7 +140,7 @@ int sst_wait_timeout(struct intel_sst_drv *sst_drv_ctx, struct sst_block *block)
 			block->condition, block->msg_id, sst_drv_ctx->sst_state);
 		sst_drv_ctx->sst_state = SST_RESET;
 
-		retval = -EBUSY;
+		retval = -ERR(EBUSY);
 	}
 	return retval;
 }
@@ -344,7 +344,7 @@ int sst_assign_pvt_id(struct intel_sst_drv *drv)
 	if (local >= SST_MAX_BLOCKS){
 		spin_unlock(&drv->block_lock);
 		dev_err(drv->dev, "PVT _ID error: no free id blocks ");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* toggle the index */
 	change_bit(local, &drv->pvt_id);
@@ -359,7 +359,7 @@ int sst_validate_strid(
 		dev_err(sst_drv_ctx->dev,
 			"SST ERR: invalid stream id : %d, max %d\n",
 			str_id, sst_drv_ctx->info.max_streams);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

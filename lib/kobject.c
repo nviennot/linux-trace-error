@@ -228,13 +228,13 @@ static int kobject_add_internal(struct kobject *kobj)
 	struct kobject *parent;
 
 	if (!kobj)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!kobj->name || !kobj->name[0]) {
 		WARN(1,
 		     "kobject: (%p): attempted to be registered with empty name!\n",
 		     kobj);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	parent = kobject_get(kobj->parent);
@@ -430,13 +430,13 @@ int kobject_add(struct kobject *kobj, struct kobject *parent,
 	int retval;
 
 	if (!kobj)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!kobj->state_initialized) {
 		pr_err("kobject '%s' (%p): tried to add an uninitialized object, something is seriously wrong.\n",
 		       kobject_name(kobj), kobj);
 		dump_stack();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	va_start(args, fmt);
 	retval = kobject_add_varg(kobj, parent, fmt, args);
@@ -497,10 +497,10 @@ int kobject_rename(struct kobject *kobj, const char *new_name)
 
 	kobj = kobject_get(kobj);
 	if (!kobj)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!kobj->parent) {
 		kobject_put(kobj);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	devpath = kobject_get_path(kobj, GFP_KERNEL);
@@ -561,7 +561,7 @@ int kobject_move(struct kobject *kobj, struct kobject *new_parent)
 
 	kobj = kobject_get(kobj);
 	if (!kobj)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	new_parent = kobject_get(new_parent);
 	if (!new_parent) {
 		if (kobj->kset)
@@ -823,7 +823,7 @@ static ssize_t kobj_attr_show(struct kobject *kobj, struct attribute *attr,
 			      char *buf)
 {
 	struct kobj_attribute *kattr;
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 
 	kattr = container_of(attr, struct kobj_attribute, attr);
 	if (kattr->show)
@@ -835,7 +835,7 @@ static ssize_t kobj_attr_store(struct kobject *kobj, struct attribute *attr,
 			       const char *buf, size_t count)
 {
 	struct kobj_attribute *kattr;
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 
 	kattr = container_of(attr, struct kobj_attribute, attr);
 	if (kattr->store)
@@ -858,7 +858,7 @@ int kset_register(struct kset *k)
 	int err;
 
 	if (!k)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kset_init(k);
 	err = kobject_add_internal(&k->kobj);
@@ -1018,15 +1018,15 @@ int kobj_ns_type_register(const struct kobj_ns_type_operations *ops)
 
 	spin_lock(&kobj_ns_type_lock);
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (type >= KOBJ_NS_TYPES)
 		goto out;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (type <= KOBJ_NS_TYPE_NONE)
 		goto out;
 
-	error = -EBUSY;
+	error = -ERR(EBUSY);
 	if (kobj_ns_ops_tbl[type])
 		goto out;
 

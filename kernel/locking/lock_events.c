@@ -71,7 +71,7 @@ ssize_t __weak lockevent_read(struct file *file, char __user *user_buf,
 	id = (long)file_inode(file)->i_private;
 
 	if (id >= lockevent_num)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	for_each_possible_cpu(cpu)
 		sum += per_cpu(lockevents[id], cpu);

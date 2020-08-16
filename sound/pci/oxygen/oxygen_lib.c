@@ -623,14 +623,14 @@ int oxygen_pci_probe(struct pci_dev *pci, int index, char *id,
 	if (!(pci_resource_flags(pci, 0) & IORESOURCE_IO) ||
 	    pci_resource_len(pci, 0) < OXYGEN_IO_SIZE) {
 		dev_err(card->dev, "invalid PCI I/O range\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto err_pci_regions;
 	}
 	chip->addr = pci_resource_start(pci, 0);
 
 	pci_id = oxygen_search_pci_id(chip, ids);
 	if (!pci_id) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto err_pci_regions;
 	}
 	oxygen_restore_eeprom(chip, pci_id);

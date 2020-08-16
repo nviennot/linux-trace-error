@@ -312,11 +312,11 @@ static int q6asm_apr_send_session_pkt(struct q6asm *a, struct audio_client *ac,
 
 	if (!rc) {
 		dev_err(a->dev, "CMD timeout\n");
-		rc = -ETIMEDOUT;
+		rc = -ERR(ETIMEDOUT);
 	} else if (ac->result.status > 0) {
 		dev_err(a->dev, "DSP returned error[%x]\n",
 			ac->result.status);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 
 err:
@@ -335,7 +335,7 @@ static int __q6asm_memory_unmap(struct audio_client *ac,
 
 	if (ac->port[dir].mem_map_handle == 0) {
 		dev_err(ac->dev, "invalid mem handle\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pkt_size = APR_HDR_SIZE + sizeof(*mem_unmap);
@@ -396,7 +396,7 @@ int q6asm_unmap_memory_regions(unsigned int dir, struct audio_client *ac)
 
 	port = &ac->port[dir];
 	if (!port->buf) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -689,7 +689,7 @@ static int32_t q6asm_stream_callback(struct apr_device *adev,
 				dev_err(ac->dev, "Expected addr %pa\n",
 					&port->buf[hdr->token].phys);
 				spin_unlock_irqrestore(&ac->lock, flags);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto done;
 			}
 			spin_unlock_irqrestore(&ac->lock, flags);
@@ -719,7 +719,7 @@ static int32_t q6asm_stream_callback(struct apr_device *adev,
 					done->buf_addr_lsw,
 					done->buf_addr_msw);
 				spin_unlock_irqrestore(&ac->lock, flags);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto done;
 			}
 			spin_unlock_irqrestore(&ac->lock, flags);
@@ -892,14 +892,14 @@ static int q6asm_ac_send_cmd_sync(struct audio_client *ac, struct apr_pkt *pkt)
 				(ac->result.opcode == hdr->opcode), 5 * HZ);
 	if (!rc) {
 		dev_err(ac->dev, "CMD timeout\n");
-		rc =  -ETIMEDOUT;
+		rc =  -ERR(ETIMEDOUT);
 		goto err;
 	}
 
 	if (ac->result.status > 0) {
 		dev_err(ac->dev, "DSP returned error[%x]\n",
 			ac->result.status);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	} else {
 		rc = 0;
 	}
@@ -970,7 +970,7 @@ int q6asm_open_write(struct audio_client *ac, uint32_t format,
 		default:
 			dev_err(ac->dev, "Invalid codec profile 0x%x\n",
 				codec_profile);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto err;
 		}
 		break;
@@ -982,7 +982,7 @@ int q6asm_open_write(struct audio_client *ac, uint32_t format,
 		break;
 	default:
 		dev_err(ac->dev, "Invalid format 0x%x\n", format);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1112,7 +1112,7 @@ int q6asm_media_format_block_multi_ch_pcm(struct audio_client *ac,
 	} else {
 		if (q6dsp_map_channels(channel_mapping, channels)) {
 			dev_err(ac->dev, " map channels failed %d\n", channels);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto err;
 		}
 	}
@@ -1360,7 +1360,7 @@ int q6asm_enc_cfg_blk_pcm_format_support(struct audio_client *ac,
 	channel_mapping = enc_cfg->channel_mapping;
 
 	if (q6dsp_map_channels(channel_mapping, channels)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1595,7 +1595,7 @@ static int __q6asm_cmd(struct audio_client *ac, int cmd, bool wait)
 		pkt.hdr.opcode = ASM_STREAM_CMD_CLOSE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wait)

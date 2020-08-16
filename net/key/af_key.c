@@ -144,11 +144,11 @@ static int pfkey_create(struct net *net, struct socket *sock, int protocol,
 	int err;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	if (protocol != PF_KEY_V2)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	err = -ENOMEM;
 	sk = sk_alloc(net, PF_KEY, GFP_KERNEL, &key_proto, kern);
@@ -195,7 +195,7 @@ static int pfkey_release(struct socket *sock)
 static int pfkey_broadcast_one(struct sk_buff *skb, gfp_t allocation,
 			       struct sock *sk)
 {
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	if (atomic_read(&sk->sk_rmem_alloc) > sk->sk_rcvbuf)
 		return err;
@@ -222,7 +222,7 @@ static int pfkey_broadcast(struct sk_buff *skb, gfp_t allocation,
 {
 	struct netns_pfkey *net_pfkey = net_generic(net, pfkey_net_id);
 	struct sock *sk;
-	int err = -ESRCH;
+	int err = -ERR(ESRCH);
 
 	/* XXX Do we need something like netlink_overrun?  I think
 	 * XXX PF_KEY socket apps will not mind current behavior.
@@ -321,7 +321,7 @@ static int pfkey_error(const struct sadb_msg *orig, int err, struct sock *sk)
 	struct sadb_msg *hdr;
 
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* Woe be to the platform trying to support PFKEY yet
 	 * having normal errnos outside the 1-255 range, inclusive.
@@ -330,9 +330,9 @@ static int pfkey_error(const struct sadb_msg *orig, int err, struct sock *sk)
 	if (err == ERESTARTSYS ||
 	    err == ERESTARTNOHAND ||
 	    err == ERESTARTNOINTR)
-		err = EINTR;
+		err = ERR(EINTR);
 	if (err >= 512)
-		err = EINVAL;
+		err = ERR(EINVAL);
 	BUG_ON(err <= 0 || err >= 256);
 
 	hdr = skb_put(skb, sizeof(struct sadb_msg));
@@ -390,21 +390,21 @@ static int verify_address_len(const void *p)
 	if (sp->sadb_address_len <
 	    DIV_ROUND_UP(sizeof(*sp) + offsetofend(typeof(*addr), sa_family),
 			 sizeof(uint64_t)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (addr->sa_family) {
 	case AF_INET:
 		len = DIV_ROUND_UP(sizeof(*sp) + sizeof(*sin), sizeof(uint64_t));
 		if (sp->sadb_address_len != len ||
 		    sp->sadb_address_prefixlen > 32)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
 	case AF_INET6:
 		len = DIV_ROUND_UP(sizeof(*sp) + sizeof(*sin6), sizeof(uint64_t));
 		if (sp->sadb_address_len != len ||
 		    sp->sadb_address_prefixlen > 128)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 #endif
 	default:
@@ -417,7 +417,7 @@ static int verify_address_len(const void *p)
 		 * XXX able to cope with arbitrary sockaddr families.
 		 * XXX When it can, remove this -EINVAL.  -DaveM
 		 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -436,7 +436,7 @@ static int verify_key_len(const void *p)
 	const struct sadb_key *key = p;
 
 	if (sadb_key_len(key) > key->sadb_key_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -454,12 +454,12 @@ static inline int verify_sec_ctx_len(const void *p)
 	int len = sec_ctx->sadb_x_ctx_len;
 
 	if (len > PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = pfkey_sec_ctx_len(sec_ctx);
 
 	if (sec_ctx->sadb_x_sec_len != len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -521,7 +521,7 @@ static int parse_exthdrs(struct sk_buff *skb, const struct sadb_msg *hdr, void *
 		int ext_len;
 
 		if (len < sizeof(*ehdr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ext_len  = ehdr->sadb_ext_len;
 		ext_len *= sizeof(uint64_t);
@@ -529,30 +529,30 @@ static int parse_exthdrs(struct sk_buff *skb, const struct sadb_msg *hdr, void *
 		if (ext_len < sizeof(uint64_t) ||
 		    ext_len > len ||
 		    ext_type == SADB_EXT_RESERVED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (ext_type <= SADB_EXT_MAX) {
 			int min = (int) sadb_ext_min_len[ext_type];
 			if (ext_len < min)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (ext_hdrs[ext_type-1] != NULL)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			switch (ext_type) {
 			case SADB_EXT_ADDRESS_SRC:
 			case SADB_EXT_ADDRESS_DST:
 			case SADB_EXT_ADDRESS_PROXY:
 			case SADB_X_EXT_NAT_T_OA:
 				if (verify_address_len(p))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			case SADB_X_EXT_SEC_CTX:
 				if (verify_sec_ctx_len(p))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			case SADB_EXT_KEY_AUTH:
 			case SADB_EXT_KEY_ENCRYPT:
 				if (verify_key_len(p))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			default:
 				break;
@@ -784,7 +784,7 @@ static struct sk_buff *__pfkey_xfrm_state2msg(const struct xfrm_state *x,
 	/* address family check */
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
 	if (!sockaddr_size)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* base, SA, (lifetime (HSC),) address(SD), (address(P),)
 	   key(AE), (identity(SD),) (sensitivity)> */
@@ -828,7 +828,7 @@ static struct sk_buff *__pfkey_xfrm_state2msg(const struct xfrm_state *x,
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
 	if (skb == NULL)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	/* call should fill header later */
 	hdr = skb_put(skb, sizeof(struct sadb_msg));
@@ -991,7 +991,7 @@ static struct sk_buff *__pfkey_xfrm_state2msg(const struct xfrm_state *x,
 	sa2->sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	if ((mode = pfkey_mode_from_xfrm(x->props.mode)) < 0) {
 		kfree_skb(skb);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	sa2->sadb_x_sa2_mode = mode;
 	sa2->sadb_x_sa2_reserved1 = 0;
@@ -1077,23 +1077,23 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 	if (!sa ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (hdr->sadb_msg_satype == SADB_SATYPE_ESP &&
 	    !ext_hdrs[SADB_EXT_KEY_ENCRYPT-1])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (hdr->sadb_msg_satype == SADB_SATYPE_AH &&
 	    !ext_hdrs[SADB_EXT_KEY_AUTH-1])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (!!ext_hdrs[SADB_EXT_LIFETIME_HARD-1] !=
 	    !!ext_hdrs[SADB_EXT_LIFETIME_SOFT-1])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
 	if (proto == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* default error is no buffer space */
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 
 	/* RFC2367:
 
@@ -1111,21 +1111,21 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 	    (hdr->sadb_msg_satype == SADB_X_SATYPE_IPCOMP &&
 	     sa->sadb_sa_encrypt > SADB_X_CALG_MAX) ||
 	    sa->sadb_sa_encrypt > SADB_EALG_MAX)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	key = ext_hdrs[SADB_EXT_KEY_AUTH - 1];
 	if (key != NULL &&
 	    sa->sadb_sa_auth != SADB_X_AALG_NULL &&
 	    key->sadb_key_bits == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	key = ext_hdrs[SADB_EXT_KEY_ENCRYPT-1];
 	if (key != NULL &&
 	    sa->sadb_sa_encrypt != SADB_EALG_NULL &&
 	    key->sadb_key_bits == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	x = xfrm_state_alloc(net);
 	if (x == NULL)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	x->id.proto = proto;
 	x->id.spi = sa->sadb_sa_spi;
@@ -1167,13 +1167,13 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 			goto out;
 	}
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	key = ext_hdrs[SADB_EXT_KEY_AUTH - 1];
 	if (sa->sadb_sa_auth) {
 		int keysize = 0;
 		struct xfrm_algo_desc *a = xfrm_aalg_get_byid(sa->sadb_sa_auth);
 		if (!a || !a->pfkey_supported) {
-			err = -ENOSYS;
+			err = -ERR(ENOSYS);
 			goto out;
 		}
 		if (key)
@@ -1197,7 +1197,7 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 		if (hdr->sadb_msg_satype == SADB_X_SATYPE_IPCOMP) {
 			struct xfrm_algo_desc *a = xfrm_calg_get_byid(sa->sadb_sa_encrypt);
 			if (!a || !a->pfkey_supported) {
-				err = -ENOSYS;
+				err = -ERR(ENOSYS);
 				goto out;
 			}
 			x->calg = kmalloc(sizeof(*x->calg), GFP_KERNEL);
@@ -1211,7 +1211,7 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 			int keysize = 0;
 			struct xfrm_algo_desc *a = xfrm_ealg_get_byid(sa->sadb_sa_encrypt);
 			if (!a || !a->pfkey_supported) {
-				err = -ENOSYS;
+				err = -ERR(ENOSYS);
 				goto out;
 			}
 			key = (struct sadb_key*) ext_hdrs[SADB_EXT_KEY_ENCRYPT-1];
@@ -1243,7 +1243,7 @@ static struct xfrm_state * pfkey_msg2xfrm_state(struct net *net,
 		const struct sadb_x_sa2 *sa2 = ext_hdrs[SADB_X_EXT_SA2-1];
 		int mode = pfkey_mode_to_xfrm(sa2->sadb_x_sa2_mode);
 		if (mode < 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		x->props.mode = mode;
@@ -1303,7 +1303,7 @@ out:
 
 static int pfkey_reserved(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int pfkey_getspi(struct sock *sk, struct sk_buff *skb, const struct sadb_msg *hdr, void * const *ext_hdrs)
@@ -1325,16 +1325,16 @@ static int pfkey_getspi(struct sock *sk, struct sk_buff *skb, const struct sadb_
 
 	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
 	if (proto == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((sa2 = ext_hdrs[SADB_X_EXT_SA2-1]) != NULL) {
 		mode = pfkey_mode_to_xfrm(sa2->sadb_x_sa2_mode);
 		if (mode < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		reqid = sa2->sadb_x_sa2_reqid;
 	} else {
 		mode = 0;
@@ -1370,7 +1370,7 @@ static int pfkey_getspi(struct sock *sk, struct sk_buff *skb, const struct sadb_
 		x = xfrm_find_acq(net, &dummy_mark, mode, reqid, 0, proto, xdaddr, xsaddr, 1, family);
 
 	if (x == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	min_spi = 0x100;
 	max_spi = 0x0fffffff;
@@ -1417,7 +1417,7 @@ static int pfkey_acquire(struct sock *sk, struct sk_buff *skb, const struct sadb
 	struct xfrm_state *x;
 
 	if (hdr->sadb_msg_len != sizeof(struct sadb_msg)/8)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (hdr->sadb_msg_seq == 0 || hdr->sadb_msg_errno == 0)
 		return 0;
@@ -1545,17 +1545,17 @@ static int pfkey_delete(struct sock *sk, struct sk_buff *skb, const struct sadb_
 	if (!ext_hdrs[SADB_EXT_SA-1] ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	x = pfkey_xfrm_state_lookup(net, hdr, ext_hdrs);
 	if (x == NULL)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	if ((err = security_xfrm_state_delete(x)))
 		goto out;
 
 	if (xfrm_state_kern(x)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out;
 	}
 
@@ -1586,11 +1586,11 @@ static int pfkey_get(struct sock *sk, struct sk_buff *skb, const struct sadb_msg
 	if (!ext_hdrs[SADB_EXT_SA-1] ||
 	    !present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	x = pfkey_xfrm_state_lookup(net, hdr, ext_hdrs);
 	if (x == NULL)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	out_skb = pfkey_xfrm_state2msg(x);
 	proto = x->id.proto;
@@ -1693,11 +1693,11 @@ static int pfkey_register(struct sock *sk, struct sk_buff *skb, const struct sad
 	struct sk_buff *supp_skb;
 
 	if (hdr->sadb_msg_satype > SADB_SATYPE_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC) {
 		if (pfk->registered&(1<<hdr->sadb_msg_satype))
-			return -EEXIST;
+			return -ERR(EEXIST);
 		pfk->registered |= (1<<hdr->sadb_msg_satype);
 	}
 
@@ -1708,7 +1708,7 @@ static int pfkey_register(struct sock *sk, struct sk_buff *skb, const struct sad
 		if (hdr->sadb_msg_satype != SADB_SATYPE_UNSPEC)
 			pfk->registered &= ~(1<<hdr->sadb_msg_satype);
 
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	pfkey_broadcast(supp_skb, GFP_KERNEL, BROADCAST_REGISTERED, sk,
@@ -1723,7 +1723,7 @@ static int unicast_flush_resp(struct sock *sk, const struct sadb_msg *ihdr)
 
 	skb = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	hdr = skb_put_data(skb, ihdr, sizeof(struct sadb_msg));
 	hdr->sadb_msg_errno = (uint8_t) 0;
@@ -1740,7 +1740,7 @@ static int key_notify_sa_flush(const struct km_event *c)
 
 	skb = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	hdr = skb_put(skb, sizeof(struct sadb_msg));
 	hdr->sadb_msg_satype = pfkey_proto2satype(c->data.proto);
 	hdr->sadb_msg_type = SADB_FLUSH;
@@ -1765,7 +1765,7 @@ static int pfkey_flush(struct sock *sk, struct sk_buff *skb, const struct sadb_m
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
 	if (proto == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = xfrm_state_flush(net, proto, true, false);
 	err2 = unicast_flush_resp(sk, hdr);
@@ -1792,7 +1792,7 @@ static int dump_sa(struct xfrm_state *x, int count, void *ptr)
 	struct sadb_msg *out_hdr;
 
 	if (!pfkey_can_dump(&pfk->sk))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	out_skb = pfkey_xfrm_state2msg(x);
 	if (IS_ERR(out_skb))
@@ -1837,13 +1837,13 @@ static int pfkey_dump(struct sock *sk, struct sk_buff *skb, const struct sadb_ms
 	mutex_lock(&pfk->dump_lock);
 	if (pfk->dump.dump != NULL) {
 		mutex_unlock(&pfk->dump_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	proto = pfkey_satype2proto(hdr->sadb_msg_satype);
 	if (proto == 0) {
 		mutex_unlock(&pfk->dump_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ext_hdrs[SADB_X_EXT_FILTER - 1]) {
@@ -1854,7 +1854,7 @@ static int pfkey_dump(struct sock *sk, struct sk_buff *skb, const struct sadb_ms
 		    (xfilter->sadb_x_filter_dplen >=
 			(sizeof(xfrm_address_t) << 3))) {
 			mutex_unlock(&pfk->dump_lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		filter = kmalloc(sizeof(*filter), GFP_KERNEL);
 		if (filter == NULL) {
@@ -1890,7 +1890,7 @@ static int pfkey_promisc(struct sock *sk, struct sk_buff *skb, const struct sadb
 	if (hdr->sadb_msg_len == (sizeof(*hdr) / sizeof(uint64_t))) {
 		reset_errno = true;
 		if (satype != 0 && satype != 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		pfk->promisc = satype;
 	}
 	if (reset_errno && skb_cloned(skb))
@@ -1914,7 +1914,7 @@ static int check_reqid(struct xfrm_policy *xp, int dir, int count, void *ptr)
 
 	for (i=0; i<xp->xfrm_nr; i++) {
 		if (xp->xfrm_vec[i].reqid == reqid)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 	return 0;
 }
@@ -1948,16 +1948,16 @@ parse_ipsecrequest(struct xfrm_policy *xp, struct sadb_x_ipsecrequest *rq)
 	int mode;
 
 	if (xp->xfrm_nr >= XFRM_MAX_DEPTH)
-		return -ELOOP;
+		return -ERR(ELOOP);
 
 	if (rq->sadb_x_ipsecrequest_mode == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!xfrm_id_proto_valid(rq->sadb_x_ipsecrequest_proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t->id.proto = rq->sadb_x_ipsecrequest_proto;
 	if ((mode = pfkey_mode_to_xfrm(rq->sadb_x_ipsecrequest_mode)) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	t->mode = mode;
 	if (rq->sadb_x_ipsecrequest_level == IPSEC_LEVEL_USE)
 		t->optional = 1;
@@ -1966,7 +1966,7 @@ parse_ipsecrequest(struct xfrm_policy *xp, struct sadb_x_ipsecrequest *rq)
 		if (t->reqid > IPSEC_MANUAL_REQID_MAX)
 			t->reqid = 0;
 		if (!t->reqid && !(t->reqid = gen_reqid(net)))
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 	}
 
 	/* addresses present only in tunnel mode */
@@ -1996,12 +1996,12 @@ parse_ipsecrequests(struct xfrm_policy *xp, struct sadb_x_policy *pol)
 	struct sadb_x_ipsecrequest *rq = (void*)(pol+1);
 
 	if (pol->sadb_x_policy_len * 8 < sizeof(struct sadb_x_policy))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (len >= sizeof(*rq)) {
 		if (len < rq->sadb_x_ipsecrequest_len ||
 		    rq->sadb_x_ipsecrequest_len < sizeof(*rq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if ((err = parse_ipsecrequest(xp, rq)) < 0)
 			return err;
@@ -2054,7 +2054,7 @@ static struct sk_buff * pfkey_xfrm_policy2msg_prep(const struct xfrm_policy *xp)
 
 	skb =  alloc_skb(size + 16, GFP_ATOMIC);
 	if (skb == NULL)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	return skb;
 }
@@ -2169,7 +2169,7 @@ static int pfkey_xfrm_policy2msg(struct sk_buff *skb, const struct xfrm_policy *
 		rq->sadb_x_ipsecrequest_len = req_size;
 		rq->sadb_x_ipsecrequest_proto = t->id.proto;
 		if ((mode = pfkey_mode_from_xfrm(t->mode)) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rq->sadb_x_ipsecrequest_mode = mode;
 		rq->sadb_x_ipsecrequest_level = IPSEC_LEVEL_REQUIRE;
 		if (t->reqid)
@@ -2254,17 +2254,17 @@ static int pfkey_spdadd(struct sock *sk, struct sk_buff *skb, const struct sadb_
 	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]) ||
 	    !ext_hdrs[SADB_X_EXT_POLICY-1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pol = ext_hdrs[SADB_X_EXT_POLICY-1];
 	if (pol->sadb_x_policy_type > IPSEC_POLICY_IPSEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_DIR_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xp = xfrm_policy_alloc(net, GFP_KERNEL);
 	if (xp == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	xp->action = (pol->sadb_x_policy_type == IPSEC_POLICY_DISCARD ?
 		      XFRM_POLICY_BLOCK : XFRM_POLICY_ALLOW);
@@ -2297,7 +2297,7 @@ static int pfkey_spdadd(struct sock *sk, struct sk_buff *skb, const struct sadb_
 		struct xfrm_user_sec_ctx *uctx = pfkey_sadb2xfrm_user_sec_ctx(sec_ctx, GFP_KERNEL);
 
 		if (!uctx) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto out;
 		}
 
@@ -2370,11 +2370,11 @@ static int pfkey_spddelete(struct sock *sk, struct sk_buff *skb, const struct sa
 	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC-1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST-1]) ||
 	    !ext_hdrs[SADB_X_EXT_POLICY-1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pol = ext_hdrs[SADB_X_EXT_POLICY-1];
 	if (!pol->sadb_x_policy_dir || pol->sadb_x_policy_dir >= IPSEC_DIR_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&sel, 0, sizeof(sel));
 
@@ -2412,7 +2412,7 @@ static int pfkey_spddelete(struct sock *sk, struct sk_buff *skb, const struct sa
 				   1, &err);
 	security_xfrm_policy_free(pol_ctx);
 	if (xp == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	xfrm_audit_policy_delete(xp, err ? 0 : 1, true);
 
@@ -2474,16 +2474,16 @@ static int parse_sockaddr_pair(struct sockaddr *sa, int ext_len,
 	int af, socklen;
 
 	if (ext_len < 2 || ext_len < pfkey_sockaddr_pair_size(sa->sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	af = pfkey_sockaddr_extract(sa, saddr);
 	if (!af)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	socklen = pfkey_sockaddr_len(af);
 	if (pfkey_sockaddr_extract((struct sockaddr *) (((u8 *)sa) + socklen),
 				   daddr) != af)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*family = af;
 	return 0;
@@ -2500,7 +2500,7 @@ static int ipsecrequests_to_migrate(struct sadb_x_ipsecrequest *rq1, int len,
 	if (len < sizeof(*rq1) ||
 	    len < rq1->sadb_x_ipsecrequest_len ||
 	    rq1->sadb_x_ipsecrequest_len < sizeof(*rq1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* old endoints */
 	err = parse_sockaddr_pair((struct sockaddr *)(rq1 + 1),
@@ -2516,7 +2516,7 @@ static int ipsecrequests_to_migrate(struct sadb_x_ipsecrequest *rq1, int len,
 	if (len <= sizeof(*rq2) ||
 	    len < rq2->sadb_x_ipsecrequest_len ||
 	    rq2->sadb_x_ipsecrequest_len < sizeof(*rq2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* new endpoints */
 	err = parse_sockaddr_pair((struct sockaddr *)(rq2 + 1),
@@ -2529,11 +2529,11 @@ static int ipsecrequests_to_migrate(struct sadb_x_ipsecrequest *rq1, int len,
 	if (rq1->sadb_x_ipsecrequest_proto != rq2->sadb_x_ipsecrequest_proto ||
 	    rq1->sadb_x_ipsecrequest_mode != rq2->sadb_x_ipsecrequest_mode ||
 	    rq1->sadb_x_ipsecrequest_reqid != rq2->sadb_x_ipsecrequest_reqid)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	m->proto = rq1->sadb_x_ipsecrequest_proto;
 	if ((mode = pfkey_mode_to_xfrm(rq1->sadb_x_ipsecrequest_mode)) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	m->mode = mode;
 	m->reqid = rq1->sadb_x_ipsecrequest_reqid;
 
@@ -2544,7 +2544,7 @@ static int ipsecrequests_to_migrate(struct sadb_x_ipsecrequest *rq1, int len,
 static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 			 const struct sadb_msg *hdr, void * const *ext_hdrs)
 {
-	int i, len, ret, err = -EINVAL;
+	int i, len, ret, err = -ERR(EINVAL);
 	u8 dir;
 	struct sadb_address *sa;
 	struct sadb_x_kmaddress *kma;
@@ -2558,7 +2558,7 @@ static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 	if (!present_and_same_family(ext_hdrs[SADB_EXT_ADDRESS_SRC - 1],
 				     ext_hdrs[SADB_EXT_ADDRESS_DST - 1]) ||
 	    !ext_hdrs[SADB_X_EXT_POLICY - 1]) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2566,7 +2566,7 @@ static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 	pol = ext_hdrs[SADB_X_EXT_POLICY - 1];
 
 	if (pol->sadb_x_policy_dir >= IPSEC_DIR_MAX) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2622,7 +2622,7 @@ static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 	}
 
 	if (!i || len > 0) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2636,7 +2636,7 @@ static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 static int pfkey_migrate(struct sock *sk, struct sk_buff *skb,
 			 const struct sadb_msg *hdr, void * const *ext_hdrs)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 #endif
 
@@ -2651,17 +2651,17 @@ static int pfkey_spdget(struct sock *sk, struct sk_buff *skb, const struct sadb_
 	struct km_event c;
 
 	if ((pol = ext_hdrs[SADB_X_EXT_POLICY-1]) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dir = xfrm_policy_id2dir(pol->sadb_x_policy_id);
 	if (dir >= XFRM_POLICY_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	delete = (hdr->sadb_msg_type == SADB_X_SPDDELETE2);
 	xp = xfrm_policy_byid(net, &dummy_mark, 0, XFRM_POLICY_TYPE_MAIN,
 			      dir, pol->sadb_x_policy_id, delete, &err);
 	if (xp == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (delete) {
 		xfrm_audit_policy_delete(xp, err ? 0 : 1, true);
@@ -2690,7 +2690,7 @@ static int dump_sp(struct xfrm_policy *xp, int dir, int count, void *ptr)
 	int err;
 
 	if (!pfkey_can_dump(&pfk->sk))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	out_skb = pfkey_xfrm_policy2msg_prep(xp);
 	if (IS_ERR(out_skb))
@@ -2738,7 +2738,7 @@ static int pfkey_spddump(struct sock *sk, struct sk_buff *skb, const struct sadb
 	mutex_lock(&pfk->dump_lock);
 	if (pfk->dump.dump != NULL) {
 		mutex_unlock(&pfk->dump_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pfk->dump.msg_version = hdr->sadb_msg_version;
@@ -2758,7 +2758,7 @@ static int key_notify_policy_flush(const struct km_event *c)
 
 	skb_out = alloc_skb(sizeof(struct sadb_msg) + 16, GFP_ATOMIC);
 	if (!skb_out)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	hdr = skb_put(skb_out, sizeof(struct sadb_msg));
 	hdr->sadb_msg_type = SADB_X_SPDFLUSH;
 	hdr->sadb_msg_seq = c->seq;
@@ -2836,7 +2836,7 @@ static int pfkey_process(struct sock *sk, struct sk_buff *skb, const struct sadb
 	memset(ext_hdrs, 0, sizeof(ext_hdrs));
 	err = parse_exthdrs(skb, hdr, ext_hdrs);
 	if (!err) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		if (pfkey_funcs[hdr->sadb_msg_type])
 			err = pfkey_funcs[hdr->sadb_msg_type](sk, skb, hdr, ext_hdrs);
 	}
@@ -2848,7 +2848,7 @@ static struct sadb_msg *pfkey_get_base_msg(struct sk_buff *skb, int *errp)
 	struct sadb_msg *hdr = NULL;
 
 	if (skb->len < sizeof(*hdr)) {
-		*errp = -EMSGSIZE;
+		*errp = -ERR(EMSGSIZE);
 	} else {
 		hdr = (struct sadb_msg *) skb->data;
 		if (hdr->sadb_msg_version != PF_KEY_V2 ||
@@ -2856,13 +2856,13 @@ static struct sadb_msg *pfkey_get_base_msg(struct sk_buff *skb, int *errp)
 		    (hdr->sadb_msg_type <= SADB_RESERVED ||
 		     hdr->sadb_msg_type > SADB_MAX)) {
 			hdr = NULL;
-			*errp = -EINVAL;
+			*errp = -ERR(EINVAL);
 		} else if (hdr->sadb_msg_len != (skb->len /
 						 sizeof(uint64_t)) ||
 			   hdr->sadb_msg_len < (sizeof(struct sadb_msg) /
 						sizeof(uint64_t))) {
 			hdr = NULL;
-			*errp = -EMSGSIZE;
+			*errp = -ERR(EMSGSIZE);
 		} else {
 			*errp = 0;
 		}
@@ -3150,7 +3150,7 @@ static int pfkey_send_acquire(struct xfrm_state *x, struct xfrm_tmpl *t, struct 
 
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
 	if (!sockaddr_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = sizeof(struct sadb_msg) +
 		(sizeof(struct sadb_address) * 2) +
@@ -3255,24 +3255,24 @@ static struct xfrm_policy *pfkey_compile_policy(struct sock *sk, int opt,
 	switch (sk->sk_family) {
 	case AF_INET:
 		if (opt != IP_IPSEC_POLICY) {
-			*dir = -EOPNOTSUPP;
+			*dir = -ERR(EOPNOTSUPP);
 			return NULL;
 		}
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
 	case AF_INET6:
 		if (opt != IPV6_IPSEC_POLICY) {
-			*dir = -EOPNOTSUPP;
+			*dir = -ERR(EOPNOTSUPP);
 			return NULL;
 		}
 		break;
 #endif
 	default:
-		*dir = -EINVAL;
+		*dir = -ERR(EINVAL);
 		return NULL;
 	}
 
-	*dir = -EINVAL;
+	*dir = -ERR(EINVAL);
 
 	if (len < sizeof(struct sadb_x_policy) ||
 	    pol->sadb_x_policy_len*8 > len ||
@@ -3282,7 +3282,7 @@ static struct xfrm_policy *pfkey_compile_policy(struct sock *sk, int opt,
 
 	xp = xfrm_policy_alloc(net, GFP_ATOMIC);
 	if (xp == NULL) {
-		*dir = -ENOBUFS;
+		*dir = -ERR(ENOBUFS);
 		return NULL;
 	}
 
@@ -3310,7 +3310,7 @@ static struct xfrm_policy *pfkey_compile_policy(struct sock *sk, int opt,
 		sec_ctx = (struct sadb_x_sec_ctx *)p;
 		if (len < pol->sadb_x_policy_len*8 +
 		    sec_ctx->sadb_x_sec_len*8) {
-			*dir = -EINVAL;
+			*dir = -ERR(EINVAL);
 			goto out;
 		}
 		if ((*dir = verify_sec_ctx_len(p)))
@@ -3346,13 +3346,13 @@ static int pfkey_send_new_mapping(struct xfrm_state *x, xfrm_address_t *ipaddr, 
 
 	sockaddr_size = pfkey_sockaddr_size(x->props.family);
 	if (!sockaddr_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!satype)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!x->encap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	natt = x->encap;
 
@@ -3466,7 +3466,7 @@ static int set_sadb_address(struct sk_buff *skb, int sasize, int type,
 				    sel->family);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -3492,7 +3492,7 @@ static int set_sadb_kmaddress(struct sk_buff *skb, const struct xfrm_kmaddress *
 	sa = (u8 *)(kma + 1);
 	if (!pfkey_sockaddr_fill(&k->local, 0, (struct sockaddr *)sa, family) ||
 	    !pfkey_sockaddr_fill(&k->remote, 0, (struct sockaddr *)(sa+socklen), family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3520,7 +3520,7 @@ static int set_ipsecrequest(struct sk_buff *skb,
 	sa = (u8 *) (rq + 1);
 	if (!pfkey_sockaddr_fill(src, 0, (struct sockaddr *)sa, family) ||
 	    !pfkey_sockaddr_fill(dst, 0, (struct sockaddr *)(sa + socklen), family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3545,7 +3545,7 @@ static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 		return 0;
 
 	if (num_bundles <= 0 || num_bundles > XFRM_MAX_DEPTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (k != NULL) {
 		/* addresses for KM */
@@ -3556,7 +3556,7 @@ static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 	/* selector */
 	sasize_sel = pfkey_sockaddr_size(sel->family);
 	if (!sasize_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	size += (sizeof(struct sadb_address) + sasize_sel) * 2;
 
 	/* policy info */
@@ -3635,7 +3635,7 @@ static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 
 err:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #else
 static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
@@ -3643,7 +3643,7 @@ static int pfkey_send_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 			      const struct xfrm_kmaddress *k,
 			      const struct xfrm_encap_tmpl *encap)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 #endif
 
@@ -3655,15 +3655,15 @@ static int pfkey_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	int err;
 	struct net *net = sock_net(sk);
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (msg->msg_flags & MSG_OOB)
 		goto out;
 
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 	if ((unsigned int)len > sk->sk_sndbuf - 32)
 		goto out;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	skb = alloc_skb(len, GFP_KERNEL);
 	if (skb == NULL)
 		goto out;
@@ -3696,7 +3696,7 @@ static int pfkey_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 	struct sk_buff *skb;
 	int copied, err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (flags & ~(MSG_PEEK|MSG_DONTWAIT|MSG_TRUNC|MSG_CMSG_COMPAT))
 		goto out;
 

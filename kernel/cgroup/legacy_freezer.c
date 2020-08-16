@@ -428,7 +428,7 @@ static ssize_t freezer_write(struct kernfs_open_file *of,
 	else if (strcmp(buf, freezer_state_strs(CGROUP_FROZEN)) == 0)
 		freeze = true;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	freezer_change_state(css_freezer(of_css(of)), freeze);
 	return nbytes;

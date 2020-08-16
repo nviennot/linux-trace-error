@@ -1727,7 +1727,7 @@ static int hdspm_set_rate(struct hdspm * hdspm, int rate, int called_internally)
 		rate_bits = HDSPM_Frequency192KHz;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (current_speed != target_speed
@@ -1737,7 +1737,7 @@ static int hdspm_set_rate(struct hdspm * hdspm, int rate, int called_internally)
 			hdspm_speed_names[current_speed],
 			hdspm_speed_names[target_speed],
 			hdspm->capture_pid, hdspm->playback_pid);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	hdspm->control_register &= ~HDSPM_FrequencyMask;
@@ -2268,7 +2268,7 @@ static int snd_hdspm_put_system_sample_rate(struct snd_kcontrol *kcontrol,
 	int rate = ucontrol->value.integer.value[0];
 
 	if (rate < 27000 || rate > 207000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	hdspm_set_dds_value(hdspm, ucontrol->value.integer.value[0]);
 	return 0;
 }
@@ -2575,7 +2575,7 @@ static int snd_hdspm_put_system_clock_mode(struct snd_kcontrol *kcontrol,
 	int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0)
@@ -2668,7 +2668,7 @@ static int snd_hdspm_put_clock_source(struct snd_kcontrol *kcontrol,
 	int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0)
 		val = 0;
@@ -2993,7 +2993,7 @@ static int snd_hdspm_put_pref_sync_ref(struct snd_kcontrol *kcontrol,
 	int val, change = 0;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	val = ucontrol->value.enumerated.item[0];
 
@@ -3257,7 +3257,7 @@ static int snd_hdspm_put_toggle_setting(struct snd_kcontrol *kcontrol,
 	unsigned int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdspm->lock);
 	change = (int) val != hdspm_toggle_setting(hdspm, regmask);
@@ -3318,7 +3318,7 @@ static int snd_hdspm_put_input_select(struct snd_kcontrol *kcontrol,
 	unsigned int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdspm->lock);
 	change = (int) val != hdspm_input_select(hdspm);
@@ -3380,7 +3380,7 @@ static int snd_hdspm_put_ds_wire(struct snd_kcontrol *kcontrol,
 	unsigned int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdspm->lock);
 	change = (int) val != hdspm_ds_wire(hdspm);
@@ -3453,7 +3453,7 @@ static int snd_hdspm_put_qs_wire(struct snd_kcontrol *kcontrol,
 	int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0];
 	if (val < 0)
 		val = 0;
@@ -3530,7 +3530,7 @@ static int snd_hdspm_put_tristate(struct snd_kcontrol *kcontrol,
 	int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0];
 	if (val < 0)
 		val = 0;
@@ -3607,7 +3607,7 @@ static int snd_hdspm_put_madi_speedmode(struct snd_kcontrol *kcontrol,
 	int val;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0];
 	if (val < 0)
 		val = 0;
@@ -3686,7 +3686,7 @@ static int snd_hdspm_put_mixer(struct snd_kcontrol *kcontrol,
 	int gain;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	source = ucontrol->value.integer.value[0];
 	destination = ucontrol->value.integer.value[1];
@@ -3756,7 +3756,7 @@ static int snd_hdspm_get_playback_mixer(struct snd_kcontrol *kcontrol,
 	channel = ucontrol->id.index - 1;
 
 	if (snd_BUG_ON(channel < 0 || channel >= HDSPM_MAX_CHANNELS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irq(&hdspm->lock);
 	ucontrol->value.integer.value[0] =
@@ -3775,12 +3775,12 @@ static int snd_hdspm_put_playback_mixer(struct snd_kcontrol *kcontrol,
 	int gain;
 
 	if (!snd_hdspm_use_is_exclusive(hdspm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	channel = ucontrol->id.index - 1;
 
 	if (snd_BUG_ON(channel < 0 || channel >= HDSPM_MAX_CHANNELS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gain = ucontrol->value.integer.value[0]*UNITY_GAIN/64;
 
@@ -5527,14 +5527,14 @@ static int snd_hdspm_hw_params(struct snd_pcm_substream *substream,
 			spin_unlock_irq(&hdspm->lock);
 			_snd_pcm_hw_param_setempty(params,
 					SNDRV_PCM_HW_PARAM_RATE);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		if (params_period_size(params) != hdspm->period_bytes / 4) {
 			spin_unlock_irq(&hdspm->lock);
 			_snd_pcm_hw_param_setempty(params,
 					SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 	}
@@ -5698,7 +5698,7 @@ static int snd_hdspm_channel_info(struct snd_pcm_substream *substream,
 			dev_info(hdspm->card->dev,
 				 "snd_hdspm_channel_info: output channel out of range (%d)\n",
 				 channel);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		channel = array_index_nospec(channel, hdspm->max_channels_out);
@@ -5706,7 +5706,7 @@ static int snd_hdspm_channel_info(struct snd_pcm_substream *substream,
 			dev_info(hdspm->card->dev,
 				 "snd_hdspm_channel_info: output channel %d mapped out\n",
 				 channel);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		info->offset = hdspm->channel_map_out[channel] *
@@ -5716,7 +5716,7 @@ static int snd_hdspm_channel_info(struct snd_pcm_substream *substream,
 			dev_info(hdspm->card->dev,
 				 "snd_hdspm_channel_info: input channel out of range (%d)\n",
 				 channel);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		channel = array_index_nospec(channel, hdspm->max_channels_in);
@@ -5724,7 +5724,7 @@ static int snd_hdspm_channel_info(struct snd_pcm_substream *substream,
 			dev_info(hdspm->card->dev,
 				 "snd_hdspm_channel_info: input channel %d mapped out\n",
 				 channel);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		info->offset = hdspm->channel_map_in[channel] *
@@ -5774,7 +5774,7 @@ static int snd_hdspm_trigger(struct snd_pcm_substream *substream, int cmd)
 	default:
 		snd_BUG();
 		spin_unlock(&hdspm->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		other = hdspm->capture_substream;
@@ -6358,7 +6358,7 @@ static int snd_hdspm_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -6578,7 +6578,7 @@ static int snd_hdspm_create(struct snd_card *card,
 			dev_err(card->dev,
 				"unknown firmware revision %x\n",
 				hdspm->firmware_rev);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -6602,7 +6602,7 @@ static int snd_hdspm_create(struct snd_card *card,
 	if (!hdspm->iobase) {
 		dev_err(card->dev, "unable to remap region 0x%lx-0x%lx\n",
 				hdspm->port, hdspm->port + io_extent - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	dev_dbg(card->dev, "remapped region (0x%lx) 0x%lx-0x%lx\n",
 			(unsigned long)hdspm->iobase, hdspm->port,
@@ -6611,7 +6611,7 @@ static int snd_hdspm_create(struct snd_card *card,
 	if (request_irq(pci->irq, snd_hdspm_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, hdspm)) {
 		dev_err(card->dev, "unable to use IRQ %d\n", pci->irq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	dev_dbg(card->dev, "use IRQ %d\n", pci->irq);
@@ -6916,10 +6916,10 @@ static int snd_hdspm_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev],

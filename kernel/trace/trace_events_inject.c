@@ -52,7 +52,7 @@ parse_field(char *str, struct trace_event_call *call,
 		i++;
 	len = i - s;
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	field_name = kmemdup_nul(str + s, len, GFP_KERNEL);
 	if (!field_name)
@@ -60,13 +60,13 @@ parse_field(char *str, struct trace_event_call *call,
 	field = trace_find_event_field(call, field_name);
 	kfree(field_name);
 	if (!field)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*pf = field;
 	while (isspace(str[i]))
 		i++;
 	if (str[i] != '=')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i++;
 	while (isspace(str[i]))
 		i++;
@@ -77,7 +77,7 @@ parse_field(char *str, struct trace_event_call *call,
 
 		/* Make sure the field is not a string */
 		if (is_string_field(field))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (str[i] == '-')
 			i++;
@@ -88,7 +88,7 @@ parse_field(char *str, struct trace_event_call *call,
 		num = str + s;
 		c = str[i];
 		if (c != '\0' && !isspace(c))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		str[i] = '\0';
 		/* Make sure it is a value */
 		if (field->is_signed)
@@ -106,7 +106,7 @@ parse_field(char *str, struct trace_event_call *call,
 
 		/* Make sure the field is OK for strings */
 		if (!is_string_field(field))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		for (i++; str[i]; i++) {
 			if (str[i] == '\\' && str[i + 1]) {
@@ -117,13 +117,13 @@ parse_field(char *str, struct trace_event_call *call,
 				break;
 		}
 		if (!str[i])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Skip quotes */
 		s++;
 		len = i - s;
 		if (len >= MAX_FILTER_STR_VAL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		*pv = (unsigned long)(str + s);
 		str[i] = 0;
@@ -132,7 +132,7 @@ parse_field(char *str, struct trace_event_call *call,
 		return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int trace_get_entry_size(struct trace_event_call *call)
@@ -209,7 +209,7 @@ static int parse_entry(char *str, struct trace_event_call *call, void **pentry)
 
 	while ((len = parse_field(str, call, &field, &val)) > 0) {
 		if (is_function_field(field))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (is_string_field(field)) {
 			char *addr = (char *)(unsigned long) val;
@@ -262,7 +262,7 @@ static int parse_entry(char *str, struct trace_event_call *call, void **pentry)
 				memcpy(entry + field->offset, &val, 8);
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -281,12 +281,12 @@ event_inject_write(struct file *filp, const char __user *ubuf, size_t cnt,
 {
 	struct trace_event_call *call;
 	struct trace_event_file *file;
-	int err = -ENODEV, size;
+	int err = -ERR(ENODEV), size;
 	void *entry = NULL;
 	char *buf;
 
 	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = memdup_user_nul(ubuf, cnt);
 	if (IS_ERR(buf))
@@ -319,7 +319,7 @@ static ssize_t
 event_inject_read(struct file *file, char __user *buf, size_t size,
 		  loff_t *ppos)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 const struct file_operations event_inject_fops = {

@@ -42,7 +42,7 @@ int avc_general_set_sig_fmt(struct fw_unit *unit, unsigned int rate,
 		}
 	}
 	if (!flag)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = kzalloc(8, GFP_KERNEL);
 	if (buf == NULL)
@@ -66,11 +66,11 @@ int avc_general_set_sig_fmt(struct fw_unit *unit, unsigned int rate,
 	if (err < 0)
 		;
 	else if (err < 8)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	if (err < 0)
 		goto end;
 
@@ -111,20 +111,20 @@ int avc_general_get_sig_fmt(struct fw_unit *unit, unsigned int *rate,
 	if (err < 0)
 		;
 	else if (err < 8)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
 	/* check sfc field and pick up rate */
 	sfc = 0x07 & buf[5];
 	if (sfc >= CIP_SFC_COUNT) {
-		err = -EAGAIN;	/* also in transition */
+		err = -ERR(EAGAIN);	/* also in transition */
 		goto end;
 	}
 
@@ -145,7 +145,7 @@ int avc_general_get_plug_info(struct fw_unit *unit, unsigned int subunit_type,
 
 	/* extended subunit in spec.4.2 is not supported */
 	if ((subunit_type == 0x1E) || (subunit_id == 5))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = kzalloc(8, GFP_KERNEL);
 	if (buf == NULL)
@@ -161,13 +161,13 @@ int avc_general_get_plug_info(struct fw_unit *unit, unsigned int subunit_type,
 	if (err < 0)
 		;
 	else if (err < 8)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -277,7 +277,7 @@ deferred:
 			msleep(ERROR_DELAY_MS);
 		} else if (++tries >= ERROR_RETRIES) {
 			dev_err(&t.unit->device, "FCP command timed out\n");
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 		}
 	}

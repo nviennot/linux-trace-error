@@ -344,7 +344,7 @@ static int wm8904_configure_clocking(struct snd_soc_component *component)
 
 	default:
 		dev_err(component->dev, "System clock not configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* SYSCLK shouldn't be over 13.5MHz */
@@ -394,7 +394,7 @@ static int wm8904_put_drc_enum(struct snd_kcontrol *kcontrol,
 	int value = ucontrol->value.enumerated.item[0];
 
 	if (value >= pdata->num_drc_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8904->drc_cfg = value;
 
@@ -465,7 +465,7 @@ static int wm8904_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
 	int value = ucontrol->value.enumerated.item[0];
 
 	if (value >= pdata->num_retune_mobile_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8904->retune_mobile_cfg = value;
 
@@ -532,7 +532,7 @@ static int wm8904_put_deemph(struct snd_kcontrol *kcontrol,
 	unsigned int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8904->deemph = deemph;
 
@@ -642,7 +642,7 @@ static int cp_event(struct snd_soc_dapm_widget *w,
 		    struct snd_kcontrol *kcontrol, int event)
 {
 	if (WARN_ON(event != SND_SOC_DAPM_POST_PMU))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Maximum startup time */
 	udelay(500);
@@ -725,7 +725,7 @@ static int out_pga_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Invalid reg %d\n", reg);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -1321,7 +1321,7 @@ static int wm8904_hw_params(struct snd_pcm_substream *substream,
 		aif1 |= 0xc0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -1430,7 +1430,7 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif3 |= WM8904_LRCLK_DIR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1449,7 +1449,7 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif1 |= 0x1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1463,7 +1463,7 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif1 |= WM8904_AIF_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -1483,11 +1483,11 @@ static int wm8904_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif1 |= WM8904_AIF_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8904_AUDIO_INTERFACE_1,
@@ -1524,7 +1524,7 @@ static int wm8904_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		aif1 |= WM8904_AIFADC_TDM_CHAN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -1535,7 +1535,7 @@ static int wm8904_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		aif1 |= WM8904_AIFDAC_TDM_CHAN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 out:
@@ -1592,7 +1592,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1608,7 +1608,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 64) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * div;
@@ -1626,7 +1626,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Now, calculate N.K */
@@ -1711,7 +1711,7 @@ static int wm8904_set_fll(struct snd_soc_dai *dai, int fll_id, int source,
 
 	default:
 		dev_err(component->dev, "Unknown FLL ID %d\n", fll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Save current state then disable the FLL and SYSCLK to avoid
@@ -1836,7 +1836,7 @@ static int wm8904_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "Clock source is %d at %uHz\n", clk_id, freq);
@@ -2106,7 +2106,7 @@ static int wm8904_probe(struct snd_soc_component *component)
 	default:
 		dev_err(component->dev, "Unknown device type %d\n",
 			wm8904->devtype);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8904_handle_pdata(component);
@@ -2193,7 +2193,7 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 
 		match = of_match_node(wm8904_of_match, i2c->dev.of_node);
 		if (match == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		wm8904->devtype = (enum wm8904_type)match->data;
 	} else {
 		wm8904->devtype = id->driver_data;
@@ -2226,7 +2226,7 @@ static int wm8904_i2c_probe(struct i2c_client *i2c,
 	}
 	if (val != 0x8904) {
 		dev_err(&i2c->dev, "Device is not a WM8904, ID is %x\n", val);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_enable;
 	}
 

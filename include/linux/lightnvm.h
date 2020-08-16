@@ -689,11 +689,11 @@ struct nvm_dev_ops;
 
 static inline struct nvm_dev *nvm_alloc_dev(int node)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline int nvm_register(struct nvm_dev *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void nvm_unregister(struct nvm_dev *dev) {}
 #endif /* CONFIG_NVM */

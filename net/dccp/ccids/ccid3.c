@@ -277,7 +277,7 @@ static int ccid3_hc_tx_send_packet(struct sock *sk, struct sk_buff *skb)
 	 * control this case is pathological - ignore it.
 	 */
 	if (unlikely(skb->len == 0))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	if (hc->tx_state == TFRC_SSTATE_NO_SENT) {
 		sk_reset_timer(sk, &hc->tx_no_feedback_timer, (jiffies +
@@ -464,7 +464,7 @@ static int ccid3_hc_tx_parse_options(struct sock *sk, u8 packet_type,
 		if (unlikely(optlen != 4)) {
 			DCCP_WARN("%s(%p), invalid len %d for %u\n",
 				  dccp_role(sk), sk, optlen, option);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		opt_val = ntohl(get_unaligned((__be32 *)optval));
 
@@ -522,7 +522,7 @@ static int ccid3_hc_tx_getsockopt(struct sock *sk, const int optname, int len,
 	switch (optname) {
 	case DCCP_SOCKOPT_CCID_TX_INFO:
 		if (len < sizeof(tfrc))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memset(&tfrc, 0, sizeof(tfrc));
 		tfrc.tfrctx_x	   = hc->tx_x;
 		tfrc.tfrctx_x_recv = hc->tx_x_recv;
@@ -535,7 +535,7 @@ static int ccid3_hc_tx_getsockopt(struct sock *sk, const int optname, int len,
 		val = &tfrc;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen) || copy_to_user(optval, val, len))
@@ -816,7 +816,7 @@ static int ccid3_hc_rx_getsockopt(struct sock *sk, const int optname, int len,
 	switch (optname) {
 	case DCCP_SOCKOPT_CCID_RX_INFO:
 		if (len < sizeof(rx_info))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rx_info.tfrcrx_x_recv = hc->rx_x_recv;
 		rx_info.tfrcrx_rtt    = hc->rx_rtt;
 		rx_info.tfrcrx_p      = tfrc_invert_loss_event_rate(hc->rx_pinv);
@@ -824,7 +824,7 @@ static int ccid3_hc_rx_getsockopt(struct sock *sk, const int optname, int len,
 		val = &rx_info;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen) || copy_to_user(optval, val, len))

@@ -164,7 +164,7 @@ static int nft_synproxy_do_init(const struct nft_ctx *ctx,
 	if (tb[NFTA_SYNPROXY_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFTA_SYNPROXY_FLAGS]));
 		if (flags & ~NF_SYNPROXY_OPT_MASK)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		priv->info.options = flags;
 	}
 

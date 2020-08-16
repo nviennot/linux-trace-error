@@ -255,7 +255,7 @@ static int max9867_dai_hw_params(struct snd_pcm_substream *substream,
 					value = MAX9867_IFC1B_PCLK_16;
 					break;
 				default:
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 				break;
 			case 24:
@@ -265,7 +265,7 @@ static int max9867_dai_hw_params(struct snd_pcm_substream *substream,
 				value = MAX9867_IFC1B_64X;
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		regmap_update_bits(max9867->regmap, MAX9867_IFC1B,
@@ -313,7 +313,7 @@ static int max9867_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		dev_err(component->dev,
 			"Invalid clock frequency %uHz (required 10-60MHz)\n",
 			freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (freq % 48000 == 0)
 		max9867->constraints = &max9867_constraints_48k;
@@ -350,7 +350,7 @@ static int max9867_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		iface1A = iface1B = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -363,7 +363,7 @@ static int max9867_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		iface1A |= MAX9867_TDM_MODE | MAX9867_SDOUT_HIZ;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock inversion bits, BCI and WCI */
@@ -380,7 +380,7 @@ static int max9867_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		iface1A |= MAX9867_WCI_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(max9867->regmap, MAX9867_IFC1A, iface1A);

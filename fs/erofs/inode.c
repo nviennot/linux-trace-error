@@ -25,7 +25,7 @@ static int erofs_read_inode(struct inode *inode, void *data)
 		erofs_err(inode->i_sb, "unsupported datalayout %u of nid %llu",
 			  vi->datalayout, vi->nid);
 		DBG_BUGON(1);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	switch (erofs_inode_version(ifmt)) {
@@ -112,7 +112,7 @@ static int erofs_read_inode(struct inode *inode, void *data)
 			  "unsupported on-disk inode version %u of nid %llu",
 			  erofs_inode_version(ifmt), vi->nid);
 		DBG_BUGON(1);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!nblks)

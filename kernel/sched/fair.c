@@ -2004,7 +2004,7 @@ static int task_numa_migrate(struct task_struct *p)
 	 */
 	if (unlikely(!sd)) {
 		sched_setnuma(p, task_node(p));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	env.dst_nid = p->numa_preferred_nid;
@@ -2073,7 +2073,7 @@ static int task_numa_migrate(struct task_struct *p)
 	/* No better CPU than the current one was found. */
 	if (env.best_cpu == -1) {
 		trace_sched_stick_numa(p, env.src_cpu, NULL, -1);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	best_rq = cpu_rq(env.best_cpu);
@@ -11056,7 +11056,7 @@ int sched_group_set_shares(struct task_group *tg, unsigned long shares)
 	 * We can't change the weight of the root cgroup.
 	 */
 	if (!tg->se[0])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	shares = clamp(shares, scale_load(MIN_SHARES), scale_load(MAX_SHARES));
 

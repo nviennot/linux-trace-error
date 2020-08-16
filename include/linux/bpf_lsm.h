@@ -25,7 +25,7 @@ int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
 static inline int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
 				      const struct bpf_prog *prog)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #endif /* CONFIG_BPF_LSM */

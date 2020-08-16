@@ -258,7 +258,7 @@ static int jz4770_codec_pcm_trigger(struct snd_pcm_substream *substream,
 		/* do nothing */
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -718,7 +718,7 @@ static int jz4770_codec_hw_params(struct snd_pcm_substream *substream,
 		bit_width = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (rate = 0; rate < ARRAY_SIZE(jz4770_codec_sample_rates); rate++) {
@@ -727,7 +727,7 @@ static int jz4770_codec_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	if (rate == ARRAY_SIZE(jz4770_codec_sample_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		regmap_update_bits(codec->regmap, JZ4770_CODEC_REG_AICR_DAC,

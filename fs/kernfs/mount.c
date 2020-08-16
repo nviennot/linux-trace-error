@@ -100,7 +100,7 @@ static struct dentry *__kernfs_fh_to_dentry(struct super_block *sb,
 
 	kn = kernfs_find_and_get_node_by_id(info->root, id);
 	if (!kn)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	if (get_parent) {
 		struct kernfs_node *parent;
@@ -109,13 +109,13 @@ static struct dentry *__kernfs_fh_to_dentry(struct super_block *sb,
 		kernfs_put(kn);
 		kn = parent;
 		if (!kn)
-			return ERR_PTR(-ESTALE);
+			return ERR_PTR(-ERR(ESTALE));
 	}
 
 	inode = kernfs_get_inode(sb, kn);
 	kernfs_put(kn);
 	if (!inode)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	return d_obtain_alias(inode);
 }
@@ -209,7 +209,7 @@ struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
 	knparent = find_next_ancestor(kn, NULL);
 	if (WARN_ON(!knparent)) {
 		dput(dentry);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	do {
@@ -221,7 +221,7 @@ struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
 		kntmp = find_next_ancestor(kn, knparent);
 		if (WARN_ON(!kntmp)) {
 			dput(dentry);
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		dtmp = lookup_positive_unlocked(kntmp->name, dentry,
 					       strlen(kntmp->name));

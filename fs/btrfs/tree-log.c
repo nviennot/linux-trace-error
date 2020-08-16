@@ -147,7 +147,7 @@ static int start_log_trans(struct btrfs_trans_handle *trans,
 
 	if (root->log_root) {
 		if (btrfs_need_log_full_commit(trans)) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 
@@ -194,7 +194,7 @@ out:
  */
 static int join_running_log_trans(struct btrfs_root *root)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (!test_bit(BTRFS_ROOT_HAS_LOG_TREE, &root->state))
 		return ret;
@@ -616,7 +616,7 @@ static noinline int replay_one_extent(struct btrfs_trans_handle *trans,
 
 	inode = read_one_inode(root, key->objectid);
 	if (!inode) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -875,7 +875,7 @@ static noinline int drop_one_dir_item(struct btrfs_trans_handle *trans,
 
 	inode = read_one_inode(root, location.objectid);
 	if (!inode) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -1105,7 +1105,7 @@ again:
 			if (ret < 0) {
 				return ret;
 			} else if (!ret) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				victim_parent = read_one_inode(root,
 						parent_objectid);
 				if (victim_parent) {
@@ -1266,7 +1266,7 @@ again:
 			btrfs_release_path(path);
 			dir = read_one_inode(root, parent_id);
 			if (!dir) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				kfree(name);
 				goto out;
 			}
@@ -1365,7 +1365,7 @@ static int add_link(struct btrfs_trans_handle *trans, struct btrfs_root *root,
 	btrfs_release_path(path);
 	other_inode = read_one_inode(root, key.objectid);
 	if (!other_inode) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	ret = btrfs_unlink_inode(trans, root, BTRFS_I(dir), BTRFS_I(other_inode),
@@ -1443,13 +1443,13 @@ static noinline int add_inode_ref(struct btrfs_trans_handle *trans,
 	 */
 	dir = read_one_inode(root, parent_objectid);
 	if (!dir) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	inode = read_one_inode(root, inode_objectid);
 	if (!inode) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -1464,7 +1464,7 @@ static noinline int add_inode_ref(struct btrfs_trans_handle *trans,
 			if (!dir)
 				dir = read_one_inode(root, parent_objectid);
 			if (!dir) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				goto out;
 			}
 		} else {
@@ -1773,7 +1773,7 @@ static noinline int fixup_inode_link_counts(struct btrfs_trans_handle *trans,
 		btrfs_release_path(path);
 		inode = read_one_inode(root, key.offset);
 		if (!inode)
-			return -EIO;
+			return -ERR(EIO);
 
 		ret = fixup_inode_link_count(trans, root, inode);
 		iput(inode);
@@ -1810,7 +1810,7 @@ static noinline int link_to_fixup_dir(struct btrfs_trans_handle *trans,
 
 	inode = read_one_inode(root, objectid);
 	if (!inode)
-		return -EIO;
+		return -ERR(EIO);
 
 	key.objectid = BTRFS_TREE_LOG_FIXUP_OBJECTID;
 	key.type = BTRFS_ORPHAN_ITEM_KEY;
@@ -1852,12 +1852,12 @@ static noinline int insert_one_name(struct btrfs_trans_handle *trans,
 
 	inode = read_one_inode(root, location->objectid);
 	if (!inode)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dir = read_one_inode(root, dirid);
 	if (!dir) {
 		iput(inode);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ret = btrfs_add_link(trans, BTRFS_I(dir), BTRFS_I(inode), name,
@@ -1907,7 +1907,7 @@ static noinline int replay_one_name(struct btrfs_trans_handle *trans,
 
 	dir = read_one_inode(root, key->objectid);
 	if (!dir)
-		return -EIO;
+		return -ERR(EIO);
 
 	name_len = btrfs_dir_name_len(eb, di);
 	name = kmalloc(name_len, GFP_NOFS);
@@ -1938,7 +1938,7 @@ static noinline int replay_one_name(struct btrfs_trans_handle *trans,
 						     name_len, 1);
 	} else {
 		/* Corruption */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (IS_ERR_OR_NULL(dst_di)) {
@@ -2252,7 +2252,7 @@ again:
 			inode = read_one_inode(root, location.objectid);
 			if (!inode) {
 				kfree(name);
-				return -EIO;
+				return -ERR(EIO);
 			}
 
 			ret = link_to_fixup_dir(trans, root,
@@ -2595,7 +2595,7 @@ static int replay_one_buffer(struct btrfs_root *log, struct extent_buffer *eb,
 
 				inode = read_one_inode(root, key.objectid);
 				if (!inode) {
-					ret = -EIO;
+					ret = -ERR(EIO);
 					break;
 				}
 				from = ALIGN(i_size_read(inode),
@@ -3064,7 +3064,7 @@ int btrfs_sync_log(struct btrfs_trans_handle *trans,
 
 	/* bail out if we need to do a full commit */
 	if (btrfs_need_log_full_commit(trans)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		mutex_unlock(&root->log_mutex);
 		goto out;
 	}
@@ -3153,7 +3153,7 @@ int btrfs_sync_log(struct btrfs_trans_handle *trans,
 		}
 		btrfs_wait_tree_log_extents(log, mark);
 		mutex_unlock(&log_root_tree->log_mutex);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -3194,7 +3194,7 @@ int btrfs_sync_log(struct btrfs_trans_handle *trans,
 		blk_finish_plug(&plug);
 		btrfs_wait_tree_log_extents(log, mark);
 		mutex_unlock(&log_root_tree->log_mutex);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out_wake_log_root;
 	}
 
@@ -4392,7 +4392,7 @@ static int btrfs_log_changed_extents(struct btrfs_trans_handle *trans,
 		 */
 		if (++num > 32768) {
 			list_del_init(&tree->modified_extents);
-			ret = -EFBIG;
+			ret = -ERR(EFBIG);
 			goto process;
 		}
 
@@ -4633,7 +4633,7 @@ static int btrfs_log_holes(struct btrfs_trans_handle *trans,
 			if (ret < 0)
 				return ret;
 			if (WARN_ON(ret > 0))
-				return -ENOENT;
+				return -ERR(ENOENT);
 			leaf = path->nodes[0];
 		}
 
@@ -4775,7 +4775,7 @@ static int btrfs_check_ref_name_override(struct extent_buffer *eb,
 					ret = 0;
 				}
 			} else {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			}
 			goto out;
 		} else if (IS_ERR(di)) {
@@ -5811,7 +5811,7 @@ static int log_new_ancestors(struct btrfs_trans_handle *trans,
 			if (ret < 0)
 				return ret;
 			else if (ret > 0)
-				return -ENOENT;
+				return -ERR(ENOENT);
 			leaf = path->nodes[0];
 			slot = path->slots[0];
 		}
@@ -5819,7 +5819,7 @@ static int log_new_ancestors(struct btrfs_trans_handle *trans,
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 		if (found_key.objectid != search_key.objectid ||
 		    found_key.type != BTRFS_INODE_REF_KEY)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 	return 0;
 }
@@ -5921,7 +5921,7 @@ again:
 		 * a transaction commit.
 		 */
 		if (found_key.type == BTRFS_INODE_EXTREF_KEY) {
-			ret = -EMLINK;
+			ret = -ERR(EMLINK);
 			goto out;
 		}
 

@@ -96,7 +96,7 @@ struct btrfs_free_space_info *search_free_space_info(
 		btrfs_warn(fs_info, "missing free space info for %llu",
 			   block_group->start);
 		ASSERT(0);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 
 	return btrfs_item_ptr(path->nodes[0], path->slots[0],
@@ -120,12 +120,12 @@ static int btrfs_search_prev_slot(struct btrfs_trans_handle *trans,
 
 	if (ret == 0) {
 		ASSERT(0);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (p->slots[0] == 0) {
 		ASSERT(0);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	p->slots[0]--;
 
@@ -273,7 +273,7 @@ int convert_free_space_to_bitmaps(struct btrfs_trans_handle *trans,
 			  block_group->start, extent_count,
 			  expected_extent_count);
 		ASSERT(0);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -439,7 +439,7 @@ int convert_free_space_to_extents(struct btrfs_trans_handle *trans,
 			  block_group->start, extent_count,
 			  expected_extent_count);
 		ASSERT(0);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -827,7 +827,7 @@ int remove_from_free_space_tree(struct btrfs_trans_handle *trans,
 	block_group = btrfs_lookup_block_group(trans->fs_info, start);
 	if (!block_group) {
 		ASSERT(0);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1020,7 +1020,7 @@ int add_to_free_space_tree(struct btrfs_trans_handle *trans,
 	block_group = btrfs_lookup_block_group(trans->fs_info, start);
 	if (!block_group) {
 		ASSERT(0);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1454,7 +1454,7 @@ static int load_free_space_bitmaps(struct btrfs_caching_control *caching_ctl,
 			  block_group->start, extent_count,
 			  expected_extent_count);
 		ASSERT(0);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -1516,7 +1516,7 @@ static int load_free_space_extents(struct btrfs_caching_control *caching_ctl,
 			  block_group->start, extent_count,
 			  expected_extent_count);
 		ASSERT(0);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 

@@ -128,11 +128,11 @@ static int parse_dirfile(char *buf, size_t nbytes, struct file *file,
 		struct fuse_dirent *dirent = (struct fuse_dirent *) buf;
 		size_t reclen = FUSE_DIRENT_SIZE(dirent);
 		if (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
-			return -EIO;
+			return -ERR(EIO);
 		if (reclen > nbytes)
 			break;
 		if (memchr(dirent->name, '/', dirent->namelen) != NULL)
-			return -EIO;
+			return -ERR(EIO);
 
 		if (!fuse_emit(file, ctx, dirent))
 			break;
@@ -183,9 +183,9 @@ static int fuse_direntplus_link(struct file *file,
 	}
 
 	if (invalid_nodeid(o->nodeid))
-		return -EIO;
+		return -ERR(EIO);
 	if (fuse_invalid_attr(&o->attr))
-		return -EIO;
+		return -ERR(EIO);
 
 	fc = get_fuse_conn(dir);
 
@@ -209,7 +209,7 @@ retry:
 		}
 		if (is_bad_inode(inode)) {
 			dput(dentry);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		fi = get_fuse_inode(inode);
@@ -285,11 +285,11 @@ static int parse_dirplusfile(char *buf, size_t nbytes, struct file *file,
 		reclen = FUSE_DIRENTPLUS_SIZE(direntplus);
 
 		if (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
-			return -EIO;
+			return -ERR(EIO);
 		if (reclen > nbytes)
 			break;
 		if (memchr(dirent->name, '/', dirent->namelen) != NULL)
-			return -EIO;
+			return -ERR(EIO);
 
 		if (!over) {
 			/* We fill entries into dstbuf only as much as
@@ -543,7 +543,7 @@ retry_locked:
 	put_page(page);
 
 	if (res == FOUND_ERR)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (res == FOUND_ALL)
 		return 0;
@@ -569,7 +569,7 @@ int fuse_readdir(struct file *file, struct dir_context *ctx)
 	int err;
 
 	if (is_bad_inode(inode))
-		return -EIO;
+		return -ERR(EIO);
 
 	mutex_lock(&ff->readdir.lock);
 

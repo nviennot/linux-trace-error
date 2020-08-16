@@ -82,7 +82,7 @@ static int sam9x5_wm8731_driver_probe(struct platform_device *pdev)
 
 	if (!np) {
 		dev_err(&pdev->dev, "No device node supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	card = devm_kzalloc(&pdev->dev, sizeof(*card), GFP_KERNEL);
@@ -132,7 +132,7 @@ static int sam9x5_wm8731_driver_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "atmel,audio-codec", 0);
 	if (!codec_np) {
 		dev_err(&pdev->dev, "atmel,audio-codec node missing\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -141,7 +141,7 @@ static int sam9x5_wm8731_driver_probe(struct platform_device *pdev)
 	cpu_np = of_parse_phandle(np, "atmel,ssc-controller", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "atmel,ssc-controller node missing\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	dai->cpus->of_node = cpu_np;

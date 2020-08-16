@@ -270,14 +270,14 @@ int bpf_trampoline_link_prog(struct bpf_prog *prog)
 		/* cannot attach fentry/fexit if extension prog is attached.
 		 * cannot overwrite extension prog either.
 		 */
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 	cnt = tr->progs_cnt[BPF_TRAMP_FENTRY] + tr->progs_cnt[BPF_TRAMP_FEXIT];
 	if (kind == BPF_TRAMP_REPLACE) {
 		/* Cannot attach extension if fentry/fexit are in use. */
 		if (cnt) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto out;
 		}
 		tr->extension_prog = prog;
@@ -286,12 +286,12 @@ int bpf_trampoline_link_prog(struct bpf_prog *prog)
 		goto out;
 	}
 	if (cnt >= BPF_MAX_TRAMP_PROGS) {
-		err = -E2BIG;
+		err = -ERR(E2BIG);
 		goto out;
 	}
 	if (!hlist_unhashed(&prog->aux->tramp_hlist)) {
 		/* prog already linked */
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 	hlist_add_head(&prog->aux->tramp_hlist, &tr->progs_hlist[kind]);
@@ -400,7 +400,7 @@ arch_prepare_bpf_trampoline(void *image, void *image_end,
 			    struct bpf_tramp_progs *tprogs,
 			    void *orig_call)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int __init init_trampolines(void)

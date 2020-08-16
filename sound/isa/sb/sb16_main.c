@@ -296,7 +296,7 @@ static int snd_sb16_playback_trigger(struct snd_pcm_substream *substream,
 		chip->mode &= ~SB_RATE_LOCK_PLAYBACK;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->reg_lock);
 	return result;
@@ -365,7 +365,7 @@ static int snd_sb16_capture_trigger(struct snd_pcm_substream *substream,
 		chip->mode &= ~SB_RATE_LOCK_CAPTURE;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->reg_lock);
 	return result;
@@ -498,7 +498,7 @@ static int snd_sb16_playback_open(struct snd_pcm_substream *substream)
 	spin_lock_irqsave(&chip->open_lock, flags);
 	if (chip->mode & SB_MODE_PLAYBACK) {
 		spin_unlock_irqrestore(&chip->open_lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	runtime->hw = snd_sb16_playback;
 
@@ -534,7 +534,7 @@ static int snd_sb16_playback_open(struct snd_pcm_substream *substream)
 		goto __open_ok;
 	}
 	spin_unlock_irqrestore(&chip->open_lock, flags);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 
       __open_ok:
 	if (chip->hardware == SB_HW_ALS100)
@@ -573,7 +573,7 @@ static int snd_sb16_capture_open(struct snd_pcm_substream *substream)
 	spin_lock_irqsave(&chip->open_lock, flags);
 	if (chip->mode & SB_MODE_CAPTURE) {
 		spin_unlock_irqrestore(&chip->open_lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	runtime->hw = snd_sb16_capture;
 
@@ -609,7 +609,7 @@ static int snd_sb16_capture_open(struct snd_pcm_substream *substream)
 		goto __open_ok;
 	}
 	spin_unlock_irqrestore(&chip->open_lock, flags);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 
       __open_ok:
 	if (chip->hardware == SB_HW_ALS100)
@@ -647,7 +647,7 @@ static int snd_sb16_set_dma_mode(struct snd_sb *chip, int what)
 {
 	if (chip->dma8 < 0 || chip->dma16 < 0) {
 		if (snd_BUG_ON(what))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	}
 	if (what == 0) {
@@ -657,7 +657,7 @@ static int snd_sb16_set_dma_mode(struct snd_sb *chip, int what)
 	} else if (what == 2) {
 		chip->force_mode16 = SB_MODE_CAPTURE_16;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -704,7 +704,7 @@ static int snd_sb16_dma_control_put(struct snd_kcontrol *kcontrol, struct snd_ct
 	int change;
 	
 	if ((nval = ucontrol->value.enumerated.item[0]) > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	oval = snd_sb16_get_dma_mode(chip);
 	change = nval != oval;
@@ -751,7 +751,7 @@ int snd_sb16dsp_configure(struct snd_sb * chip)
 		irqreg |= SB_IRQSETUP_IRQ10;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (chip->dma8 >= 0) {
 		switch (chip->dma8) {
@@ -765,7 +765,7 @@ int snd_sb16dsp_configure(struct snd_sb * chip)
 			dmareg |= SB_DMASETUP_DMA3;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	if (chip->dma16 >= 0 && chip->dma16 != chip->dma8) {
@@ -780,7 +780,7 @@ int snd_sb16dsp_configure(struct snd_sb * chip)
 			dmareg |= SB_DMASETUP_DMA7;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	switch (chip->mpu_port) {
@@ -809,7 +809,7 @@ int snd_sb16dsp_configure(struct snd_sb * chip)
 		snd_printk(KERN_ERR "SB16 [0x%lx]: unable to set DMA & IRQ (PnP device?)\n", chip->port);
 		snd_printk(KERN_ERR "SB16 [0x%lx]: wanted: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, realirq, realdma, realmpureg);
 		snd_printk(KERN_ERR "SB16 [0x%lx]:    got: irqreg=0x%x, dmareg=0x%x, mpureg = 0x%x\n", chip->port, irqreg, dmareg, mpureg);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

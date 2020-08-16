@@ -1394,7 +1394,7 @@ int snd_soc_fixup_dai_links_platform_name(struct snd_soc_card *card,
 			return -ENOMEM;
 
 		if (!dai_link->platforms)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* only single platform is supported for now */
 		dai_link->platforms->name = name;

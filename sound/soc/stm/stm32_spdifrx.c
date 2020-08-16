@@ -299,14 +299,14 @@ static int stm32_spdifrx_dma_ctrl_start(struct stm32_spdifrx_data *spdifrx)
 						    DMA_DEV_TO_MEM,
 						    DMA_CTRL_ACK);
 	if (!spdifrx->desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spdifrx->desc->callback = stm32_spdifrx_dma_complete;
 	spdifrx->desc->callback_param = spdifrx;
 	cookie = dmaengine_submit(spdifrx->desc);
 	err = dma_submit_error(cookie);
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dma_async_issue_pending(spdifrx->ctrl_chan);
 
@@ -508,7 +508,7 @@ static int stm32_spdifrx_get_ctrl_data(struct stm32_spdifrx_data *spdifrx)
 						      msecs_to_jiffies(100))
 						      <= 0) {
 		dev_dbg(&spdifrx->pdev->dev, "Failed to get control data\n");
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 
 	stm32_spdifrx_stop(spdifrx);
@@ -798,7 +798,7 @@ static int stm32_spdifrx_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(&spdifrx->pdev->dev, "Unexpected data format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -838,7 +838,7 @@ static int stm32_spdifrx_trigger(struct snd_pcm_substream *substream, int cmd,
 		stm32_spdifrx_stop(spdifrx);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -913,14 +913,14 @@ static int stm32_spdifrx_parse_of(struct platform_device *pdev,
 	struct resource *res;
 
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	of_id = of_match_device(stm32_spdifrx_ids, &pdev->dev);
 	if (of_id)
 		spdifrx->regmap_conf =
 			(const struct regmap_config *)of_id->data;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	spdifrx->base = devm_ioremap_resource(&pdev->dev, res);

@@ -240,7 +240,7 @@ static int dmirror_range_fault(struct dmirror *dmirror,
 
 	while (true) {
 		if (time_after(jiffies, timeout)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 
@@ -319,7 +319,7 @@ static int dmirror_do_read(struct dmirror *dmirror, unsigned long start,
 		entry = xa_load(&dmirror->pt, pfn);
 		page = xa_untag_pointer(entry);
 		if (!page)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		tmp = kmap(page);
 		memcpy(ptr, tmp, PAGE_SIZE);
@@ -342,7 +342,7 @@ static int dmirror_read(struct dmirror *dmirror, struct hmm_dmirror_cmd *cmd)
 	start = cmd->addr;
 	end = start + size;
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = dmirror_bounce_init(&bounce, start, size);
 	if (ret)
@@ -388,7 +388,7 @@ static int dmirror_do_write(struct dmirror *dmirror, unsigned long start,
 		entry = xa_load(&dmirror->pt, pfn);
 		page = xa_untag_pointer(entry);
 		if (!page || xa_pointer_tag(entry) != DPT_XA_TAG_WRITE)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		tmp = kmap(page);
 		memcpy(tmp, ptr, PAGE_SIZE);
@@ -411,7 +411,7 @@ static int dmirror_write(struct dmirror *dmirror, struct hmm_dmirror_cmd *cmd)
 	start = cmd->addr;
 	end = start + size;
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = dmirror_bounce_init(&bounce, start, size);
 	if (ret)
@@ -679,18 +679,18 @@ static int dmirror_migrate(struct dmirror *dmirror,
 	start = cmd->addr;
 	end = start + size;
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Since the mm is for the mirrored process, get a reference first. */
 	if (!mmget_not_zero(mm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_read_lock(mm);
 	for (addr = start; addr < end; addr = next) {
 		vma = find_vma(mm, addr);
 		if (!vma || addr < vma->vm_start ||
 		    !(vma->vm_flags & VM_READ)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		next = min(end, addr + (ARRAY_SIZE(src_pfns) << PAGE_SHIFT));
@@ -818,7 +818,7 @@ static int dmirror_range_snapshot(struct dmirror *dmirror,
 
 	while (true) {
 		if (time_after(jiffies, timeout)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 
@@ -872,11 +872,11 @@ static int dmirror_snapshot(struct dmirror *dmirror,
 	start = cmd->addr;
 	end = start + size;
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Since the mm is for the mirrored process, get a reference first. */
 	if (!mmget_not_zero(mm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Register a temporary notifier to detect invalidations even if it
@@ -919,15 +919,15 @@ static long dmirror_fops_unlocked_ioctl(struct file *filp,
 
 	dmirror = filp->private_data;
 	if (!dmirror)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&cmd, uarg, sizeof(cmd)))
 		return -EFAULT;
 
 	if (cmd.addr & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (cmd.addr >= (cmd.addr + (cmd.npages << PAGE_SHIFT)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cmd.cpages = 0;
 	cmd.faults = 0;
@@ -950,7 +950,7 @@ static long dmirror_fops_unlocked_ioctl(struct file *filp,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ret)
 		return ret;

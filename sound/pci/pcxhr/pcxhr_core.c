@@ -130,7 +130,7 @@ static int pcxhr_check_reg_bit(struct pcxhr_mgr *mgr, unsigned int reg,
 	dev_err(&mgr->pci->dev,
 		   "pcxhr_check_reg_bit: timeout, reg=%x, mask=0x%x, val=%x\n",
 		   reg, mask, *read);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* constants used with pcxhr_check_reg_bit() */
@@ -283,7 +283,7 @@ int pcxhr_load_xilinx_binary(struct pcxhr_mgr *mgr,
 	if(second) {
 		if ((chipsc & PCXHR_CHIPSC_GPI_USERI) == 0) {
 			dev_err(&mgr->pci->dev, "error loading first xilinx\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/* activate second xilinx */
 		chipsc |= PCXHR_CHIPSC_RESET_XILINX;
@@ -326,11 +326,11 @@ static int pcxhr_download_dsp(struct pcxhr_mgr *mgr, const struct firmware *dsp)
 	unsigned char dummy;
 	/* check the length of boot image */
 	if (dsp->size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (dsp->size % 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!dsp->data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* transfert data buffer from PC to DSP */
 	for (i = 0; i < dsp->size; i += 3) {
 		data = dsp->data + i;
@@ -340,7 +340,7 @@ static int pcxhr_download_dsp(struct pcxhr_mgr *mgr, const struct firmware *dsp)
 					     (data[1]<<8) +
 					     data[2]);
 			if (len && (dsp->size != (len + 2) * 3))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		/* wait DSP ready for new transfer */
 		err = pcxhr_check_reg_bit(mgr, PCXHR_DSP_ISR,
@@ -408,7 +408,7 @@ int pcxhr_load_boot_binary(struct pcxhr_mgr *mgr, const struct firmware *boot)
 
 	/* send the hostport address to the DSP (only the upper 24 bit !) */
 	if (snd_BUG_ON(physaddr & 0xff))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	PCXHR_OUTPL(mgr, PCXHR_PLX_MBOX1, (physaddr >> 8));
 
 	err = pcxhr_send_it_dsp(mgr, PCXHR_IT_DOWNLOAD_BOOT, 0);
@@ -600,7 +600,7 @@ static int pcxhr_send_msg_nolock(struct pcxhr_mgr *mgr, struct pcxhr_rmh *rmh)
 	unsigned char reg;
 
 	if (snd_BUG_ON(rmh->cmd_len >= PCXHR_SIZE_MAX_CMD))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = pcxhr_send_it_dsp(mgr, PCXHR_IT_MESSAGE, 1);
 	if (err) {
 		dev_err(&mgr->pci->dev,
@@ -697,14 +697,14 @@ static int pcxhr_send_msg_nolock(struct pcxhr_mgr *mgr, struct pcxhr_rmh *rmh)
 		data |= PCXHR_INPB(mgr, PCXHR_DSP_TXL);
 		dev_err(&mgr->pci->dev, "ERROR RMH(%d): 0x%x\n",
 			   rmh->cmd_idx, data);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	} else {
 		/* read the response data */
 		err = pcxhr_read_rmh_status(mgr, rmh);
 	}
 	/* reset semaphore */
 	if (pcxhr_send_it_dsp(mgr, PCXHR_IT_RESET_SEMAPHORE, 1) < 0)
-		return -EIO;
+		return -ERR(EIO);
 	return err;
 }
 
@@ -938,7 +938,7 @@ int pcxhr_set_pipe_state(struct pcxhr_mgr *mgr, int playback_mask,
 			break;
 		if (++i >= MAX_WAIT_FOR_DSP * 100) {
 			dev_err(&mgr->pci->dev, "error pipe start/stop\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		udelay(10);			/* wait 10 microseconds */
 	}

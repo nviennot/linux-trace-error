@@ -98,7 +98,7 @@ int snd_hdac_bus_exec_verb_unlocked(struct hdac_bus *bus, unsigned int addr,
 	int err;
 
 	if (cmd == ~0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (res)
 		*res = -1;
@@ -195,7 +195,7 @@ int snd_hdac_bus_add_device(struct hdac_bus *bus, struct hdac_device *codec)
 	if (bus->caddr_tbl[codec->addr]) {
 		dev_err(bus->dev, "address 0x%x is already occupied\n",
 			codec->addr);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	list_add_tail(&codec->list, &bus->codec_list);

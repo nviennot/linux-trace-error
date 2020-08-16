@@ -190,7 +190,7 @@ int irq_gc_set_wake(struct irq_data *d, unsigned int on)
 	u32 mask = d->mask;
 
 	if (!(mask & gc->wake_enabled))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	irq_gc_lock(gc);
 	if (on)
@@ -292,11 +292,11 @@ int __irq_alloc_domain_generic_chips(struct irq_domain *d, int irqs_per_chip,
 	void *tmp;
 
 	if (d->gc)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	numchips = DIV_ROUND_UP(d->revmap_size, irqs_per_chip);
 	if (!numchips)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Allocate a pointer, generic chip and chiptypes for each chip */
 	sz = sizeof(*dgc) + numchips * sizeof(gc);
@@ -343,10 +343,10 @@ __irq_get_domain_generic_chip(struct irq_domain *d, unsigned int hw_irq)
 	int idx;
 
 	if (!dgc)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 	idx = hw_irq / dgc->irqs_per_chip;
 	if (idx >= dgc->num_chips)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	return dgc->gc[idx];
 }
 
@@ -392,10 +392,10 @@ int irq_map_generic_chip(struct irq_domain *d, unsigned int virq,
 	idx = hw_irq % dgc->irqs_per_chip;
 
 	if (test_bit(idx, &gc->unused))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (test_bit(idx, &gc->installed))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ct = gc->chip_types;
 	chip = &ct->chip;
@@ -521,7 +521,7 @@ int irq_setup_alt_chip(struct irq_data *d, unsigned int type)
 			return 0;
 		}
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(irq_setup_alt_chip);
 

@@ -179,7 +179,7 @@ static int red_offload(struct Qdisc *sch, bool enable)
 	};
 
 	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (enable) {
 		opt.command = TC_RED_REPLACE;
@@ -229,7 +229,7 @@ static int red_change(struct Qdisc *sch, struct nlattr *opt,
 	u32 max_P;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_RED_MAX, opt, red_policy,
 					  NULL);
@@ -238,13 +238,13 @@ static int red_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (tb[TCA_RED_PARMS] == NULL ||
 	    tb[TCA_RED_STAB] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max_P = tb[TCA_RED_MAX_P] ? nla_get_u32(tb[TCA_RED_MAX_P]) : 0;
 
 	ctl = nla_data(tb[TCA_RED_PARMS]);
 	if (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = red_get_flags(ctl->flags, TC_RED_HISTORIC_FLAGS,
 			    tb[TCA_RED_FLAGS], TC_RED_SUPPORTED_FLAGS,
@@ -377,7 +377,7 @@ static int red_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int red_dump_stats(struct Qdisc *sch, struct gnet_dump *d)

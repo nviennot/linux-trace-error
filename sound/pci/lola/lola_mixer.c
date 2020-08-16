@@ -36,7 +36,7 @@ static int lola_init_pin(struct lola *chip, struct lola_pin *pin,
 		pin->is_analog = true;
 	else {
 		dev_err(chip->card->dev, "Invalid wcaps 0x%x for 0x%x\n", val, nid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* analog parameters only following, so continue in case of Digital pin
@@ -189,7 +189,7 @@ int lola_init_mixer_widget(struct lola *chip, int nid)
 	if (chip->mixer.src_stream_out_ofs > MAX_AUDIO_INOUT_COUNT ||
 	    chip->mixer.dest_phys_out_ofs > MAX_STREAM_IN_COUNT) {
 		dev_err(chip->card->dev, "Invalid mixer widget size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chip->mixer.src_mask = ((1U << chip->mixer.src_phys_ins) - 1) |
@@ -211,7 +211,7 @@ static int lola_mixer_set_src_gain(struct lola *chip, unsigned int id,
 	unsigned int oldval, val;
 
 	if (!(chip->mixer.src_mask & (1 << id)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	oldval = val = readl(&chip->mixer.array->src_gain_enable);
 	if (on)
 		val |= (1 << id);
@@ -273,7 +273,7 @@ static int lola_mixer_set_mapping_gain(struct lola *chip,
 
 	if (!(chip->mixer.src_mask & (1 << src)) ||
 	    !(chip->mixer.dest_mask & (1 << dest)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (on)
 		writew(gain, &chip->mixer.array->dest_mix_gain[dest][src]);
 	val = readl(&chip->mixer.array->dest_mix_gain_enable[dest]);
@@ -388,10 +388,10 @@ static int set_analog_volume(struct lola *chip, int dir,
 	int err;
 
 	if (idx >= chip->pin[dir].num_pins)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pin = &chip->pin[dir].pins[idx];
 	if (!pin->is_analog || pin->amp_num_steps <= val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (external_call && pin->cur_gain_step == val)
 		return 0;
 	if (external_call)
@@ -416,7 +416,7 @@ int lola_set_src_config(struct lola *chip, unsigned int src_mask, bool update)
 
 	/* SRC can be activated and the dwInputSRCMask is valid? */
 	if ((chip->input_src_caps_mask & src_mask) != src_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* handle all even Inputs - SRC is a stereo setting !!! */
 	for (n = 0; n < chip->pin[CAPT].num_pins; n += 2) {
 		unsigned int mask = 3U << n; /* handle the stereo case */
@@ -681,7 +681,7 @@ static int lola_src_gain_get(struct snd_kcontrol *kcontrol,
 		unsigned int idx = ofs + i;
 		unsigned short val;
 		if (!(chip->mixer.src_mask & (1 << idx)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (mask & (1 << idx))
 			val = readw(&chip->mixer.array->src_gain[idx]) + 1;
 		else

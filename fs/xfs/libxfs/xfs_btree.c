@@ -4260,7 +4260,7 @@ xfs_btree_visit_block(
 	/* now read rh sibling block for next iteration */
 	xfs_btree_get_sibling(cur, block, &rptr, XFS_BB_RIGHTSIB);
 	if (xfs_btree_ptr_is_null(cur, &rptr))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return xfs_btree_lookup_get_block(cur, level, &rptr, &block);
 }
@@ -4383,7 +4383,7 @@ xfs_btree_block_change_owner(
 	if (cur->bc_tp) {
 		if (!xfs_trans_ordered_buf(cur->bc_tp, bp)) {
 			xfs_btree_log_block(cur, bp, XFS_BB_OWNER);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 	} else {
 		xfs_buf_delwri_queue(bp, bbcoi->buffer_list);
@@ -4787,7 +4787,7 @@ xfs_btree_query_range(
 
 	/* Enforce low key < high key. */
 	if (cur->bc_ops->diff_two_keys(cur, &low_key, &high_key) > 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(cur->bc_flags & XFS_BTREE_OVERLAPPING))
 		return xfs_btree_simple_query_range(cur, &low_key,
@@ -4878,7 +4878,7 @@ xfs_btree_has_record_helper(
 	union xfs_btree_rec		*rec,
 	void				*priv)
 {
-	return -ECANCELED;
+	return -ERR(ECANCELED);
 }
 
 /* Is there a record covering a given range of keys? */

@@ -28,11 +28,11 @@ static int ebt_mark_mt_check(const struct xt_mtchk_param *par)
 	const struct ebt_mark_m_info *info = par->matchinfo;
 
 	if (info->bitmask & ~EBT_MARK_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((info->bitmask & EBT_MARK_OR) && (info->bitmask & EBT_MARK_AND))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!info->bitmask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

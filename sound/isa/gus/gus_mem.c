@@ -216,7 +216,7 @@ int snd_gf1_mem_free(struct snd_gf1_mem * alloc, unsigned int address)
 		return result;
 	}
 	snd_gf1_mem_lock(alloc, 1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int snd_gf1_mem_init(struct snd_gus_card * gus)

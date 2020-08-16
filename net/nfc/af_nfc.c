@@ -18,13 +18,13 @@ static const struct nfc_protocol *proto_tab[NFC_SOCKPROTO_MAX];
 static int nfc_sock_create(struct net *net, struct socket *sock, int proto,
 			   int kern)
 {
-	int rc = -EPROTONOSUPPORT;
+	int rc = -ERR(EPROTONOSUPPORT);
 
 	if (net != &init_net)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (proto < 0 || proto >= NFC_SOCKPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock(&proto_tab_lock);
 	if (proto_tab[proto] &&	try_module_get(proto_tab[proto]->owner)) {
@@ -47,7 +47,7 @@ int nfc_proto_register(const struct nfc_protocol *nfc_proto)
 	int rc;
 
 	if (nfc_proto->id < 0 || nfc_proto->id >= NFC_SOCKPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = proto_register(nfc_proto->proto, 0);
 	if (rc)
@@ -55,7 +55,7 @@ int nfc_proto_register(const struct nfc_protocol *nfc_proto)
 
 	write_lock(&proto_tab_lock);
 	if (proto_tab[nfc_proto->id])
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 	else
 		proto_tab[nfc_proto->id] = nfc_proto;
 	write_unlock(&proto_tab_lock);

@@ -484,7 +484,7 @@ int kasan_add_zero_shadow(void *start, unsigned long size)
 	if (WARN_ON((unsigned long)start %
 			(KASAN_SHADOW_SCALE_SIZE * PAGE_SIZE)) ||
 	    WARN_ON(size % (KASAN_SHADOW_SCALE_SIZE * PAGE_SIZE)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = kasan_populate_early_shadow(shadow_start, shadow_end);
 	if (ret)

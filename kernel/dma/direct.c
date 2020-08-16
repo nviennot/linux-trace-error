@@ -495,7 +495,7 @@ int dma_direct_mmap(struct device *dev, struct vm_area_struct *vma,
 	unsigned long user_count = vma_pages(vma);
 	unsigned long count = PAGE_ALIGN(size) >> PAGE_SHIFT;
 	unsigned long pfn = PHYS_PFN(dma_to_phys(dev, dma_addr));
-	int ret = -ENXIO;
+	int ret = -ERR(ENXIO);
 
 	vma->vm_page_prot = dma_pgprot(dev, vma->vm_page_prot, attrs);
 
@@ -503,7 +503,7 @@ int dma_direct_mmap(struct device *dev, struct vm_area_struct *vma,
 		return ret;
 
 	if (vma->vm_pgoff >= count || user_count > count - vma->vm_pgoff)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return remap_pfn_range(vma, vma->vm_start, pfn + vma->vm_pgoff,
 			user_count << PAGE_SHIFT, vma->vm_page_prot);
 }

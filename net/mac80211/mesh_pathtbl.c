@@ -311,7 +311,7 @@ int mesh_path_add_gate(struct mesh_path *mpath)
 
 	spin_lock_bh(&mpath->state_lock);
 	if (mpath->is_gate) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		spin_unlock_bh(&mpath->state_lock);
 		goto err_rcu;
 	}
@@ -404,13 +404,13 @@ struct mesh_path *mesh_path_add(struct ieee80211_sub_if_data *sdata,
 
 	if (ether_addr_equal(dst, sdata->vif.addr))
 		/* never add ourselves as neighbours */
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 
 	if (is_multicast_ether_addr(dst))
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 
 	if (atomic_add_unless(&sdata->u.mesh.mpaths, 1, MESH_MAX_MPATHS) == 0)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	new_mpath = mesh_path_new(sdata, dst, GFP_ATOMIC);
 	if (!new_mpath)
@@ -447,10 +447,10 @@ int mpp_path_add(struct ieee80211_sub_if_data *sdata,
 
 	if (ether_addr_equal(dst, sdata->vif.addr))
 		/* never add ourselves as neighbours */
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (is_multicast_ether_addr(dst))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	new_mpath = mesh_path_new(sdata, dst, GFP_ATOMIC);
 
@@ -618,7 +618,7 @@ static int table_path_del(struct mesh_table *tbl,
 	mpath = rhashtable_lookup_fast(&tbl->rhead, addr, mesh_rht_params);
 	if (!mpath) {
 		spin_unlock_bh(&tbl->walk_lock);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	__mesh_path_del(tbl, mpath);
@@ -702,7 +702,7 @@ int mesh_path_send_to_gates(struct mesh_path *mpath)
 	}
 	rcu_read_unlock();
 
-	return (from_mpath == mpath) ? -EHOSTUNREACH : 0;
+	return (from_mpath == mpath) ? -ERR(EHOSTUNREACH) : 0;
 }
 
 /**

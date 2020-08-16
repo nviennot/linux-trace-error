@@ -2184,7 +2184,7 @@ int rt5663_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (filter_mask & RT5663_DA_STEREO_FILTER) {
@@ -2776,7 +2776,7 @@ static int rt5663_hw_params(struct snd_pcm_substream *substream,
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting %d for DAI %d\n",
 			rt5663->lrck, dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "pre_div is %d for iis %d\n", pre_div, dai->id);
@@ -2795,7 +2795,7 @@ static int rt5663_hw_params(struct snd_pcm_substream *substream,
 		val_len = RT5663_I2S_DL_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5663_I2S1_SDP,
@@ -2819,7 +2819,7 @@ static int rt5663_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5663_I2S_MS_S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2829,7 +2829,7 @@ static int rt5663_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5663_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2845,7 +2845,7 @@ static int rt5663_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5663_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5663_I2S1_SDP, RT5663_I2S_MS_MASK |
@@ -2876,7 +2876,7 @@ static int rt5663_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5663_GLB_CLK, RT5663_SCLK_SRC_MASK,
 		reg_val);
@@ -2923,7 +2923,7 @@ static int rt5663_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown CODEC Version\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (source) {
@@ -2935,7 +2935,7 @@ static int rt5663_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5663_GLB_CLK, mask, (val << shift));
 
@@ -2988,7 +2988,7 @@ static int rt5663_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slot_width) {
@@ -3007,7 +3007,7 @@ static int rt5663_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rt5663->codec_ver) {
@@ -3019,7 +3019,7 @@ static int rt5663_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		break;
 	default:
 		dev_err(component->dev, "Unknown CODEC Version\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, reg, RT5663_TDM_MODE_MASK |
@@ -3065,7 +3065,7 @@ static int rt5663_set_bclk_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 		break;
 	default:
 		dev_err(component->dev, "Invalid ratio!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -3569,7 +3569,7 @@ static int rt5663_i2c_probe(struct i2c_client *i2c,
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5663\n",
 			val);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err_enable;
 	}
 

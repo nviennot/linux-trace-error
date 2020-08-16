@@ -343,7 +343,7 @@ static int mt2701_cs42448_machine_probe(struct platform_device *pdev)
 					 "mediatek,platform", 0);
 	if (!platform_node) {
 		dev_err(&pdev->dev, "Property 'platform' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for_each_card_prelinks(card, i, dai_link) {
 		if (dai_link->platforms->name)
@@ -358,7 +358,7 @@ static int mt2701_cs42448_machine_probe(struct platform_device *pdev)
 	if (!codec_node) {
 		dev_err(&pdev->dev,
 			"Property 'audio-codec' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for_each_card_prelinks(card, i, dai_link) {
 		if (dai_link->codecs->name)
@@ -371,7 +371,7 @@ static int mt2701_cs42448_machine_probe(struct platform_device *pdev)
 	if (!codec_node_bt_mrg) {
 		dev_err(&pdev->dev,
 			"Property 'audio-codec-bt-mrg' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mt2701_cs42448_dai_links[DAI_LINK_BE_MRG_BT].codecs->of_node
 							= codec_node_bt_mrg;

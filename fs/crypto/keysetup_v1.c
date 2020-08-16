@@ -138,7 +138,7 @@ find_and_lock_process_key(const char *prefix,
 invalid:
 	up_read(&key->sem);
 	key_put(key);
-	return ERR_PTR(-ENOKEY);
+	return ERR_PTR(-ERR(ENOKEY));
 }
 
 /* Master key referenced by DIRECT_KEY policy */

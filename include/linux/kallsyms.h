@@ -151,12 +151,12 @@ static inline int sprint_backtrace(char *buffer, unsigned long addr)
 
 static inline int lookup_symbol_name(unsigned long addr, char *symname)
 {
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 static inline int lookup_symbol_attrs(unsigned long addr, unsigned long *size, unsigned long *offset, char *modname, char *name)
 {
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 static inline bool kallsyms_show_value(const struct cred *cred)

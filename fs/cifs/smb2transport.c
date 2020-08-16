@@ -110,7 +110,7 @@ int smb2_get_sign_key(__u64 ses_id, struct TCP_Server_Info *server, u8 *key)
 	}
 	cifs_server_dbg(VFS, "%s: Could not find session 0x%llx\n",
 			__func__, ses_id);
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 	goto out;
 
 found:
@@ -139,7 +139,7 @@ found:
 	cifs_dbg(VFS,
 		 "%s: Could not find channel signing key for session 0x%llx\n",
 		 __func__, ses_id);
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 
 out:
 	spin_unlock(&cifs_tcp_ses_lock);
@@ -662,7 +662,7 @@ smb2_verify_signature(struct smb_rqst *rqst, struct TCP_Server_Info *server)
 	if (memcmp(server_response_sig, shdr->Signature, SMB2_SIGNATURE_SIZE)) {
 		cifs_dbg(VFS, "sign fail cmd 0x%x message id 0x%llx\n",
 			shdr->Command, shdr->MessageId);
-		return -EACCES;
+		return -ERR(EACCES);
 	} else
 		return 0;
 }
@@ -726,27 +726,27 @@ smb2_get_mid_entry(struct cifs_ses *ses, struct TCP_Server_Info *server,
 		   struct smb2_sync_hdr *shdr, struct mid_q_entry **mid)
 {
 	if (server->tcpStatus == CifsExiting)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (server->tcpStatus == CifsNeedReconnect) {
 		cifs_dbg(FYI, "tcp session dead - return to caller to retry\n");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (server->tcpStatus == CifsNeedNegotiate &&
 	   shdr->Command != SMB2_NEGOTIATE)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (ses->status == CifsNew) {
 		if ((shdr->Command != SMB2_SESSION_SETUP) &&
 		    (shdr->Command != SMB2_NEGOTIATE))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		/* else ok - we are setting up session */
 	}
 
 	if (ses->status == CifsExiting) {
 		if (shdr->Command != SMB2_LOGOFF)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		/* else ok - we are shutting down the session */
 	}
 
@@ -823,7 +823,7 @@ smb2_setup_async_request(struct TCP_Server_Info *server, struct smb_rqst *rqst)
 
 	if (server->tcpStatus == CifsNeedNegotiate &&
 	   shdr->Command != SMB2_NEGOTIATE)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 
 	smb2_seq_num_into_buf(server, shdr);
 

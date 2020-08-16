@@ -803,7 +803,7 @@ static int xdr_set_page_base(struct xdr_stream *xdr,
 
 	maxlen = xdr->buf->page_len;
 	if (base >= maxlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	maxlen -= base;
 	if (len > maxlen)
 		len = maxlen;
@@ -1292,13 +1292,13 @@ xdr_xcode_array2(struct xdr_buf *buf, unsigned int base,
 
 	if (encode) {
 		if (xdr_encode_word(buf, base, desc->array_len) != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (xdr_decode_word(buf, base, &desc->array_len) != 0 ||
 		    desc->array_len > desc->array_maxlen ||
 		    (unsigned long) base + 4 + desc->array_len *
 				    desc->elem_size > buf->len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	base += 4;
 
@@ -1480,7 +1480,7 @@ xdr_decode_array2(struct xdr_buf *buf, unsigned int base,
 		  struct xdr_array2_desc *desc)
 {
 	if (base >= buf->len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xdr_xcode_array2(buf, base, desc, 0);
 }
@@ -1492,7 +1492,7 @@ xdr_encode_array2(struct xdr_buf *buf, unsigned int base,
 {
 	if ((unsigned long) base + 4 + desc->array_len * desc->elem_size >
 	    buf->head->iov_len + buf->page_len + buf->tail->iov_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xdr_xcode_array2(buf, base, desc, 1);
 }
@@ -1559,7 +1559,7 @@ xdr_process_buf(struct xdr_buf *buf, unsigned int offset, unsigned int len,
 		len -= thislen;
 	}
 	if (len != 0)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 out:
 	return ret;
 }

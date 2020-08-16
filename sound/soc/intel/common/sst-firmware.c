@@ -76,7 +76,7 @@ static int sst_dsp_dma_copy(struct sst_dsp *sst, dma_addr_t dest_addr,
 
 	if (dma->ch == NULL) {
 		dev_err(sst->dev, "error: no DMA channel\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_dbg(sst->dev, "DMA: src: 0x%lx dest 0x%lx size %zu\n",
@@ -86,7 +86,7 @@ static int sst_dsp_dma_copy(struct sst_dsp *sst, dma_addr_t dest_addr,
 		src_addr, size, DMA_CTRL_ACK);
 	if (!desc){
 		dev_err(sst->dev, "error: dma prep memcpy failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	desc->callback = sst_dma_transfer_complete;
@@ -228,7 +228,7 @@ int sst_dsp_dma_get_channel(struct sst_dsp *dsp, int chan_id)
 	dma->ch = dma_request_channel(mask, dma_chan_filter, dsp);
 	if (dma->ch == NULL) {
 		dev_err(dsp->dev, "error: DMA request channel failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	memset(&slave, 0, sizeof(slave));
@@ -280,7 +280,7 @@ static int sst_dma_new(struct sst_dsp *sst)
 	default:
 		dev_err(sst->dev, "error: invalid DMA engine %d\n",
 			sst->pdata->dma_engine);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma = devm_kzalloc(sst->dev, sizeof(struct sst_dma), GFP_KERNEL);

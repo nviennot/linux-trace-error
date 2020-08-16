@@ -303,7 +303,7 @@ static int snd_soc_put_volsw_2r_st(struct snd_kcontrol *kcontrol,
 	val2 = ucontrol->value.integer.value[1];
 
 	if (val >= ARRAY_SIZE(st_table) || val2 >= ARRAY_SIZE(st_table))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = snd_soc_component_update_bits(component, reg, 0x3f, st_table[val].m);
 	if (err < 0)
@@ -931,7 +931,7 @@ static int pm860x_pcm_hw_params(struct snd_pcm_substream *substream,
 		inf |= PCM_INF2_18WL;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mask |= PCM_INF2_18WL;
 	snd_soc_component_update_bits(component, PM860X_PCM_IFACE_2, mask, inf);
@@ -951,7 +951,7 @@ static int pm860x_pcm_hw_params(struct snd_pcm_substream *substream,
 		inf = 8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, PM860X_PCM_RATE, 0x0f, inf);
 
@@ -964,7 +964,7 @@ static int pm860x_pcm_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	struct snd_soc_component *component = codec_dai->component;
 	struct pm860x_priv *pm860x = snd_soc_component_get_drvdata(component);
 	unsigned char inf = 0, mask = 0;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	mask |= PCM_INF2_BCLK | PCM_INF2_FS | PCM_INF2_MASTER;
 
@@ -1007,7 +1007,7 @@ static int pm860x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if (dir == PM860X_CLK_DIR_OUT)
 		pm860x->dir = PM860X_CLK_DIR_OUT;
 	else	/* Slave mode is not supported */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1028,7 +1028,7 @@ static int pm860x_i2s_hw_params(struct snd_pcm_substream *substream,
 		inf = PCM_INF2_18WL;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, PM860X_I2S_IFACE_2, PCM_INF2_18WL, inf);
 
@@ -1056,7 +1056,7 @@ static int pm860x_i2s_hw_params(struct snd_pcm_substream *substream,
 		inf = 8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, PM860X_I2S_IFACE_4, 0xf, inf);
 
@@ -1078,16 +1078,16 @@ static int pm860x_i2s_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		if (pm860x->dir == PM860X_CLK_DIR_OUT)
 			inf |= PCM_INF2_MASTER;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case SND_SOC_DAIFMT_CBS_CFS:
 		if (pm860x->dir == PM860X_CLK_DIR_IN)
 			inf &= ~PCM_INF2_MASTER;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1095,7 +1095,7 @@ static int pm860x_i2s_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		inf |= PCM_EXACT_I2S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mask |= PCM_MODE_MASK;
 	snd_soc_component_update_bits(component, PM860X_I2S_IFACE_2, mask, inf);
@@ -1369,7 +1369,7 @@ static int pm860x_codec_probe(struct platform_device *pdev)
 		res = platform_get_resource(pdev, IORESOURCE_IRQ, i);
 		if (!res) {
 			dev_err(&pdev->dev, "Failed to get IRQ resources\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		pm860x->irq[i] = res->start + chip->irq_base;
 		strncpy(pm860x->name[i], res->name, MAX_NAME_LEN);
@@ -1380,7 +1380,7 @@ static int pm860x_codec_probe(struct platform_device *pdev)
 				     pm860x_dai, ARRAY_SIZE(pm860x_dai));
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to register component\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return ret;
 }

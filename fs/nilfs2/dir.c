@@ -202,7 +202,7 @@ static struct page *nilfs_get_page(struct inode *dir, unsigned long n)
 
 fail:
 	nilfs_put_page(page);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /*
@@ -280,7 +280,7 @@ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
 		if (IS_ERR(page)) {
 			nilfs_error(sb, "bad page in #%lu", inode->i_ino);
 			ctx->pos += PAGE_SIZE - offset;
-			return -EIO;
+			return -ERR(EIO);
 		}
 		kaddr = page_address(page);
 		de = (struct nilfs_dir_entry *)(kaddr + offset);
@@ -290,7 +290,7 @@ static int nilfs_readdir(struct file *file, struct dir_context *ctx)
 			if (de->rec_len == 0) {
 				nilfs_error(sb, "zero-length directory entry");
 				nilfs_put_page(page);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			if (de->inode) {
 				unsigned char t;
@@ -480,10 +480,10 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 			if (de->rec_len == 0) {
 				nilfs_error(dir->i_sb,
 					    "zero-length directory entry");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out_unlock;
 			}
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (nilfs_match(namelen, name, de))
 				goto out_unlock;
 			name_len = NILFS_DIR_REC_LEN(de->name_len);
@@ -498,7 +498,7 @@ int nilfs_add_link(struct dentry *dentry, struct inode *inode)
 		nilfs_put_page(page);
 	}
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 got_it:
 	from = (char *)de - (char *)page_address(page);
@@ -552,7 +552,7 @@ int nilfs_delete_entry(struct nilfs_dir_entry *dir, struct page *page)
 		if (de->rec_len == 0) {
 			nilfs_error(inode->i_sb,
 				    "zero-length directory entry");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		pde = de;

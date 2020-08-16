@@ -49,14 +49,14 @@ static int em_text_change(struct net *net, void *data, int len,
 	int flags = 0;
 
 	if (len < sizeof(*conf) || len < (sizeof(*conf) + conf->pattern_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (conf->from_layer > conf->to_layer)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (conf->from_layer == conf->to_layer &&
 	    conf->from_offset > conf->to_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 retry:
 	ts_conf = textsearch_prepare(conf->algo, (u8 *) conf + sizeof(*conf),
@@ -74,13 +74,13 @@ retry:
 			return PTR_ERR(ts_conf);
 	} else if (flags & TS_AUTOLOAD) {
 		textsearch_destroy(ts_conf);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	tm = kmalloc(sizeof(*tm), GFP_KERNEL);
 	if (tm == NULL) {
 		textsearch_destroy(ts_conf);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	tm->from_offset = conf->from_offset;

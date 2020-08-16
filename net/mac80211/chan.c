@@ -647,7 +647,7 @@ static int ieee80211_assign_vif_chanctx(struct ieee80211_sub_if_data *sdata,
 	int ret = 0;
 
 	if (WARN_ON(sdata->vif.type == NL80211_IFTYPE_NAN))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	conf = rcu_dereference_protected(sdata->vif.chanctx_conf,
 					 lockdep_is_held(&local->chanctx_mtx));
@@ -838,7 +838,7 @@ int ieee80211_vif_unreserve_chanctx(struct ieee80211_sub_if_data *sdata)
 	lockdep_assert_held(&sdata->local->chanctx_mtx);
 
 	if (WARN_ON(!ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_del(&sdata->reserved_chanctx_list);
 	sdata->reserved_chanctx = NULL;
@@ -846,7 +846,7 @@ int ieee80211_vif_unreserve_chanctx(struct ieee80211_sub_if_data *sdata)
 	if (ieee80211_chanctx_refcount(sdata->local, ctx) == 0) {
 		if (ctx->replace_state == IEEE80211_CHANCTX_REPLACES_OTHER) {
 			if (WARN_ON(!ctx->replace_ctx))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			WARN_ON(ctx->replace_ctx->replace_state !=
 			        IEEE80211_CHANCTX_WILL_BE_REPLACED);
@@ -878,7 +878,7 @@ int ieee80211_vif_reserve_chanctx(struct ieee80211_sub_if_data *sdata,
 
 	curr_ctx = ieee80211_vif_get_chanctx(sdata);
 	if (curr_ctx && local->use_chanctx && !local->ops->switch_vif_chanctx)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	new_ctx = ieee80211_find_reservation_chanctx(local, chandef, mode);
 	if (!new_ctx) {
@@ -935,7 +935,7 @@ int ieee80211_vif_reserve_chanctx(struct ieee80211_sub_if_data *sdata,
 			    (curr_ctx->replace_state ==
 			     IEEE80211_CHANCTX_WILL_BE_REPLACED) ||
 			    !list_empty(&curr_ctx->reserved_vifs))
-				return -EBUSY;
+				return -ERR(EBUSY);
 
 			new_ctx = ieee80211_alloc_chanctx(local, chandef, mode);
 			if (!new_ctx)
@@ -1023,22 +1023,22 @@ ieee80211_vif_use_reserved_reassign(struct ieee80211_sub_if_data *sdata)
 	old_ctx = ieee80211_vif_get_chanctx(sdata);
 
 	if (WARN_ON(!sdata->reserved_ready))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (WARN_ON(!new_ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(!old_ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(new_ctx->replace_state ==
 		    IEEE80211_CHANCTX_REPLACES_OTHER))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chandef = ieee80211_chanctx_non_reserved_chandef(local, new_ctx,
 				&sdata->reserved_chandef);
 	if (WARN_ON(!chandef))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ieee80211_change_chanctx(local, new_ctx, chandef);
 
@@ -1098,22 +1098,22 @@ ieee80211_vif_use_reserved_assign(struct ieee80211_sub_if_data *sdata)
 	new_ctx = sdata->reserved_chanctx;
 
 	if (WARN_ON(!sdata->reserved_ready))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(old_ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(!new_ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(new_ctx->replace_state ==
 		    IEEE80211_CHANCTX_REPLACES_OTHER))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chandef = ieee80211_chanctx_non_reserved_chandef(local, new_ctx,
 				&sdata->reserved_chandef);
 	if (WARN_ON(!chandef))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ieee80211_change_chanctx(local, new_ctx, chandef);
 
@@ -1168,7 +1168,7 @@ static int ieee80211_chsw_switch_hwconf(struct ieee80211_local *local,
 
 	chandef = ieee80211_chanctx_reserved_chandef(local, new_ctx, NULL);
 	if (WARN_ON(!chandef))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	local->hw.conf.radar_enabled = new_ctx->conf.radar_enabled;
 	local->_oper_chandef = *chandef;
@@ -1198,7 +1198,7 @@ static int ieee80211_chsw_switch_vifs(struct ieee80211_local *local,
 			continue;
 
 		if (WARN_ON(!ctx->replace_ctx)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1296,7 +1296,7 @@ static int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local)
 			continue;
 
 		if (WARN_ON(!ctx->replace_ctx)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -1323,11 +1323,11 @@ static int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local)
 			if (n_ready == n_reserved) {
 				wiphy_info(local->hw.wiphy,
 					   "channel context reservation cannot be finalized because some interfaces aren't switching\n");
-				err = -EBUSY;
+				err = -ERR(EBUSY);
 				goto err;
 			}
 
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 
 		ctx->conf.radar_enabled = false;
@@ -1335,7 +1335,7 @@ static int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local)
 				    reserved_chanctx_list) {
 			if (ieee80211_vif_has_in_place_reservation(sdata) &&
 			    !sdata->reserved_ready)
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 
 			old_ctx = ieee80211_vif_get_chanctx(sdata);
 			if (old_ctx) {
@@ -1359,7 +1359,7 @@ static int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local)
 		    n_vifs_ctxless == 0) ||
 	    WARN_ON(n_ctx > 1 && !local->use_chanctx) ||
 	    WARN_ON(!new_ctx && !local->use_chanctx)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1395,7 +1395,7 @@ static int ieee80211_vif_use_reserved_switch(struct ieee80211_local *local)
 			continue;
 
 		if (WARN_ON(!ctx->replace_ctx)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -1627,14 +1627,14 @@ int ieee80211_vif_use_reserved_context(struct ieee80211_sub_if_data *sdata)
 	old_ctx = ieee80211_vif_get_chanctx(sdata);
 
 	if (WARN_ON(!new_ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(new_ctx->replace_state ==
 		    IEEE80211_CHANCTX_WILL_BE_REPLACED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(sdata->reserved_ready))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdata->reserved_ready = true;
 
@@ -1689,7 +1689,7 @@ int ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,
 
 	if (!cfg80211_chandef_usable(sdata->local->hw.wiphy, chandef,
 				     IEEE80211_CHAN_DISABLED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&local->chanctx_mtx);
 	if (cfg80211_chandef_identical(chandef, &sdata->vif.bss_conf.chandef)) {
@@ -1699,14 +1699,14 @@ int ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,
 
 	if (chandef->width == NL80211_CHAN_WIDTH_20_NOHT ||
 	    sdata->vif.bss_conf.chandef.width == NL80211_CHAN_WIDTH_20_NOHT) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	conf = rcu_dereference_protected(sdata->vif.chanctx_conf,
 					 lockdep_is_held(&local->chanctx_mtx));
 	if (!conf) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1714,21 +1714,21 @@ int ieee80211_vif_change_bandwidth(struct ieee80211_sub_if_data *sdata,
 
 	compat = cfg80211_chandef_compatible(&conf->def, chandef);
 	if (!compat) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	switch (ctx->replace_state) {
 	case IEEE80211_CHANCTX_REPLACE_NONE:
 		if (!ieee80211_chanctx_reserved_chandef(local, ctx, compat)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 		break;
 	case IEEE80211_CHANCTX_WILL_BE_REPLACED:
 		/* TODO: Perhaps the bandwidth change could be treated as a
 		 * reservation itself? */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	case IEEE80211_CHANCTX_REPLACES_OTHER:
 		/* channel context that is going to replace another channel

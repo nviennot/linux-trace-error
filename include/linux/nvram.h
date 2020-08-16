@@ -52,7 +52,7 @@ static inline ssize_t nvram_get_size(void)
 	if (arch_nvram_ops.get_size)
 		return arch_nvram_ops.get_size();
 #endif
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline unsigned char nvram_read_byte(int addr)

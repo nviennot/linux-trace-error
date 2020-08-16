@@ -50,11 +50,11 @@ int __cifs_calc_signature(struct smb_rqst *rqst,
 	/* iov[0] is actual data and not the rfc1002 length for SMB2+ */
 	if (is_smb2) {
 		if (iov[0].iov_len <= 4)
-			return -EIO;
+			return -ERR(EIO);
 		i = 0;
 	} else {
 		if (n_vec < 2 || iov[0].iov_len != 4)
-			return -EIO;
+			return -ERR(EIO);
 		i = 1; /* skip rfc1002 length */
 	}
 
@@ -63,7 +63,7 @@ int __cifs_calc_signature(struct smb_rqst *rqst,
 			continue;
 		if (iov[i].iov_base == NULL) {
 			cifs_dbg(VFS, "null iovec entry\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		rc = crypto_shash_update(shash,
@@ -115,7 +115,7 @@ static int cifs_calc_signature(struct smb_rqst *rqst,
 	int rc;
 
 	if (!rqst->rq_iov || !signature || !server)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = cifs_alloc_hash("md5", &server->secmech.md5,
 			     &server->secmech.sdescmd5);
@@ -149,10 +149,10 @@ int cifs_sign_rqst(struct smb_rqst *rqst, struct TCP_Server_Info *server,
 
 	if (rqst->rq_iov[0].iov_len != 4 ||
 	    rqst->rq_iov[0].iov_base + 4 != rqst->rq_iov[1].iov_base)
-		return -EIO;
+		return -ERR(EIO);
 
 	if ((cifs_pdu == NULL) || (server == NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(cifs_pdu->Flags2 & SMBFLG2_SECURITY_SIGNATURE) ||
 	    server->tcpStatus == CifsNeedNegotiate)
@@ -214,10 +214,10 @@ int cifs_verify_signature(struct smb_rqst *rqst,
 
 	if (rqst->rq_iov[0].iov_len != 4 ||
 	    rqst->rq_iov[0].iov_base + 4 != rqst->rq_iov[1].iov_base)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (cifs_pdu == NULL || server == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!server->session_estab)
 		return 0;
@@ -256,7 +256,7 @@ int cifs_verify_signature(struct smb_rqst *rqst,
 		      what_we_think_sig_should_be, 16); */
 
 	if (memcmp(server_response_sig, what_we_think_sig_should_be, 8))
-		return -EACCES;
+		return -ERR(EACCES);
 	else
 		return 0;
 
@@ -270,7 +270,7 @@ int setup_ntlm_response(struct cifs_ses *ses, const struct nls_table *nls_cp)
 	char temp_key[CIFS_SESS_KEY_SIZE];
 
 	if (!ses)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ses->auth_key.response = kmalloc(temp_len, GFP_KERNEL);
 	if (!ses->auth_key.response)
@@ -777,7 +777,7 @@ calc_seckey(struct cifs_ses *ses)
 	struct arc4_ctx *ctx_arc4;
 
 	if (fips_enabled)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	get_random_bytes(sec_key, CIFS_SESS_KEY_SIZE);
 

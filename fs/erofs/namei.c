@@ -84,7 +84,7 @@ static struct erofs_dirent *find_target_dirent(struct erofs_qstr *name,
 		}
 	}
 
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static struct page *find_target_block_classic(struct inode *dir,
@@ -94,7 +94,7 @@ static struct page *find_target_block_classic(struct inode *dir,
 	unsigned int startprfx, endprfx;
 	int head, back;
 	struct address_space *const mapping = dir->i_mapping;
-	struct page *candidate = ERR_PTR(-ENOENT);
+	struct page *candidate = ERR_PTR(-ERR(ENOENT));
 
 	startprfx = endprfx = 0;
 	head = 0;
@@ -176,7 +176,7 @@ int erofs_namei(struct inode *dir,
 	struct erofs_qstr qn;
 
 	if (!dir->i_size)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	qn.name = name->name;
 	qn.end = name->name + name->len;
@@ -223,7 +223,7 @@ static struct dentry *erofs_lookup(struct inode *dir,
 
 	/* file name exceeds fs limit */
 	if (dentry->d_name.len > EROFS_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	/* false uninitialized warnings on gcc 4.8.x */
 	err = erofs_namei(dir, &dentry->d_name, &nid, &d_type);

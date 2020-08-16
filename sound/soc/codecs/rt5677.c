@@ -880,7 +880,7 @@ static int rt5677_set_dsp_vad(struct snd_soc_component *component, bool on)
 	rt5677->dsp_vad_en = on;
 
 	if (!IS_ENABLED(CONFIG_SND_SOC_RT5677_SPI))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	schedule_delayed_work(&rt5677->dsp_work, 0);
 	return 0;
@@ -1254,7 +1254,7 @@ int rt5677_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* ASRC 3 */
@@ -4299,12 +4299,12 @@ static int rt5677_hw_params(struct snd_pcm_substream *substream,
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting: sysclk=%dHz lrck=%dHz\n",
 			rt5677->sysclk, rt5677->lrck[dai->id]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	bclk_ms = frame_size > 32;
 	rt5677->bclk[dai->id] = rt5677->lrck[dai->id] * (32 << bclk_ms);
@@ -4327,7 +4327,7 @@ static int rt5677_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5677_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -4387,7 +4387,7 @@ static int rt5677_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5677->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -4397,7 +4397,7 @@ static int rt5677_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5677_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -4413,7 +4413,7 @@ static int rt5677_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5677_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -4467,7 +4467,7 @@ static int rt5677_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(rt5677->regmap, RT5677_GLB_CLK1,
 		RT5677_SCLK_SRC_MASK, reg_val);
@@ -4493,7 +4493,7 @@ static int rt5677_pll_calc(const unsigned int freq_in,
 	const unsigned int freq_out, struct rl6231_pll_code *pll_code)
 {
 	if (RT5677_PLL_INP_MIN > freq_in)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return rl6231_pll_calc(freq_in, freq_out, pll_code);
 }
@@ -4552,7 +4552,7 @@ static int rt5677_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rt5677_pll_calc(freq_in, freq_out, &pll_code);
@@ -4854,7 +4854,7 @@ static int rt5677_to_irq(struct gpio_chip *chip, unsigned offset)
 			offset == RT5677_GPIO6)) {
 		irq = RT5677_IRQ_JD3;
 	} else {
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	return irq_create_mapping(rt5677->domain, irq);
@@ -5503,7 +5503,7 @@ static int rt5677_init_irq(struct i2c_client *i2c)
 
 	if (!i2c->irq) {
 		dev_err(&i2c->dev, "No interrupt specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_init(&rt5677->irq_lock);
@@ -5587,7 +5587,7 @@ static int rt5677_i2c_probe(struct i2c_client *i2c)
 		if (acpi_id)
 			rt5677->type = (enum rt5677_type)acpi_id->driver_data;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt5677_read_device_properties(rt5677, &i2c->dev);
@@ -5640,7 +5640,7 @@ static int rt5677_i2c_probe(struct i2c_client *i2c)
 	if (val != RT5677_DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5677\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt5677->regmap, RT5677_RESET, 0x10ec);

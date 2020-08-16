@@ -70,7 +70,7 @@ static int br_vlan_modify_state(struct net_bridge_vlan_group *vg,
 
 	if (state > BR_STATE_BLOCKING) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid vlan state");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (br_vlan_is_brentry(v))
@@ -80,7 +80,7 @@ static int br_vlan_modify_state(struct net_bridge_vlan_group *vg,
 
 	if (br->stp_enabled == BR_KERNEL_STP) {
 		NL_SET_ERR_MSG_MOD(extack, "Can't modify vlan state when using kernel STP");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (v->state == state)
@@ -113,11 +113,11 @@ static int br_vlan_modify_tunnel(const struct net_bridge_port *p,
 
 	if (!p) {
 		NL_SET_ERR_MSG_MOD(extack, "Can't modify tunnel mapping of non-port vlans");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!(p->flags & BR_VLAN_TUNNEL)) {
 		NL_SET_ERR_MSG_MOD(extack, "Port doesn't have tunnel flag set");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	attr = tb[BRIDGE_VLANDB_ENTRY_TUNNEL_INFO];
@@ -128,14 +128,14 @@ static int br_vlan_modify_tunnel(const struct net_bridge_port *p,
 
 	if (!tun_tb[BRIDGE_VLANDB_TINFO_CMD]) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing tunnel command attribute");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	cmd = nla_get_u32(tun_tb[BRIDGE_VLANDB_TINFO_CMD]);
 	switch (cmd) {
 	case RTM_SETLINK:
 		if (!tun_tb[BRIDGE_VLANDB_TINFO_ID]) {
 			NL_SET_ERR_MSG_MOD(extack, "Missing tunnel id attribute");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		/* when working on vlan ranges this is the starting tunnel id */
 		tun_id = nla_get_u32(tun_tb[BRIDGE_VLANDB_TINFO_ID]);
@@ -151,7 +151,7 @@ static int br_vlan_modify_tunnel(const struct net_bridge_port *p,
 		break;
 	default:
 		NL_SET_ERR_MSG_MOD(extack, "Unsupported tunnel command");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return br_vlan_tunnel_info(p, cmd, v->vid, tun_id, changed);
@@ -203,11 +203,11 @@ int br_vlan_process_options(const struct net_bridge *br,
 
 	if (!range_start || !br_vlan_should_use(range_start)) {
 		NL_SET_ERR_MSG_MOD(extack, "Vlan range start doesn't exist, can't process options");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (!range_end || !br_vlan_should_use(range_end)) {
 		NL_SET_ERR_MSG_MOD(extack, "Vlan range end doesn't exist, can't process options");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	pvid = br_get_pvid(vg);
@@ -217,7 +217,7 @@ int br_vlan_process_options(const struct net_bridge *br,
 		v = br_vlan_find(vg, vid);
 		if (!v || !br_vlan_should_use(v)) {
 			NL_SET_ERR_MSG_MOD(extack, "Vlan in range doesn't exist, can't process options");
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			break;
 		}
 

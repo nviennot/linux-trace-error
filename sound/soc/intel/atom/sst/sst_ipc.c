@@ -87,7 +87,7 @@ int sst_wake_up_block(struct intel_sst_drv *ctx, int result,
 	dev_dbg(ctx->dev,
 		"Block not found or a response received for a short msg for ipc %d, drv_id %d\n",
 		ipc, drv_id);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int sst_free_block(struct intel_sst_drv *ctx, struct sst_block *freed)
@@ -110,7 +110,7 @@ int sst_free_block(struct intel_sst_drv *ctx, struct sst_block *freed)
 	}
 	spin_unlock_bh(&ctx->block_lock);
 	dev_err(ctx->dev, "block is already freed!!!\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int sst_post_message_mrfld(struct intel_sst_drv *sst_drv_ctx,
@@ -130,7 +130,7 @@ int sst_post_message_mrfld(struct intel_sst_drv *sst_drv_ctx,
 			if (loop_count > 25) {
 				dev_err(sst_drv_ctx->dev,
 					"sst: Busy wait failed, cant send this msg\n");
-				retval = -EBUSY;
+				retval = -ERR(EBUSY);
 				goto out;
 			}
 			cpu_relax();

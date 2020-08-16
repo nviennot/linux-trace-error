@@ -150,7 +150,7 @@ static int usb6fire_fw_ihex_init(const struct firmware *fw,
 	while (usb6fire_fw_ihex_next_record(record))
 		record->max_len = max(record->len, record->max_len);
 	if (record->error)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	record->txt_offset = 0;
 	return 0;
 }
@@ -166,7 +166,7 @@ static int usb6fire_fw_ezusb_write(struct usb_device *device,
 	if (ret < 0)
 		return ret;
 	else if (ret != len)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -179,7 +179,7 @@ static int usb6fire_fw_ezusb_read(struct usb_device *device,
 	if (ret < 0)
 		return ret;
 	else if (ret != len)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -194,7 +194,7 @@ static int usb6fire_fw_fpga_write(struct usb_device *device,
 	if (ret < 0)
 		return ret;
 	else if (actual_len != len)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -295,7 +295,7 @@ static int usb6fire_fw_fpga_upload(
 		dev_err(&intf->dev, "unable to get fpga firmware %s.\n",
 				fwname);
 		kfree(buffer);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	c = fw->data;
@@ -350,7 +350,7 @@ static int usb6fire_fw_check(struct usb_interface *intf, const u8 *version)
 			"please reconnect to power. if this failure "
 			"still happens, check your firmware installation.",
 			version);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int usb6fire_fw_init(struct usb_interface *intf)
@@ -374,7 +374,7 @@ int usb6fire_fw_init(struct usb_interface *intf)
 		for (i = 0; i < 8; i++)
 			printk(KERN_CONT "%02x ", buffer[i]);
 		printk(KERN_CONT "\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	/* do we need fpga loader ezusb firmware? */
 	if (buffer[3] == 0x01) {
@@ -410,7 +410,7 @@ int usb6fire_fw_init(struct usb_interface *intf)
 		for (i = 0; i < 8; i++)
 			printk(KERN_CONT "%02x ", buffer[i]);
 		printk(KERN_CONT "\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }

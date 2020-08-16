@@ -231,7 +231,7 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 
 	ptr = __struct_ptr(sbi, a->struct_type);
 	if (!ptr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!strcmp(a->attr.name, "extension_list")) {
 		__u8 (*extlist)[F2FS_EXTENSION_LEN] =
@@ -270,7 +270,7 @@ static ssize_t __sbi_store(struct f2fs_attr *a,
 
 	ptr = __struct_ptr(sbi, a->struct_type);
 	if (!ptr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!strcmp(a->attr.name, "extension_list")) {
 		const char *name = strim((char *)buf);
@@ -281,7 +281,7 @@ static ssize_t __sbi_store(struct f2fs_attr *a,
 		else if (!strncmp(name, "[c]", 3))
 			hot = false;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		name += 3;
 
@@ -291,7 +291,7 @@ static ssize_t __sbi_store(struct f2fs_attr *a,
 		}
 
 		if (strlen(name) >= F2FS_EXTENSION_LEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		down_write(&sbi->sb_lock);
 
@@ -314,16 +314,16 @@ out:
 		return ret;
 #ifdef CONFIG_F2FS_FAULT_INJECTION
 	if (a->struct_type == FAULT_INFO_TYPE && t >= (1 << FAULT_MAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (a->struct_type == FAULT_INFO_RATE && t >= UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	if (a->struct_type == RESERVED_BLOCKS) {
 		spin_lock(&sbi->stat_lock);
 		if (t > (unsigned long)(sbi->user_block_count -
 				F2FS_OPTION(sbi).root_reserved_blocks)) {
 			spin_unlock(&sbi->stat_lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*ui = t;
 		sbi->current_reserved_blocks = min(sbi->reserved_blocks,
@@ -334,7 +334,7 @@ out:
 
 	if (!strcmp(a->attr.name, "discard_granularity")) {
 		if (t == 0 || t > MAX_PLIST_NUM)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (t == *ui)
 			return count;
 		*ui = t;
@@ -343,11 +343,11 @@ out:
 
 	if (!strcmp(a->attr.name, "migration_granularity")) {
 		if (t == 0 || t > sbi->segs_per_sec)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (!strcmp(a->attr.name, "trim_sections"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!strcmp(a->attr.name, "gc_urgent")) {
 		if (t >= 1) {
@@ -382,7 +382,7 @@ out:
 
 	if (!strcmp(a->attr.name, "iostat_period_ms")) {
 		if (t < MIN_IOSTAT_PERIOD_MS || t > MAX_IOSTAT_PERIOD_MS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		spin_lock(&sbi->iostat_lock);
 		sbi->iostat_period_ms = (unsigned int)t;
 		spin_unlock(&sbi->iostat_lock);
@@ -404,7 +404,7 @@ static ssize_t f2fs_sbi_store(struct f2fs_attr *a,
 
 	if (gc_entry) {
 		if (!down_read_trylock(&sbi->sb->s_umount))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	}
 	ret = __sbi_store(a, sbi, buf, count);
 	if (gc_entry)

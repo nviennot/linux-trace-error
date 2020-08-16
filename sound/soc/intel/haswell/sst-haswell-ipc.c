@@ -549,7 +549,7 @@ static int hsw_process_reply(struct sst_hsw *hsw, u32 header)
 	msg = sst_ipc_reply_find_msg(&hsw->ipc, header);
 	if (msg == NULL) {
 		trace_ipc_error("error: can't find message header", header);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	msg->rx.header = header;
@@ -575,7 +575,7 @@ static int hsw_process_reply(struct sst_hsw *hsw, u32 header)
 	/* these will be rare - but useful for debug */
 	case IPC_GLB_REPLY_UNKNOWN_MESSAGE_TYPE:
 		trace_ipc_error("error: unknown message type", header);
-		msg->errno = -EBADMSG;
+		msg->errno = -ERR(EBADMSG);
 		break;
 	case IPC_GLB_REPLY_OUT_OF_RESOURCES:
 		trace_ipc_error("error: out of resources", header);
@@ -583,35 +583,35 @@ static int hsw_process_reply(struct sst_hsw *hsw, u32 header)
 		break;
 	case IPC_GLB_REPLY_BUSY:
 		trace_ipc_error("error: reply busy", header);
-		msg->errno = -EBUSY;
+		msg->errno = -ERR(EBUSY);
 		break;
 	case IPC_GLB_REPLY_FAILURE:
 		trace_ipc_error("error: reply failure", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	case IPC_GLB_REPLY_STAGE_UNINITIALIZED:
 		trace_ipc_error("error: stage uninitialized", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	case IPC_GLB_REPLY_NOT_FOUND:
 		trace_ipc_error("error: reply not found", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	case IPC_GLB_REPLY_SOURCE_NOT_STARTED:
 		trace_ipc_error("error: source not started", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	case IPC_GLB_REPLY_INVALID_REQUEST:
 		trace_ipc_error("error: invalid request", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	case IPC_GLB_REPLY_ERROR_INVALID_PARAM:
 		trace_ipc_error("error: invalid parameter", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	default:
 		trace_ipc_error("error: unknown reply", header);
-		msg->errno = -EINVAL;
+		msg->errno = -ERR(EINVAL);
 		break;
 	}
 
@@ -829,7 +829,7 @@ int sst_hsw_stream_get_volume(struct sst_hsw *hsw, struct sst_hsw_stream *stream
 	u32 stage_id, u32 channel, u32 *volume)
 {
 	if (channel > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sst_dsp_read(hsw->dsp, volume,
 		stream->reply.volume_register_address[channel],
@@ -849,7 +849,7 @@ int sst_hsw_stream_set_volume(struct sst_hsw *hsw,
 	trace_ipc_request("set stream volume", stream->reply.stream_hw_id);
 
 	if (channel >= 2 && channel != SST_HSW_CHANNELS_ALL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	request.header = IPC_GLB_TYPE(IPC_GLB_STREAM_MESSAGE) |
 		IPC_STR_TYPE(IPC_STR_STAGE_MESSAGE);
@@ -895,7 +895,7 @@ int sst_hsw_mixer_get_volume(struct sst_hsw *hsw, u32 stage_id, u32 channel,
 	u32 *volume)
 {
 	if (channel > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sst_dsp_read(hsw->dsp, volume,
 		hsw->mixer_info.volume_register_address[channel],
@@ -915,7 +915,7 @@ int sst_hsw_mixer_set_volume(struct sst_hsw *hsw, u32 stage_id, u32 channel,
 	trace_ipc_request("set mixer volume", volume);
 
 	if (channel >= 2 && channel != SST_HSW_CHANNELS_ALL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set both at same time ? */
 	if (channel == SST_HSW_CHANNELS_ALL) {
@@ -1013,7 +1013,7 @@ int sst_hsw_stream_free(struct sst_hsw *hsw, struct sst_hsw_stream *stream)
 	if (ret < 0) {
 		dev_err(hsw->dev, "error: free stream %d failed\n",
 			stream->free_req.stream_id);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	trace_hsw_stream_free_req(stream, &stream->free_req);
@@ -1033,7 +1033,7 @@ int sst_hsw_stream_set_bits(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set bits\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.bitdepth = bits;
@@ -1045,7 +1045,7 @@ int sst_hsw_stream_set_channels(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.ch_num = channels;
@@ -1057,7 +1057,7 @@ int sst_hsw_stream_set_rate(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.frequency = rate;
@@ -1070,7 +1070,7 @@ int sst_hsw_stream_set_map_config(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set map\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.map = map;
@@ -1083,7 +1083,7 @@ int sst_hsw_stream_set_style(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set style\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.style = style;
@@ -1095,7 +1095,7 @@ int sst_hsw_stream_set_valid(struct sst_hsw *hsw,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set valid bits\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.format.valid_bit = bits;
@@ -1110,7 +1110,7 @@ int sst_hsw_stream_format(struct sst_hsw *hsw, struct sst_hsw_stream *stream,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.path_id = path_id;
@@ -1128,7 +1128,7 @@ int sst_hsw_stream_buffer(struct sst_hsw *hsw, struct sst_hsw_stream *stream,
 {
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for buffer\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream->request.ringinfo.ring_pt_address = ring_pt_address;
@@ -1151,7 +1151,7 @@ int sst_hsw_stream_set_module_info(struct sst_hsw *hsw,
 
 	if (stream->commited) {
 		dev_err(hsw->dev, "error: stream committed for set module\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* only support initial module atm */
@@ -1339,7 +1339,7 @@ int sst_hsw_stream_reset(struct sst_hsw *hsw, struct sst_hsw_stream *stream)
 	if (!tries) {
 		dev_err(hsw->dev, "error: reset stream %d still running\n",
 			stream->reply.stream_hw_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	trace_ipc_request("stream reset", stream->reply.stream_hw_id);
@@ -1502,7 +1502,7 @@ static int sst_hsw_dx_state_dump(struct sst_hsw *hsw)
 			"error: number of FW context regions greater than %d\n",
 			SST_HSW_MAX_DX_REGIONS);
 		memset(&hsw->dx, 0, sizeof(hsw->dx));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = sst_dsp_dma_get_channel(sst, 0);
@@ -1582,7 +1582,7 @@ int sst_hsw_dsp_load(struct sst_hsw *hsw)
 	ret = sst_dsp_wake(dsp);
 	if (ret < 0) {
 		dev_err(hsw->dev, "error: failed to wake audio DSP\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = sst_dsp_dma_get_channel(dsp, 0);
@@ -1601,7 +1601,7 @@ int sst_hsw_dsp_load(struct sst_hsw *hsw)
 	}
 	ret = sst_block_alloc_scratch(hsw->dsp);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sst_dsp_dma_put_channel(dsp);
 	return 0;
@@ -1694,7 +1694,7 @@ int sst_hsw_dsp_runtime_resume(struct sst_hsw *hsw)
 		dev_err(hsw->dev, "error: audio DSP boot timeout IPCD 0x%x IPCX 0x%x\n",
 			sst_dsp_shim_read_unlocked(hsw->dsp, SST_IPCD),
 			sst_dsp_shim_read_unlocked(hsw->dsp, SST_IPCX));
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* Set ADSP SSP port settings - sadly the FW does not store SSP port
@@ -1780,7 +1780,7 @@ int sst_hsw_store_param_line(struct sst_hsw *hsw, u8 *buf)
 	/* save line to the first available position of param buffer */
 	if (hsw->param_idx_w > WAVES_PARAM_LINES - 1) {
 		dev_warn(hsw->dev, "warning: param buffer overflow!\n");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	memcpy(hsw->param_buf[hsw->param_idx_w], buf, WAVES_PARAM_COUNT);
 	hsw->param_idx_w++;
@@ -1849,7 +1849,7 @@ int sst_hsw_module_load(struct sst_hsw *hsw,
 			fw = dsp->pdata->fw;
 			if (!fw) {
 				dev_err(dev, "request Base fw failed\n");
-				return -ENODEV;
+				return -ERR(ENODEV);
 			}
 		} else {
 			/* try and load any other optional modules if they are
@@ -1908,13 +1908,13 @@ int sst_hsw_module_enable(struct sst_hsw *hsw,
 	module = sst_module_get_from_id(dsp, module_id);
 	if (module == NULL) {
 		dev_err(dev, "module %d not valid\n", module_id);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	runtime = sst_module_runtime_get_from_id(module, module_id);
 	if (runtime == NULL) {
 		dev_err(dev, "runtime %d not valid", module_id);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	request.header = IPC_GLB_TYPE(IPC_GLB_MODULE_OPERATION) |
@@ -1975,7 +1975,7 @@ int sst_hsw_module_disable(struct sst_hsw *hsw,
 	module = sst_module_get_from_id(dsp, module_id);
 	if (module == NULL) {
 		dev_err(dev, "module %d not valid\n", module_id);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	request.header = IPC_GLB_TYPE(IPC_GLB_MODULE_OPERATION) |
@@ -2132,7 +2132,7 @@ int sst_hsw_dsp_init(struct device *dev, struct sst_pdata *pdata)
 	/* init SST shim */
 	hsw->dsp = sst_dsp_new(dev, &hsw_dev, pdata);
 	if (hsw->dsp == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto dsp_new_err;
 	}
 
@@ -2170,7 +2170,7 @@ int sst_hsw_dsp_init(struct device *dev, struct sst_pdata *pdata)
 	ret = wait_event_timeout(hsw->boot_wait, hsw->boot_complete,
 		msecs_to_jiffies(IPC_BOOT_MSECS));
 	if (ret == 0) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		dev_err(hsw->dev, "error: audio DSP boot timeout IPCD 0x%x IPCX 0x%x\n",
 			sst_dsp_shim_read_unlocked(hsw->dsp, SST_IPCD),
 			sst_dsp_shim_read_unlocked(hsw->dsp, SST_IPCX));

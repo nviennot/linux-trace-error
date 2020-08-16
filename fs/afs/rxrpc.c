@@ -542,7 +542,7 @@ static void afs_deliver_to_call(struct afs_call *call)
 		ret = call->type->deliver(call);
 		state = READ_ONCE(call->state);
 		if (ret == 0 && call->unmarshalling_error)
-			ret = -EBADMSG;
+			ret = -ERR(EBADMSG);
 		switch (ret) {
 		case 0:
 			afs_queue_call_work(call);
@@ -821,7 +821,7 @@ static int afs_deliver_cm_op_id(struct afs_call *call)
 	/* ask the cache manager to route the call (it'll change the call type
 	 * if successful) */
 	if (!afs_cm_incoming_call(call))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	trace_afs_cb_call(call);
 
@@ -968,5 +968,5 @@ noinline int afs_protocol_error(struct afs_call *call,
 	trace_afs_protocol_error(call, cause);
 	if (call)
 		call->unmarshalling_error = true;
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 }

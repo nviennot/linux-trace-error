@@ -34,7 +34,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != DARLA24))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -130,11 +130,11 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 		dev_err(chip->card->dev,
 			"set_sample_rate: Error, invalid sample rate %d\n",
 			rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	dev_dbg(chip->card->dev,
 		"set_sample_rate: %d clock %d\n", rate, clock);
@@ -156,7 +156,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 {
 	if (snd_BUG_ON(clock != ECHO_CLOCK_INTERNAL &&
 		       clock != ECHO_CLOCK_ESYNC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	chip->input_clock = clock;
 	return set_sample_rate(chip, chip->sample_rate);
 }

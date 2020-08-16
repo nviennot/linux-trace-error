@@ -168,13 +168,13 @@ int acpi_debugger_notify_command_complete(void);
 #else
 static inline int acpi_debugger_init(void)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_register_debugger(struct module *owner,
 					 const struct acpi_debugger_ops *ops)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void acpi_unregister_debugger(const struct acpi_debugger_ops *ops)
@@ -184,27 +184,27 @@ static inline void acpi_unregister_debugger(const struct acpi_debugger_ops *ops)
 static inline int acpi_debugger_create_thread(acpi_osd_exec_callback function,
 					      void *context)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_debugger_write_log(const char *msg)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_debugger_read_cmd(char *buffer, u32 buffer_length)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_debugger_wait_command_ready(void)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_debugger_notify_command_complete(void)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 
@@ -291,7 +291,7 @@ static inline bool acpi_processor_claim_cst_control(void) { return false; }
 static inline int acpi_processor_evaluate_cst(acpi_handle handle, u32 cpu,
 					      struct acpi_processor_power *info)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 
@@ -830,7 +830,7 @@ struct acpi_table_header;
 static inline int acpi_table_parse(char *id,
 				int (*handler)(struct acpi_table_header *))
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_nvs_register(__u64 start, __u64 size)
@@ -874,13 +874,13 @@ static inline union acpi_object *acpi_evaluate_dsm(acpi_handle handle,
 static inline int acpi_device_uevent_modalias(struct device *dev,
 				struct kobj_uevent_env *env)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_device_modalias(struct device *dev,
 				char *buf, int size)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline bool acpi_dma_supported(struct acpi_device *adev)
@@ -896,7 +896,7 @@ static inline enum dev_dma_attr acpi_get_dma_attr(struct acpi_device *adev)
 static inline int acpi_dma_get_range(struct device *dev, u64 *dma_addr,
 				     u64 *offset, u64 *size)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_dma_configure(struct device *dev,
@@ -917,12 +917,12 @@ static inline void acpi_device_clear_enumerated(struct acpi_device *adev)
 
 static inline int acpi_reconfig_notifier_register(struct notifier_block *nb)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int acpi_reconfig_notifier_unregister(struct notifier_block *nb)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct acpi_device *acpi_resource_consumer(struct resource *res)
@@ -1067,7 +1067,7 @@ static inline bool acpi_gpio_get_irq_resource(struct acpi_resource *ares,
 }
 static inline int acpi_dev_gpio_irq_get(struct acpi_device *adev, int index)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 #endif
 
@@ -1172,7 +1172,7 @@ static inline int acpi_dev_get_property(struct acpi_device *adev,
 					const char *name, acpi_object_type type,
 					const union acpi_object **obj)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int
@@ -1180,7 +1180,7 @@ __acpi_node_get_property_reference(const struct fwnode_handle *fwnode,
 				const char *name, size_t index, size_t num_args,
 				struct fwnode_reference_args *args)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int
@@ -1188,21 +1188,21 @@ acpi_node_get_property_reference(const struct fwnode_handle *fwnode,
 				 const char *name, size_t index,
 				 struct fwnode_reference_args *args)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int acpi_node_prop_get(const struct fwnode_handle *fwnode,
 				     const char *propname,
 				     void **valptr)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int acpi_dev_prop_get(const struct acpi_device *adev,
 				    const char *propname,
 				    void **valptr)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int acpi_dev_prop_read_single(const struct acpi_device *adev,
@@ -1210,7 +1210,7 @@ static inline int acpi_dev_prop_read_single(const struct acpi_device *adev,
 					    enum dev_prop_type proptype,
 					    void *val)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int acpi_node_prop_read(const struct fwnode_handle *fwnode,
@@ -1218,7 +1218,7 @@ static inline int acpi_node_prop_read(const struct fwnode_handle *fwnode,
 				      enum dev_prop_type proptype,
 				      void *val, size_t nval)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline int acpi_dev_prop_read(const struct acpi_device *adev,
@@ -1226,7 +1226,7 @@ static inline int acpi_dev_prop_read(const struct acpi_device *adev,
 				     enum dev_prop_type proptype,
 				     void *val, size_t nval)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static inline struct fwnode_handle *
@@ -1246,7 +1246,7 @@ static inline struct fwnode_handle *
 acpi_graph_get_next_endpoint(const struct fwnode_handle *fwnode,
 			     struct fwnode_handle *prev)
 {
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline int
@@ -1255,7 +1255,7 @@ acpi_graph_get_remote_endpoint(const struct fwnode_handle *fwnode,
 			       struct fwnode_handle **port,
 			       struct fwnode_handle **endpoint)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 #define ACPI_DECLARE_PROBE_ENTRY(table, name, table_id, subtable, valid, data, fn) \
@@ -1298,7 +1298,7 @@ int acpi_irq_get(acpi_handle handle, unsigned int index, struct resource *res);
 static inline
 int acpi_irq_get(acpi_handle handle, unsigned int index, struct resource *res)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -1307,7 +1307,7 @@ int lpit_read_residency_count_address(u64 *address);
 #else
 static inline int lpit_read_residency_count_address(u64 *address)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -1320,23 +1320,23 @@ int find_acpi_cpu_cache_topology(unsigned int cpu, int level);
 #else
 static inline int acpi_pptt_cpu_is_thread(unsigned int cpu)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int find_acpi_cpu_topology(unsigned int cpu, int level)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int find_acpi_cpu_topology_package(unsigned int cpu)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int find_acpi_cpu_topology_hetero_id(unsigned int cpu)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int find_acpi_cpu_cache_topology(unsigned int cpu, int level)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

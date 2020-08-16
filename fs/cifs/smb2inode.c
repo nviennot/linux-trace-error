@@ -348,7 +348,7 @@ smb2_compound_op(const unsigned int xid, struct cifs_tcon *tcon,
 		break;
 	default:
 		cifs_dbg(VFS, "Invalid command\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 	if (rc)
 		goto finished;

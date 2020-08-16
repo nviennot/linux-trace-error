@@ -146,14 +146,14 @@ int nilfs_gccache_wait_and_mark_dirty(struct buffer_head *bh)
 			  "I/O error reading %s block for GC (ino=%lu, vblocknr=%llu)",
 			  buffer_nilfs_node(bh) ? "node" : "data",
 			  inode->i_ino, (unsigned long long)bh->b_blocknr);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (buffer_dirty(bh))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (buffer_nilfs_node(bh) && nilfs_btree_broken_node_block(bh)) {
 		clear_buffer_uptodate(bh);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	mark_buffer_dirty(bh);
 	return 0;

@@ -507,7 +507,7 @@ void rtmsg_fib(int event, __be32 key, struct fib_alias *fa,
 	struct fib_rt_info fri;
 	struct sk_buff *skb;
 	u32 seq = info->nlh ? info->nlh->nlmsg_seq : 0;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(fib_nlmsg_size(fa->fa_info), GFP_KERNEL);
 	if (!skb)
@@ -587,7 +587,7 @@ int fib_nh_common_init(struct net *net, struct fib_nh_common *nhc,
 
 		if (encap_type == LWTUNNEL_ENCAP_NONE) {
 			NL_SET_ERR_MSG(extack, "LWT encap type not specified");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto lwt_failure;
 		}
 		err = lwtunnel_build_state(net, encap_type, encap,
@@ -681,13 +681,13 @@ static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
 		if (!rtnh_ok(rtnh, remaining)) {
 			NL_SET_ERR_MSG(extack,
 				       "Invalid nexthop configuration - extra data after nexthop");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (rtnh->rtnh_flags & (RTNH_F_DEAD | RTNH_F_LINKDOWN)) {
 			NL_SET_ERR_MSG(extack,
 				       "Invalid flags for nexthop - can not contain DEAD or LINKDOWN");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		fib_cfg.fc_flags = (cfg->fc_flags & ~0xFF) | rtnh->rtnh_flags;
@@ -702,7 +702,7 @@ static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
 			if (nla && nlav) {
 				NL_SET_ERR_MSG(extack,
 					       "Nexthop configuration can not contain both GATEWAY and VIA");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (nla) {
 				fib_cfg.fc_gw4 = nla_get_in_addr(nla);
@@ -732,7 +732,7 @@ static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
 		rtnh = rtnh_next(rtnh, &remaining);
 	} endfor_nexthops(fi);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	nh = fib_info_nh(fi, 0);
 	if (cfg->fc_oif && nh->fib_nh_oif != cfg->fc_oif) {
 		NL_SET_ERR_MSG(extack,
@@ -809,7 +809,7 @@ static int fib_get_nhs(struct fib_info *fi, struct rtnexthop *rtnh,
 {
 	NL_SET_ERR_MSG(extack, "Multipath support not enabled in kernel");
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #define fib_rebalance(fi) do { } while (0)
@@ -895,7 +895,7 @@ int fib_nh_match(struct net *net, struct fib_config *cfg, struct fib_info *fi,
 		int attrlen;
 
 		if (!rtnh_ok(rtnh, remaining))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (rtnh->rtnh_ifindex && rtnh->rtnh_ifindex != nh->fib_nh_oif)
 			return 1;
@@ -909,7 +909,7 @@ int fib_nh_match(struct net *net, struct fib_config *cfg, struct fib_info *fi,
 			if (nla && nlav) {
 				NL_SET_ERR_MSG(extack,
 					       "Nexthop configuration can not contain both GATEWAY and VIA");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			if (nla) {
@@ -1072,21 +1072,21 @@ static int fib_check_nh_v4_gw(struct net *net, struct fib_nh *nh, u32 table,
 
 		if (scope >= RT_SCOPE_LINK) {
 			NL_SET_ERR_MSG(extack, "Nexthop has invalid scope");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		dev = __dev_get_by_index(net, nh->fib_nh_oif);
 		if (!dev) {
 			NL_SET_ERR_MSG(extack, "Nexthop device required for onlink");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		if (!(dev->flags & IFF_UP)) {
 			NL_SET_ERR_MSG(extack, "Nexthop device is not up");
-			return -ENETDOWN;
+			return -ERR(ENETDOWN);
 		}
 		addr_type = inet_addr_type_dev_table(net, dev, nh->fib_nh_gw4);
 		if (addr_type != RTN_UNICAST) {
 			NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!netif_carrier_ok(dev))
 			nh->fib_nh_flags |= RTNH_F_LINKDOWN;
@@ -1132,7 +1132,7 @@ static int fib_check_nh_v4_gw(struct net *net, struct fib_nh *nh, u32 table,
 		}
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (res.type != RTN_UNICAST && res.type != RTN_LOCAL) {
 		NL_SET_ERR_MSG(extack, "Nexthop has invalid gateway");
 		goto out;
@@ -1148,7 +1148,7 @@ static int fib_check_nh_v4_gw(struct net *net, struct fib_nh *nh, u32 table,
 	dev_hold(dev);
 	if (!netif_carrier_ok(dev))
 		nh->fib_nh_flags |= RTNH_F_LINKDOWN;
-	err = (dev->flags & IFF_UP) ? 0 : -ENETDOWN;
+	err = (dev->flags & IFF_UP) ? 0 : -ERR(ENETDOWN);
 out:
 	rcu_read_unlock();
 	return err;
@@ -1163,16 +1163,16 @@ static int fib_check_nh_nongw(struct net *net, struct fib_nh *nh,
 	if (nh->fib_nh_flags & (RTNH_F_PERVASIVE | RTNH_F_ONLINK)) {
 		NL_SET_ERR_MSG(extack,
 			       "Invalid flags for nexthop - PERVASIVE and ONLINK can not be set");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rcu_read_lock();
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	in_dev = inetdev_by_index(net, nh->fib_nh_oif);
 	if (!in_dev)
 		goto out;
-	err = -ENETDOWN;
+	err = -ERR(ENETDOWN);
 	if (!(in_dev->dev->flags & IFF_UP)) {
 		NL_SET_ERR_MSG(extack, "Device for nexthop is not up");
 		goto out;
@@ -1393,7 +1393,7 @@ struct fib_info *fib_create_info(struct fib_config *cfg,
 	}
 #endif
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (fib_info_cnt >= fib_info_hash_size) {
 		unsigned int new_size = fib_info_hash_size << 1;
 		struct hlist_head *new_info_hash;
@@ -1440,7 +1440,7 @@ struct fib_info *fib_create_info(struct fib_config *cfg,
 	if (nh) {
 		if (!nexthop_get(nh)) {
 			NL_SET_ERR_MSG(extack, "Nexthop has been deleted");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		} else {
 			err = 0;
 			fi->nh = nh;
@@ -1506,7 +1506,7 @@ struct fib_info *fib_create_info(struct fib_config *cfg,
 		}
 		nh->fib_nh_scope = RT_SCOPE_NOWHERE;
 		nh->fib_nh_dev = dev_get_by_index(net, nh->fib_nh_oif);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		if (!nh->fib_nh_dev)
 			goto failure;
 	} else {
@@ -1579,7 +1579,7 @@ link_it:
 	return fi;
 
 err_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 failure:
 	if (fi) {
@@ -1657,7 +1657,7 @@ int fib_nexthop_info(struct sk_buff *skb, const struct fib_nh_common *nhc,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 EXPORT_SYMBOL_GPL(fib_nexthop_info);
 
@@ -1687,7 +1687,7 @@ int fib_add_nexthop(struct sk_buff *skb, const struct fib_nh_common *nhc,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 EXPORT_SYMBOL_GPL(fib_add_nexthop);
 #endif
@@ -1724,7 +1724,7 @@ mp_end:
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 #else
 static int fib_add_multipath(struct sk_buff *skb, struct fib_info *fi)
@@ -1744,7 +1744,7 @@ int fib_dump_info(struct sk_buff *skb, u32 portid, u32 seq, int event,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm = nlmsg_data(nlh);
 	rtm->rtm_family = AF_INET;
@@ -1818,7 +1818,7 @@ offload:
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /*

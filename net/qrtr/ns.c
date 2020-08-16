@@ -265,7 +265,7 @@ static int server_del(struct qrtr_node *node, unsigned int port)
 
 	srv = radix_tree_lookup(&node->servers, port);
 	if (!srv)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	radix_tree_delete(&node->servers, port);
 
@@ -401,11 +401,11 @@ static int ctrl_cmd_del_client(struct sockaddr_qrtr *from,
 
 	/* Don't accept spoofed messages */
 	if (from->sq_node != node_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Local DEL_CLIENT messages comes from the port being closed */
 	if (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Remove any lookups by this client */
 	list_for_each_safe(li, tmp, &qrtr_ns.lookups) {
@@ -471,11 +471,11 @@ static int ctrl_cmd_new_server(struct sockaddr_qrtr *from,
 
 	/* Don't accept spoofed messages */
 	if (from->sq_node != node_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	srv = server_add(service, instance, node_id, port);
 	if (!srv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (srv->node == qrtr_ns.local_node) {
 		ret = service_announce_new(&qrtr_ns.bcast_sq, srv);
@@ -513,15 +513,15 @@ static int ctrl_cmd_del_server(struct sockaddr_qrtr *from,
 
 	/* Don't accept spoofed messages */
 	if (from->sq_node != node_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Local servers may only unregister themselves */
 	if (from->sq_node == qrtr_ns.local_node && from->sq_port != port)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	node = node_get(node_id);
 	if (!node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return server_del(node, port);
 }
@@ -539,7 +539,7 @@ static int ctrl_cmd_new_lookup(struct sockaddr_qrtr *from,
 
 	/* Accept only local observers */
 	if (from->sq_node != qrtr_ns.local_node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lookup = kzalloc(sizeof(*lookup), GFP_KERNEL);
 	if (!lookup)

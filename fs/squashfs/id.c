@@ -64,7 +64,7 @@ __le64 *squashfs_read_id_index_table(struct super_block *sb,
 
 	/* there should always be at least one id */
 	if (no_ids == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * length bytes should not extend into the next table - this check
@@ -72,7 +72,7 @@ __le64 *squashfs_read_id_index_table(struct super_block *sb,
 	 * than the next table start
 	 */
 	if (id_table_start + length > next_table)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	table = squashfs_read_table(sb, id_table_start, length);
 
@@ -82,7 +82,7 @@ __le64 *squashfs_read_id_index_table(struct super_block *sb,
 	 */
 	if (!IS_ERR(table) && le64_to_cpu(table[0]) >= id_table_start) {
 		kfree(table);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return table;

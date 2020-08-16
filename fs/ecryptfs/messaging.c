@@ -111,7 +111,7 @@ int ecryptfs_find_daemon_by_euid(struct ecryptfs_daemon **daemon)
 			goto out;
 		}
 	}
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 out:
 	return rc;
 }
@@ -161,7 +161,7 @@ int ecryptfs_exorcise_daemon(struct ecryptfs_daemon *daemon)
 	mutex_lock(&daemon->mux);
 	if ((daemon->flags & ECRYPTFS_DAEMON_IN_READ)
 	    || (daemon->flags & ECRYPTFS_DAEMON_IN_POLL)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		mutex_unlock(&daemon->mux);
 		goto out;
 	}
@@ -210,7 +210,7 @@ int ecryptfs_process_response(struct ecryptfs_daemon *daemon,
 	int rc;
 
 	if (msg->index >= ecryptfs_message_buf_len) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_ERR "%s: Attempt to reference "
 		       "context buffer at index [%d]; maximum "
 		       "allowable is [%d]\n", __func__, msg->index,
@@ -220,12 +220,12 @@ int ecryptfs_process_response(struct ecryptfs_daemon *daemon,
 	msg_ctx = &ecryptfs_msg_ctx_arr[msg->index];
 	mutex_lock(&msg_ctx->mux);
 	if (msg_ctx->state != ECRYPTFS_MSG_CTX_STATE_PENDING) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_WARNING "%s: Desired context element is not "
 		       "pending a response\n", __func__);
 		goto unlock;
 	} else if (msg_ctx->counter != seq) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_WARNING "%s: Invalid message sequence; "
 		       "expected [%d]; received [%d]\n", __func__,
 		       msg_ctx->counter, seq);
@@ -265,7 +265,7 @@ ecryptfs_send_message_locked(char *data, int data_len, u8 msg_type,
 
 	rc = ecryptfs_find_daemon_by_euid(&daemon);
 	if (rc) {
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out;
 	}
 	mutex_lock(&ecryptfs_msg_ctx_lists_mux);
@@ -337,7 +337,7 @@ sleep:
 			mutex_unlock(&ecryptfs_msg_ctx_lists_mux);
 			goto sleep;
 		}
-		rc = -ENOMSG;
+		rc = -ERR(ENOMSG);
 	} else {
 		*msg = msg_ctx->msg;
 		msg_ctx->msg = NULL;

@@ -151,17 +151,17 @@ static int sctp_mt_check(const struct xt_mtchk_param *par)
 	const struct xt_sctp_info *info = par->matchinfo;
 
 	if (info->flags & ~XT_SCTP_VALID_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->invflags & ~XT_SCTP_VALID_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->invflags & ~info->flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!(info->flags & XT_SCTP_CHUNK_TYPES))
 		return 0;
 	if (info->chunk_match_type & (SCTP_CHUNK_MATCH_ALL |
 	    SCTP_CHUNK_MATCH_ANY | SCTP_CHUNK_MATCH_ONLY))
 		return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct xt_match sctp_mt_reg[] __read_mostly = {

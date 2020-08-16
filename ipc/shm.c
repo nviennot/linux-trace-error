@@ -199,7 +199,7 @@ static inline struct shmid_kernel *shm_lock(struct ipc_namespace *ns, int id)
 	}
 
 	ipc_unlock_object(ipcp);
-	ipcp = ERR_PTR(-EIDRM);
+	ipcp = ERR_PTR(-ERR(EIDRM));
 err:
 	rcu_read_unlock();
 	/*
@@ -246,7 +246,7 @@ static int __shm_open(struct vm_area_struct *vma)
 	if (shp->shm_file != sfd->file) {
 		/* ID was reused */
 		shm_unlock(shp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	shp->shm_atim = ktime_get_real_seconds();
@@ -527,7 +527,7 @@ static int shm_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 	struct shm_file_data *sfd = shm_file_data(file);
 
 	if (!sfd->file->f_op->fsync)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return sfd->file->f_op->fsync(sfd->file, start, end, datasync);
 }
 
@@ -537,7 +537,7 @@ static long shm_fallocate(struct file *file, int mode, loff_t offset,
 	struct shm_file_data *sfd = shm_file_data(file);
 
 	if (!sfd->file->f_op->fallocate)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return sfd->file->f_op->fallocate(file, mode, offset, len);
 }
 
@@ -610,14 +610,14 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 	vm_flags_t acctflag = 0;
 
 	if (size < SHMMIN || size > ns->shm_ctlmax)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (numpages << PAGE_SHIFT < size)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (ns->shm_tot + numpages < ns->shm_tot ||
 			ns->shm_tot + numpages > ns->shm_ctlall)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	shp = kvmalloc(sizeof(*shp), GFP_KERNEL);
 	if (unlikely(!shp))
@@ -641,7 +641,7 @@ static int newseg(struct ipc_namespace *ns, struct ipc_params *params)
 
 		hs = hstate_sizelog((shmflg >> SHM_HUGE_SHIFT) & SHM_HUGE_MASK);
 		if (!hs) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto no_file;
 		}
 		hugesize = ALIGN(size, huge_page_size(hs));
@@ -718,7 +718,7 @@ static inline int shm_more_checks(struct kern_ipc_perm *ipcp,
 
 	shp = container_of(ipcp, struct shmid_kernel, shm_perm);
 	if (shp->shm_segsz < params->u.size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -769,7 +769,7 @@ static inline unsigned long copy_shmid_to_user(void __user *buf, struct shmid64_
 		return copy_to_user(buf, &out, sizeof(out));
 	    }
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -795,7 +795,7 @@ copy_shmid_from_user(struct shmid64_ds *out, void __user *buf, int version)
 		return 0;
 	    }
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -821,7 +821,7 @@ static inline unsigned long copy_shminfo_to_user(void __user *buf, struct shminf
 		return copy_to_user(buf, &out, sizeof(out));
 	    }
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -925,7 +925,7 @@ static int shmctl_down(struct ipc_namespace *ns, int shmid, int cmd,
 		shp->shm_ctim = ktime_get_real_seconds();
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock1;
 	}
 
@@ -1010,7 +1010,7 @@ static int shmctl_stat(struct ipc_namespace *ns, int shmid,
 	if (cmd == SHM_STAT_ANY)
 		audit_ipc_obj(&shp->shm_perm);
 	else {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if (ipcperms(ns, &shp->shm_perm, S_IRUGO))
 			goto out_unlock;
 	}
@@ -1023,7 +1023,7 @@ static int shmctl_stat(struct ipc_namespace *ns, int shmid,
 
 	if (!ipc_valid_object(&shp->shm_perm)) {
 		ipc_unlock_object(&shp->shm_perm);
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock;
 	}
 
@@ -1083,7 +1083,7 @@ static int shmctl_do_lock(struct ipc_namespace *ns, int shmid, int cmd)
 
 	/* check if shm_destroy() is tearing down shp */
 	if (!ipc_valid_object(&shp->shm_perm)) {
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock0;
 	}
 
@@ -1092,11 +1092,11 @@ static int shmctl_do_lock(struct ipc_namespace *ns, int shmid, int cmd)
 
 		if (!uid_eq(euid, shp->shm_perm.uid) &&
 		    !uid_eq(euid, shp->shm_perm.cuid)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			goto out_unlock0;
 		}
 		if (cmd == SHM_LOCK && !rlimit(RLIMIT_MEMLOCK)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			goto out_unlock0;
 		}
 	}
@@ -1144,7 +1144,7 @@ static long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf, int ver
 	struct shmid64_ds sem64;
 
 	if (cmd < 0 || shmid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ns = current->nsproxy->ipc_ns;
 
@@ -1187,7 +1187,7 @@ static long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf, int ver
 	case SHM_UNLOCK:
 		return shmctl_do_lock(ns, shmid, cmd);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1341,7 +1341,7 @@ static long compat_ksys_shmctl(int shmid, int cmd, void __user *uptr, int versio
 	ns = current->nsproxy->ipc_ns;
 
 	if (cmd < 0 || shmid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case IPC_INFO: {
@@ -1383,7 +1383,7 @@ static long compat_ksys_shmctl(int shmid, int cmd, void __user *uptr, int versio
 		return shmctl_do_lock(ns, shmid, cmd);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return err;
 }
@@ -1431,7 +1431,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
 	int f_flags;
 	unsigned long populate = 0;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (shmid < 0)
 		goto out;
 
@@ -1484,7 +1484,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
 		goto out_unlock;
 	}
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (ipcperms(ns, &shp->shm_perm, acc_mode))
 		goto out_unlock;
 
@@ -1497,7 +1497,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
 	/* check if shm_destroy() is tearing down shp */
 	if (!ipc_valid_object(&shp->shm_perm)) {
 		ipc_unlock_object(&shp->shm_perm);
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock;
 	}
 
@@ -1545,12 +1545,12 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
 		goto out_fput;
 
 	if (mmap_write_lock_killable(current->mm)) {
-		err = -EINTR;
+		err = -ERR(EINTR);
 		goto out_fput;
 	}
 
 	if (addr && !(shmflg & SHM_REMAP)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (addr + size < addr)
 			goto invalid;
 
@@ -1628,7 +1628,7 @@ long ksys_shmdt(char __user *shmaddr)
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
 	unsigned long addr = (unsigned long)shmaddr;
-	int retval = -EINVAL;
+	int retval = -ERR(EINVAL);
 #ifdef CONFIG_MMU
 	loff_t size = 0;
 	struct file *file;
@@ -1639,7 +1639,7 @@ long ksys_shmdt(char __user *shmaddr)
 		return retval;
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	/*
 	 * This function tries to be smart and unmap shm segments that

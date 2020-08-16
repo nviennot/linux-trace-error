@@ -121,7 +121,7 @@ static struct socket *__mptcp_socket_create(struct mptcp_sock *msk, int state)
 		goto set_state;
 
 	if (!__mptcp_can_create_subflow(msk))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	err = mptcp_subflow_create_socket(sk, &ssock);
 	if (err)
@@ -603,7 +603,7 @@ static int mptcp_sendmsg_frag(struct sock *sk, struct sock *ssk,
 					    &msg->msg_iter);
 		pr_debug("left=%zu", msg_data_left(msg));
 		if (!psize)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!sk_wmem_schedule(sk, psize + dfrag->overhead))
 			return -ENOMEM;
@@ -747,7 +747,7 @@ static int mptcp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	long timeo;
 
 	if (msg->msg_flags & ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
@@ -799,7 +799,7 @@ wait_for_sndbuf:
 
 		ssk = mptcp_subflow_get_send(msk);
 		if (list_empty(&msk->conn_list)) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto out;
 		}
 	}
@@ -978,7 +978,7 @@ static int mptcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 	long timeo;
 
 	if (msg->msg_flags & ~(MSG_WAITALL | MSG_DONTWAIT))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 	ssock = __mptcp_tcp_fallback(msk);
@@ -1039,12 +1039,12 @@ fallback:
 				break;
 
 			if (sk->sk_state == TCP_CLOSE) {
-				copied = -ENOTCONN;
+				copied = -ERR(ENOTCONN);
 				break;
 			}
 
 			if (!timeo) {
-				copied = -EAGAIN;
+				copied = -ERR(EAGAIN);
 				break;
 			}
 
@@ -1274,7 +1274,7 @@ static int mptcp_init_sock(struct sock *sk)
 	int ret;
 
 	if (!mptcp_is_enabled(net))
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (unlikely(!net->mib.mptcp_statistics) && !mptcp_mib_alloc(net))
 		return -ENOMEM;
@@ -1491,7 +1491,7 @@ static struct sock *mptcp_accept(struct sock *sk, int flags, int *err,
 
 	listener = __mptcp_nmpc_socket(msk);
 	if (WARN_ON_ONCE(!listener)) {
-		*err = -EINVAL;
+		*err = -ERR(EINVAL);
 		return NULL;
 	}
 
@@ -1575,7 +1575,7 @@ static int mptcp_setsockopt(struct sock *sk, int level, int optname,
 		return tcp_setsockopt(ssock->sk, level, optname, optval,
 				      optlen);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int mptcp_getsockopt(struct sock *sk, int level, int optname,
@@ -1599,7 +1599,7 @@ static int mptcp_getsockopt(struct sock *sk, int level, int optname,
 		return tcp_getsockopt(ssock->sk, level, optname, optval,
 				      option);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #define MPTCP_DEFERRED_ALL (TCPF_DELACK_TIMER_DEFERRED | \
@@ -1644,7 +1644,7 @@ static int mptcp_get_port(struct sock *sk, unsigned short snum)
 	ssock = __mptcp_nmpc_socket(msk);
 	pr_debug("msk=%p, subflow=%p", msk, ssock);
 	if (WARN_ON_ONCE(!ssock))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return inet_csk_get_port(ssock->sk, snum);
 }
@@ -1957,7 +1957,7 @@ static int mptcp_stream_accept(struct socket *sock, struct socket *newsock,
 
 unlock_fail:
 	release_sock(sock->sk);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static __poll_t mptcp_poll(struct file *file, struct socket *sock,
@@ -2018,7 +2018,7 @@ static int mptcp_shutdown(struct socket *sock, int how)
 	how++;
 
 	if ((how & ~SHUTDOWN_MASK) || !how) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 

@@ -101,7 +101,7 @@ static int tegra_wm9712_driver_probe(struct platform_device *pdev)
 	if (!tegra_wm9712_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,ac97-controller' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto codec_unregister;
 	}
 

@@ -125,7 +125,7 @@ static int ovl_revalidate_real(struct dentry *d, unsigned int flags, bool weak)
 		if (!ret) {
 			if (!(flags & LOOKUP_RCU))
 				d_invalidate(d);
-			ret = -ESTALE;
+			ret = -ERR(ESTALE);
 		}
 	}
 	return ret;
@@ -372,7 +372,7 @@ static int ovl_remount(struct super_block *sb, int *flags, char *data)
 	int ret = 0;
 
 	if (!(*flags & SB_RDONLY) && ovl_force_readonly(ofs))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (*flags & SB_RDONLY && !sb_rdonly(sb)) {
 		upper_sb = ovl_upper_mnt(ofs)->mnt_sb;
@@ -472,7 +472,7 @@ static int ovl_parse_redirect_mode(struct ovl_config *config, const char *mode)
 	} else if (strcmp(mode, "nofollow") != 0) {
 		pr_err("bad mount option \"redirect_dir=%s\"\n",
 		       mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -576,7 +576,7 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 		default:
 			pr_err("unrecognized mount option \"%s\" or missing value\n",
 					p);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -611,7 +611,7 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 		if (metacopy_opt && redirect_opt) {
 			pr_err("conflicting options: metacopy=on,redirect_dir=%s\n",
 			       config->redirect_mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (redirect_opt) {
 			/*
@@ -634,7 +634,7 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 			config->nfs_export = false;
 		} else if (nfs_export_opt && index_opt) {
 			pr_err("conflicting options: nfs_export=on,index=off\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (index_opt) {
 			/*
 			 * There was an explicit index=off that resulted
@@ -652,7 +652,7 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 	if (config->nfs_export && config->metacopy) {
 		if (nfs_export_opt && metacopy_opt) {
 			pr_err("conflicting options: nfs_export=on,metacopy=on\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (metacopy_opt) {
 			/*
@@ -697,7 +697,7 @@ retry:
 		};
 
 		if (work->d_inode) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (retried)
 				goto out_dput;
 
@@ -774,7 +774,7 @@ static void ovl_unescape(char *s)
 
 static int ovl_mount_dir_noesc(const char *name, struct path *path)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (!*name) {
 		pr_err("empty lowerdir\n");
@@ -785,7 +785,7 @@ static int ovl_mount_dir_noesc(const char *name, struct path *path)
 		pr_err("failed to resolve '%s': %i\n", name, err);
 		goto out;
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (ovl_dentry_weird(path->dentry)) {
 		pr_err("filesystem on '%s' not supported\n", name);
 		goto out_put;
@@ -815,7 +815,7 @@ static int ovl_mount_dir(const char *name, struct path *path)
 			pr_err("filesystem on '%s' not supported as upperdir\n",
 			       tmp);
 			path_put_init(path);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		kfree(tmp);
 	}
@@ -929,16 +929,16 @@ ovl_posix_acl_xattr_set(const struct xattr_handler *handler,
 		if (IS_ERR(acl))
 			return PTR_ERR(acl);
 	}
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (!IS_POSIXACL(d_inode(workdir)))
 		goto out_acl_release;
 	if (!realinode->i_op->set_acl)
 		goto out_acl_release;
 	if (handler->flags == ACL_TYPE_DEFAULT && !S_ISDIR(inode->i_mode)) {
-		err = acl ? -EACCES : 0;
+		err = acl ? -ERR(EACCES) : 0;
 		goto out_acl_release;
 	}
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (!inode_owner_or_capable(inode))
 		goto out_acl_release;
 
@@ -974,7 +974,7 @@ static int ovl_own_xattr_get(const struct xattr_handler *handler,
 			     struct dentry *dentry, struct inode *inode,
 			     const char *name, void *buffer, size_t size)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int ovl_own_xattr_set(const struct xattr_handler *handler,
@@ -982,7 +982,7 @@ static int ovl_own_xattr_set(const struct xattr_handler *handler,
 			     const char *name, const void *value,
 			     size_t size, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int ovl_other_xattr_get(const struct xattr_handler *handler,
@@ -1067,7 +1067,7 @@ static int ovl_report_in_use(struct ovl_fs *ofs, const char *name)
 	if (ofs->config.index) {
 		pr_err("%s is in-use as upperdir/workdir of another mount, mount with '-o index=off' to override exclusive upperdir protection.\n",
 		       name);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	} else {
 		pr_warn("%s is in-use as upperdir/workdir of another mount, accessing files from both mounts will result in undefined behavior.\n",
 			name);
@@ -1088,7 +1088,7 @@ static int ovl_get_upper(struct super_block *sb, struct ovl_fs *ofs,
 	/* Upper fs should not be r/o */
 	if (sb_rdonly(upperpath->mnt->mnt_sb)) {
 		pr_err("upper fs is r/o, try multi-lower layers mount\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1275,7 +1275,7 @@ static int ovl_make_workdir(struct super_block *sb, struct ovl_fs *ofs,
 	if (ovl_dentry_remote(ofs->workdir) &&
 	    (!d_type || !rename_whiteout || ofs->noxattr)) {
 		pr_err("upper fs missing required features.\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1310,7 +1310,7 @@ static int ovl_get_workdir(struct super_block *sb, struct ovl_fs *ofs,
 	if (err)
 		goto out;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (upperpath->mnt != workpath.mnt) {
 		pr_err("workdir and upperdir must reside under the same mount\n");
 		goto out;
@@ -1611,14 +1611,14 @@ static struct ovl_entry *ovl_get_lowerstack(struct super_block *sb,
 
 	if (!ofs->config.upperdir && numlower == 1) {
 		pr_err("at least 2 lowerdir are needed while upperdir nonexistent\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	stack = kcalloc(numlower, sizeof(struct path), GFP_KERNEL);
 	if (!stack)
 		return ERR_PTR(-ENOMEM);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (i = 0; i < numlower; i++) {
 		err = ovl_lower_dir(lower, &stack[i], ofs, &sb->s_stack_depth);
 		if (err)
@@ -1627,7 +1627,7 @@ static struct ovl_entry *ovl_get_lowerstack(struct super_block *sb,
 		lower = strchr(lower, '\0') + 1;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	sb->s_stack_depth++;
 	if (sb->s_stack_depth > FILESYSTEM_MAX_STACK_DEPTH) {
 		pr_err("maximum fs stacking depth exceeded\n");
@@ -1679,7 +1679,7 @@ static int ovl_check_layer(struct super_block *sb, struct ovl_fs *ofs,
 	/* Walk back ancestors to root (inclusive) looking for traps */
 	while (!err && parent != next) {
 		if (ovl_lookup_trap_inode(sb, parent)) {
-			err = -ELOOP;
+			err = -ERR(ELOOP);
 			pr_err("overlapping %s path\n", name);
 		} else if (ovl_is_inuse(parent)) {
 			err = ovl_report_in_use(ofs, name);
@@ -1803,7 +1803,7 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 	if (err)
 		goto out_err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!ofs->config.lowerdir) {
 		if (!silent)
 			pr_err("missing 'lowerdir'\n");

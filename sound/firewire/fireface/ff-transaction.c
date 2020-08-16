@@ -157,7 +157,7 @@ static int allocate_own_address(struct snd_ff *ff, int i)
 		/* Controllers are allowed to register this region. */
 		if (ff->async_handler.offset & 0x0000ffffffff) {
 			fw_core_remove_address_handler(&ff->async_handler);
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 		}
 	}
 

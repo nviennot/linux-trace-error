@@ -338,7 +338,7 @@ int dbg_set_sw_break(unsigned long addr)
 	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
 		if ((kgdb_break[i].state == BP_SET) &&
 					(kgdb_break[i].bpt_addr == addr))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 	for (i = 0; i < KGDB_MAX_BREAKPOINTS; i++) {
 		if (kgdb_break[i].state == BP_REMOVED &&
@@ -358,7 +358,7 @@ int dbg_set_sw_break(unsigned long addr)
 	}
 
 	if (breakno == -1)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	kgdb_break[breakno].state = BP_SET;
 	kgdb_break[breakno].type = BP_BREAKPOINT;
@@ -400,7 +400,7 @@ int dbg_remove_sw_break(unsigned long addr)
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 int kgdb_isremovedbreak(unsigned long addr)
@@ -1101,7 +1101,7 @@ int kgdb_register_io_module(struct kgdb_io *new_dbg_io_ops)
 
 			pr_err("KGDB I/O driver %s can't replace %s.\n",
 				new_dbg_io_ops->name, old_dbg_io_ops->name);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		pr_info("Replacing I/O driver %s with %s\n",
 			old_dbg_io_ops->name, new_dbg_io_ops->name);

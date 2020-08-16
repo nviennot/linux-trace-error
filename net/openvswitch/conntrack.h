@@ -50,13 +50,13 @@ static inline int ovs_ct_copy_action(struct net *net, const struct nlattr *nla,
 				     const struct sw_flow_key *key,
 				     struct sw_flow_actions **acts, bool log)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int ovs_ct_action_to_attr(const struct ovs_conntrack_info *info,
 					struct sk_buff *skb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int ovs_ct_execute(struct net *net, struct sk_buff *skb,
@@ -64,13 +64,13 @@ static inline int ovs_ct_execute(struct net *net, struct sk_buff *skb,
 				 const struct ovs_conntrack_info *info)
 {
 	kfree_skb(skb);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int ovs_ct_clear(struct sk_buff *skb,
 			       struct sw_flow_key *key)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void ovs_ct_fill_key(const struct sk_buff *skb,

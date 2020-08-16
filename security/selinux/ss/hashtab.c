@@ -54,7 +54,7 @@ int hashtab_insert(struct hashtab *h, void *key, void *datum)
 	cond_resched();
 
 	if (!h->size || h->nel == HASHTAB_MAX_NODES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hvalue = h->hash_value(h, key);
 	prev = NULL;
@@ -65,7 +65,7 @@ int hashtab_insert(struct hashtab *h, void *key, void *datum)
 	}
 
 	if (cur && (h->keycmp(h, key, cur->key) == 0))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	newnode = kmem_cache_zalloc(hashtab_node_cachep, GFP_KERNEL);
 	if (!newnode)

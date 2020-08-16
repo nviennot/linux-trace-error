@@ -918,7 +918,7 @@ static int ocfs2_xattr_list_entry(struct super_block *sb,
 		return 0;
 
 	if (*result > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	memcpy(p, prefix, prefix_len);
 	memcpy(p + prefix_len, name, name_len);
@@ -1033,7 +1033,7 @@ ssize_t ocfs2_listxattr(struct dentry *dentry,
 	struct ocfs2_inode_info *oi = OCFS2_I(d_inode(dentry));
 
 	if (!ocfs2_supports_xattr(OCFS2_SB(dentry->d_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!(oi->ip_dyn_features & OCFS2_HAS_XATTR_FL))
 		return ret;
@@ -1077,7 +1077,7 @@ static int ocfs2_xattr_find_entry(int name_index,
 	int i, cmp = 1;
 
 	if (name == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name_len = strlen(name);
 	entry = xs->here;
@@ -1095,7 +1095,7 @@ static int ocfs2_xattr_find_entry(int name_index,
 	}
 	xs->here = entry;
 
-	return cmp ? -ENODATA : 0;
+	return cmp ? -ERR(ENODATA) : 0;
 }
 
 static int ocfs2_xattr_get_value_outside(struct inode *inode,
@@ -1164,7 +1164,7 @@ static int ocfs2_xattr_ibody_get(struct inode *inode,
 	int ret = 0;
 
 	if (!(oi->ip_dyn_features & OCFS2_INLINE_XATTR_FL))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	xs->end = (void *)di + inode->i_sb->s_blocksize;
 	xs->header = (struct ocfs2_xattr_header *)
@@ -1178,7 +1178,7 @@ static int ocfs2_xattr_ibody_get(struct inode *inode,
 	size = le64_to_cpu(xs->here->xe_value_size);
 	if (buffer) {
 		if (size > buffer_size)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		if (ocfs2_xattr_is_local(xs->here)) {
 			memcpy(buffer, (void *)xs->base +
 			       le16_to_cpu(xs->here->xe_name_offset) +
@@ -1210,7 +1210,7 @@ static int ocfs2_xattr_block_get(struct inode *inode,
 	struct ocfs2_xattr_block *xb;
 	struct ocfs2_xattr_value_root *xv;
 	size_t size;
-	int ret = -ENODATA, name_offset, name_len, i;
+	int ret = -ERR(ENODATA), name_offset, name_len, i;
 	int uninitialized_var(block_off);
 
 	xs->bucket = ocfs2_xattr_bucket_new(inode);
@@ -1227,14 +1227,14 @@ static int ocfs2_xattr_block_get(struct inode *inode,
 	}
 
 	if (xs->not_found) {
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 		goto cleanup;
 	}
 
 	xb = (struct ocfs2_xattr_block *)xs->xattr_bh->b_data;
 	size = le64_to_cpu(xs->here->xe_value_size);
 	if (buffer) {
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		if (size > buffer_size)
 			goto cleanup;
 
@@ -1295,10 +1295,10 @@ int ocfs2_xattr_get_nolock(struct inode *inode,
 	};
 
 	if (!ocfs2_supports_xattr(OCFS2_SB(inode->i_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!(oi->ip_dyn_features & OCFS2_HAS_XATTR_FL))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	xis.inode_bh = xbs.inode_bh = di_bh;
 	di = (struct ocfs2_dinode *)di_bh->b_data;
@@ -1432,9 +1432,9 @@ static int ocfs2_xa_check_space_helper(int needed_space, int free_start,
 		(num_entries * sizeof(struct ocfs2_xattr_entry)) -
 		OCFS2_XATTR_HEADER_GAP;
 	if (free_space < 0)
-		return -EIO;
+		return -ERR(EIO);
 	if (free_space < needed_space)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	return 0;
 }
@@ -1784,7 +1784,7 @@ static int ocfs2_xa_bucket_check_space(struct ocfs2_xa_loc *loc,
 
 	if (free_start < size) {
 		if (needed_space)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 	} else {
 		/*
 		 * First we check if it would fit in the first place.
@@ -2724,7 +2724,7 @@ static int ocfs2_xattr_ibody_init(struct inode *inode,
 	unsigned int xattrsize = osb->s_xattr_inline_size;
 
 	if (!ocfs2_xattr_has_space_inline(inode, di)) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -2776,7 +2776,7 @@ static int ocfs2_xattr_ibody_set(struct inode *inode,
 	struct ocfs2_xa_loc loc;
 
 	if (inode->i_sb->s_blocksize == OCFS2_MIN_BLOCKSIZE)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	down_write(&oi->ip_alloc_sem);
 	if (!(oi->ip_dyn_features & OCFS2_INLINE_XATTR_FL)) {
@@ -3327,7 +3327,7 @@ static int __ocfs2_xattr_set_handle(struct inode *inode,
 			xi->xi_value_len = 0;
 
 			old_found = xis->not_found;
-			xis->not_found = -ENODATA;
+			xis->not_found = -ERR(ENODATA);
 			ret = ocfs2_calc_xattr_set_need(inode,
 							di,
 							xi,
@@ -3357,7 +3357,7 @@ static int __ocfs2_xattr_set_handle(struct inode *inode,
 					goto out;
 
 				old_found = xis->not_found;
-				xis->not_found = -ENODATA;
+				xis->not_found = -ERR(ENODATA);
 				ret = ocfs2_calc_xattr_set_need(inode,
 								di,
 								xi,
@@ -3392,7 +3392,7 @@ static int __ocfs2_xattr_set_handle(struct inode *inode,
 				 */
 				xi->xi_value = NULL;
 				xi->xi_value_len = 0;
-				xbs->not_found = -ENODATA;
+				xbs->not_found = -ERR(ENODATA);
 				ret = ocfs2_calc_xattr_set_need(inode,
 								di,
 								xi,
@@ -3478,7 +3478,7 @@ int ocfs2_xattr_set_handle(handle_t *handle,
 	};
 
 	if (!ocfs2_supports_xattr(OCFS2_SB(inode->i_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * In extreme situation, may need xattr bucket when
@@ -3557,7 +3557,7 @@ int ocfs2_xattr_set(struct inode *inode,
 	};
 
 	if (!ocfs2_supports_xattr(osb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * Only xbs will be used on indexed trees.  xis doesn't need a
@@ -3593,14 +3593,14 @@ int ocfs2_xattr_set(struct inode *inode,
 	}
 
 	if (xis.not_found && xbs.not_found) {
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 		if (flags & XATTR_REPLACE)
 			goto cleanup;
 		ret = 0;
 		if (!value)
 			goto cleanup;
 	} else {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		if (flags & XATTR_CREATE)
 			goto cleanup;
 	}
@@ -3913,7 +3913,7 @@ static int ocfs2_xattr_bucket_find(struct inode *inode,
 			(unsigned long long)bucket_blkno(xs->bucket),
 			index);
 	} else
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 
 out:
 	ocfs2_xattr_bucket_free(search);
@@ -3936,7 +3936,7 @@ static int ocfs2_xattr_index_block_find(struct inode *inode,
 	u32 name_hash = ocfs2_xattr_name_hash(inode, name, strlen(name));
 
 	if (le16_to_cpu(el->l_next_free_rec) == 0)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	trace_ocfs2_xattr_index_block_find(OCFS2_I(inode)->ip_blkno,
 					name, name_index, name_hash,
@@ -4032,7 +4032,7 @@ static int ocfs2_xattr_bucket_get_name_value(struct super_block *sb,
 	u16 name_offset;
 
 	if (index < 0 || index >= le16_to_cpu(xh->xh_count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name_offset = le16_to_cpu(xh->xh_entries[index].xe_name_offset);
 
@@ -4403,7 +4403,7 @@ static int ocfs2_defrag_xattr_bucket(struct inode *inode,
 	 */
 	bucket_buf = kmalloc(OCFS2_XATTR_BUCKET_SIZE, GFP_NOFS);
 	if (!bucket_buf) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -5531,7 +5531,7 @@ static int ocfs2_check_xattr_bucket_collision(struct inode *inode,
 		     "hash = %u\n",
 		     (unsigned long long)bucket_blkno(bucket),
 		     le32_to_cpu(xh->xh_entries[0].xe_name_hash));
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	return 0;
@@ -7280,7 +7280,7 @@ int ocfs2_init_security_get(struct inode *inode,
 {
 	/* check whether ocfs2 support feature xattr */
 	if (!ocfs2_supports_xattr(OCFS2_SB(dir->i_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (si)
 		return security_old_inode_init_security(inode, dir, qstr,
 							&si->name, &si->value,
@@ -7345,7 +7345,7 @@ static int ocfs2_xattr_user_get(const struct xattr_handler *handler,
 	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	if (osb->s_mount_opt & OCFS2_MOUNT_NOUSERXATTR)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return ocfs2_xattr_get(inode, OCFS2_XATTR_INDEX_USER, name,
 			       buffer, size);
 }
@@ -7358,7 +7358,7 @@ static int ocfs2_xattr_user_set(const struct xattr_handler *handler,
 	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
 	if (osb->s_mount_opt & OCFS2_MOUNT_NOUSERXATTR)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ocfs2_xattr_set(inode, OCFS2_XATTR_INDEX_USER,
 			       name, value, size, flags);

@@ -157,7 +157,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					ctx->pdata->res_info->acpi_lpe_res_index);
 	if (!rsrc) {
 		dev_err(ctx->dev, "Invalid SHIM base from IFWI\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	dev_info(ctx->dev, "LPE base: %#x size:%#x", (unsigned int) rsrc->start,
 					(unsigned int)resource_size(rsrc));
@@ -169,7 +169,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					 ctx->pdata->res_info->iram_size);
 	if (!ctx->iram) {
 		dev_err(ctx->dev, "unable to map IRAM\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ctx->dram_base = rsrc->start + ctx->pdata->res_info->dram_offset;
@@ -179,7 +179,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					 ctx->pdata->res_info->dram_size);
 	if (!ctx->dram) {
 		dev_err(ctx->dev, "unable to map DRAM\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ctx->shim_phy_add = rsrc->start + ctx->pdata->res_info->shim_offset;
@@ -188,7 +188,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					ctx->pdata->res_info->shim_size);
 	if (!ctx->shim) {
 		dev_err(ctx->dev, "unable to map SHIM\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* reassign physical address to LPE viewpoint address */
@@ -201,7 +201,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					    ctx->pdata->res_info->mbox_size);
 	if (!ctx->mailbox) {
 		dev_err(ctx->dev, "unable to map mailbox\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* reassign physical address to LPE viewpoint address */
@@ -211,7 +211,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					ctx->pdata->res_info->acpi_ddr_index);
 	if (!rsrc) {
 		dev_err(ctx->dev, "Invalid DDR base from IFWI\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	ctx->ddr_base = rsrc->start;
 	ctx->ddr_end = rsrc->end;
@@ -220,14 +220,14 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 					resource_size(rsrc));
 	if (!ctx->ddr) {
 		dev_err(ctx->dev, "unable to map DDR\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* Find the IRQ */
 	ctx->irq_num = platform_get_irq(pdev,
 				ctx->pdata->res_info->acpi_ipc_irq_index);
 	if (ctx->irq_num <= 0)
-		return ctx->irq_num < 0 ? ctx->irq_num : -EIO;
+		return ctx->irq_num < 0 ? ctx->irq_num : -ERR(EIO);
 
 	return 0;
 }
@@ -246,14 +246,14 @@ static int sst_acpi_probe(struct platform_device *pdev)
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
 	if (!id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	dev_dbg(dev, "for %s\n", id->id);
 
 	mach = (struct snd_soc_acpi_mach *)id->driver_data;
 	mach = snd_soc_acpi_find_machine(mach);
 	if (mach == NULL) {
 		dev_err(dev, "No matching machine driver found\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (soc_intel_is_byt())

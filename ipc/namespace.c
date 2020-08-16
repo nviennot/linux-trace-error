@@ -36,7 +36,7 @@ static struct ipc_namespace *create_ipc_ns(struct user_namespace *user_ns,
 	struct ucounts *ucounts;
 	int err;
 
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	ucounts = inc_ipc_namespaces(user_ns);
 	if (!ucounts)
 		goto fail;
@@ -203,7 +203,7 @@ static int ipcns_install(struct nsset *nsset, struct ns_common *new)
 	struct ipc_namespace *ns = to_ipc_ns(new);
 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	put_ipc_ns(nsproxy->ipc_ns);
 	nsproxy->ipc_ns = get_ipc_ns(ns);

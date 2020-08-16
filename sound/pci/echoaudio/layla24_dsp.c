@@ -41,7 +41,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != LAYLA24))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -160,7 +160,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 
 	if (snd_BUG_ON(rate >= 50000 &&
 		       chip->digital_mode == DIGITAL_MODE_ADAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Only set the clock for internal mode. */
 	if (chip->input_clock != ECHO_CLOCK_INTERNAL) {
@@ -225,7 +225,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 			base_rate = 25000;
 
 		if (wait_handshake(chip))
-			return -EIO;
+			return -ERR(EIO);
 
 		chip->comm_page->sample_rate =
 			cpu_to_le32(LAYLA24_MAGIC_NUMBER / base_rate - 2);
@@ -262,7 +262,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		return set_sample_rate(chip, chip->sample_rate);
 	case ECHO_CLOCK_SPDIF:
 		if (chip->digital_mode == DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		control_reg |= GML_SPDIF_CLOCK;
 		/* Layla24 doesn't support 96KHz S/PDIF */
 		control_reg &= ~GML_DOUBLE_SPEED_MODE;
@@ -276,14 +276,14 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		break;
 	case ECHO_CLOCK_ADAT:
 		if (chip->digital_mode != DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		control_reg |= GML_ADAT_CLOCK;
 		control_reg &= ~GML_DOUBLE_SPEED_MODE;
 		break;
 	default:
 		dev_err(chip->card->dev,
 			"Input clock 0x%x not supported for Layla24\n", clock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chip->input_clock = clock;
@@ -315,7 +315,7 @@ static int switch_asic(struct echoaudio *chip, short asic)
 			memcpy(chip->comm_page->monitors, monitors,
 			       MONITOR_ARRAY_SIZE);
 			kfree(monitors);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		chip->asic_code = asic;
 		memcpy(chip->comm_page->monitors, monitors, MONITOR_ARRAY_SIZE);
@@ -350,7 +350,7 @@ static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
 	default:
 		dev_err(chip->card->dev,
 			"Digital mode not supported: %d\n", mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (incompatible_clock) {	/* Switch to 48KHz, internal */
@@ -362,7 +362,7 @@ static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
 
 	/* switch_asic() can sleep */
 	if (switch_asic(chip, asic) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock_irq(&chip->lock);
 

@@ -292,7 +292,7 @@ static int ip_vs_mh_reassign(struct ip_vs_mh_state *s,
 	int ret;
 
 	if (svc->num_dests > IP_VS_MH_TAB_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (svc->num_dests >= 1) {
 		s->dest_setup = kcalloc(svc->num_dests,

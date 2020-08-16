@@ -377,7 +377,7 @@ int cpu_check_up_prepare(int cpu)
 		 * offline, with no post-death manipulation required from
 		 * a surviving CPU.
 		 */
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	case CPU_BROKEN:
 
@@ -390,12 +390,12 @@ int cpu_check_up_prepare(int cpu)
 		 * immediately online that same CPU.  Trying again later
 		 * might return -EBUSY above, hence -EAGAIN.
 		 */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	default:
 
 		/* Should not happen.  Famous last words. */
-		return -EIO;
+		return -ERR(EIO);
 	}
 }
 

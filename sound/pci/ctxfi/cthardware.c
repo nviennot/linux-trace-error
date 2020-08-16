@@ -29,7 +29,7 @@ int create_hw_obj(struct pci_dev *pci, enum CHIPTYP chip_type,
 		err = create_20k2_hw_obj(rhw);
 		break;
 	default:
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		break;
 	}
 	if (err)
@@ -54,7 +54,7 @@ int destroy_hw_obj(struct hw *hw)
 		err = destroy_20k2_hw_obj(hw);
 		break;
 	default:
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		break;
 	}
 

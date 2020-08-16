@@ -169,7 +169,7 @@ static int q6core_get_fwk_versions(struct q6core *core)
 		core->resp_received = false;
 
 		if (!core->fwk_version_supported)
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 		else
 			return 0;
 	}
@@ -247,7 +247,7 @@ static bool __q6core_is_adsp_ready(struct q6core *core)
 int q6core_get_svc_api_info(int svc_id, struct q6core_svc_api_info *ainfo)
 {
 	int i;
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (!g_core || !ainfo)
 		return 0;

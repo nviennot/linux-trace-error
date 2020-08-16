@@ -154,7 +154,7 @@ static int __init glob_init(void)
 	printk(message, successes, n);
 
 	/* What's the errno for "kernel bug detected"?  Guess... */
-	return n ? -ECANCELED : 0;
+	return n ? -ERR(ECANCELED) : 0;
 }
 
 /* We need a dummy exit function to allow unload */

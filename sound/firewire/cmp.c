@@ -134,7 +134,7 @@ int cmp_connection_init(struct cmp_connection *c,
 	mpr = be32_to_cpu(mpr_be);
 
 	if (pcr_index >= (mpr & MPR_PLUGS_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = fw_iso_resources_init(&c->resources, unit);
 	if (err < 0)
@@ -193,7 +193,7 @@ int cmp_connection_reserve(struct cmp_connection *c,
 	mutex_lock(&c->mutex);
 
 	if (WARN_ON(c->resources.allocated)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 
@@ -280,11 +280,11 @@ static int pcr_set_check(struct cmp_connection *c, __be32 pcr)
 	if (pcr & cpu_to_be32(PCR_BCAST_CONN |
 			      PCR_P2P_CONN_MASK)) {
 		cmp_error(c, "plug is already in use\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (!(pcr & cpu_to_be32(PCR_ONLINE))) {
 		cmp_error(c, "plug is not on-line\n");
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 	}
 
 	return 0;
@@ -309,7 +309,7 @@ int cmp_connection_establish(struct cmp_connection *c)
 
 	if (WARN_ON(c->connected)) {
 		mutex_unlock(&c->mutex);
-		return -EISCONN;
+		return -ERR(EISCONN);
 	}
 
 retry_after_bus_reset:

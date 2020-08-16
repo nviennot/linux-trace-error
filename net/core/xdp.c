@@ -162,7 +162,7 @@ int xdp_rxq_info_reg(struct xdp_rxq_info *xdp_rxq,
 {
 	if (xdp_rxq->reg_state == REG_STATE_UNUSED) {
 		WARN(1, "Driver promised not to register this");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (xdp_rxq->reg_state == REG_STATE_REGISTERED) {
@@ -172,7 +172,7 @@ int xdp_rxq_info_reg(struct xdp_rxq_info *xdp_rxq,
 
 	if (!dev) {
 		WARN(1, "Missing net_device from driver");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* State either UNREGISTERED or NEW */
@@ -273,13 +273,13 @@ int xdp_rxq_info_reg_mem_model(struct xdp_rxq_info *xdp_rxq,
 	}
 
 	if (!__is_supported_mem_type(type))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	xdp_rxq->mem.type = type;
 
 	if (!allocator) {
 		if (type == MEM_TYPE_PAGE_POOL)
-			return -EINVAL; /* Setup time check page_pool req */
+			return -ERR(EINVAL); /* Setup time check page_pool req */
 		return 0;
 	}
 

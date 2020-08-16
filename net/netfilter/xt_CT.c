@@ -80,14 +80,14 @@ xt_ct_set_helper(struct nf_conn *ct, const char *helper_name,
 	proto = xt_ct_find_proto(par);
 	if (!proto) {
 		pr_info_ratelimited("You must specify a L4 protocol and not use inversions on it\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	helper = nf_conntrack_helper_try_module_get(helper_name, par->family,
 						    proto);
 	if (helper == NULL) {
 		pr_info_ratelimited("No such helper \"%s\"\n", helper_name);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	help = nf_ct_helper_ext_add(ct, GFP_KERNEL);
@@ -112,14 +112,14 @@ xt_ct_set_timeout(struct nf_conn *ct, const struct xt_tgchk_param *par,
 	if (!proto) {
 		pr_info_ratelimited("You must specify a L4 protocol and not "
 				    "use inversions on it");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	l4proto = nf_ct_l4proto_find(proto);
 	return nf_ct_set_timeout(par->net, ct, par->family, l4proto->l4proto,
 				 timeout_name);
 
 #else
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 #endif
 }
 
@@ -142,7 +142,7 @@ static int xt_ct_tg_check(const struct xt_tgchk_param *par,
 	struct nf_conntrack_zone zone;
 	struct nf_conn_help *help;
 	struct nf_conn *ct;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (info->flags & XT_CT_NOTRACK) {
 		ct = NULL;
@@ -176,13 +176,13 @@ static int xt_ct_tg_check(const struct xt_tgchk_param *par,
 	if ((info->ct_events || info->exp_events) &&
 	    !nf_ct_ecache_ext_add(ct, info->ct_events, info->exp_events,
 				  GFP_KERNEL)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err3;
 	}
 
 	if (info->helper[0]) {
 		if (strnlen(info->helper, sizeof(info->helper)) == sizeof(info->helper)) {
-			ret = -ENAMETOOLONG;
+			ret = -ERR(ENAMETOOLONG);
 			goto err3;
 		}
 
@@ -193,7 +193,7 @@ static int xt_ct_tg_check(const struct xt_tgchk_param *par,
 
 	if (info->timeout[0]) {
 		if (strnlen(info->timeout, sizeof(info->timeout)) == sizeof(info->timeout)) {
-			ret = -ENAMETOOLONG;
+			ret = -ERR(ENAMETOOLONG);
 			goto err4;
 		}
 
@@ -231,7 +231,7 @@ static int xt_ct_tg_check_v0(const struct xt_tgchk_param *par)
 	int ret;
 
 	if (info->flags & ~XT_CT_NOTRACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(info_v1.helper, info->helper, sizeof(info->helper));
 
@@ -249,7 +249,7 @@ static int xt_ct_tg_check_v1(const struct xt_tgchk_param *par)
 	struct xt_ct_target_info_v1 *info = par->targinfo;
 
 	if (info->flags & ~XT_CT_NOTRACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xt_ct_tg_check(par, par->targinfo);
 }
@@ -259,7 +259,7 @@ static int xt_ct_tg_check_v2(const struct xt_tgchk_param *par)
 	struct xt_ct_target_info_v1 *info = par->targinfo;
 
 	if (info->flags & ~XT_CT_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xt_ct_tg_check(par, par->targinfo);
 }

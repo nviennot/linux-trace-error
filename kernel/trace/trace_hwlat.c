@@ -468,7 +468,7 @@ hwlat_width_write(struct file *filp, const char __user *ubuf,
 	if (val < hwlat_data.sample_window)
 		hwlat_data.sample_width = val;
 	else
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	mutex_unlock(&hwlat_data.lock);
 
 	if (err)
@@ -507,7 +507,7 @@ hwlat_window_write(struct file *filp, const char __user *ubuf,
 	if (hwlat_data.sample_width < val)
 		hwlat_data.sample_window = val;
 	else
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	mutex_unlock(&hwlat_data.lock);
 
 	if (err)
@@ -590,7 +590,7 @@ static int hwlat_tracer_init(struct trace_array *tr)
 {
 	/* Only allow one instance to enable this */
 	if (hwlat_busy)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	hwlat_trace = tr;
 

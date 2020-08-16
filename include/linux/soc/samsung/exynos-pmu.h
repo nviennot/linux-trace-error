@@ -24,7 +24,7 @@ extern struct regmap *exynos_get_pmu_regmap(void);
 #else
 static inline struct regmap *exynos_get_pmu_regmap(void)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 #endif
 

@@ -215,7 +215,7 @@ static int tcf_ct_flow_table_add_action_nat(struct net *net,
 						      action);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	switch (nf_ct_protonum(ct)) {
@@ -226,7 +226,7 @@ static int tcf_ct_flow_table_add_action_nat(struct net *net,
 		tcf_ct_flow_table_add_action_nat_udp(tuple, target, action);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return 0;
@@ -251,7 +251,7 @@ static int tcf_ct_flow_table_fill_actions(struct net *net,
 		dir = IP_CT_DIR_REPLY;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	err = tcf_ct_flow_table_add_action_nat(net, ct, dir, action);
@@ -644,7 +644,7 @@ static int tcf_ct_ipv4_is_fragment(struct sk_buff *skb, bool *frag)
 
 	len =  skb_network_offset(skb) + sizeof(struct iphdr);
 	if (unlikely(skb->len < len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(!pskb_may_pull(skb, len)))
 		return -ENOMEM;
 
@@ -660,13 +660,13 @@ static int tcf_ct_ipv6_is_fragment(struct sk_buff *skb, bool *frag)
 
 	len =  skb_network_offset(skb) + sizeof(struct ipv6hdr);
 	if (unlikely(skb->len < len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(!pskb_may_pull(skb, len)))
 		return -ENOMEM;
 
 	nexthdr = ipv6_find_hdr(skb, &payload_ofs, -1, &frag_off, &flags);
 	if (unlikely(nexthdr < 0))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	*frag = flags & IP6_FH_F_FRAG;
 	return 0;
@@ -720,7 +720,7 @@ static int tcf_ct_handle_fragments(struct net *net, struct sk_buff *skb,
 		if (!err)
 			*defrag = true;
 #else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out_free;
 #endif
 	}
@@ -1065,7 +1065,7 @@ static int tcf_ct_fill_params_nat(struct tcf_ct_params *p,
 
 	if (!IS_ENABLED(CONFIG_NF_NAT)) {
 		NL_SET_ERR_MSG_MOD(extack, "Netfilter nat isn't enabled in kernel");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!(p->ct_action & (TCA_CT_ACT_NAT_SRC | TCA_CT_ACT_NAT_DST)))
@@ -1074,7 +1074,7 @@ static int tcf_ct_fill_params_nat(struct tcf_ct_params *p,
 	if ((p->ct_action & TCA_CT_ACT_NAT_SRC) &&
 	    (p->ct_action & TCA_CT_ACT_NAT_DST)) {
 		NL_SET_ERR_MSG_MOD(extack, "dnat and snat can't be enabled at the same time");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	range = &p->range;
@@ -1160,7 +1160,7 @@ static int tcf_ct_fill_params(struct net *net,
 	if (tb[TCA_CT_MARK]) {
 		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)) {
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack mark isn't enabled.");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		tcf_ct_set_key_val(tb,
 				   &p->mark, TCA_CT_MARK,
@@ -1171,12 +1171,12 @@ static int tcf_ct_fill_params(struct net *net,
 	if (tb[TCA_CT_LABELS]) {
 		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)) {
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack labels isn't enabled.");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 
 		if (!tn->labels) {
 			NL_SET_ERR_MSG_MOD(extack, "Failed to set connlabel length");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		tcf_ct_set_key_val(tb,
 				   p->labels, TCA_CT_LABELS,
@@ -1187,7 +1187,7 @@ static int tcf_ct_fill_params(struct net *net,
 	if (tb[TCA_CT_ZONE]) {
 		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)) {
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack zones isn't enabled.");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 
 		tcf_ct_set_key_val(tb,
@@ -1229,7 +1229,7 @@ static int tcf_ct_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG_MOD(extack, "Ct requires attributes to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, TCA_CT_MAX, nla, ct_policy, extack);
@@ -1238,7 +1238,7 @@ static int tcf_ct_init(struct net *net, struct nlattr *nla,
 
 	if (!tb[TCA_CT_PARMS]) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing required ct parameters");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	parm = nla_data(tb[TCA_CT_PARMS]);
 	index = parm->index;
@@ -1260,7 +1260,7 @@ static int tcf_ct_init(struct net *net, struct nlattr *nla,
 
 		if (!replace) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);

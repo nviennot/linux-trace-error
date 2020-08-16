@@ -115,7 +115,7 @@ static irqreturn_t uni_player_irq_handler(int irq, void *dev_id)
 		if (!player->underflow_enabled) {
 			dev_err(player->dev,
 				"unexpected Underflow recovering\n");
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto stream_unlock;
 		}
 		/* Read the underflow recovery duration */
@@ -185,7 +185,7 @@ static int uni_player_clk_set_rate(struct uniperif *player, unsigned long rate)
 
 	/* Adjusted rate should never be == 0 */
 	if (!rate_adjusted)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_set_rate(player->clk, rate_adjusted);
 	if (ret < 0)
@@ -194,7 +194,7 @@ static int uni_player_clk_set_rate(struct uniperif *player, unsigned long rate)
 	rate_achieved = clk_get_rate(player->clk);
 	if (!rate_achieved)
 		/* If value is 0 means that clock or parent not valid */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Using ALSA's adjustment control, we can modify the rate to be up
@@ -321,7 +321,7 @@ static int uni_player_prepare_iec958(struct uniperif *player,
 	if ((clk_div % 128) || (clk_div <= 0)) {
 		dev_err(player->dev, "%s: invalid clk_div %d\n",
 			__func__, clk_div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (runtime->format) {
@@ -343,7 +343,7 @@ static int uni_player_prepare_iec958(struct uniperif *player,
 		break;
 	default:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set parity to be calculated by the hardware */
@@ -434,12 +434,12 @@ static int uni_player_prepare_pcm(struct uniperif *player,
 	 */
 	if ((slot_width == 32) && (clk_div % 128)) {
 		dev_err(player->dev, "%s: invalid clk_div\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((slot_width == 16) && (clk_div % 64)) {
 		dev_err(player->dev, "%s: invalid clk_div\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -457,7 +457,7 @@ static int uni_player_prepare_pcm(struct uniperif *player,
 		break;
 	default:
 		dev_err(player->dev, "subframe format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Configure data memory format */
@@ -477,7 +477,7 @@ static int uni_player_prepare_pcm(struct uniperif *player,
 
 	default:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set rounding to off */
@@ -490,7 +490,7 @@ static int uni_player_prepare_pcm(struct uniperif *player,
 	if ((runtime->channels % 2) || (runtime->channels < 2) ||
 	    (runtime->channels > 10)) {
 		dev_err(player->dev, "%s: invalid nb of channels\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	SET_UNIPERIF_I2S_FMT_NUM_CH(player, runtime->channels / 2);
@@ -659,7 +659,7 @@ static int snd_sti_clk_adjustment_put(struct snd_kcontrol *kcontrol,
 
 	if ((ucontrol->value.integer.value[0] < UNIPERIF_PLAYER_CLK_ADJ_MIN) ||
 	    (ucontrol->value.integer.value[0] > UNIPERIF_PLAYER_CLK_ADJ_MAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&player->ctrl_lock);
 	player->clk_adj = ucontrol->value.integer.value[0];
@@ -732,7 +732,7 @@ static int uni_player_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		return 0;
 
 	if (clk_id != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&player->ctrl_lock);
 	ret = uni_player_clk_set_rate(player, freq);
@@ -756,7 +756,7 @@ static int uni_player_prepare(struct snd_pcm_substream *substream,
 	if (player->state != UNIPERIF_STATE_STOPPED) {
 		dev_err(player->dev, "%s: invalid player state %d\n", __func__,
 			player->state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate transfer size (in fifo cells and bytes) for frame count */
@@ -785,7 +785,7 @@ static int uni_player_prepare(struct snd_pcm_substream *substream,
 	    (trigger_limit > UNIPERIF_CONFIG_DMA_TRIG_LIMIT_MASK(player))) {
 		dev_err(player->dev, "invalid trigger limit %d\n",
 			trigger_limit);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	SET_UNIPERIF_CONFIG_DMA_TRIG_LIMIT(player, trigger_limit);
@@ -806,7 +806,7 @@ static int uni_player_prepare(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(player->dev, "invalid player type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret)
@@ -846,7 +846,7 @@ static int uni_player_prepare(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(player->dev, "format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	SET_UNIPERIF_I2S_FMT_NO_OF_SAMPLES_TO_READ(player, 0);
@@ -862,7 +862,7 @@ static int uni_player_start(struct uniperif *player)
 	/* The player should be stopped */
 	if (player->state != UNIPERIF_STATE_STOPPED) {
 		dev_err(player->dev, "%s: invalid player state\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_prepare_enable(player->clk);
@@ -927,7 +927,7 @@ static int uni_player_stop(struct uniperif *player)
 	/* The player should not be in stopped state */
 	if (player->state == UNIPERIF_STATE_STOPPED) {
 		dev_err(player->dev, "%s: invalid player state\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Turn the player off */
@@ -987,7 +987,7 @@ static int uni_player_trigger(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_TRIGGER_RESUME:
 		return uni_player_resume(player);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

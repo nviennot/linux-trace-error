@@ -315,7 +315,7 @@ int seq_buf_to_user(struct seq_buf *s, char __user *ubuf, int cnt)
 	len = seq_buf_used(s);
 
 	if (len <= s->readpos)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	len -= s->readpos;
 	if (cnt > len)

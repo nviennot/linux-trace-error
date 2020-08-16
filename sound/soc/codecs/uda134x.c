@@ -92,7 +92,7 @@ static int uda134x_regmap_write(void *context, unsigned int reg,
 		ret = l3_write(&pd->l3,
 			       UDA134X_DATA0_ADDR, &addr, 1);
 		if (ret != 1)
-			return -EIO;
+			return -ERR(EIO);
 
 		addr = UDA134X_DATA0_ADDR;
 		data = (value | UDA134X_EXTDATA_PREFIX);
@@ -102,7 +102,7 @@ static int uda134x_regmap_write(void *context, unsigned int reg,
 	ret = l3_write(&pd->l3,
 		       addr, &data, 1);
 	if (ret != 1)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -203,7 +203,7 @@ static int uda134x_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		printk(KERN_ERR "%s unsupported fs\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pr_debug("%s dai_fmt: %d, params_format:%d\n", __func__,
@@ -227,7 +227,7 @@ static int uda134x_hw_params(struct snd_pcm_substream *substream,
 		default:
 			printk(KERN_ERR "%s unsupported format (right)\n",
 			       __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_LEFT_J:
@@ -235,7 +235,7 @@ static int uda134x_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		printk(KERN_ERR "%s unsupported format\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_update_bits(uda134x->regmap, UDA134X_STATUS0,
@@ -261,7 +261,7 @@ static int uda134x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	}
 
 	printk(KERN_ERR "%s unsupported sysclk\n", __func__);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int uda134x_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -275,13 +275,13 @@ static int uda134x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	/* codec supports only full slave mode */
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
 		printk(KERN_ERR "%s unsupported slave mode\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* no support for clock inversion */
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) {
 		printk(KERN_ERR "%s unsupported clock inversion\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* We can't setup DAI format here as it depends on the word bit num */
@@ -464,7 +464,7 @@ static int uda134x_soc_probe(struct snd_soc_component *component)
 		printk(KERN_ERR "UDA134X SoC codec: "
 		       "unsupported model %d\n",
 			pd->model);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (pd->power)
@@ -504,7 +504,7 @@ static int uda134x_soc_probe(struct snd_soc_component *component)
 	default:
 		printk(KERN_ERR "%s unknown codec type: %d",
 			__func__, pd->model);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret < 0) {
@@ -548,7 +548,7 @@ static int uda134x_codec_probe(struct platform_device *pdev)
 
 	if (!pd) {
 		dev_err(&pdev->dev, "Missing L3 bitbang function\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	uda134x = devm_kzalloc(&pdev->dev, sizeof(*uda134x), GFP_KERNEL);

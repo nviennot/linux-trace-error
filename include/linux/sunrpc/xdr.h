@@ -315,7 +315,7 @@ static inline ssize_t xdr_stream_encode_item_present(struct xdr_stream *xdr)
 	__be32 *p = xdr_reserve_space(xdr, len);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	*p = xdr_one;
 	return len;
 }
@@ -334,7 +334,7 @@ static inline int xdr_stream_encode_item_absent(struct xdr_stream *xdr)
 	__be32 *p = xdr_reserve_space(xdr, len);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	*p = xdr_zero;
 	return len;
 }
@@ -355,7 +355,7 @@ xdr_stream_encode_u32(struct xdr_stream *xdr, __u32 n)
 	__be32 *p = xdr_reserve_space(xdr, len);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	*p = cpu_to_be32(n);
 	return len;
 }
@@ -376,7 +376,7 @@ xdr_stream_encode_u64(struct xdr_stream *xdr, __u64 n)
 	__be32 *p = xdr_reserve_space(xdr, len);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	xdr_encode_hyper(p, n);
 	return len;
 }
@@ -399,7 +399,7 @@ xdr_stream_encode_opaque_inline(struct xdr_stream *xdr, void **ptr, size_t len)
 
 	if (unlikely(!p)) {
 		*ptr = NULL;
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	xdr_encode_opaque(p, NULL, len);
 	*ptr = ++p;
@@ -422,7 +422,7 @@ xdr_stream_encode_opaque_fixed(struct xdr_stream *xdr, const void *ptr, size_t l
 	__be32 *p = xdr_reserve_space(xdr, len);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	xdr_encode_opaque_fixed(p, ptr, len);
 	return xdr_align_size(len);
 }
@@ -444,7 +444,7 @@ xdr_stream_encode_opaque(struct xdr_stream *xdr, const void *ptr, size_t len)
 	__be32 *p = xdr_reserve_space(xdr, count);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	xdr_encode_opaque(p, ptr, len);
 	return count;
 }
@@ -467,7 +467,7 @@ xdr_stream_encode_uint32_array(struct xdr_stream *xdr,
 	__be32 *p = xdr_reserve_space(xdr, ret);
 
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	*p++ = cpu_to_be32(array_size);
 	for (; array_size > 0; p++, array++, array_size--)
 		*p = cpu_to_be32p(array);
@@ -490,7 +490,7 @@ xdr_stream_decode_u32(struct xdr_stream *xdr, __u32 *ptr)
 	__be32 *p = xdr_inline_decode(xdr, count);
 
 	if (unlikely(!p))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	*ptr = be32_to_cpup(p);
 	return 0;
 }
@@ -511,7 +511,7 @@ xdr_stream_decode_opaque_fixed(struct xdr_stream *xdr, void *ptr, size_t len)
 	__be32 *p = xdr_inline_decode(xdr, len);
 
 	if (unlikely(!p))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	xdr_decode_opaque_fixed(p, ptr, len);
 	return len;
 }
@@ -540,13 +540,13 @@ xdr_stream_decode_opaque_inline(struct xdr_stream *xdr, void **ptr, size_t maxle
 
 	*ptr = NULL;
 	if (unlikely(xdr_stream_decode_u32(xdr, &len) < 0))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	if (len != 0) {
 		p = xdr_inline_decode(xdr, len);
 		if (unlikely(!p))
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 		if (unlikely(len > maxlen))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		*ptr = p;
 	}
 	return len;
@@ -572,10 +572,10 @@ xdr_stream_decode_uint32_array(struct xdr_stream *xdr,
 	ssize_t retval;
 
 	if (unlikely(xdr_stream_decode_u32(xdr, &len) < 0))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	p = xdr_inline_decode(xdr, len * sizeof(*p));
 	if (unlikely(!p))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	if (array == NULL)
 		return len;
 	if (len <= array_size) {
@@ -584,7 +584,7 @@ xdr_stream_decode_uint32_array(struct xdr_stream *xdr,
 		array_size = len;
 		retval = len;
 	} else
-		retval = -EMSGSIZE;
+		retval = -ERR(EMSGSIZE);
 	for (; array_size > 0; p++, array++, array_size--)
 		*array = be32_to_cpup(p);
 	return retval;

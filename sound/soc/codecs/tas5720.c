@@ -70,7 +70,7 @@ static int tas5720_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unsupported sample rate: %u\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, TAS5720_DIGITAL_CTRL1_REG,
@@ -91,7 +91,7 @@ static int tas5720_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
 		dev_vdbg(component->dev, "DAI Format master is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & (SND_SOC_DAIFMT_FORMAT_MASK |
@@ -125,7 +125,7 @@ static int tas5720_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_vdbg(component->dev, "DAI Format is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, TAS5720_DIGITAL_CTRL1_REG,
@@ -150,7 +150,7 @@ static int tas5720_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (!tx_mask) {
 		dev_err(component->dev, "tx masks must not be 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -163,7 +163,7 @@ static int tas5720_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (first_slot > 7) {
 		dev_err(component->dev, "slot selection out of bounds (%u)\n",
 			first_slot);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Enable manual TDM slot selection (instead of I2C ID based) */
@@ -310,7 +310,7 @@ static int tas5720_codec_probe(struct snd_soc_component *component)
 		break;
 	default:
 		dev_err(component->dev, "unexpected private driver data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (device_id != expected_device_id)
@@ -657,7 +657,7 @@ static int tas5720_probe(struct i2c_client *client,
 		break;
 	default:
 		dev_err(dev, "unexpected private driver data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	data->regmap = devm_regmap_init_i2c(client, regmap_config);
 	if (IS_ERR(data->regmap)) {
@@ -693,7 +693,7 @@ static int tas5720_probe(struct i2c_client *client,
 		break;
 	default:
 		dev_err(dev, "unexpected private driver data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ret < 0) {
 		dev_err(dev, "failed to register component: %d\n", ret);

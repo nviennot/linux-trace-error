@@ -495,7 +495,7 @@ static int snd_intel8x0_codec_semaphore(struct intel8x0 *chip, unsigned int code
 	int time;
 	
 	if (codec > 2)
-		return -EIO;
+		return -ERR(EIO);
 	if (chip->in_sdin_init) {
 		/* we don't know the ready bit assignment at the moment */
 		/* so we check any */
@@ -506,7 +506,7 @@ static int snd_intel8x0_codec_semaphore(struct intel8x0 *chip, unsigned int code
 
 	/* codec ready ? */
 	if ((igetdword(chip, ICHREG(GLOB_STA)) & codec) == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (chip->buggy_semaphore)
 		return 0; /* just ignore ... */
@@ -527,7 +527,7 @@ static int snd_intel8x0_codec_semaphore(struct intel8x0 *chip, unsigned int code
 			igetbyte(chip, ICHREG(ACC_SEMA)), igetdword(chip, ICHREG(GLOB_STA)));
 	iagetword(chip, 0);	/* clear semaphore flag */
 	/* I don't care about the semaphore */
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
  
 static void snd_intel8x0_codec_write(struct snd_ac97 *ac97,
@@ -602,7 +602,7 @@ static int snd_intel8x0_ali_codec_ready(struct intel8x0 *chip, int mask)
 	}
 	if (! chip->in_ac97_init)
 		dev_warn(chip->card->dev, "AC97 codec ready timeout.\n");
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int snd_intel8x0_ali_codec_semaphore(struct intel8x0 *chip)
@@ -826,7 +826,7 @@ static int snd_intel8x0_pcm_trigger(struct snd_pcm_substream *substream, int cmd
 		val = ICH_IOCE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	iputbyte(chip, port + ICH_REG_OFF_CR, val);
 	if (cmd == SNDRV_PCM_TRIGGER_STOP) {
@@ -888,7 +888,7 @@ static int snd_intel8x0_ali_trigger(struct snd_pcm_substream *substream, int cmd
 			  igetdword(chip, ICHREG(ALI_INTERRUPTSR)) & ichdev->int_sta_mask);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2339,7 +2339,7 @@ static int snd_intel8x0_ich_chip_cold_reset(struct intel8x0 *chip)
 	/* ACLink on, 2 channels */
 
 	if (snd_pci_quirk_lookup(chip->pci, ich_chip_reset_mode))
-		return -EIO;
+		return -ERR(EIO);
 
 	cnt = igetdword(chip, ICHREG(GLOB_CNT));
 	cnt &= ~(ICH_ACLINK | ICH_PCM_246_MASK);
@@ -2379,7 +2379,7 @@ static int snd_intel8x0_ich_chip_reset(struct intel8x0 *chip)
 	} while (time_after_eq(end_time, jiffies));
 	dev_err(chip->card->dev, "AC'97 warm reset still in progress? [0x%x]\n",
 		   igetdword(chip, ICHREG(GLOB_CNT)));
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_intel8x0_ich_chip_init(struct intel8x0 *chip, int probing)
@@ -2422,7 +2422,7 @@ static int snd_intel8x0_ich_chip_init(struct intel8x0 *chip, int probing)
 			dev_err(chip->card->dev,
 				"codec_ready: codec is not ready [0x%x]\n",
 				   igetdword(chip, ICHREG(GLOB_STA)));
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/* wait for other codecs ready status. */
@@ -2486,7 +2486,7 @@ static int snd_intel8x0_ali_chip_init(struct intel8x0 *chip, int probing)
 	}
 	dev_err(chip->card->dev, "AC'97 reset failed.\n");
 	if (probing)
-		return -EIO;
+		return -ERR(EIO);
 
  __ok:
 	for (i = 0; i < HZ / 2; i++) {
@@ -2610,7 +2610,7 @@ static int intel8x0_resume(struct device *dev)
 		dev_err(dev, "unable to grab IRQ %d, disabling device\n",
 			pci->irq);
 		snd_card_disconnect(card);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -2985,7 +2985,7 @@ static int snd_intel8x0_create(struct snd_card *card,
 	if (!chip->addr) {
 		dev_err(card->dev, "AC'97 space ioremap problem\n");
 		snd_intel8x0_free(chip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (pci_resource_flags(pci, 3) & IORESOURCE_MEM) /* ICH4 */
 		chip->bmaddr = pci_iomap(pci, 3, 0);
@@ -2996,7 +2996,7 @@ static int snd_intel8x0_create(struct snd_card *card,
 	if (!chip->bmaddr) {
 		dev_err(card->dev, "Controller space ioremap problem\n");
 		snd_intel8x0_free(chip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	chip->bdbars_count = bdbars[device_type];
 
@@ -3090,7 +3090,7 @@ static int snd_intel8x0_create(struct snd_card *card,
 			IRQF_SHARED, KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_intel8x0_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;

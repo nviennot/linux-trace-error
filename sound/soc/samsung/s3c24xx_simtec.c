@@ -303,7 +303,7 @@ int simtec_audio_core_probe(struct platform_device *pdev,
 	pdata = pdev->dev.platform_data;
 	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	simtec_call_startup(pdata);
@@ -311,7 +311,7 @@ int simtec_audio_core_probe(struct platform_device *pdev,
 	xtal_clk = clk_get(&pdev->dev, "xtal");
 	if (IS_ERR(xtal_clk)) {
 		dev_err(&pdev->dev, "could not get clkout0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_info(&pdev->dev, "xtal rate is %ld\n", clk_get_rate(xtal_clk));

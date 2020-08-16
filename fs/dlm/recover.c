@@ -52,13 +52,13 @@ int dlm_wait_function(struct dlm_ls *ls, int (*testfn) (struct dlm_ls *ls))
 			break;
 		if (test_bit(LSFL_RCOM_WAIT, &ls->ls_flags)) {
 			log_debug(ls, "dlm_wait_function timed out");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 	}
 
 	if (dlm_recovery_stopped(ls)) {
 		log_debug(ls, "dlm_wait_function aborted");
-		error = -EINTR;
+		error = -ERR(EINTR);
 	}
 	return error;
 }
@@ -103,7 +103,7 @@ static int wait_status_all(struct dlm_ls *ls, uint32_t wait_status,
 		delay = 0;
 		for (;;) {
 			if (dlm_recovery_stopped(ls)) {
-				error = -EINTR;
+				error = -ERR(EINTR);
 				goto out;
 			}
 
@@ -133,7 +133,7 @@ static int wait_status_low(struct dlm_ls *ls, uint32_t wait_status,
 
 	for (;;) {
 		if (dlm_recovery_stopped(ls)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			goto out;
 		}
 
@@ -534,7 +534,7 @@ int dlm_recover_masters(struct dlm_ls *ls)
 	list_for_each_entry(r, &ls->ls_root_list, res_root_list) {
 		if (dlm_recovery_stopped(ls)) {
 			up_read(&ls->ls_root_sem);
-			error = -EINTR;
+			error = -ERR(EINTR);
 			goto out;
 		}
 
@@ -672,7 +672,7 @@ int dlm_recover_locks(struct dlm_ls *ls)
 			continue;
 
 		if (dlm_recovery_stopped(ls)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			up_read(&ls->ls_root_sem);
 			goto out;
 		}
@@ -899,7 +899,7 @@ int dlm_create_root_list(struct dlm_ls *ls)
 	down_write(&ls->ls_root_sem);
 	if (!list_empty(&ls->ls_root_list)) {
 		log_error(ls, "root list not empty");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 

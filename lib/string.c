@@ -184,7 +184,7 @@ ssize_t strscpy(char *dest, const char *src, size_t count)
 	long res = 0;
 
 	if (count == 0 || WARN_ON_ONCE(count > INT_MAX))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 #ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
 	/*
@@ -233,7 +233,7 @@ ssize_t strscpy(char *dest, const char *src, size_t count)
 	if (res)
 		dest[res-1] = '\0';
 
-	return -E2BIG;
+	return -ERR(E2BIG);
 }
 EXPORT_SYMBOL(strscpy);
 #endif
@@ -723,7 +723,7 @@ int match_string(const char * const *array, size_t n, const char *string)
 			return index;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(match_string);
 
@@ -757,7 +757,7 @@ int __sysfs_match_string(const char * const *array, size_t n, const char *str)
 			return index;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(__sysfs_match_string);
 

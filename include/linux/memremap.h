@@ -145,7 +145,7 @@ static inline void *devm_memremap_pages(struct device *dev,
 	 * back to plain devm_memremap() based on config
 	 */
 	WARN_ON_ONCE(1);
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline void devm_memunmap_pages(struct device *dev,

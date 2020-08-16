@@ -226,7 +226,7 @@ struct inode *minix_new_inode(const struct inode *dir, umode_t mode, int *error)
 	}
 	j = bits_per_zone;
 	bh = NULL;
-	*error = -ENOSPC;
+	*error = -ERR(ENOSPC);
 	spin_lock(&bitmap_lock);
 	for (i = 0; i < sbi->s_imap_blocks; i++) {
 		bh = sbi->s_imap[i];

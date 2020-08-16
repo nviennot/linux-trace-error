@@ -224,7 +224,7 @@ int p9_errstr2errno(char *errstr, int len)
 		errstr[len] = 0;
 		pr_err("%s: server reported unknown error %s\n",
 		       __func__, errstr);
-		errno = ESERVERFAULT;
+		errno = ERR(ESERVERFAULT);
 	}
 
 	return -errno;

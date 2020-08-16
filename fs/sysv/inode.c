@@ -180,7 +180,7 @@ struct inode *sysv_iget(struct super_block *sb, unsigned int ino)
 	if (!ino || ino > sbi->s_ninodes) {
 		printk("Bad inode number on dev %s: %d is out of range\n",
 		       sb->s_id, ino);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	inode = iget_locked(sb, ino);
@@ -225,7 +225,7 @@ struct inode *sysv_iget(struct super_block *sb, unsigned int ino)
 
 bad_inode:
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static int __sysv_write_inode(struct inode *inode, int wait)
@@ -242,12 +242,12 @@ static int __sysv_write_inode(struct inode *inode, int wait)
 	if (!ino || ino > sbi->s_ninodes) {
 		printk("Bad inode number on dev %s: %d is out of range\n",
 		       inode->i_sb->s_id, ino);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	raw_inode = sysv_raw_inode(sb, ino, &bh);
 	if (!raw_inode) {
 		printk("unable to read i-node block\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	raw_inode->i_mode = cpu_to_fs16(sbi, inode->i_mode);
@@ -271,7 +271,7 @@ static int __sysv_write_inode(struct inode *inode, int wait)
                 if (buffer_req(bh) && !buffer_uptodate(bh)) {
                         printk ("IO error syncing sysv inode [%s:%08x]\n",
                                 sb->s_id, ino);
-                        err = -EIO;
+                        err = -ERR(EIO);
                 }
         }
 	brelse(bh);

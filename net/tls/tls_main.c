@@ -81,7 +81,7 @@ int wait_on_pending_writer(struct sock *sk, long *timeo)
 	add_wait_queue(sk_sleep(sk), &wait);
 	while (1) {
 		if (!*timeo) {
-			rc = -EAGAIN;
+			rc = -ERR(EAGAIN);
 			break;
 		}
 
@@ -166,21 +166,21 @@ int tls_proccess_cmsg(struct sock *sk, struct msghdr *msg,
 		      unsigned char *record_type)
 {
 	struct cmsghdr *cmsg;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (cmsg->cmsg_level != SOL_TLS)
 			continue;
 
 		switch (cmsg->cmsg_type) {
 		case TLS_SET_RECORD_TYPE:
 			if (cmsg->cmsg_len < CMSG_LEN(sizeof(*record_type)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (msg->msg_flags & MSG_MORE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			rc = tls_handle_open_record(sk, msg->msg_flags);
 			if (rc)
@@ -190,7 +190,7 @@ int tls_proccess_cmsg(struct sock *sk, struct msghdr *msg,
 			rc = 0;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -342,12 +342,12 @@ static int do_tls_getsockopt_tx(struct sock *sk, char __user *optval,
 		return -EFAULT;
 
 	if (!optval || (len < sizeof(*crypto_info))) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!ctx) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -355,7 +355,7 @@ static int do_tls_getsockopt_tx(struct sock *sk, char __user *optval,
 	crypto_info = &ctx->crypto_send.info;
 
 	if (!TLS_CRYPTO_INFO_READY(crypto_info)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -374,7 +374,7 @@ static int do_tls_getsockopt_tx(struct sock *sk, char __user *optval,
 			       info);
 
 		if (len != sizeof(*crypto_info_aes_gcm_128)) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 		lock_sock(sk);
@@ -398,7 +398,7 @@ static int do_tls_getsockopt_tx(struct sock *sk, char __user *optval,
 			       info);
 
 		if (len != sizeof(*crypto_info_aes_gcm_256)) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 		lock_sock(sk);
@@ -415,7 +415,7 @@ static int do_tls_getsockopt_tx(struct sock *sk, char __user *optval,
 		break;
 	}
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 
 out:
@@ -432,7 +432,7 @@ static int do_tls_getsockopt(struct sock *sk, int optname,
 		rc = do_tls_getsockopt_tx(sk, optval, optlen);
 		break;
 	default:
-		rc = -ENOPROTOOPT;
+		rc = -ERR(ENOPROTOOPT);
 		break;
 	}
 	return rc;
@@ -461,7 +461,7 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 	int conf;
 
 	if (!optval || (optlen < sizeof(*crypto_info))) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -475,7 +475,7 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 
 	/* Currently we don't support set crypto info more than one time */
 	if (TLS_CRYPTO_INFO_READY(crypto_info)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -488,7 +488,7 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 	/* check version */
 	if (crypto_info->version != TLS_1_2_VERSION &&
 	    crypto_info->version != TLS_1_3_VERSION) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err_crypto_info;
 	}
 
@@ -496,7 +496,7 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 	if (TLS_CRYPTO_INFO_READY(alt_crypto_info)) {
 		if (alt_crypto_info->version != crypto_info->version ||
 		    alt_crypto_info->cipher_type != crypto_info->cipher_type) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto err_crypto_info;
 		}
 	}
@@ -513,12 +513,12 @@ static int do_tls_setsockopt_conf(struct sock *sk, char __user *optval,
 		optsize = sizeof(struct tls12_crypto_info_aes_ccm_128);
 		break;
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err_crypto_info;
 	}
 
 	if (optlen != optsize) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto err_crypto_info;
 	}
 
@@ -593,7 +593,7 @@ static int do_tls_setsockopt(struct sock *sk, int optname,
 		release_sock(sk);
 		break;
 	default:
-		rc = -ENOPROTOOPT;
+		rc = -ERR(ENOPROTOOPT);
 		break;
 	}
 	return rc;
@@ -716,7 +716,7 @@ static int tls_init(struct sock *sk)
 	 * share the ulp context.
 	 */
 	if (sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	/* allocate tls context */
 	write_lock_bh(&sk->sk_callback_lock);
@@ -759,7 +759,7 @@ static int tls_get_info(const struct sock *sk, struct sk_buff *skb)
 
 	start = nla_nest_start_noflag(skb, INET_ULP_INFO_TLS);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rcu_read_lock();
 	ctx = rcu_dereference(inet_csk(sk)->icsk_ulp_data);

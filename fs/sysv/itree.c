@@ -114,10 +114,10 @@ static Indirect *get_branch(struct inode *inode,
 
 changed:
 	brelse(bh);
-	*err = -EAGAIN;
+	*err = -ERR(EAGAIN);
 	goto no_block;
 failure:
-	*err = -EIO;
+	*err = -ERR(EIO);
 no_block:
 	return p;
 }
@@ -162,7 +162,7 @@ static int alloc_branch(struct inode *inode,
 		bforget(branch[i].bh);
 	for (i = 0; i < n; i++)
 		sysv_free_block(inode->i_sb, branch[i].key);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static inline int splice_branch(struct inode *inode,
@@ -197,12 +197,12 @@ changed:
 		bforget(where[i].bh);
 	for (i = 0; i < num; i++)
 		sysv_free_block(inode->i_sb, where[i].key);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int get_block(struct inode *inode, sector_t iblock, struct buffer_head *bh_result, int create)
 {
-	int err = -EIO;
+	int err = -ERR(EIO);
 	int offsets[DEPTH];
 	Indirect chain[DEPTH];
 	struct super_block *sb = inode->i_sb;

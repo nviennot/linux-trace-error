@@ -232,7 +232,7 @@ static int dsa_tree_setup_default_cpu(struct dsa_switch_tree *dst)
 	cpu_dp = dsa_tree_find_first_cpu(dst);
 	if (!cpu_dp) {
 		pr_err("DSA: tree %d has no CPU port\n", dst->index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Assign the default CPU port to all ports of the fabric */
@@ -539,7 +539,7 @@ static int dsa_tree_setup(struct dsa_switch_tree *dst)
 	if (dst->setup) {
 		pr_err("DSA: tree %d already setup! Disjoint trees?\n",
 		       dst->index);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	complete = dsa_tree_setup_routing_table(dst);
@@ -723,7 +723,7 @@ static int dsa_switch_parse_ports_of(struct dsa_switch *ds,
 	ports = of_get_child_by_name(dn, "ports");
 	if (!ports) {
 		dev_err(ds->dev, "no ports child node found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for_each_available_child_of_node(ports, port) {
@@ -732,7 +732,7 @@ static int dsa_switch_parse_ports_of(struct dsa_switch *ds,
 			goto out_put_node;
 
 		if (reg >= ds->num_ports) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_put_node;
 		}
 
@@ -844,7 +844,7 @@ static int dsa_switch_parse_ports(struct dsa_switch *ds,
 	}
 
 	if (!valid_name_found && i == DSA_MAX_PORTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -891,13 +891,13 @@ static int dsa_switch_probe(struct dsa_switch *ds)
 	int err;
 
 	if (!ds->dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	pdata = ds->dev->platform_data;
 	np = ds->dev->of_node;
 
 	if (!ds->num_ports)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (np) {
 		err = dsa_switch_parse_of(ds, np);
@@ -908,7 +908,7 @@ static int dsa_switch_probe(struct dsa_switch *ds)
 		if (err)
 			dsa_switch_release_ports(ds);
 	} else {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	}
 
 	if (err)

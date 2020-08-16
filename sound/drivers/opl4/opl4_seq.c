@@ -67,7 +67,7 @@ static int snd_opl4_seq_use(void *private_data, struct snd_seq_port_subscribe *i
 
 	if (opl4->used) {
 		mutex_unlock(&opl4->access_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	opl4->used++;
 
@@ -133,10 +133,10 @@ static int snd_opl4_seq_probe(struct device *_dev)
 
 	opl4 = *(struct snd_opl4 **)SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (!opl4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (snd_yrw801_detect(opl4) < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	opl4->chset = snd_midi_channel_alloc_set(16);
 	if (!opl4->chset)
@@ -188,7 +188,7 @@ static int snd_opl4_seq_remove(struct device *_dev)
 
 	opl4 = *(struct snd_opl4 **)SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (!opl4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (opl4->seq_client >= 0) {
 		snd_seq_delete_kernel_client(opl4->seq_client);

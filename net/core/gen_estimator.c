@@ -134,18 +134,18 @@ int gen_new_estimator(struct gnet_stats_basic_packed *bstats,
 	int intvl_log;
 
 	if (nla_len(opt) < sizeof(*parm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* allowed timer periods are :
 	 * -2 : 250ms,   -1 : 500ms,    0 : 1 sec
 	 *  1 : 2 sec,    2 : 4 sec,    3 : 8 sec
 	 */
 	if (parm->interval < -2 || parm->interval > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	est = kzalloc(sizeof(*est), GFP_KERNEL);
 	if (!est)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	seqcount_init(&est->seq);
 	intvl_log = parm->interval + 2;

@@ -158,14 +158,14 @@ int ubifs_decompress(const struct ubifs_info *c, const void *in_buf,
 
 	if (unlikely(compr_type < 0 || compr_type >= UBIFS_COMPR_TYPES_CNT)) {
 		ubifs_err(c, "invalid compression type %d", compr_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	compr = ubifs_compressors[compr_type];
 
 	if (unlikely(!compr->capi_name)) {
 		ubifs_err(c, "%s compression is not compiled in", compr->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (compr_type == UBIFS_COMPR_NONE) {

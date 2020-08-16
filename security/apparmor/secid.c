@@ -76,7 +76,7 @@ int apparmor_secid_to_secctx(u32 secid, char **secdata, u32 *seclen)
 	AA_BUG(!seclen);
 
 	if (!label)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (secdata)
 		len = aa_label_asxprint(secdata, root_ns, label,

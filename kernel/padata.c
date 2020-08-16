@@ -189,7 +189,7 @@ int padata_do_parallel(struct padata_shell *ps,
 
 	pd = rcu_dereference_bh(ps->pd);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!(pinst->flags & PADATA_INIT) || pinst->flags & PADATA_INVALID)
 		goto out;
 
@@ -207,7 +207,7 @@ int padata_do_parallel(struct padata_shell *ps,
 		*cb_cpu = cpu;
 	}
 
-	err =  -EBUSY;
+	err =  -ERR(EBUSY);
 	if ((pinst->flags & PADATA_RESET))
 		goto out;
 
@@ -761,7 +761,7 @@ int padata_set_cpumask(struct padata_instance *pinst, int cpumask_type,
 		       cpumask_var_t cpumask)
 {
 	struct cpumask *serial_mask, *parallel_mask;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	get_online_cpus();
 	mutex_lock(&pinst->lock);
@@ -803,7 +803,7 @@ int padata_start(struct padata_instance *pinst)
 	mutex_lock(&pinst->lock);
 
 	if (pinst->flags & PADATA_INVALID)
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 	__padata_start(pinst);
 
@@ -950,7 +950,7 @@ static ssize_t show_cpumask(struct padata_instance *pinst,
 	len = snprintf(buf, PAGE_SIZE, "%*pb\n",
 		       nr_cpu_ids, cpumask_bits(cpumask));
 	mutex_unlock(&pinst->lock);
-	return len < PAGE_SIZE ? len : -EINVAL;
+	return len < PAGE_SIZE ? len : -ERR(EINVAL);
 }
 
 static ssize_t store_cpumask(struct padata_instance *pinst,
@@ -1007,7 +1007,7 @@ static ssize_t padata_sysfs_show(struct kobject *kobj,
 {
 	struct padata_instance *pinst;
 	struct padata_sysfs_entry *pentry;
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 
 	pinst = kobj2pinst(kobj);
 	pentry = attr2pentry(attr);
@@ -1022,7 +1022,7 @@ static ssize_t padata_sysfs_store(struct kobject *kobj, struct attribute *attr,
 {
 	struct padata_instance *pinst;
 	struct padata_sysfs_entry *pentry;
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 
 	pinst = kobj2pinst(kobj);
 	pentry = attr2pentry(attr);

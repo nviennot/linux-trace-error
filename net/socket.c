@@ -192,7 +192,7 @@ static const struct net_proto_family __rcu *net_families[NPROTO] __read_mostly;
 int move_addr_to_kernel(void __user *uaddr, int ulen, struct sockaddr_storage *kaddr)
 {
 	if (ulen < 0 || ulen > sizeof(struct sockaddr_storage))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ulen == 0)
 		return 0;
 	if (copy_from_user(kaddr, uaddr, ulen))
@@ -230,7 +230,7 @@ static int move_addr_to_user(struct sockaddr_storage *kaddr, int klen,
 	if (len > klen)
 		len = klen;
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len) {
 		if (audit_sockaddr(klen, kaddr))
 			return -ENOMEM;
@@ -318,7 +318,7 @@ static int sockfs_xattr_get(const struct xattr_handler *handler,
 {
 	if (value) {
 		if (dentry->d_name.len + 1 > size)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		memcpy(value, dentry->d_name.name, dentry->d_name.len + 1);
 	}
 	return dentry->d_name.len + 1;
@@ -339,7 +339,7 @@ static int sockfs_security_xattr_set(const struct xattr_handler *handler,
 				     size_t size, int flags)
 {
 	/* Handled by LSM. */
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static const struct xattr_handler sockfs_security_xattr_handler = {
@@ -455,7 +455,7 @@ struct socket *sock_from_file(struct file *file, int *err)
 	if (file->f_op == &socket_file_ops)
 		return file->private_data;	/* set in sock_map_fd */
 
-	*err = -ENOTSOCK;
+	*err = -ERR(ENOTSOCK);
 	return NULL;
 }
 EXPORT_SYMBOL(sock_from_file);
@@ -480,7 +480,7 @@ struct socket *sockfd_lookup(int fd, int *err)
 
 	file = fget(fd);
 	if (!file) {
-		*err = -EBADF;
+		*err = -ERR(EBADF);
 		return NULL;
 	}
 
@@ -496,7 +496,7 @@ static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
 	struct fd f = fdget(fd);
 	struct socket *sock;
 
-	*err = -EBADF;
+	*err = -ERR(EBADF);
 	if (f.file) {
 		sock = sock_from_file(f.file, err);
 		if (likely(sock)) {
@@ -520,7 +520,7 @@ static ssize_t sockfs_listxattr(struct dentry *dentry, char *buffer,
 	used += len;
 	if (buffer) {
 		if (size < used)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		buffer += len;
 	}
 
@@ -528,7 +528,7 @@ static ssize_t sockfs_listxattr(struct dentry *dentry, char *buffer,
 	used += len;
 	if (buffer) {
 		if (size < used)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		memcpy(buffer, XATTR_NAME_SOCKPROTONAME, len);
 		buffer += len;
 	}
@@ -546,7 +546,7 @@ static int sockfs_setattr(struct dentry *dentry, struct iattr *iattr)
 		if (sock->sk)
 			sock->sk->sk_uid = iattr->ia_uid;
 		else
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 	}
 
 	return err;
@@ -969,7 +969,7 @@ static ssize_t sock_read_iter(struct kiocb *iocb, struct iov_iter *to)
 		msg.msg_flags = MSG_DONTWAIT;
 
 	if (iocb->ki_pos != 0)
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	if (!iov_iter_count(to))	/* Match SYS5 behaviour */
 		return 0;
@@ -988,7 +988,7 @@ static ssize_t sock_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	ssize_t res;
 
 	if (iocb->ki_pos != 0)
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	if (file->f_flags & O_NONBLOCK || (iocb->ki_flags & IOCB_NOWAIT))
 		msg.msg_flags = MSG_DONTWAIT;
@@ -1137,7 +1137,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 		case SIOCSIFBR:
 		case SIOCBRADDBR:
 		case SIOCBRDELBR:
-			err = -ENOPKG;
+			err = -ERR(ENOPKG);
 			if (!br_ioctl_hook)
 				request_module("bridge");
 
@@ -1148,7 +1148,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			break;
 		case SIOCGIFVLAN:
 		case SIOCSIFVLAN:
-			err = -ENOPKG;
+			err = -ERR(ENOPKG);
 			if (!vlan_ioctl_hook)
 				request_module("8021q");
 
@@ -1159,7 +1159,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			break;
 		case SIOCADDDLCI:
 		case SIOCDELDLCI:
-			err = -ENOPKG;
+			err = -ERR(ENOPKG);
 			if (!dlci_ioctl_hook)
 				request_module("dlci");
 
@@ -1169,7 +1169,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			mutex_unlock(&dlci_ioctl_mutex);
 			break;
 		case SIOCGSKNS:
-			err = -EPERM;
+			err = -ERR(EPERM);
 			if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 				break;
 
@@ -1178,7 +1178,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 		case SIOCGSTAMP_OLD:
 		case SIOCGSTAMPNS_OLD:
 			if (!sock->ops->gettstamp) {
-				err = -ENOIOCTLCMD;
+				err = -ERR(ENOIOCTLCMD);
 				break;
 			}
 			err = sock->ops->gettstamp(sock, argp,
@@ -1188,7 +1188,7 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 		case SIOCGSTAMP_NEW:
 		case SIOCGSTAMPNS_NEW:
 			if (!sock->ops->gettstamp) {
-				err = -ENOIOCTLCMD;
+				err = -ERR(ENOIOCTLCMD);
 				break;
 			}
 			err = sock->ops->gettstamp(sock, argp,
@@ -1297,7 +1297,7 @@ static int sock_fasync(int fd, struct file *filp, int on)
 	struct socket_wq *wq = &sock->wq;
 
 	if (sk == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	fasync_helper(fd, filp, on, &wq->fasync_list);
@@ -1365,9 +1365,9 @@ int __sock_create(struct net *net, int family, int type, int protocol,
 	 *      Check protocol is in range
 	 */
 	if (family < 0 || family >= NPROTO)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	if (type < 0 || type >= SOCK_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Compatibility.
 
@@ -1392,7 +1392,7 @@ int __sock_create(struct net *net, int family, int type, int protocol,
 	sock = sock_alloc();
 	if (!sock) {
 		net_warn_ratelimited("socket: no more sockets\n");
-		return -ENFILE;	/* Not exactly a match, but its the
+		return -ERR(ENFILE);	/* Not exactly a match, but its the
 				   closest posix thing */
 	}
 
@@ -1411,7 +1411,7 @@ int __sock_create(struct net *net, int family, int type, int protocol,
 
 	rcu_read_lock();
 	pf = rcu_dereference(net_families[family]);
-	err = -EAFNOSUPPORT;
+	err = -ERR(EAFNOSUPPORT);
 	if (!pf)
 		goto out_release;
 
@@ -1449,7 +1449,7 @@ int __sock_create(struct net *net, int family, int type, int protocol,
 	return 0;
 
 out_module_busy:
-	err = -EAFNOSUPPORT;
+	err = -ERR(EAFNOSUPPORT);
 out_module_put:
 	sock->ops = NULL;
 	module_put(pf->owner);
@@ -1512,7 +1512,7 @@ int __sys_socket(int family, int type, int protocol)
 
 	flags = type & ~SOCK_TYPE_MASK;
 	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	type &= SOCK_TYPE_MASK;
 
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
@@ -1543,7 +1543,7 @@ int __sys_socketpair(int family, int type, int protocol, int __user *usockvec)
 
 	flags = type & ~SOCK_TYPE_MASK;
 	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	type &= SOCK_TYPE_MASK;
 
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
@@ -1711,7 +1711,7 @@ int __sys_accept4_file(struct file *file, unsigned file_flags,
 	struct sockaddr_storage address;
 
 	if (flags & ~(SOCK_CLOEXEC | SOCK_NONBLOCK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (SOCK_NONBLOCK != O_NONBLOCK && (flags & SOCK_NONBLOCK))
 		flags = (flags & ~SOCK_NONBLOCK) | O_NONBLOCK;
@@ -1720,7 +1720,7 @@ int __sys_accept4_file(struct file *file, unsigned file_flags,
 	if (!sock)
 		goto out;
 
-	err = -ENFILE;
+	err = -ERR(ENFILE);
 	newsock = sock_alloc();
 	if (!newsock)
 		goto out;
@@ -1760,7 +1760,7 @@ int __sys_accept4_file(struct file *file, unsigned file_flags,
 		len = newsock->ops->getname(newsock,
 					(struct sockaddr *)&address, 2);
 		if (len < 0) {
-			err = -ECONNABORTED;
+			err = -ERR(ECONNABORTED);
 			goto out_fd;
 		}
 		err = move_addr_to_user(&address,
@@ -1797,7 +1797,7 @@ out_fd:
 int __sys_accept4(int fd, struct sockaddr __user *upeer_sockaddr,
 		  int __user *upeer_addrlen, int flags)
 {
-	int ret = -EBADF;
+	int ret = -ERR(EBADF);
 	struct fd f;
 
 	f = fdget(fd);
@@ -1859,7 +1859,7 @@ out:
 
 int __sys_connect(int fd, struct sockaddr __user *uservaddr, int addrlen)
 {
-	int ret = -EBADF;
+	int ret = -ERR(EBADF);
 	struct fd f;
 
 	f = fdget(fd);
@@ -2094,7 +2094,7 @@ static int __sys_setsockopt(int fd, int level, int optname,
 	struct socket *sock;
 
 	if (optlen < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (sock != NULL) {
@@ -2244,7 +2244,7 @@ int __copy_msghdr_from_user(struct msghdr *kmsg,
 		kmsg->msg_namelen = 0;
 
 	if (kmsg->msg_namelen < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (kmsg->msg_namelen > sizeof(struct sockaddr_storage))
 		kmsg->msg_namelen = sizeof(struct sockaddr_storage);
@@ -2266,7 +2266,7 @@ int __copy_msghdr_from_user(struct msghdr *kmsg,
 	}
 
 	if (msg.msg_iovlen > UIO_MAXIOV)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	kmsg->msg_iocb = NULL;
 	*uiov = msg.msg_iov;
@@ -2304,7 +2304,7 @@ static int ____sys_sendmsg(struct socket *sock, struct msghdr *msg_sys,
 	int ctl_len;
 	ssize_t err;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 
 	if (msg_sys->msg_controllen > INT_MAX)
 		goto out;
@@ -2417,7 +2417,7 @@ long __sys_sendmsg_sock(struct socket *sock, struct msghdr *msg,
 {
 	/* disallow ancillary data requests from this path */
 	if (msg->msg_control || msg->msg_controllen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ____sys_sendmsg(sock, msg, flags, NULL, 0);
 }
@@ -2430,7 +2430,7 @@ long __sys_sendmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 	struct socket *sock;
 
 	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2464,7 +2464,7 @@ int __sys_sendmmsg(int fd, struct mmsghdr __user *mmsg, unsigned int vlen,
 	unsigned int oflags = flags;
 
 	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (vlen > UIO_MAXIOV)
 		vlen = UIO_MAXIOV;
@@ -2629,7 +2629,7 @@ long __sys_recvmsg_sock(struct socket *sock, struct msghdr *msg,
 {
 	/* disallow ancillary data requests from this path */
 	if (msg->msg_control || msg->msg_controllen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ____sys_recvmsg(sock, msg, umsg, uaddr, flags, 0);
 }
@@ -2642,7 +2642,7 @@ long __sys_recvmsg(int fd, struct user_msghdr __user *msg, unsigned int flags,
 	struct socket *sock;
 
 	if (forbid_cmsg_compat && (flags & MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock = sockfd_lookup_light(fd, &err, &fput_needed);
 	if (!sock)
@@ -2680,7 +2680,7 @@ static int do_recvmmsg(int fd, struct mmsghdr __user *mmsg,
 	if (timeout &&
 	    poll_select_set_timeout(&end_time, timeout->tv_sec,
 				    timeout->tv_nsec))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	datagrams = 0;
 
@@ -2812,7 +2812,7 @@ SYSCALL_DEFINE5(recvmmsg, int, fd, struct mmsghdr __user *, mmsg,
 		struct __kernel_timespec __user *, timeout)
 {
 	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __sys_recvmmsg(fd, mmsg, vlen, flags, timeout, NULL);
 }
@@ -2823,7 +2823,7 @@ SYSCALL_DEFINE5(recvmmsg_time32, int, fd, struct mmsghdr __user *, mmsg,
 		struct old_timespec32 __user *, timeout)
 {
 	if (flags & MSG_CMSG_COMPAT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __sys_recvmmsg(fd, mmsg, vlen, flags, NULL, timeout);
 }
@@ -2857,12 +2857,12 @@ SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
 	unsigned int len;
 
 	if (call < 1 || call > SYS_SENDMMSG)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	call = array_index_nospec(call, SYS_SENDMMSG + 1);
 
 	len = nargs[call];
 	if (len > sizeof(a))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* copy_from_user should be SMP safe. */
 	if (copy_from_user(a, args, len))
@@ -2962,7 +2962,7 @@ SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
 				    (int __user *)a[2], a[3]);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	return err;
@@ -2985,13 +2985,13 @@ int sock_register(const struct net_proto_family *ops)
 
 	if (ops->family >= NPROTO) {
 		pr_crit("protocol %d >= NPROTO(%d)\n", ops->family, NPROTO);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	spin_lock(&net_family_lock);
 	if (rcu_dereference_protected(net_families[ops->family],
 				      lockdep_is_held(&net_family_lock)))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else {
 		rcu_assign_pointer(net_families[ops->family], ops);
 		err = 0;
@@ -3378,7 +3378,7 @@ static int old_bridge_ioctl(compat_ulong_t __user *argp)
 		return -EFAULT;
 	if (tmp == BRCTL_GET_VERSION)
 		return BRCTL_VERSION + 1;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int compat_sock_ioctl_trans(struct file *file, struct socket *sock,
@@ -3407,7 +3407,7 @@ static int compat_sock_ioctl_trans(struct file *file, struct socket *sock,
 	case SIOCGSTAMP_OLD:
 	case SIOCGSTAMPNS_OLD:
 		if (!sock->ops->gettstamp)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		return sock->ops->gettstamp(sock, argp, cmd == SIOCGSTAMP_OLD,
 					    !COMPAT_USE_64BIT_TIME);
 
@@ -3481,14 +3481,14 @@ static int compat_sock_ioctl_trans(struct file *file, struct socket *sock,
 		return sock_do_ioctl(net, sock, cmd, arg);
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static long compat_sock_ioctl(struct file *file, unsigned int cmd,
 			      unsigned long arg)
 {
 	struct socket *sock = file->private_data;
-	int ret = -ENOIOCTLCMD;
+	int ret = -ERR(ENOIOCTLCMD);
 	struct sock *sk;
 	struct net *net;
 

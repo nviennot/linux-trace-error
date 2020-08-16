@@ -523,9 +523,9 @@ static blk_status_t dio_bio_complete(struct dio *dio, struct bio *bio)
 
 	if (err) {
 		if (err == BLK_STS_AGAIN && (bio->bi_opf & REQ_NOWAIT))
-			dio->io_error = -EAGAIN;
+			dio->io_error = -ERR(EAGAIN);
 		else
-			dio->io_error = -EIO;
+			dio->io_error = -ERR(EIO);
 	}
 
 	if (dio->is_async && should_dirty) {
@@ -1020,7 +1020,7 @@ do_holes:
 				/* AKPM: eargh, -ENOTBLK is a hack */
 				if (dio->op == REQ_OP_WRITE) {
 					put_page(page);
-					return -ENOTBLK;
+					return -ERR(ENOTBLK);
 				}
 
 				/*
@@ -1150,7 +1150,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	unsigned i_blkbits = READ_ONCE(inode->i_blkbits);
 	unsigned blkbits = i_blkbits;
 	unsigned blocksize_mask = (1 << blkbits) - 1;
-	ssize_t retval = -EINVAL;
+	ssize_t retval = -ERR(EINVAL);
 	const size_t count = iov_iter_count(iter);
 	loff_t offset = iocb->ki_pos;
 	const loff_t end = offset + count;
@@ -1359,7 +1359,7 @@ do_blockdev_direct_IO(struct kiocb *iocb, struct inode *inode,
 	BUG_ON(retval == -EIOCBQUEUED);
 	if (dio->is_async && retval == 0 && dio->result &&
 	    (iov_iter_rw(iter) == READ || dio->result == count))
-		retval = -EIOCBQUEUED;
+		retval = -ERR(EIOCBQUEUED);
 	else
 		dio_await_completion(dio);
 

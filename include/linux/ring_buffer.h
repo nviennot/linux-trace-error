@@ -153,7 +153,7 @@ static inline int
 ring_buffer_swap_cpu(struct trace_buffer *buffer_a,
 		     struct trace_buffer *buffer_b, int cpu)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

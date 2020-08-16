@@ -1135,7 +1135,7 @@ static int cs47l15_set_fll(struct snd_soc_component *component, int fll_id,
 		return madera_set_fll_syncclk(&cs47l15->fll[0], source, fref,
 					      fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1244,7 +1244,7 @@ static int cs47l15_open(struct snd_soc_component *component,
 		dev_err(madera->dev,
 			"No suitable compressed stream for DAI '%s'\n",
 			asoc_rtd_to_codec(rtd, 0)->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return wm_adsp_compr_open(&priv->adsp[n_adsp], stream);

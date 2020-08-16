@@ -221,7 +221,7 @@ static int nla_put_nh_group(struct sk_buff *skb, struct nh_group *nhg)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int nh_fill_node(struct sk_buff *skb, struct nexthop *nh,
@@ -235,7 +235,7 @@ static int nh_fill_node(struct sk_buff *skb, struct nexthop *nh,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*nhm), nlflags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nhm = nlmsg_data(nlh);
 	nhm->nh_family = AF_UNSPEC;
@@ -302,7 +302,7 @@ out:
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static size_t nh_nlmsg_size_grp(struct nexthop *nh)
@@ -364,7 +364,7 @@ static void nexthop_notify(int event, struct nexthop *nh, struct nl_info *info)
 	unsigned int nlflags = info->nlh ? info->nlh->nlmsg_flags : 0;
 	u32 seq = info->nlh ? info->nlh->nlmsg_seq : 0;
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(nh_nlmsg_size(nh), gfp_any());
 	if (!skb)
@@ -424,14 +424,14 @@ static int nh_check_attr_fdb_group(struct nexthop *nh, u8 *nh_family,
 
 	if (!nhi->fdb_nh) {
 		NL_SET_ERR_MSG(extack, "FDB nexthop group can only have fdb nexthops");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (*nh_family == AF_UNSPEC) {
 		*nh_family = nhi->family;
 	} else if (*nh_family != nhi->family) {
 		NL_SET_ERR_MSG(extack, "FDB nexthop group cannot have mixed family nexthops");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -449,7 +449,7 @@ static int nh_check_attr_group(struct net *net, struct nlattr *tb[],
 	if (len & (sizeof(struct nexthop_grp) - 1)) {
 		NL_SET_ERR_MSG(extack,
 			       "Invalid length for nexthop group attribute");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* convert len to number of nexthop ids */
@@ -459,16 +459,16 @@ static int nh_check_attr_group(struct net *net, struct nlattr *tb[],
 	for (i = 0; i < len; ++i) {
 		if (nhg[i].resvd1 || nhg[i].resvd2) {
 			NL_SET_ERR_MSG(extack, "Reserved fields in nexthop_grp must be 0");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (nhg[i].weight > 254) {
 			NL_SET_ERR_MSG(extack, "Invalid value for weight");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		for (j = i + 1; j < len; ++j) {
 			if (nhg[i].id == nhg[j].id) {
 				NL_SET_ERR_MSG(extack, "Nexthop id can not be used twice in a group");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -483,17 +483,17 @@ static int nh_check_attr_group(struct net *net, struct nlattr *tb[],
 		nh = nexthop_find_by_id(net, nhg[i].id);
 		if (!nh) {
 			NL_SET_ERR_MSG(extack, "Invalid nexthop id");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!valid_group_nh(nh, len, &is_fdb_nh, extack))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (nhg_fdb && nh_check_attr_fdb_group(nh, &nh_family, extack))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!nhg_fdb && is_fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Non FDB nexthop group cannot have fdb nexthops");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	for (i = NHA_GROUP_TYPE + 1; i < __NHA_MAX; ++i) {
@@ -503,7 +503,7 @@ static int nh_check_attr_group(struct net *net, struct nlattr *tb[],
 			continue;
 		NL_SET_ERR_MSG(extack,
 			       "No other attributes can be set in nexthop groups");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -621,7 +621,7 @@ static int check_src_addr(const struct in6_addr *saddr,
 {
 	if (!ipv6_addr_any(saddr)) {
 		NL_SET_ERR_MSG(extack, "IPv6 routes using source address can not use nexthop objects");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -639,7 +639,7 @@ int fib6_check_nexthop(struct nexthop *nh, struct fib6_config *cfg,
 	 * fib6_src on routes.
 	 */
 	if (cfg && check_src_addr(&cfg->fc_src, extack) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nh->is_group) {
 		struct nh_group *nhg;
@@ -657,13 +657,13 @@ int fib6_check_nexthop(struct nexthop *nh, struct fib6_config *cfg,
 
 	if (is_fdb_nh) {
 		NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
 no_v4_nh:
 	NL_SET_ERR_MSG(extack, "IPv6 routes can not use an IPv4 nexthop");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(fib6_check_nexthop);
 
@@ -680,7 +680,7 @@ static int fib6_check_nh_list(struct nexthop *old, struct nexthop *new,
 
 	list_for_each_entry(f6i, &old->f6i_list, nh_list) {
 		if (check_src_addr(&f6i->fib6_src.addr, extack) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return fib6_check_nexthop(new, NULL, extack);
@@ -692,12 +692,12 @@ static int nexthop_check_scope(struct nh_info *nhi, u8 scope,
 	if (scope == RT_SCOPE_HOST && nhi->fib_nhc.nhc_gw_family) {
 		NL_SET_ERR_MSG(extack,
 			       "Route with host scope can not have a gateway");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nhi->fib_nhc.nhc_flags & RTNH_F_ONLINK && scope >= RT_SCOPE_LINK) {
 		NL_SET_ERR_MSG(extack, "Scope mismatch with nexthop");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -719,13 +719,13 @@ int fib_check_nexthop(struct nexthop *nh, u8 scope,
 		nhg = rtnl_dereference(nh->nh_grp);
 		if (nhg->fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
 		if (scope == RT_SCOPE_HOST) {
 			NL_SET_ERR_MSG(extack, "Route with host scope can not have multiple nexthops");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -736,7 +736,7 @@ int fib_check_nexthop(struct nexthop *nh, u8 scope,
 		nhi = rtnl_dereference(nh->nh_info);
 		if (nhi->fdb_nh) {
 			NL_SET_ERR_MSG(extack, "Route cannot point to a fdb nexthop");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		err = nexthop_check_scope(nhi, scope, extack);
@@ -941,7 +941,7 @@ static int replace_nexthop_grp(struct net *net, struct nexthop *old,
 
 	if (!new->is_group) {
 		NL_SET_ERR_MSG(extack, "Can not replace a nexthop group with a nexthop.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	oldg = rtnl_dereference(old->nh_grp);
@@ -969,7 +969,7 @@ static int replace_nexthop_single(struct net *net, struct nexthop *old,
 
 	if (new->is_group) {
 		NL_SET_ERR_MSG(extack, "Can not replace a nexthop with a nexthop group.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	oldi = rtnl_dereference(old->nh_info);
@@ -1058,7 +1058,7 @@ static int replace_nexthop(struct net *net, struct nexthop *old,
 		if (new_is_reject &&
 		    nexthop_num_path(nhge->nh_parent) > 1) {
 			NL_SET_ERR_MSG(extack, "Blackhole nexthop can not be a member of a group with more than one path");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		err = fib_check_nh_list(nhge->nh_parent, new, extack);
@@ -1095,7 +1095,7 @@ static int insert_nexthop(struct net *net, struct nexthop *new_nh,
 	bool create = !!(cfg->nlflags & NLM_F_CREATE);
 	u32 new_id = new_nh->id;
 	int replace_notify = 0;
-	int rc = -EEXIST;
+	int rc = -ERR(EEXIST);
 
 	pp = &root->rb_node;
 	while (1) {
@@ -1127,7 +1127,7 @@ static int insert_nexthop(struct net *net, struct nexthop *new_nh,
 
 	if (replace && !create) {
 		NL_SET_ERR_MSG(extack, "Replace specified without create and no entry exists");
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1246,7 +1246,7 @@ out_no_nh:
 	kfree(nhg);
 	kfree(nh);
 
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static int nh_create_ipv4(struct net *net, struct nexthop *nh,
@@ -1382,14 +1382,14 @@ static struct nexthop *nexthop_add(struct net *net, struct nh_config *cfg,
 
 	if (cfg->nlflags & NLM_F_REPLACE && !cfg->nh_id) {
 		NL_SET_ERR_MSG(extack, "Replace requires nexthop id");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (!cfg->nh_id) {
 		cfg->nh_id = nh_find_unused_id(net);
 		if (!cfg->nh_id) {
 			NL_SET_ERR_MSG(extack, "No unused id");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 	}
 
@@ -1429,7 +1429,7 @@ static int rtm_to_nh_config(struct net *net, struct sk_buff *skb,
 	if (err < 0)
 		return err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (nhm->resvd || nhm->nh_scope) {
 		NL_SET_ERR_MSG(extack, "Invalid values in ancillary header");
 		goto out;
@@ -1531,16 +1531,16 @@ static int rtm_to_nh_config(struct net *net, struct sk_buff *skb,
 			goto out;
 		} else if (!(cfg->dev->flags & IFF_UP)) {
 			NL_SET_ERR_MSG(extack, "Nexthop device is not up");
-			err = -ENETDOWN;
+			err = -ERR(ENETDOWN);
 			goto out;
 		} else if (!netif_carrier_ok(cfg->dev)) {
 			NL_SET_ERR_MSG(extack, "Carrier for nexthop device is down");
-			err = -ENETDOWN;
+			err = -ERR(ENETDOWN);
 			goto out;
 		}
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[NHA_GATEWAY]) {
 		struct nlattr *gwa = tb[NHA_GATEWAY];
 
@@ -1628,7 +1628,7 @@ static int nh_valid_get_del_req(struct nlmsghdr *nlh, u32 *id,
 	if (err < 0)
 		return err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (i = 0; i < __NHA_MAX; ++i) {
 		if (!tb[i])
 			continue;
@@ -1681,7 +1681,7 @@ static int rtm_del_nexthop(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	nh = nexthop_find_by_id(net, id);
 	if (!nh)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	remove_nexthop(net, nh, &nlinfo);
 
@@ -1702,12 +1702,12 @@ static int rtm_get_nexthop(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 	if (err)
 		return err;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
 		goto out;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	nh = nexthop_find_by_id(net, id);
 	if (!nh)
 		goto errout_free;
@@ -1788,7 +1788,7 @@ static int nh_valid_dump_req(const struct nlmsghdr *nlh, int *dev_idx,
 			idx = nla_get_u32(tb[i]);
 			if (idx > INT_MAX) {
 				NL_SET_ERR_MSG(extack, "Invalid device index");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			*dev_idx = idx;
 			break;
@@ -1796,7 +1796,7 @@ static int nh_valid_dump_req(const struct nlmsghdr *nlh, int *dev_idx,
 			idx = nla_get_u32(tb[i]);
 			if (idx > INT_MAX) {
 				NL_SET_ERR_MSG(extack, "Invalid master device index");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			*master_idx = idx;
 			break;
@@ -1808,14 +1808,14 @@ static int nh_valid_dump_req(const struct nlmsghdr *nlh, int *dev_idx,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	nhm = nlmsg_data(nlh);
 	if (nhm->nh_protocol || nhm->resvd || nhm->nh_scope || nhm->nh_flags) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for nexthop dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

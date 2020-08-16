@@ -180,7 +180,7 @@ static int rt5682_i2c_probe(struct i2c_client *i2c,
 	if (val != DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt5682\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	mutex_init(&rt5682->calibrate_mutex);

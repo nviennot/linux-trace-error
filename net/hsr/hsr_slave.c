@@ -62,31 +62,31 @@ static int hsr_check_dev_ok(struct net_device *dev,
 	if ((dev->flags & IFF_LOOPBACK) || dev->type != ARPHRD_ETHER ||
 	    dev->addr_len != ETH_ALEN) {
 		NL_SET_ERR_MSG_MOD(extack, "Cannot use loopback or non-ethernet device as HSR slave.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Don't allow enslaving hsr devices */
 	if (is_hsr_master(dev)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Cannot create trees of HSR devices.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (hsr_port_exists(dev)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "This device is already a HSR slave.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (is_vlan_dev(dev)) {
 		NL_SET_ERR_MSG_MOD(extack, "HSR on top of VLAN is not yet supported in this driver.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev->priv_flags & IFF_DONT_BRIDGE) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "This device does not support bridging.");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* HSR over bonded devices has not been tested, but I'm not sure it
@@ -145,7 +145,7 @@ int hsr_add_port(struct hsr_priv *hsr, struct net_device *dev,
 
 	port = hsr_port_get_hsr(hsr, type);
 	if (port)
-		return -EBUSY;	/* This port already exists */
+		return -ERR(EBUSY);	/* This port already exists */
 
 	port = kzalloc(sizeof(*port), GFP_KERNEL);
 	if (!port)

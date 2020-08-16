@@ -139,7 +139,7 @@ static int pcm1681_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	/* The PCM1681 can only be slave to all clocks */
 	if ((format & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
 		dev_err(component->dev, "Invalid clocking mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->format = format;
@@ -181,7 +181,7 @@ static int pcm1681_hw_params(struct snd_pcm_substream *substream,
 			val = 3;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -192,7 +192,7 @@ static int pcm1681_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(priv->regmap, PCM1681_FMT_CONTROL, 0x0f, val);

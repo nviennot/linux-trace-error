@@ -815,7 +815,7 @@ static int bcm_read_op(struct list_head *ops, struct bcm_msg_head *msg_head,
 	struct bcm_op *op = bcm_find_op(ops, msg_head, ifindex);
 
 	if (!op)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* put current values into msg_head */
 	msg_head->flags   = op->flags;
@@ -843,15 +843,15 @@ static int bcm_tx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 
 	/* we need a real device to send frames */
 	if (!ifindex)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* check nframes boundaries - we need at least one CAN frame */
 	if (msg_head->nframes < 1 || msg_head->nframes > MAX_NFRAMES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check timeval limitations */
 	if ((msg_head->flags & SETTIMER) && bcm_is_invalid_tv(msg_head))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check the given can_id */
 	op = bcm_find_op(&bo->tx_ops, msg_head, ifindex);
@@ -864,7 +864,7 @@ static int bcm_tx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 		 * therefore (complexity / locking) it is not supported.
 		 */
 		if (msg_head->nframes > op->nframes)
-			return -E2BIG;
+			return -ERR(E2BIG);
 
 		/* update CAN frames content */
 		for (i = 0; i < msg_head->nframes; i++) {
@@ -874,10 +874,10 @@ static int bcm_tx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 
 			if (op->flags & CAN_FD_FRAME) {
 				if (cf->len > 64)
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 			} else {
 				if (cf->len > 8)
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 			}
 
 			if (err < 0)
@@ -920,10 +920,10 @@ static int bcm_tx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 
 			if (op->flags & CAN_FD_FRAME) {
 				if (cf->len > 64)
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 			} else {
 				if (cf->len > 8)
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 			}
 
 			if (err < 0) {
@@ -1024,16 +1024,16 @@ static int bcm_rx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 
 	/* the first element contains the mux-mask => MAX_NFRAMES + 1  */
 	if (msg_head->nframes > MAX_NFRAMES + 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((msg_head->flags & RX_RTR_FRAME) &&
 	    ((msg_head->nframes != 1) ||
 	     (!(msg_head->can_id & CAN_RTR_FLAG))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check timeval limitations */
 	if ((msg_head->flags & SETTIMER) && bcm_is_invalid_tv(msg_head))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check the given can_id */
 	op = bcm_find_op(&bo->rx_ops, msg_head, ifindex);
@@ -1046,7 +1046,7 @@ static int bcm_rx_setup(struct bcm_msg_head *msg_head, struct msghdr *msg,
 		 * therefore (complexity / locking) it is not supported.
 		 */
 		if (msg_head->nframes > op->nframes)
-			return -E2BIG;
+			return -ERR(E2BIG);
 
 		if (msg_head->nframes) {
 			/* update CAN frames content */
@@ -1227,7 +1227,7 @@ static int bcm_tx_send(struct msghdr *msg, int ifindex, struct sock *sk,
 
 	/* we need a real device to send frames */
 	if (!ifindex)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	skb = alloc_skb(cfsiz + sizeof(struct can_skb_priv), GFP_KERNEL);
 	if (!skb)
@@ -1244,7 +1244,7 @@ static int bcm_tx_send(struct msghdr *msg, int ifindex, struct sock *sk,
 	dev = dev_get_by_index(sock_net(sk), ifindex);
 	if (!dev) {
 		kfree_skb(skb);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	can_skb_prv(skb)->ifindex = dev->ifindex;
@@ -1273,11 +1273,11 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 	int ret; /* read bytes or error codes as return value */
 
 	if (!bo->bound)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	/* check for valid message length from userspace */
 	if (size < MHSIZ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* read message head information */
 	ret = memcpy_from_msg((u8 *)&msg_head, msg, MHSIZ);
@@ -1286,7 +1286,7 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 
 	cfsiz = CFSIZ(msg_head.flags);
 	if ((size - MHSIZ) % cfsiz)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check for alternative ifindex for this bcm_op */
 
@@ -1295,10 +1295,10 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 		DECLARE_SOCKADDR(struct sockaddr_can *, addr, msg->msg_name);
 
 		if (msg->msg_namelen < CAN_REQUIRED_SIZE(*addr, can_ifindex))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (addr->can_family != AF_CAN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* ifindex from sendto() */
 		ifindex = addr->can_ifindex;
@@ -1308,11 +1308,11 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 
 			dev = dev_get_by_index(sock_net(sk), ifindex);
 			if (!dev)
-				return -ENODEV;
+				return -ERR(ENODEV);
 
 			if (dev->type != ARPHRD_CAN) {
 				dev_put(dev);
-				return -ENODEV;
+				return -ERR(ENODEV);
 			}
 
 			dev_put(dev);
@@ -1335,14 +1335,14 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 		if (bcm_delete_tx_op(&bo->tx_ops, &msg_head, ifindex))
 			ret = MHSIZ;
 		else
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		break;
 
 	case RX_DELETE:
 		if (bcm_delete_rx_op(&bo->rx_ops, &msg_head, ifindex))
 			ret = MHSIZ;
 		else
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		break;
 
 	case TX_READ:
@@ -1360,13 +1360,13 @@ static int bcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 	case TX_SEND:
 		/* we need exactly one CAN frame behind the msg head */
 		if ((msg_head.nframes != 1) || (size != cfsiz + MHSIZ))
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			ret = bcm_tx_send(msg, ifindex, sk, cfsiz);
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -1413,7 +1413,7 @@ static int bcm_notifier(struct notifier_block *nb, unsigned long msg,
 		release_sock(sk);
 
 		if (notify_enodev) {
-			sk->sk_err = ENODEV;
+			sk->sk_err = ERR(ENODEV);
 			if (!sock_flag(sk, SOCK_DEAD))
 				sk->sk_error_report(sk);
 		}
@@ -1421,7 +1421,7 @@ static int bcm_notifier(struct notifier_block *nb, unsigned long msg,
 
 	case NETDEV_DOWN:
 		if (bo->bound && bo->ifindex == dev->ifindex) {
-			sk->sk_err = ENETDOWN;
+			sk->sk_err = ERR(ENETDOWN);
 			if (!sock_flag(sk, SOCK_DEAD))
 				sk->sk_error_report(sk);
 		}
@@ -1537,12 +1537,12 @@ static int bcm_connect(struct socket *sock, struct sockaddr *uaddr, int len,
 	int ret = 0;
 
 	if (len < CAN_REQUIRED_SIZE(*addr, can_ifindex))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
 	if (bo->bound) {
-		ret = -EISCONN;
+		ret = -ERR(EISCONN);
 		goto fail;
 	}
 
@@ -1552,12 +1552,12 @@ static int bcm_connect(struct socket *sock, struct sockaddr *uaddr, int len,
 
 		dev = dev_get_by_index(net, addr->can_ifindex);
 		if (!dev) {
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto fail;
 		}
 		if (dev->type != ARPHRD_CAN) {
 			dev_put(dev);
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto fail;
 		}
 
@@ -1632,7 +1632,7 @@ static int bcm_sock_no_ioctlcmd(struct socket *sock, unsigned int cmd,
 				unsigned long arg)
 {
 	/* no ioctls for socket layer -> hand it down to NIC layer */
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static const struct proto_ops bcm_ops = {

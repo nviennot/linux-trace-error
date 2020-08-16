@@ -123,7 +123,7 @@ static int btrfs_del_inode_extref(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 	if (ret > 0)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	if (ret < 0)
 		goto out;
 
@@ -136,7 +136,7 @@ static int btrfs_del_inode_extref(struct btrfs_trans_handle *trans,
 						ref_objectid, name, name_len);
 	if (!extref) {
 		btrfs_handle_fs_error(root->fs_info, -ENOENT, NULL);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
@@ -197,7 +197,7 @@ int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 	if (ret > 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		search_ext_refs = 1;
 		goto out;
 	} else if (ret < 0) {
@@ -207,7 +207,7 @@ int btrfs_del_inode_ref(struct btrfs_trans_handle *trans,
 	ref = btrfs_find_name_in_backref(path->nodes[0], path->slots[0], name,
 					 name_len);
 	if (!ref) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		search_ext_refs = 1;
 		goto out;
 	}
@@ -352,9 +352,9 @@ int btrfs_insert_inode_ref(struct btrfs_trans_handle *trans,
 			if (btrfs_find_name_in_backref(path->nodes[0],
 						       path->slots[0],
 						       name, name_len))
-				ret = -EEXIST;
+				ret = -ERR(EEXIST);
 			else
-				ret = -EMLINK;
+				ret = -ERR(EMLINK);
 		}
 		goto out;
 	} else {

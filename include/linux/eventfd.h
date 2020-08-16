@@ -58,12 +58,12 @@ static inline bool eventfd_signal_count(void)
 
 static inline struct eventfd_ctx *eventfd_ctx_fdget(int fd)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline int eventfd_signal(struct eventfd_ctx *ctx, int n)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void eventfd_ctx_put(struct eventfd_ctx *ctx)
@@ -74,7 +74,7 @@ static inline void eventfd_ctx_put(struct eventfd_ctx *ctx)
 static inline int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx,
 						wait_queue_entry_t *wait, __u64 *cnt)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline bool eventfd_signal_count(void)

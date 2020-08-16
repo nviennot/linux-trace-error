@@ -225,7 +225,7 @@ static int __init omap3pandora_soc_init(void)
 	int ret;
 
 	if (!machine_is_omap3_pandora())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	pr_info("OMAP3 Pandora SoC init\n");
 

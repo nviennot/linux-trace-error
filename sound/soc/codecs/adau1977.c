@@ -258,7 +258,7 @@ static int adau1977_lookup_fs(unsigned int rate)
 	else if (rate >= 128000 && rate <= 192000)
 		return ADAU1977_SAI_CTRL0_FS_128000_192000;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int adau1977_lookup_mcs(struct adau1977 *adau1977, unsigned int rate,
@@ -275,13 +275,13 @@ static int adau1977_lookup_mcs(struct adau1977 *adau1977, unsigned int rate,
 	rate *= 512 >> fs;
 
 	if (adau1977->sysclk % rate != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mcs = adau1977->sysclk / rate;
 
 	/* The factors configured by MCS are 1, 2, 3, 4, 6 */
 	if (mcs < 1 || mcs > 6 || mcs == 5)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mcs = mcs - 1;
 	if (mcs == 5)
@@ -326,7 +326,7 @@ static int adau1977_hw_params(struct snd_pcm_substream *substream,
 			ctrl0 |= ADAU1977_SAI_CTRL0_FMT_RJ_24BIT;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ctrl0_mask |= ADAU1977_SAI_CTRL0_FMT_MASK;
 	}
@@ -343,7 +343,7 @@ static int adau1977_hw_params(struct snd_pcm_substream *substream,
 			slot_width = 32;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* In TDM mode there is a fixed slot width */
@@ -512,7 +512,7 @@ static int adau1977_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	}
 
 	if (rx_mask == 0 || tx_mask != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	drv = 0;
 	for (i = 0; i < 4; i++) {
@@ -520,13 +520,13 @@ static int adau1977_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		drv |= ADAU1977_SAI_OVERTEMP_DRV_C(i);
 		rx_mask &= ~(1 << slot[i]);
 		if (slot[i] >= slots)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rx_mask == 0)
 			break;
 	}
 
 	if (rx_mask != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (width) {
 	case 16:
@@ -535,14 +535,14 @@ static int adau1977_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 24:
 		/* We can only generate 16 bit or 32 bit wide slots */
 		if (adau1977->master)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctrl1 = ADAU1977_SAI_CTRL1_SLOT_WIDTH_24;
 		break;
 	case 32:
 		ctrl1 = ADAU1977_SAI_CTRL1_SLOT_WIDTH_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slots) {
@@ -559,7 +559,7 @@ static int adau1977_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		ctrl0 = ADAU1977_SAI_CTRL0_SAI_TDM_16;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(adau1977->regmap, ADAU1977_REG_SAI_OVERTEMP,
@@ -630,7 +630,7 @@ static int adau1977_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		adau1977->master = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -649,7 +649,7 @@ static int adau1977_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		invert_lrclk = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adau1977->right_j = false;
@@ -677,7 +677,7 @@ static int adau1977_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		invert_lrclk = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (invert_lrclk)
@@ -798,10 +798,10 @@ static int adau1977_set_sysclk(struct snd_soc_component *component,
 	unsigned int ret;
 
 	if (dir != SND_SOC_CLOCK_IN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (clk_id != ADAU1977_SYSCLK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (source) {
 	case ADAU1977_SYSCLK_SRC_MCLK:
@@ -811,12 +811,12 @@ static int adau1977_set_sysclk(struct snd_soc_component *component,
 		clk_src = ADAU1977_PLL_CLK_S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (freq != 0 && source == ADAU1977_SYSCLK_SRC_MCLK) {
 		if (freq < 4000000 || freq > 36864000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (adau1977_check_sysclk(freq, 32000))
 			mask |= ADAU1977_RATE_CONSTRAINT_MASK_32000;
@@ -826,7 +826,7 @@ static int adau1977_set_sysclk(struct snd_soc_component *component,
 			mask |= ADAU1977_RATE_CONSTRAINT_MASK_48000;
 
 		if (mask == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (source == ADAU1977_SYSCLK_SRC_LRCLK) {
 		mask = ADAU1977_RATE_CONSTRAINT_MASK_LRCLK;
 	}
@@ -892,7 +892,7 @@ static int adau1977_setup_micbias(struct adau1977 *adau1977)
 
 	if (micbias > ADAU1977_MICBIAS_9V0) {
 		dev_err(adau1977->dev, "Invalid value for 'adi,micbias'\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_update_bits(adau1977->regmap, ADAU1977_REG_MICBIAS,

@@ -544,19 +544,19 @@ static int decode_write_response(struct xdr_stream *xdr,
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	count = be32_to_cpup(p);
 	if (count > 1)
-		return -EREMOTEIO;
+		return -ERR(EREMOTEIO);
 	else if (count == 1) {
 		status = decode_opaque_fixed(xdr, &res->stateid,
 				NFS4_STATEID_SIZE);
 		if (unlikely(status))
-			return -EIO;
+			return -ERR(EIO);
 	}
 	p = xdr_inline_decode(xdr, 8 + 4);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	p = xdr_decode_hyper(p, &res->count);
 	res->verifier.committed = be32_to_cpup(p);
 	return decode_verifier(xdr, &res->verifier.verifier);
@@ -573,7 +573,7 @@ static int decode_nl4_server(struct xdr_stream *xdr, struct nl4_server *ns)
 	/* nl_type */
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	ns->nl4_type = be32_to_cpup(p);
 	switch (ns->nl4_type) {
 	case NL4_NAME:
@@ -582,7 +582,7 @@ static int decode_nl4_server(struct xdr_stream *xdr, struct nl4_server *ns)
 		if (unlikely(status))
 			return status;
 		if (unlikely(dummy > NFS4_OPAQUE_LIMIT))
-			return -EIO;
+			return -ERR(EIO);
 		memcpy(&ns->u.nl4_str, dummy_str, dummy);
 		ns->u.nl4_str_sz = dummy;
 		break;
@@ -594,7 +594,7 @@ static int decode_nl4_server(struct xdr_stream *xdr, struct nl4_server *ns)
 		if (unlikely(status))
 			return status;
 		if (unlikely(dummy > RPCBIND_MAXNETIDLEN))
-			return -EIO;
+			return -ERR(EIO);
 		naddr->netid_len = dummy;
 		memcpy(naddr->netid, dummy_str, naddr->netid_len);
 
@@ -603,13 +603,13 @@ static int decode_nl4_server(struct xdr_stream *xdr, struct nl4_server *ns)
 		if (unlikely(status))
 			return status;
 		if (unlikely(dummy > RPCBIND_MAXUADDRLEN))
-			return -EIO;
+			return -ERR(EIO);
 		naddr->addr_len = dummy;
 		memcpy(naddr->addr, dummy_str, naddr->addr_len);
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -620,7 +620,7 @@ static int decode_copy_requirements(struct xdr_stream *xdr,
 
 	p = xdr_inline_decode(xdr, 4 + 4);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	res->consecutive = be32_to_cpup(p++);
 	res->synchronous = be32_to_cpup(p++);
@@ -665,18 +665,18 @@ static int decode_copy_notify(struct xdr_stream *xdr,
 	/* cnr_lease_time */
 	p = xdr_inline_decode(xdr, 12);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	p = xdr_decode_hyper(p, &res->cnr_lease_time.seconds);
 	res->cnr_lease_time.nseconds = be32_to_cpup(p);
 
 	status = decode_opaque_fixed(xdr, &res->cnr_stateid, NFS4_STATEID_SIZE);
 	if (unlikely(status))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* number of source addresses */
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	count = be32_to_cpup(p);
 	if (count > 1)
@@ -685,7 +685,7 @@ static int decode_copy_notify(struct xdr_stream *xdr,
 
 	status = decode_nl4_server(xdr, &res->cnr_src);
 	if (unlikely(status))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -705,7 +705,7 @@ static int decode_seek(struct xdr_stream *xdr, struct nfs42_seek_res *res)
 
 	p = xdr_inline_decode(xdr, 4 + 8);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	res->sr_eof = be32_to_cpup(p++);
 	p = xdr_decode_hyper(p, &res->sr_offset);

@@ -38,7 +38,7 @@ int nf_connlabels_replace(struct nf_conn *ct,
 
 	labels = nf_ct_labels_find(ct);
 	if (!labels)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	size = sizeof(labels->bits);
 	if (size < (words32 * sizeof(u32)))
@@ -61,7 +61,7 @@ EXPORT_SYMBOL_GPL(nf_connlabels_replace);
 int nf_connlabels_get(struct net *net, unsigned int bits)
 {
 	if (BIT_WORD(bits) >= NF_CT_LABELS_MAX_SIZE / sizeof(long))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	spin_lock(&nf_connlabels_lock);
 	net->ct.labels_used++;

@@ -577,7 +577,7 @@ static int deactivate_urbs(struct snd_usb_endpoint *ep, bool force)
 	unsigned int i;
 
 	if (!force && atomic_read(&ep->chip->shutdown)) /* to be sure... */
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	clear_bit(EP_FLAG_RUNNING, &ep->flags);
 
@@ -1070,7 +1070,7 @@ int snd_usb_endpoint_set_params(struct snd_usb_endpoint *ep,
 			usb_audio_warn(ep->chip,
 				"Unable to change format on ep #%x: already in use\n",
 				ep->ep_num);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		usb_audio_dbg(ep->chip,
@@ -1114,7 +1114,7 @@ int snd_usb_endpoint_set_params(struct snd_usb_endpoint *ep,
 		err = sync_ep_set_params(ep);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	usb_audio_dbg(ep->chip,
@@ -1143,7 +1143,7 @@ int snd_usb_endpoint_start(struct snd_usb_endpoint *ep)
 	unsigned int i;
 
 	if (atomic_read(&ep->chip->shutdown))
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	/* already running? */
 	if (++ep->use_count != 1)
@@ -1205,7 +1205,7 @@ __error:
 	clear_bit(EP_FLAG_RUNNING, &ep->flags);
 	ep->use_count--;
 	deactivate_urbs(ep, false);
-	return -EPIPE;
+	return -ERR(EPIPE);
 }
 
 /**

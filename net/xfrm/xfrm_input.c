@@ -54,11 +54,11 @@ int xfrm_input_register_afinfo(const struct xfrm_input_afinfo *afinfo)
 	int err = 0;
 
 	if (WARN_ON(afinfo->family >= ARRAY_SIZE(xfrm_input_afinfo)))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	spin_lock_bh(&xfrm_input_afinfo_lock);
 	if (unlikely(xfrm_input_afinfo[afinfo->family] != NULL))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else
 		rcu_assign_pointer(xfrm_input_afinfo[afinfo->family], afinfo);
 	spin_unlock_bh(&xfrm_input_afinfo_lock);
@@ -73,7 +73,7 @@ int xfrm_input_unregister_afinfo(const struct xfrm_input_afinfo *afinfo)
 	spin_lock_bh(&xfrm_input_afinfo_lock);
 	if (likely(xfrm_input_afinfo[afinfo->family] != NULL)) {
 		if (unlikely(xfrm_input_afinfo[afinfo->family] != afinfo))
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			RCU_INIT_POINTER(xfrm_input_afinfo[afinfo->family], NULL);
 	}
@@ -104,7 +104,7 @@ static int xfrm_rcv_cb(struct sk_buff *skb, unsigned int family, u8 protocol,
 	const struct xfrm_input_afinfo *afinfo = xfrm_input_get_afinfo(family);
 
 	if (!afinfo)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	ret = afinfo->callback(skb, protocol, err);
 	rcu_read_unlock();
@@ -152,7 +152,7 @@ int xfrm_parse_spi(struct sk_buff *skb, u8 nexthdr, __be32 *spi, __be32 *seq)
 		break;
 	case IPPROTO_COMP:
 		if (!pskb_may_pull(skb, sizeof(struct ip_comp_hdr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*spi = htonl(ntohs(*(__be16 *)(skb_transport_header(skb) + 2)));
 		*seq = 0;
 		return 0;
@@ -161,7 +161,7 @@ int xfrm_parse_spi(struct sk_buff *skb, u8 nexthdr, __be32 *spi, __be32 *seq)
 	}
 
 	if (!pskb_may_pull(skb, hlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*spi = *(__be32 *)(skb_transport_header(skb) + offset);
 	*seq = *(__be32 *)(skb_transport_header(skb) + offset_seq);
@@ -173,7 +173,7 @@ static int xfrm4_remove_beet_encap(struct xfrm_state *x, struct sk_buff *skb)
 {
 	struct iphdr *iph;
 	int optlen = 0;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (unlikely(XFRM_MODE_SKB_CB(skb)->protocol == IPPROTO_BEETPH)) {
 		struct ip_beet_phdr *ph;
@@ -225,7 +225,7 @@ static void ipip_ecn_decapsulate(struct sk_buff *skb)
 
 static int xfrm4_remove_tunnel_encap(struct xfrm_state *x, struct sk_buff *skb)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPIP)
 		goto out;
@@ -263,7 +263,7 @@ static void ipip6_ecn_decapsulate(struct sk_buff *skb)
 
 static int xfrm6_remove_tunnel_encap(struct xfrm_state *x, struct sk_buff *skb)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (XFRM_MODE_SKB_CB(skb)->protocol != IPPROTO_IPV6)
 		goto out;
@@ -347,7 +347,7 @@ xfrm_inner_mode_encap_remove(struct xfrm_state *x,
 	}
 
 	WARN_ON_ONCE(1);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int xfrm_prepare_input(struct xfrm_state *x, struct sk_buff *skb)
@@ -363,13 +363,13 @@ static int xfrm_prepare_input(struct xfrm_state *x, struct sk_buff *skb)
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 
 	if (x->sel.family == AF_UNSPEC) {
 		inner_mode = xfrm_ip2inner_mode(x, XFRM_MODE_SKB_CB(skb)->protocol);
 		if (!inner_mode)
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 	}
 
 	switch (inner_mode->family) {
@@ -425,7 +425,7 @@ static int xfrm6_transport_input(struct xfrm_state *x, struct sk_buff *skb)
 	return 0;
 #else
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 #endif
 }
 
@@ -451,7 +451,7 @@ static int xfrm_inner_mode_input(struct xfrm_state *x,
 		break;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 int xfrm_input(struct sk_buff *skb, int nexthdr, __be32 spi, int encap_type)
@@ -725,7 +725,7 @@ resume:
 		if (xo)
 			xfrm_gro = xo->flags & XFRM_GRO;
 
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		rcu_read_lock();
 		afinfo = xfrm_state_afinfo_get_rcu(x->inner_mode.family);
 		if (likely(afinfo))
@@ -781,7 +781,7 @@ int xfrm_trans_queue_net(struct net *net, struct sk_buff *skb,
 	trans = this_cpu_ptr(&xfrm_trans_tasklet);
 
 	if (skb_queue_len(&trans->queue) >= netdev_max_backlog)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	BUILD_BUG_ON(sizeof(struct xfrm_trans_cb) > sizeof(skb->cb));
 

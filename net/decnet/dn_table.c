@@ -253,7 +253,7 @@ static int dn_fib_nh_match(struct rtmsg *r, struct nlmsghdr *nlh, struct nlattr 
 		__le16 gw;
 
 		if (attrlen < 0 || (nhlen -= nhp->rtnh_len) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (nhp->rtnh_ifindex && nhp->rtnh_ifindex != nh->nh_oif)
 			return 1;
 		if (attrlen) {
@@ -307,7 +307,7 @@ static int dn_fib_dump_info(struct sk_buff *skb, u32 portid, u32 seq, int event,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm = nlmsg_data(nlh);
 	rtm->rtm_family = AF_DECnet;
@@ -375,7 +375,7 @@ static int dn_fib_dump_info(struct sk_buff *skb, u32 portid, u32 seq, int event,
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 
@@ -384,7 +384,7 @@ static void dn_rtmsg_fib(int event, struct dn_fib_node *f, int z, u32 tb_id,
 {
 	struct sk_buff *skb;
 	u32 portid = req ? req->portid : 0;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(dn_fib_nlmsg_size(DN_FIB_INFO(f)), GFP_KERNEL);
 	if (skb == NULL)
@@ -539,17 +539,17 @@ static int dn_fib_table_insert(struct dn_fib_table *tb, struct rtmsg *r, struct 
 	int err;
 
 	if (z > 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dz = table->dh_zones[z];
 	if (!dz && !(dz = dn_new_zone(table, z)))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	dz_key_0(key);
 	if (attrs[RTA_DST]) {
 		__le16 dst = nla_get_le16(attrs[RTA_DST]);
 		if (dst & ~DZ_MASK(dz))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		key = dz_key(dst, dz);
 	}
 
@@ -587,7 +587,7 @@ static int dn_fib_table_insert(struct dn_fib_table *tb, struct rtmsg *r, struct 
 			fi->fib_priority == DN_FIB_INFO(f)->fib_priority) {
 		struct dn_fib_node **ins_fp;
 
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		if (n->nlmsg_flags & NLM_F_EXCL)
 			goto out;
 
@@ -599,7 +599,7 @@ static int dn_fib_table_insert(struct dn_fib_table *tb, struct rtmsg *r, struct 
 		}
 
 		ins_fp = fp;
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 
 		DN_FIB_SCAN_KEY(f, fp, key) {
 			if (fi->fib_priority != DN_FIB_INFO(f)->fib_priority)
@@ -617,12 +617,12 @@ static int dn_fib_table_insert(struct dn_fib_table *tb, struct rtmsg *r, struct 
 	}
 
 create:
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!(n->nlmsg_flags & NLM_F_CREATE))
 		goto out;
 
 replace:
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	new_f = kmem_cache_zalloc(dn_hash_kmem, GFP_KERNEL);
 	if (new_f == NULL)
 		goto out;
@@ -675,16 +675,16 @@ static int dn_fib_table_delete(struct dn_fib_table *tb, struct rtmsg *r, struct 
 
 
 	if (z > 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((dz = table->dh_zones[z]) == NULL)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	dz_key_0(key);
 	if (attrs[RTA_DST]) {
 		__le16 dst = nla_get_le16(attrs[RTA_DST]);
 		if (dst & ~DZ_MASK(dz))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		key = dz_key(dst, dz);
 	}
 
@@ -694,7 +694,7 @@ static int dn_fib_table_delete(struct dn_fib_table *tb, struct rtmsg *r, struct 
 		if (dn_key_eq(f->fn_key, key))
 			break;
 		if (dn_key_leq(key, f->fn_key))
-			return -ESRCH;
+			return -ERR(ESRCH);
 	}
 
 	matched = 0;
@@ -703,7 +703,7 @@ static int dn_fib_table_delete(struct dn_fib_table *tb, struct rtmsg *r, struct 
 		struct dn_fib_info *fi = DN_FIB_INFO(f);
 
 		if (f->fn_state & DN_S_ZOMBIE)
-			return -ESRCH;
+			return -ERR(ESRCH);
 
 		matched++;
 
@@ -742,7 +742,7 @@ static int dn_fib_table_delete(struct dn_fib_table *tb, struct rtmsg *r, struct 
 		return 0;
 	}
 
-	return -ESRCH;
+	return -ERR(ESRCH);
 }
 
 static inline int dn_flush_list(struct dn_fib_node **fp, int z, struct dn_hash *table)

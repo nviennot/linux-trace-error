@@ -337,7 +337,7 @@ static int bcd2000_init_midi(struct bcd2000 *bcd2k)
 	if (usb_urb_ep_type_check(bcd2k->midi_in_urb) ||
 	    usb_urb_ep_type_check(bcd2k->midi_out_urb)) {
 		dev_err(&bcd2k->dev->dev, "invalid MIDI EP\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bcd2000_init_device(bcd2k);
@@ -376,7 +376,7 @@ static int bcd2000_probe(struct usb_interface *interface,
 
 	if (card_index >= SNDRV_CARDS) {
 		mutex_unlock(&devices_mutex);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&interface->dev, index[card_index], id[card_index],

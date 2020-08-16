@@ -88,7 +88,7 @@ int linear_range_get_value(const struct linear_range *r, unsigned int selector,
 			   unsigned int *val)
 {
 	if (r->min_sel > selector || r->max_sel < selector)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*val = r->min + (selector - r->min_sel) * r->step;
 
@@ -117,7 +117,7 @@ int linear_range_get_value_array(const struct linear_range *r, int ranges,
 		if (r[i].min_sel <= selector && r[i].max_sel >= selector)
 			return linear_range_get_value(&r[i], selector, val);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(linear_range_get_value_array);
 
@@ -142,7 +142,7 @@ int linear_range_get_selector_low(const struct linear_range *r,
 	*found = false;
 
 	if (r->min > val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (linear_range_get_max_value(r) < val) {
 		*selector = r->max_sel;
@@ -184,7 +184,7 @@ int linear_range_get_selector_low_array(const struct linear_range *r,
 					unsigned int *selector, bool *found)
 {
 	int i;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	for (i = 0; i < ranges; i++) {
 		int tmpret;
@@ -223,7 +223,7 @@ int linear_range_get_selector_high(const struct linear_range *r,
 	*found = false;
 
 	if (linear_range_get_max_value(r) < val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (r->min > val) {
 		*selector = r->min_sel;

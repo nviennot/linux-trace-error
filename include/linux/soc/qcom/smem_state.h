@@ -26,7 +26,7 @@ void qcom_smem_state_unregister(struct qcom_smem_state *state);
 static inline struct qcom_smem_state *qcom_smem_state_get(struct device *dev,
 	const char *con_id, unsigned *bit)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void qcom_smem_state_put(struct qcom_smem_state *state)
@@ -36,13 +36,13 @@ static inline void qcom_smem_state_put(struct qcom_smem_state *state)
 static inline int qcom_smem_state_update_bits(struct qcom_smem_state *state,
 	u32 mask, u32 value)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct qcom_smem_state *qcom_smem_state_register(struct device_node *of_node,
 	const struct qcom_smem_state_ops *ops, void *data)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void qcom_smem_state_unregister(struct qcom_smem_state *state)

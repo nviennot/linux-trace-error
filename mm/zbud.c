@@ -131,7 +131,7 @@ static int zbud_zpool_evict(struct zbud_pool *pool, unsigned long handle)
 	if (pool->zpool && pool->zpool_ops && pool->zpool_ops->evict)
 		return pool->zpool_ops->evict(pool->zpool, handle);
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 }
 
 static const struct zbud_ops zbud_zpool_ops = {
@@ -171,7 +171,7 @@ static int zbud_zpool_shrink(void *pool, unsigned int pages,
 			unsigned int *reclaimed)
 {
 	unsigned int total = 0;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	while (total < pages) {
 		ret = zbud_reclaim_page(pool, 8);
@@ -360,9 +360,9 @@ int zbud_alloc(struct zbud_pool *pool, size_t size, gfp_t gfp,
 	struct page *page;
 
 	if (!size || (gfp & __GFP_HIGHMEM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (size > PAGE_SIZE - ZHDR_SIZE_ALIGNED - CHUNK_SIZE)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	chunks = size_to_chunks(size);
 	spin_lock(&pool->lock);
 
@@ -509,7 +509,7 @@ int zbud_reclaim_page(struct zbud_pool *pool, unsigned int retries)
 	if (!pool->ops || !pool->ops->evict || list_empty(&pool->lru) ||
 			retries == 0) {
 		spin_unlock(&pool->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < retries; i++) {
 		zhdr = list_last_entry(&pool->lru, struct zbud_header, lru);
@@ -566,7 +566,7 @@ next:
 		list_add(&zhdr->lru, &pool->lru);
 	}
 	spin_unlock(&pool->lock);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /**

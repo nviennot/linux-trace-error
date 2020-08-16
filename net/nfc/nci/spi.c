@@ -87,7 +87,7 @@ int nci_spi_send(struct nci_spi *nspi,
 		/* wait for NFC chip hardware handshake to complete */
 		if (wait_for_completion_timeout(write_handshake_completion,
 						msecs_to_jiffies(1000)) == 0) {
-			ret = -ETIME;
+			ret = -ERR(ETIME);
 			goto done;
 		}
 	}
@@ -102,7 +102,7 @@ int nci_spi_send(struct nci_spi *nspi,
 							NCI_SPI_SEND_TIMEOUT);
 
 	if (completion_rc <= 0 || nspi->req_result == ACKNOWLEDGE_NACK)
-		ret = -EIO;
+		ret = -ERR(EIO);
 
 done:
 	kfree_skb(skb);

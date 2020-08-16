@@ -214,41 +214,41 @@ extern struct dev_power_governor pm_domain_cpu_gov;
 
 static inline struct generic_pm_domain_data *dev_gpd_data(struct device *dev)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 static inline int pm_genpd_add_device(struct generic_pm_domain *genpd,
 				      struct device *dev)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_genpd_remove_device(struct device *dev)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_genpd_add_subdomain(struct generic_pm_domain *genpd,
 					 struct generic_pm_domain *subdomain)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_genpd_remove_subdomain(struct generic_pm_domain *genpd,
 					    struct generic_pm_domain *subdomain)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_genpd_init(struct generic_pm_domain *genpd,
 				struct dev_power_governor *gov, bool is_off)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_genpd_remove(struct generic_pm_domain *genpd)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_genpd_set_performance_state(struct device *dev,
 						     unsigned int state)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #define simple_qos_governor		(*(struct dev_power_governor *)(NULL))
@@ -301,13 +301,13 @@ struct device *genpd_dev_pm_attach_by_name(struct device *dev,
 static inline int of_genpd_add_provider_simple(struct device_node *np,
 					struct generic_pm_domain *genpd)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int of_genpd_add_provider_onecell(struct device_node *np,
 					struct genpd_onecell_data *data)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void of_genpd_del_provider(struct device_node *np) {}
@@ -315,25 +315,25 @@ static inline void of_genpd_del_provider(struct device_node *np) {}
 static inline int of_genpd_add_device(struct of_phandle_args *args,
 				      struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int of_genpd_add_subdomain(struct of_phandle_args *parent_spec,
 					 struct of_phandle_args *subdomain_spec)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int of_genpd_remove_subdomain(struct of_phandle_args *parent_spec,
 					struct of_phandle_args *subdomain_spec)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int of_genpd_parse_idle_states(struct device_node *dn,
 			struct genpd_power_state **states, int *n)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline unsigned int
@@ -363,7 +363,7 @@ static inline struct device *genpd_dev_pm_attach_by_name(struct device *dev,
 static inline
 struct generic_pm_domain *of_genpd_remove_last(struct device_node *np)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 #endif /* CONFIG_PM_GENERIC_DOMAINS_OF */
 

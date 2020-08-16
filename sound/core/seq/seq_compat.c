@@ -77,7 +77,7 @@ static long snd_seq_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 	void __user *argp = compat_ptr(arg);
 
 	if (snd_BUG_ON(!client))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (cmd) {
 	case SNDRV_SEQ_IOCTL_PVERSION:
@@ -118,5 +118,5 @@ static long snd_seq_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 	case SNDRV_SEQ_IOCTL_QUERY_NEXT_PORT32:
 		return snd_seq_call_port_info_ioctl(client, SNDRV_SEQ_IOCTL_QUERY_NEXT_PORT, argp);
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }

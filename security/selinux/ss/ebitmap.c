@@ -463,7 +463,7 @@ out:
 	return rc;
 bad:
 	if (!rc)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	ebitmap_destroy(e);
 	goto out;
 }

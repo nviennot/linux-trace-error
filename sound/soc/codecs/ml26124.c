@@ -305,7 +305,7 @@ static inline int get_srate(int rate)
 		srate = 8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return srate;
 }
@@ -318,7 +318,7 @@ static inline int get_coeff(int mclk, int rate)
 		if (coeff_div[i].rate == rate && coeff_div[i].mclk == mclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ml26124_hw_params(struct snd_pcm_substream *substream,
@@ -411,7 +411,7 @@ static int ml26124_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		mode = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, ML26124_SAI_MODE_SEL, BIT(0), mode);
 
@@ -420,7 +420,7 @@ static int ml26124_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_I2S:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -428,7 +428,7 @@ static int ml26124_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -448,7 +448,7 @@ static int ml26124_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		priv->clk_in = ML26124_USE_MCLKI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->mclk = freq;

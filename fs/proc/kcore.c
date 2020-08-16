@@ -64,7 +64,7 @@ static int (*mem_pfn_is_ram)(unsigned long pfn);
 int __init register_mem_pfn_is_ram(int (*fn)(unsigned long pfn))
 {
 	if (mem_pfn_is_ram)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	mem_pfn_is_ram = fn;
 	return 0;
 }
@@ -550,7 +550,7 @@ static int open_kcore(struct inode *inode, struct file *filp)
 	int ret = security_locked_down(LOCKDOWN_KCORE);
 
 	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (ret)
 		return ret;

@@ -62,7 +62,7 @@ int sbitmap_init_node(struct sbitmap *sb, unsigned int depth, int shift,
 	}
 	bits_per_word = 1U << shift;
 	if (bits_per_word > BITS_PER_LONG)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sb->shift = shift;
 	sb->depth = depth;

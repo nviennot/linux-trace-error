@@ -42,12 +42,12 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
 	 * and the file is open for write.
 	 */
 	if (((arg ^ filp->f_flags) & O_APPEND) && IS_APPEND(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* O_NOATIME can only be set by the owner or superuser */
 	if ((arg & O_NOATIME) && !(filp->f_flags & O_NOATIME))
 		if (!inode_owner_or_capable(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 
 	/* required for strict SunOS emulation */
 	if (O_NONBLOCK != O_NDELAY)
@@ -58,7 +58,7 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
 	if (!S_ISFIFO(inode->i_mode) && (arg & O_DIRECT)) {
 		if (!filp->f_mapping || !filp->f_mapping->a_ops ||
 			!filp->f_mapping->a_ops->direct_IO)
-				return -EINVAL;
+				return -ERR(EINVAL);
 	}
 
 	if (filp->f_op->check_flags)
@@ -120,7 +120,7 @@ int f_setown(struct file *filp, unsigned long arg, int force)
 	if (who < 0) {
 		/* avoid overflow below */
 		if (who == INT_MIN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		type = PIDTYPE_PGID;
 		who = -who;
@@ -130,7 +130,7 @@ int f_setown(struct file *filp, unsigned long arg, int force)
 	if (who) {
 		pid = find_vpid(who);
 		if (!pid)
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 	}
 
 	if (!ret)
@@ -183,13 +183,13 @@ static int f_setown_ex(struct file *filp, unsigned long arg)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rcu_read_lock();
 	pid = find_vpid(owner.pid);
 	if (owner.pid && !pid)
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 	else
 		 __f_setown(filp, pid, type, 1);
 	rcu_read_unlock();
@@ -220,7 +220,7 @@ static int f_getown_ex(struct file *filp, unsigned long arg)
 
 	default:
 		WARN_ON(1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	read_unlock(&filp->f_owner.lock);
@@ -254,7 +254,7 @@ static int f_getowner_uids(struct file *filp, unsigned long arg)
 #else
 static int f_getowner_uids(struct file *filp, unsigned long arg)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -292,7 +292,7 @@ static long fcntl_rw_hint(struct file *file, unsigned int cmd,
 			return -EFAULT;
 		hint = (enum rw_hint) h;
 		if (!rw_hint_valid(hint))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		spin_lock(&file->f_lock);
 		file->f_write_hint = hint;
@@ -308,14 +308,14 @@ static long fcntl_rw_hint(struct file *file, unsigned int cmd,
 			return -EFAULT;
 		hint = (enum rw_hint) h;
 		if (!rw_hint_valid(hint))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		inode_lock(inode);
 		inode->i_write_hint = hint;
 		inode_unlock(inode);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -324,7 +324,7 @@ static long do_fcntl(int fd, unsigned int cmd, unsigned long arg,
 {
 	void __user *argp = (void __user *)arg;
 	struct flock flock;
-	long err = -EINVAL;
+	long err = -ERR(EINVAL);
 
 	switch (cmd) {
 	case F_DUPFD:
@@ -448,7 +448,7 @@ static int check_fcntl_cmd(unsigned cmd)
 SYSCALL_DEFINE3(fcntl, unsigned int, fd, unsigned int, cmd, unsigned long, arg)
 {	
 	struct fd f = fdget_raw(fd);
-	long err = -EBADF;
+	long err = -ERR(EBADF);
 
 	if (!f.file)
 		goto out;
@@ -475,7 +475,7 @@ SYSCALL_DEFINE3(fcntl64, unsigned int, fd, unsigned int, cmd,
 	void __user *argp = (void __user *)arg;
 	struct fd f = fdget_raw(fd);
 	struct flock64 flock;
-	long err = -EBADF;
+	long err = -ERR(EBADF);
 
 	if (!f.file)
 		goto out;
@@ -601,7 +601,7 @@ convert_fcntl_cmd(unsigned int cmd)
 static int fixup_compat_flock(struct flock *flock)
 {
 	if (flock->l_start > COMPAT_OFF_T_MAX)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	if (flock->l_len > COMPAT_OFF_T_MAX)
 		flock->l_len = COMPAT_OFF_T_MAX;
 	return 0;
@@ -612,7 +612,7 @@ static long do_compat_fcntl64(unsigned int fd, unsigned int cmd,
 {
 	struct fd f = fdget_raw(fd);
 	struct flock flock;
-	long err = -EBADF;
+	long err = -ERR(EBADF);
 
 	if (!f.file)
 		return err;

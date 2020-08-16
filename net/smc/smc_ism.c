@@ -73,7 +73,7 @@ int smc_ism_get_vlan(struct smcd_dev *smcd, unsigned short vlanid)
 	int rc = 0;
 
 	if (!vlanid)			/* No valid vlan id */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* create new vlan entry, in case we need it */
 	new_vlan = kzalloc(sizeof(*new_vlan), GFP_KERNEL);
@@ -97,7 +97,7 @@ int smc_ism_get_vlan(struct smcd_dev *smcd, unsigned short vlanid)
 	 */
 	if (smcd->ops->add_vlan_id(smcd, vlanid)) {
 		kfree(new_vlan);
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	list_add_tail(&new_vlan->list, &smcd->vlan);
@@ -118,7 +118,7 @@ int smc_ism_put_vlan(struct smcd_dev *smcd, unsigned short vlanid)
 	int rc = 0;
 
 	if (!vlanid)			/* No valid vlan id */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&smcd->lock, flags);
 	list_for_each_entry(vlan, &smcd->vlan, list) {
@@ -130,13 +130,13 @@ int smc_ism_put_vlan(struct smcd_dev *smcd, unsigned short vlanid)
 		}
 	}
 	if (!found) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out;		/* VLAN id not in table */
 	}
 
 	/* Found and the last reference just gone */
 	if (smcd->ops->del_vlan_id(smcd, vlanid))
-		rc = -EIO;
+		rc = -ERR(EIO);
 	list_del(&vlan->list);
 	kfree(vlan);
 out:

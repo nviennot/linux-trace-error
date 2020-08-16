@@ -176,7 +176,7 @@ int rds_info_getsockopt(struct socket *sock, int optname, char __user *optval,
 	/* check for all kinds of wrapping and the like */
 	start = (unsigned long)optval;
 	if (len < 0 || len > INT_MAX - PAGE_SIZE + 1 || start + len < start) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -198,7 +198,7 @@ int rds_info_getsockopt(struct socket *sock, int optname, char __user *optval,
 			nr_pages = ret;
 		else
 			nr_pages = 0;
-		ret = -EAGAIN; /* XXX ? */
+		ret = -ERR(EAGAIN); /* XXX ? */
 		goto out;
 	}
 
@@ -207,7 +207,7 @@ int rds_info_getsockopt(struct socket *sock, int optname, char __user *optval,
 call_func:
 	func = rds_info_funcs[optname - RDS_INFO_FIRST];
 	if (!func) {
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 		goto out;
 	}
 
@@ -224,7 +224,7 @@ call_func:
 
 	if (total > len) {
 		len = total;
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 	} else {
 		len = total;
 		ret = lens.each;

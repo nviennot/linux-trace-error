@@ -932,7 +932,7 @@ redo_request:
 	if (blocked)
 		goto wait;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	dlm_node_iter_init(mle->vote_map, &iter);
 	while ((nodenum = dlm_node_iter_next(&iter)) >= 0) {
 		ret = dlm_do_master_request(res, mle, nodenum);
@@ -1185,13 +1185,13 @@ static int dlm_bitmap_diff_iter_next(struct dlm_bitmap_diff_iter *iter,
 	int bit;
 
 	if (iter->curnode >= O2NM_MAX_NODES)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	bit = find_next_bit(iter->diff_bm, O2NM_MAX_NODES,
 			    iter->curnode+1);
 	if (bit >= O2NM_MAX_NODES) {
 		iter->curnode = O2NM_MAX_NODES;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* if it was there in the original then this node died */
@@ -1288,7 +1288,7 @@ static int dlm_restart_lock_mastery(struct dlm_ctxt *dlm,
 			if (mle->type != DLM_MLE_BLOCK)
 				set_bit(dlm->node_num, mle->maybe_map);
 		}
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		node = dlm_bitmap_diff_iter_next(&bdi, &sc);
 	}
 	return ret;
@@ -2031,7 +2031,7 @@ kill:
 	spin_unlock(&dlm->spinlock);
 	*ret_data = (void *)res;
 	dlm_put(dlm);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 void dlm_assert_master_post_handler(int status, void *data, void *ret_data)
@@ -2199,7 +2199,7 @@ static int dlm_pre_master_reco_lockres(struct dlm_ctxt *dlm,
 				     "dead node is mastering the recovery "
 				     "lock.  must wait.\n", dlm->name,
 				     nodenum, master);
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			}
 			spin_unlock(&dlm->spinlock);
 			mlog(0, "%s: reco lock master is %u\n", dlm->name,
@@ -2256,7 +2256,7 @@ int dlm_deref_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
 	struct dlm_lock_resource *res = NULL;
 	char *name;
 	unsigned int namelen;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	u8 node;
 	unsigned int hash;
 	struct dlm_work_item *item;
@@ -2351,7 +2351,7 @@ int dlm_deref_lockres_done_handler(struct o2net_msg *msg, u32 len, void *data,
 	struct dlm_lock_resource *res = NULL;
 	char *name;
 	unsigned int namelen;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	u8 node;
 	unsigned int hash;
 
@@ -2552,7 +2552,7 @@ static int dlm_migrate_lockres(struct dlm_ctxt *dlm,
 	int wake = 0;
 
 	if (!dlm_grab(dlm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = res->lockname.name;
 	namelen = res->lockname.len;
@@ -2611,7 +2611,7 @@ static int dlm_migrate_lockres(struct dlm_ctxt *dlm,
 		res->state &= ~DLM_LOCK_RES_MIGRATING;
 		wake = 1;
 		spin_unlock(&res->spinlock);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 fail:
@@ -2698,7 +2698,7 @@ fail:
 				     "target %u is no longer up, restarting\n",
 				     dlm->name, res->lockname.len,
 				     res->lockname.name, target);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				/* migration failed, detach and clean up mle */
 				dlm_mle_detach_hb_events(dlm, mle);
 				dlm_put_mle(mle);
@@ -2889,7 +2889,7 @@ again:
 	if (!test_bit(target, dlm->domain_map)) {
 		mlog(ML_ERROR, "aha. migration target %u just went down\n",
 		     target);
-		ret = -EHOSTDOWN;
+		ret = -ERR(EHOSTDOWN);
 	}
 	spin_unlock(&dlm->spinlock);
 
@@ -3137,7 +3137,7 @@ int dlm_migrate_request_handler(struct o2net_msg *msg, u32 len, void *data,
 			mlog(ML_ERROR, "Got a migrate request, but the "
 			     "lockres is marked as recovering!");
 			kmem_cache_free(dlm_mle_cache, mle);
-			ret = -EINVAL; /* need a better solution */
+			ret = -ERR(EINVAL); /* need a better solution */
 			goto unlock;
 		}
 		res->state |= DLM_LOCK_RES_MIGRATING;
@@ -3205,7 +3205,7 @@ static int dlm_add_migration_mle(struct dlm_ctxt *dlm,
 				     "process beat me to it\n",
 				     namelen, name);
 				spin_unlock(&tmp->spinlock);
-				return -EEXIST;
+				return -ERR(EEXIST);
 			} else {
 				/* bad.  2 NODES are trying to migrate! */
 				mlog(ML_ERROR, "migration error  mle: "

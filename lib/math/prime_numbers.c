@@ -294,7 +294,7 @@ static int selftest(unsigned long max)
 
 err:
 	dump_primes();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __init primes_init(void)

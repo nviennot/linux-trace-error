@@ -105,7 +105,7 @@ int get_UCSname(struct component_name * uniName, struct dentry *dentry)
 	int length = dentry->d_name.len;
 
 	if (length > JFS_NAME_MAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	uniName->name =
 	    kmalloc_array(length + 1, sizeof(wchar_t), GFP_NOFS);

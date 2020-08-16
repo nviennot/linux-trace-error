@@ -120,7 +120,7 @@ static int __control_devkmsg(char *str)
 	size_t len;
 
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = str_has_prefix(str, "on");
 	if (len) {
@@ -140,7 +140,7 @@ static int __control_devkmsg(char *str)
 		return len;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __init control_devkmsg(char *str)
@@ -180,7 +180,7 @@ int devkmsg_sysctl_set_loglvl(struct ctl_table *table, int write,
 
 	if (write) {
 		if (devkmsg_log & DEVKMSG_LOG_MASK_LOCK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		old = devkmsg_log;
 		strncpy(old_str, devkmsg_log_str, DEVKMSG_STR_MAX_SIZE);
@@ -203,7 +203,7 @@ int devkmsg_sysctl_set_loglvl(struct ctl_table *table, int write,
 			devkmsg_log = old;
 			strncpy(devkmsg_log_str, old_str, DEVKMSG_STR_MAX_SIZE);
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -711,7 +711,7 @@ static int check_syslog_permissions(int type, int source)
 				 current->comm, task_pid_nr(current));
 			goto ok;
 		}
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 ok:
 	return security_syslog(type);
@@ -825,7 +825,7 @@ static ssize_t devkmsg_write(struct kiocb *iocb, struct iov_iter *from)
 	ssize_t ret = len;
 
 	if (!user || len > LOG_LINE_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ignore when user logging is disabled. */
 	if (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
@@ -886,7 +886,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	ssize_t ret;
 
 	if (!user)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	ret = mutex_lock_interruptible(&user->lock);
 	if (ret)
@@ -895,7 +895,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	logbuf_lock_irq();
 	while (user->seq == log_next_seq) {
 		if (file->f_flags & O_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			logbuf_unlock_irq();
 			goto out;
 		}
@@ -912,7 +912,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 		/* our last seen message is gone, return error and reset */
 		user->idx = log_first_idx;
 		user->seq = log_first_seq;
-		ret = -EPIPE;
+		ret = -ERR(EPIPE);
 		logbuf_unlock_irq();
 		goto out;
 	}
@@ -929,7 +929,7 @@ static ssize_t devkmsg_read(struct file *file, char __user *buf,
 	logbuf_unlock_irq();
 
 	if (len > count) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -949,9 +949,9 @@ static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
 	loff_t ret = 0;
 
 	if (!user)
-		return -EBADF;
+		return -ERR(EBADF);
 	if (offset)
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	logbuf_lock_irq();
 	switch (whence) {
@@ -975,7 +975,7 @@ static loff_t devkmsg_llseek(struct file *file, loff_t offset, int whence)
 		user->seq = log_next_seq;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	logbuf_unlock_irq();
 	return ret;
@@ -1010,7 +1010,7 @@ static int devkmsg_open(struct inode *inode, struct file *file)
 	int err;
 
 	if (devkmsg_log & DEVKMSG_LOG_MASK_OFF)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* write-only does not need any file context */
 	if ((file->f_flags & O_ACCMODE) != O_WRONLY) {
@@ -1115,7 +1115,7 @@ static int __init log_buf_len_setup(char *str)
 	u64 size;
 
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = memparse(str, &str);
 
@@ -1545,7 +1545,7 @@ int do_syslog(int type, char __user *buf, int len, int source)
 		break;
 	case SYSLOG_ACTION_READ:	/* Read from log */
 		if (!buf || len < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!len)
 			return 0;
 		if (!access_ok(buf, len))
@@ -1563,7 +1563,7 @@ int do_syslog(int type, char __user *buf, int len, int source)
 	/* Read last kernel messages */
 	case SYSLOG_ACTION_READ_ALL:
 		if (!buf || len < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!len)
 			return 0;
 		if (!access_ok(buf, len))
@@ -1590,7 +1590,7 @@ int do_syslog(int type, char __user *buf, int len, int source)
 	/* Set level of messages printed to console */
 	case SYSLOG_ACTION_CONSOLE_LEVEL:
 		if (len < 1 || len > 8)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (len < minimum_console_loglevel)
 			len = minimum_console_loglevel;
 		console_loglevel = len;
@@ -1636,7 +1636,7 @@ int do_syslog(int type, char __user *buf, int len, int source)
 		error = log_buf_len;
 		break;
 	default:
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		break;
 	}
 
@@ -2150,7 +2150,7 @@ static int __add_preferred_console(char *name, int idx, char *options,
 		}
 	}
 	if (i == MAX_CMDLINECONSOLES)
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (!brl_options)
 		preferred_console = i;
 	strlcpy(c->name, name, sizeof(c->name));
@@ -2682,7 +2682,7 @@ static int try_enable_new_console(struct console *newcon, bool user_specified)
 
 			if (newcon->setup &&
 			    newcon->setup(newcon, c->options) != 0)
-				return -EIO;
+				return -ERR(EIO);
 		}
 		newcon->flags |= CON_ENABLED;
 		if (i == preferred_console) {
@@ -2700,7 +2700,7 @@ static int try_enable_new_console(struct console *newcon, bool user_specified)
 	if (newcon->flags & CON_ENABLED && c->user_specified ==	user_specified)
 		return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*
@@ -2874,7 +2874,7 @@ int unregister_console(struct console *console)
 	if (res > 0)
 		return 0;
 
-	res = -ENODEV;
+	res = -ERR(ENODEV);
 	console_lock();
 	if (console_drivers == console) {
 		console_drivers=console->next;
@@ -3122,11 +3122,11 @@ static LIST_HEAD(dump_list);
 int kmsg_dump_register(struct kmsg_dumper *dumper)
 {
 	unsigned long flags;
-	int err = -EBUSY;
+	int err = -ERR(EBUSY);
 
 	/* The dump callback needs to be set */
 	if (!dumper->dump)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&dump_list_lock, flags);
 	/* Don't allow registering multiple times */
@@ -3151,7 +3151,7 @@ EXPORT_SYMBOL_GPL(kmsg_dump_register);
 int kmsg_dump_unregister(struct kmsg_dumper *dumper)
 {
 	unsigned long flags;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	spin_lock_irqsave(&dump_list_lock, flags);
 	if (dumper->registered) {

@@ -406,7 +406,7 @@ xfs_dir2_block_addname(
 	if (args->op_flags & XFS_DA_OP_JUSTCHECK) {
 		xfs_trans_brelse(tp, bp);
 		if (!dup)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		return 0;
 	}
 
@@ -416,7 +416,7 @@ xfs_dir2_block_addname(
 	if (!dup) {
 		/* Don't have a space reservation: return no-space.  */
 		if (args->total == 0)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		/*
 		 * Convert to the next larger format.
 		 * Then add the new entry in that format.
@@ -719,7 +719,7 @@ xfs_dir2_block_lookup_int(
 		if (low > high) {
 			ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
 			xfs_trans_brelse(tp, bp);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	/*
@@ -767,7 +767,7 @@ xfs_dir2_block_lookup_int(
 	 * No match, release the buffer and return ENOENT.
 	 */
 	xfs_trans_brelse(tp, bp);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*

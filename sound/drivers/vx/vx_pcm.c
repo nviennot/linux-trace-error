@@ -168,7 +168,7 @@ static int vx_set_format(struct vx_core *chip, struct vx_pipe *pipe,
 	case 24: header |= HEADER_FMT_24BITS; break;
 	default : 
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return vx_set_stream_format(chip, pipe, header);
@@ -322,7 +322,7 @@ static int vx_toggle_pipe(struct vx_core *chip, struct vx_pipe *pipe, int state)
 
 	/* Check the pipe is not already in the requested state */
 	if (vx_get_pipe_state(chip, pipe, &cur_state) < 0)
-		return -EBADFD;
+		return -ERR(EBADFD);
 	if (state == cur_state)
 		return 0;
 
@@ -356,10 +356,10 @@ static int vx_toggle_pipe(struct vx_core *chip, struct vx_pipe *pipe, int state)
 		err = vx_get_pipe_state(chip, pipe, &cur_state);
 		if (err < 0 || cur_state == state)
 			break;
-		err = -EIO;
+		err = -ERR(EIO);
 		mdelay(1);
 	}
-	return err < 0 ? -EIO : 0;
+	return err < 0 ? -ERR(EIO) : 0;
 }
 
     
@@ -517,11 +517,11 @@ static int vx_pcm_playback_open(struct snd_pcm_substream *subs)
 	int err;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	audio = subs->pcm->device * 2;
 	if (snd_BUG_ON(audio >= chip->audio_outs))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	/* playback pipe may have been already allocated for monitoring */
 	pipe = chip->playback_pipes[audio];
@@ -558,7 +558,7 @@ static int vx_pcm_playback_close(struct snd_pcm_substream *subs)
 	struct vx_pipe *pipe;
 
 	if (! subs->runtime->private_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pipe = subs->runtime->private_data;
 
@@ -622,7 +622,7 @@ static int vx_pcm_playback_transfer_chunk(struct vx_core *chip,
 	if (space < size) {
 		vx_send_rih(chip, IRQ_CONNECT_STREAM_NEXT);
 		snd_printd("no enough hbuffer space %d\n", space);
-		return -EIO; /* XRUN */
+		return -ERR(EIO); /* XRUN */
 	}
 		
 	/* we don't need irqsave here, because this function
@@ -719,7 +719,7 @@ static int vx_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 	int err;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 		
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -757,7 +757,7 @@ static int vx_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 			return err;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -784,7 +784,7 @@ static int vx_pcm_prepare(struct snd_pcm_substream *subs)
 	// int max_size, nchunks;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	data_mode = (chip->uer_bits & IEC958_AES0_NONAUDIO) != 0;
 	if (data_mode != pipe->data_mode && ! pipe->is_capture) {
@@ -808,7 +808,7 @@ static int vx_pcm_prepare(struct snd_pcm_substream *subs)
 	if (chip->pcm_running && chip->freq != runtime->rate) {
 		snd_printk(KERN_ERR "vx: cannot set different clock %d "
 			   "from the current %d\n", runtime->rate, chip->freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	vx_set_clock(chip, runtime->rate);
 
@@ -886,11 +886,11 @@ static int vx_pcm_capture_open(struct snd_pcm_substream *subs)
 	int err;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	audio = subs->pcm->device * 2;
 	if (snd_BUG_ON(audio >= chip->audio_ins))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = vx_alloc_pipe(chip, 1, audio, 2, &pipe);
 	if (err < 0)
 		return err;
@@ -942,7 +942,7 @@ static int vx_pcm_capture_close(struct snd_pcm_substream *subs)
 	struct vx_pipe *pipe_out_monitoring;
 	
 	if (! subs->runtime->private_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pipe = subs->runtime->private_data;
 	chip->capture_pipes[pipe->number] = NULL;
 
@@ -1135,7 +1135,7 @@ static int vx_init_audio_io(struct vx_core *chip)
 	vx_init_rmh(&rmh, CMD_SUPPORTED);
 	if (vx_send_msg(chip, &rmh) < 0) {
 		snd_printk(KERN_ERR "vx: cannot get the supported audio data\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip->audio_outs = rmh.Stat[0] & MASK_FIRST_FIELD;

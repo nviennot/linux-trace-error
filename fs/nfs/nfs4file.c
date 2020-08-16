@@ -99,7 +99,7 @@ out:
 
 out_drop:
 	d_drop(dentry);
-	err = -EOPENSTALE;
+	err = -ERR(EOPENSTALE);
 	goto out_put_ctx;
 }
 
@@ -141,11 +141,11 @@ static ssize_t __nfs4_copy_file_range(struct file *file_in, loff_t pos_in,
 
 	/* Only offload copy if superblock is the same */
 	if (file_in->f_op != &nfs4_file_operations)
-		return -EXDEV;
+		return -ERR(EXDEV);
 	if (!nfs_server_capable(file_inode(file_out), NFS_CAP_COPY))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (file_inode(file_in) == file_inode(file_out))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	/* if the copy size if smaller than 2 RPC payloads, make it
 	 * synchronous
 	 */
@@ -160,7 +160,7 @@ retry:
 		 */
 		if (sync ||
 			count <= 14 * NFS_SERVER(file_inode(file_in))->rsize)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		cn_resp = kzalloc(sizeof(struct nfs42_copy_notify_res),
 				GFP_NOFS);
 		if (unlikely(cn_resp == NULL))
@@ -168,7 +168,7 @@ retry:
 
 		ret = nfs42_proc_copy_notify(file_in, file_out, cn_resp);
 		if (ret) {
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 		nss = &cn_resp->cnr_src;
@@ -220,10 +220,10 @@ static long nfs42_fallocate(struct file *filep, int mode, loff_t offset, loff_t 
 	long ret;
 
 	if (!S_ISREG(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if ((mode != 0) && (mode != (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = inode_newsize_ok(inode, offset + len);
 	if (ret < 0)
@@ -247,16 +247,16 @@ static loff_t nfs42_remap_file_range(struct file *src_file, loff_t src_off,
 
 	/* NFS does not support deduplication. */
 	if (remap_flags & REMAP_FILE_DEDUP)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (remap_flags & ~REMAP_FILE_ADVISORY)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (IS_SWAPFILE(dst_inode) || IS_SWAPFILE(src_inode))
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 
 	/* check alignment w.r.t. clone_blksize */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (bs) {
 		if (!IS_ALIGNED(src_off, bs) || !IS_ALIGNED(dst_off, bs))
 			goto out;
@@ -363,7 +363,7 @@ nfs42_ssc_open(struct vfsmount *ss_mnt, struct nfs_fh *src_fh,
 		goto out_filep;
 	}
 
-	res = ERR_PTR(-EINVAL);
+	res = ERR_PTR(-ERR(EINVAL));
 	sp = nfs4_get_state_owner(server, ctx->cred, GFP_KERNEL);
 	if (sp == NULL)
 		goto out_ctx;

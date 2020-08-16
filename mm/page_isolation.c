@@ -20,7 +20,7 @@ static int set_migratetype_isolate(struct page *page, int migratetype, int isol_
 	struct page *unmovable = NULL;
 	struct zone *zone;
 	unsigned long flags;
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	zone = page_zone(page);
 
@@ -207,7 +207,7 @@ undo:
 		unset_migratetype_isolate(page, migratetype);
 	}
 
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /*
@@ -295,7 +295,7 @@ int test_pages_isolated(unsigned long start_pfn, unsigned long end_pfn,
 	}
 	page = __first_valid_page(start_pfn, end_pfn - start_pfn);
 	if ((pfn < end_pfn) || !page)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	/* Check all pages are free or marked as ISOLATED */
 	zone = page_zone(page);
 	spin_lock_irqsave(&zone->lock, flags);
@@ -304,7 +304,7 @@ int test_pages_isolated(unsigned long start_pfn, unsigned long end_pfn,
 
 	trace_test_pages_isolated(start_pfn, end_pfn, pfn);
 
-	return pfn < end_pfn ? -EBUSY : 0;
+	return pfn < end_pfn ? -ERR(EBUSY) : 0;
 }
 
 struct page *alloc_migrate_target(struct page *page, unsigned long private)

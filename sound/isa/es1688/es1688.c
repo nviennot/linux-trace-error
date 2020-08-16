@@ -94,14 +94,14 @@ static int snd_es1688_legacy_create(struct snd_card *card,
 		irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (irq[n] < 0) {
 			dev_err(dev, "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma8[n] == SNDRV_AUTO_DMA) {
 		dma8[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma8[n] < 0) {
 			dev_err(dev, "unable to find a free DMA\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -224,7 +224,7 @@ static int snd_card_es968_pnp(struct snd_card *card, unsigned int n,
 
 	pdev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
 	if (pdev == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	error = pnp_activate_dev(pdev);
 	if (error < 0) {
@@ -247,13 +247,13 @@ static int snd_es968_pnp_detect(struct pnp_card_link *pcard,
 	int error;
 
 	if (snd_es968_pnp_is_probed)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	for ( ; dev < SNDRV_CARDS; dev++) {
 		if (enable[dev] && isapnp[dev])
 			break;
 	}
 	if (dev == SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	error = snd_card_new(&pcard->card->dev,
 			     index[dev], id[dev], THIS_MODULE,

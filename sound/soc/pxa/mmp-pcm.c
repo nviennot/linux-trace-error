@@ -118,7 +118,7 @@ static int mmp_pcm_open(struct snd_soc_component *component,
 
 	r = platform_get_resource(pdev, IORESOURCE_DMA, substream->stream);
 	if (!r)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	snd_soc_set_runtime_hwparams(substream,
 				&mmp_pcm_hardware[substream->stream]);

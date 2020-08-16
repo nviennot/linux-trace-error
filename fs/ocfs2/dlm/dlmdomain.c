@@ -450,7 +450,7 @@ redo_bucket:
 		if (dlm->reco.state & DLM_RECO_STATE_ACTIVE) {
 			mlog(0, "%s: perhaps there are more lock resources "
 			     "need to be migrated after dlm recovery\n", dlm->name);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		} else {
 			mlog(0, "%s: we won't do dlm recovery after migrating "
 			     "all lock resources\n", dlm->name);
@@ -466,7 +466,7 @@ redo_bucket:
 	if (num) {
 		mlog(0, "%s: %d lock resources in hash last pass\n",
 		     dlm->name, num);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 	mlog(0, "DONE Migrating locks from domain %s\n", dlm->name);
 	return ret;
@@ -934,7 +934,7 @@ static int dlm_assert_joined_handler(struct o2net_msg *msg, u32 len, void *data,
 			mlog(0, "dlm recovery is ongoing, disallow join\n");
 			spin_unlock(&dlm->spinlock);
 			spin_unlock(&dlm_domain_lock);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 
 		set_bit(assert->node_idx, dlm->domain_map);
@@ -969,7 +969,7 @@ static int dlm_match_regions(struct dlm_ctxt *dlm,
 			mlog(ML_ERROR, "Domain %s: Joining node %d has global "
 			     "heartbeat enabled but local node %d does not\n",
 			     qr->qr_domain, qr->qr_node, dlm->node_num);
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 		}
 		goto bail;
 	}
@@ -978,7 +978,7 @@ static int dlm_match_regions(struct dlm_ctxt *dlm,
 		mlog(ML_ERROR, "Domain %s: Local node %d has global "
 		     "heartbeat enabled but joining node %d does not\n",
 		     qr->qr_domain, dlm->node_num, qr->qr_node);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -1004,7 +1004,7 @@ static int dlm_match_regions(struct dlm_ctxt *dlm,
 			r += O2HB_MAX_REGION_NAME_LEN;
 		}
 		if (!foundit) {
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			mlog(ML_ERROR, "Domain %s: Region '%.*s' registered "
 			     "in local node %d but not in joining node %d\n",
 			     qr->qr_domain, O2HB_MAX_REGION_NAME_LEN, l,
@@ -1027,7 +1027,7 @@ static int dlm_match_regions(struct dlm_ctxt *dlm,
 			l += O2HB_MAX_REGION_NAME_LEN;
 		}
 		if (!foundit) {
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			mlog(ML_ERROR, "Domain %s: Region '%.*s' registered "
 			     "in joining node %d but not in local node %d\n",
 			     qr->qr_domain, O2HB_MAX_REGION_NAME_LEN, r,
@@ -1112,7 +1112,7 @@ static int dlm_query_region_handler(struct o2net_msg *msg, u32 len,
 	if (!local)
 		return -ENOMEM;
 
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 
 	spin_lock(&dlm_domain_lock);
 	dlm = __dlm_lookup_domain_full(qr->qr_domain, qr->qr_namelen);
@@ -1179,13 +1179,13 @@ static int dlm_match_nodes(struct dlm_ctxt *dlm, struct dlm_query_nodeinfo *qn)
 			continue;
 
 		if ((local && !remote) || (!local && remote))
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 
 		if (!status &&
 		    ((remote->ni_nodenum != local->nd_num) ||
 		     (remote->ni_ipv4_port != local->nd_ipv4_port) ||
 		     (remote->ni_ipv4_address != local->nd_ipv4_address)))
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 
 		if (status) {
 			if (remote && !local)
@@ -1276,7 +1276,7 @@ static int dlm_query_nodeinfo_handler(struct o2net_msg *msg, u32 len,
 {
 	struct dlm_query_nodeinfo *qn;
 	struct dlm_ctxt *dlm = NULL;
-	int locked = 0, status = -EINVAL;
+	int locked = 0, status = -ERR(EINVAL);
 
 	qn = (struct dlm_query_nodeinfo *) msg->buf;
 
@@ -1387,7 +1387,7 @@ static int dlm_send_join_cancels(struct dlm_ctxt *dlm,
 		mlog(ML_ERROR,
 		     "map_size %u != BITS_TO_LONGS(O2NM_MAX_NODES) %u\n",
 		     map_size, (unsigned)BITS_TO_LONGS(O2NM_MAX_NODES));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	status = 0;
@@ -1466,7 +1466,7 @@ static int dlm_request_join(struct dlm_ctxt *dlm,
 			     dlm->fs_locking_proto.pv_major,
 			     dlm->fs_locking_proto.pv_minor,
 			     node);
-			status = -EPROTO;
+			status = -ERR(EPROTO);
 			break;
 		case JOIN_OK:
 			/* Use the same locking protocol as the remote node */
@@ -1482,7 +1482,7 @@ static int dlm_request_join(struct dlm_ctxt *dlm,
 			     dlm->fs_locking_proto.pv_minor);
 			break;
 		default:
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			mlog(ML_ERROR, "invalid response %d from node %u\n",
 			     packet.code, node);
 			/* Reset response to JOIN_DISALLOW */
@@ -1633,7 +1633,7 @@ static int dlm_try_to_join_domain(struct dlm_ctxt *dlm)
 			set_bit(node, ctxt->yes_resp_map);
 
 		if (dlm_should_restart_join(dlm, ctxt, response)) {
-			status = -EAGAIN;
+			status = -ERR(EAGAIN);
 			goto bail;
 		}
 	}
@@ -1899,12 +1899,12 @@ static int dlm_join_domain(struct dlm_ctxt *dlm)
 #define	DLM_JOIN_TIMEOUT_MSECS	90000
 		if (status == -EAGAIN) {
 			if (signal_pending(current)) {
-				status = -ERESTARTSYS;
+				status = -ERR(ERESTARTSYS);
 				goto bail;
 			}
 
 			if (total_backoff > DLM_JOIN_TIMEOUT_MSECS) {
-				status = -ERESTARTSYS;
+				status = -ERR(ERESTARTSYS);
 				mlog(ML_NOTICE, "Timed out joining dlm domain "
 				     "%s after %u msecs\n", dlm->name,
 				     total_backoff);
@@ -2109,7 +2109,7 @@ struct dlm_ctxt * dlm_register_domain(const char *domain,
 	struct dlm_ctxt *new_ctxt = NULL;
 
 	if (strlen(domain) >= O2NM_MAX_NAME_LEN) {
-		ret = -ENAMETOOLONG;
+		ret = -ERR(ENAMETOOLONG);
 		mlog(ML_ERROR, "domain name length too long\n");
 		goto leave;
 	}
@@ -2119,7 +2119,7 @@ struct dlm_ctxt * dlm_register_domain(const char *domain,
 retry:
 	dlm = NULL;
 	if (signal_pending(current)) {
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 		mlog_errno(ret);
 		goto leave;
 	}
@@ -2144,7 +2144,7 @@ retry:
 			     "Requested locking protocol version is not "
 			     "compatible with already registered domain "
 			     "\"%s\"\n", domain);
-			ret = -EPROTO;
+			ret = -ERR(EPROTO);
 			goto leave;
 		}
 

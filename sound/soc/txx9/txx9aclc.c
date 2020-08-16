@@ -220,7 +220,7 @@ static int txx9aclc_pcm_trigger(struct snd_soc_component *component,
 		__raw_writel(ctlbit, base + ACCTLEN);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	spin_unlock_irqrestore(&dmadata->dma_lock, flags);
 	return ret;
@@ -285,7 +285,7 @@ static int txx9aclc_pcm_new(struct snd_soc_component *component,
 	for (i = 0; i < 2; i++) {
 		r = platform_get_resource(pdev, IORESOURCE_DMA, i);
 		if (!r) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto exit;
 		}
 		dev->dmadata[i].dma_res = r;
@@ -350,7 +350,7 @@ static int txx9aclc_dma_init(struct txx9aclc_soc_device *dev,
 			"DMA channel for %s is not available\n",
 			dmadata->stream == SNDRV_PCM_STREAM_PLAYBACK ?
 			"playback" : "capture");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	tasklet_init(&dmadata->tasklet, txx9aclc_dma_tasklet,
 		     (unsigned long)dmadata);

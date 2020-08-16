@@ -82,7 +82,7 @@ static int vboxsf_file_open(struct inode *inode, struct file *file)
 
 	err = vboxsf_create_at_dentry(file_dentry(file), &params);
 	if (err == 0 && params.handle == SHFL_HANDLE_NIL)
-		err = (params.result == SHFL_FILE_EXISTS) ? -EEXIST : -ENOENT;
+		err = (params.result == SHFL_FILE_EXISTS) ? -ERR(EEXIST) : -ERR(ENOENT);
 	if (err) {
 		kfree(sf_handle);
 		return err;
@@ -266,7 +266,7 @@ static int vboxsf_writepage(struct page *page, struct writeback_control *wbc)
 
 	sf_handle = vboxsf_get_write_handle(sf_i);
 	if (!sf_handle)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	buf = kmap(page);
 	err = vboxsf_write(sf_handle->root, sf_handle->handle,
@@ -351,7 +351,7 @@ static const char *vboxsf_get_link(struct dentry *dentry, struct inode *inode,
 	int err;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	path = vboxsf_path_from_dentry(sbi, dentry);
 	if (IS_ERR(path))

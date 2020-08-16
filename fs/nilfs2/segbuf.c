@@ -349,7 +349,7 @@ static int nilfs_segbuf_submit_bio(struct nilfs_segment_buffer *segbuf,
 		segbuf->sb_nbio--;
 		if (unlikely(atomic_read(&segbuf->sb_err))) {
 			bio_put(bio);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto failed;
 		}
 	}
@@ -510,7 +510,7 @@ static int nilfs_segbuf_wait(struct nilfs_segment_buffer *segbuf)
 			  (unsigned long long)segbuf->sb_pseg_start,
 			  segbuf->sb_sum.nblocks,
 			  (unsigned long long)segbuf->sb_segnum);
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	return err;
 }

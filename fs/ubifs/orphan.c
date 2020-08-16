@@ -59,7 +59,7 @@ static struct ubifs_orphan *orphan_add(struct ubifs_info *c, ino_t inum,
 	if (c->tot_orphans >= c->max_orphans) {
 		spin_unlock(&c->orphan_lock);
 		kfree(orphan);
-		return ERR_PTR(-ENFILE);
+		return ERR_PTR(-ERR(ENFILE));
 	}
 	p = &c->orph_tree.rb_node;
 	while (*p) {
@@ -73,7 +73,7 @@ static struct ubifs_orphan *orphan_add(struct ubifs_info *c, ino_t inum,
 			ubifs_err(c, "orphaned twice");
 			spin_unlock(&c->orphan_lock);
 			kfree(orphan);
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 	}
 	c->tot_orphans += 1;
@@ -356,7 +356,7 @@ static int write_orph_node(struct ubifs_info *c, int atomic)
 			 * never happen.
 			 */
 			ubifs_err(c, "out of space in orphan area");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	cnt = (gap - UBIFS_ORPH_NODE_SZ) / sizeof(__le64);
@@ -466,7 +466,7 @@ static int consolidate(struct ubifs_info *c)
 		 * never happen.
 		 */
 		ubifs_err(c, "out of space in orphan area");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	spin_unlock(&c->orphan_lock);
 	return err;
@@ -645,7 +645,7 @@ static int do_kill_orphans(struct ubifs_info *c, struct ubifs_scan_leb *sleb,
 			ubifs_err(c, "invalid node type %d in orphan area at %d:%d",
 				  snod->type, sleb->lnum, snod->offs);
 			ubifs_dump_node(c, snod->node);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_free;
 		}
 
@@ -673,7 +673,7 @@ static int do_kill_orphans(struct ubifs_info *c, struct ubifs_scan_leb *sleb,
 				ubifs_err(c, "out of order commit number %llu in orphan node at %d:%d",
 					  cmt_no, sleb->lnum, snod->offs);
 				ubifs_dump_node(c, snod->node);
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out_free;
 			}
 			dbg_rcvry("out of date LEB %d", sleb->lnum);
@@ -1033,7 +1033,7 @@ static int dbg_check_orphans(struct ubifs_info *c)
 
 	if (ci.missing) {
 		ubifs_err(c, "%lu missing orphan(s)", ci.missing);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

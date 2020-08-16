@@ -250,7 +250,7 @@ static int sst_byt_pcm_open(struct snd_soc_component *component,
 	if (pcm_data->stream == NULL) {
 		dev_err(rtd->dev, "failed to create stream\n");
 		mutex_unlock(&pcm_data->mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_unlock(&pcm_data->mutex);
@@ -337,7 +337,7 @@ static int sst_byt_pcm_probe(struct snd_soc_component *component)
 	int i;
 
 	if (!plat_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	priv_data = devm_kzalloc(component->dev, sizeof(*priv_data),
 				 GFP_KERNEL);
@@ -419,7 +419,7 @@ static int sst_byt_pcm_dev_probe(struct platform_device *pdev)
 
 	ret = sst_byt_dsp_init(&pdev->dev, sst_pdata);
 	if (ret < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = devm_snd_soc_register_component(&pdev->dev, &byt_dai_component,
 					 byt_dais, ARRAY_SIZE(byt_dais));

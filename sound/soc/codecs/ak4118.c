@@ -167,7 +167,7 @@ static int ak4118_set_dai_fmt_master(struct ak4118_priv *ak4118,
 		dif = AK4118_REG_FORMAT_CTL_DIF2;
 		break;
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	return dif;
@@ -187,7 +187,7 @@ static int ak4118_set_dai_fmt_slave(struct ak4118_priv *ak4118,
 		dif = AK4118_REG_FORMAT_CTL_DIF1 | AK4118_REG_FORMAT_CTL_DIF2;
 		break;
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	return dif;
@@ -211,7 +211,7 @@ static int ak4118_set_dai_fmt(struct snd_soc_dai *dai,
 		dif = ak4118_set_dai_fmt_slave(ak4118, format);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		goto exit;
 	}
 

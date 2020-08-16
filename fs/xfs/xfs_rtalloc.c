@@ -794,7 +794,7 @@ xfs_growfs_rt_alloc(
 		error = xfs_bmapi_write(tp, ip, oblocks, nblocks - oblocks,
 					XFS_BMAPI_METADATA, 0, &map, &nmap);
 		if (!error && nmap < 1)
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 		if (error)
 			goto out_trans_cancel;
 		/*
@@ -902,11 +902,11 @@ xfs_growfs_rt(
 	 * Initial error checking.
 	 */
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (mp->m_rtdev_targp == NULL || mp->m_rbmip == NULL ||
 	    (nrblocks = in->newblocks) <= sbp->sb_rblocks ||
 	    (sbp->sb_rblocks && (in->extsize != sbp->sb_rextsize)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((error = xfs_sb_validate_fsb_count(sbp, nrblocks)))
 		return error;
 	/*
@@ -936,7 +936,7 @@ xfs_growfs_rt(
 	 * since we'll log basically the whole summary file at once.
 	 */
 	if (nrsumblocks > (mp->m_sb.sb_logblocks >> 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Get the old block counts for bitmap and summary inodes.
 	 * These can't change since other growfs callers are locked out.
@@ -1191,7 +1191,7 @@ xfs_rtmount_init(
 	if (mp->m_rtdev_targp == NULL) {
 		xfs_warn(mp,
 	"Filesystem has a realtime volume, use rtdev=device option");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	mp->m_rsumlevels = sbp->sb_rextslog + 1;
 	mp->m_rsumsize =
@@ -1207,7 +1207,7 @@ xfs_rtmount_init(
 		xfs_warn(mp, "realtime mount -- %llu != %llu",
 			(unsigned long long) XFS_BB_TO_FSB(mp, d),
 			(unsigned long long) mp->m_sb.sb_rblocks);
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 	error = xfs_buf_read_uncached(mp->m_rtdev_targp,
 					d - XFS_FSB_TO_BB(mp, 1),

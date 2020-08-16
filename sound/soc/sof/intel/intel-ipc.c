@@ -51,7 +51,7 @@ int intel_ipc_pcm_params(struct snd_sof_dev *sdev,
 	/* check if offset is overflow or it is not aligned */
 	if (posn_offset > sdev->stream_box.size ||
 	    posn_offset % sizeof(struct sof_ipc_stream_posn) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stream->posn_offset = sdev->stream_box.offset + posn_offset;
 

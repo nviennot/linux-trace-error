@@ -392,7 +392,7 @@ out_dump:
 	ubifs_err(c, "bad indexing node at LEB %d:%d, error %d", lnum, offs, err);
 	ubifs_dump_node(c, idx);
 	kfree(idx);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -490,7 +490,7 @@ int ubifs_tnc_read_node(struct ubifs_info *c, struct ubifs_zbranch *zbr,
 		dbg_tnck(key, "looked for key ");
 		dbg_tnck(&key1, "but found node's key ");
 		ubifs_dump_node(c, node);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = ubifs_node_check_hash(c, node, zbr->hash);

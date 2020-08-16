@@ -46,17 +46,17 @@ static int vlan_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (tb[IFLA_ADDRESS]) {
 		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid link address");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS]))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid link address");
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		}
 	}
 
 	if (!data) {
 		NL_SET_ERR_MSG_MOD(extack, "VLAN properties not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (data[IFLA_VLAN_PROTOCOL]) {
@@ -66,7 +66,7 @@ static int vlan_validate(struct nlattr *tb[], struct nlattr *data[],
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN protocol");
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 		}
 	}
 
@@ -74,7 +74,7 @@ static int vlan_validate(struct nlattr *tb[], struct nlattr *data[],
 		id = nla_get_u16(data[IFLA_VLAN_ID]);
 		if (id >= VLAN_VID_MASK) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN id");
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 	}
 	if (data[IFLA_VLAN_FLAGS]) {
@@ -84,7 +84,7 @@ static int vlan_validate(struct nlattr *tb[], struct nlattr *data[],
 		      VLAN_FLAG_LOOSE_BINDING | VLAN_FLAG_MVRP |
 		      VLAN_FLAG_BRIDGE_BINDING)) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid VLAN flags");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -145,18 +145,18 @@ static int vlan_newlink(struct net *src_net, struct net_device *dev,
 
 	if (!data[IFLA_VLAN_ID]) {
 		NL_SET_ERR_MSG_MOD(extack, "VLAN id not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!tb[IFLA_LINK]) {
 		NL_SET_ERR_MSG_MOD(extack, "link not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	real_dev = __dev_get_by_index(src_net, nla_get_u32(tb[IFLA_LINK]));
 	if (!real_dev) {
 		NL_SET_ERR_MSG_MOD(extack, "link does not exist");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (data[IFLA_VLAN_PROTOCOL])
@@ -180,7 +180,7 @@ static int vlan_newlink(struct net *src_net, struct net_device *dev,
 	if (!tb[IFLA_MTU])
 		dev->mtu = max_mtu;
 	else if (dev->mtu > max_mtu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = vlan_changelink(dev, tb, data, extack);
 	if (!err)
@@ -269,7 +269,7 @@ static int vlan_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static struct net *vlan_get_link_net(const struct net_device *dev)

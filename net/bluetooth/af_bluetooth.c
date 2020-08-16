@@ -82,12 +82,12 @@ int bt_sock_register(int proto, const struct net_proto_family *ops)
 	int err = 0;
 
 	if (proto < 0 || proto >= BT_MAX_PROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock(&bt_proto_lock);
 
 	if (bt_proto[proto])
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else
 		bt_proto[proto] = ops;
 
@@ -114,15 +114,15 @@ static int bt_sock_create(struct net *net, struct socket *sock, int proto,
 	int err;
 
 	if (net != &init_net)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (proto < 0 || proto >= BT_MAX_PROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!bt_proto[proto])
 		request_module("bt-proto-%d", proto);
 
-	err = -EPROTONOSUPPORT;
+	err = -ERR(EPROTONOSUPPORT);
 
 	read_lock(&bt_proto_lock);
 
@@ -261,7 +261,7 @@ int bt_sock_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 	BT_DBG("sock %p sk %p len %zu", sock, sk, len);
 
 	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
 	if (!skb) {
@@ -335,7 +335,7 @@ int bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 	long timeo;
 
 	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	BT_DBG("sk %p size %zu", sk, size);
 
@@ -359,7 +359,7 @@ int bt_sock_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 			if (sk->sk_shutdown & RCV_SHUTDOWN)
 				break;
 
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			if (!timeo)
 				break;
 
@@ -502,7 +502,7 @@ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	switch (cmd) {
 	case TIOCOUTQ:
 		if (sk->sk_state == BT_LISTEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		amount = sk->sk_sndbuf - sk_wmem_alloc_get(sk);
 		if (amount < 0)
@@ -512,7 +512,7 @@ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 
 	case TIOCINQ:
 		if (sk->sk_state == BT_LISTEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		lock_sock(sk);
 		skb = skb_peek(&sk->sk_receive_queue);
@@ -522,7 +522,7 @@ int bt_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		break;
 
 	default:
-		err = -ENOIOCTLCMD;
+		err = -ERR(ENOIOCTLCMD);
 		break;
 	}
 
@@ -542,7 +542,7 @@ int bt_sock_wait_state(struct sock *sk, int state, unsigned long timeo)
 	set_current_state(TASK_INTERRUPTIBLE);
 	while (sk->sk_state != state) {
 		if (!timeo) {
-			err = -EINPROGRESS;
+			err = -ERR(EINPROGRESS);
 			break;
 		}
 
@@ -581,7 +581,7 @@ int bt_sock_wait_ready(struct sock *sk, unsigned long flags)
 	set_current_state(TASK_INTERRUPTIBLE);
 	while (test_bit(BT_SK_SUSPEND, &bt_sk(sk)->flags)) {
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		}
 

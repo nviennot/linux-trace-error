@@ -50,7 +50,7 @@ static bool afs_start_fs_iteration(struct afs_operation *op,
 		 * and have to return an error.
 		 */
 		if (op->flags & AFS_OPERATION_CUR_ONLY) {
-			op->error = -ESTALE;
+			op->error = -ERR(ESTALE);
 			return false;
 		}
 
@@ -92,7 +92,7 @@ static bool afs_sleep_and_retry(struct afs_operation *op)
 	if (!(op->flags & AFS_OPERATION_UNINTR)) {
 		msleep_interruptible(1000);
 		if (signal_pending(current)) {
-			op->error = -ERESTARTSYS;
+			op->error = -ERR(ERESTARTSYS);
 			return false;
 		}
 	} else {
@@ -152,7 +152,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 			 * - May indicate that the fileserver couldn't attach to the vol.
 			 */
 			if (op->flags & AFS_OPERATION_VNOVOL) {
-				op->error = -EREMOTEIO;
+				op->error = -ERR(EREMOTEIO);
 				goto next_server;
 			}
 
@@ -166,7 +166,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 				goto failed_set_error;
 
 			if (test_bit(AFS_VOLUME_DELETED, &op->volume->flags)) {
-				op->error = -ENOMEDIUM;
+				op->error = -ERR(ENOMEDIUM);
 				goto failed;
 			}
 
@@ -174,7 +174,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 			 * it's the fileserver having trouble.
 			 */
 			if (rcu_access_pointer(op->volume->servers) == op->server_list) {
-				op->error = -EREMOTEIO;
+				op->error = -ERR(EREMOTEIO);
 				goto next_server;
 			}
 
@@ -198,11 +198,11 @@ bool afs_select_fileserver(struct afs_operation *op)
 				clear_bit(AFS_VOLUME_BUSY, &op->volume->flags);
 			}
 			if (op->flags & AFS_OPERATION_NO_VSLEEP) {
-				op->error = -EADV;
+				op->error = -ERR(EADV);
 				goto failed;
 			}
 			if (op->flags & AFS_OPERATION_CUR_ONLY) {
-				op->error = -ESTALE;
+				op->error = -ERR(ESTALE);
 				goto failed;
 			}
 			goto busy;
@@ -214,7 +214,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 			 * have a file lock we need to maintain.
 			 */
 			if (op->flags & AFS_OPERATION_NO_VSLEEP) {
-				op->error = -EBUSY;
+				op->error = -ERR(EBUSY);
 				goto failed;
 			}
 			if (!test_and_set_bit(AFS_VOLUME_BUSY, &op->volume->flags)) {
@@ -243,7 +243,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 			 * honour, just in case someone sets up a loop.
 			 */
 			if (op->flags & AFS_OPERATION_VMOVED) {
-				op->error = -EREMOTEIO;
+				op->error = -ERR(EREMOTEIO);
 				goto failed;
 			}
 			op->flags |= AFS_OPERATION_VMOVED;
@@ -264,7 +264,7 @@ bool afs_select_fileserver(struct afs_operation *op)
 			 * TODO: Retry a few times with sleeps.
 			 */
 			if (rcu_access_pointer(op->volume->servers) == op->server_list) {
-				op->error = -ENOMEDIUM;
+				op->error = -ERR(ENOMEDIUM);
 				goto failed;
 			}
 
@@ -442,7 +442,7 @@ no_more_servers:
 	if (op->flags & AFS_OPERATION_VBUSY)
 		goto restart_from_beginning;
 
-	e.error = -EDESTADDRREQ;
+	e.error = -ERR(EDESTADDRREQ);
 	e.responded = false;
 	for (i = 0; i < op->server_list->nr_servers; i++) {
 		struct afs_server *s = op->server_list->servers[i].server;

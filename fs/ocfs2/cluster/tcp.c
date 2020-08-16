@@ -507,7 +507,7 @@ static void o2net_set_nn_state(struct o2net_node *nn,
 	mlog_bug_on_msg(valid && !sc, "valid %u sc %p\n", valid, sc);
 
 	if (was_valid && !valid && err == 0)
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 
 	mlog(ML_CONN, "node %u sc: %p -> %p, valid %u -> %u, err %d -> %d\n",
 	     o2net_num_from_nn(nn), nn->nn_sc, sc, nn->nn_sc_valid, valid,
@@ -807,20 +807,20 @@ int o2net_register_handler(u32 msg_type, u32 key, u32 max_len,
 	if (max_len > O2NET_MAX_PAYLOAD_BYTES) {
 		mlog(0, "max_len for message handler out of range: %u\n",
 			max_len);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!msg_type) {
 		mlog(0, "no message type provided: %u, %p\n", msg_type, func);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 
 	}
 	if (!func) {
 		mlog(0, "no message handler provided: %u, %p\n",
 		       msg_type, func);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -843,7 +843,7 @@ int o2net_register_handler(u32 msg_type, u32 key, u32 max_len,
 
 	write_lock(&o2net_handler_lock);
 	if (o2net_handler_tree_lookup(msg_type, key, &p, &parent))
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	else {
 	        rb_link_node(&nmh->nh_node, parent, p);
 		rb_insert_color(&nmh->nh_node, &o2net_handler_tree);
@@ -913,7 +913,7 @@ static int o2net_send_tcp_msg(struct socket *sock, struct kvec *vec,
 	struct msghdr msg = {.msg_flags = 0,};
 
 	if (sock == NULL) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -922,7 +922,7 @@ static int o2net_send_tcp_msg(struct socket *sock, struct kvec *vec,
 		return 0;
 	mlog(ML_ERROR, "sendmsg returned %d instead of %zu\n", ret, total);
 	if (ret >= 0)
-		ret = -EPIPE; /* should be smarter, I bet */
+		ret = -ERR(EPIPE); /* should be smarter, I bet */
 out:
 	mlog(0, "returning error: %d\n", ret);
 	return ret;
@@ -1029,25 +1029,25 @@ int o2net_send_message_vec(u32 msg_type, u32 key, struct kvec *caller_vec,
 
 	if (o2net_wq == NULL) {
 		mlog(0, "attempt to tx without o2netd running\n");
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 		goto out;
 	}
 
 	if (caller_veclen == 0) {
 		mlog(0, "bad kvec array length\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	caller_bytes = iov_length((struct iovec *)caller_vec, caller_veclen);
 	if (caller_bytes > O2NET_MAX_PAYLOAD_BYTES) {
 		mlog(0, "total payload len %zu too large\n", caller_bytes);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (target_node == o2nm_this_node()) {
-		ret = -ELOOP;
+		ret = -ERR(ELOOP);
 		goto out;
 	}
 
@@ -1196,7 +1196,7 @@ static int o2net_process_message(struct o2net_sock_container *sc,
 			break;
 		default:
 			msglog(hdr, "bad magic\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 			break;
 	}
@@ -1353,7 +1353,7 @@ static int o2net_advance_rx(struct o2net_sock_container *sc)
 		if (sc->sc_page_off == sizeof(struct o2net_handshake)) {
 			o2net_check_handshake(sc);
 			if (unlikely(sc->sc_handshake_ok == 0))
-				ret = -EPROTO;
+				ret = -ERR(EPROTO);
 		}
 		goto out;
 	}
@@ -1372,7 +1372,7 @@ static int o2net_advance_rx(struct o2net_sock_container *sc)
 				hdr = page_address(sc->sc_page);
 				if (be16_to_cpu(hdr->data_len) >
 				    O2NET_MAX_PAYLOAD_BYTES)
-					ret = -EOVERFLOW;
+					ret = -ERR(EOVERFLOW);
 			}
 		}
 		if (ret <= 0)
@@ -1585,7 +1585,7 @@ static void o2net_start_connect(struct work_struct *work)
 	timeout = atomic_read(&nn->nn_timeout);
 	stop = (nn->nn_sc ||
 		(nn->nn_persistent_error &&
-		(nn->nn_persistent_error != -ENOTCONN || timeout == 0)));
+		(nn->nn_persistent_error != -ERR(ENOTCONN) || timeout == 0)));
 	spin_unlock(&nn->nn_lock);
 	if (stop)
 		goto out;
@@ -1819,7 +1819,7 @@ static int o2net_accept_one(struct socket *sock, int *more)
 		printk(KERN_NOTICE "o2net: Attempt to connect from unknown "
 		       "node at %pI4:%d\n", &sin.sin_addr.s_addr,
 		       ntohs(sin.sin_port));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1835,7 +1835,7 @@ static int o2net_accept_one(struct socket *sock, int *more)
 					node->nd_name,
 					node->nd_num, &sin.sin_addr.s_addr,
 					ntohs(sin.sin_port));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1846,7 +1846,7 @@ static int o2net_accept_one(struct socket *sock, int *more)
 		     "%pI4:%d but it isn't heartbeating\n",
 		     node->nd_name, &sin.sin_addr.s_addr,
 		     ntohs(sin.sin_port));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1854,7 +1854,7 @@ static int o2net_accept_one(struct socket *sock, int *more)
 
 	spin_lock(&nn->nn_lock);
 	if (nn->nn_sc)
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else
 		ret = 0;
 	spin_unlock(&nn->nn_lock);
@@ -2114,7 +2114,7 @@ int o2net_init(void)
 				  o2net_connect_expired);
 		INIT_DELAYED_WORK(&nn->nn_still_up, o2net_still_up);
 		/* until we see hb from a node we'll return einval */
-		nn->nn_persistent_error = -ENOTCONN;
+		nn->nn_persistent_error = -ERR(ENOTCONN);
 		init_waitqueue_head(&nn->nn_sc_wq);
 		idr_init(&nn->nn_status_idr);
 		INIT_LIST_HEAD(&nn->nn_status_list);

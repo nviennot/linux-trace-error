@@ -151,7 +151,7 @@ static int __init find_bit_test(void)
 	 * Everything is OK. Return error just to let user run benchmark
 	 * again without annoying rmmod.
 	 */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 module_init(find_bit_test);
 

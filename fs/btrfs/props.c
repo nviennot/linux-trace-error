@@ -60,11 +60,11 @@ int btrfs_validate_prop(const char *name, const char *value, size_t value_len)
 	const struct prop_handler *handler;
 
 	if (strlen(name) <= XATTR_BTRFS_PREFIX_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	handler = find_prop_handler(name, NULL);
 	if (!handler)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (value_len == 0)
 		return 0;
@@ -81,7 +81,7 @@ int btrfs_set_prop(struct btrfs_trans_handle *trans, struct inode *inode,
 
 	handler = find_prop_handler(name, NULL);
 	if (!handler)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (value_len == 0) {
 		ret = btrfs_setxattr(trans, inode, handler->xattr_name,
@@ -260,7 +260,7 @@ static int prop_compression_validate(const char *value, size_t len)
 	if (btrfs_compress_is_valid_type(value, len))
 		return 0;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int prop_compression_apply(struct inode *inode, const char *value,
@@ -286,7 +286,7 @@ static int prop_compression_apply(struct inode *inode, const char *value,
 		type = BTRFS_COMPRESS_ZSTD;
 		btrfs_set_fs_incompat(fs_info, COMPRESS_ZSTD);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	BTRFS_I(inode)->flags &= ~BTRFS_INODE_NOCOMPRESS;

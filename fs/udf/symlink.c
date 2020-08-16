@@ -55,21 +55,21 @@ static int udf_pc_to_char(struct super_block *sb, unsigned char *from,
 			/* Fall through */
 		case 2:
 			if (tolen == 0)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			p = to;
 			*p++ = '/';
 			tolen--;
 			break;
 		case 3:
 			if (tolen < 3)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			memcpy(p, "../", 3);
 			p += 3;
 			tolen -= 3;
 			break;
 		case 4:
 			if (tolen < 2)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			memcpy(p, "./", 2);
 			p += 2;
 			tolen -= 2;
@@ -78,7 +78,7 @@ static int udf_pc_to_char(struct super_block *sb, unsigned char *from,
 		case 5:
 			elen += pc->lengthComponentIdent;
 			if (elen > fromlen)
-				return -EIO;
+				return -ERR(EIO);
 			comp_len = udf_get_filename(sb, pc->componentIdent,
 						    pc->lengthComponentIdent,
 						    p, tolen);
@@ -88,7 +88,7 @@ static int udf_pc_to_char(struct super_block *sb, unsigned char *from,
 			p += comp_len;
 			tolen -= comp_len;
 			if (tolen == 0)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			*p++ = '/';
 			tolen--;
 			break;
@@ -113,7 +113,7 @@ static int udf_symlink_filler(struct file *file, struct page *page)
 
 	/* We don't support symlinks longer than one block */
 	if (inode->i_size > inode->i_sb->s_blocksize) {
-		err = -ENAMETOOLONG;
+		err = -ERR(ENAMETOOLONG);
 		goto out_unmap;
 	}
 
@@ -127,7 +127,7 @@ static int udf_symlink_filler(struct file *file, struct page *page)
 		bh = sb_bread(inode->i_sb, pos);
 
 		if (!bh) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out_unlock_inode;
 		}
 

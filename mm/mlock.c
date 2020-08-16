@@ -227,7 +227,7 @@ static int __mlock_posix_error_return(long retval)
 	if (retval == -EFAULT)
 		retval = -ENOMEM;
 	else if (retval == -ENOMEM)
-		retval = -EAGAIN;
+		retval = -ERR(EAGAIN);
 	return retval;
 }
 
@@ -591,7 +591,7 @@ static int apply_vma_lock_flags(unsigned long start, size_t len,
 	VM_BUG_ON(len != PAGE_ALIGN(len));
 	end = start + len;
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (end == start)
 		return 0;
 	vma = find_vma(current->mm, start);
@@ -677,7 +677,7 @@ static __must_check int do_mlock(unsigned long start, size_t len, vm_flags_t fla
 	start = untagged_addr(start);
 
 	if (!can_do_mlock())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	len = PAGE_ALIGN(len + (offset_in_page(start)));
 	start &= PAGE_MASK;
@@ -687,7 +687,7 @@ static __must_check int do_mlock(unsigned long start, size_t len, vm_flags_t fla
 	locked = len >> PAGE_SHIFT;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	locked += current->mm->locked_vm;
 	if ((locked > lock_limit) && (!capable(CAP_IPC_LOCK))) {
@@ -725,7 +725,7 @@ SYSCALL_DEFINE3(mlock2, unsigned long, start, size_t, len, int, flags)
 	vm_flags_t vm_flags = VM_LOCKED;
 
 	if (flags & ~MLOCK_ONFAULT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & MLOCK_ONFAULT)
 		vm_flags |= VM_LOCKONFAULT;
@@ -743,7 +743,7 @@ SYSCALL_DEFINE2(munlock, unsigned long, start, size_t, len)
 	start &= PAGE_MASK;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 	ret = apply_vma_lock_flags(start, len, 0);
 	mmap_write_unlock(current->mm);
 
@@ -803,16 +803,16 @@ SYSCALL_DEFINE1(mlockall, int, flags)
 
 	if (!flags || (flags & ~(MCL_CURRENT | MCL_FUTURE | MCL_ONFAULT)) ||
 	    flags == MCL_ONFAULT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!can_do_mlock())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	lock_limit = rlimit(RLIMIT_MEMLOCK);
 	lock_limit >>= PAGE_SHIFT;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	ret = -ENOMEM;
 	if (!(flags & MCL_CURRENT) || (current->mm->total_vm <= lock_limit) ||
@@ -830,7 +830,7 @@ SYSCALL_DEFINE0(munlockall)
 	int ret;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 	ret = apply_mlockall_flags(0);
 	mmap_write_unlock(current->mm);
 	return ret;

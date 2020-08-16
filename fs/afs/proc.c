@@ -140,7 +140,7 @@ done:
 	return ret;
 
 inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	printk("kAFS: Invalid Command on /proc/fs/afs/cells file\n");
 	goto done;
 }
@@ -177,7 +177,7 @@ static int afs_proc_rootcell_write(struct file *file, char *buf, size_t size)
 	char *s;
 	int ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (buf[0] == '.')
 		goto out;
 	if (memchr(buf, '/', size))
@@ -502,7 +502,7 @@ static int afs_proc_sysname_write(struct file *file, char *buf, size_t size)
 		len = strlen(s);
 		if (len == 0)
 			continue;
-		ret = -ENAMETOOLONG;
+		ret = -ERR(ENAMETOOLONG);
 		if (len >= AFSNAMEMAX)
 			goto error;
 
@@ -521,7 +521,7 @@ static int afs_proc_sysname_write(struct file *file, char *buf, size_t size)
 		if (memchr(s, '/', len))
 			goto invalid;
 
-		ret = -EFBIG;
+		ret = -ERR(EFBIG);
 		if (sysnames->nr >= AFS_NR_SYSNAME)
 			goto out;
 
@@ -553,7 +553,7 @@ out:
 	return ret;
 
 invalid:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 error:
 	goto out;
 }

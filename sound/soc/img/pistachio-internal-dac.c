@@ -185,7 +185,7 @@ static int pistachio_internal_dac_probe(struct platform_device *pdev)
 		break;
 	default:
 		dev_err(dev, "invalid voltage: %d\n", voltage);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_regulator;
 	}
 

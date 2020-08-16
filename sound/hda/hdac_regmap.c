@@ -209,7 +209,7 @@ static int hda_reg_read_coef(struct hdac_device *codec, unsigned int reg,
 	int err;
 
 	if (!codec->cache_coef)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* LSB 8bit = coef index */
 	verb = (reg & ~0xfff00) | (AC_VERB_SET_COEF_INDEX << 8);
 	err = snd_hdac_exec_verb(codec, verb, 0, NULL);
@@ -227,7 +227,7 @@ static int hda_reg_write_coef(struct hdac_device *codec, unsigned int reg,
 	int err;
 
 	if (!codec->cache_coef)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* LSB 8bit = coef index */
 	verb = (reg & ~0xfff00) | (AC_VERB_SET_COEF_INDEX << 8);
 	err = snd_hdac_exec_verb(codec, verb, 0, NULL);
@@ -248,7 +248,7 @@ static int hda_reg_read(void *context, unsigned int reg, unsigned int *val)
 	if (verb != AC_VERB_GET_POWER_STATE) {
 		pm_lock = codec_pm_lock(codec);
 		if (pm_lock < 0)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	}
 	reg |= (codec->addr << 28);
 	if (is_stereo_amp_verb(reg)) {
@@ -294,7 +294,7 @@ static int hda_reg_write(void *context, unsigned int reg, unsigned int val)
 	if (verb != AC_VERB_SET_POWER_STATE) {
 		pm_lock = codec_pm_lock(codec);
 		if (pm_lock < 0)
-			return codec->lazy_cache ? 0 : -EAGAIN;
+			return codec->lazy_cache ? 0 : -ERR(EAGAIN);
 	}
 
 	if (is_stereo_amp_verb(reg)) {

@@ -120,11 +120,11 @@ static int inet6_create(struct net *net, struct socket *sock, int protocol,
 	int err;
 
 	if (protocol < 0 || protocol >= IPPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Look for the requested type/protocol pair. */
 lookup_protocol:
-	err = -ESOCKTNOSUPPORT;
+	err = -ERR(ESOCKTNOSUPPORT);
 	rcu_read_lock();
 	list_for_each_entry_rcu(answer, &inetsw6[sock->type], list) {
 
@@ -142,7 +142,7 @@ lookup_protocol:
 			if (IPPROTO_IP == answer->protocol)
 				break;
 		}
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 	}
 
 	if (err) {
@@ -167,7 +167,7 @@ lookup_protocol:
 			goto out_rcu_unlock;
 	}
 
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (sock->type == SOCK_RAW && !kern &&
 	    !ns_capable(net->user_ns, CAP_NET_RAW))
 		goto out_rcu_unlock;
@@ -179,7 +179,7 @@ lookup_protocol:
 
 	WARN_ON(!answer_prot->slab);
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	sk = sk_alloc(net, PF_INET6, GFP_KERNEL, answer_prot, kern);
 	if (!sk)
 		goto out;
@@ -288,23 +288,23 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 	int err = 0;
 
 	if (addr->sin6_family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	addr_type = ipv6_addr_type(&addr->sin6_addr);
 	if ((addr_type & IPV6_ADDR_MULTICAST) && sk->sk_type == SOCK_STREAM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snum = ntohs(addr->sin6_port);
 	if (snum && inet_port_requires_bind_service(net, snum) &&
 	    !ns_capable(net->user_ns, CAP_NET_BIND_SERVICE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (flags & BIND_WITH_LOCK)
 		lock_sock(sk);
 
 	/* Check these errors (active socket, double bind). */
 	if (sk->sk_state != TCP_CLOSE || inet->inet_num) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -317,7 +317,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		 * makes no sense
 		 */
 		if (sk->sk_ipv6only) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -325,7 +325,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		if (sk->sk_bound_dev_if) {
 			dev = dev_get_by_index_rcu(net, sk->sk_bound_dev_if);
 			if (!dev) {
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto out_unlock;
 			}
 		}
@@ -340,7 +340,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		    chk_addr_ret != RTN_LOCAL &&
 		    chk_addr_ret != RTN_MULTICAST &&
 		    chk_addr_ret != RTN_BROADCAST) {
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 			goto out;
 		}
 	} else {
@@ -359,7 +359,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 
 				/* Binding to link-local address requires an interface */
 				if (!sk->sk_bound_dev_if) {
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					goto out_unlock;
 				}
 			}
@@ -367,7 +367,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 			if (sk->sk_bound_dev_if) {
 				dev = dev_get_by_index_rcu(net, sk->sk_bound_dev_if);
 				if (!dev) {
-					err = -ENODEV;
+					err = -ERR(ENODEV);
 					goto out_unlock;
 				}
 			}
@@ -380,7 +380,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 				if (!ipv6_can_nonlocal_bind(net, inet) &&
 				    !ipv6_chk_addr(net, &addr->sin6_addr,
 						   dev, 0)) {
-					err = -EADDRNOTAVAIL;
+					err = -ERR(EADDRNOTAVAIL);
 					goto out_unlock;
 				}
 			}
@@ -406,7 +406,7 @@ static int __inet6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len,
 		if (sk->sk_prot->get_port(sk, snum)) {
 			sk->sk_ipv6only = saved_ipv6only;
 			inet_reset_saddr(sk);
-			err = -EADDRINUSE;
+			err = -ERR(EADDRINUSE);
 			goto out;
 		}
 		if (!(flags & BIND_FROM_BPF)) {
@@ -446,7 +446,7 @@ int inet6_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		return sk->sk_prot->bind(sk, uaddr, addr_len);
 
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* BPF prog is run before any checks are done so that if the prog
 	 * changes context in a wrong way it will be caught.
@@ -464,7 +464,7 @@ int inet6_release(struct socket *sock)
 	struct sock *sk = sock->sk;
 
 	if (!sk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Free mc lists */
 	ipv6_sock_mc_close(sk);
@@ -519,10 +519,10 @@ int inet6_getname(struct socket *sock, struct sockaddr *uaddr,
 	sin->sin6_scope_id = 0;
 	if (peer) {
 		if (!inet->inet_dport)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		if (((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_SYN_SENT)) &&
 		    peer == 1)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		sin->sin6_port = inet->inet_dport;
 		sin->sin6_addr = sk->sk_v6_daddr;
 		if (np->sndflow)
@@ -568,7 +568,7 @@ int inet6_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		return addrconf_set_dstaddr(net, argp);
 	default:
 		if (!sk->sk_prot->ioctl)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		return sk->sk_prot->ioctl(sk, cmd, arg);
 	}
 	/*NOTREACHED*/
@@ -620,7 +620,7 @@ int inet6_compat_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCDELRT:
 		return inet6_compat_routing_ioctl(sk, cmd, argp);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 EXPORT_SYMBOL_GPL(inet6_compat_ioctl);
@@ -633,7 +633,7 @@ int inet6_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 	struct sock *sk = sock->sk;
 
 	if (unlikely(inet_send_prepare(sk)))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return INDIRECT_CALL_2(sk->sk_prot->sendmsg, tcp_sendmsg, udpv6_sendmsg,
 			       sk, msg, size);
@@ -738,13 +738,13 @@ int inet6_register_protosw(struct inet_protosw *p)
 
 	spin_lock_bh(&inetsw6_lock);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (p->type >= SOCK_MAX)
 		goto out_illegal;
 
 	/* If we are trying to override a permanent protocol, bail. */
 	answer = NULL;
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	last_perm = &inetsw6[p->type];
 	list_for_each(lh, &inetsw6[p->type]) {
 		answer = list_entry(lh, struct inet_protosw, list);

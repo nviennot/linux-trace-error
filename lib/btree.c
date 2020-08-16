@@ -275,28 +275,28 @@ int btree_update(struct btree_head *head, struct btree_geo *geo,
 	unsigned long *node = head->node;
 
 	if (height == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	for ( ; height > 1; height--) {
 		for (i = 0; i < geo->no_pairs; i++)
 			if (keycmp(geo, node, i, key) <= 0)
 				break;
 		if (i == geo->no_pairs)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		node = bval(geo, node, i);
 		if (!node)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	if (!node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	for (i = 0; i < geo->no_pairs; i++)
 		if (keycmp(geo, node, i, key) == 0) {
 			setval(geo, node, i, val);
 			return 0;
 		}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL_GPL(btree_update);
 

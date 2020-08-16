@@ -184,7 +184,7 @@ static int parse_audio_format_rates_v1(struct snd_usb_audio *chip, struct audiof
 		usb_audio_err(chip,
 			"%u:%d : invalid UAC_FORMAT_TYPE desc\n",
 			fp->iface, fp->altsetting);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nr_rates) {
@@ -228,7 +228,7 @@ static int parse_audio_format_rates_v1(struct snd_usb_audio *chip, struct audiof
 		}
 		if (!fp->nr_rates) {
 			hwc_debug("All rates were zero. Skipping format!\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		/* continuous rates */
@@ -413,7 +413,7 @@ static int line6_parse_audio_format_rates_quirk(struct snd_usb_audio *chip,
 		return set_fixed_rate(fp, 48000, SNDRV_PCM_RATE_48000);
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /*
@@ -481,7 +481,7 @@ static int parse_audio_format_rates_v2v3(struct snd_usb_audio *chip,
 		dev_err(&dev->dev,
 			"%s(): unable to retrieve sample rate range (clock %d)\n",
 				__func__, clock);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_free;
 	}
 
@@ -562,7 +562,7 @@ static int parse_audio_format_i(struct snd_usb_audio *chip,
 	} else {
 		fp->formats = parse_audio_format_i_type(chip, fp, format, _fmt);
 		if (!fp->formats)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* gather possible sample rates */
@@ -591,7 +591,7 @@ static int parse_audio_format_i(struct snd_usb_audio *chip,
 		usb_audio_err(chip,
 			"%u:%d : invalid channels %d\n",
 			fp->iface, fp->altsetting, fp->channels);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -670,7 +670,7 @@ int snd_usb_parse_audio_format(struct snd_usb_audio *chip,
 			 "%u:%d : format type %d is not supported yet\n",
 			 fp->iface, fp->altsetting,
 			 fmt->bFormatType);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 	fp->fmt_type = fmt->bFormatType;
 	if (err < 0)
@@ -686,7 +686,7 @@ int snd_usb_parse_audio_format(struct snd_usb_audio *chip,
 		if (fmt->bFormatType == UAC_FORMAT_TYPE_I &&
 		    fp->rates != SNDRV_PCM_RATE_48000 &&
 		    fp->rates != SNDRV_PCM_RATE_96000)
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 	}
 #endif
 	return 0;

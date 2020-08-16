@@ -158,7 +158,7 @@ static int arndale_audio_probe(struct platform_device *pdev)
 	if (!dai_link->cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'samsung,audio-cpu' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!dai_link->platforms->name)
@@ -168,7 +168,7 @@ static int arndale_audio_probe(struct platform_device *pdev)
 	if (!dai_link->codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'samsung,audio-codec' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_put_of_nodes;
 	}
 

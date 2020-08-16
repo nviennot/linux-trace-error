@@ -393,7 +393,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 			workspace->size);
 	if (!stream) {
 		pr_warn("BTRFS: ZSTD_initCStream failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -423,7 +423,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		if (ZSTD_isError(ret2)) {
 			pr_debug("BTRFS: ZSTD_compressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 
@@ -431,14 +431,14 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		if (tot_in + workspace->in_buf.pos > 8192 &&
 				tot_in + workspace->in_buf.pos <
 				tot_out + workspace->out_buf.pos) {
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 
 		/* We've reached the end of our output range */
 		if (workspace->out_buf.pos >= max_out) {
 			tot_out += workspace->out_buf.pos;
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 
@@ -449,7 +449,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 			kunmap(out_page);
 			if (nr_pages == nr_dest_pages) {
 				out_page = NULL;
-				ret = -E2BIG;
+				ret = -ERR(E2BIG);
 				goto out;
 			}
 			out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
@@ -491,7 +491,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		if (ZSTD_isError(ret2)) {
 			pr_debug("BTRFS: ZSTD_endStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		if (ret2 == 0) {
@@ -500,7 +500,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		}
 		if (workspace->out_buf.pos >= max_out) {
 			tot_out += workspace->out_buf.pos;
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 
@@ -509,7 +509,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 		kunmap(out_page);
 		if (nr_pages == nr_dest_pages) {
 			out_page = NULL;
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 		out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
@@ -524,7 +524,7 @@ int zstd_compress_pages(struct list_head *ws, struct address_space *mapping,
 	}
 
 	if (tot_out >= tot_in) {
-		ret = -E2BIG;
+		ret = -ERR(E2BIG);
 		goto out;
 	}
 
@@ -561,7 +561,7 @@ int zstd_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 			ZSTD_BTRFS_MAX_INPUT, workspace->mem, workspace->size);
 	if (!stream) {
 		pr_debug("BTRFS: ZSTD_initDStream failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto done;
 	}
 
@@ -581,7 +581,7 @@ int zstd_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 		if (ZSTD_isError(ret2)) {
 			pr_debug("BTRFS: ZSTD_decompressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto done;
 		}
 		buf_start = total_out;
@@ -604,7 +604,7 @@ int zstd_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 			kunmap(pages_in[page_in_index++]);
 			if (page_in_index >= total_pages_in) {
 				workspace->in_buf.src = NULL;
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto done;
 			}
 			srclen -= PAGE_SIZE;
@@ -637,7 +637,7 @@ int zstd_decompress(struct list_head *ws, unsigned char *data_in,
 			ZSTD_BTRFS_MAX_INPUT, workspace->mem, workspace->size);
 	if (!stream) {
 		pr_warn("BTRFS: ZSTD_initDStream failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto finish;
 	}
 
@@ -661,7 +661,7 @@ int zstd_decompress(struct list_head *ws, unsigned char *data_in,
 		/* Check if the frame is over and we still need more input */
 		if (ret2 == 0) {
 			pr_debug("BTRFS: ZSTD_decompressStream ended early\n");
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto finish;
 		}
 		ret2 = ZSTD_decompressStream(stream, &workspace->out_buf,
@@ -669,7 +669,7 @@ int zstd_decompress(struct list_head *ws, unsigned char *data_in,
 		if (ZSTD_isError(ret2)) {
 			pr_debug("BTRFS: ZSTD_decompressStream returned %d\n",
 					ZSTD_getErrorCode(ret2));
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto finish;
 		}
 

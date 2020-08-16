@@ -307,7 +307,7 @@ convert_legacy_settings_to_link_ksettings(
 int __ethtool_get_link(struct net_device *dev)
 {
 	if (!dev->ethtool_ops->get_link)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return netif_running(dev) && dev->ethtool_ops->get_link(dev);
 }
@@ -320,10 +320,10 @@ int ethtool_get_max_rxfh_channel(struct net_device *dev, u32 *max)
 
 	if (!dev->ethtool_ops->get_rxfh_indir_size ||
 	    !dev->ethtool_ops->get_rxfh)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	dev_size = dev->ethtool_ops->get_rxfh_indir_size(dev);
 	if (dev_size == 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	indir = kcalloc(dev_size, sizeof(indir[0]), GFP_USER);
 	if (!indir)
@@ -346,7 +346,7 @@ out:
 int ethtool_check_ops(const struct ethtool_ops *ops)
 {
 	if (WARN_ON(ops->set_coalesce && !ops->supported_coalesce_params))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* NOTE: sufficiently insane drivers may swap ethtool_ops at runtime,
 	 * the fact that ops are checked at registration time does not
 	 * mean the ops attached to a netdev later on are sane.

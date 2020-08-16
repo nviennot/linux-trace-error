@@ -119,7 +119,7 @@
 static inline int squashfs_block_size(__le32 raw)
 {
 	u32 size = le32_to_cpu(raw);
-	return (size >> 25) ? -EIO : size;
+	return (size >> 25) ? -ERR(EIO) : size;
 }
 
 /*

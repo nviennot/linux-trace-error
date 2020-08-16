@@ -372,7 +372,7 @@ static int prot_none_pte_entry(pte_t *pte, unsigned long addr,
 			       unsigned long next, struct mm_walk *walk)
 {
 	return pfn_modify_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->private)) ?
-		0 : -EACCES;
+		0 : -ERR(EACCES);
 }
 
 static int prot_none_hugetlb_entry(pte_t *pte, unsigned long hmask,
@@ -380,7 +380,7 @@ static int prot_none_hugetlb_entry(pte_t *pte, unsigned long hmask,
 				   struct mm_walk *walk)
 {
 	return pfn_modify_allowed(pte_pfn(*pte), *(pgprot_t *)(walk->private)) ?
-		0 : -EACCES;
+		0 : -ERR(EACCES);
 }
 
 static int prot_none_test(unsigned long addr, unsigned long next,
@@ -514,7 +514,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 {
 	unsigned long nstart, end, tmp, reqprot;
 	struct vm_area_struct *vma, *prev;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	const int grows = prot & (PROT_GROWSDOWN|PROT_GROWSUP);
 	const bool rier = (current->personality & READ_IMPLIES_EXEC) &&
 				(prot & PROT_READ);
@@ -523,10 +523,10 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 
 	prot &= ~(PROT_GROWSDOWN|PROT_GROWSUP);
 	if (grows == (PROT_GROWSDOWN|PROT_GROWSUP)) /* can't be both */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (start & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!len)
 		return 0;
 	len = PAGE_ALIGN(len);
@@ -534,18 +534,18 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 	if (end <= start)
 		return -ENOMEM;
 	if (!arch_validate_prot(prot, start))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reqprot = prot;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	/*
 	 * If userspace did not allocate the pkey, do not let
 	 * them use it here.
 	 */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if ((pkey != -1) && !mm_pkey_is_allocated(current->mm, pkey))
 		goto out;
 
@@ -558,7 +558,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 		if (vma->vm_start >= end)
 			goto out;
 		start = vma->vm_start;
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		if (!(vma->vm_flags & VM_GROWSDOWN))
 			goto out;
 	} else {
@@ -566,7 +566,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 			goto out;
 		if (unlikely(grows & PROT_GROWSUP)) {
 			end = vma->vm_end;
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			if (!(vma->vm_flags & VM_GROWSUP))
 				goto out;
 		}
@@ -599,7 +599,7 @@ static int do_mprotect_pkey(unsigned long start, size_t len,
 
 		/* newflags >> 4 shift VM_MAY% in place of VM_% */
 		if ((newflags & ~(newflags >> 4)) & VM_ACCESS_FLAGS) {
-			error = -EACCES;
+			error = -ERR(EACCES);
 			goto out;
 		}
 
@@ -653,15 +653,15 @@ SYSCALL_DEFINE2(pkey_alloc, unsigned long, flags, unsigned long, init_val)
 
 	/* No flags supported yet. */
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* check for unsupported init values */
 	if (init_val & ~PKEY_ACCESS_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_write_lock(current->mm);
 	pkey = mm_pkey_alloc(current->mm);
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	if (pkey == -1)
 		goto out;
 

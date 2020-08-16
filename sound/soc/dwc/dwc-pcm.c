@@ -168,7 +168,7 @@ static int dw_pcm_hw_params(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(dev->dev, "invalid channels number\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_format(hw_params)) {
@@ -183,7 +183,7 @@ static int dw_pcm_hw_params(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(dev->dev, "invalid format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -217,7 +217,7 @@ static int dw_pcm_trigger(struct snd_soc_component *component,
 			rcu_assign_pointer(dev->rx_substream, NULL);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

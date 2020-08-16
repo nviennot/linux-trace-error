@@ -31,7 +31,7 @@ hwdep_read(struct snd_hwdep *hwdep, char __user *buf,  long count,
 		schedule();
 		finish_wait(&bebob->hwdep_wait, &wait);
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		spin_lock_irq(&bebob->lock);
 	}
 
@@ -101,7 +101,7 @@ hwdep_lock(struct snd_bebob *bebob)
 		bebob->dev_lock_count = -1;
 		err = 0;
 	} else {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	spin_unlock_irq(&bebob->lock);
@@ -120,7 +120,7 @@ hwdep_unlock(struct snd_bebob *bebob)
 		bebob->dev_lock_count = 0;
 		err = 0;
 	} else {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 	}
 
 	spin_unlock_irq(&bebob->lock);
@@ -155,7 +155,7 @@ hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
 	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
 		return hwdep_unlock(bebob);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 

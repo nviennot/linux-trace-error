@@ -532,7 +532,7 @@ static int ocfs2_block_group_grow_discontig(handle_t *handle,
 		 * We have used up all the extent rec but can't fill up
 		 * the cpg. So bail out.
 		 */
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		goto bail;
 	}
 
@@ -587,7 +587,7 @@ ocfs2_block_group_alloc_discontig(handle_t *handle,
 	struct ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
 
 	if (!ocfs2_supports_discontig_bg(osb)) {
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		goto bail;
 	}
 
@@ -778,7 +778,7 @@ static int ocfs2_reserve_suballoc_bits(struct ocfs2_super *osb,
 	alloc_inode = ocfs2_get_system_file_inode(osb, type, slot);
 	if (!alloc_inode) {
 		mlog_errno(-EINVAL);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	inode_lock(alloc_inode);
@@ -816,14 +816,14 @@ static int ocfs2_reserve_suballoc_bits(struct ocfs2_super *osb,
 		if (ocfs2_is_cluster_bitmap(alloc_inode)) {
 			trace_ocfs2_reserve_suballoc_bits_nospc(bits_wanted,
 								free_bits);
-			status = -ENOSPC;
+			status = -ERR(ENOSPC);
 			goto bail;
 		}
 
 		if (!(flags & ALLOC_NEW_GROUP)) {
 			trace_ocfs2_reserve_suballoc_bits_no_new_group(
 						slot, bits_wanted, free_bits);
-			status = -ENOSPC;
+			status = -ERR(ENOSPC);
 			goto bail;
 		}
 
@@ -913,7 +913,7 @@ static int ocfs2_steal_resource(struct ocfs2_super *osb,
 				struct ocfs2_alloc_context *ac,
 				int type)
 {
-	int i, status = -ENOSPC;
+	int i, status = -ERR(ENOSPC);
 	int slot = __ocfs2_get_steal_slot(osb, type);
 
 	/* Start to steal resource from the first slot after ours. */
@@ -1158,7 +1158,7 @@ static int ocfs2_reserve_clusters_with_limit(struct ocfs2_super *osb,
 	(*ac)->ac_bits_wanted = bits_wanted;
 	(*ac)->ac_max_block = max_block;
 
-	status = -ENOSPC;
+	status = -ERR(ENOSPC);
 	if (!(flags & ALLOC_GROUPS_FROM_GLOBAL) &&
 	    ocfs2_alloc_should_use_local(osb, bits_wanted)) {
 		status = ocfs2_reserve_local_alloc_bits(osb,
@@ -1325,7 +1325,7 @@ static int ocfs2_block_group_find_clear_bits(struct ocfs2_super *osb,
 		res->sr_bit_offset = best_offset;
 		res->sr_bits = best_size;
 	} else {
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		/* No error log here -- see the comment above
 		 * ocfs2_test_bg_bit_allocatable */
 	}
@@ -1478,7 +1478,7 @@ static int ocfs2_cluster_group_search(struct inode *inode,
 				      u64 max_block,
 				      struct ocfs2_suballoc_result *res)
 {
-	int search = -ENOSPC;
+	int search = -ERR(ENOSPC);
 	int ret;
 	u64 blkoff;
 	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *) group_bh->b_data;
@@ -1522,7 +1522,7 @@ static int ocfs2_cluster_group_search(struct inode *inode,
 				(unsigned long long)blkoff,
 				(unsigned long long)max_block);
 			if (blkoff > max_block)
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 		}
 
 		/* ocfs2_block_group_find_clear_bits() might
@@ -1549,7 +1549,7 @@ static int ocfs2_block_group_search(struct inode *inode,
 				    u64 max_block,
 				    struct ocfs2_suballoc_result *res)
 {
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 	u64 blkoff;
 	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) group_bh->b_data;
 
@@ -1568,7 +1568,7 @@ static int ocfs2_block_group_search(struct inode *inode,
 				(unsigned long long)blkoff,
 				(unsigned long long)max_block);
 			if (blkoff > max_block)
-				ret = -ENOSPC;
+				ret = -ERR(ENOSPC);
 		}
 	}
 
@@ -1764,7 +1764,7 @@ static int ocfs2_search_chain(struct ocfs2_alloc_context *ac,
 	}
 	bg = (struct ocfs2_group_desc *) group_bh->b_data;
 
-	status = -ENOSPC;
+	status = -ERR(ENOSPC);
 	/* for now, the chain search is a bit simplistic. We just use
 	 * the 1st group with any empty bits. */
 	while ((status = ac->ac_group_search(alloc_inode, group_bh,
@@ -2329,7 +2329,7 @@ int __ocfs2_claim_clusters(handle_t *handle,
 			mlog(ML_ERROR, "minimum allocation requested %u exceeds "
 			     "group bitmap size %u!\n", min_clusters,
 			     osb->bitmap_cpg);
-			status = -ENOSPC;
+			status = -ERR(ENOSPC);
 			goto bail;
 		}
 		/* clamp the current request down to a realistic size. */
@@ -2715,7 +2715,7 @@ static int ocfs2_get_suballoc_slot_bit(struct ocfs2_super *osb, u64 blkno,
 	if (!OCFS2_IS_VALID_DINODE(inode_fe)) {
 		mlog(ML_ERROR, "invalid inode %llu requested\n",
 		     (unsigned long long)blkno);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2724,7 +2724,7 @@ static int ocfs2_get_suballoc_slot_bit(struct ocfs2_super *osb, u64 blkno,
 		mlog(ML_ERROR, "inode %llu has invalid suballoc slot %u\n",
 		     (unsigned long long)blkno,
 		     (u32)le16_to_cpu(inode_fe->i_suballoc_slot));
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2770,7 +2770,7 @@ static int ocfs2_test_suballoc_bit(struct ocfs2_super *osb,
 		mlog(ML_ERROR, "suballoc bit %u out of range of %u\n",
 		     (unsigned int)bit,
 		     ocfs2_bits_per_group(&alloc_di->id2.i_chain));
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2834,7 +2834,7 @@ int ocfs2_test_inode_bit(struct ocfs2_super *osb, u64 blkno, int *res)
 	if (!inode_alloc_inode) {
 		/* the error code could be inaccurate, but we are not able to
 		 * get the correct one. */
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "unable to get alloc inode in slot %u\n",
 		     (u32)suballoc_slot);
 		goto bail;

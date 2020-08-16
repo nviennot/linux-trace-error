@@ -97,7 +97,7 @@ static int memfd_wait_for_pins(struct address_space *mapping)
 				 * found pages pinned.
 				 */
 				if (scan == LAST_SCAN)
-					error = -EBUSY;
+					error = -ERR(EBUSY);
 				else
 					clear = false;
 			}
@@ -174,20 +174,20 @@ static int memfd_add_seals(struct file *file, unsigned int seals)
 	 */
 
 	if (!(file->f_mode & FMODE_WRITE))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (seals & ~(unsigned int)F_ALL_SEALS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode_lock(inode);
 
 	file_seals = memfd_file_seals_ptr(file);
 	if (!file_seals) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto unlock;
 	}
 
 	if (*file_seals & F_SEAL_SEAL) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto unlock;
 	}
 
@@ -215,7 +215,7 @@ static int memfd_get_seals(struct file *file)
 {
 	unsigned int *seals = memfd_file_seals_ptr(file);
 
-	return seals ? *seals : -EINVAL;
+	return seals ? *seals : -ERR(EINVAL);
 }
 
 long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
@@ -226,7 +226,7 @@ long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 	case F_ADD_SEALS:
 		/* disallow upper 32bit */
 		if (arg > UINT_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		error = memfd_add_seals(file, arg);
 		break;
@@ -234,7 +234,7 @@ long memfd_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 		error = memfd_get_seals(file);
 		break;
 	default:
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		break;
 	}
 

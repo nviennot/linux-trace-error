@@ -809,7 +809,7 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 	u32 fq_log;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_FQ_MAX, opt, fq_policy,
 					  NULL);
@@ -826,7 +826,7 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 		if (nval >= 1 && nval <= ilog2(256*1024))
 			fq_log = nval;
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 	}
 	if (tb[TCA_FQ_PLIMIT])
 		sch->limit = nla_get_u32(tb[TCA_FQ_PLIMIT]);
@@ -841,7 +841,7 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 			q->quantum = quantum;
 		} else {
 			NL_SET_ERR_MSG_MOD(extack, "invalid quantum");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 
@@ -867,7 +867,7 @@ static int fq_change(struct Qdisc *sch, struct nlattr *opt,
 		if (enable <= 1)
 			q->rate_enable = enable;
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 	}
 
 	if (tb[TCA_FQ_FLOW_REFILL_DELAY]) {

@@ -73,7 +73,7 @@ static int snd_proto_probe(struct platform_device *pdev)
 
 	if (!np) {
 		dev_err(&pdev->dev, "No device node supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_proto.dev = &pdev->dev;
@@ -108,14 +108,14 @@ static int snd_proto_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "audio-codec", 0);
 	if (!codec_np) {
 		dev_err(&pdev->dev, "audio-codec node missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai->codecs->of_node = codec_np;
 
 	cpu_np = of_parse_phandle(np, "i2s-controller", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "i2s-controller missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai->cpus->of_node = cpu_np;
 	dai->platforms->of_node = cpu_np;
@@ -124,7 +124,7 @@ static int snd_proto_probe(struct platform_device *pdev)
 					  &bitclkmaster, &framemaster);
 	if (bitclkmaster != framemaster) {
 		dev_err(&pdev->dev, "Must be the same bitclock and frame master\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (bitclkmaster) {
 		dai_fmt &= ~SND_SOC_DAIFMT_MASTER_MASK;

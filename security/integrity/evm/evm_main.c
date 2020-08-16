@@ -95,7 +95,7 @@ static int evm_find_protected_xattrs(struct dentry *dentry)
 	int count = 0;
 
 	if (!(inode->i_opflags & IOP_XATTR))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	list_for_each_entry_lockless(xattr, &evm_config_xattrnames, list) {
 		error = __vfs_getxattr(dentry, inode, xattr->name, NULL, 0);
@@ -177,7 +177,7 @@ static enum integrity_status evm_verify_hmac(struct dentry *dentry,
 		rc = crypto_memneq(xattr_data->data, digest.digest,
 				   SHA1_DIGEST_SIZE);
 		if (rc)
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		break;
 	case EVM_IMA_XATTR_DIGSIG:
 	case EVM_XATTR_PORTABLE_DIGSIG:
@@ -207,12 +207,12 @@ static enum integrity_status evm_verify_hmac(struct dentry *dentry,
 		}
 		break;
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		break;
 	}
 
 	if (rc)
-		evm_status = (rc == -ENODATA) ?
+		evm_status = (rc == -ERR(ENODATA)) ?
 				INTEGRITY_NOXATTRS : INTEGRITY_FAIL;
 out:
 	if (iint)
@@ -314,7 +314,7 @@ static int evm_protect_xattr(struct dentry *dentry, const char *xattr_name,
 
 	if (strcmp(xattr_name, XATTR_NAME_EVM) == 0) {
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 	} else if (!evm_protected_xattr(xattr_name)) {
 		if (!posix_xattr_acl(xattr_name))
 			return 0;
@@ -350,7 +350,7 @@ out:
 				    dentry->d_name.name, "appraise_metadata",
 				    integrity_status_msg[evm_status],
 				    -EPERM, 0);
-	return evm_status == INTEGRITY_PASS ? 0 : -EPERM;
+	return evm_status == INTEGRITY_PASS ? 0 : -ERR(EPERM);
 }
 
 /**
@@ -379,10 +379,10 @@ int evm_inode_setxattr(struct dentry *dentry, const char *xattr_name,
 
 	if (strcmp(xattr_name, XATTR_NAME_EVM) == 0) {
 		if (!xattr_value_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (xattr_data->type != EVM_IMA_XATTR_DIGSIG &&
 		    xattr_data->type != EVM_XATTR_PORTABLE_DIGSIG)
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 	return evm_protect_xattr(dentry, xattr_name, xattr_value,
 				 xattr_value_len);
@@ -488,7 +488,7 @@ int evm_inode_setattr(struct dentry *dentry, struct iattr *attr)
 	integrity_audit_msg(AUDIT_INTEGRITY_METADATA, d_backing_inode(dentry),
 			    dentry->d_name.name, "appraise_metadata",
 			    integrity_status_msg[evm_status], -EPERM, 0);
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 /**

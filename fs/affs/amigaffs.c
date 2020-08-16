@@ -37,14 +37,14 @@ affs_insert_hash(struct inode *dir, struct buffer_head *bh)
 
 	dir_bh = affs_bread(sb, dir->i_ino);
 	if (!dir_bh)
-		return -EIO;
+		return -ERR(EIO);
 
 	hash_ino = be32_to_cpu(AFFS_HEAD(dir_bh)->table[offset]);
 	while (hash_ino) {
 		affs_brelse(dir_bh);
 		dir_bh = affs_bread(sb, hash_ino);
 		if (!dir_bh)
-			return -EIO;
+			return -ERR(EIO);
 		hash_ino = be32_to_cpu(AFFS_TAIL(sb, dir_bh)->hash_chain);
 	}
 	AFFS_TAIL(sb, bh)->parent = cpu_to_be32(dir->i_ino);
@@ -88,9 +88,9 @@ affs_remove_hash(struct inode *dir, struct buffer_head *rem_bh)
 
 	bh = affs_bread(sb, dir->i_ino);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	hash_ino = be32_to_cpu(AFFS_HEAD(bh)->table[offset]);
 	while (hash_ino) {
 		if (hash_ino == rem_ino) {
@@ -108,7 +108,7 @@ affs_remove_hash(struct inode *dir, struct buffer_head *rem_bh)
 		affs_brelse(bh);
 		bh = affs_bread(sb, hash_ino);
 		if (!bh)
-			return -EIO;
+			return -ERR(EIO);
 		hash_ino = be32_to_cpu(AFFS_TAIL(sb, bh)->hash_chain);
 	}
 
@@ -148,7 +148,7 @@ affs_remove_link(struct dentry *dentry)
 	int retval;
 
 	pr_debug("%s(key=%ld)\n", __func__, inode->i_ino);
-	retval = -EIO;
+	retval = -ERR(EIO);
 	bh = affs_bread(sb, inode->i_ino);
 	if (!bh)
 		goto done;
@@ -222,7 +222,7 @@ affs_remove_link(struct dentry *dentry)
 		if (!bh)
 			goto done;
 	}
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 done:
 	affs_brelse(link_bh);
 	affs_brelse(bh);
@@ -237,12 +237,12 @@ affs_empty_dir(struct inode *inode)
 	struct buffer_head *bh;
 	int retval, size;
 
-	retval = -EIO;
+	retval = -ERR(EIO);
 	bh = affs_bread(sb, inode->i_ino);
 	if (!bh)
 		goto done;
 
-	retval = -ENOTEMPTY;
+	retval = -ERR(ENOTEMPTY);
 	for (size = AFFS_SB(sb)->s_hashsize - 1; size >= 0; size--)
 		if (AFFS_HEAD(bh)->table[size])
 			goto not_empty;
@@ -274,13 +274,13 @@ affs_remove_header(struct dentry *dentry)
 	dir = d_inode(dentry->d_parent);
 	sb = dir->i_sb;
 
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	inode = d_inode(dentry);
 	if (!inode)
 		goto done;
 
 	pr_debug("%s(key=%ld)\n", __func__, inode->i_ino);
-	retval = -EIO;
+	retval = -ERR(EIO);
 	bh = affs_bread(sb, (u32)(long)dentry->d_fsdata);
 	if (!bh)
 		goto done;
@@ -486,13 +486,13 @@ affs_check_name(const unsigned char *name, int len, bool notruncate)
 
 	if (len > AFFSNAMEMAX) {
 		if (notruncate)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 		len = AFFSNAMEMAX;
 	}
 	for (i = 0; i < len; i++) {
 		if (name[i] < ' ' || name[i] == ':'
 		    || (name[i] > 0x7e && name[i] < 0xa0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;

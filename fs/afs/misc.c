@@ -19,92 +19,92 @@ int afs_abort_to_error(u32 abort_code)
 {
 	switch (abort_code) {
 		/* Low errno codes inserted into abort namespace */
-	case 13:		return -EACCES;
-	case 27:		return -EFBIG;
-	case 30:		return -EROFS;
+	case 13:		return -ERR(EACCES);
+	case 27:		return -ERR(EFBIG);
+	case 30:		return -ERR(EROFS);
 
 		/* VICE "special error" codes; 101 - 111 */
-	case VSALVAGE:		return -EIO;
-	case VNOVNODE:		return -ENOENT;
-	case VNOVOL:		return -ENOMEDIUM;
-	case VVOLEXISTS:	return -EEXIST;
-	case VNOSERVICE:	return -EIO;
-	case VOFFLINE:		return -ENOENT;
-	case VONLINE:		return -EEXIST;
-	case VDISKFULL:		return -ENOSPC;
-	case VOVERQUOTA:	return -EDQUOT;
-	case VBUSY:		return -EBUSY;
-	case VMOVED:		return -ENXIO;
+	case VSALVAGE:		return -ERR(EIO);
+	case VNOVNODE:		return -ERR(ENOENT);
+	case VNOVOL:		return -ERR(ENOMEDIUM);
+	case VVOLEXISTS:	return -ERR(EEXIST);
+	case VNOSERVICE:	return -ERR(EIO);
+	case VOFFLINE:		return -ERR(ENOENT);
+	case VONLINE:		return -ERR(EEXIST);
+	case VDISKFULL:		return -ERR(ENOSPC);
+	case VOVERQUOTA:	return -ERR(EDQUOT);
+	case VBUSY:		return -ERR(EBUSY);
+	case VMOVED:		return -ERR(ENXIO);
 
 		/* Volume Location server errors */
-	case AFSVL_IDEXIST:		return -EEXIST;
-	case AFSVL_IO:			return -EREMOTEIO;
-	case AFSVL_NAMEEXIST:		return -EEXIST;
-	case AFSVL_CREATEFAIL:		return -EREMOTEIO;
-	case AFSVL_NOENT:		return -ENOMEDIUM;
-	case AFSVL_EMPTY:		return -ENOMEDIUM;
-	case AFSVL_ENTDELETED:		return -ENOMEDIUM;
-	case AFSVL_BADNAME:		return -EINVAL;
-	case AFSVL_BADINDEX:		return -EINVAL;
-	case AFSVL_BADVOLTYPE:		return -EINVAL;
-	case AFSVL_BADSERVER:		return -EINVAL;
-	case AFSVL_BADPARTITION:	return -EINVAL;
-	case AFSVL_REPSFULL:		return -EFBIG;
-	case AFSVL_NOREPSERVER:		return -ENOENT;
-	case AFSVL_DUPREPSERVER:	return -EEXIST;
-	case AFSVL_RWNOTFOUND:		return -ENOENT;
-	case AFSVL_BADREFCOUNT:		return -EINVAL;
-	case AFSVL_SIZEEXCEEDED:	return -EINVAL;
-	case AFSVL_BADENTRY:		return -EINVAL;
-	case AFSVL_BADVOLIDBUMP:	return -EINVAL;
-	case AFSVL_IDALREADYHASHED:	return -EINVAL;
-	case AFSVL_ENTRYLOCKED:		return -EBUSY;
-	case AFSVL_BADVOLOPER:		return -EBADRQC;
-	case AFSVL_BADRELLOCKTYPE:	return -EINVAL;
-	case AFSVL_RERELEASE:		return -EREMOTEIO;
-	case AFSVL_BADSERVERFLAG:	return -EINVAL;
-	case AFSVL_PERM:		return -EACCES;
-	case AFSVL_NOMEM:		return -EREMOTEIO;
+	case AFSVL_IDEXIST:		return -ERR(EEXIST);
+	case AFSVL_IO:			return -ERR(EREMOTEIO);
+	case AFSVL_NAMEEXIST:		return -ERR(EEXIST);
+	case AFSVL_CREATEFAIL:		return -ERR(EREMOTEIO);
+	case AFSVL_NOENT:		return -ERR(ENOMEDIUM);
+	case AFSVL_EMPTY:		return -ERR(ENOMEDIUM);
+	case AFSVL_ENTDELETED:		return -ERR(ENOMEDIUM);
+	case AFSVL_BADNAME:		return -ERR(EINVAL);
+	case AFSVL_BADINDEX:		return -ERR(EINVAL);
+	case AFSVL_BADVOLTYPE:		return -ERR(EINVAL);
+	case AFSVL_BADSERVER:		return -ERR(EINVAL);
+	case AFSVL_BADPARTITION:	return -ERR(EINVAL);
+	case AFSVL_REPSFULL:		return -ERR(EFBIG);
+	case AFSVL_NOREPSERVER:		return -ERR(ENOENT);
+	case AFSVL_DUPREPSERVER:	return -ERR(EEXIST);
+	case AFSVL_RWNOTFOUND:		return -ERR(ENOENT);
+	case AFSVL_BADREFCOUNT:		return -ERR(EINVAL);
+	case AFSVL_SIZEEXCEEDED:	return -ERR(EINVAL);
+	case AFSVL_BADENTRY:		return -ERR(EINVAL);
+	case AFSVL_BADVOLIDBUMP:	return -ERR(EINVAL);
+	case AFSVL_IDALREADYHASHED:	return -ERR(EINVAL);
+	case AFSVL_ENTRYLOCKED:		return -ERR(EBUSY);
+	case AFSVL_BADVOLOPER:		return -ERR(EBADRQC);
+	case AFSVL_BADRELLOCKTYPE:	return -ERR(EINVAL);
+	case AFSVL_RERELEASE:		return -ERR(EREMOTEIO);
+	case AFSVL_BADSERVERFLAG:	return -ERR(EINVAL);
+	case AFSVL_PERM:		return -ERR(EACCES);
+	case AFSVL_NOMEM:		return -ERR(EREMOTEIO);
 
 		/* Unified AFS error table */
-	case UAEPERM:			return -EPERM;
-	case UAENOENT:			return -ENOENT;
-	case UAEACCES:			return -EACCES;
-	case UAEBUSY:			return -EBUSY;
-	case UAEEXIST:			return -EEXIST;
-	case UAENOTDIR:			return -ENOTDIR;
-	case UAEISDIR:			return -EISDIR;
-	case UAEFBIG:			return -EFBIG;
-	case UAENOSPC:			return -ENOSPC;
-	case UAEROFS:			return -EROFS;
-	case UAEMLINK:			return -EMLINK;
-	case UAEDEADLK:			return -EDEADLK;
-	case UAENAMETOOLONG:		return -ENAMETOOLONG;
-	case UAENOLCK:			return -ENOLCK;
-	case UAENOTEMPTY:		return -ENOTEMPTY;
-	case UAELOOP:			return -ELOOP;
-	case UAEOVERFLOW:		return -EOVERFLOW;
-	case UAENOMEDIUM:		return -ENOMEDIUM;
-	case UAEDQUOT:			return -EDQUOT;
+	case UAEPERM:			return -ERR(EPERM);
+	case UAENOENT:			return -ERR(ENOENT);
+	case UAEACCES:			return -ERR(EACCES);
+	case UAEBUSY:			return -ERR(EBUSY);
+	case UAEEXIST:			return -ERR(EEXIST);
+	case UAENOTDIR:			return -ERR(ENOTDIR);
+	case UAEISDIR:			return -ERR(EISDIR);
+	case UAEFBIG:			return -ERR(EFBIG);
+	case UAENOSPC:			return -ERR(ENOSPC);
+	case UAEROFS:			return -ERR(EROFS);
+	case UAEMLINK:			return -ERR(EMLINK);
+	case UAEDEADLK:			return -ERR(EDEADLK);
+	case UAENAMETOOLONG:		return -ERR(ENAMETOOLONG);
+	case UAENOLCK:			return -ERR(ENOLCK);
+	case UAENOTEMPTY:		return -ERR(ENOTEMPTY);
+	case UAELOOP:			return -ERR(ELOOP);
+	case UAEOVERFLOW:		return -ERR(EOVERFLOW);
+	case UAENOMEDIUM:		return -ERR(ENOMEDIUM);
+	case UAEDQUOT:			return -ERR(EDQUOT);
 
 		/* RXKAD abort codes; from include/rxrpc/packet.h.  ET "RXK" == 0x1260B00 */
-	case RXKADINCONSISTENCY: return -EPROTO;
-	case RXKADPACKETSHORT:	return -EPROTO;
-	case RXKADLEVELFAIL:	return -EKEYREJECTED;
-	case RXKADTICKETLEN:	return -EKEYREJECTED;
-	case RXKADOUTOFSEQUENCE: return -EPROTO;
-	case RXKADNOAUTH:	return -EKEYREJECTED;
-	case RXKADBADKEY:	return -EKEYREJECTED;
-	case RXKADBADTICKET:	return -EKEYREJECTED;
-	case RXKADUNKNOWNKEY:	return -EKEYREJECTED;
-	case RXKADEXPIRED:	return -EKEYEXPIRED;
-	case RXKADSEALEDINCON:	return -EKEYREJECTED;
-	case RXKADDATALEN:	return -EKEYREJECTED;
-	case RXKADILLEGALLEVEL:	return -EKEYREJECTED;
+	case RXKADINCONSISTENCY: return -ERR(EPROTO);
+	case RXKADPACKETSHORT:	return -ERR(EPROTO);
+	case RXKADLEVELFAIL:	return -ERR(EKEYREJECTED);
+	case RXKADTICKETLEN:	return -ERR(EKEYREJECTED);
+	case RXKADOUTOFSEQUENCE: return -ERR(EPROTO);
+	case RXKADNOAUTH:	return -ERR(EKEYREJECTED);
+	case RXKADBADKEY:	return -ERR(EKEYREJECTED);
+	case RXKADBADTICKET:	return -ERR(EKEYREJECTED);
+	case RXKADUNKNOWNKEY:	return -ERR(EKEYREJECTED);
+	case RXKADEXPIRED:	return -ERR(EKEYEXPIRED);
+	case RXKADSEALEDINCON:	return -ERR(EKEYREJECTED);
+	case RXKADDATALEN:	return -ERR(EKEYREJECTED);
+	case RXKADILLEGALLEVEL:	return -ERR(EKEYREJECTED);
 
-	case RXGEN_OPCODE:	return -ENOTSUPP;
+	case RXGEN_OPCODE:	return -ERR(ENOTSUPP);
 
-	default:		return -EREMOTEIO;
+	default:		return -ERR(EREMOTEIO);
 	}
 }
 

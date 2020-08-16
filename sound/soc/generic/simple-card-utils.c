@@ -553,7 +553,7 @@ int asoc_simple_init_jack(struct snd_soc_card *card,
 	if (!prefix)
 		prefix = "";
 
-	sjack->gpio.gpio = -ENOENT;
+	sjack->gpio.gpio = -ERR(ENOENT);
 
 	if (is_hp) {
 		snprintf(prop, sizeof(prop), "%shp-det-gpio", prefix);

@@ -469,7 +469,7 @@ out_would_block:
 	 * invalidate_range_end()
 	 */
 	mn_itree_inv_end(subscriptions);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int mn_hlist_invalidate_range_start(
@@ -730,7 +730,7 @@ find_get_mmu_notifier(struct mm_struct *mm, const struct mmu_notifier_ops *ops)
 		if (likely(subscription->users != UINT_MAX))
 			subscription->users++;
 		else
-			subscription = ERR_PTR(-EOVERFLOW);
+			subscription = ERR_PTR(-ERR(EOVERFLOW));
 		spin_unlock(&mm->notifier_subscriptions->lock);
 		return subscription;
 	}
@@ -910,11 +910,11 @@ static int __mmu_interval_notifier_insert(
 	if (length == 0 ||
 	    check_add_overflow(start, length - 1,
 			       &interval_sub->interval_tree.last))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Must call with a mmget() held */
 	if (WARN_ON(atomic_read(&mm->mm_count) <= 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* pairs with mmdrop in mmu_interval_notifier_remove() */
 	mmgrab(mm);

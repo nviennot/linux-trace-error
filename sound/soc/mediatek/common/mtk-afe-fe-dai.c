@@ -88,7 +88,7 @@ int mtk_afe_fe_startup(struct snd_pcm_substream *substream,
 		} else {
 			dev_err(afe->dev, "%s() error: no more asys irq\n",
 				__func__);
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 		}
 	}
 	return ret;
@@ -228,7 +228,7 @@ int mtk_afe_fe_trigger(struct snd_pcm_substream *substream, int cmd,
 		fs = afe->irq_fs(substream, runtime->rate);
 
 		if (fs < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		mtk_regmap_update_bits(afe->regmap, irq_data->irq_fs_reg,
 				       irq_data->irq_fs_maskbit, fs,
@@ -255,7 +255,7 @@ int mtk_afe_fe_trigger(struct snd_pcm_substream *substream, int cmd,
 				 1 << irq_data->irq_clr_shift);
 		return ret;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 EXPORT_SYMBOL_GPL(mtk_afe_fe_trigger);
@@ -315,7 +315,7 @@ int mtk_dynamic_irq_release(struct mtk_base_afe *afe, int irq_id)
 		return 0;
 	}
 	mutex_unlock(&afe->irq_alloc_lock);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(mtk_dynamic_irq_release);
 
@@ -490,13 +490,13 @@ int mtk_memif_set_rate(struct mtk_base_afe *afe,
 	if (!afe->get_dai_fs) {
 		dev_err(afe->dev, "%s(), error, afe->get_dai_fs == NULL\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fs = afe->get_dai_fs(afe, id, rate);
 
 	if (fs < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return mtk_memif_set_rate_fs(afe, id, fs);
 }
@@ -515,13 +515,13 @@ int mtk_memif_set_rate_substream(struct snd_pcm_substream *substream,
 	if (!afe->memif_fs) {
 		dev_err(afe->dev, "%s(), error, afe->memif_fs == NULL\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fs = afe->memif_fs(substream, rate);
 
 	if (fs < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return mtk_memif_set_rate_fs(afe, id, fs);
 }

@@ -102,7 +102,7 @@ snd_emux_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure)
 
 	emu = closure;
 	if (snd_BUG_ON(!arg || !emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (!snd_emux_inc_count(emu))
 		return -EFAULT;
@@ -165,14 +165,14 @@ snd_emux_close_seq_oss(struct snd_seq_oss_arg *arg)
 	struct snd_emux_port *p;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	p = arg->private_data;
 	if (snd_BUG_ON(!p))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	snd_emux_sounds_off_all(p);
 	snd_soundfont_close_check(emu->sflist, SF_CLIENT_NO(p->chset.port));
@@ -195,14 +195,14 @@ snd_emux_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 	int rc;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	p = arg->private_data;
 	if (snd_BUG_ON(!p))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (format == GUS_PATCH)
 		rc = snd_soundfont_load_guspatch(emu->sflist, buf, count,
@@ -210,7 +210,7 @@ snd_emux_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 	else if (format == SNDRV_OSS_SOUNDFONT_PATCH) {
 		struct soundfont_patch_info patch;
 		if (count < (int)sizeof(patch))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&patch, buf, sizeof(patch)))
 			return -EFAULT;
 		if (patch.type >= SNDRV_SFNT_LOAD_INFO &&
@@ -220,7 +220,7 @@ snd_emux_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 			if (emu->ops.load_fx)
 				rc = emu->ops.load_fx(emu, patch.type, patch.optarg, buf, count);
 			else
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 		}
 	} else
 		rc = 0;
@@ -238,14 +238,14 @@ snd_emux_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd, unsigned l
 	struct snd_emux *emu;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	p = arg->private_data;
 	if (snd_BUG_ON(!p))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (cmd) {
 	case SNDCTL_SEQ_RESETSAMPLES:
@@ -271,10 +271,10 @@ snd_emux_reset_seq_oss(struct snd_seq_oss_arg *arg)
 	struct snd_emux_port *p;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	p = arg->private_data;
 	if (snd_BUG_ON(!p))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	snd_emux_reset_port(p);
 	return 0;
 }
@@ -293,10 +293,10 @@ snd_emux_event_oss_input(struct snd_seq_event *ev, int direct, void *private_dat
 
 	p = private_data;
 	if (snd_BUG_ON(!p))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ev->type != SNDRV_SEQ_EVENT_OSS)
 		return snd_emux_event_input(ev, direct, private_data, atomic, hop);
 

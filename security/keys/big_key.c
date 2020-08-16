@@ -64,7 +64,7 @@ int big_key_preparse(struct key_preparsed_payload *prep)
 	int ret;
 
 	if (datalen <= 0 || datalen > 1024 * 1024 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set an arbitrary quota */
 	prep->quotalen = 16;
@@ -110,7 +110,7 @@ int big_key_preparse(struct key_preparsed_payload *prep)
 		if (written != enclen) {
 			ret = written;
 			if (written >= 0)
-				ret = -EIO;
+				ret = -ERR(EIO);
 			goto err_fput;
 		}
 
@@ -256,12 +256,12 @@ long big_key_read(const struct key *key, char *buffer, size_t buflen)
 		ret = kernel_read(file, buf, enclen, &pos);
 		if (ret != enclen) {
 			if (ret >= 0)
-				ret = -EIO;
+				ret = -ERR(EIO);
 			goto err_fput;
 		}
 
 		ret = chacha20poly1305_decrypt(buf, buf, enclen, NULL, 0, 0,
-					       enckey) ? 0 : -EBADMSG;
+					       enckey) ? 0 : -ERR(EBADMSG);
 		if (unlikely(ret))
 			goto err_fput;
 

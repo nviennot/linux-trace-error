@@ -92,7 +92,7 @@ static int do_getitimer(int which, struct itimerspec64 *value)
 		get_cpu_itimer(tsk, CPUCLOCK_PROF, value);
 		break;
 	default:
-		return(-EINVAL);
+		return(-ERR(EINVAL));
 	}
 	return 0;
 }
@@ -248,7 +248,7 @@ again:
 		set_cpu_itimer(tsk, CPUCLOCK_PROF, value, ovalue);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -324,7 +324,7 @@ static int get_itimerval(struct itimerspec64 *o, const struct __kernel_old_itime
 	/* Validate the timevals in value. */
 	if (!timeval_valid(&v.it_value) ||
 	    !timeval_valid(&v.it_interval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	o->it_interval.tv_sec = v.it_interval.tv_sec;
 	o->it_interval.tv_nsec = v.it_interval.tv_usec * NSEC_PER_USEC;
@@ -370,7 +370,7 @@ static int get_old_itimerval32(struct itimerspec64 *o, const struct old_itimerva
 	/* Validate the timevals in value.  */
 	if (!timeval_valid(&v32.it_value) ||
 	    !timeval_valid(&v32.it_interval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	o->it_interval.tv_sec = v32.it_interval.tv_sec;
 	o->it_interval.tv_nsec = v32.it_interval.tv_usec * NSEC_PER_USEC;

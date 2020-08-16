@@ -73,7 +73,7 @@ static int req_run(struct hci_request *req, hci_req_complete_t complete,
 
 	/* Do not allow empty requests */
 	if (skb_queue_empty(&req->cmd_q))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	skb = skb_peek_tail(&req->cmd_q);
 	if (complete) {
@@ -150,7 +150,7 @@ struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
 			hdev->req_status != HCI_REQ_PEND, timeout);
 
 	if (err == -ERESTARTSYS)
-		return ERR_PTR(-EINTR);
+		return ERR_PTR(-ERR(EINTR));
 
 	switch (hdev->req_status) {
 	case HCI_REQ_DONE:
@@ -162,7 +162,7 @@ struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
 		break;
 
 	default:
-		err = -ETIMEDOUT;
+		err = -ERR(ETIMEDOUT);
 		break;
 	}
 
@@ -178,7 +178,7 @@ struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
 	}
 
 	if (!skb)
-		return ERR_PTR(-ENODATA);
+		return ERR_PTR(-ERR(ENODATA));
 
 	return skb;
 }
@@ -237,7 +237,7 @@ int __hci_req_sync(struct hci_dev *hdev, int (*func)(struct hci_request *req,
 			hdev->req_status != HCI_REQ_PEND, timeout);
 
 	if (err == -ERESTARTSYS)
-		return -EINTR;
+		return -ERR(EINTR);
 
 	switch (hdev->req_status) {
 	case HCI_REQ_DONE:
@@ -253,7 +253,7 @@ int __hci_req_sync(struct hci_dev *hdev, int (*func)(struct hci_request *req,
 		break;
 
 	default:
-		err = -ETIMEDOUT;
+		err = -ERR(ETIMEDOUT);
 		if (hci_status)
 			*hci_status = HCI_ERROR_UNSPECIFIED;
 		break;
@@ -275,7 +275,7 @@ int hci_req_sync(struct hci_dev *hdev, int (*req)(struct hci_request *req,
 	int ret;
 
 	if (!test_bit(HCI_UP, &hdev->flags))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	/* Serialize all requests */
 	hci_req_sync_lock(hdev);
@@ -1792,7 +1792,7 @@ int __hci_req_setup_ext_adv_instance(struct hci_request *req, u8 instance)
 	if (instance > 0) {
 		adv_instance = hci_find_adv_instance(hdev, instance);
 		if (!adv_instance)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		adv_instance = NULL;
 	}
@@ -1806,7 +1806,7 @@ int __hci_req_setup_ext_adv_instance(struct hci_request *req, u8 instance)
 		      mgmt_get_connectable(hdev);
 
 	if (!is_advertising_allowed(hdev, connectable))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Set require_privacy to true only when non-connectable
 	 * advertising is used. In that case it is fine to use a
@@ -1898,7 +1898,7 @@ int __hci_req_enable_ext_advertising(struct hci_request *req, u8 instance)
 	if (instance > 0) {
 		adv_instance = hci_find_adv_instance(hdev, instance);
 		if (!adv_instance)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		adv_instance = NULL;
 	}
@@ -1959,14 +1959,14 @@ int __hci_req_schedule_adv_instance(struct hci_request *req, u8 instance,
 
 	if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
 	    list_empty(&hdev->adv_instances))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (hdev->adv_instance_timeout)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
 	if (!adv_instance)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* A zero timeout means unlimited advertising. As long as there is
 	 * only one instance, duration should be ignored. We still set a timeout

@@ -138,7 +138,7 @@ static int bdw_set_dsp_D0(struct snd_sof_dev *sdev)
 		msleep(20);
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 
 finish:
 	/*
@@ -395,7 +395,7 @@ static void bdw_get_reply(struct snd_sof_dev *sdev)
 		if (reply.hdr.size != msg->reply_size) {
 			dev_err(sdev->dev, "error: reply expected %zu got %u bytes\n",
 				msg->reply_size, reply.hdr.size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		/* read the message */
@@ -462,7 +462,7 @@ static int bdw_probe(struct snd_sof_dev *sdev)
 	} else {
 		dev_err(sdev->dev, "error: failed to get LPE base at idx %d\n",
 			desc->resindex_lpe_base);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(sdev->dev, "LPE PHY base at 0x%x size 0x%x", base, size);
@@ -471,7 +471,7 @@ static int bdw_probe(struct snd_sof_dev *sdev)
 		dev_err(sdev->dev,
 			"error: failed to ioremap LPE base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "LPE VADDR %p\n", sdev->bar[BDW_DSP_BAR]);
 
@@ -489,7 +489,7 @@ static int bdw_probe(struct snd_sof_dev *sdev)
 	} else {
 		dev_err(sdev->dev, "error: failed to get PCI base at idx %d\n",
 			desc->resindex_pcicfg_base);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_dbg(sdev->dev, "PCI base at 0x%x size 0x%x", base, size);
@@ -498,7 +498,7 @@ static int bdw_probe(struct snd_sof_dev *sdev)
 		dev_err(sdev->dev,
 			"error: failed to ioremap PCI base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "PCI VADDR %p\n", sdev->bar[BDW_PCI_BAR]);
 

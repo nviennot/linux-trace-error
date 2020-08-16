@@ -363,7 +363,7 @@ int ad1843_get_recsrc(struct snd_ad1843 *ad1843)
 int ad1843_set_recsrc(struct snd_ad1843 *ad1843, int newsrc)
 {
 	if (newsrc < 0 || newsrc > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ad1843_write_multi(ad1843, 2, &ad1843_LSS, newsrc, &ad1843_RSS, newsrc);
 	return newsrc;
@@ -471,7 +471,7 @@ int ad1843_init(struct snd_ad1843 *ad1843)
 
 	if (ad1843_read_bits(ad1843, &ad1843_INIT) != 0) {
 		printk(KERN_ERR "ad1843: AD1843 won't initialize\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ad1843_write_bits(ad1843, &ad1843_SCF, 1);
@@ -484,7 +484,7 @@ int ad1843_init(struct snd_ad1843 *ad1843)
 		if (time_after(jiffies, later)) {
 			printk(KERN_ERR
 			       "ad1843: AD1843 won't power up\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		schedule_timeout_interruptible(5);
 	}

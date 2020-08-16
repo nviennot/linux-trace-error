@@ -24,13 +24,13 @@ int __cfg80211_join_ocb(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_OCB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!rdev->ops->join_ocb)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (WARN_ON(!setup->chandef.chan))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = rdev_join_ocb(rdev, dev, setup);
 	if (!err)
@@ -62,10 +62,10 @@ int __cfg80211_leave_ocb(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_OCB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!rdev->ops->leave_ocb)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	err = rdev_leave_ocb(rdev, dev);
 	if (!err)

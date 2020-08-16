@@ -129,7 +129,7 @@ static int xt_rateest_tg_checkentry(const struct xt_tgchk_param *par)
 		    (info->interval != est->params.interval ||
 		     info->ewma_log != est->params.ewma_log)) {
 			xt_rateest_put(par->net, est);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		info->est = est;
 		return 0;

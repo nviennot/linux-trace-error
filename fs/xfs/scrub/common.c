@@ -685,7 +685,7 @@ xchk_get_inode(
 
 	/* Look up the inode, see if the generation number matches. */
 	if (xfs_internal_inum(mp, sc->sm->sm_ino))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	error = xfs_iget(mp, NULL, sc->sm->sm_ino,
 			XFS_IGET_UNTRUSTED | XFS_IGET_DONTCACHE, 0, &ip);
 	switch (error) {
@@ -711,7 +711,7 @@ xchk_get_inode(
 		error = xfs_imap(sc->mp, sc->tp, sc->sm->sm_ino, &imap,
 				XFS_IGET_UNTRUSTED | XFS_IGET_DONTCACHE);
 		if (error)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		error = -EFSCORRUPTED;
 		/* fall through */
 	default:
@@ -723,7 +723,7 @@ xchk_get_inode(
 	}
 	if (VFS_I(ip)->i_generation != sc->sm->sm_gen) {
 		xfs_irele(ip);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	sc->ip = ip;

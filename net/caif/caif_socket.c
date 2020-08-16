@@ -227,7 +227,7 @@ static void caif_ctrl_cb(struct cflayer *layr,
 
 	case CAIF_CTRLCMD_INIT_FAIL_RSP:
 		/* Connect request failed */
-		cf_sk->sk.sk_err = ECONNREFUSED;
+		cf_sk->sk.sk_err = ERR(ECONNREFUSED);
 		cf_sk->sk.sk_state = CAIF_DISCONNECTED;
 		cf_sk->sk.sk_shutdown = SHUTDOWN_MASK;
 		/*
@@ -241,7 +241,7 @@ static void caif_ctrl_cb(struct cflayer *layr,
 	case CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
 		/* Modem has closed this connection, or device is down. */
 		cf_sk->sk.sk_shutdown = SHUTDOWN_MASK;
-		cf_sk->sk.sk_err = ECONNRESET;
+		cf_sk->sk.sk_err = ERR(ECONNRESET);
 		set_rx_flow_on(cf_sk);
 		cf_sk->sk.sk_error_report(&cf_sk->sk);
 		break;
@@ -277,7 +277,7 @@ static int caif_seqpkt_recvmsg(struct socket *sock, struct msghdr *m,
 	int ret;
 	int copylen;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (flags & MSG_OOB)
 		goto read_error;
 
@@ -353,7 +353,7 @@ static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 	int err = 0;
 	long timeo;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (flags&MSG_OOB)
 		goto out;
 
@@ -361,7 +361,7 @@ static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 	 * Lock the socket to prevent queue disordering
 	 * while sleeps in memcpy_tomsg
 	 */
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (sk->sk_state == CAIF_CONNECTING)
 		goto out;
 
@@ -375,7 +375,7 @@ static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 
 		lock_sock(sk);
 		if (sock_flag(sk, SOCK_DEAD)) {
-			err = -ECONNRESET;
+			err = -ERR(ECONNRESET);
 			goto unlock;
 		}
 		skb = skb_dequeue(&sk->sk_receive_queue);
@@ -390,11 +390,11 @@ static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 			err = sock_error(sk);
 			if (err)
 				goto unlock;
-			err = -ECONNRESET;
+			err = -ERR(ECONNRESET);
 			if (sk->sk_shutdown & RCV_SHUTDOWN)
 				goto unlock;
 
-			err = -EPIPE;
+			err = -ERR(EPIPE);
 			if (sk->sk_state != CAIF_CONNECTED)
 				goto unlock;
 			if (sock_flag(sk, SOCK_DEAD))
@@ -402,7 +402,7 @@ static int caif_stream_recvmsg(struct socket *sock, struct msghdr *msg,
 
 			release_sock(sk);
 
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			if (!timeo)
 				break;
 
@@ -471,20 +471,20 @@ static long caif_wait_for_flow_on(struct caifsock *cf_sk,
 		if (tx_flow_is_on(cf_sk) &&
 			(!wait_writeable || sock_writeable(&cf_sk->sk)))
 			break;
-		*err = -ETIMEDOUT;
+		*err = -ERR(ETIMEDOUT);
 		if (!timeo)
 			break;
-		*err = -ERESTARTSYS;
+		*err = -ERR(ERESTARTSYS);
 		if (signal_pending(current))
 			break;
 		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-		*err = -ECONNRESET;
+		*err = -ERR(ECONNRESET);
 		if (sk->sk_shutdown & SHUTDOWN_MASK)
 			break;
 		*err = -sk->sk_err;
 		if (sk->sk_err)
 			break;
-		*err = -EPIPE;
+		*err = -ERR(EPIPE);
 		if (cf_sk->sk.sk_state != CAIF_CONNECTED)
 			break;
 		timeo = schedule_timeout(timeo);
@@ -508,7 +508,7 @@ static int transmit_skb(struct sk_buff *skb, struct caifsock *cf_sk,
 
 	if (cf_sk->layer.dn == NULL) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return cf_sk->layer.dn->transmit(cf_sk->layer.dn, pkt);
@@ -530,15 +530,15 @@ static int caif_seqpkt_sendmsg(struct socket *sock, struct msghdr *msg,
 	if (ret)
 		goto err;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (msg->msg_flags&MSG_OOB)
 		goto err;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (msg->msg_namelen)
 		goto err;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (unlikely(msg->msg_iter.iov->iov_base == NULL))
 		goto err;
 	noblock = msg->msg_flags & MSG_DONTWAIT;
@@ -549,14 +549,14 @@ static int caif_seqpkt_sendmsg(struct socket *sock, struct msghdr *msg,
 
 	if (ret)
 		goto err;
-	ret = -EPIPE;
+	ret = -ERR(EPIPE);
 	if (cf_sk->sk.sk_state != CAIF_CONNECTED ||
 		sock_flag(sk, SOCK_DEAD) ||
 		(sk->sk_shutdown & RCV_SHUTDOWN))
 		goto err;
 
 	/* Error if trying to write more than maximum frame size. */
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 	if (len > cf_sk->maxframe && cf_sk->sk.sk_protocol != CAIFPROTO_RFM)
 		goto err;
 
@@ -600,7 +600,7 @@ static int caif_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 	int sent = 0;
 	long timeo;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (unlikely(msg->msg_flags&MSG_OOB))
 		goto out_err;
 
@@ -664,7 +664,7 @@ static int caif_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 pipe_err:
 	if (sent == 0 && !(msg->msg_flags&MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 out_err:
 	return sent ? : err;
 }
@@ -677,16 +677,16 @@ static int setsockopt(struct socket *sock,
 	int linksel;
 
 	if (cf_sk->sk.sk_socket->state != SS_UNCONNECTED)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	switch (opt) {
 	case CAIFSO_LINK_SELECT:
 		if (ol < sizeof(int))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (lvl != SOL_CAIF)
 			goto bad_sol;
 		if (copy_from_user(&linksel, ov, sizeof(int)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		lock_sock(&(cf_sk->sk));
 		cf_sk->conn_req.link_selector = linksel;
 		release_sock(&cf_sk->sk);
@@ -696,24 +696,24 @@ static int setsockopt(struct socket *sock,
 		if (lvl != SOL_CAIF)
 			goto bad_sol;
 		if (cf_sk->sk.sk_protocol != CAIFPROTO_UTIL)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 		lock_sock(&(cf_sk->sk));
 		if (ol > sizeof(cf_sk->conn_req.param.data) ||
 			copy_from_user(&cf_sk->conn_req.param.data, ov, ol)) {
 			release_sock(&cf_sk->sk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cf_sk->conn_req.param.size = ol;
 		release_sock(&cf_sk->sk);
 		return 0;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	return 0;
 bad_sol:
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 
 }
 
@@ -754,11 +754,11 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	lock_sock(sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (addr_len < offsetofend(struct sockaddr, sa_family))
 		goto out;
 
-	err = -EAFNOSUPPORT;
+	err = -ERR(EAFNOSUPPORT);
 	if (uaddr->sa_family != AF_CAIF)
 		goto out;
 
@@ -771,13 +771,13 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 		switch (sk->sk_state) {
 		case CAIF_CONNECTED:
 			sock->state = SS_CONNECTED;
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 			goto out;
 		case CAIF_DISCONNECTED:
 			/* Reconnect allowed */
 			break;
 		case CAIF_CONNECTING:
-			err = -EALREADY;
+			err = -ERR(EALREADY);
 			if (flags & O_NONBLOCK)
 				goto out;
 			goto wait_connect;
@@ -793,7 +793,7 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 			break;
 		}
 		/* No reconnect on a seqpacket socket */
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out;
 	case SS_DISCONNECTING:
 	case SS_FREE:
@@ -804,7 +804,7 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 	sock->state = SS_UNCONNECTED;
 	sk_stream_kill_queues(&cf_sk->sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (addr_len != sizeof(struct sockaddr_caif))
 		goto out;
 
@@ -838,7 +838,7 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 		goto out;
 	}
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	rcu_read_lock();
 	dev = dev_get_by_index_rcu(sock_net(sk), ifindex);
 	if (!dev) {
@@ -853,11 +853,11 @@ static int caif_connect(struct socket *sock, struct sockaddr *uaddr,
 	cf_sk->maxframe = mtu - (headroom + tailroom);
 	if (cf_sk->maxframe < 1) {
 		pr_warn("CAIF Interface MTU too small (%d)\n", dev->mtu);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
-	err = -EINPROGRESS;
+	err = -ERR(EINPROGRESS);
 wait_connect:
 
 	if (sk->sk_state != CAIF_CONNECTED && (flags & O_NONBLOCK))
@@ -866,7 +866,7 @@ wait_connect:
 	timeo = sock_sndtimeo(sk, flags & O_NONBLOCK);
 
 	release_sock(sk);
-	err = -ERESTARTSYS;
+	err = -ERR(ERESTARTSYS);
 	timeo = wait_event_interruptible_timeout(*sk_sleep(sk),
 			sk->sk_state != CAIF_CONNECTING,
 			timeo);
@@ -874,14 +874,14 @@ wait_connect:
 	if (timeo < 0)
 		goto out; /* -ERESTARTSYS */
 
-	err = -ETIMEDOUT;
+	err = -ERR(ETIMEDOUT);
 	if (timeo == 0 && sk->sk_state != CAIF_CONNECTED)
 		goto out;
 	if (sk->sk_state != CAIF_CONNECTED) {
 		sock->state = SS_UNCONNECTED;
 		err = sock_error(sk);
 		if (!err)
-			err = -ECONNREFUSED;
+			err = -ERR(ECONNREFUSED);
 		goto out;
 	}
 	sock->state = SS_CONNECTED;
@@ -1037,7 +1037,7 @@ static int caif_create(struct net *net, struct socket *sock, int protocol,
 	};
 
 	if (!capable(CAP_SYS_ADMIN) && !capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	/*
 	 * The sock->type specifies the socket type to use.
 	 * The CAIF socket is a packet stream in the sense
@@ -1049,10 +1049,10 @@ static int caif_create(struct net *net, struct socket *sock, int protocol,
 	else if (sock->type == SOCK_STREAM)
 		sock->ops = &caif_stream_ops;
 	else
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	if (protocol < 0 || protocol >= CAIFPROTO_MAX)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 	/*
 	 * Set the socket state to unconnected.	 The socket state
 	 * is really not used at all in the net/core or socket.c but the

@@ -102,7 +102,7 @@ static int ncsi_write_package_info(struct sk_buff *skb,
 
 	if (id > ndp->package_num - 1) {
 		netdev_info(ndp->ndev.dev, "NCSI: No package with id %u\n", id);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	found = false;
@@ -142,7 +142,7 @@ static int ncsi_write_package_info(struct sk_buff *skb,
 	}
 
 	if (!found)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -157,18 +157,18 @@ static int ncsi_pkg_info_nl(struct sk_buff *msg, struct genl_info *info)
 	int rc;
 
 	if (!info || !info->attrs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_PACKAGE_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(genl_info_net(info),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	skb = genlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!skb)
@@ -178,7 +178,7 @@ static int ncsi_pkg_info_nl(struct sk_buff *msg, struct genl_info *info)
 			  &ncsi_genl_family, 0, NCSI_CMD_PKG_INFO);
 	if (!hdr) {
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	package_id = nla_get_u32(info->attrs[NCSI_ATTR_PACKAGE_ID]);
@@ -186,7 +186,7 @@ static int ncsi_pkg_info_nl(struct sk_buff *msg, struct genl_info *info)
 	attr = nla_nest_start_noflag(skb, NCSI_ATTR_PACKAGE_LIST);
 	if (!attr) {
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	rc = ncsi_write_package_info(skb, ndp, package_id);
 
@@ -222,13 +222,13 @@ static int ncsi_pkg_info_all_nl(struct sk_buff *skb,
 		return rc;
 
 	if (!attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(get_net(sock_net(skb->sk)),
 			       nla_get_u32(attrs[NCSI_ATTR_IFINDEX]));
 
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	package_id = cb->args[0];
 	package = NULL;
@@ -242,13 +242,13 @@ static int ncsi_pkg_info_all_nl(struct sk_buff *skb,
 	hdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &ncsi_genl_family, NLM_F_MULTI,  NCSI_CMD_PKG_INFO);
 	if (!hdr) {
-		rc = -EMSGSIZE;
+		rc = -ERR(EMSGSIZE);
 		goto err;
 	}
 
 	attr = nla_nest_start_noflag(skb, NCSI_ATTR_PACKAGE_LIST);
 	if (!attr) {
-		rc = -EMSGSIZE;
+		rc = -ERR(EMSGSIZE);
 		goto err;
 	}
 	rc = ncsi_write_package_info(skb, ndp, package->id);
@@ -277,18 +277,18 @@ static int ncsi_set_interface_nl(struct sk_buff *msg, struct genl_info *info)
 	unsigned long flags;
 
 	if (!info || !info->attrs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_PACKAGE_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(get_net(sock_net(msg->sk)),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	package_id = nla_get_u32(info->attrs[NCSI_ATTR_PACKAGE_ID]);
 	package = NULL;
@@ -298,7 +298,7 @@ static int ncsi_set_interface_nl(struct sk_buff *msg, struct genl_info *info)
 			package = np;
 	if (!package) {
 		/* The user has set a package that does not exist */
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	channel = NULL;
@@ -313,7 +313,7 @@ static int ncsi_set_interface_nl(struct sk_buff *msg, struct genl_info *info)
 			netdev_info(ndp->ndev.dev,
 				    "NCSI: Channel %u does not exist!\n",
 				    channel_id);
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 	}
 
@@ -356,15 +356,15 @@ static int ncsi_clear_interface_nl(struct sk_buff *msg, struct genl_info *info)
 	unsigned long flags;
 
 	if (!info || !info->attrs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(get_net(sock_net(msg->sk)),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Reset any whitelists and disable multi mode */
 	spin_lock_irqsave(&ndp->lock, flags);
@@ -399,34 +399,34 @@ static int ncsi_send_cmd_nl(struct sk_buff *msg, struct genl_info *info)
 	int len, ret;
 
 	if (!info || !info->attrs) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX]) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!info->attrs[NCSI_ATTR_PACKAGE_ID]) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!info->attrs[NCSI_ATTR_CHANNEL_ID]) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!info->attrs[NCSI_ATTR_DATA]) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	ndp = ndp_from_ifindex(get_net(sock_net(msg->sk)),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -434,7 +434,7 @@ static int ncsi_send_cmd_nl(struct sk_buff *msg, struct genl_info *info)
 	channel_id = nla_get_u32(info->attrs[NCSI_ATTR_CHANNEL_ID]);
 
 	if (package_id >= NCSI_MAX_PACKAGE || channel_id >= NCSI_MAX_CHANNEL) {
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		goto out_netlink;
 	}
 
@@ -442,7 +442,7 @@ static int ncsi_send_cmd_nl(struct sk_buff *msg, struct genl_info *info)
 	if (len < sizeof(struct ncsi_pkt_hdr)) {
 		netdev_info(ndp->ndev.dev, "NCSI: no command to send %u\n",
 			    package_id);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_netlink;
 	} else {
 		data = (unsigned char *)nla_data(info->attrs[NCSI_ATTR_DATA]);
@@ -494,7 +494,7 @@ int ncsi_send_netlink_rsp(struct ncsi_request *nr,
 			  &ncsi_genl_family, 0, NCSI_CMD_SEND_CMD);
 	if (!hdr) {
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	nla_put_u32(skb, NCSI_ATTR_IFINDEX, nr->rsp->dev->ifindex);
@@ -533,7 +533,7 @@ int ncsi_send_netlink_timeout(struct ncsi_request *nr,
 			  &ncsi_genl_family, 0, NCSI_CMD_SEND_CMD);
 	if (!hdr) {
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	net = dev_net(nr->cmd->dev);
@@ -592,18 +592,18 @@ static int ncsi_set_package_mask_nl(struct sk_buff *msg,
 	int rc;
 
 	if (!info || !info->attrs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_PACKAGE_MASK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(get_net(sock_net(msg->sk)),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irqsave(&ndp->lock, flags);
 	if (nla_get_flag(info->attrs[NCSI_ATTR_MULTI_FLAG])) {
@@ -613,7 +613,7 @@ static int ncsi_set_package_mask_nl(struct sk_buff *msg,
 		} else {
 			netdev_err(ndp->ndev.dev,
 				   "NCSI: Can't use multiple packages without HWA\n");
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 		}
 	} else {
 		ndp->multi_package = false;
@@ -644,21 +644,21 @@ static int ncsi_set_channel_mask_nl(struct sk_buff *msg,
 	unsigned long flags;
 
 	if (!info || !info->attrs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_PACKAGE_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[NCSI_ATTR_CHANNEL_MASK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ndp = ndp_from_ifindex(get_net(sock_net(msg->sk)),
 			       nla_get_u32(info->attrs[NCSI_ATTR_IFINDEX]));
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	package_id = nla_get_u32(info->attrs[NCSI_ATTR_PACKAGE_ID]);
 	package = NULL;
@@ -668,7 +668,7 @@ static int ncsi_set_channel_mask_nl(struct sk_buff *msg,
 			break;
 		}
 	if (!package)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	spin_lock_irqsave(&package->lock, flags);
 
@@ -682,7 +682,7 @@ static int ncsi_set_channel_mask_nl(struct sk_buff *msg,
 			}
 		if (!channel) {
 			spin_unlock_irqrestore(&package->lock, flags);
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 		netdev_dbg(ndp->ndev.dev,
 			   "NCSI: Channel %u set as preferred channel\n",

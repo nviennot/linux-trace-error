@@ -184,14 +184,14 @@ static int pstore_unlink(struct inode *dir, struct dentry *dentry)
 	int rc = 0;
 
 	if (!record->psi->erase)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Make sure we can't race while removing this file. */
 	mutex_lock(&records_list_lock);
 	if (!list_empty(&p->list))
 		list_del_init(&p->list);
 	else
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 	p->dentry = NULL;
 	mutex_unlock(&records_list_lock);
 	if (rc)
@@ -352,9 +352,9 @@ int pstore_mkfile(struct dentry *root, struct pstore_record *record)
 	size_t			size = record->size + record->ecc_notice_size;
 
 	if (WARN_ON(!inode_is_locked(d_inode(root))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	rc = -EEXIST;
+	rc = -ERR(EEXIST);
 	/* Skip records that are already present in the filesystem. */
 	mutex_lock(&records_list_lock);
 	list_for_each_entry(pos, &records_list, list) {

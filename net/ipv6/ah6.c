@@ -265,7 +265,7 @@ static int ipv6_clear_mutable_options(struct ipv6hdr *iph, int len, int dir)
 				net_dbg_ratelimited("overrun %sopts\n",
 						    nexthdr == NEXTHDR_HOP ?
 						    "hop" : "dest");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 
@@ -473,7 +473,7 @@ static void ah6_input_done(struct crypto_async_request *base, int err)
 	auth_data = ah_tmp_auth(work_iph, hdr_len);
 	icv = ah_tmp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
 
-	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
+	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -ERR(EBADMSG) : 0;
 	if (err)
 		goto out;
 
@@ -621,7 +621,7 @@ static int ah6_input(struct xfrm_state *x, struct sk_buff *skb)
 		goto out_free;
 	}
 
-	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
+	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -ERR(EBADMSG) : 0;
 	if (err)
 		goto out_free;
 
@@ -734,7 +734,7 @@ error:
 		crypto_free_ahash(ahp->ahash);
 		kfree(ahp);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void ah6_destroy(struct xfrm_state *x)
@@ -777,13 +777,13 @@ static int __init ah6_init(void)
 {
 	if (xfrm_register_type(&ah6_type, AF_INET6) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (xfrm6_protocol_register(&ah6_protocol, IPPROTO_AH) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
 		xfrm_unregister_type(&ah6_type, AF_INET6);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	return 0;

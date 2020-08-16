@@ -177,34 +177,34 @@ bool clk_is_match(const struct clk *p, const struct clk *q);
 static inline int clk_notifier_register(struct clk *clk,
 					struct notifier_block *nb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int clk_notifier_unregister(struct clk *clk,
 					  struct notifier_block *nb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline long clk_get_accuracy(struct clk *clk)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline long clk_set_phase(struct clk *clk, int phase)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline long clk_get_phase(struct clk *clk)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int clk_set_duty_cycle(struct clk *clk, unsigned int num,
 				     unsigned int den)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline unsigned int clk_get_scaled_duty_cycle(struct clk *clk,
@@ -972,16 +972,16 @@ struct clk *of_clk_get_from_provider(struct of_phandle_args *clkspec);
 #else
 static inline struct clk *of_clk_get(struct device_node *np, int index)
 {
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 static inline struct clk *of_clk_get_by_name(struct device_node *np,
 					     const char *name)
 {
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 static inline struct clk *of_clk_get_from_provider(struct of_phandle_args *clkspec)
 {
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 #endif
 

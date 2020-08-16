@@ -285,7 +285,7 @@ int gss_mech_flavor2info(rpc_authflavor_t pseudoflavor,
 
 	gm = gss_mech_get_by_pseudoflavor(pseudoflavor);
 	if (gm == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	for (i = 0; i < gm->gm_pf_num; i++) {
 		if (gm->gm_pfs[i].pseudoflavor == pseudoflavor) {
@@ -299,7 +299,7 @@ int gss_mech_flavor2info(rpc_authflavor_t pseudoflavor,
 	}
 
 	gss_mech_put(gm);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 u32

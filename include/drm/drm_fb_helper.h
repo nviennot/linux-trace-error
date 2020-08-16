@@ -358,21 +358,21 @@ static inline void drm_fb_helper_deferred_io(struct fb_info *info,
 
 static inline int drm_fb_helper_defio_init(struct drm_fb_helper *fb_helper)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline ssize_t drm_fb_helper_sys_read(struct fb_info *info,
 					     char __user *buf, size_t count,
 					     loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline ssize_t drm_fb_helper_sys_write(struct fb_info *info,
 					      const char __user *buf,
 					      size_t count, loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void drm_fb_helper_sys_fillrect(struct fb_info *info,

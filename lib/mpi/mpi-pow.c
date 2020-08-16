@@ -47,7 +47,7 @@ int mpi_powm(MPI res, MPI base, MPI exp, MPI mod)
 	ep = exp->d;
 
 	if (!msize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!esize) {
 		/* Exponent is zero, result is 1 mod MOD, i.e., 1 or 0

@@ -90,14 +90,14 @@ static int _kstrtoull(const char *s, unsigned int base, unsigned long long *res)
 	s = _parse_integer_fixup_radix(s, &base);
 	rv = _parse_integer(s, base, &_res);
 	if (rv & KSTRTOX_OVERFLOW)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if (rv == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	s += rv;
 	if (*s == '\n')
 		s++;
 	if (*s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*res = _res;
 	return 0;
 }
@@ -152,14 +152,14 @@ int kstrtoll(const char *s, unsigned int base, long long *res)
 		if (rv < 0)
 			return rv;
 		if ((long long)-tmp > 0)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		*res = -tmp;
 	} else {
 		rv = kstrtoull(s, base, &tmp);
 		if (rv < 0)
 			return rv;
 		if ((long long)tmp < 0)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		*res = tmp;
 	}
 	return 0;
@@ -176,7 +176,7 @@ int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (unsigned long)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -192,7 +192,7 @@ int _kstrtol(const char *s, unsigned int base, long *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (long)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -223,7 +223,7 @@ int kstrtouint(const char *s, unsigned int base, unsigned int *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (unsigned int)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -254,7 +254,7 @@ int kstrtoint(const char *s, unsigned int base, int *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (int)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -269,7 +269,7 @@ int kstrtou16(const char *s, unsigned int base, u16 *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (u16)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -284,7 +284,7 @@ int kstrtos16(const char *s, unsigned int base, s16 *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (s16)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -299,7 +299,7 @@ int kstrtou8(const char *s, unsigned int base, u8 *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (u8)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -314,7 +314,7 @@ int kstrtos8(const char *s, unsigned int base, s8 *res)
 	if (rv < 0)
 		return rv;
 	if (tmp != (s8)tmp)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	*res = tmp;
 	return 0;
 }
@@ -332,7 +332,7 @@ EXPORT_SYMBOL(kstrtos8);
 int kstrtobool(const char *s, bool *res)
 {
 	if (!s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (s[0]) {
 	case 'y':
@@ -363,7 +363,7 @@ int kstrtobool(const char *s, bool *res)
 		break;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(kstrtobool);
 

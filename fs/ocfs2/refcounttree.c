@@ -1439,7 +1439,7 @@ static int ocfs2_find_refcount_split_pos(struct ocfs2_refcount_list *rl,
 	}
 
 	if (delta >= middle)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	*split_pos = ocfs2_get_ref_rec_low_cpos(&rl->rl_recs[*split_index]);
 	return 0;
@@ -3176,7 +3176,7 @@ int ocfs2_cow_sync_writeback(struct super_block *sb,
 
 		wait_on_page_writeback(page);
 		if (PageError(page)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			mlog_errno(ret);
 		} else
 			mark_page_accessed(page);
@@ -4186,7 +4186,7 @@ static int __ocfs2_reflink(struct dentry *old_dentry,
 	struct buffer_head *new_bh = NULL;
 
 	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_SYSTEM_FILE) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -4257,7 +4257,7 @@ static int ocfs2_reflink(struct dentry *old_dentry, struct inode *dir,
 	struct ocfs2_lock_holder oh;
 
 	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 
 	error = ocfs2_create_inode_in_orphan(dir, inode->i_mode,
@@ -4343,9 +4343,9 @@ out:
 static inline int ocfs2_may_create(struct inode *dir, struct dentry *child)
 {
 	if (d_really_is_positive(child))
-		return -EEXIST;
+		return -ERR(EEXIST);
 	if (IS_DEADDIR(dir))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return inode_permission(dir, MAY_WRITE | MAY_EXEC);
 }
 
@@ -4364,24 +4364,24 @@ static int ocfs2_vfs_reflink(struct dentry *old_dentry, struct inode *dir,
 	int error;
 
 	if (!inode)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = ocfs2_may_create(dir, new_dentry);
 	if (error)
 		return error;
 
 	if (dir->i_sb != inode->i_sb)
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	/*
 	 * A reflink to an append-only or immutable file cannot be created.
 	 */
 	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Only regular files can be reflinked. */
 	if (!S_ISREG(inode->i_mode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * If the caller wants to preserve ownership, they require the
@@ -4389,9 +4389,9 @@ static int ocfs2_vfs_reflink(struct dentry *old_dentry, struct inode *dir,
 	 */
 	if (preserve) {
 		if (!uid_eq(current_fsuid(), inode->i_uid) && !capable(CAP_CHOWN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (!in_group_p(inode->i_gid) && !capable(CAP_CHOWN))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	/*
@@ -4427,7 +4427,7 @@ int ocfs2_reflink_ioctl(struct inode *inode,
 	int error;
 
 	if (!ocfs2_refcount_tree(OCFS2_SB(inode->i_sb)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	error = user_path_at(AT_FDCWD, oldname, 0, &old_path);
 	if (error) {
@@ -4442,7 +4442,7 @@ int ocfs2_reflink_ioctl(struct inode *inode,
 		goto out;
 	}
 
-	error = -EXDEV;
+	error = -ERR(EXDEV);
 	if (old_path.mnt != new_path.mnt) {
 		mlog_errno(error);
 		goto out_dput;
@@ -4531,7 +4531,7 @@ static loff_t ocfs2_reflink_remap_extent(struct inode *s_inode,
 
 	while (spos < slast) {
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto out;
 		}
 
@@ -4650,7 +4650,7 @@ loff_t ocfs2_reflink_remap_blocks(struct inode *s_inode,
 	 * forget it because we don't know how (or want) to go merging
 	 * refcount trees.
 	 */
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (ocfs2_is_refcount_inode(s_inode) &&
 	    ocfs2_is_refcount_inode(t_inode) &&
 	    le64_to_cpu(dis->i_refcount_loc) !=

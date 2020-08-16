@@ -46,7 +46,7 @@ static int notifier_chain_unregister(struct notifier_block **nl,
 		}
 		nl = &((*nl)->next);
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /**

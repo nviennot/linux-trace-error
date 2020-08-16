@@ -326,11 +326,11 @@ static ssize_t proc_dev_atm_read(struct file *file, char __user *buf,
 		return -ENOMEM;
 	dev = PDE_DATA(file_inode(file));
 	if (!dev->ops->proc_read)
-		length = -EINVAL;
+		length = -ERR(EINVAL);
 	else {
 		length = dev->ops->proc_read(dev, pos, (char *)page);
 		if (length > count)
-			length = -EINVAL;
+			length = -ERR(EINVAL);
 	}
 	if (length >= 0) {
 		if (copy_to_user(buf, (char *)page, length))

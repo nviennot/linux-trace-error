@@ -89,7 +89,7 @@ xfs_acl_from_disk(
 
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 STATIC void
@@ -182,11 +182,11 @@ __xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 		break;
 	case ACL_TYPE_DEFAULT:
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
+			return acl ? -ERR(EACCES) : 0;
 		args.name = SGI_ACL_DEFAULT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	args.namelen = strlen(args.name);
 
@@ -239,7 +239,7 @@ xfs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 	if (!acl)
 		goto set_acl;
 
-	error = -E2BIG;
+	error = -ERR(E2BIG);
 	if (acl->a_count > XFS_ACL_MAX_ENTRIES(XFS_M(inode->i_sb)))
 		return error;
 

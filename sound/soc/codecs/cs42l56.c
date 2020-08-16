@@ -708,7 +708,7 @@ static int cs42l56_get_mclk_ratio(int mclk, int rate)
 		    clk_ratio_table[i].srate == rate)
 			return clk_ratio_table[i].ratio;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs42l56_set_sysclk(struct snd_soc_dai *codec_dai,
@@ -737,7 +737,7 @@ static int cs42l56_set_sysclk(struct snd_soc_dai *codec_dai,
 		cs42l56->mclk_prediv = CS42L56_MCLK_PREDIV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	cs42l56->mclk = freq;
 
@@ -764,7 +764,7 @@ static int cs42l56_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		cs42l56->iface = CS42L56_SLAVE_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	 /* interface format */
@@ -776,7 +776,7 @@ static int cs42l56_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		cs42l56->iface_fmt = CS42L56_DIG_FMT_LEFT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* sclk inversion */
@@ -788,7 +788,7 @@ static int cs42l56_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		cs42l56->iface_inv = CS42L56_SCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, CS42L56_CLKCTL_1,
@@ -869,7 +869,7 @@ static int cs42l56_pcm_hw_params(struct snd_pcm_substream *substream,
 				    CS42L56_CLK_RATIO_MASK, ratio);
 	} else {
 		dev_err(component->dev, "unsupported mclk/sclk/lrclk ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

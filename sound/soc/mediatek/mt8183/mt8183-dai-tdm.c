@@ -446,13 +446,13 @@ static int mtk_dai_tdm_cal_mclk(struct mtk_base_afe *afe,
 	if (!freq || freq > apll_rate) {
 		dev_warn(afe->dev,
 			 "%s(), freq(%d Hz) invalid\n", __func__, freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (apll_rate % freq != 0) {
 		dev_warn(afe->dev,
 			 "%s(), APLL cannot generate %d Hz", __func__, freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tdm_priv->mclk_rate = freq;
@@ -606,7 +606,7 @@ static int mtk_dai_tdm_trigger(struct snd_pcm_substream *substream,
 				   0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -621,12 +621,12 @@ static int mtk_dai_tdm_set_sysclk(struct snd_soc_dai *dai,
 
 	if (!tdm_priv) {
 		dev_warn(afe->dev, "%s(), tdm_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dir != SND_SOC_CLOCK_OUT) {
 		dev_warn(afe->dev, "%s(), dir != SND_SOC_CLOCK_OUT", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_info(afe->dev, "%s(), freq %d\n", __func__, freq);
@@ -642,7 +642,7 @@ static int mtk_dai_tdm_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	if (!tdm_priv) {
 		dev_warn(afe->dev, "%s(), tdm_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI mode*/

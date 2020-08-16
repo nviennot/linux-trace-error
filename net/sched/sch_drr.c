@@ -64,7 +64,7 @@ static int drr_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 
 	if (!opt) {
 		NL_SET_ERR_MSG(extack, "DRR options are required for this operation");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_DRR_MAX, opt, drr_policy,
@@ -76,7 +76,7 @@ static int drr_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 		quantum = nla_get_u32(tb[TCA_DRR_QUANTUM]);
 		if (quantum == 0) {
 			NL_SET_ERR_MSG(extack, "Specified DRR quantum cannot be zero");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else
 		quantum = psched_mtu(qdisc_dev(sch));
@@ -104,7 +104,7 @@ static int drr_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 
 	cl = kzalloc(sizeof(struct drr_class), GFP_KERNEL);
 	if (cl == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	cl->common.classid = classid;
 	cl->quantum	   = quantum;
@@ -152,7 +152,7 @@ static int drr_delete_class(struct Qdisc *sch, unsigned long arg)
 	struct drr_class *cl = (struct drr_class *)arg;
 
 	if (cl->filter_cnt > 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sch_tree_lock(sch);
 
@@ -251,7 +251,7 @@ static int drr_dump_class(struct Qdisc *sch, unsigned long arg,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int drr_dump_class_stats(struct Qdisc *sch, unsigned long arg,

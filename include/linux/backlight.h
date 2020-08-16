@@ -123,7 +123,7 @@ struct backlight_device {
 
 static inline int backlight_update_status(struct backlight_device *bd)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	mutex_lock(&bd->update_lock);
 	if (bd->ops && bd->ops->update_status)

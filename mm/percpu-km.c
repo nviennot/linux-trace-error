@@ -105,7 +105,7 @@ static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
 	/* all units must be in a single group */
 	if (ai->nr_groups != 1) {
 		pr_crit("can't handle more than one group\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nr_pages = (ai->groups[0].nr_units * ai->unit_size) >> PAGE_SHIFT;

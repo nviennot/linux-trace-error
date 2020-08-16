@@ -315,10 +315,10 @@ xfs_dir_cilookup_result(
 	int		len)
 {
 	if (args->cmpresult == XFS_CMP_DIFFERENT)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (args->cmpresult != XFS_CMP_CASE ||
 					!(args->op_flags & XFS_DA_OP_CILOOKUP))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	args->value = kmem_alloc(len, KM_NOFS | KM_MAYFAIL);
 	if (!args->value)
@@ -326,7 +326,7 @@ xfs_dir_cilookup_result(
 
 	memcpy(args->value, name, len);
 	args->valuelen = len;
-	return -EEXIST;
+	return -ERR(EEXIST);
 }
 
 /*

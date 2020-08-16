@@ -67,21 +67,21 @@ int nf_ct_set_timeout(struct net *net, struct nf_conn *ct,
 	rcu_read_lock();
 	timeout_find_get = rcu_dereference(nf_ct_timeout_find_get_hook);
 	if (!timeout_find_get) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		errmsg = "Timeout policy base is empty";
 		goto out;
 	}
 
 	timeout = timeout_find_get(net, timeout_name);
 	if (!timeout) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		pr_info_ratelimited("No such timeout policy \"%s\"\n",
 				    timeout_name);
 		goto out;
 	}
 
 	if (timeout->l3num != l3num) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		pr_info_ratelimited("Timeout policy `%s' can only be used by "
 				    "L%d protocol number %d\n",
 				    timeout_name, 3, timeout->l3num);
@@ -91,7 +91,7 @@ int nf_ct_set_timeout(struct net *net, struct nf_conn *ct,
 	 * otherwise default to generic.
 	 */
 	if (timeout->l4proto->l4proto != l4num) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		pr_info_ratelimited("Timeout policy `%s' can only be used by "
 				    "L%d protocol number %d\n",
 				    timeout_name, 4, timeout->l4proto->l4proto);

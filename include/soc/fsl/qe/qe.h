@@ -108,7 +108,7 @@ dma_addr_t cpm_muram_dma(void __iomem *addr);
 static inline s32 cpm_muram_alloc(unsigned long size,
 				  unsigned long align)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void cpm_muram_free(s32 offset)
@@ -118,7 +118,7 @@ static inline void cpm_muram_free(s32 offset)
 static inline s32 cpm_muram_alloc_fixed(unsigned long offset,
 					unsigned long size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void __iomem *cpm_muram_addr(unsigned long offset)
@@ -128,7 +128,7 @@ static inline void __iomem *cpm_muram_addr(unsigned long offset)
 
 static inline unsigned long cpm_muram_offset(void __iomem *addr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline dma_addr_t cpm_muram_dma(void __iomem *addr)
@@ -164,11 +164,11 @@ extern int par_io_config_pin(u8 port, u8 pin, int dir, int open_drain,
 			     int assignment, int has_irq);
 extern int par_io_data_set(u8 port, u8 pin, u8 val);
 #else
-static inline int par_io_init(struct device_node *np) { return -ENOSYS; }
-static inline int par_io_of_config(struct device_node *np) { return -ENOSYS; }
+static inline int par_io_init(struct device_node *np) { return -ERR(ENOSYS); }
+static inline int par_io_of_config(struct device_node *np) { return -ERR(ENOSYS); }
 static inline int par_io_config_pin(u8 port, u8 pin, int dir, int open_drain,
-		int assignment, int has_irq) { return -ENOSYS; }
-static inline int par_io_data_set(u8 port, u8 pin, u8 val) { return -ENOSYS; }
+		int assignment, int has_irq) { return -ERR(ENOSYS); }
+static inline int par_io_data_set(u8 port, u8 pin, u8 val) { return -ERR(ENOSYS); }
 #endif /* CONFIG_QUICC_ENGINE */
 
 /*
@@ -183,7 +183,7 @@ extern void qe_pin_set_dedicated(struct qe_pin *pin);
 #else
 static inline struct qe_pin *qe_pin_request(struct device_node *np, int index)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 static inline void qe_pin_free(struct qe_pin *qe_pin) {}
 static inline void qe_pin_set_gpio(struct qe_pin *qe_pin) {}
@@ -196,7 +196,7 @@ int qe_issue_cmd(u32 cmd, u32 device, u8 mcn_protocol, u32 cmd_input);
 static inline int qe_issue_cmd(u32 cmd, u32 device, u8 mcn_protocol,
 			       u32 cmd_input)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_QUICC_ENGINE */
 
@@ -324,7 +324,7 @@ int qe_upload_firmware(const struct qe_firmware *firmware);
 #else
 static inline int qe_upload_firmware(const struct qe_firmware *firmware)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_QUICC_ENGINE */
 

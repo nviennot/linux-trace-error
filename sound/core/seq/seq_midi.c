@@ -99,7 +99,7 @@ static int dump_midi(struct snd_rawmidi_substream *substream, const char *buf, i
 	int tmp;
 
 	if (snd_BUG_ON(!substream || !buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 	if ((tmp = runtime->avail) < count) {
 		if (printk_ratelimit())
@@ -107,7 +107,7 @@ static int dump_midi(struct snd_rawmidi_substream *substream, const char *buf, i
 		return -ENOMEM;
 	}
 	if (snd_rawmidi_kernel_write(substream, buf, count) < count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -120,10 +120,10 @@ static int event_process_midi(struct snd_seq_event *ev, int direct,
 	int len;
 
 	if (snd_BUG_ON(!msynth))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	substream = msynth->output_rfile.output;
 	if (substream == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (ev->type == SNDRV_SEQ_EVENT_SYSEX) {	/* special case, to save space */
 		if ((ev->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE) {
 			/* invalid event */
@@ -134,7 +134,7 @@ static int event_process_midi(struct snd_seq_event *ev, int direct,
 		snd_midi_event_reset_decode(msynth->parser);
 	} else {
 		if (msynth->parser == NULL)
-			return -EIO;
+			return -ERR(EIO);
 		len = snd_midi_event_decode(msynth->parser, msg, sizeof(msg), ev);
 		if (len < 0)
 			return 0;
@@ -196,7 +196,7 @@ static int midisynth_unsubscribe(void *private_data, struct snd_seq_port_subscri
 	struct seq_midisynth *msynth = private_data;
 
 	if (snd_BUG_ON(!msynth->input_rfile.input))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = snd_rawmidi_kernel_release(&msynth->input_rfile);
 	return err;
 }
@@ -234,7 +234,7 @@ static int midisynth_unuse(void *private_data, struct snd_seq_port_subscribe *in
 	struct seq_midisynth *msynth = private_data;
 
 	if (snd_BUG_ON(!msynth->output_rfile.output))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_rawmidi_drain_output(msynth->output_rfile.output);
 	return snd_rawmidi_kernel_release(&msynth->output_rfile);
 }
@@ -271,7 +271,7 @@ snd_seq_midisynth_probe(struct device *_dev)
 	unsigned int input_count = 0, output_count = 0;
 
 	if (snd_BUG_ON(!card || device < 0 || device >= SNDRV_RAWMIDI_DEVICES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info = kmalloc(sizeof(*info), GFP_KERNEL);
 	if (! info)
 		return -ENOMEM;
@@ -289,7 +289,7 @@ snd_seq_midisynth_probe(struct device *_dev)
 		ports = input_count;
 	if (ports == 0) {
 		kfree(info);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (ports > (256 / SNDRV_RAWMIDI_DEVICES))
 		ports = 256 / SNDRV_RAWMIDI_DEVICES;
@@ -422,7 +422,7 @@ snd_seq_midisynth_remove(struct device *_dev)
 	client = synths[card->number];
 	if (client == NULL || client->ports[device] == NULL) {
 		mutex_unlock(&register_mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	ports = client->ports_per_device[device];
 	client->ports_per_device[device] = 0;

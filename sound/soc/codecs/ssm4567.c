@@ -214,7 +214,7 @@ static int ssm4567_hw_params(struct snd_pcm_substream *substream,
 	else if (rate >= 128000 && rate <= 192000)
 		dacfs = SSM4567_DAC_FS_128000_192000;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return regmap_update_bits(ssm4567->regmap, SSM4567_REG_DAC_CTRL,
 				SSM4567_DAC_FS_MASK, dacfs);
@@ -239,14 +239,14 @@ static int ssm4567_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	int ret;
 
 	if (tx_mask == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rx_mask && rx_mask != tx_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slot = __ffs(tx_mask);
 	if (tx_mask != BIT(slot))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (width) {
 	case 32:
@@ -259,7 +259,7 @@ static int ssm4567_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		blcks = SSM4567_SAI_CTRL_1_TDM_BLCKS_64;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(ssm4567->regmap, SSM4567_REG_SAI_CTRL_2,
@@ -282,7 +282,7 @@ static int ssm4567_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -302,7 +302,7 @@ static int ssm4567_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		invert_fclk = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -322,7 +322,7 @@ static int ssm4567_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1 |= SSM4567_SAI_CTRL_1_PDM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (invert_fclk)

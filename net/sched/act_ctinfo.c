@@ -171,7 +171,7 @@ static int tcf_ctinfo_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG_MOD(extack, "ctinfo requires attributes to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, TCA_CTINFO_MAX, nla, ctinfo_policy, extack);
@@ -181,7 +181,7 @@ static int tcf_ctinfo_init(struct net *net, struct nlattr *nla,
 	if (!tb[TCA_CTINFO_ACT]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing required TCA_CTINFO_ACT attribute");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	actparm = nla_data(tb[TCA_CTINFO_ACT]);
 
@@ -195,7 +195,7 @@ static int tcf_ctinfo_init(struct net *net, struct nlattr *nla,
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_CTINFO_PARMS_DSCP_MASK],
 					    "dscp mask must be 6 contiguous bits");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		dscpstatemask = tb[TCA_CTINFO_PARMS_DSCP_STATEMASK] ?
 			nla_get_u32(tb[TCA_CTINFO_PARMS_DSCP_STATEMASK]) : 0;
@@ -204,7 +204,7 @@ static int tcf_ctinfo_init(struct net *net, struct nlattr *nla,
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[TCA_CTINFO_PARMS_DSCP_STATEMASK],
 					    "dscp statemask must not overlap dscp mask");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -224,7 +224,7 @@ static int tcf_ctinfo_init(struct net *net, struct nlattr *nla,
 			return 0;
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	} else {
 		return err;

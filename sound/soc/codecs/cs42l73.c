@@ -856,7 +856,7 @@ static int cs42l73_get_mclkx_coeff(int mclkx)
 		if (cs42l73_mclkx_coeffs[i].mclkx == mclkx)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs42l73_get_mclk_coeff(int mclk, int srate)
@@ -868,7 +868,7 @@ static int cs42l73_get_mclk_coeff(int mclk, int srate)
 		    cs42l73_mclk_coeffs[i].srate == srate)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 }
 
@@ -916,13 +916,13 @@ static int cs42l73_set_sysclk(struct snd_soc_dai *dai,
 	case CS42L73_CLKID_MCLK2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((cs42l73_set_mclk(dai, freq)) < 0) {
 		dev_err(component->dev, "Unable to set MCLK for dai %s\n",
 			dai->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->mclksel = clk_id;
@@ -951,7 +951,7 @@ static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	format = (fmt & SND_SOC_DAIFMT_FORMAT_MASK);
@@ -966,17 +966,17 @@ static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		if (mmcc & CS42L73_MS_MASTER) {
 			dev_err(component->dev,
 				"PCM format in slave mode only\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (id == CS42L73_ASP) {
 			dev_err(component->dev,
 				"PCM format is not supported on ASP port\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		spc |= CS42L73_SPDIF_PCM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (spc & CS42L73_SPDIF_PCM) {
@@ -994,7 +994,7 @@ static int cs42l73_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 				spc |= CS42L73_PCM_MODE1;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1058,7 +1058,7 @@ static int cs42l73_pcm_hw_params(struct snd_pcm_substream *substream,
 		    cs42l73_get_mclk_coeff(priv->mclk, srate);
 
 		if (mclk_coeff < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		dev_dbg(component->dev,
 			 "DAI[%d]: MCLK %u, srate %u, MMCC[5:0] = %x\n",
@@ -1336,7 +1336,7 @@ static int cs42l73_i2c_probe(struct i2c_client *i2c_client,
 	devid |= (reg & 0xF0) >> 4;
 
 	if (devid != CS42L73_DEVID) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c_client->dev,
 			"CS42L73 Device ID (%X). Expected %X\n",
 			devid, CS42L73_DEVID);

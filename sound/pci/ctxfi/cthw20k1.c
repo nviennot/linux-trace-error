@@ -1319,7 +1319,7 @@ static int hw_pll_init(struct hw *hw, unsigned int rsr)
 	}
 	if (i >= 3) {
 		dev_alert(hw->card->dev, "PLL initialization failed!!!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -1343,7 +1343,7 @@ static int hw_auto_init(struct hw *hw)
 	}
 	if (!get_field(gctl, GCTL_AID)) {
 		dev_alert(hw->card->dev, "Card Auto-init failed!!!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -1807,7 +1807,7 @@ static int uaa_to_xfi(struct pci_dev *pci)
 	io_base = pci_resource_start(pci, 0);
 	mem_base = ioremap(io_base, pci_resource_len(pci, 0));
 	if (!mem_base)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* Read current mode from Mode Change Register */
 	for (i = 0; i < 4; i++)

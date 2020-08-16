@@ -86,7 +86,7 @@ static struct rawdata_f_data *rawdata_f_data_alloc(size_t size)
 	struct rawdata_f_data *ret;
 
 	if (size > SIZE_MAX - sizeof(*ret))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ret = kvzalloc(sizeof(*ret) + size, GFP_KERNEL);
 	if (!ret)
@@ -287,7 +287,7 @@ static struct dentry *aafs_create(const char *name, umode_t mode,
 	}
 
 	if (d_really_is_positive(dentry)) {
-		error = -EEXIST;
+		error = -ERR(EEXIST);
 		goto fail_dentry;
 	}
 
@@ -392,7 +392,7 @@ static struct aa_loaddata *aa_simple_write_to_buffer(const char __user *userbuf,
 
 	if (*pos != 0)
 		/* only writes from pos 0, that is complete writes */
-		return ERR_PTR(-ESPIPE);
+		return ERR_PTR(-ERR(ESPIPE));
 
 	/* freed by caller to simple_write_to_buffer */
 	data = aa_loaddata_alloc(alloc_size);
@@ -541,11 +541,11 @@ static ssize_t ns_revision_read(struct file *file, char __user *buf,
 	if (last_read == rev->ns->revision) {
 		mutex_unlock(&rev->ns->lock);
 		if (file->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		if (wait_event_interruptible(rev->ns->wait,
 					     last_read !=
 					     READ_ONCE(rev->ns->revision)))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		mutex_lock_nested(&rev->ns->lock, rev->ns->level);
 	}
 
@@ -668,16 +668,16 @@ static ssize_t query_data(char *buf, size_t buf_len,
 	__le32 outle32;
 
 	if (!query_len)
-		return -EINVAL; /* need a query */
+		return -ERR(EINVAL); /* need a query */
 
 	key = query + strnlen(query, query_len) + 1;
 	if (key + 1 >= query + query_len)
-		return -EINVAL; /* not enough space for a non-empty key */
+		return -ERR(EINVAL); /* not enough space for a non-empty key */
 	if (key + strnlen(key, query + query_len - key) >= query + query_len)
-		return -EINVAL; /* must end with NUL */
+		return -ERR(EINVAL); /* must end with NUL */
 
 	if (buf_len < sizeof(bytes) + sizeof(blocks))
-		return -EINVAL; /* not enough space */
+		return -ERR(EINVAL); /* not enough space */
 
 	curr = begin_current_label_crit_section();
 	label = aa_label_parse(curr, query, GFP_KERNEL, false, false);
@@ -708,7 +708,7 @@ static ssize_t query_data(char *buf, size_t buf_len,
 			if (out + sizeof(outle32) + data->size > buf +
 			    buf_len) {
 				aa_put_label(label);
-				return -EINVAL; /* not enough space */
+				return -ERR(EINVAL); /* not enough space */
 			}
 			outle32 = __cpu_to_le32(data->size);
 			memcpy(out, &outle32, sizeof(outle32));
@@ -759,12 +759,12 @@ static ssize_t query_label(char *buf, size_t buf_len,
 	struct label_it i;
 
 	if (!query_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	label_name = query;
 	label_name_len = strnlen(query, query_len);
 	if (!label_name_len || label_name_len == query_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/**
 	 * The extra byte is to account for the null byte between the
@@ -861,7 +861,7 @@ static struct multi_transaction *multi_transaction_new(struct file *file,
 	struct multi_transaction *t;
 
 	if (size > MULTI_TRANSACTION_LIMIT - 1)
-		return ERR_PTR(-EFBIG);
+		return ERR_PTR(-ERR(EFBIG));
 
 	t = (struct multi_transaction *)get_zeroed_page(GFP_KERNEL);
 	if (!t)
@@ -935,7 +935,7 @@ static ssize_t aa_write_access(struct file *file, const char __user *ubuf,
 	ssize_t len;
 
 	if (*ppos)
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	t = multi_transaction_new(file, ubuf, count);
 	if (IS_ERR(t))
@@ -963,7 +963,7 @@ static ssize_t aa_write_access(struct file *file, const char __user *ubuf,
 				 t->data + QUERY_CMD_DATA_LEN,
 				 count - QUERY_CMD_DATA_LEN);
 	} else
-		len = -EINVAL;
+		len = -ERR(EINVAL);
 
 	if (len < 0) {
 		put_multi_transaction(t);
@@ -1225,7 +1225,7 @@ static int seq_rawdata_open(struct inode *inode, struct file *file,
 
 	if (!data)
 		/* lost race this ent is being reaped */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = single_open(file, show, data);
 	if (error) {
@@ -1300,7 +1300,7 @@ static int deflate_decompress(char *src, size_t slen, char *dst, size_t dlen)
 
 	if (aa_g_rawdata_compression_level == 0) {
 		if (dlen < slen)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(dst, src, slen);
 		return 0;
 	}
@@ -1325,7 +1325,7 @@ static int deflate_decompress(char *src, size_t slen, char *dst, size_t dlen)
 
 	error = zlib_inflate(&strm, Z_FINISH);
 	if (error != Z_STREAM_END)
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = 0;
 
@@ -1359,12 +1359,12 @@ static int rawdata_open(struct inode *inode, struct file *file)
 	struct rawdata_f_data *private;
 
 	if (!policy_view_capable(NULL))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	loaddata = __aa_get_loaddata(inode->i_private);
 	if (!loaddata)
 		/* lost race: this entry is being reaped */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	private = rawdata_f_data_alloc(loaddata->size);
 	if (IS_ERR(private)) {
@@ -1589,7 +1589,7 @@ static char *gen_symlink_name(int depth, const char *dirname, const char *fname)
 	error = snprintf(s, size, "raw_data/%s/%s", dirname, fname);
 	if (error >= size || error < 0) {
 		kfree(buffer);
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	}
 
 	return buffer;
@@ -1612,7 +1612,7 @@ static const char *rawdata_get_link_base(struct dentry *dentry,
 	int depth;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	label = aa_get_label_rcu(&proxy->label);
 	profile = labels_profile(label);
@@ -1847,7 +1847,7 @@ static int ns_rmdir_op(struct inode *dir, struct dentry *dentry)
 	ns = aa_get_ns(__aa_findn_ns(&parent->sub_ns, dentry->d_name.name,
 				     dentry->d_name.len));
 	if (!ns) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto out;
 	}
 	AA_BUG(ns_dir(ns) != dentry);
@@ -2268,7 +2268,7 @@ static const struct seq_operations aa_sfs_profiles_op = {
 static int profiles_open(struct inode *inode, struct file *file)
 {
 	if (!policy_view_capable(NULL))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return seq_open(file, &aa_sfs_profiles_op);
 }
@@ -2547,7 +2547,7 @@ static const char *policy_get_link(struct dentry *dentry,
 	int error;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	ns = aa_get_current_ns();
 	path.mnt = mntget(aafs_mnt);
@@ -2569,7 +2569,7 @@ static int policy_readlink(struct dentry *dentry, char __user *buffer,
 	if (res > 0 && res < sizeof(name))
 		res = readlink_copy(buffer, buflen, name);
 	else
-		res = -ENOENT;
+		res = -ERR(ENOENT);
 
 	return res;
 }
@@ -2597,7 +2597,7 @@ static int __init aa_create_aafs(void)
 
 	if (aa_sfs_entry.dentry) {
 		AA_ERROR("%s: AppArmor securityfs already exists\n", __func__);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/* setup apparmorfs used to virtualize policy/ */

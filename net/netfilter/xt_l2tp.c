@@ -214,7 +214,7 @@ static int l2tp_mt_check(const struct xt_mtchk_param *par)
 	if (info->flags & ~(XT_L2TP_TID | XT_L2TP_SID | XT_L2TP_VERSION |
 			    XT_L2TP_TYPE)) {
 		pr_info_ratelimited("unknown flags: %x\n", info->flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* At least one of tid, sid or type=control must be specified */
@@ -224,7 +224,7 @@ static int l2tp_mt_check(const struct xt_mtchk_param *par)
 	     (info->type != XT_L2TP_TYPE_CONTROL))) {
 		pr_info_ratelimited("invalid flags combination: %x\n",
 				    info->flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If version 2 is specified, check that incompatible params
@@ -234,7 +234,7 @@ static int l2tp_mt_check(const struct xt_mtchk_param *par)
 		if ((info->version < 2) || (info->version > 3)) {
 			pr_info_ratelimited("wrong L2TP version: %u\n",
 					    info->version);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (info->version == 2) {
@@ -242,13 +242,13 @@ static int l2tp_mt_check(const struct xt_mtchk_param *par)
 			    (info->tid > 0xffff)) {
 				pr_info_ratelimited("v2 tid > 0xffff: %u\n",
 						    info->tid);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if ((info->flags & XT_L2TP_SID) &&
 			    (info->sid > 0xffff)) {
 				pr_info_ratelimited("v2 sid > 0xffff: %u\n",
 						    info->sid);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -270,13 +270,13 @@ static int l2tp_mt_check4(const struct xt_mtchk_param *par)
 	if ((ip->proto != IPPROTO_UDP) &&
 	    (ip->proto != IPPROTO_L2TP)) {
 		pr_info_ratelimited("missing protocol rule (udp|l2tpip)\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((ip->proto == IPPROTO_L2TP) &&
 	    (info->version == 2)) {
 		pr_info_ratelimited("v2 doesn't support IP mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -297,13 +297,13 @@ static int l2tp_mt_check6(const struct xt_mtchk_param *par)
 	if ((ip->proto != IPPROTO_UDP) &&
 	    (ip->proto != IPPROTO_L2TP)) {
 		pr_info_ratelimited("missing protocol rule (udp|l2tpip)\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((ip->proto == IPPROTO_L2TP) &&
 	    (info->version == 2)) {
 		pr_info_ratelimited("v2 doesn't support IP mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

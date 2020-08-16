@@ -282,7 +282,7 @@ int affs_init_bitmap(struct super_block *sb, int *flags)
 		bh = affs_bread(sb, bm->bm_key);
 		if (!bh) {
 			pr_err("Cannot read bitmap\n");
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out;
 		}
 		if (affs_checksum_block(sb, bh)) {
@@ -304,7 +304,7 @@ int affs_init_bitmap(struct super_block *sb, int *flags)
 		bmap_bh = affs_bread(sb, be32_to_cpu(bmap_blk[blk]));
 		if (!bmap_bh) {
 			pr_err("Cannot read bitmap extension\n");
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out;
 		}
 		bmap_blk = (__be32 *)bmap_bh->b_data;

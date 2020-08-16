@@ -98,12 +98,12 @@ unsigned long qnx4_block_map( struct inode *inode, long iblock )
 				bh = sb_bread(inode->i_sb, i_xblk - 1);
 				if ( !bh ) {
 					QNX4DEBUG((KERN_ERR "qnx4: I/O error reading xtnt block [%ld])\n", i_xblk - 1));
-					return -EIO;
+					return -ERR(EIO);
 				}
 				xblk = (struct qnx4_xblk*)bh->b_data;
 				if ( memcmp( xblk->xblk_signature, "IamXblk", 7 ) ) {
 					QNX4DEBUG((KERN_ERR "qnx4: block at %ld is not a valid xtnt\n", qnx4_inode->i_xblk));
-					return -EIO;
+					return -ERR(EIO);
 				}
 			}
 			block = try_extent(&xblk->xblk_xtnts[ix], &offset);
@@ -210,7 +210,7 @@ static int qnx4_fill_super(struct super_block *s, void *data, int silent)
 	bh = sb_bread(s, 1);
 	if (!bh) {
 		printk(KERN_ERR "qnx4: unable to read the superblock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
  	/* check before allocating dentries, inodes, .. */
@@ -219,7 +219,7 @@ static int qnx4_fill_super(struct super_block *s, void *data, int silent)
 	if (errmsg != NULL) {
  		if (!silent)
 			printk(KERN_ERR "qnx4: %s\n", errmsg);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
  	/* does root not have inode number QNX4_ROOT_INO ?? */
@@ -283,7 +283,7 @@ struct inode *qnx4_iget(struct super_block *sb, unsigned long ino)
 				"out of range\n",
 		       sb->s_id, ino);
 		iget_failed(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	block = ino / QNX4_INODES_PER_BLOCK;
 
@@ -291,7 +291,7 @@ struct inode *qnx4_iget(struct super_block *sb, unsigned long ino)
 		printk(KERN_ERR "qnx4: major problem: unable to read inode from dev "
 		       "%s\n", sb->s_id);
 		iget_failed(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	raw_inode = ((struct qnx4_inode_entry *) bh->b_data) +
 	    (ino % QNX4_INODES_PER_BLOCK);
@@ -327,7 +327,7 @@ struct inode *qnx4_iget(struct super_block *sb, unsigned long ino)
 			ino, sb->s_id);
 		iget_failed(inode);
 		brelse(bh);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	brelse(bh);
 	unlock_new_inode(inode);

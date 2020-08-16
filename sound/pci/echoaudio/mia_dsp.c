@@ -42,7 +42,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != MIA))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -127,7 +127,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	default:
 		dev_err(chip->card->dev,
 			"set_sample_rate: %d invalid!\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Override the clock setting if this Mia is set to S/PDIF clock */
@@ -137,7 +137,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	/* Set the control register if it has changed */
 	if (control_reg != le32_to_cpu(chip->comm_page->control_register)) {
 		if (wait_handshake(chip))
-			return -EIO;
+			return -ERR(EIO);
 
 		chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP */
 		chip->comm_page->control_register = cpu_to_le32(control_reg);
@@ -156,7 +156,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 	dev_dbg(chip->card->dev, "set_input_clock(%d)\n", clock);
 	if (snd_BUG_ON(clock != ECHO_CLOCK_INTERNAL &&
 		       clock != ECHO_CLOCK_SPDIF))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chip->input_clock = clock;
 	return set_sample_rate(chip, chip->sample_rate);
@@ -172,10 +172,10 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 
 	if (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
 		       output >= num_busses_out(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->vmixer_gain[output][pipe] = gain;
 	index = output * num_pipes_out(chip) + pipe;
@@ -192,7 +192,7 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 static int update_vmixer_level(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
 }
@@ -203,7 +203,7 @@ static int update_vmixer_level(struct echoaudio *chip)
 static int update_flags(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
 }

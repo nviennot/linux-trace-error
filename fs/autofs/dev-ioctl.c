@@ -29,7 +29,7 @@ typedef int (*ioctl_fn)(struct file *, struct autofs_sb_info *,
 static int check_name(const char *name)
 {
 	if (!strchr(name, '/'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -41,7 +41,7 @@ static int invalid_str(char *str, size_t size)
 {
 	if (memchr(str, 0, size))
 		return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -62,7 +62,7 @@ static int check_dev_ioctl_version(int cmd, struct autofs_dev_ioctl *param)
 			AUTOFS_DEV_IOCTL_VERSION_MAJOR,
 			AUTOFS_DEV_IOCTL_VERSION_MINOR,
 			param->ver_major, param->ver_minor, cmd);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	/* Fill in the kernel version. */
@@ -85,10 +85,10 @@ copy_dev_ioctl(struct autofs_dev_ioctl __user *in)
 		return ERR_PTR(-EFAULT);
 
 	if (tmp.size < AUTOFS_DEV_IOCTL_SIZE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tmp.size > AUTOFS_DEV_IOCTL_SIZE + PATH_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	res = memdup_user(in, tmp.size);
 	if (!IS_ERR(res))
@@ -138,7 +138,7 @@ static int validate_dev_ioctl(int cmd, struct autofs_dev_ioctl *param)
 		if (inr == AUTOFS_DEV_IOCTL_OPENMOUNT_CMD ||
 		    inr == AUTOFS_DEV_IOCTL_REQUESTER_CMD ||
 		    inr == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -189,7 +189,7 @@ static int find_autofs_mount(const char *pathname,
 	err = kern_path(pathname, LOOKUP_MOUNTPOINT, &path);
 	if (err)
 		return err;
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	while (path.dentry == path.mnt->mnt_root) {
 		if (path.dentry->d_sb->s_magic == AUTOFS_SUPER_MAGIC) {
 			if (test(&path, data)) {
@@ -264,7 +264,7 @@ static int autofs_dev_ioctl_openmount(struct file *fp,
 	/* param->path has been checked in validate_dev_ioctl() */
 
 	if (!param->openmount.devid)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	param->ioctlfd = -1;
 
@@ -317,7 +317,7 @@ static int autofs_dev_ioctl_fail(struct file *fp,
 	int status;
 
 	token = (autofs_wqt_t) param->fail.token;
-	status = param->fail.status < 0 ? param->fail.status : -ENOENT;
+	status = param->fail.status < 0 ? param->fail.status : -ERR(ENOENT);
 	return autofs_wait_release(sbi, token, status);
 }
 
@@ -342,14 +342,14 @@ static int autofs_dev_ioctl_setpipefd(struct file *fp,
 	struct pid *new_pid = NULL;
 
 	if (param->setpipefd.pipefd == -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pipefd = param->setpipefd.pipefd;
 
 	mutex_lock(&sbi->wq_mutex);
 	if (!(sbi->flags & AUTOFS_SBI_CATATONIC)) {
 		mutex_unlock(&sbi->wq_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	} else {
 		struct file *pipe;
 
@@ -357,17 +357,17 @@ static int autofs_dev_ioctl_setpipefd(struct file *fp,
 
 		if (ns_of_pid(new_pid) != ns_of_pid(sbi->oz_pgrp)) {
 			pr_warn("not allowed to change PID namespace\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
 		pipe = fget(pipefd);
 		if (!pipe) {
-			err = -EBADF;
+			err = -ERR(EBADF);
 			goto out;
 		}
 		if (autofs_prepare_pipe(pipe) < 0) {
-			err = -EPIPE;
+			err = -ERR(EPIPE);
 			fput(pipe);
 			goto out;
 		}
@@ -422,7 +422,7 @@ static int autofs_dev_ioctl_requester(struct file *fp,
 	struct autofs_info *ino;
 	struct path path;
 	dev_t devid;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	/* param->path has been checked in validate_dev_ioctl() */
 
@@ -507,7 +507,7 @@ static int autofs_dev_ioctl_ismountpoint(struct file *fp,
 	const char *name;
 	unsigned int type;
 	unsigned int devid, magic;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	/* param->path has been checked in validate_dev_ioctl() */
 
@@ -600,7 +600,7 @@ static int _autofs_dev_ioctl(unsigned int command,
 
 	if (_IOC_TYPE(command) != _IOC_TYPE(AUTOFS_DEV_IOCTL_IOC_FIRST) ||
 	    cmd - cmd_first > AUTOFS_DEV_IOCTL_IOC_COUNT) {
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 
 	/* Only root can use ioctls other than AUTOFS_DEV_IOCTL_VERSION_CMD
@@ -609,7 +609,7 @@ static int _autofs_dev_ioctl(unsigned int command,
 	if (cmd != AUTOFS_DEV_IOCTL_VERSION_CMD &&
 	    cmd != AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Copy the parameters into kernel space. */
 	param = copy_dev_ioctl(user);
@@ -623,7 +623,7 @@ static int _autofs_dev_ioctl(unsigned int command,
 	fn = lookup_dev_ioctl(cmd);
 	if (!fn) {
 		pr_warn("unknown command 0x%08x\n", command);
-		err = -ENOTTY;
+		err = -ERR(ENOTTY);
 		goto out;
 	}
 
@@ -645,13 +645,13 @@ static int _autofs_dev_ioctl(unsigned int command,
 		if (!fp) {
 			if (cmd == AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD)
 				goto cont;
-			err = -EBADF;
+			err = -ERR(EBADF);
 			goto out;
 		}
 
 		sb = file_inode(fp)->i_sb;
 		if (sb->s_type != &autofs_fs_type) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			fput(fp);
 			goto out;
 		}
@@ -663,7 +663,7 @@ static int _autofs_dev_ioctl(unsigned int command,
 		 */
 		if (!autofs_oz_mode(sbi) &&
 		    cmd != AUTOFS_DEV_IOCTL_CATATONIC_CMD) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			fput(fp);
 			goto out;
 		}

@@ -89,7 +89,7 @@ static int mt2701_dai_num_to_i2s(struct mtk_base_afe *afe, int num)
 	if (val < 0 || val >= afe_priv->soc->i2s_num) {
 		dev_err(afe->dev, "%s, num not available, num %d, val %d\n",
 			__func__, num, val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return val;
 }
@@ -102,7 +102,7 @@ static int mt2701_afe_i2s_fs(unsigned int sample_rate)
 		if (mt2701_afe_i2s_rates[i].rate == sample_rate)
 			return mt2701_afe_i2s_rates[i].regvalue;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int mt2701_afe_i2s_startup(struct snd_pcm_substream *substream,
@@ -243,7 +243,7 @@ static int mt2701_afe_i2s_prepare(struct snd_pcm_substream *substream,
 	i2s_path = &afe_priv->i2s_path[i2s_num];
 
 	if (i2s_path->occupied[substream->stream])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ret = mt2701_mclk_configuration(afe, mode ? 1 : i2s_num);
 	if (ret)
@@ -276,7 +276,7 @@ static int mt2701_afe_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	/* mclk */
 	if (dir == SND_SOC_CLOCK_IN) {
 		dev_warn(dai->dev, "The SoCs doesn't support mclk input\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	afe_priv->i2s_path[mode ? 1 : i2s_num].mclk_rate = freq;
@@ -312,7 +312,7 @@ static int mt2701_btmrg_hw_params(struct snd_pcm_substream *substream,
 
 	if (stream_fs != 8000 && stream_fs != 16000) {
 		dev_err(afe->dev, "unsupported rate %d\n", stream_fs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(afe->regmap, AFE_MRGIF_CON,
@@ -374,7 +374,7 @@ static int mt2701_simple_fe_startup(struct snd_pcm_substream *substream,
 		memif_tmp = &afe->memif[MT2701_MEMIF_DLM];
 		if (memif_tmp->substream) {
 			dev_warn(afe->dev, "memif is not available");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -409,7 +409,7 @@ static int mt2701_dlm_fe_startup(struct snd_pcm_substream *substream,
 	for (i = MT2701_MEMIF_DL1; i < MT2701_MEMIF_DL_SINGLE_NUM; ++i) {
 		memif_tmp = &afe->memif[i];
 		if (memif_tmp->substream)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	/* enable agent for all signal DL (due to hw design) */
@@ -487,7 +487,7 @@ static int mt2701_dlm_fe_trigger(struct snd_pcm_substream *substream,
 
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

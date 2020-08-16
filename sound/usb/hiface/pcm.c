@@ -145,7 +145,7 @@ static int hiface_pcm_set_rate(struct pcm_runtime *rt, unsigned int rate)
 		break;
 	default:
 		dev_err(&device->dev, "Unsupported rate %d\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -237,7 +237,7 @@ static int hiface_pcm_stream_start(struct pcm_runtime *rt)
 			rt->stream_state = STREAM_RUNNING;
 		} else {
 			hiface_pcm_stream_stop(rt);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return ret;
@@ -356,7 +356,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 	int ret;
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
@@ -368,7 +368,7 @@ static int hiface_pcm_open(struct snd_pcm_substream *alsa_sub)
 		struct device *device = &rt->chip->dev->dev;
 		mutex_unlock(&rt->stream_mutex);
 		dev_err(device, "Invalid stream type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rt->extra_freq) {
@@ -423,9 +423,9 @@ static int hiface_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 	int ret;
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 	if (!sub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&rt->stream_mutex);
 
@@ -457,9 +457,9 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	struct pcm_runtime *rt = snd_pcm_substream_chip(alsa_sub);
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 	if (!sub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -477,7 +477,7 @@ static int hiface_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -521,7 +521,7 @@ static int hiface_pcm_init_urb(struct pcm_urb *urb,
 			  usb_sndbulkpipe(chip->dev, ep), (void *)urb->buffer,
 			  PCM_PACKET_SIZE, handler, urb);
 	if (usb_urb_ep_type_check(&urb->instance))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	init_usb_anchor(&urb->submitted);
 
 	return 0;

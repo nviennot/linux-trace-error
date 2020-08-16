@@ -574,7 +574,7 @@ static int oxygen_trigger(struct snd_pcm_substream *substream, int cmd)
 		pausing = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_group_for_each_entry(s, substream) {

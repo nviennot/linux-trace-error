@@ -66,7 +66,7 @@ xfs_uuid_mount(
 
 	if (uuid_is_null(uuid)) {
 		xfs_warn(mp, "Filesystem has null UUID - can't mount");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&xfs_uuid_table_mutex);
@@ -93,7 +93,7 @@ xfs_uuid_mount(
  out_duplicate:
 	mutex_unlock(&xfs_uuid_table_mutex);
 	xfs_warn(mp, "Filesystem has duplicate UUID %pU - can't mount", uuid);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 STATIC void
@@ -167,7 +167,7 @@ xfs_sb_validate_fsb_count(
 
 	/* Limited by ULONG_MAX of page cache index */
 	if (nblocks >> (PAGE_SHIFT - sbp->sb_blocklog) > ULONG_MAX)
-		return -EFBIG;
+		return -ERR(EFBIG);
 	return 0;
 }
 
@@ -217,7 +217,7 @@ xfs_initialize_perag(
 			WARN_ON_ONCE(1);
 			spin_unlock(&mp->m_perag_lock);
 			radix_tree_preload_end();
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 			goto out_hash_destroy;
 		}
 		spin_unlock(&mp->m_perag_lock);
@@ -319,7 +319,7 @@ reread:
 	if (sbp->sb_magicnum != XFS_SB_MAGIC) {
 		if (loud)
 			xfs_warn(mp, "Invalid superblock magic number");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto release_buf;
 	}
 
@@ -330,7 +330,7 @@ reread:
 		if (loud)
 			xfs_warn(mp, "device supports %u byte sectors (not %u)",
 				sector_size, sbp->sb_sectsize);
-		error = -ENOSYS;
+		error = -ERR(ENOSYS);
 		goto release_buf;
 	}
 
@@ -417,7 +417,7 @@ xfs_validate_new_dalign(
 		xfs_warn(mp,
 	"alignment check failed: sunit/swidth vs. blocksize(%d)",
 			mp->m_sb.sb_blocksize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else {
 		/*
 		 * Convert the stripe unit and width to FSBs.
@@ -427,21 +427,21 @@ xfs_validate_new_dalign(
 			xfs_warn(mp,
 		"alignment check failed: sunit/swidth vs. agsize(%d)",
 				 mp->m_sb.sb_agblocks);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (mp->m_dalign) {
 			mp->m_swidth = XFS_BB_TO_FSBT(mp, mp->m_swidth);
 		} else {
 			xfs_warn(mp,
 		"alignment check failed: sunit(%d) less than bsize(%d)",
 				 mp->m_dalign, mp->m_sb.sb_blocksize);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (!xfs_sb_version_hasdalign(&mp->m_sb)) {
 		xfs_warn(mp,
 "cannot change alignment: superblock does not support data alignment");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -509,7 +509,7 @@ xfs_check_sizes(
 	d = (xfs_daddr_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks);
 	if (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_dblocks) {
 		xfs_warn(mp, "filesystem size mismatch detected");
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 	error = xfs_buf_read_uncached(mp->m_ddev_targp,
 					d - XFS_FSS_TO_BB(mp, 1),
@@ -526,7 +526,7 @@ xfs_check_sizes(
 	d = (xfs_daddr_t)XFS_FSB_TO_BB(mp, mp->m_sb.sb_logblocks);
 	if (XFS_BB_TO_FSB(mp, d) != mp->m_sb.sb_logblocks) {
 		xfs_warn(mp, "log size mismatch detected");
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 	error = xfs_buf_read_uncached(mp->m_logdev_targp,
 					d - XFS_FSB_TO_BB(mp, 1),
@@ -776,7 +776,7 @@ xfs_mountfs(
 	"Sparse inode block alignment (%u) must match cluster size (%llu).",
 			 mp->m_sb.sb_spino_align,
 			 XFS_B_TO_FSBT(mp, igeo->inode_cluster_size_raw));
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_remove_uuid;
 	}
 
@@ -1272,7 +1272,7 @@ xfs_mod_fdblocks(
 
 fdblocks_enospc:
 	spin_unlock(&mp->m_sb_lock);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 int
@@ -1286,7 +1286,7 @@ xfs_mod_frextents(
 	spin_lock(&mp->m_sb_lock);
 	lcounter = mp->m_sb.sb_frextents + delta;
 	if (lcounter < 0)
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 	else
 		mp->m_sb.sb_frextents = lcounter;
 	spin_unlock(&mp->m_sb_lock);
@@ -1338,7 +1338,7 @@ xfs_dev_is_read_only(
 	    (mp->m_rtdev_targp && xfs_readonly_buftarg(mp->m_rtdev_targp))) {
 		xfs_notice(mp, "%s required on read-only device.", message);
 		xfs_notice(mp, "write access unavailable, cannot proceed.");
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 	return 0;
 }

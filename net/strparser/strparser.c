@@ -153,7 +153,7 @@ static int __strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
 				 * appending to the message.
 				 */
 				if (WARN_ON(head->next)) {
-					desc->error = -EINVAL;
+					desc->error = -ERR(EINVAL);
 					return 0;
 				}
 
@@ -233,7 +233,7 @@ static int __strp_recv(read_descriptor_t *desc, struct sk_buff *orig_skb,
 				break;
 			} else if (len < 0) {
 				if (len == -ESTRPIPE && stm->accum_len) {
-					len = -ENODATA;
+					len = -ERR(ENODATA);
 					strp->unrecov_intr = 1;
 				} else {
 					strp->interrupted = 1;
@@ -356,7 +356,7 @@ static int strp_read_sock(struct strparser *strp)
 	read_descriptor_t desc;
 
 	if (unlikely(!sock || !sock->ops || !sock->ops->read_sock))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	desc.arg.data = strp;
 	desc.error = 0;
@@ -450,7 +450,7 @@ int strp_init(struct strparser *strp, struct sock *sk,
 {
 
 	if (!cb || !cb->rcv_msg || !cb->parse_msg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The sk (sock) arg determines the mode of the stream parser.
 	 *
@@ -465,7 +465,7 @@ int strp_init(struct strparser *strp, struct sock *sk,
 
 	if (!sk) {
 		if (!cb->lock || !cb->unlock)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	memset(strp, 0, sizeof(*strp));

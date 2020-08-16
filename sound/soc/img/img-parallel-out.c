@@ -108,7 +108,7 @@ static int img_prl_out_trigger(struct snd_pcm_substream *substream, int cmd,
 		img_prl_out_reset(prl);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -131,11 +131,11 @@ static int img_prl_out_hw_params(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_FORMAT_S24_LE:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (channels != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	clk_set_rate(prl->clk_ref, rate * 256);
 
@@ -159,7 +159,7 @@ static int img_prl_out_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		control_set |= IMG_PRL_OUT_CTL_EDGE_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = pm_runtime_get_sync(prl->dev);

@@ -111,7 +111,7 @@ static int mmp_sspa_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 	int ret = 0;
 
 	if (dev->of_node)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	switch (clk_id) {
 	case MMP_SSPA_CLK_AUDIO:
@@ -122,9 +122,9 @@ static int mmp_sspa_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 	case MMP_SSPA_CLK_PLL:
 	case MMP_SSPA_CLK_VCXO:
 		/* not support yet */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -139,7 +139,7 @@ static int mmp_sspa_set_dai_pll(struct snd_soc_dai *cpu_dai, int pll_id,
 	int ret = 0;
 
 	if (dev->of_node)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	switch (pll_id) {
 	case MMP_SYSCLK:
@@ -153,7 +153,7 @@ static int mmp_sspa_set_dai_pll(struct snd_soc_dai *cpu_dai, int pll_id,
 			return ret;
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -178,7 +178,7 @@ static int mmp_sspa_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_CBM_CFM:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -186,7 +186,7 @@ static int mmp_sspa_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		sspa->sp |= SSPA_SP_FSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -194,7 +194,7 @@ static int mmp_sspa_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		sspa->ctrl |= SSPA_CTL_XDATDLY(1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Since we are configuring the timings for the format by hand
@@ -236,7 +236,7 @@ static int mmp_sspa_hw_params(struct snd_pcm_substream *substream,
 		bitval = SSPA_CTL_32_BITS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev->of_node || params_channels(params) == 2)
@@ -312,7 +312,7 @@ static int mmp_sspa_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -420,7 +420,7 @@ static int mmp_sspa_open(struct snd_soc_component *component,
 	    (__raw_readl(sspa->rx_base + SSPA_SP) & SSPA_SP_S_EN)) {
 		dev_err(component->dev,
 			"can't change hardware dai format: stream is in use\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	__raw_writel(sspa->sp, sspa->tx_base + SSPA_SP);
@@ -490,7 +490,7 @@ static int asoc_mmp_sspa_probe(struct platform_device *pdev)
 
 		res = platform_get_resource(pdev, IORESOURCE_IO, 0);
 		if (res == NULL)
-			return -ENODEV;
+			return -ERR(ENODEV);
 
 		sspa->rx_base = devm_ioremap(&pdev->dev, res->start, 0x30);
 		if (!sspa->rx_base)

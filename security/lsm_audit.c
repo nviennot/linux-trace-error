@@ -45,7 +45,7 @@ int ipv4_skb_to_auditdata(struct sk_buff *skb,
 
 	ih = ip_hdr(skb);
 	if (ih == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ad->u.net->v4info.saddr = ih->saddr;
 	ad->u.net->v4info.daddr = ih->daddr;
@@ -93,7 +93,7 @@ int ipv4_skb_to_auditdata(struct sk_buff *skb,
 		break;
 	}
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -116,7 +116,7 @@ int ipv6_skb_to_auditdata(struct sk_buff *skb,
 
 	ip6 = ipv6_hdr(skb);
 	if (ip6 == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ad->u.net->v6info.saddr = ip6->saddr;
 	ad->u.net->v6info.daddr = ip6->daddr;
 	ret = 0;
@@ -175,7 +175,7 @@ int ipv6_skb_to_auditdata(struct sk_buff *skb,
 		break;
 	}
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }

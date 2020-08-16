@@ -213,18 +213,18 @@ int proc_sched_autogroup_set_nice(struct task_struct *p, int nice)
 	int err, idx;
 
 	if (nice < MIN_NICE || nice > MAX_NICE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = security_task_setnice(current, nice);
 	if (err)
 		return err;
 
 	if (nice < 0 && !can_nice(current, nice))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* This is a heavy operation, taking global locks.. */
 	if (!capable(CAP_SYS_ADMIN) && time_before(jiffies, next))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	next = HZ / 10 + jiffies;
 	ag = autogroup_task_get(p);

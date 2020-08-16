@@ -568,11 +568,11 @@ int batadv_gw_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ifindex = batadv_netlink_get_ifindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -580,12 +580,12 @@ int batadv_gw_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (!bat_priv->algo_ops->gw.dump) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 

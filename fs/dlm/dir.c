@@ -106,7 +106,7 @@ int dlm_recover_directory(struct dlm_ls *ls)
 			for (;;) {
 				__be16 v;
 
-				error = -EINVAL;
+				error = -ERR(EINVAL);
 				if (left < sizeof(__be16))
 					goto out_free;
 

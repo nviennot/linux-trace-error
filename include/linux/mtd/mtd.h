@@ -476,10 +476,10 @@ static inline int mtd_max_bad_blocks(struct mtd_info *mtd,
 	struct mtd_info *master = mtd_get_master(mtd);
 
 	if (!master->_max_bad_blocks)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (mtd->size < (len + ofs) || ofs < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return master->_max_bad_blocks(master, mtd_get_master_ofs(mtd, ofs),
 				       len);
@@ -693,11 +693,11 @@ extern int unregister_mtd_user (struct mtd_notifier *old);
 void *mtd_kmalloc_up_to(const struct mtd_info *mtd, size_t *size);
 
 static inline int mtd_is_bitflip(int err) {
-	return err == -EUCLEAN;
+	return err == -ERR(EUCLEAN);
 }
 
 static inline int mtd_is_eccerr(int err) {
-	return err == -EBADMSG;
+	return err == -ERR(EBADMSG);
 }
 
 static inline int mtd_is_bitflip_or_eccerr(int err) {

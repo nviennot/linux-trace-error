@@ -182,7 +182,7 @@ static int fill_gate_entry(struct nlattr **tb, struct tcfg_gate_entry *entry,
 
 	if (interval == 0) {
 		NL_SET_ERR_MSG(extack, "Invalid interval for schedule entry");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry->interval = interval;
@@ -209,7 +209,7 @@ static int parse_gate_entry(struct nlattr *n, struct  tcfg_gate_entry *entry,
 	err = nla_parse_nested(tb, TCA_GATE_ENTRY_MAX, n, entry_policy, extack);
 	if (err < 0) {
 		NL_SET_ERR_MSG(extack, "Could not parse nested entry");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry->index = index;
@@ -237,7 +237,7 @@ static int parse_gate_list(struct nlattr *list_attr,
 	int i = 0;
 
 	if (!list_attr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nla_for_each_nested(n, list_attr, rem) {
 		if (nla_type(n) != TCA_GATE_ONE_ENTRY) {
@@ -315,14 +315,14 @@ static int tcf_gate_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested(tb, TCA_GATE_MAX, nla, gate_policy, extack);
 	if (err < 0)
 		return err;
 
 	if (!tb[TCA_GATE_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[TCA_GATE_CLOCKID]) {
 		clockid = nla_get_s32(tb[TCA_GATE_CLOCKID]);
@@ -341,7 +341,7 @@ static int tcf_gate_init(struct net *net, struct nlattr *nla,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Invalid 'clockid'");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -366,7 +366,7 @@ static int tcf_gate_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	if (tb[TCA_GATE_PRIORITY])
@@ -406,7 +406,7 @@ static int tcf_gate_init(struct net *net, struct nlattr *nla,
 			cycle = ktime_add_ns(cycle, entry->interval);
 		cycletime = cycle;
 		if (!cycletime) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto chain_put;
 		}
 	}
@@ -476,7 +476,7 @@ static int dumping_entry(struct sk_buff *skb,
 
 	item = nla_nest_start_noflag(skb, TCA_GATE_ONE_ENTRY);
 	if (!item)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (nla_put_u32(skb, TCA_GATE_ENTRY_INDEX, entry->index))
 		goto nla_put_failure;

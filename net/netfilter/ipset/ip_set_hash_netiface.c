@@ -81,7 +81,7 @@ hash_netiface4_data_equal(const struct hash_netiface4_elem *ip1,
 static int
 hash_netiface4_do_data_match(const struct hash_netiface4_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -180,7 +180,7 @@ hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
 					      get_physoutdev_name(skb);
 
 		if (!eiface)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		STRLCPY(e.iface, eiface);
 		e.physdev = 1;
 #endif
@@ -189,7 +189,7 @@ hash_netiface4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	}
 
 	if (strlen(e.iface) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
 }
 
@@ -310,7 +310,7 @@ hash_netiface6_data_equal(const struct hash_netiface6_elem *ip1,
 static int
 hash_netiface6_do_data_match(const struct hash_netiface6_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -393,7 +393,7 @@ hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
 					      get_physoutdev_name(skb);
 
 		if (!eiface)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		STRLCPY(e.iface, eiface);
 		e.physdev = 1;
 #endif
@@ -402,7 +402,7 @@ hash_netiface6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	}
 
 	if (strlen(e.iface) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
 }

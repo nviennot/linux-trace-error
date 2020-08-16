@@ -49,7 +49,7 @@ static int hfsplus_system_read_inode(struct inode *inode)
 		inode->i_mapping->a_ops = &hfsplus_btree_aops;
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -124,7 +124,7 @@ static int hfsplus_system_write_inode(struct inode *inode)
 		tree = sbi->attr_tree;
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (fork->total_size != cpu_to_be64(inode->i_size)) {
@@ -337,7 +337,7 @@ static int hfsplus_remount(struct super_block *sb, int *flags, char *data)
 		int force = 0;
 
 		if (!hfsplus_parse_options_remount(data, &force))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!(vhdr->attributes & cpu_to_be32(HFSPLUS_VOL_UNMNT))) {
 			pr_warn("filesystem was not cleanly unmounted, running fsck.hfsplus is recommended.  leaving read-only.\n");
@@ -396,7 +396,7 @@ static int hfsplus_fill_super(struct super_block *sb, void *data, int silent)
 	INIT_DELAYED_WORK(&sbi->sync_work, delayed_sync_fs);
 	hfsplus_fill_defaults(sbi);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!hfsplus_parse_options(data, sbi)) {
 		pr_err("unable to parse mount options\n");
 		goto out_unload_nls;
@@ -439,7 +439,7 @@ static int hfsplus_fill_super(struct super_block *sb, void *data, int silent)
 	if (!sbi->rsrc_clump_blocks)
 		sbi->rsrc_clump_blocks = 1;
 
-	err = -EFBIG;
+	err = -ERR(EFBIG);
 	last_fs_block = sbi->total_blocks - 1;
 	last_fs_page = (last_fs_block << sbi->alloc_blksz_shift) >>
 			PAGE_SHIFT;
@@ -468,7 +468,7 @@ static int hfsplus_fill_super(struct super_block *sb, void *data, int silent)
 		sb->s_flags |= SB_RDONLY;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	/* Load metadata objects (B*Trees) */
 	sbi->ext_tree = hfs_btree_open(sb, HFSPLUS_EXT_CNID);
@@ -526,7 +526,7 @@ static int hfsplus_fill_super(struct super_block *sb, void *data, int silent)
 	if (!hfs_brec_read(&fd, &entry, sizeof(entry))) {
 		hfs_find_exit(&fd);
 		if (entry.type != cpu_to_be16(HFSPLUS_FOLDER)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_put_root;
 		}
 		inode = hfsplus_iget(sb, be32_to_cpu(entry.folder.id));

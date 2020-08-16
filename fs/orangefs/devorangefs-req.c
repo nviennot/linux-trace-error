@@ -120,7 +120,7 @@ static int fs_mount_pending(__s32 fsid)
 
 static int orangefs_devreq_open(struct inode *inode, struct file *file)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/* in order to ensure that the filesystem driver sees correct UIDs */
 	if (file->f_cred->user_ns != &init_user_ns) {
@@ -134,7 +134,7 @@ static int orangefs_devreq_open(struct inode *inode, struct file *file)
 			   __func__);
 		goto out;
 	}
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 	gossip_debug(GOSSIP_DEV_DEBUG, "client-core: opening device\n");
 	mutex_lock(&devreq_mutex);
 
@@ -169,7 +169,7 @@ static ssize_t orangefs_devreq_read(struct file *file,
 	if (!(file->f_flags & O_NONBLOCK)) {
 		gossip_err("%s: blocking read from client-core.\n",
 			   __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -178,12 +178,12 @@ static ssize_t orangefs_devreq_read(struct file *file,
 	 */
 	if (count != MAX_DEV_REQ_UPSIZE) {
 		gossip_err("orangefs: client-core tried to read wrong size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check for an empty list before locking. */
 	if (list_empty(&orangefs_request_list))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 restart:
 	cur_op = NULL;
@@ -252,7 +252,7 @@ restart:
 	 */
 	if (!cur_op) {
 		spin_unlock(&orangefs_request_list_lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	gossip_debug(GOSSIP_DEV_DEBUG, "%s: reading op tag %llu %s\n",
@@ -269,7 +269,7 @@ restart:
 		list_del_init(&cur_op->list);
 		spin_unlock(&cur_op->lock);
 		spin_unlock(&orangefs_request_list_lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	list_del_init(&cur_op->list);
@@ -396,19 +396,19 @@ static ssize_t orangefs_devreq_write_iter(struct kiocb *iocb,
 			   __func__,
 			   head.version,
 			   ORANGEFS_MINIMUM_USERSPACE_VERSION);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (head.magic != ORANGEFS_DEVREQ_MAGIC) {
 		gossip_err("Error: Device magic number does not match.\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (!orangefs_userspace_version) {
 		orangefs_userspace_version = head.version;
 	} else if (orangefs_userspace_version != head.version) {
 		gossip_err("Error: userspace version changes\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	/* remove the op from the in progress hash table */
@@ -559,7 +559,7 @@ int is_daemon_in_service(void)
 	 * based on the access count we maintain on the device.
 	 */
 	mutex_lock(&devreq_mutex);
-	in_service = open_access_count == 1 ? 0 : -EIO;
+	in_service = open_access_count == 1 ? 0 : -ERR(EIO);
 	mutex_unlock(&devreq_mutex);
 	return in_service;
 }
@@ -577,13 +577,13 @@ static inline long check_ioctl_command(unsigned int command)
 			command,
 			_IOC_TYPE(command),
 			ORANGEFS_DEV_MAGIC);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* and valid ioctl commands */
 	if (_IOC_NR(command) >= ORANGEFS_DEV_MAXNR || _IOC_NR(command) <= 0) {
 		gossip_err("Invalid ioctl command number [%d >= %d]\n",
 			   _IOC_NR(command), ORANGEFS_DEV_MAXNR);
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 	return 0;
 }
@@ -603,17 +603,17 @@ static long dispatch_ioctl_command(unsigned int command, unsigned long arg)
 	switch (command) {
 	case ORANGEFS_DEV_GET_MAGIC:
 		return ((put_user(magic, (__s32 __user *) arg) == -EFAULT) ?
-			-EIO :
+			-ERR(EIO) :
 			0);
 	case ORANGEFS_DEV_GET_MAX_UPSIZE:
 		return ((put_user(max_up_size,
 				  (__s32 __user *) arg) == -EFAULT) ?
-					-EIO :
+					-ERR(EIO) :
 					0);
 	case ORANGEFS_DEV_GET_MAX_DOWNSIZE:
 		return ((put_user(max_down_size,
 				  (__s32 __user *) arg) == -EFAULT) ?
-					-EIO :
+					-ERR(EIO) :
 					0);
 	case ORANGEFS_DEV_MAP:
 		ret = copy_from_user(&user_desc,
@@ -621,7 +621,7 @@ static long dispatch_ioctl_command(unsigned int command, unsigned long arg)
 				     arg,
 				     sizeof(struct ORANGEFS_dev_map_desc));
 		/* WTF -EIO and not -EFAULT? */
-		return ret ? -EIO : orangefs_bufmap_initialize(&user_desc);
+		return ret ? -ERR(EIO) : orangefs_bufmap_initialize(&user_desc);
 	case ORANGEFS_DEV_REMOUNT_ALL:
 		gossip_debug(GOSSIP_DEV_DEBUG,
 			     "%s: got ORANGEFS_DEV_REMOUNT_ALL\n",
@@ -680,7 +680,7 @@ static long dispatch_ioctl_command(unsigned int command, unsigned long arg)
 				    sizeof(upstream_kmod));
 
 		if (ret != 0)
-			return -EIO;
+			return -ERR(EIO);
 		else
 			return ret;
 
@@ -691,9 +691,9 @@ static long dispatch_ioctl_command(unsigned int command, unsigned long arg)
 	case ORANGEFS_DEV_DEBUG:
 		return orangefs_debugfs_new_debug((void __user *)arg);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static long orangefs_devreq_ioctl(struct file *file,

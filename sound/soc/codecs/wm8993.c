@@ -397,7 +397,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -415,7 +415,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 7) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	fll_div->fll_outdiv = div;
@@ -432,7 +432,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Now, calculate N.K */
@@ -511,7 +511,7 @@ static int _wm8993_set_fll(struct snd_soc_component *component, int fll_id, int 
 
 	default:
 		dev_err(component->dev, "Unknown FLL ID %d\n", fll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Any FLL configuration change requires that the FLL be
@@ -613,7 +613,7 @@ static int configure_clock(struct snd_soc_component *component)
 
 	default:
 		dev_err(component->dev, "System clock not configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "CLK_SYS is %dHz\n", wm8993->sysclk_rate);
@@ -1079,7 +1079,7 @@ static int wm8993_set_sysclk(struct snd_soc_dai *codec_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1115,7 +1115,7 @@ static int wm8993_set_dai_fmt(struct snd_soc_dai *dai,
 		wm8993->master = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1134,7 +1134,7 @@ static int wm8993_set_dai_fmt(struct snd_soc_dai *dai,
 		aif1 |= 0x8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1148,7 +1148,7 @@ static int wm8993_set_dai_fmt(struct snd_soc_dai *dai,
 			aif1 |= WM8993_AIF_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -1168,11 +1168,11 @@ static int wm8993_set_dai_fmt(struct snd_soc_dai *dai,
 			aif1 |= WM8993_AIF_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8993_AUDIO_INTERFACE_1, aif1);
@@ -1227,7 +1227,7 @@ static int wm8993_hw_params(struct snd_pcm_substream *substream,
 			aif1 |= 0x18;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1375,7 +1375,7 @@ static int wm8993_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		aif1 |= WM8993_AIFADC_TDM_CHAN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -1386,7 +1386,7 @@ static int wm8993_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		aif2 |= WM8993_AIFDAC_TDM_CHAN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 out:
@@ -1672,7 +1672,7 @@ static int wm8993_i2c_probe(struct i2c_client *i2c,
 
 	if (reg != 0x8993) {
 		dev_err(&i2c->dev, "Invalid ID register value %x\n", reg);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_enable;
 	}
 

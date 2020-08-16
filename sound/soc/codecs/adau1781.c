@@ -491,7 +491,7 @@ int adau1781_probe(struct device *dev, struct regmap *regmap,
 		firmware_name = ADAU1781_FIRMWARE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = adau17x1_probe(dev, regmap, type, switch_mode, firmware_name);

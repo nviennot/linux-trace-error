@@ -1274,7 +1274,7 @@ ipv6_renew_options(struct sock *sk, struct ipv6_txoptions *opt,
 	tot_len += sizeof(*opt2);
 	opt2 = sock_kmalloc(sk, tot_len, GFP_ATOMIC);
 	if (!opt2)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	memset(opt2, 0, tot_len);
 	refcount_set(&opt2->refcnt, 1);

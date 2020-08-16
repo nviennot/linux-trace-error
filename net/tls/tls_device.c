@@ -430,7 +430,7 @@ static int tls_push_data(struct sock *sk,
 
 	if (flags &
 	    ~(MSG_MORE | MSG_DONTWAIT | MSG_NOSIGNAL | MSG_SENDPAGE_NOTLAST))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (unlikely(sk->sk_err))
 		return -sk->sk_err;
@@ -572,7 +572,7 @@ int tls_device_sendpage(struct sock *sk, struct page *page,
 	lock_sock(sk);
 
 	if (flags & MSG_OOB) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -944,10 +944,10 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 	int rc;
 
 	if (!ctx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctx->priv_ctx_tx)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	start_marker_record = kmalloc(sizeof(*start_marker_record), GFP_KERNEL);
 	if (!start_marker_record)
@@ -961,7 +961,7 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 
 	crypto_info = &ctx->crypto_send.info;
 	if (crypto_info->version != TLS_1_2_VERSION) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto free_offload_ctx;
 	}
 
@@ -976,13 +976,13 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 		 ((struct tls12_crypto_info_aes_gcm_128 *)crypto_info)->rec_seq;
 		break;
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_offload_ctx;
 	}
 
 	/* Sanity-check the rec_seq_size for stack allocations */
 	if (rec_seq_size > TLS_MAX_REC_SEQ_SIZE) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto free_offload_ctx;
 	}
 
@@ -1040,12 +1040,12 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 	netdev = get_netdev_for_sock(sk);
 	if (!netdev) {
 		pr_err_ratelimited("%s: netdev not found\n", __func__);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto disable_cad;
 	}
 
 	if (!(netdev->features & NETIF_F_HW_TLS_TX)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto release_netdev;
 	}
 
@@ -1059,7 +1059,7 @@ int tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 	 */
 	down_read(&device_offload_lock);
 	if (!(netdev->flags & IFF_UP)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto release_lock;
 	}
 
@@ -1111,16 +1111,16 @@ int tls_set_device_offload_rx(struct sock *sk, struct tls_context *ctx)
 	int rc = 0;
 
 	if (ctx->crypto_recv.info.version != TLS_1_2_VERSION)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	netdev = get_netdev_for_sock(sk);
 	if (!netdev) {
 		pr_err_ratelimited("%s: netdev not found\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!(netdev->features & NETIF_F_HW_TLS_RX)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto release_netdev;
 	}
 
@@ -1134,7 +1134,7 @@ int tls_set_device_offload_rx(struct sock *sk, struct tls_context *ctx)
 	 */
 	down_read(&device_offload_lock);
 	if (!(netdev->flags & IFF_UP)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto release_lock;
 	}
 

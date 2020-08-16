@@ -729,7 +729,7 @@ static int __init test_kstrtox_init(void)
 	test_kstrtou8_fail();
 	test_kstrtos8_ok();
 	test_kstrtos8_fail();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 module_init(test_kstrtox_init);
 MODULE_LICENSE("Dual BSD/GPL");

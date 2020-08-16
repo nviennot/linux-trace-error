@@ -341,7 +341,7 @@ xfs_iget_check_free_state(
 
 	/* should be an allocated inode */
 	if (VFS_I(ip)->i_mode == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -372,7 +372,7 @@ xfs_iget_cache_hit(
 	if (ip->i_ino != ino) {
 		trace_xfs_iget_skip(ip);
 		XFS_STATS_INC(mp, xs_ig_frecycle);
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_error;
 	}
 
@@ -390,7 +390,7 @@ xfs_iget_cache_hit(
 	if (ip->i_flags & (XFS_INEW|XFS_IRECLAIM)) {
 		trace_xfs_iget_skip(ip);
 		XFS_STATS_INC(mp, xs_ig_frecycle);
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_error;
 	}
 
@@ -410,7 +410,7 @@ xfs_iget_cache_hit(
 		trace_xfs_iget_reclaim(ip);
 
 		if (flags & XFS_IGET_INCORE) {
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 			goto out_error;
 		}
 
@@ -465,7 +465,7 @@ xfs_iget_cache_hit(
 		/* If the VFS inode is being torn down, pause and try again. */
 		if (!igrab(inode)) {
 			trace_xfs_iget_skip(ip);
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 			goto out_error;
 		}
 
@@ -561,7 +561,7 @@ xfs_iget_cache_miss(
 	 * recurse into the file system.
 	 */
 	if (radix_tree_preload(GFP_NOFS)) {
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_destroy;
 	}
 
@@ -597,7 +597,7 @@ xfs_iget_cache_miss(
 	if (unlikely(error)) {
 		WARN_ON(error != -EEXIST);
 		XFS_STATS_INC(mp, xs_ig_dup);
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_preload_end;
 	}
 	spin_unlock(&pag->pag_ici_lock);
@@ -664,7 +664,7 @@ xfs_iget(
 
 	/* reject inode numbers outside existing AGs */
 	if (!ino || XFS_INO_TO_AGNO(mp, ino) >= mp->m_sb.sb_agcount)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	XFS_STATS_INC(mp, xs_ig_attempts);
 
@@ -684,7 +684,7 @@ again:
 	} else {
 		rcu_read_unlock();
 		if (flags & XFS_IGET_INCORE) {
-			error = -ENODATA;
+			error = -ERR(ENODATA);
 			goto out_error_or_again;
 		}
 		XFS_STATS_INC(mp, xs_ig_missed);
@@ -1532,7 +1532,7 @@ xfs_inode_free_eofblocks(
 	 */
 	if (!xfs_ilock_nowait(ip, XFS_IOLOCK_EXCL)) {
 		if (wait)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		return 0;
 	}
 

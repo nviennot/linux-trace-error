@@ -700,20 +700,20 @@ static inline int pcibios_err_to_errno(int err)
 
 	switch (err) {
 	case PCIBIOS_FUNC_NOT_SUPPORTED:
-		return -ENOENT;
+		return -ERR(ENOENT);
 	case PCIBIOS_BAD_VENDOR_ID:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	case PCIBIOS_DEVICE_NOT_FOUND:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	case PCIBIOS_BAD_REGISTER_NUMBER:
 		return -EFAULT;
 	case PCIBIOS_SET_FAILED:
-		return -EIO;
+		return -ERR(EIO);
 	case PCIBIOS_BUFFER_TOO_SMALL:
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 /* Low-level architecture-dependent routines */
@@ -1479,20 +1479,20 @@ int pci_irq_vector(struct pci_dev *dev, unsigned int nr);
 const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev, int vec);
 
 #else
-static inline int pci_msi_vec_count(struct pci_dev *dev) { return -ENOSYS; }
+static inline int pci_msi_vec_count(struct pci_dev *dev) { return -ERR(ENOSYS); }
 static inline void pci_disable_msi(struct pci_dev *dev) { }
-static inline int pci_msix_vec_count(struct pci_dev *dev) { return -ENOSYS; }
+static inline int pci_msix_vec_count(struct pci_dev *dev) { return -ERR(ENOSYS); }
 static inline void pci_disable_msix(struct pci_dev *dev) { }
 static inline void pci_restore_msi_state(struct pci_dev *dev) { }
 static inline int pci_msi_enabled(void) { return 0; }
 static inline int pci_enable_msi(struct pci_dev *dev)
-{ return -ENOSYS; }
+{ return -ERR(ENOSYS); }
 static inline int pci_enable_msix_range(struct pci_dev *dev,
 			struct msix_entry *entries, int minvec, int maxvec)
-{ return -ENOSYS; }
+{ return -ERR(ENOSYS); }
 static inline int pci_enable_msix_exact(struct pci_dev *dev,
 			struct msix_entry *entries, int nvec)
-{ return -ENOSYS; }
+{ return -ERR(ENOSYS); }
 
 static inline int
 pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
@@ -1501,7 +1501,7 @@ pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 {
 	if ((flags & PCI_IRQ_LEGACY) && min_vecs == 1 && dev->irq)
 		return 1;
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static inline void pci_free_irq_vectors(struct pci_dev *dev)
@@ -1511,7 +1511,7 @@ static inline void pci_free_irq_vectors(struct pci_dev *dev)
 static inline int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
 {
 	if (WARN_ON_ONCE(nr > 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return dev->irq;
 }
 static inline const struct cpumask *pci_irq_get_affinity(struct pci_dev *pdev,
@@ -1547,7 +1547,7 @@ static inline int pci_irqd_intx_xlate(struct irq_domain *d,
 	const u32 intx = intspec[0];
 
 	if (intx < PCI_INTERRUPT_INTA || intx > PCI_INTERRUPT_INTD)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*out_hwirq = intx - PCI_INTERRUPT_INTA;
 	return 0;
@@ -1705,11 +1705,11 @@ static inline struct pci_dev *pci_get_class(unsigned int class,
 #define pci_dev_put(dev)	do { } while (0)
 
 static inline void pci_set_master(struct pci_dev *dev) { }
-static inline int pci_enable_device(struct pci_dev *dev) { return -EIO; }
+static inline int pci_enable_device(struct pci_dev *dev) { return -ERR(EIO); }
 static inline void pci_disable_device(struct pci_dev *dev) { }
-static inline int pcim_enable_device(struct pci_dev *pdev) { return -EIO; }
+static inline int pcim_enable_device(struct pci_dev *pdev) { return -ERR(EIO); }
 static inline int pci_assign_resource(struct pci_dev *dev, int i)
-{ return -EBUSY; }
+{ return -ERR(EBUSY); }
 static inline int __pci_register_driver(struct pci_driver *drv,
 					struct module *owner)
 { return 0; }
@@ -1745,7 +1745,7 @@ static inline struct resource *pci_find_resource(struct pci_dev *dev,
 						 struct resource *res)
 { return NULL; }
 static inline int pci_request_regions(struct pci_dev *dev, const char *res_name)
-{ return -EIO; }
+{ return -ERR(EIO); }
 static inline void pci_release_regions(struct pci_dev *dev) { }
 
 static inline unsigned long pci_address_to_pio(phys_addr_t addr) { return -1; }
@@ -1772,7 +1772,7 @@ static inline int pci_irqd_intx_xlate(struct irq_domain *d,
 				      unsigned int intsize,
 				      unsigned long *out_hwirq,
 				      unsigned int *out_type)
-{ return -EINVAL; }
+{ return -ERR(EINVAL); }
 
 static inline const struct pci_device_id *pci_match_id(const struct pci_device_id *ids,
 							 struct pci_dev *dev)
@@ -1781,7 +1781,7 @@ static inline bool pci_ats_disabled(void) { return true; }
 
 static inline int pci_irq_vector(struct pci_dev *dev, unsigned int nr)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int
@@ -1789,7 +1789,7 @@ pci_alloc_irq_vectors_affinity(struct pci_dev *dev, unsigned int min_vecs,
 			       unsigned int max_vecs, unsigned int flags,
 			       struct irq_affinity *aff_desc)
 {
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 #endif /* CONFIG_PCI */
 
@@ -2076,23 +2076,23 @@ resource_size_t pcibios_iov_resource_alignment(struct pci_dev *dev, int resno);
 #else
 static inline int pci_iov_virtfn_bus(struct pci_dev *dev, int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pci_iov_virtfn_devfn(struct pci_dev *dev, int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pci_enable_sriov(struct pci_dev *dev, int nr_virtfn)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 static inline int pci_iov_sysfs_link(struct pci_dev *dev,
 				     struct pci_dev *virtfn, int id)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int pci_iov_add_virtfn(struct pci_dev *dev, int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline void pci_iov_remove_virtfn(struct pci_dev *dev,
 					 int id) { }
@@ -2319,7 +2319,7 @@ pci_parse_request_of_pci_ranges(struct device *dev,
 				struct list_head *ib_resources,
 				struct resource **bus_range)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif  /* CONFIG_OF */
 

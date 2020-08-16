@@ -366,7 +366,7 @@ static ssize_t cpu_latency_qos_read(struct file *filp, char __user *buf,
 	s32 value;
 
 	if (!req || !cpu_latency_qos_request_active(req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&pm_qos_lock, flags);
 	value = pm_qos_get_value(&cpu_latency_constraints);
@@ -505,7 +505,7 @@ int freq_qos_apply(struct freq_qos_request *req,
 					   action, value);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -532,11 +532,11 @@ int freq_qos_add_request(struct freq_constraints *qos,
 	int ret;
 
 	if (IS_ERR_OR_NULL(qos) || !req)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN(freq_qos_request_active(req),
 		 "%s() called for active request\n", __func__))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	req->qos = qos;
 	req->type = type;
@@ -564,11 +564,11 @@ EXPORT_SYMBOL_GPL(freq_qos_add_request);
 int freq_qos_update_request(struct freq_qos_request *req, s32 new_value)
 {
 	if (!req)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN(!freq_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (req->pnode.prio == new_value)
 		return 0;
@@ -592,11 +592,11 @@ int freq_qos_remove_request(struct freq_qos_request *req)
 	int ret;
 
 	if (!req)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN(!freq_qos_request_active(req),
 		 "%s() called for unknown object\n", __func__))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = freq_qos_apply(req, PM_QOS_REMOVE_REQ, PM_QOS_DEFAULT_VALUE);
 	req->qos = NULL;
@@ -619,7 +619,7 @@ int freq_qos_add_notifier(struct freq_constraints *qos,
 	int ret;
 
 	if (IS_ERR_OR_NULL(qos) || !notifier)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (type) {
 	case FREQ_QOS_MIN:
@@ -632,7 +632,7 @@ int freq_qos_add_notifier(struct freq_constraints *qos,
 		break;
 	default:
 		WARN_ON(1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -652,7 +652,7 @@ int freq_qos_remove_notifier(struct freq_constraints *qos,
 	int ret;
 
 	if (IS_ERR_OR_NULL(qos) || !notifier)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (type) {
 	case FREQ_QOS_MIN:
@@ -665,7 +665,7 @@ int freq_qos_remove_notifier(struct freq_constraints *qos,
 		break;
 	default:
 		WARN_ON(1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;

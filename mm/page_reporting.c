@@ -320,7 +320,7 @@ int page_reporting_register(struct page_reporting_dev_info *prdev)
 
 	/* nothing to do if already in use */
 	if (rcu_access_pointer(pr_dev_info)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_out;
 	}
 

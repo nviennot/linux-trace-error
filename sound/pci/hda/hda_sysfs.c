@@ -236,9 +236,9 @@ static int parse_init_verbs(struct hda_codec *codec, const char *buf)
 	int nid, verb, param;
 
 	if (sscanf(buf, "%i %i %i", &nid, &verb, &param) != 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!nid || !verb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->user_mutex);
 	v = snd_array_new(&codec->init_verbs);
 	if (!v) {
@@ -316,7 +316,7 @@ static int parse_hints(struct hda_codec *codec, const char *buf)
 	if (!*buf || *buf == '#' || *buf == '\n')
 		return 0;
 	if (*buf == '=')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	key = kstrndup_noeol(buf, 1024);
 	if (!key)
 		return -ENOMEM;
@@ -324,7 +324,7 @@ static int parse_hints(struct hda_codec *codec, const char *buf)
 	val = strchr(key, '=');
 	if (!val) {
 		kfree(key);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*val++ = 0;
 	val = skip_spaces(val);
@@ -383,9 +383,9 @@ static int parse_user_pin_configs(struct hda_codec *codec, const char *buf)
 	int nid, cfg, err;
 
 	if (sscanf(buf, "%i %i", &nid, &cfg) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!nid)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&codec->user_mutex);
 	err = snd_hda_add_pincfg(codec, &codec->user_pins, nid, cfg);
 	mutex_unlock(&codec->user_mutex);
@@ -442,7 +442,7 @@ int snd_hda_get_bool_hint(struct hda_codec *codec, const char *key)
 	mutex_lock(&codec->user_mutex);
 	p = snd_hda_get_hint(codec, key);
 	if (!p || !*p)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	else {
 		switch (toupper(*p)) {
 		case 'T': /* true */
@@ -479,9 +479,9 @@ int snd_hda_get_int_hint(struct hda_codec *codec, const char *key, int *valp)
 	mutex_lock(&codec->user_mutex);
 	p = snd_hda_get_hint(codec, key);
 	if (!p)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	else if (kstrtoul(p, 0, &val))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	else {
 		*valp = val;
 		ret = 0;

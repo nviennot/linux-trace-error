@@ -1012,16 +1012,16 @@ struct hci_conn *hci_connect_le(struct hci_dev *hdev, bdaddr_t *dst,
 	/* Let's make sure that le is enabled.*/
 	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED)) {
 		if (lmp_le_capable(hdev))
-			return ERR_PTR(-ECONNREFUSED);
+			return ERR_PTR(-ERR(ECONNREFUSED));
 
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 
 	/* Since the controller supports only one LE connection attempt at a
 	 * time, we return -EBUSY if there is any connection attempt running.
 	 */
 	if (hci_lookup_le_connect(hdev))
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 
 	/* If there's already a connection object but it's not in
 	 * scanning state it means it must already be established, in
@@ -1030,7 +1030,7 @@ struct hci_conn *hci_connect_le(struct hci_dev *hdev, bdaddr_t *dst,
 	 */
 	conn = hci_conn_hash_lookup_le(hdev, dst, dst_type);
 	if (conn && !test_bit(HCI_CONN_SCANNING, &conn->flags)) {
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 	}
 
 	/* When given an identity address with existing identity
@@ -1082,7 +1082,7 @@ struct hci_conn *hci_connect_le(struct hci_dev *hdev, bdaddr_t *dst,
 		    hdev->le_scan_type == LE_SCAN_ACTIVE) {
 			hci_req_purge(&req);
 			hci_conn_del(conn);
-			return ERR_PTR(-EBUSY);
+			return ERR_PTR(-ERR(EBUSY));
 		}
 
 		hci_req_directed_advertising(&req, conn);
@@ -1146,7 +1146,7 @@ static int hci_explicit_conn_params_set(struct hci_dev *hdev,
 	struct hci_conn_params *params;
 
 	if (is_connected(hdev, addr, addr_type))
-		return -EISCONN;
+		return -ERR(EISCONN);
 
 	params = hci_conn_params_lookup(hdev, addr, addr_type);
 	if (!params) {
@@ -1187,9 +1187,9 @@ struct hci_conn *hci_connect_le_scan(struct hci_dev *hdev, bdaddr_t *dst,
 	/* Let's make sure that le is enabled.*/
 	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED)) {
 		if (lmp_le_capable(hdev))
-			return ERR_PTR(-ECONNREFUSED);
+			return ERR_PTR(-ERR(ECONNREFUSED));
 
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 
 	/* Some devices send ATT messages as soon as the physical link is
@@ -1216,7 +1216,7 @@ struct hci_conn *hci_connect_le_scan(struct hci_dev *hdev, bdaddr_t *dst,
 
 	if (hci_explicit_conn_params_set(hdev, dst, dst_type) < 0) {
 		hci_conn_del(conn);
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 	}
 
 	conn->state = BT_CONNECT;
@@ -1240,9 +1240,9 @@ struct hci_conn *hci_connect_acl(struct hci_dev *hdev, bdaddr_t *dst,
 
 	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
 		if (lmp_bredr_capable(hdev))
-			return ERR_PTR(-ECONNREFUSED);
+			return ERR_PTR(-ERR(ECONNREFUSED));
 
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 
 	acl = hci_conn_hash_lookup_ba(hdev, ACL_LINK, dst);
@@ -1588,7 +1588,7 @@ int hci_get_conn_list(void __user *arg)
 		return -EFAULT;
 
 	if (!req.conn_num || req.conn_num > (PAGE_SIZE * 2) / sizeof(*ci))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = sizeof(req) + req.conn_num * sizeof(*ci);
 
@@ -1599,7 +1599,7 @@ int hci_get_conn_list(void __user *arg)
 	hdev = hci_dev_get(req.dev_id);
 	if (!hdev) {
 		kfree(cl);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ci = cl->conn_info;
@@ -1652,7 +1652,7 @@ int hci_get_conn_info(struct hci_dev *hdev, void __user *arg)
 	hci_dev_unlock(hdev);
 
 	if (!conn)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return copy_to_user(ptr, &ci, sizeof(ci)) ? -EFAULT : 0;
 }
@@ -1672,7 +1672,7 @@ int hci_get_auth_info(struct hci_dev *hdev, void __user *arg)
 	hci_dev_unlock(hdev);
 
 	if (!conn)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return copy_to_user(arg, &req, sizeof(req)) ? -EFAULT : 0;
 }

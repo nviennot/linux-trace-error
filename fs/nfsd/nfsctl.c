@@ -102,7 +102,7 @@ static ssize_t nfsctl_transaction_write(struct file *file, const char __user *bu
 	ssize_t rv;
 
 	if (ino >= ARRAY_SIZE(write_op) || !write_op[ino])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = simple_transaction_get(file, buf, size);
 	if (IS_ERR(data))
@@ -262,17 +262,17 @@ static ssize_t write_unlock_ip(struct file *file, char *buf, size_t size)
 
 	/* sanity check */
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buf[size-1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fo_path = buf;
 	if (qword_get(&buf, fo_path, size) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rpc_pton(net, fo_path, size, sap, salen) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return nlmsvc_unlock_all_by_ip(sap);
 }
@@ -299,14 +299,14 @@ static ssize_t write_unlock_fs(struct file *file, char *buf, size_t size)
 
 	/* sanity check */
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buf[size-1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fo_path = buf;
 	if (qword_get(&buf, fo_path, size) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = kern_path(fo_path, 0, &path);
 	if (error)
@@ -358,32 +358,32 @@ static ssize_t write_filehandle(struct file *file, char *buf, size_t size)
 	struct knfsd_fh fh;
 
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buf[size-1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	buf[size-1] = 0;
 
 	dname = mesg;
 	len = qword_get(&mesg, dname, size);
 	if (len <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	path = dname+len+1;
 	len = qword_get(&mesg, path, size);
 	if (len <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = get_int(&mesg, &maxsize);
 	if (len)
 		return len;
 
 	if (maxsize < NFS_FHSIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	maxsize = min(maxsize, NFS3_FHSIZE);
 
 	if (qword_get(&mesg, mesg, size)>0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* we have all the words, they are in buf.. */
 	dom = unix_domain_find(dname);
@@ -442,7 +442,7 @@ static ssize_t write_threads(struct file *file, char *buf, size_t size)
 		if (rv)
 			return rv;
 		if (newthreads < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rv = nfsd_svc(newthreads, net, file->f_cred);
 		if (rv < 0)
 			return rv;
@@ -512,7 +512,7 @@ static ssize_t write_pool_threads(struct file *file, char *buf, size_t size)
 				break;		/* fewer numbers than pools */
 			if (rv)
 				goto out_free;	/* syntax error */
-			rv = -EINVAL;
+			rv = -ERR(EINVAL);
 			if (nthreads[i] < 0)
 				goto out_free;
 		}
@@ -576,14 +576,14 @@ static ssize_t __write_versions(struct file *file, char *buf, size_t size)
 			 * nn->nfsd_serv->sv_xdrsize, and reallocing
 			 * rq_argp and rq_resp
 			 */
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (buf[size-1] != '\n')
-			return -EINVAL;
+			return -ERR(EINVAL);
 		buf[size-1] = 0;
 
 		vers = mesg;
 		len = qword_get(&mesg, vers, size);
-		if (len <= 0) return -EINVAL;
+		if (len <= 0) return -ERR(EINVAL);
 		do {
 			enum vers_op cmd;
 			unsigned minor;
@@ -594,9 +594,9 @@ static ssize_t __write_versions(struct file *file, char *buf, size_t size)
 				num = simple_strtol(vers, &minorp, 0);
 			if (*minorp == '.') {
 				if (num != 4)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if (kstrtouint(minorp+1, 0, &minor) < 0)
-					return -EINVAL;
+					return -ERR(EINVAL);
 			}
 
 			cmd = sign == '-' ? NFSD_CLEAR : NFSD_SET;
@@ -608,7 +608,7 @@ static ssize_t __write_versions(struct file *file, char *buf, size_t size)
 			case 4:
 				if (*minorp == '.') {
 					if (nfsd_minorversion(nn, minor, cmd) < 0)
-						return -EINVAL;
+						return -ERR(EINVAL);
 				} else if ((cmd == NFSD_SET) != nfsd_vers(nn, num, NFSD_TEST)) {
 					/*
 					 * Either we have +4 and no minors are enabled,
@@ -621,7 +621,7 @@ static ssize_t __write_versions(struct file *file, char *buf, size_t size)
 				}
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			vers += len + 1;
 		} while ((len = qword_get(&mesg, vers, size)) > 0);
@@ -657,7 +657,7 @@ static ssize_t __write_versions(struct file *file, char *buf, size_t size)
 out:
 	len = snprintf(buf, remaining, "\n");
 	if (len >= remaining)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return tlen + len;
 }
 
@@ -729,11 +729,11 @@ static ssize_t __write_ports_addfd(char *buf, struct net *net, const struct cred
 
 	err = get_int(&mesg, &fd);
 	if (err != 0 || fd < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (svc_alien_sock(net, fd)) {
 		printk(KERN_ERR "%s: socket net is different to NFSd's one\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nfsd_create_serv(net);
@@ -763,10 +763,10 @@ static ssize_t __write_ports_addxprt(char *buf, struct net *net, const struct cr
 	struct nfsd_net *nn = net_generic(net, nfsd_net_id);
 
 	if (sscanf(buf, "%15s %5u", transport, &port) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (port < 1 || port > USHRT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nfsd_create_serv(net);
 	if (err != 0)
@@ -808,7 +808,7 @@ static ssize_t __write_ports(struct file *file, char *buf, size_t size,
 	if (isalpha(buf[0]))
 		return __write_ports_addxprt(buf, net, file->f_cred);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -907,7 +907,7 @@ static ssize_t write_maxblksize(struct file *file, char *buf, size_t size)
 		mutex_lock(&nfsd_mutex);
 		if (nn->nfsd_serv) {
 			mutex_unlock(&nfsd_mutex);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		nfsd_max_blksize = bsize;
 		mutex_unlock(&nfsd_mutex);
@@ -963,7 +963,7 @@ static ssize_t __nfsd4_write_time(struct file *file, char *buf, size_t size,
 
 	if (size > 0) {
 		if (nn->nfsd_serv)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		rv = get_int(&mesg, &i);
 		if (rv)
 			return rv;
@@ -980,7 +980,7 @@ static ssize_t __nfsd4_write_time(struct file *file, char *buf, size_t size,
 		 *	  revoke a dead client's locks?
 		 */
 		if (i < 10 || i > 3600)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*time = i;
 	}
 
@@ -1050,15 +1050,15 @@ static ssize_t __write_recoverydir(struct file *file, char *buf, size_t size,
 
 	if (size > 0) {
 		if (nn->nfsd_serv)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (size > PATH_MAX || buf[size-1] != '\n')
-			return -EINVAL;
+			return -ERR(EINVAL);
 		buf[size-1] = 0;
 
 		recdir = mesg;
 		len = qword_get(&mesg, recdir, size);
 		if (len <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		status = nfs4_reset_recoverydir(recdir);
 		if (status)
@@ -1131,11 +1131,11 @@ static ssize_t write_v4_end_grace(struct file *file, char *buf, size_t size)
 		case 'y':
 		case '1':
 			if (!nn->nfsd_serv)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			nfsd4_end_grace(nn);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

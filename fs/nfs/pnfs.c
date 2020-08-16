@@ -204,7 +204,7 @@ out_no_driver:
 int
 pnfs_register_layoutdriver(struct pnfs_layoutdriver_type *ld_type)
 {
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 	struct pnfs_layoutdriver_type *tmp;
 
 	if (ld_type->id == 0) {
@@ -838,7 +838,7 @@ pnfs_layout_free_bulk_destroy_list(struct list_head *layout_list,
 		if (pnfs_mark_layout_stateid_invalid(lo, &lseg_list)) {
 			if (is_bulk_recall)
 				set_bit(NFS_LAYOUT_BULK_RECALL, &lo->plh_flags);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 		spin_unlock(&inode->i_lock);
 		pnfs_free_lseg_list(&lseg_list);
@@ -1490,7 +1490,7 @@ int pnfs_roc_done(struct rpc_task *task, struct inode *inode,
 		int *ret)
 {
 	struct nfs4_layoutreturn_args *arg = *argpp;
-	int retval = -EAGAIN;
+	int retval = -ERR(EAGAIN);
 
 	if (!arg)
 		return 0;
@@ -1523,7 +1523,7 @@ int pnfs_roc_done(struct rpc_task *task, struct inode *inode,
 					&arg->range, inode))
 			break;
 		*ret = -NFS4ERR_NOMATCHING_LAYOUT;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	*argpp = NULL;
 	*respp = NULL;
@@ -2334,7 +2334,7 @@ pnfs_layout_process(struct nfs4_layoutget *lgp)
 	LIST_HEAD(free_me);
 
 	if (!pnfs_sanity_check_layout_range(&res->range))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* Inject layout blob into I/O device driver */
 	lseg = NFS_SERVER(ino)->pnfs_curr_ld->alloc_lseg(lo, res, lgp->gfp_flags);
@@ -2389,7 +2389,7 @@ out_forget:
 	spin_unlock(&ino->i_lock);
 	lseg->pls_layout = lo;
 	NFS_SERVER(ino)->pnfs_curr_ld->free_lseg(lseg);
-	return ERR_PTR(-EAGAIN);
+	return ERR_PTR(-ERR(EAGAIN));
 }
 
 static int
@@ -2446,7 +2446,7 @@ pnfs_mark_matching_lsegs_return(struct pnfs_layout_hdr *lo,
 
 	if (remaining) {
 		pnfs_set_plh_return_info(lo, return_range->iomode, seq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!list_empty(&lo->plh_return_segs)) {
@@ -2454,7 +2454,7 @@ pnfs_mark_matching_lsegs_return(struct pnfs_layout_hdr *lo,
 		return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static void
@@ -3122,7 +3122,7 @@ pnfs_layoutcommit_inode(struct inode *inode, bool sync)
 
 	dprintk("--> %s inode %lu\n", __func__, inode->i_ino);
 
-	status = -EAGAIN;
+	status = -ERR(EAGAIN);
 	if (test_and_set_bit(NFS_INO_LAYOUTCOMMITTING, &nfsi->flags)) {
 		if (!sync)
 			goto out;

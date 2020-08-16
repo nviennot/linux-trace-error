@@ -122,29 +122,29 @@ static int elf_read_ehdr(const char *buf, size_t len, struct elfhdr *ehdr)
 
 	if (len < sizeof(*buf_ehdr)) {
 		pr_debug("Buffer is too small to hold ELF header.\n");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	memset(ehdr, 0, sizeof(*ehdr));
 	memcpy(ehdr->e_ident, buf, sizeof(ehdr->e_ident));
 	if (!elf_is_elf_file(ehdr)) {
 		pr_debug("No ELF header magic.\n");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	if (ehdr->e_ident[EI_CLASS] != ELF_CLASS) {
 		pr_debug("Not a supported ELF class.\n");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	} else  if (ehdr->e_ident[EI_DATA] != ELFDATA2LSB &&
 		ehdr->e_ident[EI_DATA] != ELFDATA2MSB) {
 		pr_debug("Not a supported ELF data format.\n");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	buf_ehdr = (struct elfhdr *) buf;
 	if (elf16_to_cpu(ehdr, buf_ehdr->e_ehsize) != sizeof(*buf_ehdr)) {
 		pr_debug("Bad ELF header size.\n");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	ehdr->e_type      = elf16_to_cpu(ehdr, buf_ehdr->e_type);
@@ -172,10 +172,10 @@ static int elf_read_ehdr(const char *buf, size_t len, struct elfhdr *ehdr)
 
 	default:
 		pr_debug("Unknown ELF class.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
-	return elf_is_ehdr_sane(ehdr, len) ? 0 : -ENOEXEC;
+	return elf_is_ehdr_sane(ehdr, len) ? 0 : -ERR(ENOEXEC);
 }
 
 /**
@@ -236,10 +236,10 @@ static int elf_read_phdr(const char *buf, size_t len,
 
 	default:
 		pr_debug("Unknown ELF class.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
-	return elf_is_phdr_sane(phdr, len) ? 0 : -ENOEXEC;
+	return elf_is_phdr_sane(phdr, len) ? 0 : -ERR(ENOEXEC);
 }
 
 /**
@@ -358,7 +358,7 @@ int kexec_build_elf_info(const char *buf, size_t len, struct elfhdr *ehdr,
 	return 0;
 error:
 	kexec_free_elf_info(elf_info);
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 }
 
 
@@ -374,7 +374,7 @@ int kexec_elf_probe(const char *buf, unsigned long len)
 
 	kexec_free_elf_info(&elf_info);
 
-	return elf_check_arch(&ehdr) ? 0 : -ENOEXEC;
+	return elf_check_arch(&ehdr) ? 0 : -ERR(ENOEXEC);
 }
 
 /**

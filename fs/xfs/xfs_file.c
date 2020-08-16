@@ -106,7 +106,7 @@ xfs_file_fsync(
 		return error;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	xfs_iflags_clear(ip, XFS_ITRUNCATED);
 
@@ -179,7 +179,7 @@ xfs_file_dio_aio_read(
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!xfs_ilock_nowait(ip, XFS_IOLOCK_SHARED))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, XFS_IOLOCK_SHARED);
 	}
@@ -206,7 +206,7 @@ xfs_file_dax_read(
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!xfs_ilock_nowait(ip, XFS_IOLOCK_SHARED))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, XFS_IOLOCK_SHARED);
 	}
@@ -230,7 +230,7 @@ xfs_file_buffered_aio_read(
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!xfs_ilock_nowait(ip, XFS_IOLOCK_SHARED))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, XFS_IOLOCK_SHARED);
 	}
@@ -252,7 +252,7 @@ xfs_file_read_iter(
 	XFS_STATS_INC(mp, xs_read_calls);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (IS_DAX(inode))
 		ret = xfs_file_dax_read(iocb, to);
@@ -377,7 +377,7 @@ xfs_dio_write_end_io(
 	trace_xfs_end_io_direct_write(ip, offset, size);
 
 	if (XFS_FORCED_SHUTDOWN(ip->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (error)
 		return error;
@@ -486,7 +486,7 @@ xfs_file_dio_aio_write(
 
 	/* DIO must be aligned to device logical sector size */
 	if ((iocb->ki_pos | count) & target->bt_logical_sectormask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Don't take the exclusive iolock here unless the I/O is unaligned to
@@ -505,7 +505,7 @@ xfs_file_dio_aio_write(
 		 */
 		if (xfs_is_cow_inode(ip)) {
 			trace_xfs_reflink_bounce_dio_write(ip, iocb->ki_pos, count);
-			return -EREMCHG;
+			return -ERR(EREMCHG);
 		}
 		iolock = XFS_IOLOCK_EXCL;
 	} else {
@@ -515,9 +515,9 @@ xfs_file_dio_aio_write(
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		/* unaligned dio always waits, bail */
 		if (unaligned_io)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		if (!xfs_ilock_nowait(ip, iolock))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, iolock);
 	}
@@ -574,7 +574,7 @@ xfs_file_dax_write(
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!xfs_ilock_nowait(ip, iolock))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, iolock);
 	}
@@ -620,7 +620,7 @@ xfs_file_buffered_aio_write(
 	int			iolock;
 
 	if (iocb->ki_flags & IOCB_NOWAIT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 write_retry:
 	iolock = XFS_IOLOCK_EXCL;
@@ -701,7 +701,7 @@ xfs_file_write_iter(
 		return 0;
 
 	if (XFS_FORCED_SHUTDOWN(ip->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (IS_DAX(inode))
 		return xfs_file_dax_write(iocb, from);
@@ -775,7 +775,7 @@ xfs_break_layouts(
 			break;
 		default:
 			WARN_ON_ONCE(1);
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 		}
 	} while (error == 0 && retry);
 
@@ -803,9 +803,9 @@ xfs_file_fallocate(
 	bool			do_file_insert = false;
 
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mode & ~XFS_FALLOC_FL_SUPPORTED)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	xfs_ilock(ip, iolock);
 	error = xfs_break_layouts(inode, &iolock, BREAK_UNMAP);
@@ -850,7 +850,7 @@ xfs_file_fallocate(
 		unsigned int blksize_mask = i_blocksize(inode) - 1;
 
 		if (offset & blksize_mask || len & blksize_mask) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_unlock;
 		}
 
@@ -859,7 +859,7 @@ xfs_file_fallocate(
 		 * in which case it is effectively a truncate operation
 		 */
 		if (offset + len >= i_size_read(inode)) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_unlock;
 		}
 
@@ -873,7 +873,7 @@ xfs_file_fallocate(
 		loff_t		isize = i_size_read(inode);
 
 		if (offset & blksize_mask || len & blksize_mask) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_unlock;
 		}
 
@@ -882,14 +882,14 @@ xfs_file_fallocate(
 		 * possible signed overflow.
 		 */
 		if (inode->i_sb->s_maxbytes - isize < len) {
-			error = -EFBIG;
+			error = -ERR(EFBIG);
 			goto out_unlock;
 		}
 		new_size = isize + len;
 
 		/* Offset should be less than i_size */
 		if (offset >= isize) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_unlock;
 		}
 		do_file_insert = true;
@@ -935,7 +935,7 @@ xfs_file_fallocate(
 			 * thus should not create them.
 			 */
 			if (xfs_is_always_cow_inode(ip)) {
-				error = -EOPNOTSUPP;
+				error = -ERR(EOPNOTSUPP);
 				goto out_unlock;
 			}
 		}
@@ -1024,13 +1024,13 @@ xfs_file_remap_range(
 	int			ret;
 
 	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!xfs_sb_version_hasreflink(&mp->m_sb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Prepare and then clone file data. */
 	ret = xfs_reflink_remap_prep(file_in, pos_in, file_out, pos_out,
@@ -1077,9 +1077,9 @@ xfs_file_open(
 	struct file	*file)
 {
 	if (!(file->f_flags & O_LARGEFILE) && i_size_read(inode) > MAX_NON_LFS)
-		return -EFBIG;
+		return -ERR(EFBIG);
 	if (XFS_FORCED_SHUTDOWN(XFS_M(inode->i_sb)))
-		return -EIO;
+		return -ERR(EIO);
 	file->f_mode |= FMODE_NOWAIT;
 	return 0;
 }
@@ -1151,7 +1151,7 @@ xfs_file_llseek(
 	struct inode		*inode = file->f_mapping->host;
 
 	if (XFS_FORCED_SHUTDOWN(XFS_I(inode)->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (whence) {
 	default:
@@ -1284,7 +1284,7 @@ xfs_file_mmap(
 	 * for DAX files if underneath dax_device is not synchronous.
 	 */
 	if (!daxdev_mapping_supported(vma, target->bt_daxdev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	file_accessed(file);
 	vma->vm_ops = &xfs_file_vm_ops;

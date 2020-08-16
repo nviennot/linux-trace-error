@@ -55,7 +55,7 @@ static int identify_model(struct snd_tscm *tscm)
 	if (fw_dev->config_rom_length < 30) {
 		dev_err(&tscm->unit->device,
 			"Configuration ROM is too short.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Pick up model name from certain addresses. */
@@ -74,7 +74,7 @@ static int identify_model(struct snd_tscm *tscm)
 		}
 	}
 	if (tscm->spec == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	strcpy(tscm->card->driver, "FW-TASCAM");
 	strcpy(tscm->card->shortname, model);

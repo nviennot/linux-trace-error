@@ -37,7 +37,7 @@ int snd_hdac_set_codec_wakeup(struct hdac_bus *bus, bool enable)
 	struct drm_audio_component *acomp = bus->audio_component;
 
 	if (!acomp || !acomp->ops)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!acomp->ops->codec_wake_override)
 		return 0;
@@ -126,12 +126,12 @@ int snd_hdac_sync_audio_rate(struct hdac_device *codec, hda_nid_t nid,
 	int port, pipe;
 
 	if (!acomp || !acomp->ops || !acomp->ops->sync_audio_rate)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	port = nid;
 	if (acomp->audio_ops && acomp->audio_ops->pin2port) {
 		port = acomp->audio_ops->pin2port(codec, nid);
 		if (port < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	pipe = dev_id;
 	return acomp->ops->sync_audio_rate(acomp->dev, port, pipe, rate);
@@ -167,13 +167,13 @@ int snd_hdac_acomp_get_eld(struct hdac_device *codec, hda_nid_t nid, int dev_id,
 	int port, pipe;
 
 	if (!acomp || !acomp->ops || !acomp->ops->get_eld)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	port = nid;
 	if (acomp->audio_ops && acomp->audio_ops->pin2port) {
 		port = acomp->audio_ops->pin2port(codec, nid);
 		if (port < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	pipe = dev_id;
 	return acomp->ops->get_eld(acomp->dev, port, pipe, audio_enabled,
@@ -187,20 +187,20 @@ static int hdac_component_master_bind(struct device *dev)
 	int ret;
 
 	if (WARN_ON(!acomp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = component_bind_all(dev, acomp);
 	if (ret < 0)
 		return ret;
 
 	if (WARN_ON(!(acomp->dev && acomp->ops))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unbind;
 	}
 
 	/* pin the module to avoid dynamic unbinding, but only if given */
 	if (!try_module_get(acomp->ops->owner)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_unbind;
 	}
 
@@ -252,7 +252,7 @@ int snd_hdac_acomp_register_notifier(struct hdac_bus *bus,
 				    const struct drm_audio_component_audio_ops *aops)
 {
 	if (!bus->audio_component)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	bus->audio_component->audio_ops = aops;
 	return 0;
@@ -289,7 +289,7 @@ int snd_hdac_acomp_init(struct hdac_bus *bus,
 	int ret;
 
 	if (WARN_ON(hdac_get_acomp(dev)))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	acomp = devres_alloc(hdac_acomp_release, sizeof(*acomp) + extra_size,
 			     GFP_KERNEL);

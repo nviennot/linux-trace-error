@@ -125,7 +125,7 @@ static struct dentry *reconnect_one(struct vfsmount *mnt,
 	struct dentry *tmp;
 	int err;
 
-	parent = ERR_PTR(-EACCES);
+	parent = ERR_PTR(-ERR(EACCES));
 	inode_lock(dentry->d_inode);
 	if (mnt->mnt_sb->s_export_op->get_parent)
 		parent = mnt->mnt_sb->s_export_op->get_parent(dentry);
@@ -163,7 +163,7 @@ static struct dentry *reconnect_one(struct vfsmount *mnt,
 	}
 	dput(tmp);
 	if (IS_ROOT(dentry)) {
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 		goto out_err;
 	}
 	return parent;
@@ -187,7 +187,7 @@ out_reconnected:
 	 * double check that this worked and return -ESTALE if not:
 	 */
 	if (!dentry_connected(dentry))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	return NULL;
 }
 
@@ -290,10 +290,10 @@ static int get_name(const struct path *path, char *name, struct dentry *child)
 		.name = name,
 	};
 
-	error = -ENOTDIR;
+	error = -ERR(ENOTDIR);
 	if (!dir || !S_ISDIR(dir->i_mode))
 		goto out;
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!dir->i_fop)
 		goto out;
 	/*
@@ -315,7 +315,7 @@ static int get_name(const struct path *path, char *name, struct dentry *child)
 	if (IS_ERR(file))
 		goto out;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!file->f_op->iterate && !file->f_op->iterate_shared)
 		goto out_close;
 
@@ -332,7 +332,7 @@ static int get_name(const struct path *path, char *name, struct dentry *child)
 		if (error < 0)
 			break;
 
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		if (old_seq == buffer.sequence)
 			break;
 	}
@@ -430,12 +430,12 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
 	 * Try to get any dentry for the given file handle from the filesystem.
 	 */
 	if (!nop || !nop->fh_to_dentry)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	result = nop->fh_to_dentry(mnt->mnt_sb, fid, fh_len, fileid_type);
 	if (PTR_ERR(result) == -ENOMEM)
 		return ERR_CAST(result);
 	if (IS_ERR_OR_NULL(result))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	/*
 	 * If no acceptance criteria was specified by caller, a disconnected
@@ -462,7 +462,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
 		}
 
 		if (!acceptable(context, result)) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			goto err_result;
 		}
 
@@ -490,7 +490,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
 		 * Try to extract a dentry for the parent directory from the
 		 * file handle.  If this fails we'll have to give up.
 		 */
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 		if (!nop->fh_to_parent)
 			goto err_result;
 
@@ -529,7 +529,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
 		if (!IS_ERR(nresult)) {
 			if (unlikely(nresult->d_inode != result->d_inode)) {
 				dput(nresult);
-				nresult = ERR_PTR(-ESTALE);
+				nresult = ERR_PTR(-ERR(ESTALE));
 			}
 		}
 		inode_unlock(target_dir->d_inode);
@@ -552,7 +552,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
 		 */
 		alias = find_acceptable_alias(result, acceptable, context);
 		if (!alias) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			goto err_result;
 		}
 
@@ -562,7 +562,7 @@ struct dentry *exportfs_decode_fh(struct vfsmount *mnt, struct fid *fid,
  err_result:
 	dput(result);
 	if (err != -ENOMEM)
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 	return ERR_PTR(err);
 }
 EXPORT_SYMBOL_GPL(exportfs_decode_fh);

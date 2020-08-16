@@ -147,7 +147,7 @@ fail:
 static int verify_table_headers(struct table_header **tables, int flags)
 {
 	size_t state_count, trans_count;
-	int error = -EPROTO;
+	int error = -ERR(EPROTO);
 
 	/* check that required tables exist */
 	if (!(tables[YYTD_ID_DEF] && tables[YYTD_ID_BASE] &&
@@ -197,7 +197,7 @@ out:
 static int verify_dfa(struct aa_dfa *dfa)
 {
 	size_t i, state_count, trans_count;
-	int error = -EPROTO;
+	int error = -ERR(EPROTO);
 
 	state_count = dfa->tables[YYTD_ID_BASE]->td_lolen;
 	trans_count = dfa->tables[YYTD_ID_NXT]->td_lolen;
@@ -315,7 +315,7 @@ struct aa_dfa *aa_dfa_unpack(void *blob, size_t size, int flags)
 
 	kref_init(&dfa->count);
 
-	error = -EPROTO;
+	error = -ERR(EPROTO);
 
 	/* get dfa table set header */
 	if (size < sizeof(struct table_set_header))

@@ -63,7 +63,7 @@ static int __init em_x270_init(void)
 
 	if (!(machine_is_em_x270() || machine_is_exeda()
 	      || machine_is_cm_x300()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	em_x270_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!em_x270_snd_device)

@@ -261,7 +261,7 @@ nobufs:
 		__fscache_wake_unused_cookie(cookie);
 	fscache_stat(&fscache_n_attr_changed_nobufs);
 	_leave(" = %d", -ENOBUFS);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 EXPORT_SYMBOL(__fscache_attr_changed);
 
@@ -356,7 +356,7 @@ int fscache_wait_for_deferred_lookup(struct fscache_cookie *cookie)
 			TASK_INTERRUPTIBLE) != 0) {
 		fscache_stat(&fscache_n_retrievals_intr);
 		_leave(" = -ERESTARTSYS");
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	}
 
 	ASSERT(!test_bit(FSCACHE_COOKIE_LOOKING_UP, &cookie->flags));
@@ -388,7 +388,7 @@ int fscache_wait_for_operation_activation(struct fscache_object *object,
 		trace_fscache_op(object->cookie, op, fscache_op_signal);
 		ret = fscache_cancel_op(op, false);
 		if (ret == 0)
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 
 		/* it's been removed from the pending queue by another party,
 		 * so we should get to run shortly */
@@ -402,7 +402,7 @@ check_if_dead:
 		if (stat_object_dead)
 			fscache_stat(stat_object_dead);
 		_leave(" = -ENOBUFS [cancelled]");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	if (unlikely(fscache_object_is_dying(object) ||
 		     fscache_cache_is_broken(object))) {
@@ -412,7 +412,7 @@ check_if_dead:
 		if (stat_object_dead)
 			fscache_stat(stat_object_dead);
 		_leave(" = -ENOBUFS [obj dead %d]", state);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	return 0;
 }
@@ -446,14 +446,14 @@ int __fscache_read_or_alloc_page(struct fscache_cookie *cookie,
 
 	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
 	ASSERTCMP(page, !=, NULL);
 
 	if (fscache_wait_for_deferred_lookup(cookie) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	op = fscache_alloc_retrieval(cookie, page->mapping,
 				     end_io_func, context);
@@ -499,7 +499,7 @@ int __fscache_read_or_alloc_page(struct fscache_cookie *cookie,
 		ret = object->cache->ops->allocate_page(op, page, gfp);
 		fscache_stat_d(&fscache_n_cop_allocate_page);
 		if (ret == 0)
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 	} else {
 		fscache_stat(&fscache_n_cop_read_or_alloc_page);
 		ret = object->cache->ops->read_or_alloc_page(op, page, gfp);
@@ -533,7 +533,7 @@ nobufs_unlock:
 nobufs:
 	fscache_stat(&fscache_n_retrievals_nobufs);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 EXPORT_SYMBOL(__fscache_read_or_alloc_page);
 
@@ -577,7 +577,7 @@ int __fscache_read_or_alloc_pages(struct fscache_cookie *cookie,
 
 	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	ASSERTCMP(cookie->def->type, !=, FSCACHE_COOKIE_TYPE_INDEX);
@@ -585,7 +585,7 @@ int __fscache_read_or_alloc_pages(struct fscache_cookie *cookie,
 	ASSERT(!list_empty(pages));
 
 	if (fscache_wait_for_deferred_lookup(cookie) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	op = fscache_alloc_retrieval(cookie, mapping, end_io_func, context);
 	if (!op)
@@ -660,7 +660,7 @@ nobufs_unlock:
 nobufs:
 	fscache_stat(&fscache_n_retrievals_nobufs);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 EXPORT_SYMBOL(__fscache_read_or_alloc_pages);
 
@@ -693,11 +693,11 @@ int __fscache_alloc_page(struct fscache_cookie *cookie,
 
 	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	if (fscache_wait_for_deferred_lookup(cookie) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	op = fscache_alloc_retrieval(cookie, page->mapping, NULL, NULL);
 	if (!op)
@@ -754,7 +754,7 @@ nobufs_unlock:
 nobufs:
 	fscache_stat(&fscache_n_allocs_nobufs);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 EXPORT_SYMBOL(__fscache_alloc_page);
 
@@ -976,7 +976,7 @@ int __fscache_write_page(struct fscache_cookie *cookie,
 
 	if (test_bit(FSCACHE_COOKIE_INVALIDATING, &cookie->flags)) {
 		_leave(" = -ENOBUFS [invalidating]");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	op = kzalloc(sizeof(*op), GFP_NOIO | __GFP_NOMEMALLOC | __GFP_NORETRY);
@@ -995,7 +995,7 @@ int __fscache_write_page(struct fscache_cookie *cookie,
 
 	trace_fscache_page_op(cookie, page, &op->op, fscache_page_op_write_one);
 
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 	spin_lock(&cookie->lock);
 
 	if (!fscache_cookie_enabled(cookie) ||
@@ -1077,7 +1077,7 @@ submit_failed:
 	spin_unlock(&cookie->stores_lock);
 	wake_cookie = __fscache_unuse_cookie(cookie);
 	put_page(page);
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 	goto nobufs;
 
 nobufs_unlock_obj:
@@ -1091,7 +1091,7 @@ nobufs:
 		__fscache_wake_unused_cookie(cookie);
 	fscache_stat(&fscache_n_stores_nobufs);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 
 nomem_free:
 	fscache_put_operation(&op->op);

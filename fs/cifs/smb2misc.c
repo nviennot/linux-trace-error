@@ -810,7 +810,7 @@ smb2_handle_cancelled_mid(char *buffer, struct TCP_Server_Info *server)
 	tcon = smb2_find_smb_tcon(server, sync_hdr->SessionId,
 				  sync_hdr->TreeId);
 	if (!tcon)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	rc = __smb2_handle_cancelled_cmd(tcon,
 					 le16_to_cpu(sync_hdr->Command),

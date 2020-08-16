@@ -130,7 +130,7 @@ static inline char *ceph_extract_encoded_string(void **p, void *end,
 	return buf;
 
 bad:
-	return ERR_PTR(-ERANGE);
+	return ERR_PTR(-ERR(ERANGE));
 }
 
 /*
@@ -337,7 +337,7 @@ static inline int ceph_start_decoding(void **p, void *end, u8 v,
 	if (v < struct_compat) {
 		pr_warn("got struct_v %d struct_compat %d > %d of %s\n",
 			*struct_v, struct_compat, v, name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*struct_len = ceph_decode_32(p);
@@ -345,7 +345,7 @@ static inline int ceph_start_decoding(void **p, void *end, u8 v,
 	return 0;
 
 bad:
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 #define ceph_encode_need(p, end, n, bad)			\

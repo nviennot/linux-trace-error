@@ -127,7 +127,7 @@ static int pxa2xx_ac97_mic_startup(struct snd_pcm_substream *substream,
 				   struct snd_soc_dai *cpu_dai)
 {
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	snd_soc_dai_set_dma_data(cpu_dai, substream,
 				 &pxa2xx_ac97_pcm_mic_mono_in);
 
@@ -233,7 +233,7 @@ static int pxa2xx_ac97_dev_probe(struct platform_device *pdev)
 
 	if (pdev->id != -1) {
 		dev_err(&pdev->dev, "PXA2xx has only one AC97 port.\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	ret = pxa2xx_ac97_hw_probe(pdev);

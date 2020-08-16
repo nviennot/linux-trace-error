@@ -164,7 +164,7 @@ xfs_trans_reserve(
 		error = xfs_mod_fdblocks(mp, -((int64_t)blocks), rsvd);
 		if (error != 0) {
 			current_restore_flags_nested(&tp->t_pflags, PF_MEMALLOC_NOFS);
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 		tp->t_blk_res += blocks;
 	}
@@ -214,7 +214,7 @@ xfs_trans_reserve(
 	if (rtextents > 0) {
 		error = xfs_mod_frextents(mp, -((int64_t)rtextents));
 		if (error) {
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 			goto undo_log;
 		}
 		tp->t_rtx_res += rtextents;
@@ -846,7 +846,7 @@ __xfs_trans_commit(
 		goto out_unreserve;
 
 	if (XFS_FORCED_SHUTDOWN(mp)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out_unreserve;
 	}
 

@@ -38,7 +38,7 @@ static int check_asic_status(struct echoaudio *chip)
 	u32 box_status;
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->comm_page->ext_box_status = cpu_to_le32(E3G_ASIC_NOT_LOADED);
 	chip->asic_loaded = false;
@@ -47,13 +47,13 @@ static int check_asic_status(struct echoaudio *chip)
 
 	if (wait_handshake(chip)) {
 		chip->dsp_code = NULL;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	box_status = le32_to_cpu(chip->comm_page->ext_box_status);
 	dev_dbg(chip->card->dev, "box_status=%x\n", box_status);
 	if (box_status == E3G_ASIC_NOT_LOADED)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	chip->asic_loaded = true;
 	return box_status & E3G_BOX_TYPE_MASK;
@@ -76,7 +76,7 @@ static int write_control_reg(struct echoaudio *chip, u32 ctl, u32 frq,
 	__le32 ctl_reg, frq_reg;
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	dev_dbg(chip->card->dev,
 		"WriteControlReg: Setting 0x%x, 0x%x\n", ctl, frq);
@@ -106,10 +106,10 @@ static int set_digital_mode(struct echoaudio *chip, u8 mode)
 
 	/* All audio channels must be closed before changing the digital mode */
 	if (snd_BUG_ON(chip->pipe_alloc_mask))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (snd_BUG_ON(!(chip->digital_modes & (1 << mode))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	previous_mode = chip->digital_mode;
 	err = dsp_set_digital_mode(chip, mode);
@@ -272,7 +272,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 
 	if (snd_BUG_ON(rate >= 50000 &&
 		       chip->digital_mode == DIGITAL_MODE_ADAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	clock = 0;
 	control_reg = le32_to_cpu(chip->comm_page->control_register);
@@ -342,7 +342,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		return set_sample_rate(chip, chip->sample_rate);
 	case ECHO_CLOCK_SPDIF:
 		if (chip->digital_mode == DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		control_reg |= E3G_SPDIF_CLOCK;
 		if (clocks_from_dsp & E3G_CLOCK_DETECT_BIT_SPDIF96)
 			control_reg |= E3G_DOUBLE_SPEED_MODE;
@@ -351,7 +351,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		break;
 	case ECHO_CLOCK_ADAT:
 		if (chip->digital_mode != DIGITAL_MODE_ADAT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		control_reg |= E3G_ADAT_CLOCK;
 		control_reg &= ~E3G_DOUBLE_SPEED_MODE;
 		break;
@@ -365,7 +365,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 	default:
 		dev_err(chip->card->dev,
 			"Input clock 0x%x not supported for Echo3G\n", clock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chip->input_clock = clock;
@@ -394,7 +394,7 @@ static int dsp_set_digital_mode(struct echoaudio *chip, u8 mode)
 	default:
 		dev_err(chip->card->dev,
 			"Digital mode not supported: %d\n", mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irq(&chip->lock);

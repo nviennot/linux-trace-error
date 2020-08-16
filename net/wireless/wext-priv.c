@@ -21,7 +21,7 @@ int iw_handler_get_private(struct net_device *		dev,
 	/* Check if the driver has something to export */
 	if ((dev->wireless_handlers->num_private_args == 0) ||
 	   (dev->wireless_handlers->private_args == NULL))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Check if there is enough buffer up there */
 	if (wrqu->data.length < dev->wireless_handlers->num_private_args) {
@@ -29,7 +29,7 @@ int iw_handler_get_private(struct net_device *		dev,
 		 * needs to be. Give it a hint, so that we can support
 		 * any size buffer we want somewhat efficiently... */
 		wrqu->data.length = dev->wireless_handlers->num_private_args;
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	/* Set the number of available ioctls. */
@@ -148,7 +148,7 @@ static int ioctl_private_iw_point(struct iw_point *iwp, unsigned int cmd,
 			return -EFAULT;
 
 		if (iwp->length > (descr->set_args & IW_PRIV_SIZE_MASK))
-			return -E2BIG;
+			return -ERR(E2BIG);
 	} else if (!iwp->pointer)
 		return -EFAULT;
 
@@ -188,7 +188,7 @@ int ioctl_private_call(struct net_device *dev, struct iwreq *iwr,
 		       unsigned int cmd, struct iw_request_info *info,
 		       iw_handler handler)
 {
-	int extra_size = 0, ret = -EINVAL;
+	int extra_size = 0, ret = -ERR(EINVAL);
 	const struct iw_priv_args *descr;
 
 	extra_size = get_priv_descr_and_size(dev, cmd, &descr);

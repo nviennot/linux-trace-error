@@ -359,7 +359,7 @@ int snd_hda_jack_set_gating_jack(struct hda_codec *codec, hda_nid_t gated_nid,
 	WARN_ON(codec->dp_mst);
 
 	if (!gated || !gating)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gated->gating_jack = gating_nid;
 	gating->gated_jack = gated_nid;

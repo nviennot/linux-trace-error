@@ -1318,7 +1318,7 @@ static int slim_rx_mux_put(struct snd_kcontrol *kc,
 
 	return 0;
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int slim_tx_mixer_get(struct snd_kcontrol *kc,
@@ -1362,7 +1362,7 @@ static int slim_tx_mixer_put(struct snd_kcontrol *kc,
 		break;
 	default:
 		dev_err(wcd->dev, "Unknown AIF %d\n", dai_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_dapm_mixer_update_power(widget->dapm, kc, enable, update);
@@ -1507,7 +1507,7 @@ static int wcd9335_put_dec_enum(struct snd_kcontrol *kc,
 		reg = WCD9335_CDC_TX8_TX_PATH_CFG0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* AMIC: 0, DMIC: 1 */
@@ -1536,7 +1536,7 @@ static int wcd9335_int_dem_inp_mux_put(struct snd_kcontrol *kc,
 	else if (e->reg == WCD9335_CDC_RX2_RX_PATH_SEC0)
 		reg = WCD9335_CDC_RX2_RX_PATH_CFG0;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set Look Ahead Delay */
 	snd_soc_component_update_bits(component, reg,
@@ -1799,7 +1799,7 @@ static int wcd9335_set_decimator_rate(struct snd_soc_dai *dai,
 		if ((tx_port == 12) || (tx_port >= 14)) {
 			dev_err(wcd->dev, "Invalid SLIM TX%u port DAI ID:%d\n",
 				tx_port, dai->id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/* Find the SB TX MUX input - which decimator is connected */
 		if (tx_port < 4) {
@@ -1823,7 +1823,7 @@ static int wcd9335_set_decimator_rate(struct snd_soc_dai *dai,
 			shift = 4;
 			shift_val = 0x03;
 		} else {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		tx_mux_sel = snd_soc_component_read32(comp, tx_port_reg) &
@@ -1856,7 +1856,7 @@ static int wcd9335_set_decimator_rate(struct snd_soc_dai *dai,
 		} else {
 			dev_err(wcd->dev, "ERROR: Invalid decimator: %d\n",
 				decimator);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1887,7 +1887,7 @@ static int wcd9335_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "%s: Invalid format 0x%x\n",
 				__func__, params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -1917,7 +1917,7 @@ static int wcd9335_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "%s: Invalid TX sample rate: %d\n",
 				__func__, params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		}
 
@@ -1934,13 +1934,13 @@ static int wcd9335_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "%s: Invalid format 0x%x\n",
 				__func__, params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(wcd->dev, "Invalid stream type %d\n",
 			substream->stream);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->dai[dai->id].sconfig.rate = params_rate(params);
@@ -1993,7 +1993,7 @@ static int wcd9335_set_channel_map(struct snd_soc_dai *dai,
 	if (!tx_slot || !rx_slot) {
 		dev_err(wcd->dev, "Invalid tx_slot=%p, rx_slot=%p\n",
 			tx_slot, rx_slot);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->num_rx_port = rx_num;
@@ -2029,7 +2029,7 @@ static int wcd9335_get_channel_map(struct snd_soc_dai *dai,
 		if (!rx_slot || !rx_num) {
 			dev_err(wcd->dev, "Invalid rx_slot %p or rx_num %p\n",
 				rx_slot, rx_num);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		list_for_each_entry(ch, &wcd->dai[dai->id].slim_ch_list, list)
@@ -2043,7 +2043,7 @@ static int wcd9335_get_channel_map(struct snd_soc_dai *dai,
 		if (!tx_slot || !tx_num) {
 			dev_err(wcd->dev, "Invalid tx_slot %p or tx_num %p\n",
 				tx_slot, tx_num);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		list_for_each_entry(ch, &wcd->dai[dai->id].slim_ch_list, list)
 			tx_slot[i++] = ch->ch_num;
@@ -2510,7 +2510,7 @@ static int wcd9335_micbias_control(struct snd_soc_component *component,
 	if ((micb_index < 0) || (micb_index > WCD9335_MAX_MICBIAS - 1)) {
 		dev_err(wcd->dev, "Invalid micbias index, micb_ind:%d\n",
 			micb_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (micb_num) {
@@ -2529,7 +2529,7 @@ static int wcd9335_micbias_control(struct snd_soc_component *component,
 	default:
 		dev_err(component->dev, "%s: Invalid micbias number: %d\n",
 			__func__, micb_num);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (req) {
@@ -2585,7 +2585,7 @@ static int __wcd9335_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 	else if (strnstr(w->name, "MIC BIAS4", sizeof("MIC BIAS4")))
 		micb_num = MIC_BIAS_4;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -2742,7 +2742,7 @@ static int wcd9335_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (!dec_adc_mux_name) {
 		dev_err(comp->dev, "%s: Invalid decimator = %s\n",
 			__func__, w->name);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 	dec_adc_mux_name = widget_name;
@@ -2751,7 +2751,7 @@ static int wcd9335_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (!dec) {
 		dev_err(comp->dev, "%s: decimator index not found\n",
 			__func__);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2759,7 +2759,7 @@ static int wcd9335_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (ret < 0) {
 		dev_err(comp->dev, "%s: Invalid decimator = %s\n",
 			__func__, wname);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2922,14 +2922,14 @@ static int wcd9335_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	wname = strpbrk(w->name, "012345");
 	if (!wname) {
 		dev_err(comp->dev, "%s: widget not found\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = kstrtouint(wname, 10, &dmic);
 	if (ret < 0) {
 		dev_err(comp->dev, "%s: Invalid DMIC line on the codec\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dmic) {
@@ -2951,7 +2951,7 @@ static int wcd9335_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	default:
 		dev_err(comp->dev, "%s: Invalid DMIC Selection\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -3334,7 +3334,7 @@ static int wcd9335_codec_enable_interpolator(struct snd_soc_dapm_widget *w,
 	} else {
 		dev_err(comp->dev, "%s: Interpolator reg not found\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -3547,7 +3547,7 @@ static int wcd9335_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 		if (((hph_mode == CLS_H_HIFI) || (hph_mode == CLS_H_LOHIFI) ||
 				(hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
 			dev_err(comp->dev, "Incorrect DEM Input\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		wcd_clsh_ctrl_set_state(wcd->clsh_ctrl, WCD_CLSH_EVENT_PRE_DAC,
 					WCD_CLSH_STATE_HPHL,
@@ -3701,7 +3701,7 @@ static int wcd9335_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 		     (hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
 			dev_err(comp->dev, "DEM Input not set correctly, hph_mode: %d\n",
 				hph_mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		wcd_clsh_ctrl_set_state(wcd->clsh_ctrl,
@@ -3803,7 +3803,7 @@ static int wcd9335_codec_enable_lineout_pa(struct snd_soc_dapm_widget *w,
 		}
 	} else {
 		dev_err(comp->dev, "Error enabling lineout PA\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -4126,13 +4126,13 @@ static int wcd9335_enable_mclk(struct wcd9335_codec *wcd)
 {
 	/* Enable mclk requires master bias to be enabled first */
 	if (wcd->master_bias_users <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (((wcd->clk_mclk_users == 0) && (wcd->clk_type == WCD_CLK_MCLK)) ||
 	    ((wcd->clk_mclk_users > 0) && (wcd->clk_type != WCD_CLK_MCLK))) {
 		dev_err(wcd->dev, "Error enabling MCLK, clk_type: %d\n",
 			wcd->clk_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (++wcd->clk_mclk_users == 1) {
@@ -4168,7 +4168,7 @@ static int wcd9335_enable_mclk(struct wcd9335_codec *wcd)
 static int wcd9335_disable_mclk(struct wcd9335_codec *wcd)
 {
 	if (wcd->clk_mclk_users <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (--wcd->clk_mclk_users == 0) {
 		if (wcd->clk_rco_users > 0) {
@@ -4195,7 +4195,7 @@ static int wcd9335_disable_mclk(struct wcd9335_codec *wcd)
 static int wcd9335_disable_master_bias(struct wcd9335_codec *wcd)
 {
 	if (wcd->master_bias_users <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wcd->master_bias_users--;
 	if (wcd->master_bias_users == 0) {
@@ -5088,7 +5088,7 @@ static int wcd9335_bring_up(struct wcd9335_codec *wcd)
 
 	if ((val < 0) || (byte0 < 0)) {
 		dev_err(wcd->dev, "WCD9335 CODEC version detection fail!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (byte0 == 0x1) {
@@ -5104,7 +5104,7 @@ static int wcd9335_bring_up(struct wcd9335_codec *wcd)
 		regmap_write(rm, WCD9335_CODEC_RPM_RST_CTL, 0x3);
 	} else {
 		dev_err(wcd->dev, "WCD9335 CODEC version not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -5175,7 +5175,7 @@ static int wcd9335_slim_status(struct slim_device *sdev,
 	ifc_dev_np = of_parse_phandle(dev->of_node, "slim-ifc-dev", 0);
 	if (!ifc_dev_np) {
 		dev_err(dev, "No Interface device found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->slim = sdev;
@@ -5183,7 +5183,7 @@ static int wcd9335_slim_status(struct slim_device *sdev,
 	of_node_put(ifc_dev_np);
 	if (!wcd->slim_ifc_dev) {
 		dev_err(dev, "Unable to get SLIM Interface device\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	slim_get_logical_addr(wcd->slim_ifc_dev);

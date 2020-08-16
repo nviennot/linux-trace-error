@@ -826,7 +826,7 @@ static inline int ntb_mw_get_align(struct ntb_dev *ntb, int pidx, int widx,
 				   resource_size_t *size_max)
 {
 	if (!(ntb_link_is_up(ntb, NULL, NULL) & BIT_ULL(pidx)))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	return ntb->ops->mw_get_align(ntb, pidx, widx, addr_align, size_align,
 				      size_max);
@@ -1058,7 +1058,7 @@ static inline u64 ntb_db_read(struct ntb_dev *ntb)
 static inline int ntb_db_set(struct ntb_dev *ntb, u64 db_bits)
 {
 	if (!ntb->ops->db_set)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->db_set(ntb, db_bits);
 }
@@ -1155,7 +1155,7 @@ static inline int ntb_peer_db_addr(struct ntb_dev *ntb,
 				   u64 *db_data, int db_bit)
 {
 	if (!ntb->ops->peer_db_addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_db_addr(ntb, db_addr, db_size, db_data, db_bit);
 }
@@ -1208,7 +1208,7 @@ static inline int ntb_peer_db_set(struct ntb_dev *ntb, u64 db_bits)
 static inline int ntb_peer_db_clear(struct ntb_dev *ntb, u64 db_bits)
 {
 	if (!ntb->ops->db_clear)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_db_clear(ntb, db_bits);
 }
@@ -1247,7 +1247,7 @@ static inline u64 ntb_peer_db_read_mask(struct ntb_dev *ntb)
 static inline int ntb_peer_db_set_mask(struct ntb_dev *ntb, u64 db_bits)
 {
 	if (!ntb->ops->db_set_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_db_set_mask(ntb, db_bits);
 }
@@ -1269,7 +1269,7 @@ static inline int ntb_peer_db_set_mask(struct ntb_dev *ntb, u64 db_bits)
 static inline int ntb_peer_db_clear_mask(struct ntb_dev *ntb, u64 db_bits)
 {
 	if (!ntb->ops->db_clear_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_db_clear_mask(ntb, db_bits);
 }
@@ -1339,7 +1339,7 @@ static inline u32 ntb_spad_read(struct ntb_dev *ntb, int sidx)
 static inline int ntb_spad_write(struct ntb_dev *ntb, int sidx, u32 val)
 {
 	if (!ntb->ops->spad_write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->spad_write(ntb, sidx, val);
 }
@@ -1360,7 +1360,7 @@ static inline int ntb_peer_spad_addr(struct ntb_dev *ntb, int pidx, int sidx,
 				     phys_addr_t *spad_addr)
 {
 	if (!ntb->ops->peer_spad_addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_spad_addr(ntb, pidx, sidx, spad_addr);
 }
@@ -1398,7 +1398,7 @@ static inline int ntb_peer_spad_write(struct ntb_dev *ntb, int pidx, int sidx,
 				      u32 val)
 {
 	if (!ntb->ops->peer_spad_write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_spad_write(ntb, pidx, sidx, val);
 }
@@ -1483,7 +1483,7 @@ static inline u64 ntb_msg_read_sts(struct ntb_dev *ntb)
 static inline int ntb_msg_clear_sts(struct ntb_dev *ntb, u64 sts_bits)
 {
 	if (!ntb->ops->msg_clear_sts)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->msg_clear_sts(ntb, sts_bits);
 }
@@ -1500,7 +1500,7 @@ static inline int ntb_msg_clear_sts(struct ntb_dev *ntb, u64 sts_bits)
 static inline int ntb_msg_set_mask(struct ntb_dev *ntb, u64 mask_bits)
 {
 	if (!ntb->ops->msg_set_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->msg_set_mask(ntb, mask_bits);
 }
@@ -1517,7 +1517,7 @@ static inline int ntb_msg_set_mask(struct ntb_dev *ntb, u64 mask_bits)
 static inline int ntb_msg_clear_mask(struct ntb_dev *ntb, u64 mask_bits)
 {
 	if (!ntb->ops->msg_clear_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->msg_clear_mask(ntb, mask_bits);
 }
@@ -1558,7 +1558,7 @@ static inline int ntb_peer_msg_write(struct ntb_dev *ntb, int pidx, int midx,
 				     u32 msg)
 {
 	if (!ntb->ops->peer_msg_write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ntb->ops->peer_msg_write(ntb, pidx, midx, msg);
 }
@@ -1599,7 +1599,7 @@ static inline int ntb_peer_resource_idx(struct ntb_dev *ntb, int pidx)
 	int local_port, peer_port;
 
 	if (pidx >= ntb_peer_port_count(ntb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	local_port = ntb_logical_port_number(ntb);
 	peer_port = ntb_peer_logical_port_number(ntb, pidx);
@@ -1659,11 +1659,11 @@ int ntb_msi_peer_addr(struct ntb_dev *ntb, int peer,
 static inline int ntb_msi_init(struct ntb_dev *ntb,
 			       void (*desc_changed)(void *ctx))
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int ntb_msi_setup_mws(struct ntb_dev *ntb)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline void ntb_msi_clear_mws(struct ntb_dev *ntb) {}
 static inline int ntbm_msi_request_threaded_irq(struct ntb_dev *ntb,
@@ -1672,20 +1672,20 @@ static inline int ntbm_msi_request_threaded_irq(struct ntb_dev *ntb,
 						const char *name, void *dev_id,
 						struct ntb_msi_desc *msi_desc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline void ntbm_msi_free_irq(struct ntb_dev *ntb, unsigned int irq,
 				     void *dev_id) {}
 static inline int ntb_msi_peer_trigger(struct ntb_dev *ntb, int peer,
 				       struct ntb_msi_desc *desc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int ntb_msi_peer_addr(struct ntb_dev *ntb, int peer,
 				    struct ntb_msi_desc *desc,
 				    phys_addr_t *msi_addr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 
 }
 

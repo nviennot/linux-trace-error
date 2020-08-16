@@ -172,7 +172,7 @@ static struct ip6addrlbl_entry *ip6addrlbl_alloc(const struct in6_addr *prefix,
 	switch (addrtype) {
 	case IPV6_ADDR_MAPPED:
 		if (prefixlen > 96)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		if (prefixlen < 96)
 			addrtype = 0;
 		break;
@@ -215,7 +215,7 @@ static int __ip6addrlbl_add(struct net *net, struct ip6addrlbl_entry *newp,
 		    p->ifindex == newp->ifindex &&
 		    ipv6_addr_equal(&p->prefix, &newp->prefix)) {
 			if (!replace) {
-				ret = -EEXIST;
+				ret = -ERR(EEXIST);
 				goto out;
 			}
 			hlist_replace_rcu(&p->list, &newp->list);
@@ -268,7 +268,7 @@ static int __ip6addrlbl_del(struct net *net,
 {
 	struct ip6addrlbl_entry *p = NULL;
 	struct hlist_node *n;
-	int ret = -ESRCH;
+	int ret = -ERR(ESRCH);
 
 	ADDRLABEL(KERN_DEBUG "%s(prefix=%pI6, prefixlen=%d, ifindex=%d)\n",
 		  __func__, prefix, prefixlen, ifindex);
@@ -392,23 +392,23 @@ static int ip6addrlbl_newdel(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	if (ifal->ifal_family != AF_INET6 ||
 	    ifal->ifal_prefixlen > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!tb[IFAL_ADDRESS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pfx = nla_data(tb[IFAL_ADDRESS]);
 
 	if (!tb[IFAL_LABEL])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	label = nla_get_u32(tb[IFAL_LABEL]);
 	if (label == IPV6_ADDR_LABEL_DEFAULT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (nlh->nlmsg_type) {
 	case RTM_NEWADDRLABEL:
 		if (ifal->ifal_index &&
 		    !addrlbl_ifindex_exists(net, ifal->ifal_index))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = ip6addrlbl_add(net, pfx, ifal->ifal_prefixlen,
 				     ifal->ifal_index, label,
@@ -419,7 +419,7 @@ static int ip6addrlbl_newdel(struct sk_buff *skb, struct nlmsghdr *nlh,
 				     ifal->ifal_index);
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 	return err;
 }
@@ -444,14 +444,14 @@ static int ip6addrlbl_fill(struct sk_buff *skb,
 	struct nlmsghdr *nlh = nlmsg_put(skb, portid, seq, event,
 					 sizeof(struct ifaddrlblmsg), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ip6addrlbl_putmsg(nlh, p->prefixlen, p->ifindex, lseq);
 
 	if (nla_put_in6_addr(skb, IFAL_ADDRESS, &p->prefix) < 0 ||
 	    nla_put_u32(skb, IFAL_LABEL, p->label) < 0) {
 		nlmsg_cancel(skb, nlh);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	nlmsg_end(skb, nlh);
@@ -465,19 +465,19 @@ static int ip6addrlbl_valid_dump_req(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifal))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for address label dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifal = nlmsg_data(nlh);
 	if (ifal->__ifal_reserved || ifal->ifal_prefixlen ||
 	    ifal->ifal_flags || ifal->ifal_index || ifal->ifal_seq) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for address label dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nlmsg_attrlen(nlh, sizeof(*ifal))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid data after header for address label dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -533,7 +533,7 @@ static int ip6addrlbl_valid_get_req(struct sk_buff *skb,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifal))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for addrlabel get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -543,7 +543,7 @@ static int ip6addrlbl_valid_get_req(struct sk_buff *skb,
 	ifal = nlmsg_data(nlh);
 	if (ifal->__ifal_reserved || ifal->ifal_flags || ifal->ifal_seq) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for addrlabel get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifal), tb, IFAL_MAX,
@@ -560,7 +560,7 @@ static int ip6addrlbl_valid_get_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in addrlabel get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -587,21 +587,21 @@ static int ip6addrlbl_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	if (ifal->ifal_family != AF_INET6 ||
 	    ifal->ifal_prefixlen != 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ifal->ifal_index &&
 	    !addrlbl_ifindex_exists(net, ifal->ifal_index))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!tb[IFAL_ADDRESS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	addr = nla_data(tb[IFAL_ADDRESS]);
 
 	skb = nlmsg_new(ip6addrlbl_msgsize(), GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
-	err = -ESRCH;
+	err = -ERR(ESRCH);
 
 	rcu_read_lock();
 	p = __ipv6_addr_label(net, addr, ipv6_addr_type(addr), ifal->ifal_index);

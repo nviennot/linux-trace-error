@@ -176,9 +176,9 @@ static ssize_t psz_zone_read_buffer(struct pstore_zone *zone, char *buf,
 		size_t len, unsigned long off)
 {
 	if (!buf || !zone || !zone->buffer)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (off > zone->buffer_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	len = min_t(size_t, len, zone->buffer_size - off);
 	memcpy(buf, zone->buffer->data + off, len);
 	return len;
@@ -188,9 +188,9 @@ static int psz_zone_read_oldbuf(struct pstore_zone *zone, char *buf,
 		size_t len, unsigned long off)
 {
 	if (!buf || !zone || !zone->oldbuf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (off > zone->buffer_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	len = min_t(size_t, len, zone->buffer_size - off);
 	memcpy(buf, zone->oldbuf->data + off, len);
 	return 0;
@@ -206,7 +206,7 @@ static int psz_zone_write(struct pstore_zone *zone,
 	size_t wlen;
 
 	if (off > zone->buffer_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wlen = min_t(size_t, len, zone->buffer_size - off);
 	if (buf && wlen) {
@@ -251,12 +251,12 @@ static int psz_zone_write(struct pstore_zone *zone,
 dirty:
 	/* no need to mark dirty if going to try next zone */
 	if (wcnt == -ENOMSG)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	atomic_set(&zone->dirty, true);
 	/* flush dirty zones nicely */
 	if (wcnt == -EBUSY && !is_on_panic())
 		schedule_delayed_work(&psz_cleaner, msecs_to_jiffies(500));
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int psz_flush_dirty_zone(struct pstore_zone *zone)
@@ -264,10 +264,10 @@ static int psz_flush_dirty_zone(struct pstore_zone *zone)
 	int ret;
 
 	if (unlikely(!zone))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(!atomic_read(&pstore_zone_cxt.recovered)))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!atomic_xchg(&zone->dirty, false))
 		return 0;
@@ -284,12 +284,12 @@ static int psz_flush_dirty_zones(struct pstore_zone **zones, unsigned int cnt)
 	struct pstore_zone *zone;
 
 	if (!zones)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < cnt; i++) {
 		zone = zones[i];
 		if (!zone)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ret = psz_flush_dirty_zone(zone);
 		if (ret)
 			return ret;
@@ -338,12 +338,12 @@ static int psz_kmsg_recover_data(struct psz_context *cxt)
 	ssize_t rcnt;
 
 	if (!info->read)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < cxt->kmsg_max_cnt; i++) {
 		zone = cxt->kpszs[i];
 		if (unlikely(!zone))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (atomic_read(&zone->dirty)) {
 			unsigned int wcnt = cxt->kmsg_write_cnt;
 			struct pstore_zone *new = cxt->kpszs[wcnt];
@@ -363,7 +363,7 @@ static int psz_kmsg_recover_data(struct psz_context *cxt)
 		rcnt = info->read((char *)buf, zone->buffer_size + sizeof(*buf),
 				zone->off);
 		if (rcnt != zone->buffer_size + sizeof(*buf))
-			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+			return (int)rcnt < 0 ? (int)rcnt : -ERR(EIO);
 	}
 	return 0;
 }
@@ -384,14 +384,14 @@ static int psz_kmsg_recover_meta(struct psz_context *cxt)
 	char buffer_header[sizeof(*buf) + sizeof(*hdr)] = {0};
 
 	if (!info->read)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = sizeof(*buf) + sizeof(*hdr);
 	buf = (struct psz_buffer *)buffer_header;
 	for (i = 0; i < cxt->kmsg_max_cnt; i++) {
 		zone = cxt->kpszs[i];
 		if (unlikely(!zone))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		rcnt = info->read((char *)buf, len, zone->off);
 		if (rcnt == -ENOMSG) {
@@ -400,7 +400,7 @@ static int psz_kmsg_recover_meta(struct psz_context *cxt)
 			continue;
 		} else if (rcnt != len) {
 			pr_err("read %s with id %lu failed\n", zone->name, i);
-			return (int)rcnt < 0 ? (int)rcnt : -EIO;
+			return (int)rcnt < 0 ? (int)rcnt : -ERR(EIO);
 		}
 
 		if (buf->sig != zone->buffer->sig) {
@@ -496,13 +496,13 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	}
 
 	if (unlikely(!info->read))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = sizeof(struct psz_buffer);
 	rcnt = info->read((char *)&tmpbuf, len, zone->off);
 	if (rcnt != len) {
 		pr_debug("read zone %s failed\n", zone->name);
-		return (int)rcnt < 0 ? (int)rcnt : -EIO;
+		return (int)rcnt < 0 ? (int)rcnt : -ERR(EIO);
 	}
 
 	if (tmpbuf.sig != zone->buffer->sig) {
@@ -544,7 +544,7 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	rcnt = info->read(buf, len - start, off + start);
 	if (rcnt != len - start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		ret = (int)rcnt < 0 ? (int)rcnt : -ERR(EIO);
 		goto free_oldbuf;
 	}
 
@@ -552,7 +552,7 @@ static int psz_recover_zone(struct psz_context *cxt, struct pstore_zone *zone)
 	rcnt = info->read(buf + len - start, start, off);
 	if (rcnt != start) {
 		pr_err("read zone %s failed\n", zone->name);
-		ret = (int)rcnt < 0 ? (int)rcnt : -EIO;
+		ret = (int)rcnt < 0 ? (int)rcnt : -ERR(EIO);
 		goto free_oldbuf;
 	}
 
@@ -703,7 +703,7 @@ static int psz_pstore_erase(struct pstore_record *record)
 	switch (record->type) {
 	case PSTORE_TYPE_DMESG:
 		if (record->id >= cxt->kmsg_max_cnt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return psz_kmsg_erase(cxt, cxt->kpszs[record->id], record);
 	case PSTORE_TYPE_PMSG:
 		return psz_record_erase(cxt, cxt->ppsz);
@@ -711,9 +711,9 @@ static int psz_pstore_erase(struct pstore_record *record)
 		return psz_record_erase(cxt, cxt->cpsz);
 	case PSTORE_TYPE_FTRACE:
 		if (record->id >= cxt->ftrace_max_cnt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return psz_record_erase(cxt, cxt->fpszs[record->id]);
-	default: return -EINVAL;
+	default: return -ERR(EINVAL);
 	}
 }
 
@@ -756,7 +756,7 @@ static inline int notrace psz_kmsg_write_record(struct psz_context *cxt,
 		zonenum = (cxt->kmsg_write_cnt + i) % cxt->kmsg_max_cnt;
 		zone = cxt->kpszs[zonenum];
 		if (unlikely(!zone))
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 		/* avoid destroying old data, allocate a new one */
 		len = zone->buffer_size + sizeof(*zone->buffer);
@@ -789,7 +789,7 @@ static inline int notrace psz_kmsg_write_record(struct psz_context *cxt,
 		zone->oldbuf = NULL;
 	}
 
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int notrace psz_kmsg_write(struct psz_context *cxt,
@@ -804,10 +804,10 @@ static int notrace psz_kmsg_write(struct psz_context *cxt,
 	 * report split across multiple records.
 	 */
 	if (record->part != 1)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (!cxt->kpszs)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	ret = psz_kmsg_write_record(cxt, record);
 	if (!ret && is_on_panic()) {
@@ -829,7 +829,7 @@ static int notrace psz_record_write(struct pstore_zone *zone,
 	int cnt;
 
 	if (!zone || !record)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (atomic_read(&zone->buffer->datalen) >= zone->buffer_size)
 		is_full_data = true;
@@ -882,7 +882,7 @@ static int notrace psz_pstore_write(struct pstore_record *record)
 	 * Fix case that panic_write prints log which wakes up console backend.
 	 */
 	if (is_on_panic() && record->type != PSTORE_TYPE_DMESG)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	switch (record->type) {
 	case PSTORE_TYPE_DMESG:
@@ -895,11 +895,11 @@ static int notrace psz_pstore_write(struct pstore_record *record)
 		int zonenum = smp_processor_id();
 
 		if (!cxt->fpszs)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		return psz_record_write(cxt->fpszs[zonenum], record);
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -946,7 +946,7 @@ static int psz_kmsg_read_hdr(struct pstore_zone *zone,
 		(struct psz_kmsg_header *)buffer->data;
 
 	if (hdr->magic != PSTORE_KMSG_HEADER_MAGIC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	record->compressed = hdr->compressed;
 	record->time.tv_sec = hdr->time.tv_sec;
 	record->time.tv_nsec = hdr->time.tv_nsec;
@@ -965,7 +965,7 @@ static ssize_t psz_kmsg_read(struct pstore_zone *zone,
 	if (psz_kmsg_read_hdr(zone, record)) {
 		atomic_set(&zone->buffer->datalen, 0);
 		atomic_set(&zone->dirty, 0);
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	}
 	size -= sizeof(struct psz_kmsg_header);
 
@@ -989,7 +989,7 @@ static ssize_t psz_kmsg_read(struct pstore_zone *zone,
 			sizeof(struct psz_kmsg_header));
 	if (unlikely(size < 0)) {
 		kfree(record->buf);
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	}
 
 	return size + hlen;
@@ -1004,14 +1004,14 @@ static ssize_t psz_ftrace_read(struct pstore_zone *zone,
 	int ret;
 
 	if (!zone || !record)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (!psz_old_ok(zone))
 		goto out;
 
 	buf = (struct psz_buffer *)zone->oldbuf;
 	if (!buf)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	ret = pstore_ftrace_combine_log(&record->buf, &record->size,
 			(char *)buf->data, atomic_read(&buf->datalen));
@@ -1022,9 +1022,9 @@ out:
 	cxt = record->psi->data;
 	if (cxt->ftrace_read_cnt < cxt->ftrace_max_cnt)
 		/* then, read next ftrace zone */
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	record->id = 0;
-	return record->size ? record->size : -ENOMSG;
+	return record->size ? record->size : -ERR(ENOMSG);
 }
 
 static ssize_t psz_record_read(struct pstore_zone *zone,
@@ -1034,11 +1034,11 @@ static ssize_t psz_record_read(struct pstore_zone *zone,
 	struct psz_buffer *buf;
 
 	if (!zone || !record)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	buf = (struct psz_buffer *)zone->oldbuf;
 	if (!buf)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	len = atomic_read(&buf->datalen);
 	record->buf = kmalloc(len, GFP_KERNEL);
@@ -1047,7 +1047,7 @@ static ssize_t psz_record_read(struct pstore_zone *zone,
 
 	if (unlikely(psz_zone_read_oldbuf(zone, record->buf, len, 0))) {
 		kfree(record->buf);
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	}
 
 	return len;
@@ -1293,22 +1293,22 @@ free_out:
  */
 int register_pstore_zone(struct pstore_zone_info *info)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct psz_context *cxt = &pstore_zone_cxt;
 
 	if (info->total_size < 4096) {
 		pr_warn("total_size must be >= 4096\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!info->kmsg_size && !info->pmsg_size && !info->console_size &&
 	    !info->ftrace_size) {
 		pr_warn("at least one record size must be non-zero\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!info->name || !info->name[0])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #define check_size(name, size) {					\
 		if (info->name > 0 && info->name < (size)) {		\
@@ -1337,7 +1337,7 @@ int register_pstore_zone(struct pstore_zone_info *info)
 	 */
 	if (!info->read || !info->write) {
 		pr_err("no valid general read/write interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&cxt->pstore_zone_info_lock);
@@ -1345,7 +1345,7 @@ int register_pstore_zone(struct pstore_zone_info *info)
 		pr_warn("'%s' already loaded: ignoring '%s'\n",
 				cxt->pstore_zone_info->name, info->name);
 		mutex_unlock(&cxt->pstore_zone_info_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	cxt->pstore_zone_info = info;
 

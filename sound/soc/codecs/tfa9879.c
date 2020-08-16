@@ -67,7 +67,7 @@ static int tfa9879_hw_params(struct snd_pcm_substream *substream,
 		fs = TFA9879_I2S_FS_96000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -78,7 +78,7 @@ static int tfa9879_hw_params(struct snd_pcm_substream *substream,
 		i2s_set = TFA9879_I2S_SET_LSB_J_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tfa9879->lsb_justified)
@@ -115,7 +115,7 @@ static int tfa9879_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -126,7 +126,7 @@ static int tfa9879_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		sck_pol = TFA9879_SCK_POL_INVERSE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -143,7 +143,7 @@ static int tfa9879_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		i2s_set = TFA9879_I2S_SET_LSB_J_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, TFA9879_SERIAL_INTERFACE_1,

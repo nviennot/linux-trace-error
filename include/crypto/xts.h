@@ -16,11 +16,11 @@ static inline int xts_check_key(struct crypto_tfm *tfm,
 	 * the length must be even.
 	 */
 	if (keylen % 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ensure that the AES and tweak key are not identical */
 	if (fips_enabled && !crypto_memneq(key, key + (keylen / 2), keylen / 2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -33,13 +33,13 @@ static inline int xts_verify_key(struct crypto_skcipher *tfm,
 	 * the length must be even.
 	 */
 	if (keylen % 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ensure that the AES and tweak key are not identical */
 	if ((fips_enabled || (crypto_skcipher_get_flags(tfm) &
 			      CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)) &&
 	    !crypto_memneq(key, key + (keylen / 2), keylen / 2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

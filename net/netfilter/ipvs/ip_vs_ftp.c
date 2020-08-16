@@ -579,7 +579,7 @@ static int __net_init __ip_vs_ftp_init(struct net *net)
 	struct netns_ipvs *ipvs = net_ipvs(net);
 
 	if (!ipvs)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	app = register_ip_vs_app(ipvs, &ip_vs_ftp);
 	if (IS_ERR(app))

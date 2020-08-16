@@ -153,13 +153,13 @@ static int at91sam9g20ek_audio_probe(struct platform_device *pdev)
 	int ret;
 
 	if (!np) {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = atmel_ssc_set_audio(0);
 	if (ret) {
 		dev_err(&pdev->dev, "ssc channel is not valid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -204,7 +204,7 @@ static int at91sam9g20ek_audio_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "atmel,audio-codec", 0);
 	if (!codec_np) {
 		dev_err(&pdev->dev, "codec info missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	at91sam9g20ek_dai.codecs->of_node = codec_np;
 
@@ -214,7 +214,7 @@ static int at91sam9g20ek_audio_probe(struct platform_device *pdev)
 	cpu_np = of_parse_phandle(np, "atmel,ssc-controller", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "dai and pcm info missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	at91sam9g20ek_dai.cpus->of_node = cpu_np;
 	at91sam9g20ek_dai.platforms->of_node = cpu_np;

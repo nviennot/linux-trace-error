@@ -509,7 +509,7 @@ static int snd_cs4231_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	}
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 
@@ -775,7 +775,7 @@ static int snd_cs4231_open(struct snd_cs4231 *chip, unsigned int mode)
 	mutex_lock(&chip->open_mutex);
 	if ((chip->mode & mode)) {
 		mutex_unlock(&chip->open_mutex);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (chip->mode & CS4231_MODE_OPEN) {
 		chip->mode |= mode;
@@ -911,7 +911,7 @@ static int snd_cs4231_playback_prepare(struct snd_pcm_substream *substream)
 					    CS4231_PLAYBACK_PIO);
 
 	if (WARN_ON(runtime->period_size > 0xffff + 1)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1041,7 +1041,7 @@ static int snd_cs4231_probe(struct snd_cs4231 *chip)
 	}
 	snd_printdd("cs4231: port = %p, id = 0x%x\n", chip->port, id);
 	if (id != 0x0a)
-		return -ENODEV;	/* no valid device found */
+		return -ERR(ENODEV);	/* no valid device found */
 
 	spin_lock_irqsave(&chip->lock, flags);
 
@@ -1300,7 +1300,7 @@ static int snd_cs4231_put_mux(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.enumerated.item[0] > 3 ||
 	    ucontrol->value.enumerated.item[1] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	left = ucontrol->value.enumerated.item[0] << 6;
 	right = ucontrol->value.enumerated.item[1] << 6;
 
@@ -1524,7 +1524,7 @@ static int snd_cs4231_mixer(struct snd_card *card)
 	int err, idx;
 
 	if (snd_BUG_ON(!chip || !chip->pcm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	strcpy(card->mixername, chip->pcm->name);
 
@@ -1549,11 +1549,11 @@ static int cs4231_attach_begin(struct platform_device *op,
 	*rcard = NULL;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&op->dev, index[dev], id[dev], THIS_MODULE,
@@ -1663,16 +1663,16 @@ static int sbus_dma_request(struct cs4231_dma_control *dma_cont,
 	struct sbus_dma_info *base = &dma_cont->sbus_info;
 
 	if (len >= (1 << 24))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irqsave(&base->lock, flags);
 	csr = sbus_readl(base->regs + APCCSR);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	test = APC_CDMA_READY;
 	if (base->dir == APC_PLAY)
 		test = APC_PDMA_READY;
 	if (!(csr & test))
 		goto out;
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	test = APC_XINT_CNVA;
 	if (base->dir == APC_PLAY)
 		test = APC_XINT_PNVA;
@@ -1796,7 +1796,7 @@ static int snd_cs4231_sbus_create(struct snd_card *card,
 				chip->regs_size, "cs4231");
 	if (!chip->port) {
 		snd_printdd("cs4231-%d: Unable to map chip registers.\n", dev);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	chip->c_dma.sbus_info.regs = chip->port;
@@ -1819,13 +1819,13 @@ static int snd_cs4231_sbus_create(struct snd_card *card,
 		snd_printdd("cs4231-%d: Unable to grab SBUS IRQ %d\n",
 			    dev, op->archdata.irqs[0]);
 		snd_cs4231_sbus_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq[0] = op->archdata.irqs[0];
 
 	if (snd_cs4231_probe(chip) < 0) {
 		snd_cs4231_sbus_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_cs4231_init(chip);
 
@@ -1987,37 +1987,37 @@ static int snd_cs4231_ebus_create(struct snd_card *card,
 	    !chip->c_dma.ebus_info.regs) {
 		snd_cs4231_ebus_free(chip);
 		snd_printdd("cs4231-%d: Unable to map chip registers.\n", dev);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (ebus_dma_register(&chip->c_dma.ebus_info)) {
 		snd_cs4231_ebus_free(chip);
 		snd_printdd("cs4231-%d: Unable to register EBUS capture DMA\n",
 			    dev);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (ebus_dma_irq_enable(&chip->c_dma.ebus_info, 1)) {
 		snd_cs4231_ebus_free(chip);
 		snd_printdd("cs4231-%d: Unable to enable EBUS capture IRQ\n",
 			    dev);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (ebus_dma_register(&chip->p_dma.ebus_info)) {
 		snd_cs4231_ebus_free(chip);
 		snd_printdd("cs4231-%d: Unable to register EBUS play DMA\n",
 			    dev);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (ebus_dma_irq_enable(&chip->p_dma.ebus_info, 1)) {
 		snd_cs4231_ebus_free(chip);
 		snd_printdd("cs4231-%d: Unable to enable EBUS play IRQ\n", dev);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (snd_cs4231_probe(chip) < 0) {
 		snd_cs4231_ebus_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_cs4231_init(chip);
 
@@ -2065,7 +2065,7 @@ static int cs4231_probe(struct platform_device *op)
 	    of_node_name_eq(op->dev.of_node->parent, "sbi"))
 		return cs4231_sbus_probe(op);
 #endif
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int cs4231_remove(struct platform_device *op)

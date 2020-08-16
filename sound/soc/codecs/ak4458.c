@@ -188,7 +188,7 @@ static int set_digfil(struct snd_kcontrol *kcontrol,
 
 	num = ucontrol->value.enumerated.item[0];
 	if (num > 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ak4458->digfil = num;
 
@@ -348,11 +348,11 @@ static int ak4458_hw_params(struct snd_pcm_substream *substream,
 			format = AK4458_DIF_32BIT_MSB;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AK4458_00_CONTROL1,
@@ -377,7 +377,7 @@ static int ak4458_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBM_CFS:
 	default:
 		dev_err(component->dev, "Master mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -390,7 +390,7 @@ static int ak4458_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(component->dev, "Audio format 0x%02X unsupported\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ak4458_rstn_control(component, 0);

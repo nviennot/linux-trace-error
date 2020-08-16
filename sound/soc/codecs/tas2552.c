@@ -163,7 +163,7 @@ static int tas2552_setup_pll(struct snd_soc_component *component,
 
 	if (!pll_clkin) {
 		if (tas2552->pll_clk_id != TAS2552_PLL_CLKIN_BCLK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		pll_clkin = snd_soc_params_to_bclk(params);
 		pll_clkin += tas2552->tdm_delay;
@@ -261,7 +261,7 @@ static int tas2552_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Not supported sample size: %d\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cpf <= 32)
@@ -310,7 +310,7 @@ static int tas2552_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Not supported sample rate: %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, TAS2552_CFG_3, TAS2552_WCLK_FREQ_MASK,
@@ -362,7 +362,7 @@ static int tas2552_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_vdbg(component->dev, "DAI Format master is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & (SND_SOC_DAIFMT_FORMAT_MASK |
@@ -381,7 +381,7 @@ static int tas2552_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_vdbg(component->dev, "DAI Format is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	tas2552->dai_fmt = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
 
@@ -428,7 +428,7 @@ static int tas2552_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clk id: %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, reg, mask, val);
@@ -446,14 +446,14 @@ static int tas2552_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (unlikely(!tx_mask)) {
 		dev_err(component->dev, "tx masks need to be non 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* TDM based on DSP mode requires slots to be adjacent */
 	lsb = __ffs(tx_mask);
 	if ((lsb + 1) != __fls(tx_mask)) {
 		dev_err(component->dev, "Invalid mask, slots must be adjacent\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tas2552->tdm_delay = lsb * slot_width;

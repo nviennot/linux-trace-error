@@ -125,7 +125,7 @@ static inline int snd_sof_dsp_get_mailbox_offset(struct snd_sof_dev *sdev)
 		return sof_ops(sdev)->get_mailbox_offset(sdev);
 
 	dev_err(sdev->dev, "error: %s not defined\n", __func__);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int snd_sof_dsp_get_window_offset(struct snd_sof_dev *sdev,
@@ -135,7 +135,7 @@ static inline int snd_sof_dsp_get_window_offset(struct snd_sof_dev *sdev,
 		return sof_ops(sdev)->get_window_offset(sdev, id);
 
 	dev_err(sdev->dev, "error: %s not defined\n", __func__);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 /* power management */
 static inline int snd_sof_dsp_resume(struct snd_sof_dev *sdev)
@@ -248,7 +248,7 @@ static inline u32 snd_sof_dsp_read(struct snd_sof_dev *sdev, u32 bar,
 		return sof_ops(sdev)->read(sdev, sdev->bar[bar] + offset);
 
 	dev_err(sdev->dev, "error: %s not defined\n", __func__);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline u64 snd_sof_dsp_read64(struct snd_sof_dev *sdev, u32 bar,
@@ -258,7 +258,7 @@ static inline u64 snd_sof_dsp_read64(struct snd_sof_dev *sdev, u32 bar,
 		return sof_ops(sdev)->read64(sdev, sdev->bar[bar] + offset);
 
 	dev_err(sdev->dev, "error: %s not defined\n", __func__);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* block IO */

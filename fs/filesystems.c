@@ -76,15 +76,15 @@ int register_filesystem(struct file_system_type * fs)
 
 	if (fs->parameters &&
 	    !fs_validate_description(fs->name, fs->parameters))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BUG_ON(strchr(fs->name, '.'));
 	if (fs->next)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	write_lock(&file_systems_lock);
 	p = find_filesystem(fs->name, strlen(fs->name));
 	if (*p)
-		res = -EBUSY;
+		res = -ERR(EBUSY);
 	else
 		*p = fs;
 	write_unlock(&file_systems_lock);
@@ -123,7 +123,7 @@ int unregister_filesystem(struct file_system_type * fs)
 	}
 	write_unlock(&file_systems_lock);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 EXPORT_SYMBOL(unregister_filesystem);
@@ -140,7 +140,7 @@ static int fs_index(const char __user * __name)
 	if (IS_ERR(name))
 		return err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	read_lock(&file_systems_lock);
 	for (tmp=file_systems, index=0 ; tmp ; tmp=tmp->next, index++) {
 		if (strcmp(tmp->name, name->name) == 0) {
@@ -164,7 +164,7 @@ static int fs_name(unsigned int index, char __user * buf)
 			break;
 	read_unlock(&file_systems_lock);
 	if (!tmp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* OK, we got the reference, so we can safely block */
 	len = strlen(tmp->name) + 1;
@@ -190,7 +190,7 @@ static int fs_maxindex(void)
  */
 SYSCALL_DEFINE3(sysfs, int, option, unsigned long, arg1, unsigned long, arg2)
 {
-	int retval = -EINVAL;
+	int retval = -ERR(EINVAL);
 
 	switch (option) {
 		case 1:

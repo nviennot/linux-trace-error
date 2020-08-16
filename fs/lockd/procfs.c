@@ -26,7 +26,7 @@ nlm_end_grace_write(struct file *file, const char __user *buf, size_t size,
 					   lockd_net_id);
 
 	if (size < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = simple_transaction_get(file, buf, size);
 	if (IS_ERR(data))
@@ -39,7 +39,7 @@ nlm_end_grace_write(struct file *file, const char __user *buf, size_t size,
 		locks_end_grace(&ln->lockd_manager);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return size;

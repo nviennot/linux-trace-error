@@ -133,7 +133,7 @@ static int make_free_space(struct ubifs_info *c)
 
 		liab2 = get_liability(c);
 		if (liab2 < liab1)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		dbg_budg("new liability %lld (not shrunk)", liab2);
 
@@ -141,7 +141,7 @@ static int make_free_space(struct ubifs_info *c)
 		dbg_budg("Run GC");
 		err = run_gc(c);
 		if (!err)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		if (err != -EAGAIN && err != -ENOSPC)
 			/* Some real error happened */
@@ -153,7 +153,7 @@ static int make_free_space(struct ubifs_info *c)
 			return err;
 	} while (retries++ < MAX_MKSPC_RETRIES);
 
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -332,7 +332,7 @@ static int do_budget_space(struct ubifs_info *c)
 	if (unlikely(rsvd_idx_lebs > lebs)) {
 		dbg_budg("out of indexing space: min_idx_lebs %d (old %d), rsvd_idx_lebs %d",
 			 min_idx_lebs, c->bi.min_idx_lebs, rsvd_idx_lebs);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	available = ubifs_calc_available(c, min_idx_lebs);
@@ -341,11 +341,11 @@ static int do_budget_space(struct ubifs_info *c)
 	if (unlikely(available < outstanding)) {
 		dbg_budg("out of data space: available %lld, outstanding %lld",
 			 available, outstanding);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (available - outstanding <= c->rp_size && !can_use_rp(c))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	c->bi.min_idx_lebs = min_idx_lebs;
 	return 0;
@@ -453,7 +453,7 @@ again:
 	if (unlikely(c->bi.nospace) && (c->bi.nospace_rp || !can_use_rp(c))) {
 		dbg_budg("no space");
 		spin_unlock(&c->space_lock);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	c->bi.idx_growth += idx_growth;

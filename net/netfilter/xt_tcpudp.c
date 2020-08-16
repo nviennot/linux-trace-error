@@ -123,7 +123,7 @@ static int tcp_mt_check(const struct xt_mtchk_param *par)
 	const struct xt_tcp *tcpinfo = par->matchinfo;
 
 	/* Must specify no unknown invflags */
-	return (tcpinfo->invflags & ~XT_TCP_INV_MASK) ? -EINVAL : 0;
+	return (tcpinfo->invflags & ~XT_TCP_INV_MASK) ? -ERR(EINVAL) : 0;
 }
 
 static bool udp_mt(const struct sk_buff *skb, struct xt_action_param *par)
@@ -158,7 +158,7 @@ static int udp_mt_check(const struct xt_mtchk_param *par)
 	const struct xt_udp *udpinfo = par->matchinfo;
 
 	/* Must specify no unknown invflags */
-	return (udpinfo->invflags & ~XT_UDP_INV_MASK) ? -EINVAL : 0;
+	return (udpinfo->invflags & ~XT_UDP_INV_MASK) ? -ERR(EINVAL) : 0;
 }
 
 static struct xt_match tcpudp_mt_reg[] __read_mostly = {

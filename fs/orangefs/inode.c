@@ -561,7 +561,7 @@ static ssize_t orangefs_direct_IO(struct kiocb *iocb,
 	struct orangefs_khandle *handle = &orangefs_inode->refn.khandle;
 	size_t count = iov_iter_count(iter);
 	ssize_t total_count = 0;
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 	int i = 0;
 
 	gossip_debug(GOSSIP_FILE_DEBUG,
@@ -750,7 +750,7 @@ static int orangefs_setattr_size(struct inode *inode, struct iattr *iattr)
 	struct orangefs_inode_s *orangefs_inode = ORANGEFS_I(inode);
 	struct orangefs_kernel_op_s *new_op;
 	loff_t orig_size;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_INODE_DEBUG,
 		     "%s: %pU: Handle is %pU | fs_id %d | size is %llu\n",
@@ -763,7 +763,7 @@ static int orangefs_setattr_size(struct inode *inode, struct iattr *iattr)
 	/* Ensure that we have a up to date size, so we know if it changed. */
 	ret = orangefs_inode_getattr(inode, ORANGEFS_GETATTR_SIZE);
 	if (ret == -ESTALE)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	if (ret) {
 		gossip_err("%s: orangefs_inode_getattr failed, ret:%d:.\n",
 		    __func__, ret);
@@ -821,14 +821,14 @@ int __orangefs_setattr(struct inode *inode, struct iattr *iattr)
 			} else {
 				gossip_debug(GOSSIP_UTILS_DEBUG,
 					     "User attempted to set sticky bit on non-root directory; returning EINVAL.\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 		}
 		if (iattr->ia_mode & (S_ISUID)) {
 			gossip_debug(GOSSIP_UTILS_DEBUG,
 				     "Attempting to set setuid bit (not supported); returning EINVAL.\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -924,7 +924,7 @@ int orangefs_permission(struct inode *inode, int mask)
 	int ret;
 
 	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	gossip_debug(GOSSIP_INODE_DEBUG, "%s: refreshing\n", __func__);
 
@@ -983,7 +983,7 @@ static int orangefs_init_iops(struct inode *inode)
 		gossip_debug(GOSSIP_INODE_DEBUG,
 			     "%s: unsupported mode\n",
 			     __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

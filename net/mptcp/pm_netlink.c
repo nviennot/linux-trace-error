@@ -272,7 +272,7 @@ static int mptcp_pm_nl_append_new_local_addr(struct pm_nl_pernet *pernet,
 					     struct mptcp_pm_addr_entry *entry)
 {
 	struct mptcp_pm_addr_entry *cur;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	spin_lock_bh(&pernet->lock);
 	/* to keep the code simple, don't do IDR-like allocation for address ID,
@@ -416,7 +416,7 @@ static int mptcp_pm_parse_addr(struct nlattr *attr, struct genl_info *info,
 
 	if (!attr) {
 		GENL_SET_ERR_MSG(info, "missing address info");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* no validation needed - was already done via nested policy */
@@ -432,7 +432,7 @@ static int mptcp_pm_parse_addr(struct nlattr *attr, struct genl_info *info,
 
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "missing family");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry->addr.family = nla_get_u16(tb[MPTCP_PM_ADDR_ATTR_FAMILY]);
@@ -443,13 +443,13 @@ static int mptcp_pm_parse_addr(struct nlattr *attr, struct genl_info *info,
 	    ) {
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "unknown address family");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	addr_addr = mptcp_pm_family_to_addr(entry->addr.family);
 	if (!tb[addr_addr]) {
 		NL_SET_ERR_MSG_ATTR(info->extack, attr,
 				    "missing address data");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 #if IS_ENABLED(CONFIG_MPTCP_IPV6)
@@ -532,7 +532,7 @@ static int mptcp_nl_cmd_del_addr(struct sk_buff *skb, struct genl_info *info)
 	entry = __lookup_addr_by_id(pernet, addr.addr.id);
 	if (!entry) {
 		GENL_SET_ERR_MSG(info, "address not found");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (entry->flags & MPTCP_PM_ADDR_FLAG_SIGNAL)
@@ -587,7 +587,7 @@ static int mptcp_nl_fill_addr(struct sk_buff *skb,
 
 	attr = nla_nest_start(skb, MPTCP_PM_ATTR_ADDR);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u16(skb, MPTCP_PM_ADDR_ATTR_FAMILY, addr->family))
 		goto nla_put_failure;
@@ -613,7 +613,7 @@ static int mptcp_nl_fill_addr(struct sk_buff *skb,
 
 nla_put_failure:
 	nla_nest_cancel(skb, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int mptcp_nl_cmd_get_addr(struct sk_buff *skb, struct genl_info *info)
@@ -637,7 +637,7 @@ static int mptcp_nl_cmd_get_addr(struct sk_buff *skb, struct genl_info *info)
 				  info->genlhdr->cmd);
 	if (!reply) {
 		GENL_SET_ERR_MSG(info, "not enough space in Netlink message");
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto fail;
 	}
 
@@ -645,7 +645,7 @@ static int mptcp_nl_cmd_get_addr(struct sk_buff *skb, struct genl_info *info)
 	entry = __lookup_addr_by_id(pernet, addr.addr.id);
 	if (!entry) {
 		GENL_SET_ERR_MSG(info, "address not found");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto unlock_fail;
 	}
 
@@ -712,7 +712,7 @@ static int parse_limit(struct genl_info *info, int id, unsigned int *limit)
 	*limit = nla_get_u32(attr);
 	if (*limit > MPTCP_PM_ADDR_MAX) {
 		GENL_SET_ERR_MSG(info, "limit greater than maximum");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -773,7 +773,7 @@ mptcp_nl_cmd_get_limits(struct sk_buff *skb, struct genl_info *info)
 fail:
 	GENL_SET_ERR_MSG(info, "not enough space in Netlink message");
 	nlmsg_free(msg);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static struct genl_ops mptcp_pm_ops[] = {

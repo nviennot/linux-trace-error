@@ -552,7 +552,7 @@ int gcov_iter_next(struct gcov_iterator *iter)
 		iter->pos += ITER_STRIDE;
 
 	if (iter->pos >= iter->size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -569,7 +569,7 @@ int gcov_iter_write(struct gcov_iterator *iter, struct seq_file *seq)
 	size_t len;
 
 	if (iter->pos >= iter->size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = ITER_STRIDE;
 	if (iter->pos + len > iter->size)

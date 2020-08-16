@@ -383,7 +383,7 @@ static int cs35l33_set_bias_level(struct snd_soc_component *component,
 	case SND_SOC_BIAS_OFF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -432,7 +432,7 @@ static int cs35l33_get_mclk_coeff(int mclk, int srate)
 			cs35l33_mclk_coeffs[i].srate == srate)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs35l33_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
@@ -452,7 +452,7 @@ static int cs35l33_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		dev_dbg(component->dev, "Audio port in slave mode\n");
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -469,7 +469,7 @@ static int cs35l33_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		dev_dbg(component->dev, "Audio port in I2S mode\n");
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -556,7 +556,7 @@ static int cs35l33_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	int slot, slot_num;
 
 	if (slot_width != 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* scan rx_mask for aud slot */
 	slot = ffs(rx_mask) - 1;
@@ -656,7 +656,7 @@ static int cs35l33_component_set_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		cs35l33->mclk_int = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "external mclk freq=%d, internal mclk freq=%d\n",
@@ -751,14 +751,14 @@ static int cs35l33_set_bst_ipk(struct snd_soc_component *component, unsigned int
 	/* Boost current in uA */
 	if (bst > 3600000 || bst < 1850000) {
 		dev_err(component->dev, "Invalid boost current %d\n", bst);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
 	if (bst % 15625) {
 		dev_err(component->dev, "Current not a multiple of 15625uA (%d)\n",
 			bst);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 

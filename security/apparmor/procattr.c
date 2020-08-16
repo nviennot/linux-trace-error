@@ -38,7 +38,7 @@ int aa_getprocattr(struct aa_label *label, char **string)
 
 	if (!aa_ns_visible(current_ns, ns, true)) {
 		aa_put_ns(current_ns);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	len = aa_label_snxprint(NULL, 0, current_ns, label,
@@ -82,7 +82,7 @@ static char *split_token_from_name(const char *op, char *args, u64 *token)
 	*token = simple_strtoull(args, &name, 16);
 	if ((name == args) || *name != '^') {
 		AA_ERROR("%s: Invalid input '%s'", op, args);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	name++;			/* skip ^ */
@@ -112,7 +112,7 @@ int aa_setprocattr_changehat(char *args, size_t size, int flags)
 
 	if (!hat && !token) {
 		AA_ERROR("change_hat: Invalid input, NULL hat and NULL magic");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (hat) {

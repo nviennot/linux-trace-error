@@ -607,7 +607,7 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 	switch (cmd) {
 	case SIOCINQ:
 		if (sk->sk_state == TCP_LISTEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		slow = lock_sock_fast(sk);
 		answ = tcp_inq(sk);
@@ -619,7 +619,7 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		break;
 	case SIOCOUTQ:
 		if (sk->sk_state == TCP_LISTEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))
 			answ = 0;
@@ -628,7 +628,7 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		break;
 	case SIOCOUTQNSD:
 		if (sk->sk_state == TCP_LISTEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if ((1 << sk->sk_state) & (TCPF_SYN_SENT | TCPF_SYN_RECV))
 			answ = 0;
@@ -637,7 +637,7 @@ int tcp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 			       READ_ONCE(tp->snd_nxt);
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return put_user(answ, (int __user *)arg);
@@ -788,7 +788,7 @@ ssize_t tcp_splice_read(struct socket *sock, loff_t *ppos,
 	 * We can't seek on a socket input
 	 */
 	if (unlikely(*ppos))
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	ret = spliced = 0;
 
@@ -815,11 +815,11 @@ ssize_t tcp_splice_read(struct socket *sock, loff_t *ppos,
 				 * This occurs when user tries to read
 				 * from never connected socket.
 				 */
-				ret = -ENOTCONN;
+				ret = -ERR(ENOTCONN);
 				break;
 			}
 			if (!timeo) {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				break;
 			}
 			/* if __tcp_splice_read() got nothing while we have
@@ -971,7 +971,7 @@ ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
 
 	if (IS_ENABLED(CONFIG_DEBUG_VM) &&
 	    WARN_ONCE(PageSlab(page), "page must not be a Slab one"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Wait for a connection to finish. One exception is TCP Fast Open
 	 * (passive side) where data is allowed to be sent before a connection
@@ -989,7 +989,7 @@ ssize_t do_tcp_sendpages(struct sock *sk, struct page *page, int offset,
 	mss_now = tcp_send_mss(sk, &size_goal, flags);
 	copied = 0;
 
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 	if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
 		goto out_err;
 
@@ -1147,14 +1147,14 @@ static int tcp_sendmsg_fastopen(struct sock *sk, struct msghdr *msg,
 	if (!(sock_net(sk)->ipv4.sysctl_tcp_fastopen & TFO_CLIENT_ENABLE) ||
 	    (uaddr && msg->msg_namelen >= sizeof(uaddr->sa_family) &&
 	     uaddr->sa_family == AF_UNSPEC))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (tp->fastopen_req)
-		return -EALREADY; /* Another Fast Open is in progress */
+		return -ERR(EALREADY); /* Another Fast Open is in progress */
 
 	tp->fastopen_req = kzalloc(sizeof(struct tcp_fastopen_request),
 				   sk->sk_allocation);
 	if (unlikely(!tp->fastopen_req))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	tp->fastopen_req->data = msg;
 	tp->fastopen_req->size = size;
 	tp->fastopen_req->uarg = uarg;
@@ -1200,7 +1200,7 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 		skb = tcp_write_queue_tail(sk);
 		uarg = sock_zerocopy_realloc(sk, size, skb_zcopy(skb));
 		if (!uarg) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto out_err;
 		}
 
@@ -1239,7 +1239,7 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 			goto out_nopush;
 		}
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (tp->repair_queue == TCP_NO_QUEUE)
 			goto out_err;
 
@@ -1250,7 +1250,7 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 	if (msg->msg_controllen) {
 		err = sock_cmsg_send(sk, msg, &sockc);
 		if (unlikely(err)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_err;
 		}
 	}
@@ -1264,7 +1264,7 @@ int tcp_sendmsg_locked(struct sock *sk, struct msghdr *msg, size_t size)
 restart:
 	mss_now = tcp_send_mss(sk, &size_goal, flags);
 
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 	if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN))
 		goto do_error;
 
@@ -1457,10 +1457,10 @@ static int tcp_recv_urg(struct sock *sk, struct msghdr *msg, int len, int flags)
 	/* No URG data to read. */
 	if (sock_flag(sk, SOCK_URGINLINE) || !tp->urg_data ||
 	    tp->urg_data == TCP_URG_READ)
-		return -EINVAL;	/* Yes this is right ! */
+		return -ERR(EINVAL);	/* Yes this is right ! */
 
 	if (sk->sk_state == TCP_CLOSE && !sock_flag(sk, SOCK_DONE))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (tp->urg_data & TCP_URG_VALID) {
 		int err = 0;
@@ -1491,7 +1491,7 @@ static int tcp_recv_urg(struct sock *sk, struct msghdr *msg, int len, int flags)
 	 * blocking state of the socket.
 	 * Mike <pall@rz.uni-karlsruhe.de>
 	 */
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int tcp_peek_sndq(struct sock *sk, struct msghdr *msg, int len)
@@ -1628,7 +1628,7 @@ int tcp_read_sock(struct sock *sk, read_descriptor_t *desc,
 	int copied = 0;
 
 	if (sk->sk_state == TCP_LISTEN)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	while ((skb = tcp_recv_skb(sk, seq, &offset)) != NULL) {
 		if (offset < skb->len) {
 			int used;
@@ -1731,7 +1731,7 @@ int tcp_mmap(struct file *file, struct socket *sock,
 	     struct vm_area_struct *vma)
 {
 	if (vma->vm_flags & (VM_WRITE | VM_EXEC))
-		return -EPERM;
+		return -ERR(EPERM);
 	vma->vm_flags &= ~(VM_MAYWRITE | VM_MAYEXEC);
 
 	/* Instruct vm_insert_page() to not mmap_read_lock(mm) */
@@ -1789,10 +1789,10 @@ static int tcp_zerocopy_receive(struct sock *sk,
 	int ret;
 
 	if (address & (PAGE_SIZE - 1) || address != zc->address)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sk->sk_state == TCP_LISTEN)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	sock_rps_record_flow(sk);
 
@@ -1803,7 +1803,7 @@ static int tcp_zerocopy_receive(struct sock *sk,
 	vma = find_vma(current->mm, address);
 	if (!vma || vma->vm_start > address || vma->vm_ops != &tcp_vm_ops) {
 		mmap_read_unlock(current->mm);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	zc->length = min_t(unsigned long, zc->length, vma->vm_end - address);
 
@@ -1896,7 +1896,7 @@ out:
 			zc->recv_skip_hint = 0;
 	} else {
 		if (!zc->recv_skip_hint && sock_flag(sk, SOCK_DONE))
-			ret = -EIO;
+			ret = -ERR(EIO);
 	}
 	zc->length = length;
 	return ret;
@@ -2037,7 +2037,7 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 
 	lock_sock(sk);
 
-	err = -ENOTCONN;
+	err = -ERR(ENOTCONN);
 	if (sk->sk_state == TCP_LISTEN)
 		goto out;
 
@@ -2049,14 +2049,14 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 		goto recv_urg;
 
 	if (unlikely(tp->repair)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!(flags & MSG_PEEK))
 			goto out;
 
 		if (tp->repair_queue == TCP_SEND_QUEUE)
 			goto recv_sndq;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (tp->repair_queue == TCP_NO_QUEUE)
 			goto out;
 
@@ -2079,7 +2079,7 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 			if (copied)
 				break;
 			if (signal_pending(current)) {
-				copied = timeo ? sock_intr_errno(timeo) : -EAGAIN;
+				copied = timeo ? sock_intr_errno(timeo) : -ERR(EAGAIN);
 				break;
 			}
 		}
@@ -2140,12 +2140,12 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 				/* This occurs when user tries to read
 				 * from never connected socket.
 				 */
-				copied = -ENOTCONN;
+				copied = -ERR(ENOTCONN);
 				break;
 			}
 
 			if (!timeo) {
-				copied = -EAGAIN;
+				copied = -ERR(EAGAIN);
 				break;
 			}
 
@@ -2642,7 +2642,7 @@ int tcp_disconnect(struct sock *sk, int flags)
 	if (old_state == TCP_LISTEN) {
 		inet_csk_listen_stop(sk);
 	} else if (unlikely(tp->repair)) {
-		sk->sk_err = ECONNABORTED;
+		sk->sk_err = ERR(ECONNABORTED);
 	} else if (tcp_need_reset(old_state) ||
 		   (tp->snd_nxt != tp->write_seq &&
 		    (1 << old_state) & (TCPF_CLOSING | TCPF_LAST_ACK))) {
@@ -2650,9 +2650,9 @@ int tcp_disconnect(struct sock *sk, int flags)
 		 * states
 		 */
 		tcp_send_active_reset(sk, gfp_any());
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 	} else if (old_state == TCP_SYN_SENT)
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 
 	tcp_clear_xmit_timers(sk);
 	__skb_queue_purge(&sk->sk_receive_queue);
@@ -2769,22 +2769,22 @@ static int tcp_repair_set_window(struct tcp_sock *tp, char __user *optbuf, int l
 	struct tcp_repair_window opt;
 
 	if (!tp->repair)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (len != sizeof(opt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&opt, optbuf, sizeof(opt)))
 		return -EFAULT;
 
 	if (opt.max_window < opt.snd_wnd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (after(opt.snd_wl1, tp->rcv_nxt + opt.rcv_wnd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (after(opt.rcv_wup, tp->rcv_nxt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tp->snd_wl1	= opt.snd_wl1;
 	tp->snd_wnd	= opt.snd_wnd;
@@ -2820,7 +2820,7 @@ static int tcp_repair_options_est(struct sock *sk,
 				u16 rcv_wscale = opt.opt_val >> 16;
 
 				if (snd_wscale > TCP_MAX_WSCALE || rcv_wscale > TCP_MAX_WSCALE)
-					return -EFBIG;
+					return -ERR(EFBIG);
 
 				tp->rx_opt.snd_wscale = snd_wscale;
 				tp->rx_opt.rcv_wscale = rcv_wscale;
@@ -2829,13 +2829,13 @@ static int tcp_repair_options_est(struct sock *sk,
 			break;
 		case TCPOPT_SACK_PERM:
 			if (opt.opt_val != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			tp->rx_opt.sack_ok |= TCP_SACK_SEEN;
 			break;
 		case TCPOPT_TIMESTAMP:
 			if (opt.opt_val != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			tp->rx_opt.tstamp_ok = 1;
 			break;
@@ -2943,7 +2943,7 @@ EXPORT_SYMBOL(tcp_sock_set_quickack);
 int tcp_sock_set_syncnt(struct sock *sk, int val)
 {
 	if (val < 1 || val > MAX_TCP_SYNCNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	inet_csk(sk)->icsk_syn_retries = val;
@@ -2965,7 +2965,7 @@ static int __tcp_sock_set_keepidle(struct sock *sk, int val)
 	struct tcp_sock *tp = tcp_sk(sk);
 
 	if (val < 1 || val > MAX_TCP_KEEPIDLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tp->keepalive_time = val * HZ;
 	if (sock_flag(sk, SOCK_KEEPOPEN) &&
@@ -2996,7 +2996,7 @@ EXPORT_SYMBOL(tcp_sock_set_keepidle);
 int tcp_sock_set_keepintvl(struct sock *sk, int val)
 {
 	if (val < 1 || val > MAX_TCP_KEEPINTVL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	tcp_sk(sk)->keepalive_intvl = val * HZ;
@@ -3008,7 +3008,7 @@ EXPORT_SYMBOL(tcp_sock_set_keepintvl);
 int tcp_sock_set_keepcnt(struct sock *sk, int val)
 {
 	if (val < 1 || val > MAX_TCP_KEEPCNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	tcp_sk(sk)->keepalive_probes = val;
@@ -3035,7 +3035,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		char name[TCP_CA_NAME_MAX];
 
 		if (optlen < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		val = strncpy_from_user(name, optval,
 					min_t(long, TCP_CA_NAME_MAX-1, optlen));
@@ -3054,7 +3054,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		char name[TCP_ULP_NAME_MAX];
 
 		if (optlen < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		val = strncpy_from_user(name, optval,
 					min_t(long, TCP_ULP_NAME_MAX - 1,
@@ -3077,7 +3077,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		 */
 		if (optlen != TCP_FASTOPEN_KEY_LENGTH &&
 		    optlen != TCP_FASTOPEN_KEY_BUF_LENGTH)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(key, optval, optlen))
 			return -EFAULT;
@@ -3093,7 +3093,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 	}
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
@@ -3107,7 +3107,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		 * know which interface is going to be used
 		 */
 		if (val && (val < TCP_MIN_MSS || val > MAX_TCP_WINDOW)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		tp->rx_opt.user_mss = val;
@@ -3119,19 +3119,19 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 
 	case TCP_THIN_LINEAR_TIMEOUTS:
 		if (val < 0 || val > 1)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->thin_lto = val;
 		break;
 
 	case TCP_THIN_DUPACK:
 		if (val < 0 || val > 1)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		break;
 
 	case TCP_REPAIR:
 		if (!tcp_can_repair_sock(sk))
-			err = -EPERM;
+			err = -ERR(EPERM);
 		else if (val == TCP_REPAIR_ON) {
 			tp->repair = 1;
 			sk->sk_reuse = SK_FORCE_REUSE;
@@ -3144,22 +3144,22 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 			tp->repair = 0;
 			sk->sk_reuse = SK_NO_REUSE;
 		} else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 
 		break;
 
 	case TCP_REPAIR_QUEUE:
 		if (!tp->repair)
-			err = -EPERM;
+			err = -ERR(EPERM);
 		else if ((unsigned int)val < TCP_QUEUES_NR)
 			tp->repair_queue = val;
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		break;
 
 	case TCP_QUEUE_SEQ:
 		if (sk->sk_state != TCP_CLOSE)
-			err = -EPERM;
+			err = -ERR(EPERM);
 		else if (tp->repair_queue == TCP_SEND_QUEUE)
 			WRITE_ONCE(tp->write_seq, val);
 		else if (tp->repair_queue == TCP_RECV_QUEUE) {
@@ -3167,18 +3167,18 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 			WRITE_ONCE(tp->copied_seq, val);
 		}
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		break;
 
 	case TCP_REPAIR_OPTIONS:
 		if (!tp->repair)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else if (sk->sk_state == TCP_ESTABLISHED)
 			err = tcp_repair_options_est(sk,
 					(struct tcp_repair_opt __user *)optval,
 					optlen);
 		else
-			err = -EPERM;
+			err = -ERR(EPERM);
 		break;
 
 	case TCP_CORK:
@@ -3190,26 +3190,26 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		break;
 	case TCP_KEEPINTVL:
 		if (val < 1 || val > MAX_TCP_KEEPINTVL)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->keepalive_intvl = val * HZ;
 		break;
 	case TCP_KEEPCNT:
 		if (val < 1 || val > MAX_TCP_KEEPCNT)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->keepalive_probes = val;
 		break;
 	case TCP_SYNCNT:
 		if (val < 1 || val > MAX_TCP_SYNCNT)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			icsk->icsk_syn_retries = val;
 		break;
 
 	case TCP_SAVE_SYN:
 		if (val < 0 || val > 1)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->save_syn = val;
 		break;
@@ -3233,7 +3233,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 	case TCP_WINDOW_CLAMP:
 		if (!val) {
 			if (sk->sk_state != TCP_CLOSE) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 			tp->window_clamp = 0;
@@ -3257,7 +3257,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		 * before giving up and aborting (ETIMEDOUT) a connection.
 		 */
 		if (val < 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			icsk->icsk_user_timeout = val;
 		break;
@@ -3269,32 +3269,32 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 
 			fastopen_queue_tune(sk, val);
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		break;
 	case TCP_FASTOPEN_CONNECT:
 		if (val > 1 || val < 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		} else if (net->ipv4.sysctl_tcp_fastopen & TFO_CLIENT_ENABLE) {
 			if (sk->sk_state == TCP_CLOSE)
 				tp->fastopen_connect = val;
 			else
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 		} else {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 		}
 		break;
 	case TCP_FASTOPEN_NO_COOKIE:
 		if (val > 1 || val < 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else if (!((1 << sk->sk_state) & (TCPF_CLOSE | TCPF_LISTEN)))
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->fastopen_no_cookie = val;
 		break;
 	case TCP_TIMESTAMP:
 		if (!tp->repair)
-			err = -EPERM;
+			err = -ERR(EPERM);
 		else
 			tp->tsoffset = val - tcp_time_stamp_raw();
 		break;
@@ -3307,7 +3307,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		break;
 	case TCP_INQ:
 		if (val > 1 || val < 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			tp->recvmsg_inq = val;
 		break;
@@ -3317,7 +3317,7 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		tp->tcp_tx_delay = val;
 		break;
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -3589,7 +3589,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 	len = min_t(unsigned int, len, sizeof(int));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case TCP_MAXSEG:
@@ -3733,7 +3733,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		if (tp->repair)
 			val = tp->repair_queue;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case TCP_REPAIR_WINDOW: {
@@ -3743,10 +3743,10 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 			return -EFAULT;
 
 		if (len != sizeof(opt))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!tp->repair)
-			return -EPERM;
+			return -ERR(EPERM);
 
 		opt.snd_wl1	= tp->snd_wl1;
 		opt.snd_wnd	= tp->snd_wnd;
@@ -3764,7 +3764,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		else if (tp->repair_queue == TCP_RECV_QUEUE)
 			val = tp->rcv_nxt;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case TCP_USER_TIMEOUT:
@@ -3811,7 +3811,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 					return -EFAULT;
 				}
 				release_sock(sk);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			len = tp->saved_syn[0];
 			if (put_user(len, optlen)) {
@@ -3840,7 +3840,7 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		if (get_user(len, optlen))
 			return -EFAULT;
 		if (len < offsetofend(struct tcp_zerocopy_receive, length))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (len > sizeof(zc)) {
 			len = sizeof(zc);
 			if (put_user(len, optlen))
@@ -3874,7 +3874,7 @@ zerocopy_rcv_out:
 	}
 #endif
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))
@@ -4084,7 +4084,7 @@ int tcp_abort(struct sock *sk, int err)
 			local_bh_enable();
 			return 0;
 		}
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* Don't race with userspace socket closes such as tcp_close. */

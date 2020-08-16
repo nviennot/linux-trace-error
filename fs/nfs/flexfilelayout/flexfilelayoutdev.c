@@ -88,7 +88,7 @@ nfs4_ff_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
 	if (list_empty(&dsaddrs)) {
 		dprintk("%s: no suitable DS addresses found\n",
 			__func__);
-		ret = -ENOMEDIUM;
+		ret = -ERR(ENOMEDIUM);
 		goto out_err_drain_dsaddrs;
 	}
 
@@ -132,7 +132,7 @@ nfs4_ff_alloc_deviceid_node(struct nfs_server *server, struct pnfs_device *pdev,
 			dprintk("%s: [%d] unsupported ds version %d-%d\n", __func__,
 				i, ds_versions[i].version,
 				ds_versions[i].minor_version);
-			ret = -EPROTONOSUPPORT;
+			ret = -ERR(EPROTONOSUPPORT);
 			goto out_err_drain_dsaddrs;
 		}
 
@@ -258,7 +258,7 @@ int ff_layout_track_ds_error(struct nfs4_flexfile_layout *flo,
 		return 0;
 
 	if (IS_ERR_OR_NULL(mirror->mirror_ds))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dserr = kmalloc(sizeof(*dserr), gfp_flags);
 	if (!dserr)
@@ -324,7 +324,7 @@ ff_layout_init_mirror_ds(struct pnfs_layout_hdr *lo,
 		goto outerr;
 	if (mirror->mirror_ds == NULL) {
 		struct nfs4_deviceid_node *node;
-		struct nfs4_ff_layout_ds *mirror_ds = ERR_PTR(-ENODEV);
+		struct nfs4_ff_layout_ds *mirror_ds = ERR_PTR(-ERR(ENODEV));
 
 		node = nfs4_find_get_deviceid(NFS_SERVER(lo->plh_inode),
 				&mirror->devid, lo->plh_lc_cred,
@@ -483,7 +483,7 @@ int ff_layout_encode_ds_ioerr(struct xdr_stream *xdr, const struct list_head *he
 		p = xdr_reserve_space(xdr,
 				28 + NFS4_STATEID_SIZE + NFS4_DEVICEID4_SIZE);
 		if (unlikely(!p))
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		p = xdr_encode_hyper(p, err->offset);
 		p = xdr_encode_hyper(p, err->length);
 		p = xdr_encode_opaque_fixed(p, &err->stateid,

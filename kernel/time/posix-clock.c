@@ -40,10 +40,10 @@ static ssize_t posix_clock_read(struct file *fp, char __user *buf,
 				size_t count, loff_t *ppos)
 {
 	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (!clk)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (clk->ops.read)
 		err = clk->ops.read(clk, fp->f_flags, buf, count);
@@ -73,10 +73,10 @@ static long posix_clock_ioctl(struct file *fp,
 			      unsigned int cmd, unsigned long arg)
 {
 	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -ENOTTY;
+	int err = -ERR(ENOTTY);
 
 	if (!clk)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (clk->ops.ioctl)
 		err = clk->ops.ioctl(clk, cmd, arg);
@@ -91,10 +91,10 @@ static long posix_clock_compat_ioctl(struct file *fp,
 				     unsigned int cmd, unsigned long arg)
 {
 	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -ENOTTY;
+	int err = -ERR(ENOTTY);
 
 	if (!clk)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (clk->ops.ioctl)
 		err = clk->ops.ioctl(clk, cmd, arg);
@@ -114,7 +114,7 @@ static int posix_clock_open(struct inode *inode, struct file *fp)
 	down_read(&clk->rwsem);
 
 	if (clk->zombie) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 	if (clk->ops.open)
@@ -199,7 +199,7 @@ struct posix_clock_desc {
 static int get_clock_desc(const clockid_t id, struct posix_clock_desc *cd)
 {
 	struct file *fp = fget(clockid_to_fd(id));
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (!fp)
 		return err;
@@ -210,7 +210,7 @@ static int get_clock_desc(const clockid_t id, struct posix_clock_desc *cd)
 	cd->fp = fp;
 	cd->clk = get_posix_clock(fp);
 
-	err = cd->clk ? 0 : -ENODEV;
+	err = cd->clk ? 0 : -ERR(ENODEV);
 out:
 	if (err)
 		fput(fp);
@@ -233,14 +233,14 @@ static int pc_clock_adjtime(clockid_t id, struct __kernel_timex *tx)
 		return err;
 
 	if ((cd.fp->f_mode & FMODE_WRITE) == 0) {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 
 	if (cd.clk->ops.clock_adjtime)
 		err = cd.clk->ops.clock_adjtime(cd.clk, tx);
 	else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 out:
 	put_clock_desc(&cd);
 
@@ -259,7 +259,7 @@ static int pc_clock_gettime(clockid_t id, struct timespec64 *ts)
 	if (cd.clk->ops.clock_gettime)
 		err = cd.clk->ops.clock_gettime(cd.clk, ts);
 	else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 
 	put_clock_desc(&cd);
 
@@ -278,7 +278,7 @@ static int pc_clock_getres(clockid_t id, struct timespec64 *ts)
 	if (cd.clk->ops.clock_getres)
 		err = cd.clk->ops.clock_getres(cd.clk, ts);
 	else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 
 	put_clock_desc(&cd);
 
@@ -295,14 +295,14 @@ static int pc_clock_settime(clockid_t id, const struct timespec64 *ts)
 		return err;
 
 	if ((cd.fp->f_mode & FMODE_WRITE) == 0) {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 
 	if (cd.clk->ops.clock_settime)
 		err = cd.clk->ops.clock_settime(cd.clk, ts);
 	else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 out:
 	put_clock_desc(&cd);
 

@@ -46,7 +46,7 @@ int btrfs_del_orphan_item(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		goto out;
 	if (ret) { /* JDM: Really? */
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

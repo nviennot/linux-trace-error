@@ -57,7 +57,7 @@ int q6dsp_map_channels(u8 ch_map[PCM_MAX_NUM_CHANNEL], int ch)
 		ch_map[7] = PCM_CHANNEL_RB;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

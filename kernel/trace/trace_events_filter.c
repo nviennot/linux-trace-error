@@ -453,7 +453,7 @@ predicate_parse(const char *str, int nr_parens, int nr_preds,
 		switch (*next) {
 		case '(':					/* #2 */
 			if (top - op_stack > nr_parens) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out_free;
 			}
 			*(++top) = invert;
@@ -545,7 +545,7 @@ predicate_parse(const char *str, int nr_parens, int nr_preds,
 
 	if (!N) {
 		/* No program? */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		parse_error(pe, FILT_ERR_NO_FILTER, ptr - str);
 		goto out_free;
 	}
@@ -570,7 +570,7 @@ predicate_parse(const char *str, int nr_parens, int nr_preds,
 		prog[i].when_to_branch = invert;
 		/* Make sure the program always moves forward */
 		if (WARN_ON(prog[i].target <= i)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_free;
 		}
 	}
@@ -1189,7 +1189,7 @@ static int parse_pred(const char *str, void *data,
 	kfree(field_name);
 	if (!field) {
 		parse_error(pe, FILT_ERR_FIELD_NOT_FOUND, pos + i);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	while (isspace(str[i]))
@@ -1386,7 +1386,7 @@ static int parse_pred(const char *str, void *data,
 
 err_free:
 	kfree(pred);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 enum {
@@ -1529,7 +1529,7 @@ static int process_preds(struct trace_event_call *call,
 	}
 
 	if (!nr_preds)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	prog = predicate_parse(filter_string, nr_parens, nr_preds,
 			       parse_pred, call, pe);
@@ -1660,7 +1660,7 @@ static int process_system_preds(struct trace_subsystem_dir *dir,
 		kfree(filter_item);
 	}
 	parse_error(pe, FILT_ERR_BAD_SUBSYS_FILTER, 0);
-	return -EINVAL;
+	return -ERR(EINVAL);
  fail_mem:
 	__free_filter(filter);
 	/* If any call succeeded, we still need to sync */
@@ -1683,7 +1683,7 @@ static int create_filter_start(char *filter_string, bool set_str,
 	int err = 0;
 
 	if (WARN_ON_ONCE(*pse || *filterp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	filter = kzalloc(sizeof(*filter), GFP_KERNEL);
 	if (filter && set_str) {
@@ -1857,7 +1857,7 @@ int apply_subsystem_event_filter(struct trace_subsystem_dir *dir,
 
 	/* Make sure the system still has events */
 	if (!dir->nr_events) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out_unlock;
 	}
 
@@ -1941,7 +1941,7 @@ static int ftrace_function_set_regexp(struct ftrace_ops *ops, int filter,
 static int __ftrace_function_set_filter(int filter, char *buf, int len,
 					struct function_filter_data *data)
 {
-	int i, re_cnt, ret = -EINVAL;
+	int i, re_cnt, ret = -ERR(EINVAL);
 	int *reset;
 	char **re;
 
@@ -1954,7 +1954,7 @@ static int __ftrace_function_set_filter(int filter, char *buf, int len,
 	 */
 	re = ftrace_function_filter_re(buf, len, &re_cnt);
 	if (!re)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < re_cnt; i++) {
 		ret = ftrace_function_set_regexp(data->ops, filter, *reset,
@@ -1980,10 +1980,10 @@ static int ftrace_function_check_pred(struct filter_pred *pred)
 	 *  - the 'ip' field is used
 	 */
 	if ((pred->op != OP_EQ) && (pred->op != OP_NE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(field->name, "ip"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -2038,10 +2038,10 @@ static int ftrace_function_set_filter(struct perf_event *event,
 		struct filter_pred *pred = prog[i].pred;
 
 		if (!is_or(prog, i))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (ftrace_function_set_filter_pred(pred, &data) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2049,7 +2049,7 @@ static int ftrace_function_set_filter(struct perf_event *event,
 static int ftrace_function_set_filter(struct perf_event *event,
 				      struct event_filter *filter)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif /* CONFIG_FUNCTION_TRACER */
 
@@ -2064,11 +2064,11 @@ int ftrace_profile_set_filter(struct perf_event *event, int event_id,
 
 	call = event->tp_event;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!call)
 		goto out_unlock;
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (event->filter)
 		goto out_unlock;
 

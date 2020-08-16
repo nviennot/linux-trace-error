@@ -77,7 +77,7 @@ struct afs_vlserver_list *afs_parse_text_addrs(struct afs_net *net,
 
 	if (!len) {
 		_leave(" = -EDESTADDRREQ [empty]");
-		return ERR_PTR(-EDESTADDRREQ);
+		return ERR_PTR(-ERR(EDESTADDRREQ));
 	}
 
 	if (delim == ':' && (memchr(text, ',', len) || !memchr(text, '.', len)))
@@ -210,11 +210,11 @@ struct afs_vlserver_list *afs_parse_text_addrs(struct afs_net *net,
 inval:
 	_leave(" = -EINVAL [%s %zu %*.*s]",
 	       problem, p - text, (int)len, (int)len, text);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 bad_address:
 	_leave(" = -EINVAL [%s %zu %*.*s]",
 	       problem, p - text, (int)len, (int)len, text);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 error:
 	afs_put_addrlist(alist);
 error_vl:

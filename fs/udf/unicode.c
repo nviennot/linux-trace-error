@@ -132,7 +132,7 @@ static int udf_name_conv_char(uint8_t *str_o, int str_o_max_len,
 			len = utf32_to_utf8(c, &str_o[*str_o_idx],
 					    str_o_max_len - *str_o_idx);
 			if (len < 0)
-				len = -ENAMETOOLONG;
+				len = -ERR(ENAMETOOLONG);
 		}
 		/* Valid character? */
 		if (len >= 0)
@@ -186,7 +186,7 @@ static int udf_name_from_CS0(struct super_block *sb,
 	if (cmp_id != 8 && cmp_id != 16) {
 		memset(str_o, 0, str_max_len);
 		pr_err("unknown compression code (%u)\n", cmp_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	u_ch = cmp_id >> 3;
 
@@ -195,7 +195,7 @@ static int udf_name_from_CS0(struct super_block *sb,
 
 	if (ocu_len % u_ch) {
 		pr_err("incorrect filename length (%d)\n", ocu_len + 1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (translate) {
@@ -382,7 +382,7 @@ int udf_get_filename(struct super_block *sb, const uint8_t *sname, int slen,
 	int ret;
 
 	if (!slen)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (dlen <= 0)
 		return 0;
@@ -390,7 +390,7 @@ int udf_get_filename(struct super_block *sb, const uint8_t *sname, int slen,
 	ret = udf_name_from_CS0(sb, dname, dlen, sname, slen, 1);
 	/* Zero length filename isn't valid... */
 	if (ret == 0)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	return ret;
 }
 

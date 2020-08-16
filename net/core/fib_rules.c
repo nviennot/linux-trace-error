@@ -119,19 +119,19 @@ static void flush_route_cache(struct fib_rules_ops *ops)
 
 static int __fib_rules_register(struct fib_rules_ops *ops)
 {
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 	struct fib_rules_ops *o;
 	struct net *net;
 
 	net = ops->fro_net;
 
 	if (ops->rule_size < sizeof(struct fib_rule))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ops->match == NULL || ops->configure == NULL ||
 	    ops->compare == NULL || ops->fill == NULL ||
 	    ops->action == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&net->rules_mod_lock);
 	list_for_each_entry(o, &net->rules_ops, list)
@@ -228,7 +228,7 @@ static int nla_get_port_range(struct nlattr *pattr,
 	const struct fib_rule_port_range *pr = nla_data(pattr);
 
 	if (!fib_rule_port_range_valid(pr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	port_range->start = pr->start;
 	port_range->end = pr->end;
@@ -313,7 +313,7 @@ jumped:
 		}
 	}
 
-	err = -ESRCH;
+	err = -ERR(ESRCH);
 out:
 	rcu_read_unlock();
 
@@ -361,7 +361,7 @@ int fib_rules_dump(struct net *net, struct notifier_block *nb, int family,
 
 	ops = lookup_rules_ops(net, family);
 	if (!ops)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
 		err = call_fib_rule_notifier(nb, FIB_EVENT_RULE_ADD,
 					     rule, family, extack);
@@ -500,7 +500,7 @@ static int fib_nl2rule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct net *net = sock_net(skb->sk);
 	struct fib_rule_hdr *frh = nlmsg_data(nlh);
 	struct fib_rule *nlrule = NULL;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (frh->src_len)
 		if (!tb[FRA_SRC] ||
@@ -571,7 +571,7 @@ static int fib_nl2rule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (tb[FRA_TUN_ID])
 		nlrule->tun_id = nla_get_be64(tb[FRA_TUN_ID]);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[FRA_L3MDEV] &&
 	    fib_nl2rule_l3mdev(tb[FRA_L3MDEV], nlrule, extack) < 0)
 		goto errout_free;
@@ -613,7 +613,7 @@ static int fib_nl2rule(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	if (tb[FRA_UID_RANGE]) {
 		if (current_user_ns() != net->user_ns) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			NL_SET_ERR_MSG(extack, "No permission to set uid");
 			goto errout_free;
 		}
@@ -735,7 +735,7 @@ int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct fib_rules_ops *ops = NULL;
 	struct fib_rule *rule = NULL, *r, *last = NULL;
 	struct nlattr *tb[FRA_MAX + 1];
-	int err = -EINVAL, unresolved = 0;
+	int err = -ERR(EINVAL), unresolved = 0;
 	bool user_priority = false;
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
@@ -745,7 +745,7 @@ int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	ops = lookup_rules_ops(net, frh->family);
 	if (!ops) {
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		NL_SET_ERR_MSG(extack, "Rule family not supported");
 		goto errout;
 	}
@@ -763,7 +763,7 @@ int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	if ((nlh->nlmsg_flags & NLM_F_EXCL) &&
 	    rule_exists(ops, frh, tb, rule)) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto errout_free;
 	}
 
@@ -843,7 +843,7 @@ int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct fib_rules_ops *ops = NULL;
 	struct fib_rule *rule = NULL, *r, *nlrule = NULL;
 	struct nlattr *tb[FRA_MAX+1];
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	bool user_priority = false;
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
@@ -853,7 +853,7 @@ int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	ops = lookup_rules_ops(net, frh->family);
 	if (ops == NULL) {
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		NL_SET_ERR_MSG(extack, "Rule family not supported");
 		goto errout;
 	}
@@ -871,12 +871,12 @@ int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	rule = rule_find(ops, frh, tb, nlrule, user_priority);
 	if (!rule) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto errout;
 	}
 
 	if (rule->flags & FIB_RULE_PERMANENT) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto errout;
 	}
 
@@ -970,7 +970,7 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*frh), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	frh = nlmsg_data(nlh);
 	frh->family = ops->family;
@@ -1039,7 +1039,7 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int dump_rules(struct sk_buff *skb, struct netlink_callback *cb,
@@ -1076,7 +1076,7 @@ static int fib_valid_dumprule_req(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh))) {
 		NL_SET_ERR_MSG(extack, "Invalid header for fib rule dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frh = nlmsg_data(nlh);
@@ -1084,12 +1084,12 @@ static int fib_valid_dumprule_req(const struct nlmsghdr *nlh,
 	    frh->res1 || frh->res2 || frh->action || frh->flags) {
 		NL_SET_ERR_MSG(extack,
 			       "Invalid values in header for fib rule dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nlmsg_attrlen(nlh, sizeof(*frh))) {
 		NL_SET_ERR_MSG(extack, "Invalid data after header in fib rule dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1114,7 +1114,7 @@ static int fib_nl_dumprule(struct sk_buff *skb, struct netlink_callback *cb)
 		/* Protocol specific dump request */
 		ops = lookup_rules_ops(net, family);
 		if (ops == NULL)
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 
 		dump_rules(skb, cb, ops);
 
@@ -1145,7 +1145,7 @@ static void notify_rule_change(int event, struct fib_rule *rule,
 {
 	struct net *net;
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	net = ops->fro_net;
 	skb = nlmsg_new(fib_rule_nlmsg_size(ops, rule), GFP_KERNEL);

@@ -95,7 +95,7 @@ extern int ioprio_check_cap(int ioprio);
 #else
 static inline int ioprio_check_cap(int ioprio)
 {
-	return -ENOTBLK;
+	return -ERR(ENOTBLK);
 }
 #endif /* CONFIG_BLOCK */
 

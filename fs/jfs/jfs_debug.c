@@ -38,7 +38,7 @@ static ssize_t jfs_loglevel_proc_write(struct file *file,
 
 	/* yes, I know this is an ASCIIism.  --hch */
 	if (c < '0' || c > '9')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	jfsloglevel = c - '0';
 	return count;
 }

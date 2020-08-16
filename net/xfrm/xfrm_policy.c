@@ -260,7 +260,7 @@ struct dst_entry *__xfrm_dst_lookup(struct net *net, int tos, int oif,
 
 	afinfo = xfrm_policy_get_afinfo(family);
 	if (unlikely(afinfo == NULL))
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 
 	dst = afinfo->dst_lookup(net, tos, oif, saddr, daddr, mark);
 
@@ -1195,7 +1195,7 @@ xfrm_policy_inexact_insert(struct xfrm_policy *policy, u8 dir, int excl)
 	delpol = xfrm_policy_insert_list(chain, policy, excl);
 	if (delpol && excl) {
 		__xfrm_policy_inexact_prune_bin(bin, false);
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 	}
 
 	chain = &net->xfrm.policy_inexact[dir];
@@ -1538,7 +1538,7 @@ static struct xfrm_policy *xfrm_policy_insert_list(struct hlist_head *chain,
 		    xfrm_sec_ctx_match(pol->security, policy->security) &&
 		    !WARN_ON(delpol)) {
 			if (excl)
-				return ERR_PTR(-EEXIST);
+				return ERR_PTR(-ERR(EEXIST));
 			delpol = pol;
 			if (policy->priority > pol->priority)
 				continue;
@@ -1704,7 +1704,7 @@ xfrm_policy_byid(struct net *net, const struct xfrm_mark *mark, u32 if_id,
 	struct xfrm_policy *pol, *ret;
 	struct hlist_head *chain;
 
-	*err = -ENOENT;
+	*err = -ERR(ENOENT);
 	if (xfrm_policy_id2dir(id) != dir)
 		return NULL;
 
@@ -1796,7 +1796,7 @@ again:
 	if (cnt)
 		__xfrm_policy_inexact_flush(net);
 	else
-		err = -ESRCH;
+		err = -ERR(ESRCH);
 out:
 	spin_unlock_bh(&net->xfrm.xfrm_policy_lock);
 	return err;
@@ -1813,7 +1813,7 @@ int xfrm_policy_walk(struct net *net, struct xfrm_policy_walk *walk,
 
 	if (walk->type >= XFRM_POLICY_TYPE_MAX &&
 	    walk->type != XFRM_POLICY_TYPE_ANY)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (list_empty(&walk->walk.all) && walk->seq != 0)
 		return 0;
@@ -1841,7 +1841,7 @@ int xfrm_policy_walk(struct net *net, struct xfrm_policy_walk *walk,
 		walk->seq++;
 	}
 	if (walk->seq == 0) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto out;
 	}
 	list_del_init(&walk->walk.all);
@@ -1881,7 +1881,7 @@ static int xfrm_policy_match(const struct xfrm_policy *pol,
 			     u8 type, u16 family, int dir, u32 if_id)
 {
 	const struct xfrm_selector *sel = &pol->selector;
-	int ret = -ESRCH;
+	int ret = -ERR(ESRCH);
 	bool match;
 
 	if (pol->family != family ||
@@ -2240,7 +2240,7 @@ int xfrm_policy_delete(struct xfrm_policy *pol, int dir)
 		xfrm_policy_kill(pol);
 		return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL(xfrm_policy_delete);
 
@@ -2251,7 +2251,7 @@ int xfrm_sk_policy_insert(struct sock *sk, int dir, struct xfrm_policy *pol)
 
 #ifdef CONFIG_XFRM_SUB_POLICY
 	if (pol && pol->type != XFRM_POLICY_TYPE_MAIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	spin_lock_bh(&net->xfrm.xfrm_policy_lock);
@@ -2342,7 +2342,7 @@ xfrm_get_saddr(struct net *net, int oif, xfrm_address_t *local,
 	const struct xfrm_policy_afinfo *afinfo = xfrm_policy_get_afinfo(family);
 
 	if (unlikely(afinfo == NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = afinfo->get_saddr(net, oif, local, remote, mark);
 	rcu_read_unlock();
 	return err;
@@ -2392,10 +2392,10 @@ xfrm_tmpl_resolve_one(struct xfrm_policy *policy, const struct flowi *fl,
 		}
 		if (x) {
 			error = (x->km.state == XFRM_STATE_ERROR ?
-				 -EINVAL : -EAGAIN);
+				 -ERR(EINVAL) : -ERR(EAGAIN));
 			xfrm_state_put(x);
 		} else if (error == -ESRCH) {
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 		}
 
 		if (!tmpl->optional)
@@ -2422,7 +2422,7 @@ xfrm_tmpl_resolve(struct xfrm_policy **pols, int npols, const struct flowi *fl,
 
 	for (i = 0; i < npols; i++) {
 		if (cnx + pols[i]->xfrm_nr >= XFRM_MAX_DEPTH) {
-			error = -ENOBUFS;
+			error = -ERR(ENOBUFS);
 			goto fail;
 		}
 
@@ -2462,7 +2462,7 @@ static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
 	struct xfrm_dst *xdst;
 
 	if (!afinfo)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	switch (family) {
 	case AF_INET:
@@ -2483,7 +2483,7 @@ static inline struct xfrm_dst *xfrm_alloc_dst(struct net *net, int family)
 
 		memset(dst + 1, 0, sizeof(*xdst) - sizeof(*dst));
 	} else
-		xdst = ERR_PTR(-ENOBUFS);
+		xdst = ERR_PTR(-ERR(ENOBUFS));
 
 	rcu_read_unlock();
 
@@ -2508,7 +2508,7 @@ static inline int xfrm_fill_dst(struct xfrm_dst *xdst, struct net_device *dev,
 	int err;
 
 	if (!afinfo)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = afinfo->fill_dst(xdst, dev, fl);
 
@@ -2574,7 +2574,7 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 			inner_mode = xfrm_ip2inner_mode(xfrm[i],
 							xfrm_af2proto(family));
 			if (!inner_mode) {
-				err = -EAFNOSUPPORT;
+				err = -ERR(EAFNOSUPPORT);
 				dst_release(dst);
 				goto put_states;
 			}
@@ -2626,7 +2626,7 @@ static struct dst_entry *xfrm_bundle_create(struct xfrm_policy *policy,
 	xfrm_dst_set_child(xdst_prev, dst);
 	xdst0->path = dst;
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	dev = dst->dev;
 	if (!dev)
 		goto free_dst;
@@ -2832,7 +2832,7 @@ static int xdst_queue_output(struct net *net, struct sock *sk, struct sk_buff *s
 
 	if (pq->hold_queue.qlen > XFRM_MAX_QUEUE_LEN) {
 		kfree_skb(skb);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	skb_dst_force(skb);
@@ -2900,7 +2900,7 @@ static struct xfrm_dst *xfrm_create_dummy_bundle(struct net *net,
 
 	xfrm_init_path((struct xfrm_dst *)dst1, dst, 0);
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	dev = dst->dev;
 	if (!dev)
 		goto free_dst;
@@ -2989,7 +2989,7 @@ static struct dst_entry *make_blackhole(struct net *net, u16 family,
 
 	if (!afinfo) {
 		dst_release(dst_orig);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	} else {
 		ret = afinfo->blackhole_route(net, dst_orig);
 	}
@@ -3095,11 +3095,11 @@ struct dst_entry *xfrm_lookup_with_ifid(struct net *net,
 		 * negotiate new SA's or bail out with error.*/
 		if (net->xfrm.sysctl_larval_drop) {
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTNOSTATES);
-			err = -EREMOTE;
+			err = -ERR(EREMOTE);
 			goto error;
 		}
 
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTNOSTATES);
 		goto error;
@@ -3111,7 +3111,7 @@ no_transform:
 
 	if ((flags & XFRM_LOOKUP_ICMP) &&
 	    !(pols[0]->flags & XFRM_POLICY_ICMP)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto error;
 	}
 
@@ -3121,7 +3121,7 @@ no_transform:
 	if (num_xfrms < 0) {
 		/* Prohibit the flow */
 		XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTPOLBLOCK);
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto error;
 	} else if (num_xfrms > 0) {
 		/* Flow transformed */
@@ -3143,7 +3143,7 @@ nopol:
 		dst = dst_orig;
 		goto ok;
 	}
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 error:
 	dst_release(dst);
 dropdst:
@@ -3475,7 +3475,7 @@ int __xfrm_decode_session(struct sk_buff *skb, struct flowi *fl,
 		break;
 #endif
 	default:
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 
 	return security_xfrm_decode_session(skb, &fl->flowi_secid);
@@ -3899,11 +3899,11 @@ int xfrm_policy_register_afinfo(const struct xfrm_policy_afinfo *afinfo, int fam
 	int err = 0;
 
 	if (WARN_ON(family >= ARRAY_SIZE(xfrm_policy_afinfo)))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	spin_lock(&xfrm_policy_afinfo_lock);
 	if (unlikely(xfrm_policy_afinfo[family] != NULL))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else {
 		struct dst_ops *dst_ops = afinfo->dst_ops;
 		if (likely(dst_ops->kmem_cachep == NULL))
@@ -4320,7 +4320,7 @@ static int xfrm_policy_migrate(struct xfrm_policy *pol,
 	if (unlikely(pol->walk.dead)) {
 		/* target policy has been deleted */
 		write_unlock_bh(&pol->lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	for (i = 0; i < pol->xfrm_nr; i++) {
@@ -4345,7 +4345,7 @@ static int xfrm_policy_migrate(struct xfrm_policy *pol,
 	write_unlock_bh(&pol->lock);
 
 	if (!n)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	return 0;
 }
@@ -4355,12 +4355,12 @@ static int xfrm_migrate_check(const struct xfrm_migrate *m, int num_migrate)
 	int i, j;
 
 	if (num_migrate < 1 || num_migrate > XFRM_MAX_DEPTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < num_migrate; i++) {
 		if (xfrm_addr_any(&m[i].new_daddr, m[i].new_family) ||
 		    xfrm_addr_any(&m[i].new_saddr, m[i].new_family))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* check if there is any duplicated entry */
 		for (j = i + 1; j < num_migrate; j++) {
@@ -4372,7 +4372,7 @@ static int xfrm_migrate_check(const struct xfrm_migrate *m, int num_migrate)
 			    m[i].mode == m[j].mode &&
 			    m[i].reqid == m[j].reqid &&
 			    m[i].old_family == m[j].old_family)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -4396,13 +4396,13 @@ int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 		goto out;
 
 	if (dir >= XFRM_POLICY_MAX) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	/* Stage 1 - find policy */
 	if ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == NULL) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -4416,7 +4416,7 @@ int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,
 				x_new[nx_new] = xc;
 				nx_new++;
 			} else {
-				err = -ENODATA;
+				err = -ERR(ENODATA);
 				goto restore_state;
 			}
 		}

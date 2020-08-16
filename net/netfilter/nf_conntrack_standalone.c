@@ -316,7 +316,7 @@ static int ct_seq_show(struct seq_file *s, void *v)
 
 	l4proto = nf_ct_l4proto_find(nf_ct_protonum(ct));
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	seq_printf(s, "%-8s %u %-8s %u ",
 		   l3proto_name(nf_ct_l3num(ct)), nf_ct_l3num(ct),
 		   l4proto_name(l4proto->l4proto), nf_ct_protonum(ct));

@@ -367,7 +367,7 @@ static int speaker_mode_put(struct snd_kcontrol *kcontrol,
 
 	/* Don't try to change modes while enabled */
 	if (reg_pwr & WM9081_SPK_ENA)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ucontrol->value.enumerated.item[0]) {
 		/* Class AB */
@@ -475,7 +475,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	fll_div->fll_clk_ref_div = div / 2;
@@ -494,7 +494,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 7) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	fll_div->fll_outdiv = div;
@@ -511,7 +511,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Now, calculate N.K */
@@ -578,7 +578,7 @@ static int wm9081_set_fll(struct snd_soc_component *component, int fll_id,
 
 	default:
 		dev_err(component->dev, "Unknown FLL ID %d\n", fll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Disable CLK_SYS while we reconfigure */
@@ -674,7 +674,7 @@ static int configure_clock(struct snd_soc_component *component)
 			}
 
 			if (i == ARRAY_SIZE(clk_sys_rates))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 		} else if (wm9081->fs) {
 			for (i = 0; i < ARRAY_SIZE(clk_sys_rates); i++) {
@@ -685,7 +685,7 @@ static int configure_clock(struct snd_soc_component *component)
 			}
 
 			if (i == ARRAY_SIZE(clk_sys_rates))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 		} else {
 			new_sysclk = 12288000;
@@ -704,7 +704,7 @@ static int configure_clock(struct snd_soc_component *component)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg = snd_soc_component_read32(component, WM9081_CLOCK_CONTROL_1);
@@ -743,7 +743,7 @@ static int clk_sys_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "System clock not configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -923,7 +923,7 @@ static int wm9081_set_dai_fmt(struct snd_soc_dai *dai,
 		wm9081->master = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -942,7 +942,7 @@ static int wm9081_set_dai_fmt(struct snd_soc_dai *dai,
 		aif2 |= 0x1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -956,7 +956,7 @@ static int wm9081_set_dai_fmt(struct snd_soc_dai *dai,
 			aif2 |= WM9081_AIF_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -976,11 +976,11 @@ static int wm9081_set_dai_fmt(struct snd_soc_dai *dai,
 			aif2 |= WM9081_AIF_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM9081_AUDIO_INTERFACE_2, aif2);
@@ -1040,7 +1040,7 @@ static int wm9081_hw_params(struct snd_pcm_substream *substream,
 			aif2 |= 0xc;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1177,7 +1177,7 @@ static int wm9081_set_sysclk(struct snd_soc_component *component, int clk_id,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1193,7 +1193,7 @@ static int wm9081_set_tdm_slot(struct snd_soc_dai *dai,
 	aif1 &= ~(WM9081_AIFDAC_TDM_SLOT_MASK | WM9081_AIFDAC_TDM_MODE_MASK);
 
 	if (slots < 0 || slots > 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm9081->tdm_width = slot_width;
 
@@ -1215,7 +1215,7 @@ static int wm9081_set_tdm_slot(struct snd_soc_dai *dai,
 		aif1 |= 0x30;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM9081_AUDIO_INTERFACE_1, aif1);
@@ -1326,7 +1326,7 @@ static int wm9081_i2c_probe(struct i2c_client *i2c,
 	}
 	if (reg != 0x9081) {
 		dev_err(&i2c->dev, "Device is not a WM9081: ID=0x%x\n", reg);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = wm9081_reset(wm9081->regmap);

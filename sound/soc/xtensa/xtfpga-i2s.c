@@ -338,11 +338,11 @@ static int xtfpga_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 			      unsigned int fmt)
 {
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -400,7 +400,7 @@ static int xtfpga_pcm_hw_params(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 
@@ -418,7 +418,7 @@ static int xtfpga_pcm_hw_params(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -447,7 +447,7 @@ static int xtfpga_pcm_trigger(struct snd_soc_component *component,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;

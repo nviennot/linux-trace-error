@@ -72,7 +72,7 @@ gss_krb5_remove_padding(struct xdr_buf *buf, int blocksize)
 	if (len <= buf->head[0].iov_len) {
 		pad = *(u8 *)(buf->head[0].iov_base + len - 1);
 		if (pad > buf->head[0].iov_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		buf->head[0].iov_len -= pad;
 		goto out;
 	} else
@@ -105,11 +105,11 @@ out:
 	 * XXX: Document all these weird requirements for gss mechanism
 	 * wrap/unwrap functions. */
 	if (pad > blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (buf->len > pad)
 		buf->len -= pad;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

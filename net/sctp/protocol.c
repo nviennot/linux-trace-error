@@ -1185,7 +1185,7 @@ static int sctp_v4_add_protocol(void)
 
 	/* Register SCTP with inet layer.  */
 	if (inet_add_protocol(&sctp_protocol, IPPROTO_SCTP) < 0)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return 0;
 }
@@ -1376,7 +1376,7 @@ static struct pernet_operations sctp_ctrlsock_ops = {
 static __init int sctp_init(void)
 {
 	int i;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 	unsigned long goal;
 	unsigned long limit;
 	unsigned long nr_pages = totalram_pages();
@@ -1388,7 +1388,7 @@ static __init int sctp_init(void)
 	sock_skb_cb_check_size(sizeof(struct sctp_ulpevent));
 
 	/* Allocate bind_bucket and chunk caches. */
-	status = -ENOBUFS;
+	status = -ERR(ENOBUFS);
 	sctp_bucket_cachep = kmem_cache_create("sctp_bind_bucket",
 					       sizeof(struct sctp_bind_bucket),
 					       0, SLAB_HWCACHE_ALIGN,

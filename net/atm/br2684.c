@@ -379,7 +379,7 @@ static int br2684_setfilt(struct atm_vcc *atmvcc, void __user * arg)
 			brvcc = list_entry_brvcc(brdev->brvccs.next);
 		read_unlock(&devs_lock);
 		if (brvcc == NULL)
-			return -ESRCH;
+			return -ERR(ESRCH);
 	} else
 		brvcc = BR2684_VCC(atmvcc);
 	memcpy(&brvcc->filter, &fs.filter, sizeof(brvcc->filter));
@@ -552,17 +552,17 @@ static int br2684_regvcc(struct atm_vcc *atmvcc, void __user * arg)
 	net_dev = br2684_find_dev(&be.ifspec);
 	if (net_dev == NULL) {
 		pr_err("tried to attach to non-existent device\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto error;
 	}
 	brdev = BRPRIV(net_dev);
 	if (atmvcc->push == NULL) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto error;
 	}
 	if (!list_empty(&brdev->brvccs)) {
 		/* Only 1 VCC/dev right now */
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto error;
 	}
 	if (be.fcs_in != BR2684_FCSIN_NO ||
@@ -571,7 +571,7 @@ static int br2684_regvcc(struct atm_vcc *atmvcc, void __user * arg)
 	    (be.encaps != BR2684_ENCAPS_VC &&
 	     be.encaps != BR2684_ENCAPS_LLC) ||
 	    be.min_size != 0) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 	pr_debug("vcc=%p, encaps=%d, brvcc=%p\n", atmvcc, be.encaps, brvcc);
@@ -678,7 +678,7 @@ static int br2684_create(void __user *arg)
 	ni.media &= 0xffff;	/* strip flags */
 
 	if (ni.media != BR2684_MEDIA_ETHERNET || ni.mtu != 1500)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netdev = alloc_netdev(sizeof(struct br2684_dev),
 			      ni.ifname[0] ? ni.ifname : "nas%d",
@@ -732,12 +732,12 @@ static int br2684_ioctl(struct socket *sock, unsigned int cmd,
 		if (err)
 			return -EFAULT;
 		if (b != ATM_BACKEND_BR2684)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (cmd == ATM_SETBACKEND) {
 			if (sock->state != SS_CONNECTED)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			return br2684_regvcc(atmvcc, argp);
 		} else {
 			return br2684_create(argp);
@@ -745,15 +745,15 @@ static int br2684_ioctl(struct socket *sock, unsigned int cmd,
 #ifdef CONFIG_ATM_BR2684_IPFILTER
 	case BR2684_SETFILT:
 		if (atmvcc->push != br2684_push)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		err = br2684_setfilt(atmvcc, argp);
 
 		return err;
 #endif /* CONFIG_ATM_BR2684_IPFILTER */
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static struct atm_ioctl br2684_ioctl_ops = {

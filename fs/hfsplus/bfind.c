@@ -122,13 +122,13 @@ int __hfs_brec_find(struct hfs_bnode *bnode, struct hfs_find_data *fd,
 	BUG_ON(!rec_found);
 	b = 0;
 	e = bnode->num_recs - 1;
-	res = -ENOENT;
+	res = -ERR(ENOENT);
 	do {
 		rec = (e + b) / 2;
 		len = hfs_brec_lenoff(bnode, rec, &off);
 		keylen = hfs_brec_keylen(bnode, rec);
 		if (keylen == 0) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			goto fail;
 		}
 		hfs_bnode_read(bnode, fd->key, off, keylen);
@@ -142,7 +142,7 @@ int __hfs_brec_find(struct hfs_bnode *bnode, struct hfs_find_data *fd,
 		len = hfs_brec_lenoff(bnode, e, &off);
 		keylen = hfs_brec_keylen(bnode, e);
 		if (keylen == 0) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			goto fail;
 		}
 		hfs_bnode_read(bnode, fd->key, off, keylen);
@@ -175,7 +175,7 @@ int hfs_brec_find(struct hfs_find_data *fd, search_strategy_t do_key_compare)
 	fd->bnode = NULL;
 	nidx = tree->root;
 	if (!nidx)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	height = tree->depth;
 	res = 0;
 	parent = 0;
@@ -209,7 +209,7 @@ int hfs_brec_find(struct hfs_find_data *fd, search_strategy_t do_key_compare)
 invalid:
 	pr_err("inconsistency in B*Tree (%d,%d,%d,%u,%u)\n",
 		height, bnode->height, bnode->type, nidx, parent);
-	res = -EIO;
+	res = -ERR(EIO);
 release:
 	hfs_bnode_put(bnode);
 	return res;
@@ -223,7 +223,7 @@ int hfs_brec_read(struct hfs_find_data *fd, void *rec, int rec_len)
 	if (res)
 		return res;
 	if (fd->entrylength > rec_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	hfs_bnode_read(fd->bnode, rec, fd->entryoffset, fd->entrylength);
 	return 0;
 }
@@ -245,7 +245,7 @@ int hfs_brec_goto(struct hfs_find_data *fd, int cnt)
 			fd->record = bnode->num_recs - 1;
 			idx = bnode->prev;
 			if (!idx) {
-				res = -ENOENT;
+				res = -ERR(ENOENT);
 				goto out;
 			}
 			hfs_bnode_put(bnode);
@@ -263,7 +263,7 @@ int hfs_brec_goto(struct hfs_find_data *fd, int cnt)
 			fd->record = 0;
 			idx = bnode->next;
 			if (!idx) {
-				res = -ENOENT;
+				res = -ERR(ENOENT);
 				goto out;
 			}
 			hfs_bnode_put(bnode);
@@ -280,7 +280,7 @@ int hfs_brec_goto(struct hfs_find_data *fd, int cnt)
 	len = hfs_brec_lenoff(bnode, fd->record, &off);
 	keylen = hfs_brec_keylen(bnode, fd->record);
 	if (keylen == 0) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto out;
 	}
 	fd->keyoffset = off;

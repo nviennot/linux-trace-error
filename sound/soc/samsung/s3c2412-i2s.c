@@ -212,7 +212,7 @@ static int s3c2412_iis_dev_probe(struct platform_device *pdev)
 
 	if (!pdata) {
 		dev_err(&pdev->dev, "missing platform data");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);

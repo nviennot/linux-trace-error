@@ -138,7 +138,7 @@ static int ak5558_hw_params(struct snd_pcm_substream *substream,
 		bits = AK5558_DIF_32BIT_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AK5558_02_CONTROL1, AK5558_BITS, bits);
@@ -160,7 +160,7 @@ static int ak5558_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBM_CFS:
 	default:
 		dev_err(dai->dev, "Clock mode unsupported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set master/slave audio interface */
@@ -175,7 +175,7 @@ static int ak5558_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		format = AK5558_DIF_MSB_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AK5558_02_CONTROL1, AK5558_DIF, format);

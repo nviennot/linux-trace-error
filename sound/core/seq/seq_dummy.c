@@ -154,7 +154,7 @@ register_client(void)
 
 	if (ports < 1) {
 		pr_err("ALSA: seq_dummy: invalid number of ports %d\n", ports);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* create client */

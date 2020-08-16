@@ -480,7 +480,7 @@ void aarp_probe_network(struct atalk_iface *atif)
 
 int aarp_proxy_probe_network(struct atalk_iface *atif, struct atalk_addr *sa)
 {
-	int hash, retval = -EPROTONOSUPPORT;
+	int hash, retval = -ERR(EPROTONOSUPPORT);
 	struct aarp_entry *entry;
 	unsigned int count;
 
@@ -527,7 +527,7 @@ int aarp_proxy_probe_network(struct atalk_iface *atif, struct atalk_addr *sa)
 
 	if (entry->status & ATIF_PROBE_FAIL) {
 		entry->expires_at = jiffies - 1; /* free the entry */
-		retval = -EADDRINUSE; /* return network full */
+		retval = -ERR(EADDRINUSE); /* return network full */
 	} else { /* clear the probing flag */
 		entry->status &= ~ATIF_PROBE;
 		retval = 1;

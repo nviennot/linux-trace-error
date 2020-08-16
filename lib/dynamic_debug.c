@@ -240,7 +240,7 @@ static int ddebug_tokenize(char *buf, char *words[], int maxwords)
 				;
 			if (!*end) {
 				pr_err("unclosed quote: %s\n", buf);
-				return -EINVAL;	/* unclosed quote */
+				return -ERR(EINVAL);	/* unclosed quote */
 			}
 		} else {
 			for (end = buf; *end && !isspace(*end); end++)
@@ -251,7 +251,7 @@ static int ddebug_tokenize(char *buf, char *words[], int maxwords)
 		/* `buf' is start of word, `end' is one past its end */
 		if (nwords == maxwords) {
 			pr_err("too many words, legal max <=%d\n", maxwords);
-			return -EINVAL;	/* ran out of words[] before bytes */
+			return -ERR(EINVAL);	/* ran out of words[] before bytes */
 		}
 		if (*end)
 			*end++ = '\0';	/* terminate the word */
@@ -284,7 +284,7 @@ static inline int parse_lineno(const char *str, unsigned int *val)
 	}
 	if (kstrtouint(str, 10, val) < 0) {
 		pr_err("bad line-number: %s\n", str);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -294,7 +294,7 @@ static int check_set(const char **dest, char *src, char *name)
 	int rc = 0;
 
 	if (*dest) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		pr_err("match-spec:%s val:%s overridden by %s\n",
 		       name, *dest, src);
 	}
@@ -326,7 +326,7 @@ static int ddebug_parse_query(char *words[], int nwords,
 	/* check we have an even number of words */
 	if (nwords % 2 != 0) {
 		pr_err("expecting pairs of match-spec <value>\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	memset(query, 0, sizeof(*query));
 
@@ -351,16 +351,16 @@ static int ddebug_parse_query(char *words[], int nwords,
 			char *last = strchr(first, '-');
 			if (query->first_lineno || query->last_lineno) {
 				pr_err("match-spec: line used 2x\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (last)
 				*last++ = '\0';
 			if (parse_lineno(first, &query->first_lineno) < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (last) {
 				/* range <first>-<last> */
 				if (parse_lineno(last, &query->last_lineno) < 0)
-					return -EINVAL;
+					return -ERR(EINVAL);
 
 				/* special case for last lineno not specified */
 				if (query->last_lineno == 0)
@@ -370,14 +370,14 @@ static int ddebug_parse_query(char *words[], int nwords,
 					pr_err("last-line:%d < 1st-line:%d\n",
 						query->last_lineno,
 						query->first_lineno);
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			} else {
 				query->last_lineno = query->first_lineno;
 			}
 		} else {
 			pr_err("unknown keyword \"%s\"\n", words[i]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (rc)
 			return rc;
@@ -406,7 +406,7 @@ static int ddebug_parse_flags(const char *str, unsigned int *flagsp,
 		break;
 	default:
 		pr_err("bad flag-op %c, at start of %s\n", *str, str);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	vpr_info("op='%c'\n", op);
 
@@ -419,7 +419,7 @@ static int ddebug_parse_flags(const char *str, unsigned int *flagsp,
 		}
 		if (i < 0) {
 			pr_err("unknown flag '%c' in \"%s\"\n", *str, str);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	vpr_info("flags=0x%x\n", flags);
@@ -454,16 +454,16 @@ static int ddebug_exec_query(char *query_string, const char *modname)
 	nwords = ddebug_tokenize(query_string, words, MAXWORDS);
 	if (nwords <= 0) {
 		pr_err("tokenize failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* check flags 1st (last arg) so query is pairs of spec,val */
 	if (ddebug_parse_flags(words[nwords-1], &flags, &mask)) {
 		pr_err("flags parse failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ddebug_parse_query(words, nwords-1, &query, modname)) {
 		pr_err("query parse failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* actually go and implement the change */
 	nfound = ddebug_change(&query, flags, mask);
@@ -703,7 +703,7 @@ static ssize_t ddebug_proc_write(struct file *file, const char __user *ubuf,
 		return 0;
 	if (len > USER_BUF_PAGE - 1) {
 		pr_warn("expected <%d bytes into control\n", USER_BUF_PAGE);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 	tmpbuf = memdup_user_nul(ubuf, len);
 	if (IS_ERR(tmpbuf))
@@ -953,7 +953,7 @@ static int ddebug_dyndbg_boot_param_cb(char *param, char *val,
 int ddebug_dyndbg_module_param_cb(char *param, char *val, const char *module)
 {
 	vpr_info("module: %s %s=\"%s\"\n", module, param, val);
-	return ddebug_dyndbg_param_cb(param, val, module, -ENOENT);
+	return ddebug_dyndbg_param_cb(param, val, module, -ERR(ENOENT));
 }
 
 static void ddebug_table_free(struct ddebug_table *dt)
@@ -969,7 +969,7 @@ static void ddebug_table_free(struct ddebug_table *dt)
 int ddebug_remove_module(const char *mod_name)
 {
 	struct ddebug_table *dt, *nextdt;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	vpr_info("removing module \"%s\"\n", mod_name);
 
@@ -1005,7 +1005,7 @@ static int __init dynamic_debug_init_control(void)
 	struct dentry *debugfs_dir;
 
 	if (!ddebug_init_success)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Create the control file in debugfs if it is enabled */
 	if (debugfs_initialized()) {

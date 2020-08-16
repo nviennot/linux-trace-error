@@ -33,7 +33,7 @@ static const char *ext4_encrypted_get_link(struct dentry *dentry,
 	const char *paddr;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	if (ext4_inode_is_fast_symlink(inode)) {
 		caddr = EXT4_I(inode)->i_data;

@@ -186,7 +186,7 @@ static inline int da732x_get_input_div(struct snd_soc_component *component, int 
 		val = DA732X_MCLK_RET_40_54MHZ;
 		ret = DA732X_MCLK_VAL_40_54MHZ;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, DA732X_REG_PLL_CTRL, val);
@@ -345,7 +345,7 @@ static int da732x_hpf_set(struct snd_kcontrol *kcontrol,
 		bits = DA732X_HPF_MUSIC_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, reg, DA732X_HPF_MASK, bits);
@@ -622,7 +622,7 @@ static int da732x_adc_event(struct snd_soc_dapm_widget *w,
 					    DA732X_ADCC_BB_CLK_EN);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, w->reg, DA732X_ADC_RST_MASK,
@@ -646,12 +646,12 @@ static int da732x_adc_event(struct snd_soc_dapm_widget *w,
 					    DA732X_ADCC_BB_CLK_EN, 0);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -674,7 +674,7 @@ static int da732x_out_pga_event(struct snd_soc_dapm_widget *w,
 				    (1 << w->shift) | DA732X_OUT_HIZ_DIS);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -967,7 +967,7 @@ static int da732x_hw_params(struct snd_pcm_substream *substream,
 		aif |= DA732X_AIF_WORD_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_rate(params)) {
@@ -1005,7 +1005,7 @@ static int da732x_hw_params(struct snd_pcm_substream *substream,
 		fs = DA732X_SR_96KHZ;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, reg_aif, DA732X_AIF_WORD_MASK, aif);
@@ -1035,7 +1035,7 @@ static int da732x_set_dai_fmt(struct snd_soc_dai *dai, u32 fmt)
 			   DA732X_PC_SAME;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1048,7 +1048,7 @@ static int da732x_set_dai_fmt(struct snd_soc_dai *dai, u32 fmt)
 		aif_mclk = DA732X_CLK_GENERATION_AIF_A;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1065,7 +1065,7 @@ static int da732x_set_dai_fmt(struct snd_soc_dai *dai, u32 fmt)
 		aif3 = DA732X_AIF_DSP_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock inversion */
@@ -1078,7 +1078,7 @@ static int da732x_set_dai_fmt(struct snd_soc_dai *dai, u32 fmt)
 			aif3 |= DA732X_AIF_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -1097,11 +1097,11 @@ static int da732x_set_dai_fmt(struct snd_soc_dai *dai, u32 fmt)
 			aif3 |= DA732X_AIF_WCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, DA732X_REG_AIF_MCLK, aif_mclk);
@@ -1133,7 +1133,7 @@ static int da732x_set_dai_pll(struct snd_soc_component *component, int pll_id,
 	}
 
 	if (da732x->pll_en)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (source == DA732X_SRCCLK_MCLK) {
 		/* Validate Sysclk rate */
@@ -1150,7 +1150,7 @@ static int da732x_set_dai_pll(struct snd_soc_component *component, int pll_id,
 		default:
 			dev_err(component->dev,
 				"Cannot use PLL Bypass, invalid SYSCLK rate\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

@@ -825,7 +825,7 @@ static int wm8350_set_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
 		snd_soc_component_write(component, WM8350_ADC_LR_RATE, val | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -853,7 +853,7 @@ static int wm8350_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -873,7 +873,7 @@ static int wm8350_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface |= 0x3 << 8 | WM8350_AIF_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -890,7 +890,7 @@ static int wm8350_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface |= WM8350_AIF_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8350_AI_FORMATING, iface);
@@ -985,7 +985,7 @@ static inline int fll_factors(struct _fll_div *fll_div, unsigned int input,
 		fll_div->div = 0x1;
 	else {
 		printk(KERN_ERR "wm8350: fll freq %d out of range\n", output);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (input > 48000)
@@ -1336,7 +1336,7 @@ int wm8350_hp_jack_detect(struct snd_soc_component *component, enum wm8350_jack 
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (report) {
@@ -1462,7 +1462,7 @@ static  int wm8350_component_probe(struct snd_soc_component *component)
 
 	if (wm8350->codec.platform_data == NULL) {
 		dev_err(component->dev, "No audio platform data supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv = devm_kzalloc(component->dev, sizeof(struct wm8350_data),

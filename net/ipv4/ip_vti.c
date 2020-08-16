@@ -66,7 +66,7 @@ static int vti_input(struct sk_buff *skb, int nexthdr, __be32 spi,
 		return xfrm_input(skb, nexthdr, spi, encap_type);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 drop:
 	kfree_skb(skb);
 	return 0;
@@ -111,7 +111,7 @@ static int vti_rcv_tunnel(struct sk_buff *skb)
 		return ip_tunnel_rcv(tunnel, skb, &tpi, NULL, false);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 drop:
 	kfree_skb(skb);
 	return 0;
@@ -149,7 +149,7 @@ static int vti_rcv_cb(struct sk_buff *skb, int err)
 		if (inner_mode == NULL) {
 			XFRM_INC_STATS(dev_net(skb->dev),
 				       LINUX_MIB_XFRMINSTATEMODEERROR);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -160,7 +160,7 @@ static int vti_rcv_cb(struct sk_buff *skb, int err)
 	skb->mark = orig_mark;
 
 	if (!ret)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	skb_scrub_packet(skb, !net_eq(tunnel->net, dev_net(skb->dev)));
 	skb->dev = dev;
@@ -406,7 +406,7 @@ vti_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 	if (cmd == SIOCADDTUNNEL || cmd == SIOCCHGTUNNEL) {
 		if (p->iph.version != 4 || p->iph.protocol != IPPROTO_IPIP ||
 		    p->iph.ihl != 5)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (!(p->i_flags & GRE_KEY))
@@ -618,7 +618,7 @@ static int vti_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	    nla_put_in_addr(skb, IFLA_VTI_LOCAL, p->iph.saddr) ||
 	    nla_put_in_addr(skb, IFLA_VTI_REMOTE, p->iph.daddr) ||
 	    nla_put_u32(skb, IFLA_VTI_FWMARK, t->fwmark))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

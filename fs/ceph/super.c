@@ -1099,7 +1099,7 @@ static int ceph_get_tree(struct fs_context *fc)
 out_splat:
 	if (!ceph_mdsmap_is_cluster_available(fsc->mdsc->mdsmap)) {
 		pr_info("No mds server is up or the cluster is laggy\n");
-		err = -EHOSTUNREACH;
+		err = -ERR(EHOSTUNREACH);
 	}
 
 	ceph_mdsc_close_sessions(fsc->mdsc);

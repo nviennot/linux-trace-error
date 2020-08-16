@@ -178,7 +178,7 @@ int nilfs_sufile_updatev(struct inode *sufile, __u64 *segnumv, size_t nsegs,
 		}
 	}
 	if (nerr > 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_sem;
 	}
 
@@ -233,7 +233,7 @@ int nilfs_sufile_update(struct inode *sufile, __u64 segnum, int create,
 		nilfs_msg(sufile->i_sb, KERN_WARNING,
 			  "%s: invalid segment number: %llu",
 			  __func__, (unsigned long long)segnum);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	down_write(&NILFS_MDT(sufile)->mi_sem);
 
@@ -268,7 +268,7 @@ int nilfs_sufile_set_alloc_range(struct inode *sufile, __u64 start, __u64 end)
 {
 	struct nilfs_sufile_info *sui = NILFS_SUI(sufile);
 	__u64 nsegs;
-	int ret = -ERANGE;
+	int ret = -ERR(ERANGE);
 
 	down_write(&NILFS_MDT(sufile)->mi_sem);
 	nsegs = nilfs_sufile_get_nsegments(sufile);
@@ -390,7 +390,7 @@ int nilfs_sufile_alloc(struct inode *sufile, __u64 *segnump)
 	}
 
 	/* no segments left */
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 
  out_header:
 	brelse(header_bh);
@@ -655,7 +655,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
 
 	nsegs = nilfs_sufile_get_nsegments(sufile);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (start > end || start >= nsegs)
 		goto out;
 
@@ -687,7 +687,7 @@ static int nilfs_sufile_truncate_range(struct inode *sufile,
 			if ((le32_to_cpu(su->su_flags) &
 			     ~BIT(NILFS_SEGMENT_USAGE_ERROR)) ||
 			    nilfs_segment_is_active(nilfs, segnum + j)) {
-				ret = -EBUSY;
+				ret = -ERR(EBUSY);
 				kunmap_atomic(kaddr);
 				brelse(su_bh);
 				goto out_header;
@@ -757,7 +757,7 @@ int nilfs_sufile_resize(struct inode *sufile, __u64 newnsegs)
 	if (nsegs == newnsegs)
 		goto out;
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	nrsvsegs = nilfs_nrsvsegs(nilfs, newnsegs);
 	if (newnsegs < nsegs && nsegs - newnsegs + nrsvsegs > sui->ncleansegs)
 		goto out;
@@ -910,7 +910,7 @@ ssize_t nilfs_sufile_set_suinfo(struct inode *sufile, void *buf,
 			|| (nilfs_suinfo_update_nblocks(sup) &&
 				sup->sup_sui.sui_nblocks >
 				nilfs->ns_blocks_per_segment))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	down_write(&NILFS_MDT(sufile)->mi_sem);
@@ -1034,7 +1034,7 @@ int nilfs_sufile_trim_fs(struct inode *sufile, struct fstrim_range *range)
 	max_blocks = ((u64)nilfs->ns_nsegments * nilfs->ns_blocks_per_segment);
 
 	if (!len || range->start >= max_blocks << nilfs->ns_blocksize_bits)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	start_block = (range->start + nilfs->ns_blocksize - 1) >>
 			nilfs->ns_blocksize_bits;
@@ -1170,11 +1170,11 @@ int nilfs_sufile_read(struct super_block *sb, size_t susize,
 	if (susize > sb->s_blocksize) {
 		nilfs_msg(sb, KERN_ERR,
 			  "too large segment usage size: %zu bytes", susize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (susize < NILFS_MIN_SEGMENT_USAGE_SIZE) {
 		nilfs_msg(sb, KERN_ERR,
 			  "too small segment usage size: %zu bytes", susize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sufile = nilfs_iget_locked(sb, NULL, NILFS_SUFILE_INO);

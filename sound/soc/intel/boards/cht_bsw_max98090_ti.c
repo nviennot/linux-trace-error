@@ -55,7 +55,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 	codec_dai = snd_soc_card_get_codec_dai(card, CHT_CODEC_DAI);
 	if (!codec_dai) {
 		dev_err(card->dev, "Codec dai not found; Unable to set platform clock\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {

@@ -125,7 +125,7 @@ static int rockchip_sound_da7219_hw_params(struct snd_pcm_substream *substream,
 		mclk = 11289600;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, 0, mclk,
@@ -515,7 +515,7 @@ static int rockchip_sound_of_parse_dais(struct device *dev,
 		if (!np_cpu) {
 			dev_err(dev, "Missing 'rockchip,cpu' for %s\n",
 				rockchip_dais[index].name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dai = &card->dai_link[card->num_links++];
@@ -529,7 +529,7 @@ static int rockchip_sound_of_parse_dais(struct device *dev,
 		if (card->num_dapm_routes + rockchip_routes[index].num_routes >
 		    num_routes) {
 			dev_err(dev, "Too many routes\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		memcpy(routes + card->num_dapm_routes,

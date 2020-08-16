@@ -99,7 +99,7 @@ static int cffrml_receive(struct cflayer *layr, struct cfpkt *pkt)
 		++cffrml_rcv_error;
 		pr_err("Framing length error (%d)\n", len);
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	/*
 	 * Don't do extract if FCS is false, rather do setlen - then we don't
@@ -115,20 +115,20 @@ static int cffrml_receive(struct cflayer *layr, struct cfpkt *pkt)
 			++cffrml_rcv_checsum_error;
 			pr_info("Frame checksum error (0x%x != 0x%x)\n",
 				hdrchks, pktchks);
-			return -EILSEQ;
+			return -ERR(EILSEQ);
 		}
 	}
 	if (cfpkt_erroneous(pkt)) {
 		++cffrml_rcv_error;
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (layr->up == NULL) {
 		pr_err("Layr up is missing!\n");
 		cfpkt_destroy(pkt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return layr->up->receive(layr->up, pkt);
@@ -155,12 +155,12 @@ static int cffrml_transmit(struct cflayer *layr, struct cfpkt *pkt)
 	if (cfpkt_erroneous(pkt)) {
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (layr->dn == NULL) {
 		cfpkt_destroy(pkt);
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	}
 	return layr->dn->transmit(layr->dn, pkt);

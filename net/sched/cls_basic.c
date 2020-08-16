@@ -77,7 +77,7 @@ static int basic_init(struct tcf_proto *tp)
 
 	head = kzalloc(sizeof(*head), GFP_KERNEL);
 	if (head == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	INIT_LIST_HEAD(&head->flist);
 	idr_init(&head->handle_idr);
 	rcu_assign_pointer(tp->root, head);
@@ -179,7 +179,7 @@ static int basic_change(struct net *net, struct sk_buff *in_skb,
 	struct basic_filter *fnew;
 
 	if (tca[TCA_OPTIONS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_BASIC_MAX, tca[TCA_OPTIONS],
 					  basic_policy, NULL);
@@ -188,12 +188,12 @@ static int basic_change(struct net *net, struct sk_buff *in_skb,
 
 	if (fold != NULL) {
 		if (handle && fold->handle != handle)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	fnew = kzalloc(sizeof(*fnew), GFP_KERNEL);
 	if (!fnew)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_exts_init(&fnew->exts, net, TCA_BASIC_ACT, TCA_BASIC_POLICE);
 	if (err < 0)

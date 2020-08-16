@@ -77,7 +77,7 @@ void kunit_try_catch_run(struct kunit_try_catch *try_catch, void *context)
 						     kunit_test_timeout());
 	if (time_remaining == 0) {
 		kunit_err(test, "try timed out\n");
-		try_catch->try_result = -ETIMEDOUT;
+		try_catch->try_result = -ERR(ETIMEDOUT);
 	}
 
 	exit_code = try_catch->try_result;

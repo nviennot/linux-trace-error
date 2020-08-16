@@ -49,7 +49,7 @@ int configfs_setattr(struct dentry * dentry, struct iattr * iattr)
 	int error;
 
 	if (!sd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sd_iattr = sd->s_iattr;
 	if (!sd_iattr) {
@@ -168,10 +168,10 @@ struct inode *configfs_create(struct dentry *dentry, umode_t mode)
 	struct inode *p_inode;
 
 	if (!dentry)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	if (d_really_is_positive(dentry))
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 
 	sd = dentry->d_fsdata;
 	inode = configfs_new_inode(mode, sd, dentry->d_sb);

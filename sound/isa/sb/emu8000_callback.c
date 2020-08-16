@@ -529,6 +529,6 @@ load_fx(struct snd_emux *emu, int type, int mode, const void __user *buf, long l
 	case SNDRV_EMU8000_LOAD_REVERB_FX:
 		return snd_emu8000_load_reverb_fx(hw, mode, buf, len);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 

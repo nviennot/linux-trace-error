@@ -428,7 +428,7 @@ static int udf_get_block(struct inode *inode, sector_t block,
 		return 0;
 	}
 
-	err = -EIO;
+	err = -ERR(EIO);
 	new = 0;
 	iinfo = UDF_I(inode);
 
@@ -597,7 +597,7 @@ out:
 	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
 		last_pos->offset -= sizeof(struct long_ad);
 	else
-		return -EIO;
+		return -ERR(EIO);
 
 	return count;
 }
@@ -860,7 +860,7 @@ static sector_t inode_getblk(struct inode *inode, sector_t block,
 				iinfo->i_location.partitionReferenceNum,
 				goal, err);
 		if (!newblocknum) {
-			*err = -ENOSPC;
+			*err = -ERR(ENOSPC);
 			newblock = 0;
 			goto out_free;
 		}
@@ -892,7 +892,7 @@ static sector_t inode_getblk(struct inode *inode, sector_t block,
 	newblock = udf_get_pblock(inode->i_sb, newblocknum,
 				iinfo->i_location.partitionReferenceNum, 0);
 	if (!newblock) {
-		*err = -EIO;
+		*err = -ERR(EIO);
 		goto out_free;
 	}
 	*new = 1;
@@ -1217,7 +1217,7 @@ struct buffer_head *udf_bread(struct inode *inode, udf_pblk_t block,
 		return bh;
 
 	brelse(bh);
-	*err = -EIO;
+	*err = -ERR(EIO);
 	return NULL;
 }
 
@@ -1229,9 +1229,9 @@ int udf_setsize(struct inode *inode, loff_t newsize)
 
 	if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
 	      S_ISLNK(inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	iinfo = UDF_I(inode);
 	if (newsize > inode->i_size) {
@@ -1308,21 +1308,21 @@ static int udf_read_inode(struct inode *inode, bool hidden_inode)
 	unsigned int link_count;
 	unsigned int indirections = 0;
 	int bs = inode->i_sb->s_blocksize;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 	uint32_t uid, gid;
 
 reread:
 	if (iloc->partitionReferenceNum >= sbi->s_partitions) {
 		udf_debug("partition reference: %u > logical volume partitions: %u\n",
 			  iloc->partitionReferenceNum, sbi->s_partitions);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (iloc->logicalBlockNum >=
 	    sbi->s_partmaps[iloc->partitionReferenceNum].s_partition_len) {
 		udf_debug("block=%u, partition=%u out of range\n",
 			  iloc->logicalBlockNum, iloc->partitionReferenceNum);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -1340,7 +1340,7 @@ reread:
 	bh = udf_read_ptagged(inode->i_sb, iloc, 0, &ident);
 	if (!bh) {
 		udf_err(inode->i_sb, "(ino %lu) failed !bh\n", inode->i_ino);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (ident != TAG_IDENT_FE && ident != TAG_IDENT_EFE &&
@@ -1395,7 +1395,7 @@ reread:
 	if (iinfo->i_alloc_type != ICBTAG_FLAG_AD_SHORT &&
 	    iinfo->i_alloc_type != ICBTAG_FLAG_AD_LONG &&
 	    iinfo->i_alloc_type != ICBTAG_FLAG_AD_IN_ICB) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 	iinfo->i_unique = 0;
@@ -1439,7 +1439,7 @@ reread:
 		return 0;
 	}
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	read_lock(&sbi->s_cred_lock);
 	uid = le32_to_cpu(fe->uid);
 	if (uid == UDF_INVALID_ID ||
@@ -1471,7 +1471,7 @@ reread:
 	link_count = le16_to_cpu(fe->fileLinkCount);
 	if (!link_count) {
 		if (!hidden_inode) {
-			ret = -ESTALE;
+			ret = -ERR(ESTALE);
 			goto out;
 		}
 		link_count = 1;
@@ -1692,7 +1692,7 @@ static int udf_update_inode(struct inode *inode, int do_sync)
 			udf_get_lb_pblock(inode->i_sb, &iinfo->i_location, 0));
 	if (!bh) {
 		udf_debug("getblk failure\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	lock_buffer(bh);
@@ -1887,7 +1887,7 @@ finish:
 		if (buffer_write_io_error(bh)) {
 			udf_warn(inode->i_sb, "IO error syncing udf inode [%08lx]\n",
 				 inode->i_ino);
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 	}
 	brelse(bh);
@@ -1934,14 +1934,14 @@ int udf_setup_indirect_aext(struct inode *inode, udf_pblk_t block,
 	else if (UDF_I(inode)->i_alloc_type == ICBTAG_FLAG_AD_LONG)
 		adsize = sizeof(struct long_ad);
 	else
-		return -EIO;
+		return -ERR(EIO);
 
 	neloc.logicalBlockNum = block;
 	neloc.partitionReferenceNum = epos->block.partitionReferenceNum;
 
 	bh = udf_tgetblk(sb, udf_get_lb_pblock(sb, &neloc, 0));
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	lock_buffer(bh);
 	memset(bh->b_data, 0x00, sb->s_blocksize);
 	set_buffer_uptodate(bh);
@@ -2009,7 +2009,7 @@ int __udf_add_aext(struct inode *inode, struct extent_position *epos,
 	else if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_LONG)
 		adsize = sizeof(struct long_ad);
 	else
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!epos->bh) {
 		WARN_ON(iinfo->i_lenAlloc !=
@@ -2057,7 +2057,7 @@ int udf_add_aext(struct inode *inode, struct extent_position *epos,
 	else if (UDF_I(inode)->i_alloc_type == ICBTAG_FLAG_AD_LONG)
 		adsize = sizeof(struct long_ad);
 	else
-		return -EIO;
+		return -ERR(EIO);
 
 	if (epos->offset + (2 * adsize) > sb->s_blocksize) {
 		int err;
@@ -2067,7 +2067,7 @@ int udf_add_aext(struct inode *inode, struct extent_position *epos,
 					  epos->block.partitionReferenceNum,
 					  epos->block.logicalBlockNum, &err);
 		if (!new_block)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 		err = udf_setup_indirect_aext(inode, new_block, epos);
 		if (err)

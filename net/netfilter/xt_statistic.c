@@ -56,7 +56,7 @@ static int statistic_mt_check(const struct xt_mtchk_param *par)
 
 	if (info->mode > XT_STATISTIC_MODE_MAX ||
 	    info->flags & ~XT_STATISTIC_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info->master = kzalloc(sizeof(*info->master), GFP_KERNEL);
 	if (info->master == NULL)

@@ -79,7 +79,7 @@ static int gprs_recv(struct gprs_dev *gp, struct sk_buff *skb)
 	__be16 protocol = gprs_type_trans(skb);
 
 	if (!protocol) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto drop;
 	}
 
@@ -93,7 +93,7 @@ static int gprs_recv(struct gprs_dev *gp, struct sk_buff *skb)
 		 * but at least, the whole IP payload is not memcpy'd. */
 		rskb = netdev_alloc_skb(dev, 0);
 		if (!rskb) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto drop;
 		}
 		skb_shinfo(rskb)->frag_list = skb;
@@ -123,7 +123,7 @@ static int gprs_recv(struct gprs_dev *gp, struct sk_buff *skb)
 		netif_rx(skb);
 		skb = NULL;
 	} else
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 
 drop:
 	if (skb) {
@@ -242,7 +242,7 @@ int gprs_attach(struct sock *sk)
 	int err;
 
 	if (unlikely(sk->sk_type == SOCK_STREAM))
-		return -EINVAL; /* need packet boundaries */
+		return -ERR(EINVAL); /* need packet boundaries */
 
 	/* Create net device */
 	dev = alloc_netdev(sizeof(*gp), ifname, NET_NAME_UNKNOWN, gprs_setup);
@@ -261,12 +261,12 @@ int gprs_attach(struct sock *sk)
 
 	lock_sock(sk);
 	if (unlikely(sk->sk_user_data)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_rel;
 	}
 	if (unlikely((1 << sk->sk_state & (TCPF_CLOSE|TCPF_LISTEN)) ||
 			sock_flag(sk, SOCK_DEAD))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_rel;
 	}
 	sk->sk_user_data	= gp;

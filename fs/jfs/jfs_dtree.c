@@ -122,7 +122,7 @@ do {									\
 			jfs_error((IP)->i_sb,				\
 				  "DT_GETPAGE: dtree page corrupt\n");	\
 			MP = NULL;					\
-			RC = -EIO;					\
+			RC = -ERR(EIO);					\
 		}							\
 	}								\
 } while (0)
@@ -542,7 +542,7 @@ static int read_index(struct inode *ip, u32 index,
 
 	slot = find_index(ip, index, &mp, &lblock);
 	if (!slot) {
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	memcpy(dirtab_slot, slot, sizeof(struct dir_table_slot));
@@ -670,7 +670,7 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 					 */
 					if (flag == JFS_CREATE) {
 						*data = inumber;
-						rc = -EEXIST;
+						rc = -ERR(EEXIST);
 						goto out;
 					}
 
@@ -680,7 +680,7 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 					if ((flag == JFS_REMOVE ||
 					     flag == JFS_RENAME) &&
 					    *data != inumber) {
-						rc = -ESTALE;
+						rc = -ERR(ESTALE);
 						goto out;
 					}
 
@@ -728,7 +728,7 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 			 */
 			if (flag == JFS_LOOKUP || flag == JFS_REMOVE ||
 			    flag == JFS_RENAME) {
-				rc = -ENOENT;
+				rc = -ERR(ENOENT);
 				goto out;
 			}
 
@@ -766,7 +766,7 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 			 */
 			jfs_error(sb, "stack overrun!\n");
 			BT_STACK_DUMP(btstack);
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto out;
 		}
 		btstack->nsplit++;
@@ -836,7 +836,7 @@ int dtInsert(tid_t tid, struct inode *ip,
 	if (DO_INDEX(ip)) {
 		if (JFS_IP(ip)->next_index == DIREND) {
 			DT_PUTPAGE(mp);
-			return -EMLINK;
+			return -ERR(EMLINK);
 		}
 		n = NDTLEAF(name->namlen);
 		data.leaf.tid = tid;
@@ -1354,7 +1354,7 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	rbn = addressPXD(pxd);
 	rmp = get_metapage(ip, rbn, PSIZE, 1);
 	if (rmp == NULL)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Allocate blocks to quota. */
 	rc = dquot_alloc_block(ip, lengthPXD(pxd));
@@ -1901,7 +1901,7 @@ static int dtSplitRoot(tid_t tid,
 	xsize = xlen << JFS_SBI(sb)->l2bsize;
 	rmp = get_metapage(ip, rbn, xsize, 1);
 	if (!rmp)
-		return -EIO;
+		return -ERR(EIO);
 
 	rp = rmp->data;
 
@@ -2667,7 +2667,7 @@ static int dtSearchNode(struct inode *ip, s64 lmxaddr, pxd_t * kpxd,
 		 */
 		if (p->header.flag & BT_LEAF) {
 			DT_PUTPAGE(mp);
-			return -ESTALE;
+			return -ERR(ESTALE);
 		}
 
 		/* get the leftmost entry */
@@ -2706,7 +2706,7 @@ static int dtSearchNode(struct inode *ip, s64 lmxaddr, pxd_t * kpxd,
 		bn = le64_to_cpu(p->header.next);
 	else {
 		DT_PUTPAGE(mp);
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 
 	/* unpin current page */
@@ -3370,7 +3370,7 @@ static int dtReadFirst(struct inode *ip, struct btstack * btstack)
 			DT_PUTPAGE(mp);
 			jfs_error(ip->i_sb, "btstack overrun\n");
 			BT_STACK_DUMP(btstack);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		/* push (bn, index) of the parent page/entry */
 		BT_PUSH(btstack, bn, 0);

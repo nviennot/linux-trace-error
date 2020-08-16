@@ -2968,7 +2968,7 @@ static inline int ib_destroy_usecnt(atomic_t *usecnt,
 				    struct ib_uobject *uobj)
 {
 	if (atomic_read(usecnt) && ib_is_destroy_retryable(-EBUSY, why, uobj))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 
@@ -3645,7 +3645,7 @@ static inline struct ib_srq *
 ib_create_srq(struct ib_pd *pd, struct ib_srq_init_attr *srq_init_attr)
 {
 	if (!pd->device->ops.create_srq)
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	return ib_create_srq_user(pd, srq_init_attr, NULL, NULL);
 }
@@ -4043,7 +4043,7 @@ static inline int ib_req_ncomp_notif(struct ib_cq *cq, int wc_cnt)
 {
 	return cq->device->ops.req_ncomp_notif ?
 		cq->device->ops.req_ncomp_notif(cq, wc_cnt) :
-		-ENOSYS;
+		-ERR(ENOSYS);
 }
 
 /**
@@ -4345,10 +4345,10 @@ static inline int ib_check_mr_access(int flags)
 	 */
 	if (flags & (IB_ACCESS_REMOTE_ATOMIC | IB_ACCESS_REMOTE_WRITE) &&
 	    !(flags & IB_ACCESS_LOCAL_WRITE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & ~IB_ACCESS_SUPPORTED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

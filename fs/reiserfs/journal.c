@@ -827,7 +827,7 @@ static int write_ordered_buffers(spinlock_t * lock,
 		 */
 		if (!buffer_uptodate(bh) && buffer_dirty(bh)) {
 			clear_buffer_dirty(bh);
-			ret = -EIO;
+			ret = -ERR(EIO);
 		}
 		if (buffer_dirty(bh)) {
 			list_move(&jh->list, &tmp);
@@ -857,7 +857,7 @@ loop_next:
 			spin_lock(lock);
 		}
 		if (!buffer_uptodate(bh)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 		}
 		/*
 		 * ugly interaction with invalidatepage here.
@@ -1085,7 +1085,7 @@ static int flush_commit_list(struct super_block *s,
 			reiserfs_warning(s, "journal-601",
 					 "buffer write failed");
 #endif
-			retval = -EIO;
+			retval = -ERR(EIO);
 		}
 		/* once for journal_find_get_block */
 		put_bh(tbh);
@@ -1124,7 +1124,7 @@ static int flush_commit_list(struct super_block *s,
 #ifdef CONFIG_REISERFS_CHECK
 		reiserfs_warning(s, "journal-615", "buffer write failed");
 #endif
-		retval = -EIO;
+		retval = -ERR(EIO);
 	}
 	bforget(jl->j_commit_bh);
 	if (journal->j_last_commit_id != 0 &&
@@ -1240,7 +1240,7 @@ static int _update_journal_header_block(struct super_block *sb,
 	int depth;
 
 	if (reiserfs_is_journal_aborted(journal))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (trans_id >= journal->j_last_flush_trans_id) {
 		if (buffer_locked((journal->j_header_bh))) {
@@ -1252,7 +1252,7 @@ static int _update_journal_header_block(struct super_block *sb,
 				reiserfs_warning(sb, "journal-699",
 						 "buffer write failed");
 #endif
-				return -EIO;
+				return -ERR(EIO);
 			}
 		}
 		journal->j_last_flush_trans_id = trans_id;
@@ -1276,7 +1276,7 @@ static int _update_journal_header_block(struct super_block *sb,
 		if (!buffer_uptodate(journal->j_header_bh)) {
 			reiserfs_warning(sb, "journal-837",
 					 "IO error during journal replay");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return 0;
@@ -1539,7 +1539,7 @@ free_cnode:
 					reiserfs_warning(s, "journal-949",
 							 "buffer write failed");
 #endif
-					err = -EIO;
+					err = -ERR(EIO);
 				}
 				/*
 				 * note, we must clear the JDirty_wait bit
@@ -2174,7 +2174,7 @@ static int journal_read_transaction(struct super_block *sb,
 				 "device is readonly, unable to replay log");
 		brelse(c_bh);
 		brelse(d_bh);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	trans_id = get_desc_trans_id(desc);
@@ -3168,7 +3168,7 @@ int reiserfs_end_persistent_transaction(struct reiserfs_transaction_handle *th)
 	if (th->t_trans_id)
 		ret = journal_end(th);
 	else
-		ret = -EIO;
+		ret = -ERR(EIO);
 	if (th->t_refcount == 0) {
 		SB_JOURNAL(s)->j_persistent_trans--;
 		kfree(th);
@@ -3377,7 +3377,7 @@ int journal_end(struct reiserfs_transaction_handle *th)
 
 	if (!th->t_trans_id) {
 		WARN_ON(1);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	th->t_refcount--;

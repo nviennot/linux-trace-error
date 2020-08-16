@@ -49,7 +49,7 @@ static struct uts_namespace *clone_uts_ns(struct user_namespace *user_ns,
 	struct ucounts *ucounts;
 	int err;
 
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	ucounts = inc_uts_namespaces(user_ns);
 	if (!ucounts)
 		goto fail;
@@ -147,7 +147,7 @@ static int utsns_install(struct nsset *nsset, struct ns_common *new)
 
 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	get_uts_ns(ns);
 	put_uts_ns(nsproxy->uts_ns);

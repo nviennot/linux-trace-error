@@ -51,7 +51,7 @@ static int parse_clock_bits(u32 data, unsigned int *rate,
 		}
 	}
 	if (i == ARRAY_SIZE(rate_entries))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (data & 0x00000001) {
 		*src = SND_FF_CLOCK_SRC_INTERNAL;
@@ -64,7 +64,7 @@ static int parse_clock_bits(u32 data, unsigned int *rate,
 			}
 		}
 		if (i == ARRAY_SIZE(clk_entries))
-			return -EIO;
+			return -ERR(EIO);
 	}
 
 	return 0;
@@ -324,7 +324,7 @@ static int allocate_tx_resources(struct snd_ff *ff)
 		msleep(50);
 	}
 	if (count >= 10)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 
 	// NOTE: this is a makeshift to start OHCI 1394 IR context in the
 	// channel. On the other hand, 'struct fw_iso_resources.allocated' is
@@ -451,7 +451,7 @@ static int ff400_allocate_resources(struct snd_ff *ff, unsigned int rate)
 			break;
 	}
 	if (i >= CIP_SFC_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	// Set the number of data blocks transferred in a second.
 	reg = cpu_to_le32(rate);

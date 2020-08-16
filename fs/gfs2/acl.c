@@ -115,7 +115,7 @@ int gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 	umode_t mode;
 
 	if (acl && acl->a_count > GFS2_ACL_MAX_ENTRIES(GFS2_SB(inode)))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	ret = gfs2_qa_get(ip);
 	if (ret)

@@ -11,7 +11,7 @@ int ceph_metric_init(struct ceph_client_metric *m)
 	int ret;
 
 	if (!m)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	atomic64_set(&m->total_dentries, 0);
 	ret = percpu_counter_init(&m->d_lease_hit, 0, GFP_KERNEL);

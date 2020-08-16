@@ -174,7 +174,7 @@ static int btrfs_add_block_group_cache(struct btrfs_fs_info *info,
 			p = &(*p)->rb_right;
 		} else {
 			spin_unlock(&info->block_group_cache_lock);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -418,11 +418,11 @@ int btrfs_wait_block_group_cache_done(struct btrfs_block_group *cache)
 
 	caching_ctl = btrfs_get_caching_control(cache);
 	if (!caching_ctl)
-		return (cache->cached == BTRFS_CACHE_ERROR) ? -EIO : 0;
+		return (cache->cached == BTRFS_CACHE_ERROR) ? -ERR(EIO) : 0;
 
 	wait_event(caching_ctl->wait, btrfs_block_group_done(cache));
 	if (cache->cached == BTRFS_CACHE_ERROR)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	btrfs_put_caching_control(caching_ctl);
 	return ret;
 }
@@ -880,7 +880,7 @@ static int remove_block_group_item(struct btrfs_trans_handle *trans,
 
 	ret = btrfs_search_slot(trans, root, &key, path, -1, 1);
 	if (ret > 0)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	if (ret < 0)
 		return ret;
 
@@ -1222,7 +1222,7 @@ static int inc_block_group_ro(struct btrfs_block_group *cache, int force)
 {
 	struct btrfs_space_info *sinfo = cache->space_info;
 	u64 num_bytes;
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 
 	spin_lock(&sinfo->lock);
 	spin_lock(&cache->lock);
@@ -1575,14 +1575,14 @@ static int find_first_block_group(struct btrfs_fs_info *fs_info,
 				btrfs_err(fs_info,
 			"logical %llu len %llu found bg but no related chunk",
 					  found_key.objectid, found_key.offset);
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 			} else if (em->start != found_key.objectid ||
 				   em->len != found_key.offset) {
 				btrfs_err(fs_info,
 		"block group %llu len %llu mismatch with chunk %llu len %llu",
 					  found_key.objectid, found_key.offset,
 					  em->start, em->len);
-				ret = -EUCLEAN;
+				ret = -ERR(EUCLEAN);
 			} else {
 				read_extent_buffer(leaf, &bg,
 					btrfs_item_ptr_offset(leaf, slot),
@@ -1598,7 +1598,7 @@ static int find_first_block_group(struct btrfs_fs_info *fs_info,
 						found_key.offset, flags,
 						(BTRFS_BLOCK_GROUP_TYPE_MASK &
 						 em->map_lookup->type));
-					ret = -EUCLEAN;
+					ret = -ERR(EUCLEAN);
 				} else {
 					ret = 0;
 				}
@@ -1654,7 +1654,7 @@ int btrfs_rmap_block(struct btrfs_fs_info *fs_info, u64 chunk_start,
 
 	em = btrfs_get_chunk_map(fs_info, chunk_start, 1);
 	if (IS_ERR(em))
-		return -EIO;
+		return -ERR(EIO);
 
 	map = em->map_lookup;
 	data_stripe_length = em->len;
@@ -1865,7 +1865,7 @@ static int check_chunk_block_group_mappings(struct btrfs_fs_info *fs_info)
 			btrfs_err(fs_info,
 	"chunk start=%llu len=%llu doesn't have corresponding block group",
 				     em->start, em->len);
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			free_extent_map(em);
 			break;
 		}
@@ -1878,7 +1878,7 @@ static int check_chunk_block_group_mappings(struct btrfs_fs_info *fs_info)
 				em->map_lookup->type & BTRFS_BLOCK_GROUP_TYPE_MASK,
 				bg->start, bg->length,
 				bg->flags & BTRFS_BLOCK_GROUP_TYPE_MASK);
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			free_extent_map(em);
 			btrfs_put_block_group(bg);
 			break;
@@ -1947,7 +1947,7 @@ static int read_one_block_group(struct btrfs_fs_info *info,
 			btrfs_err(info,
 "bg %llu is a mixed block group but filesystem hasn't enabled mixed block groups",
 				  cache->start);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 	}
 
@@ -2377,7 +2377,7 @@ static int update_block_group_item(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	if (ret) {
 		if (ret > 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		goto fail;
 	}
 
@@ -2504,7 +2504,7 @@ again:
 	 * skip doing the setup, we've already cleared the cache so we're safe.
 	 */
 	if (test_bit(BTRFS_TRANS_CACHE_ENOSPC, &trans->transaction->flags)) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out_put;
 	}
 
@@ -2906,7 +2906,7 @@ int btrfs_update_block_group(struct btrfs_trans_handle *trans,
 	while (total) {
 		cache = btrfs_lookup_block_group(info, bytenr);
 		if (!cache) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			break;
 		}
 		factor = btrfs_bg_type_to_factor(cache->flags);
@@ -3012,7 +3012,7 @@ int btrfs_add_reserved_bytes(struct btrfs_block_group *cache,
 	spin_lock(&space_info->lock);
 	spin_lock(&cache->lock);
 	if (cache->ro) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	} else {
 		cache->reserved += num_bytes;
 		space_info->bytes_reserved += num_bytes;
@@ -3124,7 +3124,7 @@ int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
 
 	/* Don't re-enter if we're already allocating a chunk */
 	if (trans->allocating_chunk)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	space_info = btrfs_find_space_info(fs_info, flags);
 	ASSERT(space_info);
@@ -3137,7 +3137,7 @@ int btrfs_chunk_alloc(struct btrfs_trans_handle *trans, u64 flags,
 		if (space_info->full) {
 			/* No more free physical space */
 			if (should_alloc)
-				ret = -ENOSPC;
+				ret = -ERR(ENOSPC);
 			else
 				ret = 0;
 			spin_unlock(&space_info->lock);

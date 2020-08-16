@@ -84,7 +84,7 @@ ecryptfs_get_encrypted_key_payload_data(struct key *key)
 
 	payload = key->payload.data[0];
 	if (!payload)
-		return ERR_PTR(-EKEYREVOKED);
+		return ERR_PTR(-ERR(EKEYREVOKED));
 
 	return (struct ecryptfs_auth_tok *)payload->payload_data;
 }
@@ -103,7 +103,7 @@ ecryptfs_get_encrypted_key_payload_data(struct key *key)
 
 static inline struct key *ecryptfs_get_encrypted_key(char *sig)
 {
-	return ERR_PTR(-ENOKEY);
+	return ERR_PTR(-ERR(ENOKEY));
 }
 
 #endif /* CONFIG_ENCRYPTED_KEYS */
@@ -120,7 +120,7 @@ ecryptfs_get_key_payload_data(struct key *key)
 
 	ukp = user_key_payload_locked(key);
 	if (!ukp)
-		return ERR_PTR(-EKEYREVOKED);
+		return ERR_PTR(-ERR(EKEYREVOKED));
 
 	return (struct ecryptfs_auth_tok *)ukp->data;
 }
@@ -633,12 +633,12 @@ static inline void ecryptfs_release_messaging(void)
 static inline int ecryptfs_send_message(char *data, int data_len,
 					struct ecryptfs_msg_ctx **msg_ctx)
 {
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 static inline int ecryptfs_wait_for_response(struct ecryptfs_msg_ctx *msg_ctx,
 					     struct ecryptfs_message **emsg)
 {
-	return -ENOMSG;
+	return -ERR(ENOMSG);
 }
 #endif
 

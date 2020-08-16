@@ -83,7 +83,7 @@ static int selinux_xfrm_alloc_user(struct xfrm_sec_ctx **ctxp,
 	if (ctxp == NULL || uctx == NULL ||
 	    uctx->ctx_doi != XFRM_SC_DOI_LSM ||
 	    uctx->ctx_alg != XFRM_SC_ALG_SELINUX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	str_len = uctx->ctx_len;
 	if (str_len >= PAGE_SIZE)
@@ -161,12 +161,12 @@ int selinux_xfrm_policy_lookup(struct xfrm_sec_ctx *ctx, u32 fl_secid, u8 dir)
 
 	/* Context sid is either set to label or ANY_ASSOC */
 	if (!selinux_authorizable_ctx(ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = avc_has_perm(&selinux_state,
 			  fl_secid, ctx->ctx_sid,
 			  SECCLASS_ASSOCIATION, ASSOCIATION__POLMATCH, NULL);
-	return (rc == -EACCES ? -ESRCH : rc);
+	return (rc == -ERR(EACCES) ? -ERR(ESRCH) : rc);
 }
 
 /*
@@ -243,7 +243,7 @@ static int selinux_xfrm_skb_sid_ingress(struct sk_buff *skb,
 						goto out;
 				} else if (sid_session != ctx->ctx_sid) {
 					*sid = SECSID_NULL;
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			}
 		}
@@ -352,7 +352,7 @@ int selinux_xfrm_state_alloc_acquire(struct xfrm_state *x,
 		return 0;
 
 	if (secid == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = security_sid_to_context(&selinux_state, secid, &ctx_str,
 				     &str_len);

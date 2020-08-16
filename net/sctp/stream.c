@@ -268,18 +268,18 @@ int sctp_send_reset_streams(struct sctp_association *asoc,
 	struct sctp_stream *stream = &asoc->stream;
 	__u16 i, str_nums, *str_list;
 	struct sctp_chunk *chunk;
-	int retval = -EINVAL;
+	int retval = -ERR(EINVAL);
 	__be16 *nstr_list;
 	bool out, in;
 
 	if (!asoc->peer.reconf_capable ||
 	    !(asoc->strreset_enable & SCTP_ENABLE_RESET_STREAM_REQ)) {
-		retval = -ENOPROTOOPT;
+		retval = -ERR(ENOPROTOOPT);
 		goto out;
 	}
 
 	if (asoc->strreset_outstanding) {
-		retval = -EINPROGRESS;
+		retval = -ERR(EINPROGRESS);
 		goto out;
 	}
 
@@ -327,7 +327,7 @@ int sctp_send_reset_streams(struct sctp_association *asoc,
 
 	if (out && !sctp_stream_outq_is_empty(stream, str_nums, nstr_list)) {
 		kfree(nstr_list);
-		retval = -EAGAIN;
+		retval = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -386,13 +386,13 @@ int sctp_send_reset_assoc(struct sctp_association *asoc)
 
 	if (!asoc->peer.reconf_capable ||
 	    !(asoc->strreset_enable & SCTP_ENABLE_RESET_ASSOC_REQ))
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (asoc->strreset_outstanding)
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 
 	if (!sctp_outq_is_empty(&asoc->outqueue))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	chunk = sctp_make_strreset_tsnreq(asoc);
 	if (!chunk)
@@ -432,12 +432,12 @@ int sctp_send_add_streams(struct sctp_association *asoc,
 
 	if (!asoc->peer.reconf_capable ||
 	    !(asoc->strreset_enable & SCTP_ENABLE_CHANGE_ASSOC_REQ)) {
-		retval = -ENOPROTOOPT;
+		retval = -ERR(ENOPROTOOPT);
 		goto out;
 	}
 
 	if (asoc->strreset_outstanding) {
-		retval = -EINPROGRESS;
+		retval = -ERR(EINPROGRESS);
 		goto out;
 	}
 
@@ -447,7 +447,7 @@ int sctp_send_add_streams(struct sctp_association *asoc,
 	incnt = stream->incnt + in;
 	if (outcnt > SCTP_MAX_STREAM || incnt > SCTP_MAX_STREAM ||
 	    (!out && !in)) {
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		goto out;
 	}
 

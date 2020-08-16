@@ -68,11 +68,11 @@ __le64 *squashfs_read_xattr_id_table(struct super_block *sb, u64 start,
 
 	/* there is always at least one xattr id */
 	if (*xattr_ids == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* xattr_table should be less than start */
 	if (*xattr_table_start >= start)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	len = SQUASHFS_XATTR_BLOCK_BYTES(*xattr_ids);
 

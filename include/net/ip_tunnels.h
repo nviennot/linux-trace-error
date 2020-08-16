@@ -336,13 +336,13 @@ static inline bool pskb_inet_may_pull(struct sk_buff *skb)
 static inline int ip_encap_hlen(struct ip_tunnel_encap *e)
 {
 	const struct ip_tunnel_encap_ops *ops;
-	int hlen = -EINVAL;
+	int hlen = -ERR(EINVAL);
 
 	if (e->type == TUNNEL_ENCAP_NONE)
 		return 0;
 
 	if (e->type >= MAX_IPTUN_ENCAP_OPS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	ops = rcu_dereference(iptun_encaps[e->type]);
@@ -357,13 +357,13 @@ static inline int ip_tunnel_encap(struct sk_buff *skb, struct ip_tunnel *t,
 				  u8 *protocol, struct flowi4 *fl4)
 {
 	const struct ip_tunnel_encap_ops *ops;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (t->encap.type == TUNNEL_ENCAP_NONE)
 		return 0;
 
 	if (t->encap.type >= MAX_IPTUN_ENCAP_OPS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	ops = rcu_dereference(iptun_encaps[t->encap.type]);

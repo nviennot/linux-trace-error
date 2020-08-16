@@ -34,11 +34,11 @@ static ssize_t store_bridge_parm(struct device *d,
 	int err;
 
 	if (!ns_capable(dev_net(br->dev)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	val = simple_strtoul(buf, &endp, 0);
 	if (endp == buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -148,7 +148,7 @@ static ssize_t group_fwd_mask_show(struct device *d,
 static int set_group_fwd_mask(struct net_bridge *br, unsigned long val)
 {
 	if (val & BR_GROUPFWD_RESTRICTED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	br->group_fwd_mask = val;
 
@@ -277,18 +277,18 @@ static ssize_t group_addr_store(struct device *d,
 	u8 new_addr[6];
 
 	if (!ns_capable(dev_net(br->dev)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!mac_pton(buf, new_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!is_link_local_ether_addr(new_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (new_addr[5] == 1 ||		/* 802.3x Pause address */
 	    new_addr[5] == 2 ||		/* 802.3ad Slow protocols */
 	    new_addr[5] == 3)		/* 802.1X PAE address */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rtnl_trylock())
 		return restart_syscall();
@@ -920,7 +920,7 @@ static ssize_t brforward_read(struct file *filp, struct kobject *kobj,
 
 	/* must read whole records */
 	if (off % sizeof(struct __fdb_entry) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	n =  br_fdb_fillbuf(br, buf,
 			    count / sizeof(struct __fdb_entry),

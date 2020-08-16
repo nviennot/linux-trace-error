@@ -88,23 +88,23 @@ static int snd_compr_open(struct inode *inode, struct file *f)
 	else if ((f->f_flags & O_ACCMODE) == O_RDONLY)
 		dirn = SND_COMPRESS_CAPTURE;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (maj == snd_major)
 		compr = snd_lookup_minor_data(iminor(inode),
 					SNDRV_DEVICE_TYPE_COMPRESS);
 	else
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (compr == NULL) {
 		pr_err("no device data!!!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (dirn != compr->direction) {
 		pr_err("this device doesn't support this direction\n");
 		snd_card_unref(compr->card);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	data = kzalloc(sizeof(*data), GFP_KERNEL);
@@ -169,7 +169,7 @@ static int snd_compr_update_tstamp(struct snd_compr_stream *stream,
 		struct snd_compr_tstamp *tstamp)
 {
 	if (!stream->ops->pointer)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	stream->ops->pointer(stream, tstamp);
 	pr_debug("dsp consumed till %d total %d bytes\n",
 		tstamp->byte_offset, tstamp->copied_total);
@@ -234,9 +234,9 @@ snd_compr_ioctl_avail(struct snd_compr_stream *stream, unsigned long arg)
 
 	switch (stream->runtime->state) {
 	case SNDRV_PCM_STATE_OPEN:
-		return -EBADFD;
+		return -ERR(EBADFD);
 	case SNDRV_PCM_STATE_XRUN:
-		return -EPIPE;
+		return -ERR(EPIPE);
 	default:
 		break;
 	}
@@ -299,7 +299,7 @@ static ssize_t snd_compr_write(struct file *f, const char __user *buf,
 		break;
 	default:
 		mutex_unlock(&stream->device->lock);
-		return -EBADFD;
+		return -ERR(EBADFD);
 	}
 
 	avail = snd_compr_get_avail(stream);
@@ -352,10 +352,10 @@ static ssize_t snd_compr_read(struct file *f, char __user *buf,
 	case SNDRV_PCM_STATE_PREPARED:
 	case SNDRV_PCM_STATE_SUSPENDED:
 	case SNDRV_PCM_STATE_DISCONNECTED:
-		retval = -EBADFD;
+		retval = -ERR(EBADFD);
 		goto out;
 	case SNDRV_PCM_STATE_XRUN:
-		retval = -EPIPE;
+		retval = -ERR(EPIPE);
 		goto out;
 	}
 
@@ -368,7 +368,7 @@ static ssize_t snd_compr_read(struct file *f, char __user *buf,
 	if (stream->ops->copy) {
 		retval = stream->ops->copy(stream, buf, avail);
 	} else {
-		retval = -ENXIO;
+		retval = -ERR(ENXIO);
 		goto out;
 	}
 	if (retval > 0)
@@ -381,7 +381,7 @@ out:
 
 static int snd_compr_mmap(struct file *f, struct vm_area_struct *vma)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static __poll_t snd_compr_get_poll(struct snd_compr_stream *stream)
@@ -450,7 +450,7 @@ snd_compr_get_caps(struct snd_compr_stream *stream, unsigned long arg)
 	struct snd_compr_caps caps;
 
 	if (!stream->ops->get_caps)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	memset(&caps, 0, sizeof(caps));
 	retval = stream->ops->get_caps(stream, &caps);
@@ -470,7 +470,7 @@ snd_compr_get_codec_caps(struct snd_compr_stream *stream, unsigned long arg)
 	struct snd_compr_codec_caps *caps;
 
 	if (!stream->ops->get_codec_caps)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	caps = kzalloc(sizeof(*caps), GFP_KERNEL);
 	if (!caps)
@@ -494,7 +494,7 @@ int snd_compr_malloc_pages(struct snd_compr_stream *stream, size_t size)
 	int ret;
 
 	if (snd_BUG_ON(!(stream) || !(stream)->runtime))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dmab = kzalloc(sizeof(*dmab), GFP_KERNEL);
 	if (!dmab)
 		return -ENOMEM;
@@ -516,7 +516,7 @@ int snd_compr_free_pages(struct snd_compr_stream *stream)
 	struct snd_compr_runtime *runtime = stream->runtime;
 
 	if (snd_BUG_ON(!(stream) || !(stream)->runtime))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (runtime->dma_area == NULL)
 		return 0;
 	if (runtime->dma_buffer_p != &stream->dma_buffer) {
@@ -572,14 +572,14 @@ static int snd_compress_check_input(struct snd_compr_params *params)
 	if (params->buffer.fragment_size == 0 ||
 	    params->buffer.fragments > U32_MAX / params->buffer.fragment_size ||
 	    params->buffer.fragments == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* now codec parameters */
 	if (params->codec.id == 0 || params->codec.id > SND_AUDIOCODEC_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (params->codec.ch_in == 0 || params->codec.ch_out == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -618,7 +618,7 @@ snd_compr_set_params(struct snd_compr_stream *stream, unsigned long arg)
 
 		stream->runtime->state = SNDRV_PCM_STATE_SETUP;
 	} else {
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 out:
 	kfree(params);
@@ -632,7 +632,7 @@ snd_compr_get_params(struct snd_compr_stream *stream, unsigned long arg)
 	int retval;
 
 	if (!stream->ops->get_params)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	params = kzalloc(sizeof(*params), GFP_KERNEL);
 	if (!params)
@@ -655,7 +655,7 @@ snd_compr_get_metadata(struct snd_compr_stream *stream, unsigned long arg)
 	int retval;
 
 	if (!stream->ops->get_metadata)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (copy_from_user(&metadata, (void __user *)arg, sizeof(metadata)))
 		return -EFAULT;
@@ -677,7 +677,7 @@ snd_compr_set_metadata(struct snd_compr_stream *stream, unsigned long arg)
 	int retval;
 
 	if (!stream->ops->set_metadata)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	/*
 	* we should allow parameter change only when stream has been
 	* opened not in other cases
@@ -709,7 +709,7 @@ static int snd_compr_pause(struct snd_compr_stream *stream)
 	int retval;
 
 	if (stream->runtime->state != SNDRV_PCM_STATE_RUNNING)
-		return -EPERM;
+		return -ERR(EPERM);
 	retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_PUSH);
 	if (!retval)
 		stream->runtime->state = SNDRV_PCM_STATE_PAUSED;
@@ -721,7 +721,7 @@ static int snd_compr_resume(struct snd_compr_stream *stream)
 	int retval;
 
 	if (stream->runtime->state != SNDRV_PCM_STATE_PAUSED)
-		return -EPERM;
+		return -ERR(EPERM);
 	retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_PAUSE_RELEASE);
 	if (!retval)
 		stream->runtime->state = SNDRV_PCM_STATE_RUNNING;
@@ -735,12 +735,12 @@ static int snd_compr_start(struct snd_compr_stream *stream)
 	switch (stream->runtime->state) {
 	case SNDRV_PCM_STATE_SETUP:
 		if (stream->direction != SND_COMPRESS_CAPTURE)
-			return -EPERM;
+			return -ERR(EPERM);
 		break;
 	case SNDRV_PCM_STATE_PREPARED:
 		break;
 	default:
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	retval = stream->ops->trigger(stream, SNDRV_PCM_TRIGGER_START);
@@ -757,7 +757,7 @@ static int snd_compr_stop(struct snd_compr_stream *stream)
 	case SNDRV_PCM_STATE_OPEN:
 	case SNDRV_PCM_STATE_SETUP:
 	case SNDRV_PCM_STATE_PREPARED:
-		return -EPERM;
+		return -ERR(EPERM);
 	default:
 		break;
 	}
@@ -857,9 +857,9 @@ static int snd_compr_drain(struct snd_compr_stream *stream)
 	case SNDRV_PCM_STATE_SETUP:
 	case SNDRV_PCM_STATE_PREPARED:
 	case SNDRV_PCM_STATE_PAUSED:
-		return -EPERM;
+		return -ERR(EPERM);
 	case SNDRV_PCM_STATE_XRUN:
-		return -EPIPE;
+		return -ERR(EPIPE);
 	default:
 		break;
 	}
@@ -880,17 +880,17 @@ static int snd_compr_next_track(struct snd_compr_stream *stream)
 
 	/* only a running stream can transition to next track */
 	if (stream->runtime->state != SNDRV_PCM_STATE_RUNNING)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* next track doesn't have any meaning for capture streams */
 	if (stream->direction == SND_COMPRESS_CAPTURE)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* you can signal next track if this is intended to be a gapless stream
 	 * and current track metadata is set
 	 */
 	if (stream->metadata_set == false)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	retval = stream->ops->trigger(stream, SND_COMPR_TRIGGER_NEXT_TRACK);
 	if (retval != 0)
@@ -909,20 +909,20 @@ static int snd_compr_partial_drain(struct snd_compr_stream *stream)
 	case SNDRV_PCM_STATE_SETUP:
 	case SNDRV_PCM_STATE_PREPARED:
 	case SNDRV_PCM_STATE_PAUSED:
-		return -EPERM;
+		return -ERR(EPERM);
 	case SNDRV_PCM_STATE_XRUN:
-		return -EPIPE;
+		return -ERR(EPIPE);
 	default:
 		break;
 	}
 
 	/* partial drain doesn't have any meaning for capture streams */
 	if (stream->direction == SND_COMPRESS_CAPTURE)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* stream can be drained only when next track has been signalled */
 	if (stream->next_track == false)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	stream->partial_drain = true;
 	retval = stream->ops->trigger(stream, SND_COMPR_TRIGGER_PARTIAL_DRAIN);
@@ -940,7 +940,7 @@ static long snd_compr_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
 {
 	struct snd_compr_file *data = f->private_data;
 	struct snd_compr_stream *stream;
-	int retval = -ENOTTY;
+	int retval = -ERR(ENOTTY);
 
 	if (snd_BUG_ON(!data))
 		return -EFAULT;
@@ -1031,11 +1031,11 @@ static const struct file_operations snd_compr_file_ops = {
 
 static int snd_compress_dev_register(struct snd_device *device)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	struct snd_compr *compr;
 
 	if (snd_BUG_ON(!device || !device->device_data))
-		return -EBADFD;
+		return -ERR(EBADFD);
 	compr = device->device_data;
 
 	pr_debug("reg device %s, direction %d\n", compr->name,
@@ -1174,7 +1174,7 @@ static int snd_compress_add_device(struct snd_compr *device)
 	int ret;
 
 	if (!device->card)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* register the card */
 	ret = snd_card_register(device->card);
@@ -1203,17 +1203,17 @@ int snd_compress_register(struct snd_compr *device)
 	int retval;
 
 	if (device->name == NULL || device->ops == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("Registering compressed device %s\n", device->name);
 	if (snd_BUG_ON(!device->ops->open))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!device->ops->free))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!device->ops->set_params))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!device->ops->trigger))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_init(&device->lock);
 

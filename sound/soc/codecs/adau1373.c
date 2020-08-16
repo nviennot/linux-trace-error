@@ -1040,7 +1040,7 @@ static int adau1373_hw_params(struct snd_pcm_substream *substream,
 	freq = adau1373_dai->sysclk;
 
 	if (freq % params_rate(params) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (freq / params_rate(params)) {
 	case 1024: /* sysclk / 256 */
@@ -1065,7 +1065,7 @@ static int adau1373_hw_params(struct snd_pcm_substream *substream,
 		div = 6;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adau1373_dai->enable_src = (div != 0);
@@ -1088,7 +1088,7 @@ static int adau1373_hw_params(struct snd_pcm_substream *substream,
 		ctrl = ADAU1373_DAI_WLEN_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_update_bits(adau1373->regmap, ADAU1373_DAI(dai->id),
@@ -1112,7 +1112,7 @@ static int adau1373_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		adau1373_dai->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1129,7 +1129,7 @@ static int adau1373_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl |= ADAU1373_DAI_FORMAT_DSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1145,7 +1145,7 @@ static int adau1373_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl |= ADAU1373_DAI_INVERT_LRCLK | ADAU1373_DAI_INVERT_BCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau1373->regmap, ADAU1373_DAI(dai->id),
@@ -1165,7 +1165,7 @@ static int adau1373_set_dai_sysclk(struct snd_soc_dai *dai,
 	case ADAU1373_CLK_SRC_PLL2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adau1373_dai->sysclk = freq;
@@ -1262,7 +1262,7 @@ static int adau1373_set_pll(struct snd_soc_component *component, int pll_id,
 	case ADAU1373_PLL2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (source) {
@@ -1280,14 +1280,14 @@ static int adau1373_set_pll(struct snd_soc_component *component, int pll_id,
 	case ADAU1373_PLL_SRC_GPIO4:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (freq_in < 7813 || freq_in > 27000000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (freq_out < 45158000 || freq_out > 49152000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* APLL input needs to be >= 8Mhz, so in case freq_in is less we use the
 	 * DPLL to get it there. DPLL_out = (DPLL_in / div) * 1024 */
@@ -1298,7 +1298,7 @@ static int adau1373_set_pll(struct snd_soc_component *component, int pll_id,
 
 	ret = adau_calc_pll_cfg(freq_in, freq_out, pll_regs);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dpll_div) {
 		dpll_div = 11 - dpll_div;
@@ -1357,11 +1357,11 @@ static int adau1373_probe(struct snd_soc_component *component)
 
 	if (pdata) {
 		if (pdata->num_drc > ARRAY_SIZE(pdata->drc_setting))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!adau1373_valid_micbias(pdata->micbias1) ||
 			!adau1373_valid_micbias(pdata->micbias2))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		for (i = 0; i < pdata->num_drc; ++i) {
 			adau1373_load_drc_settings(adau1373, i,

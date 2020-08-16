@@ -275,7 +275,7 @@ int sst_dsp_register_poll(struct sst_dsp *ctx, u32 offset, u32 mask,
 
 	dev_dbg(ctx->dev, "FW Poll Status: reg=%#x %s timedout\n",
 					reg, operation);
-	return -ETIME;
+	return -ERR(ETIME);
 }
 EXPORT_SYMBOL_GPL(sst_dsp_register_poll);
 

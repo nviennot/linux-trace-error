@@ -51,7 +51,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
 		goto out;
 
 	if (dlen < (plen + sizeof(struct ip_comp_hdr))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -68,7 +68,7 @@ static int ipcomp_decompress(struct xfrm_state *x, struct sk_buff *skb)
 		skb_frag_t *frag;
 		struct page *page;
 
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		if (WARN_ON(skb_shinfo(skb)->nr_frags >= MAX_SKB_FRAGS))
 			goto out;
 
@@ -149,7 +149,7 @@ static int ipcomp_compress(struct xfrm_state *x, struct sk_buff *skb)
 		goto out;
 
 	if ((dlen + sizeof(struct ip_comp_hdr)) >= plen) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -340,7 +340,7 @@ int ipcomp_init_state(struct xfrm_state *x)
 	struct ipcomp_data *ipcd;
 	struct xfrm_algo_desc *calg_desc;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!x->calg)
 		goto out;
 

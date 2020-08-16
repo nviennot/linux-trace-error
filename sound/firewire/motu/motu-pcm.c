@@ -281,7 +281,7 @@ static int capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&motu->tx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -298,7 +298,7 @@ static int playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&motu->rx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -737,7 +737,7 @@ static int dn_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	struct net_device *dev = dst->dev;
 	struct dn_skb_cb *cb = DN_SKB_CB(skb);
 
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (rt->n == NULL)
 		goto error;
@@ -975,7 +975,7 @@ static int dn_route_output_slow(struct dst_entry **pprt, const struct flowidn *o
 	/* If we have an output interface, verify its a DECnet device */
 	if (oldflp->flowidn_oif) {
 		dev_out = dev_get_by_index(&init_net, oldflp->flowidn_oif);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		if (dev_out && dev_out->dn_ptr == NULL) {
 			dev_put(dev_out);
 			dev_out = NULL;
@@ -986,7 +986,7 @@ static int dn_route_output_slow(struct dst_entry **pprt, const struct flowidn *o
 
 	/* If we have a source address, verify that its a local address */
 	if (oldflp->saddr) {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 
 		if (dev_out) {
 			if (dn_dev_islocal(dev_out, oldflp->saddr))
@@ -1022,11 +1022,11 @@ source_ok:
 
 		if (dev_out)
 			dev_put(dev_out);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		dev_out = init_net.loopback_dev;
 		if (!dev_out->dn_ptr)
 			goto out;
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		dev_hold(dev_out);
 		if (!fld.daddr) {
 			fld.daddr =
@@ -1052,7 +1052,7 @@ source_ok:
 	 * dn_fib_lookup() will evaluate to non-zero so this if () block
 	 * will always be executed.
 	 */
-	err = -ESRCH;
+	err = -ERR(ESRCH);
 	if (try_hard || (err = dn_fib_lookup(&fld, &res)) != 0) {
 		struct dn_dev *dn_db;
 		if (err != -ESRCH)
@@ -1095,7 +1095,7 @@ source_ok:
 		/* Not there? Perhaps its a local address */
 		if (dev_out == NULL)
 			dev_out = dn_dev_get_default();
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		if (dev_out == NULL)
 			goto out;
 		dn_db = rcu_dereference_raw(dev_out->dn_ptr);
@@ -1222,13 +1222,13 @@ out:
 	return err;
 
 e_addr:
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 	goto done;
 e_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	goto done;
 e_nobufs:
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	goto done;
 e_neighbour:
 	dst_release_immediate(&rt->dst);
@@ -1317,7 +1317,7 @@ static int dn_route_input_slow(struct sk_buff *skb)
 		.flowidn_iif = skb->dev->ifindex,
 	};
 	struct dn_fib_res res = { .fi = NULL, .type = RTN_UNREACHABLE };
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int free_res = 0;
 
 	dev_hold(in_dev);
@@ -1336,7 +1336,7 @@ static int dn_route_input_slow(struct sk_buff *skb)
 	 * other nasties. Loopback packets already have the dst attached
 	 * so this only affects packets which have originated elsewhere.
 	 */
-	err  = -ENOTUNIQ;
+	err  = -ERR(ENOTUNIQ);
 	if (dn_dev_islocal(in_dev, cb->src))
 		goto out;
 
@@ -1502,11 +1502,11 @@ out:
 	return err;
 
 e_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	goto done;
 
 e_nobufs:
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	goto done;
 
 e_neighbour:
@@ -1552,7 +1552,7 @@ static int dn_rt_fill_info(struct sk_buff *skb, u32 portid, u32 seq,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*r), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	r = nlmsg_data(nlh);
 	r->rtm_family = AF_DECnet;
@@ -1610,7 +1610,7 @@ static int dn_rt_fill_info(struct sk_buff *skb, u32 portid, u32 seq,
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 const struct nla_policy rtm_dn_policy[RTA_MAX + 1] = {
@@ -1643,7 +1643,7 @@ static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 	struct nlattr *tb[RTA_MAX+1];
 
 	if (!net_eq(net, &init_net))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nlmsg_parse_deprecated(nlh, sizeof(*rtm), tb, RTA_MAX,
 				     rtm_dn_policy, extack);
@@ -1655,7 +1655,7 @@ static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (skb == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	skb_reset_mac_header(skb);
 	cb = DN_SKB_CB(skb);
 
@@ -1673,7 +1673,7 @@ static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		dev = __dev_get_by_index(&init_net, fld.flowidn_iif);
 		if (!dev || !dev->dn_ptr) {
 			kfree_skb(skb);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		skb->protocol = htons(ETH_P_DNA_RT);
 		skb->dev = dev;
@@ -1702,7 +1702,7 @@ static int dn_cache_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	err = dn_rt_fill_info(skb, NETLINK_CB(in_skb).portid, nlh->nlmsg_seq, RTM_NEWROUTE, 0, 0);
 	if (err < 0) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out_free;
 	}
 
@@ -1729,7 +1729,7 @@ int dn_cache_dump(struct sk_buff *skb, struct netlink_callback *cb)
 		return 0;
 
 	if (nlmsg_len(cb->nlh) < sizeof(struct rtmsg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rtm = nlmsg_data(cb->nlh);
 	if (!(rtm->rtm_flags & RTM_F_CLONED))

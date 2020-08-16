@@ -784,7 +784,7 @@ wavefront_send_patch (snd_wavefront_t *dev, wavefront_patch_info *header)
 				      header->number);
 
 	if (header->number >= ARRAY_SIZE(dev->patch_status))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->patch_status[header->number] |= WF_SLOT_FILLED;
 
@@ -793,7 +793,7 @@ wavefront_send_patch (snd_wavefront_t *dev, wavefront_patch_info *header)
     
 	if (snd_wavefront_cmd (dev, WFC_DOWNLOAD_PATCH, NULL, buf)) {
 		snd_printk ("download patch failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return (0);
@@ -810,7 +810,7 @@ wavefront_send_program (snd_wavefront_t *dev, wavefront_patch_info *header)
 		header->number);
 
 	if (header->number >= ARRAY_SIZE(dev->prog_status))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->prog_status[header->number] = WF_SLOT_USED;
 
@@ -834,7 +834,7 @@ wavefront_send_program (snd_wavefront_t *dev, wavefront_patch_info *header)
     
 	if (snd_wavefront_cmd (dev, WFC_DOWNLOAD_PROGRAM, NULL, buf)) {
 		snd_printk ("download patch failed\n");	
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return (0);
@@ -902,7 +902,7 @@ wavefront_send_sample (snd_wavefront_t *dev,
 	}
 
 	if (header->number >= WF_MAX_SAMPLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (header->size) {
 
@@ -934,7 +934,7 @@ wavefront_send_sample (snd_wavefront_t *dev,
 				snd_printk ("sample slot %d "
 					    "write protected\n",
 					    header->number);
-				return -EACCES;
+				return -ERR(EACCES);
 			}
 		}
 
@@ -958,7 +958,7 @@ wavefront_send_sample (snd_wavefront_t *dev,
 	if (skip > 0 && header->hdr.s.SampleResolution != LINEAR_16BIT) {
 		snd_printk ("channel selection only "
 			    "possible on 16-bit samples");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (skip) {
@@ -1055,7 +1055,7 @@ wavefront_send_sample (snd_wavefront_t *dev,
 			   NULL, sample_hdr)) {
 		snd_printk ("sample %sdownload refused.\n",
 			    header->size ? "" : "header ");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (header->size == 0) {
@@ -1081,7 +1081,7 @@ wavefront_send_sample (snd_wavefront_t *dev,
 		if (snd_wavefront_cmd (dev, WFC_DOWNLOAD_BLOCK, NULL, NULL)) {
 			snd_printk ("download block "
 				    "request refused.\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		for (i = 0; i < blocksize; i++) {
@@ -1141,12 +1141,12 @@ wavefront_send_sample (snd_wavefront_t *dev,
 			if (dma_ack == -1) {
 				snd_printk ("upload sample "
 					    "DMA ack timeout\n");
-				return -EIO;
+				return -ERR(EIO);
 			} else {
 				snd_printk ("upload sample "
 					    "DMA ack error 0x%x\n",
 					    dma_ack);
-				return -EIO;
+				return -ERR(EIO);
 			}
 		}
 	}
@@ -1173,7 +1173,7 @@ wavefront_send_alias (snd_wavefront_t *dev, wavefront_patch_info *header)
 				      header->hdr.a.OriginalSample);
 
 	if (header->number >= WF_MAX_SAMPLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	munge_int32 (header->number, &alias_hdr[0], 2);
 	munge_int32 (header->hdr.a.OriginalSample, &alias_hdr[2], 2);
@@ -1190,7 +1190,7 @@ wavefront_send_alias (snd_wavefront_t *dev, wavefront_patch_info *header)
 
 	if (snd_wavefront_cmd (dev, WFC_DOWNLOAD_SAMPLE_ALIAS, NULL, alias_hdr)) {
 		snd_printk ("download alias failed.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	dev->sample_status[header->number] = (WF_SLOT_FILLED|WF_ST_ALIAS);
@@ -1206,7 +1206,7 @@ wavefront_send_multisample (snd_wavefront_t *dev, wavefront_patch_info *header)
 	unsigned char *msample_hdr;
 
 	if (header->number >= WF_MAX_SAMPLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msample_hdr = kmalloc(WF_MSAMPLE_BYTES, GFP_KERNEL);
 	if (! msample_hdr)
@@ -1244,7 +1244,7 @@ wavefront_send_multisample (snd_wavefront_t *dev, wavefront_patch_info *header)
 			   msample_hdr)) {
 		snd_printk ("download of multisample failed.\n");
 		kfree(msample_hdr);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	dev->sample_status[header->number] = (WF_SLOT_FILLED|WF_ST_MULTISAMPLE);
@@ -1266,7 +1266,7 @@ wavefront_fetch_multisample (snd_wavefront_t *dev,
     
 	if (snd_wavefront_cmd (dev, WFC_UPLOAD_MULTISAMPLE, log_ns, number)) {
 		snd_printk ("upload multisample failed.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
     
 	DPRINT (WF_DEBUG_DATA, "msample %d has %d samples\n",
@@ -1285,14 +1285,14 @@ wavefront_fetch_multisample (snd_wavefront_t *dev,
 		if ((val = wavefront_read (dev)) == -1) {
 			snd_printk ("upload multisample failed "
 				    "during sample loop.\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		d[0] = val;
 
 		if ((val = wavefront_read (dev)) == -1) {
 			snd_printk ("upload multisample failed "
 				    "during sample loop.\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		d[1] = val;
 	
@@ -1327,7 +1327,7 @@ wavefront_send_drum (snd_wavefront_t *dev, wavefront_patch_info *header)
 
 	if (snd_wavefront_cmd (dev, WFC_DOWNLOAD_EDRUM_PROGRAM, NULL, drumbuf)) {
 		snd_printk ("download drum failed.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return (0);
@@ -1457,7 +1457,7 @@ wavefront_load_patch (snd_wavefront_t *dev, const char __user *addr)
 	default:
 		snd_printk ("unknown patch type %d.\n",
 			    header->subkey);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -1544,8 +1544,8 @@ wavefront_synth_control (snd_wavefront_card_t *acard,
 		if (i <0 || i >= WF_MAX_SAMPLE) {
 			snd_printk ("invalid slot ID %d\n",
 				i);
-			wc->status = EINVAL;
-			return -EINVAL;
+			wc->status = ERR(EINVAL);
+			return -ERR(EINVAL);
 		}
 		wc->rbuf[0] = dev->sample_status[i];
 		wc->status = 0;
@@ -1572,8 +1572,8 @@ wavefront_synth_control (snd_wavefront_card_t *acard,
 	case WFC_UPLOAD_SAMPLE_ALIAS:
 		snd_printk ("support for sample alias upload "
 			"being considered.\n");
-		wc->status = EINVAL;
-		return -EINVAL;
+		wc->status = ERR(EINVAL);
+		return -ERR(EINVAL);
 	}
 
 	wc->status = snd_wavefront_cmd (dev, wc->cmd, wc->rbuf, wc->wbuf);
@@ -1663,9 +1663,9 @@ snd_wavefront_synth_ioctl (struct snd_hwdep *hw, struct file *file,
 	card = (struct snd_card *) hw->card;
 
 	if (snd_BUG_ON(!card))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (snd_BUG_ON(!card->private_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	acard = card->private_data;
 	dev = &acard->wavefront;
@@ -1673,7 +1673,7 @@ snd_wavefront_synth_ioctl (struct snd_hwdep *hw, struct file *file,
 	switch (cmd) {
 	case WFCTL_LOAD_SPP:
 		if (wavefront_load_patch (dev, argp) != 0) {
-			return -EIO;
+			return -ERR(EIO);
 		}
 		break;
 
@@ -1683,7 +1683,7 @@ snd_wavefront_synth_ioctl (struct snd_hwdep *hw, struct file *file,
 			return PTR_ERR(wc);
 
 		if (wavefront_synth_control (acard, wc) < 0)
-			err = -EIO;
+			err = -ERR(EIO);
 		else if (copy_to_user (argp, wc, sizeof (*wc)))
 			err = -EFAULT;
 		else
@@ -1692,7 +1692,7 @@ snd_wavefront_synth_ioctl (struct snd_hwdep *hw, struct file *file,
 		return err;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

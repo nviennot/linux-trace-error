@@ -186,12 +186,12 @@ static int __rds_rdma_map(struct rds_sock *rs, struct rds_get_mr_args *args,
 	int ret;
 
 	if (ipv6_addr_any(&rs->rs_bound_addr) || !rs->rs_transport) {
-		ret = -ENOTCONN; /* XXX not a great errno */
+		ret = -ERR(ENOTCONN); /* XXX not a great errno */
 		goto out;
 	}
 
 	if (!rs->rs_transport->get_mr) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -201,18 +201,18 @@ static int __rds_rdma_map(struct rds_sock *rs, struct rds_get_mr_args *args,
 	if (((args->vec.addr + args->vec.bytes) < args->vec.addr) ||
 	    PAGE_ALIGN(args->vec.addr + args->vec.bytes) <
 		    (args->vec.addr + args->vec.bytes)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!can_do_mlock()) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
 	nr_pages = rds_pages_in_vec(&args->vec);
 	if (nr_pages == 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -220,7 +220,7 @@ static int __rds_rdma_map(struct rds_sock *rs, struct rds_get_mr_args *args,
 	 * To account for unaligned mr regions, subtract one from nr_pages
 	 */
 	if ((nr_pages - 1) > (RDS_MAX_MSG_SIZE >> PAGE_SHIFT)) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -358,7 +358,7 @@ int rds_get_mr(struct rds_sock *rs, char __user *optval, int optlen)
 	struct rds_get_mr_args args;
 
 	if (optlen != sizeof(struct rds_get_mr_args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&args, (struct rds_get_mr_args __user *)optval,
 			   sizeof(struct rds_get_mr_args)))
@@ -373,7 +373,7 @@ int rds_get_mr_for_dest(struct rds_sock *rs, char __user *optval, int optlen)
 	struct rds_get_mr_args new_args;
 
 	if (optlen != sizeof(struct rds_get_mr_for_dest_args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&args, (struct rds_get_mr_for_dest_args __user *)optval,
 			   sizeof(struct rds_get_mr_for_dest_args)))
@@ -401,7 +401,7 @@ int rds_free_mr(struct rds_sock *rs, char __user *optval, int optlen)
 	unsigned long flags;
 
 	if (optlen != sizeof(struct rds_free_mr_args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&args, (struct rds_free_mr_args __user *)optval,
 			   sizeof(struct rds_free_mr_args)))
@@ -410,7 +410,7 @@ int rds_free_mr(struct rds_sock *rs, char __user *optval, int optlen)
 	/* Special case - a null cookie means flush all unused MRs */
 	if (args.cookie == 0) {
 		if (!rs->rs_transport || !rs->rs_transport->flush_mrs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rs->rs_transport->flush_mrs();
 		return 0;
 	}
@@ -430,7 +430,7 @@ int rds_free_mr(struct rds_sock *rs, char __user *optval, int optlen)
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
 
 	if (!mr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kref_put(&mr->r_kref, __rds_put_mr_final);
 	return 0;
@@ -538,7 +538,7 @@ static int rds_rdma_pages(struct rds_iovec iov[], int nr_iovecs)
 	for (i = 0; i < nr_iovecs; i++) {
 		nr_pages = rds_pages_in_vec(&iov[i]);
 		if (nr_pages == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tot_pages += nr_pages;
 
@@ -547,7 +547,7 @@ static int rds_rdma_pages(struct rds_iovec iov[], int nr_iovecs)
 		 * so tot_pages cannot overflow without first going negative.
 		 */
 		if (tot_pages < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return tot_pages;
@@ -565,7 +565,7 @@ int rds_rdma_extra_size(struct rds_rdma_args *args,
 	local_vec = (struct rds_iovec __user *)(unsigned long) args->local_vec_addr;
 
 	if (args->nr_local == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iov->iov = kcalloc(args->nr_local,
 			   sizeof(struct rds_iovec),
@@ -585,7 +585,7 @@ int rds_rdma_extra_size(struct rds_rdma_args *args,
 
 		nr_pages = rds_pages_in_vec(vec);
 		if (nr_pages == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tot_pages += nr_pages;
 
@@ -594,7 +594,7 @@ int rds_rdma_extra_size(struct rds_rdma_args *args,
 		 * so tot_pages cannot overflow without first going negative.
 		 */
 		if (tot_pages < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return tot_pages * sizeof(struct scatterlist);
@@ -620,22 +620,22 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 
 	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_rdma_args))
 	    || rm->rdma.op_active)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	args = CMSG_DATA(cmsg);
 
 	if (ipv6_addr_any(&rs->rs_bound_addr)) {
-		ret = -ENOTCONN; /* XXX not a great errno */
+		ret = -ERR(ENOTCONN); /* XXX not a great errno */
 		goto out_ret;
 	}
 
 	if (args->nr_local > UIO_MAXIOV) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out_ret;
 	}
 
 	if (vec->len != args->nr_local) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_ret;
 	}
 	/* odp-mr is not supported for multiple requests within one message */
@@ -646,7 +646,7 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 
 	nr_pages = rds_rdma_pages(iovs, args->nr_local);
 	if (nr_pages < 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_ret;
 	}
 
@@ -723,7 +723,7 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 			struct rds_mr *local_odp_mr;
 
 			if (!rs->rs_transport->get_mr) {
-				ret = -EOPNOTSUPP;
+				ret = -ERR(EOPNOTSUPP);
 				goto out_pages;
 			}
 			local_odp_mr =
@@ -745,7 +745,7 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 				rdsdebug("get_mr ret %d %p\"", ret,
 					 local_odp_mr->r_trans_private);
 				kfree(local_odp_mr);
-				ret = -EOPNOTSUPP;
+				ret = -ERR(EOPNOTSUPP);
 				goto out_pages;
 			}
 			rdsdebug("Need odp; local_odp_mr %p trans_private %p\n",
@@ -783,7 +783,7 @@ int rds_cmsg_rdma_args(struct rds_sock *rs, struct rds_message *rm,
 		rdsdebug("RDS nr_bytes %u remote_bytes %u do not match\n",
 				nr_bytes,
 				(unsigned int) args->remote_vec.bytes);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_pages;
 	}
 	op->op_bytes = nr_bytes;
@@ -814,7 +814,7 @@ int rds_cmsg_rdma_dest(struct rds_sock *rs, struct rds_message *rm,
 
 	if (cmsg->cmsg_len < CMSG_LEN(sizeof(rds_rdma_cookie_t)) ||
 	    rm->m_rdma_cookie != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(&rm->m_rdma_cookie, CMSG_DATA(cmsg), sizeof(rm->m_rdma_cookie));
 
@@ -828,7 +828,7 @@ int rds_cmsg_rdma_dest(struct rds_sock *rs, struct rds_message *rm,
 	spin_lock_irqsave(&rs->rs_rdma_lock, flags);
 	mr = rds_mr_tree_walk(&rs->rs_rdma_keys, r_key, NULL);
 	if (!mr)
-		err = -EINVAL;	/* invalid r_key */
+		err = -ERR(EINVAL);	/* invalid r_key */
 	else
 		kref_get(&mr->r_kref);
 	spin_unlock_irqrestore(&rs->rs_rdma_lock, flags);
@@ -852,7 +852,7 @@ int rds_cmsg_rdma_map(struct rds_sock *rs, struct rds_message *rm,
 {
 	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_get_mr_args)) ||
 	    rm->m_rdma_cookie != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __rds_rdma_map(rs, CMSG_DATA(cmsg), &rm->m_rdma_cookie,
 			      &rm->rdma.op_rdma_mr, rm->m_conn_path);
@@ -870,7 +870,7 @@ int rds_cmsg_atomic(struct rds_sock *rs, struct rds_message *rm,
 
 	if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct rds_atomic_args))
 	 || rm->atomic.op_active)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	args = CMSG_DATA(cmsg);
 

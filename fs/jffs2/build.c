@@ -414,7 +414,7 @@ int jffs2_do_mount_fs(struct jffs2_sb_info *c)
 		dbg_fsbuild("build_fs failed\n");
 		jffs2_free_ino_caches(c);
 		jffs2_free_raw_node_refs(c);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_free;
 	}
 

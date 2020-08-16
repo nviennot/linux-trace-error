@@ -234,7 +234,7 @@ static int ip_finish_output2(struct net *net, struct sock *sk, struct sk_buff *s
 	net_dbg_ratelimited("%s: No header cache and no neighbour!\n",
 			    __func__);
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ip_finish_output_gso(struct net *net, struct sock *sk,
@@ -535,7 +535,7 @@ no_route:
 	rcu_read_unlock();
 	IP_INC_STATS(net, IPSTATS_MIB_OUTNOROUTES);
 	kfree_skb(skb);
-	return -EHOSTUNREACH;
+	return -ERR(EHOSTUNREACH);
 }
 EXPORT_SYMBOL(__ip_queue_xmit);
 
@@ -579,7 +579,7 @@ static int ip_fragment(struct net *net, struct sock *sk, struct sk_buff *skb,
 		icmp_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED,
 			  htonl(mtu));
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	return ip_do_fragment(net, sk, skb, output);
@@ -995,7 +995,7 @@ static int __ip_append_data(struct sock *sk,
 	if (cork->length + length > maxnonfragsize - fragheaderlen) {
 		ip_local_error(sk, EMSGSIZE, fl4->daddr, inet->inet_dport,
 			       mtu - (opt ? opt->optlen : 0));
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	/*
@@ -1012,7 +1012,7 @@ static int __ip_append_data(struct sock *sk,
 	if (flags & MSG_ZEROCOPY && length && sock_flag(sk, SOCK_ZEROCOPY)) {
 		uarg = sock_zerocopy_realloc(sk, length, skb_zcopy(skb));
 		if (!uarg)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		extra_uref = !skb_zcopy(skb);	/* only ref on new uarg */
 		if (rt->dst.dev->features & NETIF_F_SG &&
 		    csummode == CHECKSUM_PARTIAL) {
@@ -1096,7 +1096,7 @@ alloc_new_skb:
 					skb = alloc_skb(alloclen + hh_len + 15,
 							sk->sk_allocation);
 				if (unlikely(!skb))
-					err = -ENOBUFS;
+					err = -ERR(ENOBUFS);
 			}
 			if (!skb)
 				goto error;
@@ -1185,7 +1185,7 @@ alloc_new_skb:
 
 			if (!skb_can_coalesce(skb, i, pfrag->page,
 					      pfrag->offset)) {
-				err = -EMSGSIZE;
+				err = -ERR(EMSGSIZE);
 				if (i == MAX_SKB_FRAGS)
 					goto error;
 
@@ -1249,7 +1249,7 @@ static int ip_setup_cork(struct sock *sk, struct inet_cork *cork,
 			cork->opt = kmalloc(sizeof(struct ip_options) + 40,
 					    sk->sk_allocation);
 			if (unlikely(!cork->opt))
-				return -ENOBUFS;
+				return -ERR(ENOBUFS);
 		}
 		memcpy(cork->opt, &opt->opt, sizeof(struct ip_options) + opt->opt.optlen);
 		cork->flags |= IPCORK_OPT;
@@ -1260,7 +1260,7 @@ static int ip_setup_cork(struct sock *sk, struct inet_cork *cork,
 			 dst_mtu(&rt->dst) : READ_ONCE(rt->dst.dev->mtu);
 
 	if (!inetdev_valid_mtu(cork->fragsize))
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 
 	cork->gso_size = ipc->gso_size;
 
@@ -1332,13 +1332,13 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 	unsigned int maxfraglen, fragheaderlen, fraggap, maxnonfragsize;
 
 	if (inet->hdrincl)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (flags&MSG_PROBE)
 		return 0;
 
 	if (skb_queue_empty(&sk->sk_write_queue))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cork = &inet->cork.base;
 	rt = (struct rtable *)cork->dst;
@@ -1346,7 +1346,7 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 		opt = cork->opt;
 
 	if (!(rt->dst.dev->features&NETIF_F_SG))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	hh_len = LL_RESERVED_SPACE(rt->dst.dev);
 	mtu = cork->gso_size ? IP_MAX_MTU : cork->fragsize;
@@ -1358,12 +1358,12 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 	if (cork->length + size > maxnonfragsize - fragheaderlen) {
 		ip_local_error(sk, EMSGSIZE, fl4->daddr, inet->inet_dport,
 			       mtu - (opt ? opt->optlen : 0));
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	skb = skb_peek_tail(&sk->sk_write_queue);
 	if (!skb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cork->length += size;
 
@@ -1383,7 +1383,7 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 			alloclen = fragheaderlen + hh_len + fraggap + 15;
 			skb = sock_wmalloc(sk, alloclen, 1, sk->sk_allocation);
 			if (unlikely(!skb)) {
-				err = -ENOBUFS;
+				err = -ERR(ENOBUFS);
 				goto error;
 			}
 
@@ -1422,7 +1422,7 @@ ssize_t	ip_append_page(struct sock *sk, struct flowi4 *fl4, struct page *page,
 			len = size;
 
 		if (skb_append_pagefrags(skb, page, offset, len)) {
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			goto error;
 		}
 

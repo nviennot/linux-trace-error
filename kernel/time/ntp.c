@@ -558,7 +558,7 @@ static void sync_rtc_clock(void)
 #ifdef CONFIG_GENERIC_CMOS_UPDATE
 int __weak update_persistent_clock64(struct timespec64 now64)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 
@@ -567,7 +567,7 @@ static bool sync_cmos_clock(void)
 	static bool no_cmos;
 	struct timespec64 now;
 	struct timespec64 adjust;
-	int rc = -EPROTO;
+	int rc = -ERR(EPROTO);
 	long target_nsec = NSEC_PER_SEC / 2;
 
 	if (!IS_ENABLED(CONFIG_GENERIC_CMOS_UPDATE))

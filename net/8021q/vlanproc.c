@@ -126,7 +126,7 @@ int __net_init vlan_proc_init(struct net *net)
 err:
 	pr_err("can't create entry in proc filesystem!\n");
 	vlan_proc_cleanup(net);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -139,11 +139,11 @@ int vlan_proc_add_dev(struct net_device *vlandev)
 	struct vlan_net *vn = net_generic(dev_net(vlandev), vlan_net_id);
 
 	if (!strcmp(vlandev->name, name_conf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	vlan->dent = proc_create_single_data(vlandev->name, S_IFREG | 0600,
 			vn->proc_vlan_dir, vlandev_seq_show, vlandev);
 	if (!vlan->dent)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	return 0;
 }
 

@@ -19,15 +19,15 @@ static int ip6t_npt_checkentry(const struct xt_tgchk_param *par)
 	__wsum src_sum, dst_sum;
 
 	if (npt->src_pfx_len > 64 || npt->dst_pfx_len > 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ensure that LSB of prefix is zero */
 	ipv6_addr_prefix(&pfx, &npt->src_pfx.in6, npt->src_pfx_len);
 	if (!ipv6_addr_equal(&pfx, &npt->src_pfx.in6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ipv6_addr_prefix(&pfx, &npt->dst_pfx.in6, npt->dst_pfx_len);
 	if (!ipv6_addr_equal(&pfx, &npt->dst_pfx.in6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	src_sum = csum_partial(&npt->src_pfx.in6, sizeof(npt->src_pfx.in6), 0);
 	dst_sum = csum_partial(&npt->dst_pfx.in6, sizeof(npt->dst_pfx.in6), 0);

@@ -111,7 +111,7 @@ struct time_namespace *copy_time_ns(unsigned long flags,
 				    struct time_namespace *old_ns)
 {
 	if (flags & CLONE_NEWTIME)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return old_ns;
 }

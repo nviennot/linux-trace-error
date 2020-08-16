@@ -257,7 +257,7 @@ func_set_flag(struct trace_array *tr, u32 old_flags, u32 bit, int set)
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -645,7 +645,7 @@ ftrace_trace_probe_callback(struct trace_array *tr,
 
 	/* hash funcs only work with set_ftrace_filter */
 	if (!enable)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (glob[0] == '!')
 		return unregister_ftrace_function_probe_func(glob+1, tr, ops);
@@ -679,7 +679,7 @@ ftrace_trace_onoff_callback(struct trace_array *tr, struct ftrace_hash *hash,
 	struct ftrace_probe_ops *ops;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* we register both traceon and traceoff to this callback */
 	if (strcmp(cmd, "traceon") == 0)
@@ -698,7 +698,7 @@ ftrace_stacktrace_callback(struct trace_array *tr, struct ftrace_hash *hash,
 	struct ftrace_probe_ops *ops;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = param ? &stacktrace_count_probe_ops : &stacktrace_probe_ops;
 
@@ -713,7 +713,7 @@ ftrace_dump_callback(struct trace_array *tr, struct ftrace_hash *hash,
 	struct ftrace_probe_ops *ops;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = &dump_probe_ops;
 
@@ -729,7 +729,7 @@ ftrace_cpudump_callback(struct trace_array *tr, struct ftrace_hash *hash,
 	struct ftrace_probe_ops *ops;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = &cpudump_probe_ops;
 

@@ -352,18 +352,18 @@ checkSMB(char *buf, unsigned int total_read, struct TCP_Server_Info *server)
 		} else {
 			cifs_dbg(VFS, "Length less than smb header size\n");
 		}
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* otherwise, there is enough to get to the BCC */
 	if (check_smb_hdr(smb))
-		return -EIO;
+		return -ERR(EIO);
 	clc_len = smbCalcSize(smb, server);
 
 	if (4 + rfclen != total_read) {
 		cifs_dbg(VFS, "Length read does not match RFC1001 length %d\n",
 			 rfclen);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (4 + rfclen != clc_len) {
@@ -380,7 +380,7 @@ checkSMB(char *buf, unsigned int total_read, struct TCP_Server_Info *server)
 		if (4 + rfclen < clc_len) {
 			cifs_dbg(VFS, "RFC1001 size %u smaller than SMB for mid=%u\n",
 				 rfclen, mid);
-			return -EIO;
+			return -ERR(EIO);
 		} else if (rfclen > clc_len + 512) {
 			/*
 			 * Some servers (Windows XP in particular) send more
@@ -393,7 +393,7 @@ checkSMB(char *buf, unsigned int total_read, struct TCP_Server_Info *server)
 			 */
 			cifs_dbg(VFS, "RFC1001 size %u more than 512 bytes larger than SMB for mid=%u\n",
 				 rfclen, mid);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return 0;
@@ -693,7 +693,7 @@ parse_dfs_referrals(struct get_dfs_referral_rsp *rsp, u32 rsp_size,
 	if (*num_of_nodes < 1) {
 		cifs_dbg(VFS, "num_referrals: must be at least > 0, but we get num_referrals = %d\n",
 			 *num_of_nodes);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto parse_DFS_referrals_exit;
 	}
 
@@ -701,7 +701,7 @@ parse_dfs_referrals(struct get_dfs_referral_rsp *rsp, u32 rsp_size,
 	if (ref->VersionNumber != cpu_to_le16(3)) {
 		cifs_dbg(VFS, "Referrals of V%d version are not supported, should be V3\n",
 			 le16_to_cpu(ref->VersionNumber));
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto parse_DFS_referrals_exit;
 	}
 
@@ -1057,7 +1057,7 @@ static struct super_block *__cifs_get_super(void (*f)(struct super_block *, void
 	iterate_supers_type(&cifs_fs_type, f, &sd);
 
 	if (!sd.sb)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	/*
 	 * Grab an active reference in order to prevent automounts (DFS links)
 	 * of expiring and then freeing up our cifs superblock pointer while
@@ -1113,7 +1113,7 @@ int match_target_ip(struct TCP_Server_Info *server,
 	if (!cifs_convert_address(&tipaddr, tip, strlen(tip))) {
 		cifs_dbg(VFS, "%s: failed to convert target ip address\n",
 			 __func__);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1156,7 +1156,7 @@ static inline void cifs_put_tcon_super(struct super_block *sb)
 #else
 static inline struct super_block *cifs_get_tcon_super(struct cifs_tcon *tcon)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline void cifs_put_tcon_super(struct super_block *sb)

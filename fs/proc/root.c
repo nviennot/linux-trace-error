@@ -129,16 +129,16 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
 
 	case Opt_hidepid:
 		if (proc_parse_hidepid_param(fc, param))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case Opt_subset:
 		if (proc_parse_subset_param(fc, param->string) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ctx->mask |= 1 << opt;

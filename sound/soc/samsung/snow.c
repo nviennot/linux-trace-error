@@ -34,7 +34,7 @@ static int snow_card_hw_params(struct snd_pcm_substream *substream,
 	struct snow_priv *priv = snd_soc_card_get_drvdata(rtd->card);
 	int bfs, psr, rfs, bitwidth;
 	unsigned long int rclk;
-	long int freq = -EINVAL;
+	long int freq = -ERR(EINVAL);
 	int ret, i;
 
 	bitwidth = snd_pcm_format_width(params_format(params));
@@ -45,7 +45,7 @@ static int snow_card_hw_params(struct snd_pcm_substream *substream,
 
 	if (bitwidth != 16 && bitwidth != 24) {
 		dev_err(rtd->card->dev, "Unsupported bit-width: %d\n", bitwidth);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bfs = 2 * bitwidth;
@@ -70,7 +70,7 @@ static int snow_card_hw_params(struct snd_pcm_substream *substream,
 		rfs = 16 * bfs;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rclk = params_rate(params) * rfs;
@@ -85,7 +85,7 @@ static int snow_card_hw_params(struct snd_pcm_substream *substream,
 	}
 	if (freq < 0) {
 		dev_err(rtd->card->dev, "Unsupported RCLK rate: %lu\n", rclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_rate(priv->clk_i2s_bus, freq);
@@ -168,7 +168,7 @@ static int snow_probe(struct platform_device *pdev)
 
 		if (!link->cpus->of_node) {
 			dev_err(dev, "Failed parsing cpu/sound-dai property\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		codec = of_get_child_by_name(dev->of_node, "codec");
@@ -195,7 +195,7 @@ static int snow_probe(struct platform_device *pdev)
 						"samsung,i2s-controller", 0);
 		if (!link->cpus->of_node) {
 			dev_err(dev, "i2s-controller property parse error\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		link->codecs->of_node = of_parse_phandle(dev->of_node,
@@ -203,7 +203,7 @@ static int snow_probe(struct platform_device *pdev)
 		if (!link->codecs->of_node) {
 			of_node_put(link->cpus->of_node);
 			dev_err(dev, "audio-codec property parse error\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

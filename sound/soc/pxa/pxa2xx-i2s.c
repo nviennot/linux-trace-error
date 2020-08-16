@@ -148,7 +148,7 @@ static int pxa2xx_i2s_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		int clk_id, unsigned int freq, int dir)
 {
 	if (clk_id != PXA2XX_I2S_SYSCLK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -160,7 +160,7 @@ static int pxa2xx_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct snd_dmaengine_dai_dma_data *dma_data;
 
 	if (WARN_ON(IS_ERR(clk_i2s)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	clk_prepare_enable(clk_i2s);
 	clk_ena = 1;
 	pxa_i2s_wait();
@@ -233,7 +233,7 @@ static int pxa2xx_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -322,7 +322,7 @@ static int pxa2xx_i2s_probe(struct snd_soc_dai *dai)
 static int  pxa2xx_i2s_remove(struct snd_soc_dai *dai)
 {
 	clk_put(clk_i2s);
-	clk_i2s = ERR_PTR(-ENOENT);
+	clk_i2s = ERR_PTR(-ERR(ENOENT));
 	return 0;
 }
 
@@ -388,7 +388,7 @@ static struct platform_driver pxa2xx_i2s_driver = {
 
 static int __init pxa2xx_i2s_init(void)
 {
-	clk_i2s = ERR_PTR(-ENOENT);
+	clk_i2s = ERR_PTR(-ERR(ENOENT));
 	return platform_driver_register(&pxa2xx_i2s_driver);
 }
 

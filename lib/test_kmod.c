@@ -231,7 +231,7 @@ static int run_request(void *data)
 	default:
 		/* __trigger_config_run() already checked for test sanity */
 		BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(test_dev->dev, "Ran thread %u\n", info->thread_idx);
@@ -267,7 +267,7 @@ static int tally_work_test(struct kmod_test_device_info *info)
 	case TEST_KMOD_FS_TYPE:
 		/* For now we make this simple */
 		if (!info->fs_sync)
-			err_ret = -EINVAL;
+			err_ret = -ERR(EINVAL);
 		dev_info(test_dev->dev, "Sync thread %u fs: %s\n",
 			 info->thread_idx, info->fs_sync ? config->test_fs :
 			 "NULL");
@@ -520,7 +520,7 @@ static int __trigger_config_run(struct kmod_test_device *test_dev)
 		dev_warn(test_dev->dev,
 			 "Invalid test case requested: %u\n",
 			 config->test_case);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -588,7 +588,7 @@ trigger_config_store(struct device *dev,
 	 * return value as possitive return errors will be lost.
 	 */
 	if (WARN_ON(ret > 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = count;
 out:
@@ -605,7 +605,7 @@ static int __kstrncpy(char **dst, const char *name, size_t count, gfp_t gfp)
 {
 	*dst = kstrndup(name, count, gfp);
 	if (!*dst)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return count;
 }
 
@@ -751,7 +751,7 @@ static int trigger_config_run_type(struct kmod_test_device *test_dev,
 		break;
 	default:
 		mutex_unlock(&test_dev->config_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	config->test_case = test_case;
@@ -885,7 +885,7 @@ static int test_dev_config_update_uint_sync(struct kmod_test_device *test_dev,
 		return ret;
 
 	if (new > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&test_dev->config_mutex);
 
@@ -900,7 +900,7 @@ static int test_dev_config_update_uint_sync(struct kmod_test_device *test_dev,
 		WARN_ON(ret);
 
 		mutex_unlock(&test_dev->config_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_unlock(&test_dev->config_mutex);
@@ -922,7 +922,7 @@ static int test_dev_config_update_uint_range(struct kmod_test_device *test_dev,
 		return ret;
 
 	if (new < min || new > max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&test_dev->config_mutex);
 	*config = new;
@@ -944,7 +944,7 @@ static int test_dev_config_update_int(struct kmod_test_device *test_dev,
 		return ret;
 
 	if (new < INT_MIN || new > INT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&test_dev->config_mutex);
 	*config = new;
@@ -1179,7 +1179,7 @@ static int __init test_kmod_init(void)
 	test_dev = register_test_dev_kmod();
 	if (!test_dev) {
 		pr_err("Cannot add first test kmod device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/*

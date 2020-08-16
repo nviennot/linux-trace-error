@@ -64,7 +64,7 @@ static int ebt_dnat_tg_check(const struct xt_tgchk_param *par)
 	unsigned int hook_mask;
 
 	if (BASE_CHAIN && info->target == EBT_RETURN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hook_mask = par->hook_mask & ~(1 << NF_BR_NUMHOOKS);
 	if ((strcmp(par->table, "nat") != 0 ||
@@ -72,9 +72,9 @@ static int ebt_dnat_tg_check(const struct xt_tgchk_param *par)
 	    (1 << NF_BR_LOCAL_OUT)))) &&
 	    (strcmp(par->table, "broute") != 0 ||
 	    hook_mask & ~(1 << NF_BR_BROUTING)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ebt_invalid_target(info->target))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

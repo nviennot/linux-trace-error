@@ -652,14 +652,14 @@ static int rt1015_hw_params(struct snd_pcm_substream *substream,
 	pre_div = rl6231_get_clk_info(rt1015->sysclk, rt1015->lrck);
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_ms = frame_size > 32;
@@ -684,7 +684,7 @@ static int rt1015_hw_params(struct snd_pcm_substream *substream,
 		val_len = RT1015_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT1015_TDM_MASTER,
@@ -708,7 +708,7 @@ static int rt1015_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT1015_TCON_TDM_MS_S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -718,7 +718,7 @@ static int rt1015_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val2 |= RT1015_TDM_INV_BCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -738,7 +738,7 @@ static int rt1015_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT1015_TDM_MASTER,
@@ -770,7 +770,7 @@ static int rt1015_set_component_sysclk(struct snd_soc_component *component,
 
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt1015->sysclk = freq;
@@ -810,7 +810,7 @@ static int rt1015_set_component_pll(struct snd_soc_component *component,
 		if (rt1015->bclk_ratio == 0) {
 			dev_err(component->dev,
 				"Can not support bclk ratio as 0.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -827,7 +827,7 @@ static int rt1015_set_component_pll(struct snd_soc_component *component,
 
 	default:
 		dev_err(component->dev, "Unknown PLL Source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -864,7 +864,7 @@ static int rt1015_set_bclk_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 
 	if (ratio == 50) {
 		dev_dbg(component->dev, "Unsupport bclk ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1015,7 +1015,7 @@ static int rt1015_i2c_probe(struct i2c_client *i2c,
 	if ((val != RT1015_DEVICE_ID_VAL) && (val != RT1015_DEVICE_ID_VAL2)) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt1015\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return devm_snd_soc_register_component(&i2c->dev,

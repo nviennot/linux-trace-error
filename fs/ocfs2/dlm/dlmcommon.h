@@ -1110,7 +1110,7 @@ static inline int dlm_node_iter_next(struct dlm_node_iter *iter)
 	bit = find_next_bit(iter->node_map, O2NM_MAX_NODES, iter->curnode+1);
 	if (bit >= O2NM_MAX_NODES) {
 		iter->curnode = O2NM_MAX_NODES;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	iter->curnode = bit;
 	return bit;

@@ -171,7 +171,7 @@ static int dn_fib_get_nhs(struct dn_fib_info *fi, const struct nlattr *attr,
 		int attrlen;
 
 		if (!rtnh_ok(nhp, nhlen))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		nh->nh_flags  = (r->rtm_flags&~0xFF) | nhp->rtnh_flags;
 		nh->nh_oif    = nhp->rtnh_ifindex;
@@ -204,13 +204,13 @@ static int dn_fib_check_nh(const struct rtmsg *r, struct dn_fib_info *fi, struct
 			struct net_device *dev;
 
 			if (r->rtm_scope >= RT_SCOPE_LINK)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (dnet_addr_type(nh->nh_gw) != RTN_UNICAST)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if ((dev = __dev_get_by_index(&init_net, nh->nh_oif)) == NULL)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			if (!(dev->flags&IFF_UP))
-				return -ENETDOWN;
+				return -ERR(ENETDOWN);
 			nh->nh_dev = dev;
 			dev_hold(dev);
 			nh->nh_scope = RT_SCOPE_LINK;
@@ -228,7 +228,7 @@ static int dn_fib_check_nh(const struct rtmsg *r, struct dn_fib_info *fi, struct
 		if ((err = dn_fib_lookup(&fld, &res)) != 0)
 			return err;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (res.type != RTN_UNICAST && res.type != RTN_LOCAL)
 			goto out;
 		nh->nh_scope = res.scope;
@@ -237,7 +237,7 @@ static int dn_fib_check_nh(const struct rtmsg *r, struct dn_fib_info *fi, struct
 		if (nh->nh_dev == NULL)
 			goto out;
 		dev_hold(nh->nh_dev);
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		if (!(nh->nh_dev->flags & IFF_UP))
 			goto out;
 		err = 0;
@@ -248,13 +248,13 @@ out:
 		struct net_device *dev;
 
 		if (nh->nh_flags&(RTNH_F_PERVASIVE|RTNH_F_ONLINK))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		dev = __dev_get_by_index(&init_net, nh->nh_oif);
 		if (dev == NULL || dev->dn_ptr == NULL)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		if (!(dev->flags&IFF_UP))
-			return -ENETDOWN;
+			return -ERR(ENETDOWN);
 		nh->nh_dev = dev;
 		dev_hold(nh->nh_dev);
 		nh->nh_scope = RT_SCOPE_HOST;
@@ -283,7 +283,7 @@ struct dn_fib_info *dn_fib_create_info(const struct rtmsg *r, struct nlattr *att
 		goto err_inval;
 
 	fi = kzalloc(struct_size(fi, fib_nh, nhs), GFP_KERNEL);
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (fi == NULL)
 		goto failure;
 
@@ -364,7 +364,7 @@ struct dn_fib_info *dn_fib_create_info(const struct rtmsg *r, struct nlattr *att
 			goto err_inval;
 		nh->nh_scope = RT_SCOPE_NOWHERE;
 		nh->nh_dev = dev_get_by_index(&init_net, fi->fib_nh->nh_oif);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		if (nh->nh_dev == NULL)
 			goto failure;
 	} else {
@@ -401,7 +401,7 @@ link_it:
 	return fi;
 
 err_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 failure:
 	*errp = err;
@@ -449,7 +449,7 @@ int dn_fib_semantic_match(int type, struct dn_fib_info *fi, const struct flowidn
 			net_err_ratelimited("DECnet: impossible routing event : dn_fib_semantic_match type=%d\n",
 					    type);
 			res->fi = NULL;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return err;
@@ -512,10 +512,10 @@ static int dn_fib_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int err;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!net_eq(net, &init_net))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nlmsg_parse_deprecated(nlh, sizeof(*r), attrs, RTA_MAX,
 				     rtm_dn_policy, extack);
@@ -524,7 +524,7 @@ static int dn_fib_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	tb = dn_fib_get_table(rtm_get_table(attrs, r->rtm_table), 0);
 	if (!tb)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	return tb->delete(tb, r, attrs, nlh, &NETLINK_CB(skb));
 }
@@ -539,10 +539,10 @@ static int dn_fib_rtm_newroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int err;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!net_eq(net, &init_net))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nlmsg_parse_deprecated(nlh, sizeof(*r), attrs, RTA_MAX,
 				     rtm_dn_policy, extack);
@@ -551,7 +551,7 @@ static int dn_fib_rtm_newroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	tb = dn_fib_get_table(rtm_get_table(attrs, r->rtm_table), 1);
 	if (!tb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	return tb->insert(tb, r, attrs, nlh, &NETLINK_CB(skb));
 }

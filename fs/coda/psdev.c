@@ -78,7 +78,7 @@ static long coda_psdev_ioctl(struct file * filp, unsigned int cmd, unsigned long
 		data = CODA_KERNEL_VERSION;
 		return put_user(data, (int __user *) arg);
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 
 	return 0;
@@ -101,7 +101,7 @@ static ssize_t coda_psdev_write(struct file *file, const char __user *buf,
 
 	/* make sure there is enough to copy out the (opcode, unique) values */
 	if (nbytes < (2 * sizeof(u_int32_t)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
         /* Peek at the opcode, uniquefier */
 	if (copy_from_user(&hdr, buf, 2 * sizeof(u_int32_t)))
@@ -162,7 +162,7 @@ static ssize_t coda_psdev_write(struct file *file, const char __user *buf,
 	if (!req) {
 		pr_warn("%s: msg (%d, %d) not found\n",
 			__func__, hdr.opcode, hdr.unique);
-		retval = -ESRCH;
+		retval = -ERR(ESRCH);
 		goto out;
 	}
 
@@ -192,7 +192,7 @@ static ssize_t coda_psdev_write(struct file *file, const char __user *buf,
 		if (!outp->oh.result) {
 			outp->fh = fget(outp->fd);
 			if (!outp->fh)
-				return -EBADF;
+				return -ERR(EBADF);
 		}
 	}
 
@@ -223,11 +223,11 @@ static ssize_t coda_psdev_read(struct file * file, char __user * buf,
 
 	while (list_empty(&vcp->vc_pending)) {
 		if (file->f_flags & O_NONBLOCK) {
-			retval = -EAGAIN;
+			retval = -ERR(EAGAIN);
 			break;
 		}
 		if (signal_pending(current)) {
-			retval = -ERESTARTSYS;
+			retval = -ERR(ERESTARTSYS);
 			break;
 		}
 		mutex_unlock(&vcp->vc_mutex);
@@ -275,16 +275,16 @@ static int coda_psdev_open(struct inode * inode, struct file * file)
 	int idx, err;
 
 	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (current_user_ns() != &init_user_ns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	idx = iminor(inode);
 	if (idx < 0 || idx >= MAX_CODADEVS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	vcp = &coda_comms[idx];
 	mutex_lock(&vcp->vc_mutex);
 
@@ -363,7 +363,7 @@ static int __init init_coda_psdev(void)
 	if (register_chrdev(CODA_PSDEV_MAJOR, "coda", &coda_psdev_fops)) {
 		pr_err("%s: unable to get major %d\n",
 		       __func__, CODA_PSDEV_MAJOR);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	coda_psdev_class = class_create(THIS_MODULE, "coda");
 	if (IS_ERR(coda_psdev_class)) {

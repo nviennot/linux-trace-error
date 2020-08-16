@@ -45,7 +45,7 @@ static int snd_emu10k1_spdif_get(struct snd_kcontrol *kcontrol,
 
 	/* Limit: emu->spdif_bits */
 	if (idx >= 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irqsave(&emu->reg_lock, flags);
 	ucontrol->value.iec958.status[0] = (emu->spdif_bits[idx] >> 0) & 0xff;
 	ucontrol->value.iec958.status[1] = (emu->spdif_bits[idx] >> 8) & 0xff;
@@ -397,7 +397,7 @@ static int snd_emu1010_output_source_get(struct snd_kcontrol *kcontrol,
 	if (channel >= 24 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     channel >= 18))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ucontrol->value.enumerated.item[0] = emu->emu1010.output_source[channel];
 	return 0;
 }
@@ -413,13 +413,13 @@ static int snd_emu1010_output_source_put(struct snd_kcontrol *kcontrol,
 	if (val >= 53 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     val >= 49))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_output_dst, emu->emu1010.output_source */
 	if (channel >= 24 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     channel >= 18))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (emu->emu1010.output_source[channel] == val)
 		return 0;
 	emu->emu1010.output_source[channel] = val;
@@ -441,7 +441,7 @@ static int snd_emu1010_input_source_get(struct snd_kcontrol *kcontrol,
 	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_input_dst, emu->emu1010.input_source */
 	if (channel >= 22)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ucontrol->value.enumerated.item[0] = emu->emu1010.input_source[channel];
 	return 0;
 }
@@ -457,11 +457,11 @@ static int snd_emu1010_input_source_put(struct snd_kcontrol *kcontrol,
 	if (val >= 53 ||
 	    (emu->card_capabilities->emu_model == EMU_MODEL_EMU1616 &&
 	     val >= 49))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	channel = (kcontrol->private_value) & 0xff;
 	/* Limit: emu1010_input_dst, emu->emu1010.input_source */
 	if (channel >= 22)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (emu->emu1010.input_source[channel] == val)
 		return 0;
 	emu->emu1010.input_source[channel] = val;
@@ -699,7 +699,7 @@ static int snd_emu1010_internal_clock_put(struct snd_kcontrol *kcontrol,
 	val = ucontrol->value.enumerated.item[0] ;
 	/* Limit: uinfo->value.enumerated.items = 4; */
 	if (val >= 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->emu1010.internal_clock != val);
 	if (change) {
 		emu->emu1010.internal_clock = val;
@@ -822,7 +822,7 @@ static int snd_emu1010_optical_out_put(struct snd_kcontrol *kcontrol,
 	val = ucontrol->value.enumerated.item[0];
 	/* Limit: uinfo->value.enumerated.items = 2; */
 	if (val >= 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->emu1010.optical_out != val);
 	if (change) {
 		emu->emu1010.optical_out = val;
@@ -873,7 +873,7 @@ static int snd_emu1010_optical_in_put(struct snd_kcontrol *kcontrol,
 	val = ucontrol->value.enumerated.item[0];
 	/* Limit: uinfo->value.enumerated.items = 2; */
 	if (val >= 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->emu1010.optical_in != val);
 	if (change) {
 		emu->emu1010.optical_in = val;
@@ -936,7 +936,7 @@ static int snd_audigy_i2c_capture_source_put(struct snd_kcontrol *kcontrol,
 	/* Limit: uinfo->value.enumerated.items = 2; */
 	/*        emu->i2c_capture_volume */
 	if (source_id >= 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->i2c_capture_source != source_id);
 	if (change) {
 		snd_emu10k1_i2c_write(emu, ADC_MUX, 0); /* Mute input */
@@ -993,7 +993,7 @@ static int snd_audigy_i2c_volume_get(struct snd_kcontrol *kcontrol,
 	/* Limit: emu->i2c_capture_volume */
         /*        capture_source: uinfo->value.enumerated.items = 2 */
 	if (source_id >= 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ucontrol->value.integer.value[0] = emu->i2c_capture_volume[source_id][0];
 	ucontrol->value.integer.value[1] = emu->i2c_capture_volume[source_id][1];
@@ -1013,7 +1013,7 @@ static int snd_audigy_i2c_volume_put(struct snd_kcontrol *kcontrol,
 	/* Limit: emu->i2c_capture_volume */
         /*        capture_source: uinfo->value.enumerated.items = 2 */
 	if (source_id >= 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ogain = emu->i2c_capture_volume[source_id][0]; /* Left */
 	ngain = ucontrol->value.integer.value[0];
 	if (ngain > 0xff)
@@ -1148,7 +1148,7 @@ static int snd_emu10k1_spdif_put(struct snd_kcontrol *kcontrol,
 
 	/* Limit: emu->spdif_bits */
 	if (idx >= 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = (ucontrol->value.iec958.status[0] << 0) |
 	      (ucontrol->value.iec958.status[1] << 8) |
 	      (ucontrol->value.iec958.status[2] << 16) |
@@ -1769,7 +1769,7 @@ static int rename_ctl(struct snd_card *card, const char *src, const char *dst)
 		strcpy(kctl->id.name, dst);
 		return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 int snd_emu10k1_mixer(struct snd_emu10k1 *emu,

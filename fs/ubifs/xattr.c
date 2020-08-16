@@ -91,7 +91,7 @@ static int create_xattr(struct ubifs_info *c, struct inode *host,
 	if (host_ui->xattr_cnt >= ubifs_xattr_max_cnt(c)) {
 		ubifs_err(c, "inode %lu already has too many xattrs (%d), cannot create more",
 			  host->i_ino, host_ui->xattr_cnt);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	/*
 	 * Linux limits the maximum size of the extended attribute names list
@@ -103,7 +103,7 @@ static int create_xattr(struct ubifs_info *c, struct inode *host,
 	if (names_len > XATTR_LIST_MAX) {
 		ubifs_err(c, "cannot add one more xattr name to inode %lu, total names length would become %d, max. is %d",
 			  host->i_ino, names_len, XATTR_LIST_MAX);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	err = ubifs_budget_space(c, &req);
@@ -259,7 +259,7 @@ static struct inode *iget_xattr(struct ubifs_info *c, ino_t inum)
 		return inode;
 	ubifs_err(c, "corrupt extended attribute entry");
 	iput(inode);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
@@ -276,10 +276,10 @@ int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
 		ubifs_assert(c, inode_is_locked(host));
 
 	if (size > UBIFS_MAX_INO_DATA)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (fname_len(&nm) > UBIFS_MAX_NLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	xent = kmalloc(UBIFS_MAX_XENT_NODE_SZ, GFP_NOFS);
 	if (!xent)
@@ -297,7 +297,7 @@ int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
 
 		if (flags & XATTR_REPLACE)
 			/* We are asked not to create the xattr */
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 		else
 			err = create_xattr(c, host, &nm, value, size);
 		goto out_free;
@@ -305,7 +305,7 @@ int ubifs_xattr_set(struct inode *host, const char *name, const void *value,
 
 	if (flags & XATTR_CREATE) {
 		/* We are asked not to replace the xattr */
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out_free;
 	}
 
@@ -335,7 +335,7 @@ ssize_t ubifs_xattr_get(struct inode *host, const char *name, void *buf,
 	int err;
 
 	if (fname_len(&nm) > UBIFS_MAX_NLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	xent = kmalloc(UBIFS_MAX_XENT_NODE_SZ, GFP_NOFS);
 	if (!xent)
@@ -345,7 +345,7 @@ ssize_t ubifs_xattr_get(struct inode *host, const char *name, void *buf,
 	err = ubifs_tnc_lookup_nm(c, &key, xent, &nm);
 	if (err) {
 		if (err == -ENOENT)
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 		goto out_unlock;
 	}
 
@@ -363,7 +363,7 @@ ssize_t ubifs_xattr_get(struct inode *host, const char *name, void *buf,
 	if (buf) {
 		/* If @buf is %NULL we are supposed to return the length */
 		if (ui->data_len > size) {
-			err = -ERANGE;
+			err = -ERR(ERANGE);
 			goto out_iput;
 		}
 
@@ -415,7 +415,7 @@ ssize_t ubifs_listxattr(struct dentry *dentry, char *buffer, size_t size)
 		return len;
 
 	if (len > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	lowest_xent_key(c, &key, host->i_ino);
 	while (1) {
@@ -586,7 +586,7 @@ static int ubifs_xattr_remove(struct inode *host, const char *name)
 	ubifs_assert(c, inode_is_locked(host));
 
 	if (fname_len(&nm) > UBIFS_MAX_NLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	xent = kmalloc(UBIFS_MAX_XENT_NODE_SZ, GFP_NOFS);
 	if (!xent)
@@ -596,7 +596,7 @@ static int ubifs_xattr_remove(struct inode *host, const char *name)
 	err = ubifs_tnc_lookup_nm(c, &key, xent, &nm);
 	if (err) {
 		if (err == -ENOENT)
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 		goto out_free;
 	}
 

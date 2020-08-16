@@ -226,7 +226,7 @@ static int pxa2xx_ac97_probe(struct platform_device *dev)
 
 	if (dev->id >= 0) {
 		dev_err(&dev->dev, "PXA2xx has only one AC97 port.\n");
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		goto err_dev;
 	}
 

@@ -273,7 +273,7 @@ struct page *ufs_get_locked_page(struct address_space *mapping,
 			       "can not read page: ino %lu, index: %lu\n",
 			       inode->i_ino, index);
 
-			return ERR_PTR(-EIO);
+			return ERR_PTR(-ERR(EIO));
 		}
 	}
 	if (!page_has_buffers(page))

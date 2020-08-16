@@ -250,7 +250,7 @@ static int ceph_do_readpage(struct file *filp, struct page *page)
 		 * into page cache while getting Fcr caps.
 		 */
 		if (off == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		zero_user_segment(page, 0, PAGE_SIZE);
 		SetPageUptodate(page);
 		return 0;
@@ -258,7 +258,7 @@ static int ceph_do_readpage(struct file *filp, struct page *page)
 
 	err = ceph_readpage_from_fscache(inode, page);
 	if (err == 0)
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 
 	dout("readpage inode %p file %p page %p index %lu\n",
 	     inode, filp, page, page->index);
@@ -498,7 +498,7 @@ static int ceph_readpages(struct file *file, struct address_space *mapping,
 	int max = 0;
 
 	if (ceph_inode(inode)->i_inline_version != CEPH_INLINE_NONE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = ceph_readpages_from_fscache(mapping->host, mapping, page_list,
 					 &nr_pages);
@@ -900,7 +900,7 @@ static int ceph_writepages_start(struct address_space *mapping,
 				inode, ceph_ino(inode));
 		}
 		mapping_set_error(mapping, -EIO);
-		return -EIO; /* we're in a forced umount, don't write! */
+		return -ERR(EIO); /* we're in a forced umount, don't write! */
 	}
 	if (fsc->mount_options->wsize < wsize)
 		wsize = fsc->mount_options->wsize;
@@ -1325,7 +1325,7 @@ static int ceph_update_writeable_page(struct file *file,
 	if (READ_ONCE(fsc->mount_state) == CEPH_MOUNT_SHUTDOWN) {
 		dout(" page %p forced umount\n", page);
 		unlock_page(page);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 retry_locked:
@@ -1355,7 +1355,7 @@ retry_locked:
 			ceph_put_snap_context(snapc);
 			if (r == -ERESTARTSYS)
 				return r;
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		ceph_put_snap_context(oldest);
 
@@ -1397,7 +1397,7 @@ retry_locked:
 	r = ceph_do_readpage(file, page);
 	if (r < 0) {
 		if (r == -EINPROGRESS)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		goto fail_unlock;
 	}
 	goto retry_locked;
@@ -1485,7 +1485,7 @@ out:
 static ssize_t ceph_direct_io(struct kiocb *iocb, struct iov_iter *iter)
 {
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 const struct address_space_operations ceph_aops = {
@@ -1556,7 +1556,7 @@ static vm_fault_t ceph_filemap_fault(struct vm_fault *vmf)
 			inode, off, (size_t)PAGE_SIZE,
 				ceph_cap_string(got), ret);
 	} else
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 
 	if (pinned_page)
 		put_page(pinned_page);
@@ -1900,7 +1900,7 @@ int ceph_mmap(struct file *file, struct vm_area_struct *vma)
 	struct address_space *mapping = file->f_mapping;
 
 	if (!mapping->a_ops->readpage)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	file_accessed(file);
 	vma->vm_ops = &ceph_vmops;
 	return 0;
@@ -2116,12 +2116,12 @@ check:
 		if ((need & CEPH_CAP_FILE_RD) && !(flags & CEPH_I_POOL_RD)) {
 			dout("ceph_pool_perm_check pool %lld no read perm\n",
 			     pool);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		if ((need & CEPH_CAP_FILE_WR) && !(flags & CEPH_I_POOL_WR)) {
 			dout("ceph_pool_perm_check pool %lld no write perm\n",
 			     pool);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		return 0;
 	}

@@ -63,7 +63,7 @@ static int aiu_encoder_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -88,7 +88,7 @@ static int aiu_encoder_i2s_setup_desc(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_channels(params)) {
@@ -98,7 +98,7 @@ static int aiu_encoder_i2s_setup_desc(struct snd_soc_component *component,
 		desc |= AIU_I2S_SOURCE_DESC_MODE_8CH;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIU_I2S_SOURCE_DESC,
@@ -125,7 +125,7 @@ static int aiu_encoder_i2s_set_legacy_div(struct snd_soc_component *component,
 
 	default:
 		dev_err(component->dev, "Unsupported i2s divider: %u\n", bs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIU_CLK_CTRL,
@@ -156,7 +156,7 @@ static int aiu_encoder_i2s_set_more_div(struct snd_soc_component *component,
 		if (bs % 2) {
 			dev_err(component->dev,
 				"Cannot increase i2s divider by 50%%\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		bs += bs / 2;
 	}
@@ -186,7 +186,7 @@ static int aiu_encoder_i2s_set_clocks(struct snd_soc_component *component,
 	fs = DIV_ROUND_CLOSEST(clk_get_rate(aiu->i2s.clks[MCLK].clk), srate);
 
 	if (fs % 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Send data MSB first */
 	snd_soc_component_update_bits(component, AIU_I2S_DAC_CFG,
@@ -263,7 +263,7 @@ static int aiu_encoder_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	/* Only CPU Master / Codec Slave supported ATM */
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (inv == SND_SOC_DAIFMT_NB_IF ||
 	    inv == SND_SOC_DAIFMT_IB_IF)
@@ -284,7 +284,7 @@ static int aiu_encoder_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		skew = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val |= FIELD_PREP(AIU_CLK_CTRL_LRCLK_SKEW, skew);
@@ -304,7 +304,7 @@ static int aiu_encoder_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	int ret;
 
 	if (WARN_ON(clk_id != 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dir == SND_SOC_CLOCK_IN)
 		return 0;

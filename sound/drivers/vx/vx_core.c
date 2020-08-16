@@ -53,7 +53,7 @@ int snd_vx_check_reg_bit(struct vx_core *chip, int reg, int mask, int bit, int t
 		//msleep(10);
 	} while (time_after_eq(end_time, jiffies));
 	snd_printd(KERN_DEBUG "vx_check_reg_bit: timeout, reg=%s, mask=0x%x, val=0x%x\n", reg_names[reg], mask, snd_vx_inb(chip, reg));
-	return -EIO;
+	return -ERR(EIO);
 }
 
 EXPORT_SYMBOL(snd_vx_check_reg_bit);
@@ -72,7 +72,7 @@ static int vx_send_irq_dsp(struct vx_core *chip, int num)
 
 	/* wait for Hc = 0 */
 	if (snd_vx_check_reg_bit(chip, VX_CVR, CVR_HC, 0, 200) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	nirq = num;
 	if (vx_has_new_dsp(chip))
@@ -91,10 +91,10 @@ static int vx_reset_chk(struct vx_core *chip)
 {
 	/* Reset irq CHK */
 	if (vx_send_irq_dsp(chip, IRQ_RESET_CHK) < 0)
-		return -EIO;
+		return -ERR(EIO);
 	/* Wait until CHK = 0 */
 	if (vx_check_isr(chip, ISR_CHK, 0, 200) < 0)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -193,7 +193,7 @@ static int vx_read_status(struct vx_core *chip, struct vx_rmh *rmh)
 	if (size < 1)
 		return 0;
 	if (snd_BUG_ON(size >= SIZE_MAX_STATUS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 1; i <= size; i++) {
 		/* trigger an irq MESS_WRITE_NEXT */
@@ -230,7 +230,7 @@ int vx_send_msg_nolock(struct vx_core *chip, struct vx_rmh *rmh)
 	int i, err;
 	
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if ((err = vx_reset_chk(chip)) < 0) {
 		snd_printd(KERN_DEBUG "vx_send_msg: vx_reset_chk error\n");
@@ -357,7 +357,7 @@ int vx_send_rih_nolock(struct vx_core *chip, int cmd)
 	int err;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 #if 0
 	printk(KERN_DEBUG "send_rih: cmd = 0x%x\n", cmd);
@@ -413,9 +413,9 @@ int snd_vx_load_boot_image(struct vx_core *chip, const struct firmware *boot)
 
 	/* check the length of boot image */
 	if (boot->size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (boot->size % 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #if 0
 	{
 		/* more strict check */
@@ -437,7 +437,7 @@ int snd_vx_load_boot_image(struct vx_core *chip, const struct firmware *boot)
 				break;
 			if (vx_wait_isr_bit(chip, ISR_TX_EMPTY) < 0) {
 				snd_printk(KERN_ERR "dsp boot failed at %d\n", i);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			vx_outb(chip, TXH, 0);
 			vx_outb(chip, TXM, 0);
@@ -446,7 +446,7 @@ int snd_vx_load_boot_image(struct vx_core *chip, const struct firmware *boot)
 			const unsigned char *image = boot->data + i;
 			if (vx_wait_isr_bit(chip, ISR_TX_EMPTY) < 0) {
 				snd_printk(KERN_ERR "dsp boot failed at %d\n", i);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			vx_outb(chip, TXH, image[0]);
 			vx_outb(chip, TXM, image[1]);
@@ -669,7 +669,7 @@ int snd_vx_dsp_load(struct vx_core *chip, const struct firmware *dsp)
 	const unsigned char *image, *cptr;
 
 	if (dsp->size % 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vx_toggle_dac_mute(chip, 1);
 
@@ -739,7 +739,7 @@ int snd_vx_resume(struct vx_core *chip)
 		err = chip->ops->load_dsp(chip, i, chip->firmware[i]);
 		if (err < 0) {
 			snd_printk(KERN_ERR "vx: firmware resume error at DSP %d\n", i);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 

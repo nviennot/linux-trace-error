@@ -49,7 +49,7 @@ static int kirkwood_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		mask = KIRKWOOD_I2S_CTL_I2S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -192,7 +192,7 @@ static int kirkwood_i2s_hw_params(struct snd_pcm_substream *substream,
 			  KIRKWOOD_RECCTL_I2S_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -307,7 +307,7 @@ static int kirkwood_i2s_play_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -373,7 +373,7 @@ static int kirkwood_i2s_rec_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -546,7 +546,7 @@ static int kirkwood_i2s_dev_probe(struct platform_device *pdev)
 		priv->burst = data->burst;
 	} else {
 		dev_err(&pdev->dev, "no DT nor platform data ?!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->clk = devm_clk_get(&pdev->dev, np ? "internal" : NULL);
@@ -562,7 +562,7 @@ static int kirkwood_i2s_dev_probe(struct platform_device *pdev)
 	} else {
 		if (clk_is_match(priv->extclk, priv->clk)) {
 			devm_clk_put(&pdev->dev, priv->extclk);
-			priv->extclk = ERR_PTR(-EINVAL);
+			priv->extclk = ERR_PTR(-ERR(EINVAL));
 		} else {
 			dev_info(&pdev->dev, "found external clock\n");
 			clk_prepare_enable(priv->extclk);

@@ -151,7 +151,7 @@ int olpc_quirks(struct snd_card *card, struct snd_ac97 *ac97)
 
 	if (gpio_request(OLPC_GPIO_MIC_AC, DRV_NAME)) {
 		dev_err(card->dev, "unable to allocate MIC GPIO\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	gpio_direction_output(OLPC_GPIO_MIC_AC, 0);
 

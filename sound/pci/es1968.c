@@ -1514,7 +1514,7 @@ static int snd_es1968_alloc_apu_pair(struct es1968 *chip, int type)
 			return apu;
 		}
 	}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /*
@@ -2436,11 +2436,11 @@ static int snd_es1968_create_gameport(struct es1968 *chip, int dev)
 	u16 val;
 
 	if (!joystick[dev])
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	r = request_region(JOYSTICK_ADDR, 8, "ES1968 gameport");
 	if (!r)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	chip->gameport = gp = gameport_allocate_port();
 	if (!gp) {
@@ -2476,7 +2476,7 @@ static void snd_es1968_free_gameport(struct es1968 *chip)
 	}
 }
 #else
-static inline int snd_es1968_create_gameport(struct es1968 *chip, int dev) { return -ENOSYS; }
+static inline int snd_es1968_create_gameport(struct es1968 *chip, int dev) { return -ERR(ENOSYS); }
 static inline void snd_es1968_free_gameport(struct es1968 *chip) { }
 #endif
 
@@ -2673,7 +2673,7 @@ static int snd_es1968_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 28bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -2707,7 +2707,7 @@ static int snd_es1968_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_es1968_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -2794,10 +2794,10 @@ static int snd_es1968_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

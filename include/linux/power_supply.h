@@ -409,7 +409,7 @@ extern int power_supply_set_battery_charged(struct power_supply *psy);
 #ifdef CONFIG_POWER_SUPPLY
 extern int power_supply_is_system_supplied(void);
 #else
-static inline int power_supply_is_system_supplied(void) { return -ENOSYS; }
+static inline int power_supply_is_system_supplied(void) { return -ERR(ENOSYS); }
 #endif
 
 extern int power_supply_get_property(struct power_supply *psy,

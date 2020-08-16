@@ -367,10 +367,10 @@ int filemap_check_errors(struct address_space *mapping)
 	/* Check for outstanding write errors */
 	if (test_bit(AS_ENOSPC, &mapping->flags) &&
 	    test_and_clear_bit(AS_ENOSPC, &mapping->flags))
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 	if (test_bit(AS_EIO, &mapping->flags) &&
 	    test_and_clear_bit(AS_EIO, &mapping->flags))
-		ret = -EIO;
+		ret = -ERR(EIO);
 	return ret;
 }
 EXPORT_SYMBOL(filemap_check_errors);
@@ -379,9 +379,9 @@ static int filemap_check_and_keep_errors(struct address_space *mapping)
 {
 	/* Check for outstanding write errors */
 	if (test_bit(AS_EIO, &mapping->flags))
-		return -EIO;
+		return -ERR(EIO);
 	if (test_bit(AS_ENOSPC, &mapping->flags))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return 0;
 }
 
@@ -1158,7 +1158,7 @@ static inline int wait_on_page_bit_common(wait_queue_head_t *q,
 		}
 
 		if (signal_pending_state(state, current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -2022,7 +2022,7 @@ ssize_t generic_file_buffered_read(struct kiocb *iocb,
 		cond_resched();
 find_page:
 		if (fatal_signal_pending(current)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			goto out;
 		}
 
@@ -2202,7 +2202,7 @@ readpage:
 				}
 				unlock_page(page);
 				shrink_readahead_size_eio(ra);
-				error = -EIO;
+				error = -ERR(EIO);
 				goto readpage_error;
 			}
 			unlock_page(page);
@@ -2239,7 +2239,7 @@ no_cached_page:
 	}
 
 would_block:
-	error = -EAGAIN;
+	error = -ERR(EAGAIN);
 out:
 	ra->prev_pos = prev_index;
 	ra->prev_pos <<= PAGE_SHIFT;
@@ -2291,7 +2291,7 @@ generic_file_read_iter(struct kiocb *iocb, struct iov_iter *iter)
 		if (iocb->ki_flags & IOCB_NOWAIT) {
 			if (filemap_range_has_page(mapping, iocb->ki_pos,
 						   iocb->ki_pos + count - 1))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		} else {
 			retval = filemap_write_and_wait_range(mapping,
 						iocb->ki_pos,
@@ -2574,7 +2574,7 @@ page_not_uptodate:
 	if (!error) {
 		wait_on_page_locked(page);
 		if (!PageUptodate(page))
-			error = -EIO;
+			error = -ERR(EIO);
 	}
 	if (fpin)
 		goto out_retry;
@@ -2708,7 +2708,7 @@ int generic_file_mmap(struct file * file, struct vm_area_struct * vma)
 	struct address_space *mapping = file->f_mapping;
 
 	if (!mapping->a_ops->readpage)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	file_accessed(file);
 	vma->vm_ops = &generic_file_vm_ops;
 	return 0;
@@ -2720,7 +2720,7 @@ int generic_file_mmap(struct file * file, struct vm_area_struct * vma)
 int generic_file_readonly_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	if ((vma->vm_flags & VM_SHARED) && (vma->vm_flags & VM_MAYWRITE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return generic_file_mmap(file, vma);
 }
 #else
@@ -2730,11 +2730,11 @@ vm_fault_t filemap_page_mkwrite(struct vm_fault *vmf)
 }
 int generic_file_mmap(struct file * file, struct vm_area_struct * vma)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 int generic_file_readonly_mmap(struct file * file, struct vm_area_struct * vma)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_MMU */
 
@@ -2748,7 +2748,7 @@ static struct page *wait_on_page_read(struct page *page)
 		wait_on_page_locked(page);
 		if (!PageUptodate(page)) {
 			put_page(page);
-			page = ERR_PTR(-EIO);
+			page = ERR_PTR(-ERR(EIO));
 		}
 	}
 	return page;
@@ -2921,7 +2921,7 @@ static int generic_write_check_limits(struct file *file, loff_t pos,
 	if (limit != RLIM_INFINITY) {
 		if (pos >= limit) {
 			send_sig(SIGXFSZ, current, 0);
-			return -EFBIG;
+			return -ERR(EFBIG);
 		}
 		*count = min(*count, limit - pos);
 	}
@@ -2930,7 +2930,7 @@ static int generic_write_check_limits(struct file *file, loff_t pos,
 		max_size = MAX_NON_LFS;
 
 	if (unlikely(pos >= max_size))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	*count = min(*count, max_size - pos);
 
@@ -2952,7 +2952,7 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
 	int ret;
 
 	if (IS_SWAPFILE(inode))
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 
 	if (!iov_iter_count(from))
 		return 0;
@@ -2962,7 +2962,7 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
 		iocb->ki_pos = i_size_read(inode);
 
 	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	count = iov_iter_count(from);
 	ret = generic_write_check_limits(file, iocb->ki_pos, &count);
@@ -2995,11 +2995,11 @@ int generic_remap_checks(struct file *file_in, loff_t pos_in,
 
 	/* The start of both ranges must be aligned to an fs block. */
 	if (!IS_ALIGNED(pos_in, bs) || !IS_ALIGNED(pos_out, bs))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ensure offsets don't wrap. */
 	if (pos_in + count < pos_in || pos_out + count < pos_out)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size_in = i_size_read(inode_in);
 	size_out = i_size_read(inode_out);
@@ -3008,11 +3008,11 @@ int generic_remap_checks(struct file *file_in, loff_t pos_in,
 	if ((remap_flags & REMAP_FILE_DEDUP) &&
 	    (pos_in >= size_in || pos_in + count > size_in ||
 	     pos_out >= size_out || pos_out + count > size_out))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ensure the infile range is within the infile. */
 	if (pos_in >= size_in)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	count = min(count, size_in - (uint64_t)pos_in);
 
 	ret = generic_write_check_limits(file_out, pos_out, &count);
@@ -3038,14 +3038,14 @@ int generic_remap_checks(struct file *file_in, loff_t pos_in,
 	if (inode_in == inode_out &&
 	    pos_out + bcount > pos_in &&
 	    pos_out < pos_in + bcount)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We shortened the request but the caller can't deal with that, so
 	 * bounce the request back to userspace.
 	 */
 	if (*req_count != count && !(remap_flags & REMAP_FILE_CAN_SHORTEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*req_count = count;
 	return 0;
@@ -3063,14 +3063,14 @@ int generic_file_rw_checks(struct file *file_in, struct file *file_out)
 
 	/* Don't copy dirs, pipes, sockets... */
 	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
-		return -EISDIR;
+		return -ERR(EISDIR);
 	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(file_in->f_mode & FMODE_READ) ||
 	    !(file_out->f_mode & FMODE_WRITE) ||
 	    (file_out->f_flags & O_APPEND))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	return 0;
 }
@@ -3098,14 +3098,14 @@ int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
 
 	/* Don't touch certain kinds of inodes */
 	if (IS_IMMUTABLE(inode_out))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (IS_SWAPFILE(inode_in) || IS_SWAPFILE(inode_out))
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 
 	/* Ensure offsets don't wrap. */
 	if (pos_in + count < pos_in || pos_out + count < pos_out)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Shorten the copy to EOF */
 	size_in = i_size_read(inode_in);
@@ -3122,7 +3122,7 @@ int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
 	if (inode_in == inode_out &&
 	    pos_out + count > pos_in &&
 	    pos_out < pos_in + count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*req_count = count;
 	return 0;
@@ -3188,7 +3188,7 @@ generic_file_direct_write(struct kiocb *iocb, struct iov_iter *from)
 		/* If there are pages to writeback, return */
 		if (filemap_range_has_page(inode->i_mapping, pos,
 					   pos + write_len - 1))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		written = filemap_write_and_wait_range(mapping, pos,
 							pos + write_len - 1);
@@ -3311,7 +3311,7 @@ again:
 		}
 
 		if (fatal_signal_pending(current)) {
-			status = -EINTR;
+			status = -ERR(EINTR);
 			break;
 		}
 

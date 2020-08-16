@@ -63,7 +63,7 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 	u64 rate64, prate64;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_POLICE_MAX, nla,
 					  police_policy, NULL);
@@ -71,10 +71,10 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (tb[TCA_POLICE_TBF] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	size = nla_len(tb[TCA_POLICE_TBF]);
 	if (size != sizeof(*parm) && size != sizeof(struct tc_police_compat))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_POLICE_TBF]);
 	index = parm->index;
@@ -96,7 +96,7 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 		spin_lock_init(&(to_police(*a)->tcfp_lock));
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
 	if (err < 0)
@@ -128,7 +128,7 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 	} else if (tb[TCA_POLICE_AVRATE] &&
 		   (ret == ACT_P_CREATED ||
 		    !gen_estimator_active(&police->tcf_rate_est))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failure;
 	}
 
@@ -137,7 +137,7 @@ static int tcf_police_init(struct net *net, struct nlattr *nla,
 		if (TC_ACT_EXT_CMP(tcfp_result, TC_ACT_GOTO_CHAIN)) {
 			NL_SET_ERR_MSG(extack,
 				       "goto chain not allowed on fallback");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto failure;
 		}
 	}

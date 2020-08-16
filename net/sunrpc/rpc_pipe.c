@@ -134,7 +134,7 @@ EXPORT_SYMBOL_GPL(rpc_pipe_generic_upcall);
 int
 rpc_queue_upcall(struct rpc_pipe *pipe, struct rpc_pipe_msg *msg)
 {
-	int res = -EPIPE;
+	int res = -ERR(EPIPE);
 	struct dentry *dentry;
 
 	spin_lock(&pipe->lock);
@@ -214,7 +214,7 @@ rpc_pipe_open(struct inode *inode, struct file *filp)
 {
 	struct rpc_pipe *pipe;
 	int first_open;
-	int res = -ENXIO;
+	int res = -ERR(ENXIO);
 
 	inode_lock(inode);
 	pipe = RPC_I(inode)->pipe;
@@ -250,7 +250,7 @@ rpc_pipe_release(struct inode *inode, struct file *filp)
 	msg = filp->private_data;
 	if (msg != NULL) {
 		spin_lock(&pipe->lock);
-		msg->errno = -EAGAIN;
+		msg->errno = -ERR(EAGAIN);
 		list_del_init(&msg->list);
 		spin_unlock(&pipe->lock);
 		pipe->ops->destroy_msg(msg);
@@ -288,7 +288,7 @@ rpc_pipe_read(struct file *filp, char __user *buf, size_t len, loff_t *offset)
 	inode_lock(inode);
 	pipe = RPC_I(inode)->pipe;
 	if (pipe == NULL) {
-		res = -EPIPE;
+		res = -ERR(EPIPE);
 		goto out_unlock;
 	}
 	msg = filp->private_data;
@@ -328,7 +328,7 @@ rpc_pipe_write(struct file *filp, const char __user *buf, size_t len, loff_t *of
 	int res;
 
 	inode_lock(inode);
-	res = -EPIPE;
+	res = -ERR(EPIPE);
 	if (RPC_I(inode)->pipe != NULL)
 		res = RPC_I(inode)->pipe->ops->downcall(filp, buf, len);
 	inode_unlock(inode);
@@ -366,7 +366,7 @@ rpc_pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		pipe = RPC_I(inode)->pipe;
 		if (pipe == NULL) {
 			inode_unlock(inode);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		spin_lock(&pipe->lock);
 		len = pipe->pipelen;
@@ -379,7 +379,7 @@ rpc_pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		inode_unlock(inode);
 		return put_user(len, (int __user *)arg);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -429,7 +429,7 @@ rpc_info_open(struct inode *inode, struct file *file)
 		} else {
 			spin_unlock(&file->f_path.dentry->d_lock);
 			single_release(inode, file);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 	return ret;
@@ -640,7 +640,7 @@ static struct dentry *__rpc_lookup_create_exclusive(struct dentry *parent,
 	if (d_really_is_negative(dentry))
 		return dentry;
 	dput(dentry);
-	return ERR_PTR(-EEXIST);
+	return ERR_PTR(-ERR(EEXIST));
 }
 
 /*
@@ -1251,7 +1251,7 @@ static const struct rpc_filelist gssd_dummy_clnt_dir[] = {
 static ssize_t
 dummy_downcall(struct file *filp, const char __user *src, size_t len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static const struct rpc_pipe_ops gssd_dummy_pipe_ops = {
@@ -1305,7 +1305,7 @@ rpc_gssd_dummy_populate(struct dentry *root, struct rpc_pipe *pipe_data)
 	/* We should never get this far if "gssd" doesn't exist */
 	gssd_dentry = d_hash_and_lookup(root, &q);
 	if (!gssd_dentry)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	ret = rpc_populate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1, NULL);
 	if (ret) {
@@ -1318,7 +1318,7 @@ rpc_gssd_dummy_populate(struct dentry *root, struct rpc_pipe *pipe_data)
 	clnt_dentry = d_hash_and_lookup(gssd_dentry, &q);
 	if (!clnt_dentry) {
 		__rpc_depopulate(gssd_dentry, gssd_dummy_clnt_dir, 0, 1);
-		pipe_dentry = ERR_PTR(-ENOENT);
+		pipe_dentry = ERR_PTR(-ERR(ENOENT));
 		goto out;
 	}
 

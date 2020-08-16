@@ -480,7 +480,7 @@ static int snd_wss_trigger(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 		do_start = 0; break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	what = 0;
@@ -863,7 +863,7 @@ static int snd_wss_open(struct snd_wss *chip, unsigned int mode)
 	if ((chip->mode & mode) ||
 	    ((chip->mode & WSS_MODE_OPEN) && chip->single_dma)) {
 		mutex_unlock(&chip->open_mutex);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (chip->mode & WSS_MODE_OPEN) {
 		chip->mode |= mode;
@@ -1158,7 +1158,7 @@ static int snd_ad1848_probe(struct snd_wss *chip)
 
 	while (wss_inb(chip, CS4231P(REGSEL)) & CS4231_INIT) {
 		if (time_after(jiffies, timeout))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		cond_resched();
 	}
 	spin_lock_irqsave(&chip->reg_lock, flags);
@@ -1171,7 +1171,7 @@ static int snd_ad1848_probe(struct snd_wss *chip)
 	if (r != 0x45) {
 		/* RMGE always high on AD1847 */
 		if ((r & ~CS4231_ENABLE_MIC_GAIN) != 0x45) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 		hardware = WSS_HW_AD1847;
@@ -1180,7 +1180,7 @@ static int snd_ad1848_probe(struct snd_wss *chip)
 		r = snd_wss_in(chip, CS4231_LEFT_INPUT);
 		/* L/RMGE always low on AT2320 */
 		if ((r | CS4231_ENABLE_MIC_GAIN) != 0xaa) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 	}
@@ -1258,7 +1258,7 @@ static int snd_wss_probe(struct snd_wss *chip)
 		}
 		snd_printdd("wss: port = 0x%lx, id = 0x%x\n", chip->port, id);
 		if (id != 0x0a)
-			return -ENODEV;	/* no valid device found */
+			return -ERR(ENODEV);	/* no valid device found */
 
 		rev = snd_wss_in(chip, CS4231_VERSION) & 0xe7;
 		snd_printdd("CS4231: VERSION (I25) = 0x%x\n", rev);
@@ -1282,7 +1282,7 @@ static int snd_wss_probe(struct snd_wss *chip)
 		} else {
 			snd_printk(KERN_ERR
 				   "unknown CS chip with version 0x%x\n", rev);
-			return -ENODEV;		/* unknown CS4231 chip? */
+			return -ERR(ENODEV);		/* unknown CS4231 chip? */
 		}
 	}
 	spin_lock_irqsave(&chip->reg_lock, flags);
@@ -1790,7 +1790,7 @@ int snd_wss_create(struct snd_card *card,
 	if (!chip->res_port) {
 		snd_printk(KERN_ERR "wss: can't grab port 0x%lx\n", port);
 		snd_wss_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->port = port;
 	if ((long)cport >= 0) {
@@ -1799,7 +1799,7 @@ int snd_wss_create(struct snd_card *card,
 			snd_printk(KERN_ERR
 				"wss: can't grab control port 0x%lx\n", cport);
 			snd_wss_free(chip);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	chip->cport = cport;
@@ -1808,21 +1808,21 @@ int snd_wss_create(struct snd_card *card,
 				"WSS", (void *) chip)) {
 			snd_printk(KERN_ERR "wss: can't grab IRQ %d\n", irq);
 			snd_wss_free(chip);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
 	if (!(hwshare & WSS_HWSHARE_DMA1) && request_dma(dma1, "WSS - 1")) {
 		snd_printk(KERN_ERR "wss: can't grab DMA1 %d\n", dma1);
 		snd_wss_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma1 = dma1;
 	if (!(hwshare & WSS_HWSHARE_DMA2) && dma1 != dma2 &&
 	      dma2 >= 0 && request_dma(dma2, "WSS - 2")) {
 		snd_printk(KERN_ERR "wss: can't grab DMA2 %d\n", dma2);
 		snd_wss_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (dma1 == dma2 || dma2 < 0) {
 		chip->single_dma = 1;
@@ -1839,7 +1839,7 @@ int snd_wss_create(struct snd_card *card,
 	/* global setup */
 	if (snd_wss_probe(chip) < 0) {
 		snd_wss_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_wss_init(chip);
 
@@ -1965,7 +1965,7 @@ static int snd_wss_info_mux(struct snd_kcontrol *kcontrol,
 	struct snd_wss *chip = snd_kcontrol_chip(kcontrol);
 
 	if (snd_BUG_ON(!chip->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!strcmp(chip->card->driver, "GUS MAX"))
 		ptexts = gusmax_texts;
 	switch (chip->hardware) {
@@ -2003,7 +2003,7 @@ static int snd_wss_put_mux(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.enumerated.item[0] > 3 ||
 	    ucontrol->value.enumerated.item[1] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	left = ucontrol->value.enumerated.item[0] << 6;
 	right = ucontrol->value.enumerated.item[1] << 6;
 	spin_lock_irqsave(&chip->reg_lock, flags);
@@ -2212,7 +2212,7 @@ int snd_wss_mixer(struct snd_wss *chip)
 	int count = ARRAY_SIZE(snd_wss_controls);
 
 	if (snd_BUG_ON(!chip || !chip->pcm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 

@@ -98,12 +98,12 @@ static int netlbl_calipso_add_pass(struct genl_info *info,
 static int netlbl_calipso_add(struct sk_buff *skb, struct genl_info *info)
 
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_audit audit_info;
 
 	if (!info->attrs[NLBL_CALIPSO_A_DOI] ||
 	    !info->attrs[NLBL_CALIPSO_A_MTYPE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 	switch (nla_get_u32(info->attrs[NLBL_CALIPSO_A_MTYPE])) {
@@ -136,7 +136,7 @@ static int netlbl_calipso_list(struct sk_buff *skb, struct genl_info *info)
 	struct calipso_doi *doi_def;
 
 	if (!info->attrs[NLBL_CALIPSO_A_DOI]) {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto list_failure;
 	}
 
@@ -144,7 +144,7 @@ static int netlbl_calipso_list(struct sk_buff *skb, struct genl_info *info)
 
 	doi_def = calipso_doi_getdef(doi);
 	if (!doi_def) {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto list_failure;
 	}
 
@@ -278,14 +278,14 @@ static int netlbl_calipso_remove_cb(struct netlbl_dom_map *entry, void *arg)
  */
 static int netlbl_calipso_remove(struct sk_buff *skb, struct genl_info *info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_domhsh_walk_arg cb_arg;
 	struct netlbl_audit audit_info;
 	u32 skip_bkt = 0;
 	u32 skip_chain = 0;
 
 	if (!info->attrs[NLBL_CALIPSO_A_DOI])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 	cb_arg.doi = nla_get_u32(info->attrs[NLBL_CALIPSO_A_DOI]);
@@ -399,7 +399,7 @@ static const struct netlbl_calipso_ops *netlbl_calipso_ops_get(void)
 int calipso_doi_add(struct calipso_doi *doi_def,
 		    struct netlbl_audit *audit_info)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -436,7 +436,7 @@ void calipso_doi_free(struct calipso_doi *doi_def)
  */
 int calipso_doi_remove(u32 doi, struct netlbl_audit *audit_info)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -497,7 +497,7 @@ int calipso_doi_walk(u32 *skip_cnt,
 		     int (*callback)(struct calipso_doi *doi_def, void *arg),
 		     void *cb_arg)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -519,7 +519,7 @@ int calipso_doi_walk(u32 *skip_cnt,
  */
 int calipso_sock_getattr(struct sock *sk, struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -545,7 +545,7 @@ int calipso_sock_setattr(struct sock *sk,
 			 const struct calipso_doi *doi_def,
 			 const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -585,7 +585,7 @@ int calipso_req_setattr(struct request_sock *req,
 			const struct calipso_doi *doi_def,
 			const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -641,7 +641,7 @@ unsigned char *calipso_optptr(const struct sk_buff *skb)
 int calipso_getattr(const unsigned char *calipso,
 		    struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -664,7 +664,7 @@ int calipso_skbuff_setattr(struct sk_buff *skb,
 			   const struct calipso_doi *doi_def,
 			   const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -683,7 +683,7 @@ int calipso_skbuff_setattr(struct sk_buff *skb,
  */
 int calipso_skbuff_delattr(struct sk_buff *skb)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)
@@ -721,7 +721,7 @@ int calipso_cache_add(const unsigned char *calipso_ptr,
 		      const struct netlbl_lsm_secattr *secattr)
 
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	const struct netlbl_calipso_ops *ops = netlbl_calipso_ops_get();
 
 	if (ops)

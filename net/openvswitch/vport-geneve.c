@@ -44,7 +44,7 @@ static int geneve_get_options(const struct vport *vport,
 	struct geneve_port *geneve_port = geneve_vport(vport);
 
 	if (nla_put_u16(skb, OVS_TUNNEL_ATTR_DST_PORT, geneve_port->dst_port))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	return 0;
 }
 
@@ -60,7 +60,7 @@ static struct vport *geneve_tnl_create(const struct vport_parms *parms)
 	int err;
 
 	if (!options) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -69,7 +69,7 @@ static struct vport *geneve_tnl_create(const struct vport_parms *parms)
 		dst_port = nla_get_u16(a);
 	} else {
 		/* Require destination port from userspace. */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 

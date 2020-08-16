@@ -38,7 +38,7 @@ static gifconf_func_t *gifconf_list[NPROTO];
 int register_gifconf(unsigned int family, gifconf_func_t *gifconf)
 {
 	if (family >= NPROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	gifconf_list[family] = gifconf;
 	return 0;
 }
@@ -106,7 +106,7 @@ static int dev_ifsioc_locked(struct net *net, struct ifreq *ifr, unsigned int cm
 	struct net_device *dev = dev_get_by_name_rcu(net, ifr->ifr_name);
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (cmd) {
 	case SIOCGIFFLAGS:	/* Get interface flags */
@@ -134,7 +134,7 @@ static int dev_ifsioc_locked(struct net *net, struct ifreq *ifr, unsigned int cm
 		return 0;
 
 	case SIOCGIFSLAVE:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 
 	case SIOCGIFMAP:
@@ -159,7 +159,7 @@ static int dev_ifsioc_locked(struct net *net, struct ifreq *ifr, unsigned int cm
 		 * is never reached
 		 */
 		WARN_ON(1);
-		err = -ENOTTY;
+		err = -ERR(ENOTTY);
 		break;
 
 	}
@@ -178,7 +178,7 @@ static int net_hwtstamp_validate(struct ifreq *ifr)
 		return -EFAULT;
 
 	if (cfg.flags) /* reserved for future extensions */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tx_type = cfg.tx_type;
 	rx_filter = cfg.rx_filter;
@@ -220,7 +220,7 @@ static int net_hwtstamp_validate(struct ifreq *ifr)
 	}
 
 	if (!tx_type_valid || !rx_filter_valid)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return 0;
 }
@@ -235,7 +235,7 @@ static int dev_ifsioc(struct net *net, struct ifreq *ifr, unsigned int cmd)
 	const struct net_device_ops *ops;
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = dev->netdev_ops;
 
@@ -245,19 +245,19 @@ static int dev_ifsioc(struct net *net, struct ifreq *ifr, unsigned int cmd)
 
 	case SIOCSIFMETRIC:	/* Set the metric on the interface
 				   (currently unused) */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	case SIOCSIFMTU:	/* Set the MTU of a device */
 		return dev_set_mtu(dev, ifr->ifr_mtu);
 
 	case SIOCSIFHWADDR:
 		if (dev->addr_len > sizeof(struct sockaddr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return dev_set_mac_address(dev, &ifr->ifr_hwaddr, NULL);
 
 	case SIOCSIFHWBROADCAST:
 		if (ifr->ifr_hwaddr.sa_family != dev->type)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(dev->broadcast, ifr->ifr_hwaddr.sa_data,
 		       min(sizeof(ifr->ifr_hwaddr.sa_data),
 			   (size_t)dev->addr_len));
@@ -267,30 +267,30 @@ static int dev_ifsioc(struct net *net, struct ifreq *ifr, unsigned int cmd)
 	case SIOCSIFMAP:
 		if (ops->ndo_set_config) {
 			if (!netif_device_present(dev))
-				return -ENODEV;
+				return -ERR(ENODEV);
 			return ops->ndo_set_config(dev, &ifr->ifr_map);
 		}
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	case SIOCADDMULTI:
 		if (!ops->ndo_set_rx_mode ||
 		    ifr->ifr_hwaddr.sa_family != AF_UNSPEC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!netif_device_present(dev))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		return dev_mc_add_global(dev, ifr->ifr_hwaddr.sa_data);
 
 	case SIOCDELMULTI:
 		if (!ops->ndo_set_rx_mode ||
 		    ifr->ifr_hwaddr.sa_family != AF_UNSPEC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!netif_device_present(dev))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		return dev_mc_del_global(dev, ifr->ifr_hwaddr.sa_data);
 
 	case SIOCSIFTXQLEN:
 		if (ifr->ifr_qlen < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return dev_change_tx_queue_len(dev, ifr->ifr_qlen);
 
 	case SIOCSIFNAME:
@@ -323,15 +323,15 @@ static int dev_ifsioc(struct net *net, struct ifreq *ifr, unsigned int cmd)
 		    cmd == SIOCSHWTSTAMP ||
 		    cmd == SIOCGHWTSTAMP ||
 		    cmd == SIOCWANDEV) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			if (ops->ndo_do_ioctl) {
 				if (netif_device_present(dev))
 					err = ops->ndo_do_ioctl(dev, ifr, cmd);
 				else
-					err = -ENODEV;
+					err = -ERR(ENODEV);
 			}
 		} else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 
 	}
 	return err;
@@ -445,7 +445,7 @@ int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_c
 	case SIOCSIFNAME:
 		dev_load(net, ifr->ifr_name);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		rtnl_lock();
 		ret = dev_ifsioc(net, ifr, cmd);
 		rtnl_unlock();
@@ -462,7 +462,7 @@ int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_c
 	case SIOCSIFMAP:
 	case SIOCSIFTXQLEN:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		/* fall through */
 	/*
 	 *	These ioctl calls:
@@ -487,7 +487,7 @@ int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_c
 	case SIOCBRDELIF:
 	case SIOCSHWTSTAMP:
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		/* fall through */
 	case SIOCBONDSLAVEINFOQUERY:
 	case SIOCBONDINFOQUERY:
@@ -506,7 +506,7 @@ int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_c
 		/* Set the per device memory buffer space.
 		 * Not applicable in our case */
 	case SIOCSIFLINK:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	/*
 	 *	Unknown or private ioctl.
@@ -522,6 +522,6 @@ int dev_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr, bool *need_c
 			rtnl_unlock();
 			return ret;
 		}
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }

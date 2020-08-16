@@ -266,7 +266,7 @@ int rdmacg_try_charge(struct rdma_cgroup **rdmacg,
 	int ret = 0;
 
 	if (index >= RDMACG_RESOURCE_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * hold on to css, as cgroup can be removed but resource
@@ -283,7 +283,7 @@ int rdmacg_try_charge(struct rdma_cgroup **rdmacg,
 		} else {
 			new = rpool->resources[index].usage + 1;
 			if (new > rpool->resources[index].max) {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				goto err;
 			} else {
 				rpool->resources[index].usage = new;
@@ -362,7 +362,7 @@ static int parse_resource(char *c, int *intval)
 
 	name = strsep(&value, "=");
 	if (!name || !value)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	i = match_string(rdmacg_resource_names, RDMACG_RESOURCE_MAX, name);
 	if (i < 0)
@@ -376,21 +376,21 @@ static int parse_resource(char *c, int *intval)
 	ret = match_int(&argstr, intval);
 	if (ret >= 0) {
 		if (*intval < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return i;
 	}
 	if (strncmp(value, RDMACG_MAX_STR, len) == 0) {
 		*intval = S32_MAX;
 		return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rdmacg_parse_limits(char *options,
 			       int *new_limits, unsigned long *enables)
 {
 	char *c;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	/* parse resource options */
 	while ((c = strsep(&options, " ")) != NULL) {
@@ -437,7 +437,7 @@ static ssize_t rdmacg_resource_set_max(struct kernfs_open_file *of,
 	/* extract the device name first */
 	dev_name = strsep(&options, " ");
 	if (!dev_name) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -456,7 +456,7 @@ static ssize_t rdmacg_resource_set_max(struct kernfs_open_file *of,
 
 	device = rdmacg_get_device_locked(dev_name);
 	if (!device) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto dev_err;
 	}
 

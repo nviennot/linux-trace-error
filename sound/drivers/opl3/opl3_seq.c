@@ -43,7 +43,7 @@ int snd_opl3_synth_setup(struct snd_opl3 * opl3)
 	mutex_lock(&hwdep->open_mutex);
 	if (hwdep->used) {
 		mutex_unlock(&hwdep->open_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	hwdep->used++;
 	mutex_unlock(&hwdep->open_mutex);
@@ -212,7 +212,7 @@ static int snd_opl3_seq_probe(struct device *_dev)
 
 	opl3 = *(struct snd_opl3 **)SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (opl3 == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_init(&opl3->voice_lock);
 
@@ -251,7 +251,7 @@ static int snd_opl3_seq_remove(struct device *_dev)
 
 	opl3 = *(struct snd_opl3 **)SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (opl3 == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #if IS_ENABLED(CONFIG_SND_SEQUENCER_OSS)
 	snd_opl3_free_seq_oss(opl3);

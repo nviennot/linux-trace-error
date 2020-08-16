@@ -123,7 +123,7 @@ static int interval_tree_test_init(void)
 	kfree(queries);
 	kfree(nodes);
 
-	return -EAGAIN; /* Fail will directly unload the module */
+	return -ERR(EAGAIN); /* Fail will directly unload the module */
 }
 
 static void interval_tree_test_exit(void)

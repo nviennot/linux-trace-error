@@ -45,7 +45,7 @@ int nfs_cache_upcall(struct cache_detail *cd, char *entry_name)
 		entry_name,
 		NULL
 	};
-	int ret = -EACCES;
+	int ret = -ERR(EACCES);
 
 	if (nfs_cache_getent_prog[0] == '\0')
 		goto out;
@@ -109,7 +109,7 @@ int nfs_cache_wait_for_upcall(struct nfs_cache_defer_req *dreq)
 {
 	if (wait_for_completion_timeout(&dreq->completion,
 			nfs_cache_getent_timeout * HZ) == 0)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	return 0;
 }
 

@@ -54,7 +54,7 @@ int nft_fib_validate(const struct nft_ctx *ctx, const struct nft_expr *expr,
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);
@@ -69,21 +69,21 @@ int nft_fib_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 	int err;
 
 	if (!tb[NFTA_FIB_DREG] || !tb[NFTA_FIB_RESULT] || !tb[NFTA_FIB_FLAGS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->flags = ntohl(nla_get_be32(tb[NFTA_FIB_FLAGS]));
 
 	if (priv->flags == 0 || (priv->flags & ~NFTA_FIB_F_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) ==
 			   (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((priv->flags & (NFTA_FIB_F_IIF | NFTA_FIB_F_OIF)) ==
 			   (NFTA_FIB_F_IIF | NFTA_FIB_F_OIF))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((priv->flags & (NFTA_FIB_F_SADDR | NFTA_FIB_F_DADDR)) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->result = ntohl(nla_get_be32(tb[NFTA_FIB_RESULT]));
 	priv->dreg = nft_parse_register(tb[NFTA_FIB_DREG]);
@@ -91,19 +91,19 @@ int nft_fib_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 	switch (priv->result) {
 	case NFT_FIB_RESULT_OIF:
 		if (priv->flags & NFTA_FIB_F_OIF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof(int);
 		break;
 	case NFT_FIB_RESULT_OIFNAME:
 		if (priv->flags & NFTA_FIB_F_OIF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = IFNAMSIZ;
 		break;
 	case NFT_FIB_RESULT_ADDRTYPE:
 		len = sizeof(u32);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nft_validate_register_store(ctx, priv->dreg, NULL,

@@ -63,7 +63,7 @@ static int afs_fill_page(struct afs_vnode *vnode, struct key *key,
 			_debug("got NOENT from server"
 			       " - marking file deleted and stale");
 			set_bit(AFS_VNODE_DELETED, &vnode->flags);
-			ret = -ESTALE;
+			ret = -ERR(ESTALE);
 		}
 	}
 
@@ -358,7 +358,7 @@ static int afs_get_writeback_key(struct afs_vnode *vnode,
 {
 	struct afs_wb_key *wbk = NULL;
 	struct list_head *p;
-	int ret = -ENOKEY, ret2;
+	int ret = -ERR(ENOKEY), ret2;
 
 	spin_lock(&vnode->wb_lock);
 	if (*_wbk)
@@ -781,7 +781,7 @@ ssize_t afs_file_write(struct kiocb *iocb, struct iov_iter *from)
 	if (IS_SWAPFILE(&vnode->vfs_inode)) {
 		printk(KERN_INFO
 		       "AFS: Attempt to write to active swap file!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!count)

@@ -34,7 +34,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			if (arg)
 				err = reiserfs_unpack(inode, filp);
 		} else
-			err = -ENOTTY;
+			err = -ERR(ENOTTY);
 		break;
 		/*
 		 * following two cases are taken from fs/ext2/ioctl.c by Remy
@@ -42,7 +42,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		 */
 	case REISERFS_IOC_GETFLAGS:
 		if (!reiserfs_attrs(inode->i_sb)) {
-			err = -ENOTTY;
+			err = -ERR(ENOTTY);
 			break;
 		}
 
@@ -51,7 +51,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	case REISERFS_IOC_SETFLAGS:{
 			if (!reiserfs_attrs(inode->i_sb)) {
-				err = -ENOTTY;
+				err = -ERR(ENOTTY);
 				break;
 			}
 
@@ -60,7 +60,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				break;
 
 			if (!inode_owner_or_capable(inode)) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto setflags_out;
 			}
 			if (get_user(flags, (int __user *)arg)) {
@@ -71,7 +71,7 @@ long reiserfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			 * Is it quota file? Do not allow user to mess with it
 			 */
 			if (IS_NOQUOTA(inode)) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto setflags_out;
 			}
 			err = vfs_ioc_setflags_prepare(inode,
@@ -102,7 +102,7 @@ setflags_out:
 		break;
 	case REISERFS_IOC_SETVERSION:
 		if (!inode_owner_or_capable(inode)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			break;
 		}
 		err = mnt_want_write_file(filp);
@@ -118,7 +118,7 @@ setversion_out:
 		mnt_drop_write_file(filp);
 		break;
 	default:
-		err = -ENOTTY;
+		err = -ERR(ENOTTY);
 	}
 
 	reiserfs_write_unlock(inode->i_sb);
@@ -151,7 +151,7 @@ long reiserfs_compat_ioctl(struct file *file, unsigned int cmd,
 		cmd = REISERFS_IOC_SETVERSION;
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return reiserfs_ioctl(file, cmd, (unsigned long) compat_ptr(arg));

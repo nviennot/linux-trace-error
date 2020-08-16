@@ -199,7 +199,7 @@ static int rockchip_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		i2s->is_master_mode = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, I2S_CKR, mask, val);
@@ -213,7 +213,7 @@ static int rockchip_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		val = I2S_CKR_CKP_POS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, I2S_CKR, mask, val);
@@ -236,7 +236,7 @@ static int rockchip_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		val = I2S_TXCR_TFS_PCM | I2S_TXCR_PBM_MODE(1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, I2S_TXCR, mask, val);
@@ -259,7 +259,7 @@ static int rockchip_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		val = I2S_RXCR_TFS_PCM | I2S_RXCR_PBM_MODE(1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, I2S_RXCR, mask, val);
@@ -280,7 +280,7 @@ static int rockchip_i2s_hw_params(struct snd_pcm_substream *substream,
 		mclk_rate = clk_get_rate(i2s->mclk);
 		bclk_rate = 2 * 32 * params_rate(params);
 		if (bclk_rate && mclk_rate % bclk_rate)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		div_bclk = mclk_rate / bclk_rate;
 		div_lrck = bclk_rate / params_rate(params);
@@ -312,7 +312,7 @@ static int rockchip_i2s_hw_params(struct snd_pcm_substream *substream,
 		val |= I2S_TXCR_VDW(32);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_channels(params)) {
@@ -331,7 +331,7 @@ static int rockchip_i2s_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(i2s->dev, "invalid channel: %d\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
@@ -406,7 +406,7 @@ static int rockchip_i2s_trigger(struct snd_pcm_substream *substream,
 			rockchip_snd_txctrl(i2s, 0);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -595,7 +595,7 @@ static int rockchip_i2s_probe(struct platform_device *pdev)
 	if (!IS_ERR(i2s->grf)) {
 		of_id = of_match_device(rockchip_i2s_match, &pdev->dev);
 		if (!of_id || !of_id->data)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		i2s->pins = of_id->data;
 	}

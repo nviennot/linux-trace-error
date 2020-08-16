@@ -517,27 +517,27 @@ static int snd_rme32_playback_setrate(struct rme32 * rme32, int rate)
 		break;
 	case 64000:
 		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) & 
 			~RME32_WCR_FREQ_1;
 		break;
 	case 88200:
 		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_1) & 
 			~RME32_WCR_FREQ_0;
 		break;
 	case 96000:
 		if (rme32->pci->device != PCI_DEVICE_ID_RME_DIGI32_PRO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rme32->wcreg |= RME32_WCR_DS_BM;
 		rme32->wcreg = (rme32->wcreg | RME32_WCR_FREQ_0) | 
 			RME32_WCR_FREQ_1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
         if ((!ds && rme32->wcreg & RME32_WCR_DS_BM) ||
             (ds && !(rme32->wcreg & RME32_WCR_DS_BM)))
@@ -574,7 +574,7 @@ static int snd_rme32_setclockmode(struct rme32 * rme32, int mode)
 			RME32_WCR_FREQ_1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	return 0;
@@ -606,7 +606,7 @@ static int snd_rme32_setinputtype(struct rme32 * rme32, int type)
 			RME32_WCR_INP_1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	return 0;
@@ -648,7 +648,7 @@ static int snd_rme32_setformat(struct rme32 *rme32, snd_pcm_format_t format)
 		rme32->wcreg |= RME32_WCR_MODE24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
 	return 0;
@@ -675,7 +675,7 @@ snd_rme32_playback_hw_params(struct snd_pcm_substream *substream,
 		/* AutoSync */
 		if ((int)params_rate(params) != rate) {
 			spin_unlock_irq(&rme32->lock);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	} else if ((err = snd_rme32_playback_setrate(rme32, params_rate(params))) < 0) {
 		spin_unlock_irq(&rme32->lock);
@@ -690,7 +690,7 @@ snd_rme32_playback_hw_params(struct snd_pcm_substream *substream,
 	if (rme32->capture_periodsize != 0) {
 		if (params_period_size(params) << rme32->playback_frlog != rme32->capture_periodsize) {
 			spin_unlock_irq(&rme32->lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	rme32->playback_periodsize = params_period_size(params) << rme32->playback_frlog;
@@ -736,12 +736,12 @@ snd_rme32_capture_hw_params(struct snd_pcm_substream *substream,
 	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
                 if ((int)params_rate(params) != rate) {
 			spin_unlock_irq(&rme32->lock);
-                        return -EIO;                    
+                        return -ERR(EIO);                    
                 }
                 if ((isadat && runtime->hw.channels_min == 2) ||
                     (!isadat && runtime->hw.channels_min == 8)) {
 			spin_unlock_irq(&rme32->lock);
-                        return -EIO;
+                        return -ERR(EIO);
                 }
 	}
 	/* AutoSync off for recording */
@@ -753,7 +753,7 @@ snd_rme32_capture_hw_params(struct snd_pcm_substream *substream,
 		if (params_period_size(params) << rme32->capture_frlog !=
 		    rme32->playback_periodsize) {
 			spin_unlock_irq(&rme32->lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	rme32->capture_periodsize =
@@ -841,7 +841,7 @@ static int snd_rme32_playback_spdif_open(struct snd_pcm_substream *substream)
 	spin_lock_irq(&rme32->lock);
 	if (rme32->playback_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	rme32->wcreg &= ~RME32_WCR_ADAT;
 	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
@@ -884,7 +884,7 @@ static int snd_rme32_capture_spdif_open(struct snd_pcm_substream *substream)
 	spin_lock_irq(&rme32->lock);
         if (rme32->capture_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-                return -EBUSY;
+                return -ERR(EBUSY);
         }
 	rme32->capture_substream = substream;
 	spin_unlock_irq(&rme32->lock);
@@ -899,7 +899,7 @@ static int snd_rme32_capture_spdif_open(struct snd_pcm_substream *substream)
 	}
 	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
 		if (isadat) {
-			return -EIO;
+			return -ERR(EIO);
 		}
 		runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
 		runtime->hw.rate_min = rate;
@@ -923,7 +923,7 @@ snd_rme32_playback_adat_open(struct snd_pcm_substream *substream)
 	spin_lock_irq(&rme32->lock);	
         if (rme32->playback_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-                return -EBUSY;
+                return -ERR(EBUSY);
         }
 	rme32->wcreg |= RME32_WCR_ADAT;
 	writel(rme32->wcreg, rme32->iobase + RME32_IO_CONTROL_REGISTER);
@@ -959,7 +959,7 @@ snd_rme32_capture_adat_open(struct snd_pcm_substream *substream)
 		runtime->hw = snd_rme32_adat_info;
 	if ((rate = snd_rme32_capture_getrate(rme32, &isadat)) > 0) {
 		if (!isadat) {
-			return -EIO;
+			return -ERR(EIO);
 		}
                 runtime->hw.rates = snd_pcm_rate_to_rate_bit(rate);
                 runtime->hw.rate_min = rate;
@@ -971,7 +971,7 @@ snd_rme32_capture_adat_open(struct snd_pcm_substream *substream)
 	spin_lock_irq(&rme32->lock);	
 	if (rme32->capture_substream != NULL) {
 		spin_unlock_irq(&rme32->lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
         }
 	rme32->capture_substream = substream;
 	spin_unlock_irq(&rme32->lock);
@@ -1327,7 +1327,7 @@ static int snd_rme32_create(struct rme32 *rme32)
 	if (request_irq(pci->irq, snd_rme32_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, rme32)) {
 		dev_err(rme32->card->dev, "unable to grab IRQ %d\n", pci->irq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	rme32->irq = pci->irq;
 	rme32->card->sync_irq = rme32->irq;
@@ -1589,7 +1589,7 @@ snd_rme32_info_inputtype_control(struct snd_kcontrol *kcontrol,
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return snd_ctl_enum_info(uinfo, 1, num_items, texts);
 }
@@ -1884,11 +1884,11 @@ snd_rme32_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 	int err;
 
 	if (dev >= SNDRV_CARDS) {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

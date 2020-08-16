@@ -340,7 +340,7 @@ static int match_mnt_path_str(struct aa_profile *profile,
 		goto audit;
 	}
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	pos = do_match_mnt(profile->policy.dfa,
 			   profile->policy.start[AA_CLASS_MOUNT],
 			   mntpnt, devname, type, flags, data, binary, &perms);
@@ -375,7 +375,7 @@ static int match_mnt(struct aa_profile *profile, const struct path *path,
 		     bool binary)
 {
 	const char *devname = NULL, *info = NULL;
-	int error = -EACCES;
+	int error = -ERR(EACCES);
 
 	AA_BUG(!profile);
 	AA_BUG(devpath && !devbuffer);
@@ -431,7 +431,7 @@ int aa_bind_mount(struct aa_label *label, const struct path *path,
 	AA_BUG(!path);
 
 	if (!dev_name || !*dev_name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	flags &= MS_REC | MS_BIND;
 
@@ -493,7 +493,7 @@ int aa_move_mount(struct aa_label *label, const struct path *path,
 	AA_BUG(!path);
 
 	if (!orig_name || !*orig_name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = kern_path(orig_name, LOOKUP_FOLLOW, &old_path);
 	if (error)
@@ -534,14 +534,14 @@ int aa_new_mount(struct aa_label *label, const char *dev_name,
 
 		fstype = get_fs_type(type);
 		if (!fstype)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		binary = fstype->fs_flags & FS_BINARY_MOUNTDATA;
 		requires_dev = fstype->fs_flags & FS_REQUIRES_DEV;
 		put_filesystem(fstype);
 
 		if (requires_dev) {
 			if (!dev_name || !*dev_name)
-				return -ENOENT;
+				return -ERR(ENOENT);
 
 			error = kern_path(dev_name, LOOKUP_FOLLOW, &tmp_path);
 			if (error)
@@ -603,7 +603,7 @@ static int profile_umount(struct aa_profile *profile, struct path *path,
 			     name);
 	perms = compute_mnt_perms(profile->policy.dfa, state);
 	if (AA_MAY_UMOUNT & ~perms.allow)
-		error = -EACCES;
+		error = -ERR(EACCES);
 
 audit:
 	return audit_mount(profile, OP_UMOUNT, name, NULL, NULL, NULL, 0, NULL,
@@ -666,7 +666,7 @@ static struct aa_label *build_pivotroot(struct aa_profile *profile,
 	if (error)
 		goto audit;
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	state = aa_dfa_match(profile->policy.dfa,
 			     profile->policy.start[AA_CLASS_MOUNT],
 			     new_name);

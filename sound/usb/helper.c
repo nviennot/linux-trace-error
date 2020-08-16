@@ -73,7 +73,7 @@ int snd_usb_pipe_sanity_check(struct usb_device *dev, unsigned int pipe)
 
 	ep = usb_pipe_endpoint(dev, pipe);
 	if (!ep || usb_pipetype(pipe) != pipetypes[usb_endpoint_type(&ep->desc)])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -90,7 +90,7 @@ int snd_usb_ctl_msg(struct usb_device *dev, unsigned int pipe, __u8 request,
 	int timeout;
 
 	if (snd_usb_pipe_sanity_check(dev, pipe))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (size > 0) {
 		buf = kmemdup(data, size, GFP_KERNEL);

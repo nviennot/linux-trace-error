@@ -193,7 +193,7 @@ static int cpuusage_write(struct cgroup_subsys_state *css, struct cftype *cft,
 	 * Only allow '0' here to do a reset.
 	 */
 	if (val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_possible_cpu(cpu)
 		cpuacct_cpuusage_write(ca, cpu, 0);

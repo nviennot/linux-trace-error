@@ -137,13 +137,13 @@ int __request_module(bool wait, const char *fmt, ...)
 	WARN_ON_ONCE(wait && current_is_async());
 
 	if (!modprobe_path[0])
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	va_start(args, fmt);
 	ret = vsnprintf(module_name, MODULE_NAME_LEN, fmt, args);
 	va_end(args);
 	if (ret >= MODULE_NAME_LEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	ret = security_kernel_module_request(module_name);
 	if (ret)
@@ -159,7 +159,7 @@ int __request_module(bool wait, const char *fmt, ...)
 		if (!ret) {
 			pr_warn_ratelimited("request_module: modprobe %s cannot be processed, kmod busy with %d threads for more than %d seconds now",
 					    module_name, MAX_KMOD_CONCURRENT, MAX_KMOD_ALL_BUSY_TIMEOUT);
-			return -ETIME;
+			return -ERR(ETIME);
 		} else if (ret == -ERESTARTSYS) {
 			pr_warn_ratelimited("request_module: sigkill sent for modprobe %s, giving up", module_name);
 			return ret;

@@ -57,21 +57,21 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
 	if (log_blocksize != PAGE_SHIFT) {
 		fsverity_warn(inode, "Unsupported log_blocksize: %u",
 			      log_blocksize);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_err;
 	}
 	params->log_blocksize = log_blocksize;
 	params->block_size = 1 << log_blocksize;
 
 	if (WARN_ON(!is_power_of_2(params->digest_size))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_err;
 	}
 	if (params->block_size < 2 * params->digest_size) {
 		fsverity_warn(inode,
 			      "Merkle tree block size (%u) too small for hash algorithm \"%s\"",
 			      params->block_size, hash_alg->name);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_err;
 	}
 	params->log_arity = params->log_blocksize - ilog2(params->digest_size);
@@ -94,7 +94,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
 	while (blocks > 1) {
 		if (params->num_levels >= FS_VERITY_MAX_LEVELS) {
 			fsverity_err(inode, "Too many levels in Merkle tree");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_err;
 		}
 		blocks = (blocks + params->hashes_per_block - 1) >>
@@ -155,30 +155,30 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
 	if (desc_size < sizeof(*desc)) {
 		fsverity_err(inode, "Unrecognized descriptor size: %zu bytes",
 			     desc_size);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (desc->version != 1) {
 		fsverity_err(inode, "Unrecognized descriptor version: %u",
 			     desc->version);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (memchr_inv(desc->__reserved, 0, sizeof(desc->__reserved))) {
 		fsverity_err(inode, "Reserved bits set in descriptor");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (desc->salt_size > sizeof(desc->salt)) {
 		fsverity_err(inode, "Invalid salt_size: %u", desc->salt_size);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (le64_to_cpu(desc->data_size) != inode->i_size) {
 		fsverity_err(inode,
 			     "Wrong data_size: %llu (desc) != %lld (inode)",
 			     le64_to_cpu(desc->data_size), inode->i_size);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	vi = kmem_cache_zalloc(fsverity_info_cachep, GFP_KERNEL);
@@ -255,7 +255,7 @@ static int ensure_verity_info(struct inode *inode)
 	if (res > FS_VERITY_MAX_DESCRIPTOR_SIZE) {
 		fsverity_err(inode, "Verity descriptor is too large (%d bytes)",
 			     res);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	desc = kmalloc(res, GFP_KERNEL);
 	if (!desc)
@@ -300,7 +300,7 @@ int fsverity_file_open(struct inode *inode, struct file *filp)
 	if (filp->f_mode & FMODE_WRITE) {
 		pr_debug("Denying opening verity file (ino %lu) for write\n",
 			 inode->i_ino);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	return ensure_verity_info(inode);
@@ -322,7 +322,7 @@ int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr)
 	if (IS_VERITY(d_inode(dentry)) && (attr->ia_valid & ATTR_SIZE)) {
 		pr_debug("Denying truncate of verity file (ino %lu)\n",
 			 d_inode(dentry)->i_ino);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	return 0;
 }

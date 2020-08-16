@@ -345,7 +345,7 @@ static int bpf_adj_delta_to_imm(struct bpf_insn *insn, u32 pos, s32 end_old,
 	else if (curr >= end_new && curr + imm + 1 < end_new)
 		imm -= delta;
 	if (imm < imm_min || imm > imm_max)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if (!probe_pass)
 		insn->imm = imm;
 	return 0;
@@ -363,7 +363,7 @@ static int bpf_adj_delta_to_off(struct bpf_insn *insn, u32 pos, s32 end_old,
 	else if (curr >= end_new && curr + off + 1 < end_new)
 		off -= delta;
 	if (off < off_min || off > off_max)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if (!probe_pass)
 		insn->off = off;
 	return 0;
@@ -740,7 +740,7 @@ int bpf_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 {
 	struct bpf_ksym *ksym;
 	unsigned int it = 0;
-	int ret = -ERANGE;
+	int ret = -ERR(ERANGE);
 
 	if (!bpf_jit_kallsyms_enabled())
 		return ret;
@@ -772,17 +772,17 @@ int bpf_jit_add_poke_descriptor(struct bpf_prog *prog,
 	u32 size = slot + 1;
 
 	if (size > poke_tab_max)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	if (poke->ip || poke->ip_stable || poke->adj_off)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (poke->reason) {
 	case BPF_POKE_REASON_TAIL_CALL:
 		if (!poke->tail_call.map)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tab = krealloc(tab, size * sizeof(*poke), GFP_KERNEL);
@@ -826,7 +826,7 @@ static int bpf_jit_charge_modmem(u32 pages)
 	    (bpf_jit_limit >> PAGE_SHIFT)) {
 		if (!capable(CAP_SYS_ADMIN)) {
 			atomic_long_sub(pages, &bpf_jit_current);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 	}
 
@@ -933,7 +933,7 @@ int bpf_jit_get_func_addr(const struct bpf_prog *prog,
 			 off >= 0 && off < prog->aux->func_cnt)
 			addr = (u8 *)prog->aux->func[off]->bpf_func;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		/* Address of a BPF helper call. Since part of the core
 		 * kernel, it's always at a fixed location. __bpf_call_base
@@ -1758,7 +1758,7 @@ static int bpf_check_tail_call(const struct bpf_prog *fp)
 
 		array = container_of(map, struct bpf_array, map);
 		if (!bpf_prog_array_compatible(array, fp))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1808,7 +1808,7 @@ struct bpf_prog *bpf_prog_select_runtime(struct bpf_prog *fp, int *err)
 		if (!fp->jited) {
 			bpf_prog_free_jited_linfo(fp);
 #ifdef CONFIG_BPF_JIT_ALWAYS_ON
-			*err = -ENOTSUPP;
+			*err = -ERR(ENOTSUPP);
 			return fp;
 #endif
 		} else {
@@ -1942,7 +1942,7 @@ int bpf_prog_array_copy_to_user(struct bpf_prog_array *array,
 	if (err)
 		return -EFAULT;
 	if (nospc)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return 0;
 }
 
@@ -1982,12 +1982,12 @@ int bpf_prog_array_copy(struct bpf_prog_array *old_array,
 			if (existing->prog != &dummy_bpf_prog.prog)
 				carry_prog_cnt++;
 			if (existing->prog == include_prog)
-				return -EEXIST;
+				return -ERR(EEXIST);
 		}
 	}
 
 	if (exclude_prog && !found_exclude)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* How many progs (not NULL) will be in the new array? */
 	new_prog_cnt = carry_prog_cnt;
@@ -2038,8 +2038,8 @@ int bpf_prog_array_copy_info(struct bpf_prog_array *array,
 		return 0;
 
 	/* this function is called under trace/bpf_trace.c: bpf_event_mutex */
-	return bpf_prog_array_copy_core(array, prog_ids, request_cnt) ? -ENOSPC
-								     : 0;
+	return bpf_prog_array_copy_core(array, prog_ids, request_cnt) ? -ERR(ENOSPC)
+								     							     : 0;
 }
 
 static void bpf_free_cgroup_storage(struct bpf_prog_aux *aux)
@@ -2175,7 +2175,7 @@ u64 __weak
 bpf_event_output(struct bpf_map *map, u64 flags, void *meta, u64 meta_size,
 		 void *ctx, u64 ctx_size, bpf_ctx_copy_t ctx_copy)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 EXPORT_SYMBOL_GPL(bpf_event_output);
 
@@ -2231,7 +2231,7 @@ int __weak skb_copy_bits(const struct sk_buff *skb, int offset, void *to,
 int __weak bpf_arch_text_poke(void *ip, enum bpf_text_poke_type t,
 			      void *addr1, void *addr2)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 DEFINE_STATIC_KEY_FALSE(bpf_stats_enabled_key);

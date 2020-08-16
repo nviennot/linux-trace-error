@@ -234,7 +234,7 @@ noxoff:
 
 	err = dev_queue_xmit(skb);
 	if (err > 0)
-		err = -EIO;
+		err = -ERR(EIO);
 
 	return err;
 }
@@ -419,7 +419,7 @@ static int caif_device_notify(struct notifier_block *me, unsigned long what,
 		caifd = caif_get(dev);
 		if (!caifd || !caifd->layer.up || !caifd->layer.up->ctrlcmd) {
 			rcu_read_unlock();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		cfcnfg_set_phy_state(cfg, &caifd->layer, false);

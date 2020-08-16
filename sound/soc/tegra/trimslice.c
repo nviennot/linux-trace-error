@@ -125,7 +125,7 @@ static int tegra_snd_trimslice_probe(struct platform_device *pdev)
 	if (!trimslice_tlv320aic23_dai.codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,audio-codec' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	trimslice_tlv320aic23_dai.cpus->of_node = of_parse_phandle(np,
@@ -133,7 +133,7 @@ static int tegra_snd_trimslice_probe(struct platform_device *pdev)
 	if (!trimslice_tlv320aic23_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,i2s-controller' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	trimslice_tlv320aic23_dai.platforms->of_node =

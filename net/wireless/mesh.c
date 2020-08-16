@@ -107,20 +107,20 @@ int __cfg80211_join_mesh(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_MESH_POINT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!(rdev->wiphy.flags & WIPHY_FLAG_MESH_AUTH) &&
 	      setup->is_secure)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (wdev->mesh_id_len)
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	if (!setup->mesh_id_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rdev->ops->join_mesh)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!setup->chandef.chan) {
 		/* if no channel explicitly given, use preset channel */
@@ -156,7 +156,7 @@ int __cfg80211_join_mesh(struct cfg80211_registered_device *rdev,
 
 		/* no usable channel ... */
 		if (!setup->chandef.chan)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		setup->chandef.width = NL80211_CHAN_WIDTH_20_NOHT;
 		setup->chandef.center_freq1 = setup->chandef.chan->center_freq;
@@ -200,11 +200,11 @@ int __cfg80211_join_mesh(struct cfg80211_registered_device *rdev,
 	if (err < 0)
 		return err;
 	if (err > 0 && !setup->userspace_handles_dfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!cfg80211_reg_can_beacon(&rdev->wiphy, &setup->chandef,
 				     NL80211_IFTYPE_MESH_POINT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = rdev_join_mesh(rdev, dev, conf, setup);
 	if (!err) {
@@ -232,10 +232,10 @@ int cfg80211_set_mesh_channel(struct cfg80211_registered_device *rdev,
 	 */
 	if (rdev->ops->libertas_set_mesh_channel) {
 		if (chandef->width != NL80211_CHAN_WIDTH_20_NOHT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!netif_running(wdev->netdev))
-			return -ENETDOWN;
+			return -ERR(ENETDOWN);
 
 		err = rdev_libertas_set_mesh_channel(rdev, wdev->netdev,
 						     chandef->chan);
@@ -246,7 +246,7 @@ int cfg80211_set_mesh_channel(struct cfg80211_registered_device *rdev,
 	}
 
 	if (wdev->mesh_id_len)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wdev->preset_chandef = *chandef;
 	return 0;
@@ -261,13 +261,13 @@ int __cfg80211_leave_mesh(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_MESH_POINT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!rdev->ops->leave_mesh)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!wdev->mesh_id_len)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	err = rdev_leave_mesh(rdev, dev);
 	if (!err) {

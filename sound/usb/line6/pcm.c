@@ -268,18 +268,18 @@ int snd_line6_trigger(struct snd_pcm_substream *substream, int cmd)
 
 		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 			if (s->stream != SNDRV_PCM_STREAM_PLAYBACK)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			set_bit(LINE6_FLAG_PAUSE_PLAYBACK, &line6pcm->flags);
 			break;
 
 		case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 			if (s->stream != SNDRV_PCM_STREAM_PLAYBACK)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			clear_bit(LINE6_FLAG_PAUSE_PLAYBACK, &line6pcm->flags);
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -559,7 +559,7 @@ int line6_init_pcm(struct usb_line6 *line6,
 	if (!line6pcm->max_packet_size_in || !line6pcm->max_packet_size_out) {
 		dev_err(line6pcm->line6->ifcdev,
 			"cannot get proper max packet size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = line6_create_audio_out_urbs(line6pcm);

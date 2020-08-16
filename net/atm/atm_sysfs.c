@@ -113,11 +113,11 @@ static int atm_uevent(struct device *cdev, struct kobj_uevent_env *env)
 	struct atm_dev *adev;
 
 	if (!cdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	adev = to_atm_dev(cdev);
 	if (!adev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (add_uevent_var(env, "NAME=%s%d", adev->type, adev->number))
 		return -ENOMEM;

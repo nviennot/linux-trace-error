@@ -43,7 +43,7 @@ static int lowpan_nhc_insert(struct lowpan_nhc *nhc)
 		else if (result > 0)
 			new = &((*new)->rb_right);
 		else
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	/* Add new node and rebalance tree. */
@@ -99,7 +99,7 @@ int lowpan_nhc_check_compression(struct sk_buff *skb,
 
 	nhc = lowpan_nexthdr_nhcs[hdr->nexthdr];
 	if (!(nhc && nhc->compress))
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 
 	spin_unlock_bh(&lowpan_nhc_lock);
 
@@ -126,7 +126,7 @@ int lowpan_nhc_do_compression(struct sk_buff *skb, const struct ipv6hdr *hdr,
 	 * handling.
 	 */
 	if (unlikely(!nhc || !nhc->compress)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -171,12 +171,12 @@ int lowpan_nhc_do_uncompression(struct sk_buff *skb,
 			spin_unlock_bh(&lowpan_nhc_lock);
 			netdev_warn(dev, "received nhc id for %s which is not implemented.\n",
 				    nhc->name);
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 		}
 	} else {
 		spin_unlock_bh(&lowpan_nhc_lock);
 		netdev_warn(dev, "received unknown nhc id which was not found.\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	hdr->nexthdr = nhc->nexthdr;
@@ -194,7 +194,7 @@ int lowpan_nhc_add(struct lowpan_nhc *nhc)
 	int ret;
 
 	if (!nhc->idlen || !nhc->idsetup)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WARN_ONCE(nhc->idlen > LOWPAN_NHC_MAX_ID_LEN,
 		  "LOWPAN_NHC_MAX_ID_LEN should be updated to %zd.\n",
@@ -205,7 +205,7 @@ int lowpan_nhc_add(struct lowpan_nhc *nhc)
 	spin_lock_bh(&lowpan_nhc_lock);
 
 	if (lowpan_nexthdr_nhcs[nhc->nexthdr]) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out;
 	}
 

@@ -1528,7 +1528,7 @@ static int wcd934x_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 					dev_err(component->dev,
 						"Invalid rate for AIF_PB DAI(%d)\n",
 						dai->id);
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 
 				snd_soc_component_update_bits(component,
@@ -1556,7 +1556,7 @@ static int wcd934x_set_interpolator_rate(struct snd_soc_dai *dai,
 	}
 	if ((i == ARRAY_SIZE(sr_val_tbl)) || (rate_val < 0)) {
 		dev_err(dai->dev, "Unsupported sample rate: %d\n", sample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = wcd934x_set_prim_interpolator_rate(dai, (u8)rate_val,
@@ -1613,7 +1613,7 @@ static int wcd934x_set_decimator_rate(struct snd_soc_dai *dai,
 		default:
 			dev_err(wcd->dev, "Invalid SLIM TX%u port DAI ID:%d\n",
 				tx_port, dai->id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		tx_mux_sel = snd_soc_component_read32(comp, tx_port_reg) &
@@ -1640,7 +1640,7 @@ static int wcd934x_set_decimator_rate(struct snd_soc_dai *dai,
 		default:
 			dev_err(wcd->dev, "ERROR: Invalid tx_port: %d\n",
 				tx_port);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(comp,
@@ -1755,7 +1755,7 @@ static int wcd934x_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "Invalid format 0x%x\n",
 				params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -1785,7 +1785,7 @@ static int wcd934x_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "Invalid TX sample rate: %d\n",
 				params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		}
 
@@ -1802,13 +1802,13 @@ static int wcd934x_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(wcd->dev, "Invalid format 0x%x\n",
 				params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(wcd->dev, "Invalid stream type %d\n",
 			substream->stream);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->dai[dai->id].sconfig.rate = params_rate(params);
@@ -1876,7 +1876,7 @@ static int wcd934x_set_channel_map(struct snd_soc_dai *dai,
 	if (!tx_slot || !rx_slot) {
 		dev_err(wcd->dev, "Invalid tx_slot=%p, rx_slot=%p\n",
 			tx_slot, rx_slot);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->num_rx_port = rx_num;
@@ -1912,7 +1912,7 @@ static int wcd934x_get_channel_map(struct snd_soc_dai *dai,
 		if (!rx_slot || !rx_num) {
 			dev_err(wcd->dev, "Invalid rx_slot %p or rx_num %p\n",
 				rx_slot, rx_num);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		list_for_each_entry(ch, &wcd->dai[dai->id].slim_ch_list, list)
@@ -1926,7 +1926,7 @@ static int wcd934x_get_channel_map(struct snd_soc_dai *dai,
 		if (!tx_slot || !tx_num) {
 			dev_err(wcd->dev, "Invalid tx_slot %p or tx_num %p\n",
 				tx_slot, tx_num);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		list_for_each_entry(ch, &wcd->dai[dai->id].slim_ch_list, list)
@@ -2580,7 +2580,7 @@ static int slim_rx_mux_put(struct snd_kcontrol *kc,
 
 	return 0;
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wcd934x_int_dem_inp_mux_put(struct snd_kcontrol *kc,
@@ -2599,7 +2599,7 @@ static int wcd934x_int_dem_inp_mux_put(struct snd_kcontrol *kc,
 	else if (e->reg == WCD934X_CDC_RX2_RX_PATH_SEC0)
 		reg = WCD934X_CDC_RX2_RX_PATH_CFG0;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set Look Ahead Delay */
 	if (val)
@@ -2629,7 +2629,7 @@ static int wcd934x_dec_enum_put(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.enumerated.item[0];
 	if (val > e->items - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (e->reg) {
 	case WCD934X_CDC_TX_INP_MUX_ADC_MUX0_CFG1:
@@ -2661,7 +2661,7 @@ static int wcd934x_dec_enum_put(struct snd_kcontrol *kcontrol,
 	default:
 		dev_err(comp->dev, "%s: e->reg: 0x%x not expected\n",
 			__func__, e->reg);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* ADC: 0, DMIC: 1 */
@@ -3640,7 +3640,7 @@ static int wcd934x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 
 		if (((hph_mode == CLS_H_HIFI) || (hph_mode == CLS_H_LOHIFI) ||
 		     (hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (hph_mode != CLS_H_LP)
 			/* Ripple freq control enable */
@@ -3690,7 +3690,7 @@ static int wcd934x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 					WCD934X_CDC_RX2_RX_PATH_SEC0) & 0x03;
 		if (((hph_mode == CLS_H_HIFI) || (hph_mode == CLS_H_LOHIFI) ||
 		     (hph_mode == CLS_H_LP)) && (dem_inp != 0x01)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (hph_mode != CLS_H_LP)
 			/* Ripple freq control enable */
@@ -3985,14 +3985,14 @@ static int wcd934x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	wname = strpbrk(w->name, "012345");
 	if (!wname) {
 		dev_err(comp->dev, "%s: widget not found\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = kstrtouint(wname, 10, &dmic);
 	if (ret < 0) {
 		dev_err(comp->dev, "%s: Invalid DMIC line on the codec\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dmic) {
@@ -4014,7 +4014,7 @@ static int wcd934x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	default:
 		dev_err(comp->dev, "%s: Invalid DMIC Selection\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -4157,7 +4157,7 @@ static int wcd934x_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (!dec_adc_mux_name) {
 		dev_err(comp->dev, "%s: Invalid decimator = %s\n",
 			__func__, w->name);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 	dec_adc_mux_name = widget_name;
@@ -4166,7 +4166,7 @@ static int wcd934x_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (!dec) {
 		dev_err(comp->dev, "%s: decimator index not found\n",
 			__func__);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 
@@ -4174,7 +4174,7 @@ static int wcd934x_codec_enable_dec(struct snd_soc_dapm_widget *w,
 	if (ret < 0) {
 		dev_err(comp->dev, "%s: Invalid decimator = %s\n",
 			__func__, wname);
-		ret =  -EINVAL;
+		ret =  -ERR(EINVAL);
 		goto out;
 	}
 
@@ -4975,13 +4975,13 @@ static int wcd934x_codec_parse_data(struct wcd934x_codec *wcd)
 	ifc_dev_np = of_parse_phandle(dev->of_node, "slim-ifc-dev", 0);
 	if (!ifc_dev_np) {
 		dev_err(dev, "No Interface device found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wcd->sidev = of_slim_get_device(wcd->sdev->ctrl, ifc_dev_np);
 	if (!wcd->sidev) {
 		dev_err(dev, "Unable to get SLIM Interface device\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	slim_get_logical_addr(wcd->sidev);

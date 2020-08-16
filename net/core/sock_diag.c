@@ -42,7 +42,7 @@ int sock_diag_check_cookie(struct sock *sk, const __u32 *cookie)
 
 	res = sock_gen_cookie(sk);
 	if ((u32)res != cookie[0] || (u32)(res >> 32) != cookie[1])
-		return -ESTALE;
+		return -ERR(ESTALE);
 
 	return 0;
 }
@@ -94,7 +94,7 @@ int sock_diag_put_filterinfo(bool may_report_filterinfo, struct sock *sk,
 
 	attr = nla_reserve(skb, attrtype, flen);
 	if (attr == NULL) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -182,11 +182,11 @@ int sock_diag_register(const struct sock_diag_handler *hndl)
 	int err = 0;
 
 	if (hndl->family >= AF_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&sock_diag_table_mutex);
 	if (sock_diag_handlers[hndl->family])
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	else
 		sock_diag_handlers[hndl->family] = hndl;
 	mutex_unlock(&sock_diag_table_mutex);
@@ -216,10 +216,10 @@ static int __sock_diag_cmd(struct sk_buff *skb, struct nlmsghdr *nlh)
 	const struct sock_diag_handler *hndl;
 
 	if (nlmsg_len(nlh) < sizeof(*req))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (req->sdiag_family >= AF_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	req->sdiag_family = array_index_nospec(req->sdiag_family, AF_MAX);
 
 	if (sock_diag_handlers[req->sdiag_family] == NULL)
@@ -228,13 +228,13 @@ static int __sock_diag_cmd(struct sk_buff *skb, struct nlmsghdr *nlh)
 	mutex_lock(&sock_diag_table_mutex);
 	hndl = sock_diag_handlers[req->sdiag_family];
 	if (hndl == NULL)
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	else if (nlh->nlmsg_type == SOCK_DIAG_BY_FAMILY)
 		err = hndl->dump(skb, nlh);
 	else if (nlh->nlmsg_type == SOCK_DESTROY && hndl->destroy)
 		err = hndl->destroy(skb, nlh);
 	else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	mutex_unlock(&sock_diag_table_mutex);
 
 	return err;
@@ -255,7 +255,7 @@ static int sock_diag_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 		if (inet_rcv_compat != NULL)
 			ret = inet_rcv_compat(skb, nlh);
 		else
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 		mutex_unlock(&sock_diag_table_mutex);
 
 		return ret;
@@ -263,7 +263,7 @@ static int sock_diag_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 	case SOCK_DESTROY:
 		return __sock_diag_cmd(skb, nlh);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -296,10 +296,10 @@ static int sock_diag_bind(struct net *net, int group)
 int sock_diag_destroy(struct sock *sk, int err)
 {
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!sk->sk_prot->diag_destroy)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return sk->sk_prot->diag_destroy(sk, err);
 }

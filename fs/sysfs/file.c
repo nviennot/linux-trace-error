@@ -94,7 +94,7 @@ static ssize_t sysfs_kf_bin_read(struct kernfs_open_file *of, char *buf,
 	}
 
 	if (!battr->read)
-		return -EIO;
+		return -ERR(EIO);
 
 	return battr->read(of->file, kobj, battr, buf, pos, count);
 }
@@ -148,14 +148,14 @@ static ssize_t sysfs_kf_bin_write(struct kernfs_open_file *of, char *buf,
 
 	if (size) {
 		if (size <= pos)
-			return -EFBIG;
+			return -ERR(EFBIG);
 		count = min_t(ssize_t, count, size - pos);
 	}
 	if (!count)
 		return 0;
 
 	if (!battr->write)
-		return -EIO;
+		return -ERR(EIO);
 
 	return battr->write(of->file, kobj, battr, buf, pos, count);
 }
@@ -259,7 +259,7 @@ int sysfs_add_file_mode_ns(struct kernfs_node *parent,
 		if (WARN(!sysfs_ops, KERN_ERR
 			 "missing sysfs attribute operations for kobject: %s\n",
 			 kobject_name(kobj)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (sysfs_ops->show && sysfs_ops->store) {
 			if (mode & SYSFS_PREALLOC)
@@ -325,7 +325,7 @@ int sysfs_create_file_ns(struct kobject *kobj, const struct attribute *attr,
 	kgid_t gid;
 
 	if (WARN_ON(!kobj || !kobj->sd || !attr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kobject_get_ownership(kobj, &uid, &gid);
 	return sysfs_add_file_mode_ns(kobj->sd, attr, false, attr->mode,
@@ -370,7 +370,7 @@ int sysfs_add_file_to_group(struct kobject *kobj,
 	}
 
 	if (!parent)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kobject_get_ownership(kobj, &uid, &gid);
 	error = sysfs_add_file_mode_ns(parent, attr, false,
@@ -397,7 +397,7 @@ int sysfs_chmod_file(struct kobject *kobj, const struct attribute *attr,
 
 	kn = kernfs_find_and_get(kobj->sd, attr->name);
 	if (!kn)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	newattrs.ia_mode = (mode & S_IALLUGO) | (kn->mode & ~S_IALLUGO);
 	newattrs.ia_valid = ATTR_MODE;
@@ -540,7 +540,7 @@ int sysfs_create_bin_file(struct kobject *kobj,
 	kgid_t gid;
 
 	if (WARN_ON(!kobj || !kobj->sd || !attr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kobject_get_ownership(kobj, &uid, &gid);
 	return sysfs_add_file_mode_ns(kobj->sd, &attr->attr, true,
@@ -592,14 +592,14 @@ int sysfs_link_change_owner(struct kobject *kobj, struct kobject *targ,
 	int error;
 
 	if (!name || !kobj->state_in_sysfs || !targ->state_in_sysfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	kn = kernfs_find_and_get_ns(kobj->sd, name, targ->sd->ns);
 	if (!kn)
 		goto out;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (kernfs_type(kn) != KERNFS_LINK)
 		goto out;
 	if (kn->symlink.target_kn->priv != targ)
@@ -631,14 +631,14 @@ int sysfs_file_change_owner(struct kobject *kobj, const char *name, kuid_t kuid,
 	int error;
 
 	if (!name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!kobj->state_in_sysfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kn = kernfs_find_and_get(kobj->sd, name);
 	if (!kn)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = internal_change_owner(kn, kuid, kgid);
 
@@ -672,7 +672,7 @@ int sysfs_change_owner(struct kobject *kobj, kuid_t kuid, kgid_t kgid)
 	const struct kobj_type *ktype;
 
 	if (!kobj->state_in_sysfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Change the owner of the kobject itself. */
 	error = internal_change_owner(kobj->sd, kuid, kgid);

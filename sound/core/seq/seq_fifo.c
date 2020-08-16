@@ -106,7 +106,7 @@ int snd_seq_fifo_event_in(struct snd_seq_fifo *f,
 	int err;
 
 	if (snd_BUG_ON(!f))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_use_lock_use(&f->use_lock);
 	err = snd_seq_event_dup(f->pool, event, &cell, 1, NULL, NULL); /* always non-blocking */
@@ -166,7 +166,7 @@ int snd_seq_fifo_cell_out(struct snd_seq_fifo *f,
 	wait_queue_entry_t wait;
 
 	if (snd_BUG_ON(!f))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*cellp = NULL;
 	init_waitqueue_entry(&wait, current);
@@ -175,7 +175,7 @@ int snd_seq_fifo_cell_out(struct snd_seq_fifo *f,
 		if (nonblock) {
 			/* non-blocking - return immediately */
 			spin_unlock_irqrestore(&f->lock, flags);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		set_current_state(TASK_INTERRUPTIBLE);
 		add_wait_queue(&f->input_sleep, &wait);
@@ -185,7 +185,7 @@ int snd_seq_fifo_cell_out(struct snd_seq_fifo *f,
 		remove_wait_queue(&f->input_sleep, &wait);
 		if (signal_pending(current)) {
 			spin_unlock_irqrestore(&f->lock, flags);
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		}
 	}
 	spin_unlock_irqrestore(&f->lock, flags);
@@ -227,7 +227,7 @@ int snd_seq_fifo_resize(struct snd_seq_fifo *f, int poolsize)
 	struct snd_seq_event_cell *cell, *next, *oldhead;
 
 	if (snd_BUG_ON(!f || !f->pool))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* allocate new pool */
 	newpool = snd_seq_pool_new(poolsize);

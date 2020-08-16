@@ -198,7 +198,7 @@ static int tproxy_tg6_check(const struct xt_tgchk_param *par)
 		return 0;
 
 	pr_info_ratelimited("Can be used only with -p tcp or -p udp\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -216,7 +216,7 @@ static int tproxy_tg4_check(const struct xt_tgchk_param *par)
 		return 0;
 
 	pr_info_ratelimited("Can be used only with -p tcp or -p udp\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct xt_target tproxy_tg_reg[] __read_mostly = {

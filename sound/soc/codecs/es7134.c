@@ -54,12 +54,12 @@ static int es7134_check_mclk(struct snd_soc_dai *dai,
 
 		dev_err(dai->dev, "unsupported mclk_fs %u for rate %u\n",
 			mfs, rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* should not happen */
 	dev_err(dai->dev, "unsupported rate: %u\n", rate);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int es7134_hw_params(struct snd_pcm_substream *substream,
@@ -85,7 +85,7 @@ static int es7134_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		return 0;
 	}
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int es7134_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
@@ -96,7 +96,7 @@ static int es7134_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	if (fmt != (SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 		    SND_SOC_DAIFMT_CBS_CFS)) {
 		dev_err(codec_dai->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -284,7 +284,7 @@ static int es7134_probe(struct platform_device *pdev)
 	priv->chip = of_device_get_match_data(dev);
 	if (!priv->chip) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return devm_snd_soc_register_component(&pdev->dev,

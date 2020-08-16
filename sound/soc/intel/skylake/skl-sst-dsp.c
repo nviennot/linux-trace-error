@@ -96,7 +96,7 @@ skl_dsp_core_set_reset_state(struct sst_dsp *ctx, unsigned int core_mask)
 				SKL_ADSPCS_CRST_MASK(core_mask)) {
 		dev_err(ctx->dev, "Set reset state failed: core_mask %x\n",
 							core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -125,7 +125,7 @@ int skl_dsp_core_unset_reset_state(
 				SKL_ADSPCS_CRST_MASK(core_mask)) != 0) {
 		dev_err(ctx->dev, "Unset reset state failed: core_mask %x\n",
 				core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -179,7 +179,7 @@ int skl_dsp_start_core(struct sst_dsp *ctx, unsigned int core_mask)
 		skl_dsp_reset_core(ctx, core_mask);
 		dev_err(ctx->dev, "DSP start core failed: core_mask %x\n",
 							core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -207,7 +207,7 @@ int skl_dsp_core_power_up(struct sst_dsp *ctx, unsigned int core_mask)
 			SKL_ADSPCS_CPA_MASK(core_mask)) {
 		dev_err(ctx->dev, "DSP core power up failed: core_mask %x\n",
 				core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -265,7 +265,7 @@ int skl_dsp_disable_core(struct sst_dsp *ctx, unsigned int core_mask)
 	if (is_skl_dsp_core_enable(ctx, core_mask)) {
 		dev_err(ctx->dev, "dsp core disable fail mask %x: %d\n",
 							core_mask, ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -340,7 +340,7 @@ int skl_dsp_get_core(struct sst_dsp *ctx, unsigned int core_id)
 
 	if (core_id >= skl->cores.count) {
 		dev_err(ctx->dev, "invalid core id: %d\n", core_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	skl->cores.usage_count[core_id]++;
@@ -369,7 +369,7 @@ int skl_dsp_put_core(struct sst_dsp *ctx, unsigned int core_id)
 
 	if (core_id >= skl->cores.count) {
 		dev_err(ctx->dev, "invalid core id: %d\n", core_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((--skl->cores.usage_count[core_id] == 0) &&

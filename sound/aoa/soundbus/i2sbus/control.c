@@ -62,7 +62,7 @@ int i2sbus_control_add_dev(struct i2sbus_control *c,
 		pmf_put_function(i2sdev->clock_enable);
 		pmf_put_function(i2sdev->cell_disable);
 		pmf_put_function(i2sdev->clock_disable);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	list_add(&i2sdev->item, &c->list);
@@ -89,7 +89,7 @@ int i2sbus_control_enable(struct i2sbus_control *c,
 		return pmf_call_one(i2sdev->enable, &args);
 
 	if (macio == NULL || macio->base == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (i2sdev->bus_number) {
 	case 0:
@@ -101,7 +101,7 @@ int i2sbus_control_enable(struct i2sbus_control *c,
 		MACIO_BIS(KEYLARGO_FCR1, KL1_I2S1_ENABLE);
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -124,11 +124,11 @@ int i2sbus_control_cell(struct i2sbus_control *c,
 		break;
 	default:
 		printk(KERN_ERR "i2sbus: INVALID CELL ENABLE VALUE\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (macio == NULL || macio->base == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (i2sdev->bus_number) {
 	case 0:
@@ -144,7 +144,7 @@ int i2sbus_control_cell(struct i2sbus_control *c,
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S1_CELL_ENABLE);
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -167,11 +167,11 @@ int i2sbus_control_clock(struct i2sbus_control *c,
 		break;
 	default:
 		printk(KERN_ERR "i2sbus: INVALID CLOCK ENABLE VALUE\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (macio == NULL || macio->base == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (i2sdev->bus_number) {
 	case 0:
@@ -187,7 +187,7 @@ int i2sbus_control_clock(struct i2sbus_control *c,
 			MACIO_BIC(KEYLARGO_FCR1, KL1_I2S1_CLK_ENABLE_BIT);
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

@@ -63,7 +63,7 @@ static int snd_pcm_plugin_alloc(struct snd_pcm_plugin *plugin, snd_pcm_uframes_t
 		return width;
 	size = frames * format->channels * width;
 	if (snd_BUG_ON(size % 8))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	size /= 8;
 	if (plugin->buf_frames < frames) {
 		kvfree(plugin->buf);
@@ -86,7 +86,7 @@ static int snd_pcm_plugin_alloc(struct snd_pcm_plugin *plugin, snd_pcm_uframes_t
 		}
 	} else if (plugin->access == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED) {
 		if (snd_BUG_ON(size % format->channels))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		size /= format->channels;
 		for (channel = 0; channel < format->channels; channel++, c++) {
 			c->frames = frames;
@@ -97,7 +97,7 @@ static int snd_pcm_plugin_alloc(struct snd_pcm_plugin *plugin, snd_pcm_uframes_t
 			c->area.step = width;
 		}
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -105,14 +105,14 @@ int snd_pcm_plug_alloc(struct snd_pcm_substream *plug, snd_pcm_uframes_t frames)
 {
 	int err;
 	if (snd_BUG_ON(!snd_pcm_plug_first(plug)))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_pcm_plug_stream(plug) == SNDRV_PCM_STREAM_PLAYBACK) {
 		struct snd_pcm_plugin *plugin = snd_pcm_plug_first(plug);
 		while (plugin->next) {
 			if (plugin->dst_frames)
 				frames = plugin->dst_frames(plugin, frames);
 			if ((snd_pcm_sframes_t)frames <= 0)
-				return -ENXIO;
+				return -ERR(ENXIO);
 			plugin = plugin->next;
 			err = snd_pcm_plugin_alloc(plugin, frames);
 			if (err < 0)
@@ -124,7 +124,7 @@ int snd_pcm_plug_alloc(struct snd_pcm_substream *plug, snd_pcm_uframes_t frames)
 			if (plugin->src_frames)
 				frames = plugin->src_frames(plugin, frames);
 			if ((snd_pcm_sframes_t)frames <= 0)
-				return -ENXIO;
+				return -ERR(ENXIO);
 			plugin = plugin->prev;
 			err = snd_pcm_plugin_alloc(plugin, frames);
 			if (err < 0)
@@ -154,9 +154,9 @@ int snd_pcm_plugin_build(struct snd_pcm_substream *plug,
 	unsigned int channels;
 	
 	if (snd_BUG_ON(!plug))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!src_format || !dst_format))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	plugin = kzalloc(sizeof(*plugin) + extra, GFP_KERNEL);
 	if (plugin == NULL)
 		return -ENOMEM;
@@ -243,7 +243,7 @@ static snd_pcm_sframes_t calc_src_frames(struct snd_pcm_substream *plug,
 snd_pcm_sframes_t snd_pcm_plug_client_size(struct snd_pcm_substream *plug, snd_pcm_uframes_t drv_frames)
 {
 	if (snd_BUG_ON(!plug))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	switch (snd_pcm_plug_stream(plug)) {
 	case SNDRV_PCM_STREAM_PLAYBACK:
 		return calc_src_frames(plug, drv_frames, false);
@@ -251,14 +251,14 @@ snd_pcm_sframes_t snd_pcm_plug_client_size(struct snd_pcm_substream *plug, snd_p
 		return calc_dst_frames(plug, drv_frames, false);
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
 snd_pcm_sframes_t snd_pcm_plug_slave_size(struct snd_pcm_substream *plug, snd_pcm_uframes_t clt_frames)
 {
 	if (snd_BUG_ON(!plug))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	switch (snd_pcm_plug_stream(plug)) {
 	case SNDRV_PCM_STREAM_PLAYBACK:
 		return calc_dst_frames(plug, clt_frames, false);
@@ -266,7 +266,7 @@ snd_pcm_sframes_t snd_pcm_plug_slave_size(struct snd_pcm_substream *plug, snd_pc
 		return calc_src_frames(plug, clt_frames, false);
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -321,7 +321,7 @@ snd_pcm_format_t snd_pcm_plug_slave_format(snd_pcm_format_t format,
 	if (snd_mask_test(format_mask, (__force int)format))
 		return format;
 	if (!snd_pcm_plug_formats(format_mask, format))
-		return (__force snd_pcm_format_t)-EINVAL;
+		return (__force snd_pcm_format_t)-ERR(EINVAL);
 	if (snd_pcm_format_linear(format)) {
 		unsigned int width = snd_pcm_format_width(format);
 		int unsignd = snd_pcm_format_unsigned(format) > 0;
@@ -348,7 +348,7 @@ snd_pcm_format_t snd_pcm_plug_slave_format(snd_pcm_format_t format,
 		if ((__force int)best_format >= 0)
 			return best_format;
 		else
-			return (__force snd_pcm_format_t)-EINVAL;
+			return (__force snd_pcm_format_t)-ERR(EINVAL);
 	} else {
 		switch (format) {
 		case SNDRV_PCM_FORMAT_MU_LAW:
@@ -359,7 +359,7 @@ snd_pcm_format_t snd_pcm_plug_slave_format(snd_pcm_format_t format,
 			}
 			/* fall through */
 		default:
-			return (__force snd_pcm_format_t)-EINVAL;
+			return (__force snd_pcm_format_t)-ERR(EINVAL);
 		}
 	}
 }
@@ -403,7 +403,7 @@ int snd_pcm_plug_format_plugins(struct snd_pcm_substream *plug,
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	tmpformat = srcformat;
 		
@@ -420,7 +420,7 @@ int snd_pcm_plug_format_plugins(struct snd_pcm_substream *plug,
 	if (! rate_match(srcformat.rate, dstformat.rate) &&
 	    ! snd_pcm_format_linear(srcformat.format)) {
 		if (srcformat.format != SNDRV_PCM_FORMAT_MU_LAW)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		tmpformat.format = SNDRV_PCM_FORMAT_S16;
 		err = snd_pcm_plugin_build_mulaw(plug,
 						 &srcformat, &tmpformat,
@@ -502,7 +502,7 @@ int snd_pcm_plug_format_plugins(struct snd_pcm_substream *plug,
 							  &plugin);
 		}
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		pdprintf("format change: src=%i, dst=%i returns %i\n", srcformat.format, tmpformat.format, err);
 		if (err < 0)
 			return err;
@@ -562,7 +562,7 @@ snd_pcm_sframes_t snd_pcm_plug_client_channels_buf(struct snd_pcm_substream *plu
 	int stream = snd_pcm_plug_stream(plug);
 
 	if (snd_BUG_ON(!buf))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		plugin = snd_pcm_plug_first(plug);
 		format = &plugin->src_format;
@@ -577,7 +577,7 @@ snd_pcm_sframes_t snd_pcm_plug_client_channels_buf(struct snd_pcm_substream *plu
 	nchannels = format->channels;
 	if (snd_BUG_ON(plugin->access != SNDRV_PCM_ACCESS_RW_INTERLEAVED &&
 		       format->channels > 1))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	for (channel = 0; channel < nchannels; channel++, v++) {
 		v->frames = count;
 		v->enabled = 1;
@@ -673,12 +673,12 @@ int snd_pcm_area_silence(const struct snd_pcm_channel_area *dst_area, size_t dst
 	dst = dst_area->addr + (dst_area->first + dst_area->step * dst_offset) / 8;
 	width = snd_pcm_format_physical_width(format);
 	if (width <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (dst_area->step == (unsigned int) width && width >= 8)
 		return snd_pcm_format_set_silence(format, dst, samples);
 	silence = snd_pcm_format_silence_64(format);
 	if (! silence)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dst_step = dst_area->step / 8;
 	if (width == 4) {
 		/* Ima ADPCM */
@@ -722,7 +722,7 @@ int snd_pcm_area_copy(const struct snd_pcm_channel_area *src_area, size_t src_of
 		return 0;
 	width = snd_pcm_format_physical_width(format);
 	if (width <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (src_area->step == (unsigned int) width &&
 	    dst_area->step == (unsigned int) width && width >= 8) {
 		size_t bytes = samples * width / 8;

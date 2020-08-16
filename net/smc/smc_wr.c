@@ -68,7 +68,7 @@ int smc_wr_tx_wait_no_pending_sends(struct smc_link *link)
 			       SMC_WR_TX_WAIT_PENDING_TIME))
 		return 0;
 	else /* timeout */
-		return -EPIPE;
+		return -ERR(EPIPE);
 }
 
 static inline int smc_wr_tx_find_pending_index(struct smc_link *link, u64 wr_id)
@@ -170,13 +170,13 @@ static inline int smc_wr_tx_get_free_slot_index(struct smc_link *link, u32 *idx)
 {
 	*idx = link->wr_tx_cnt;
 	if (!smc_link_usable(link))
-		return -ENOLINK;
+		return -ERR(ENOLINK);
 	for_each_clear_bit(*idx, link->wr_tx_mask, link->wr_tx_cnt) {
 		if (!test_and_set_bit(*idx, link->wr_tx_mask))
 			return 0;
 	}
 	*idx = link->wr_tx_cnt;
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /**
@@ -214,15 +214,15 @@ int smc_wr_tx_get_free_slot(struct smc_link *link,
 			link->wr_tx_wait,
 			!smc_link_usable(link) ||
 			lgr->terminating ||
-			(smc_wr_tx_get_free_slot_index(link, &idx) != -EBUSY),
+			(smc_wr_tx_get_free_slot_index(link, &idx) != -ERR(EBUSY)),
 			SMC_WR_TX_WAIT_FREE_SLOT_TIME);
 		if (!rc) {
 			/* timeout - terminate link */
 			smcr_link_down_cond_sched(link);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		if (idx == link->wr_tx_cnt)
-			return -EPIPE;
+			return -ERR(EPIPE);
 	}
 	wr_id = smc_wr_tx_get_next_wr_id(link);
 	wr_pend = &link->wr_tx_pends[idx];
@@ -301,7 +301,7 @@ int smc_wr_tx_send_wait(struct smc_link *link, struct smc_wr_tx_pend_priv *priv,
 	rc = wait_for_completion_interruptible_timeout(
 					&link->wr_tx_compl[pend->idx], timeout);
 	if (rc <= 0)
-		rc = -ENODATA;
+		rc = -ERR(ENODATA);
 	if (rc > 0)
 		rc = 0;
 	return rc;
@@ -328,19 +328,19 @@ int smc_wr_reg_send(struct smc_link *link, struct ib_mr *mr)
 	if (!rc) {
 		/* timeout - terminate link */
 		smcr_link_down_cond_sched(link);
-		return -EPIPE;
+		return -ERR(EPIPE);
 	}
 	if (rc == -ERESTARTSYS)
-		return -EINTR;
+		return -ERR(EINTR);
 	switch (link->wr_reg_state) {
 	case CONFIRMED:
 		rc = 0;
 		break;
 	case FAILED:
-		rc = -EIO;
+		rc = -ERR(EIO);
 		break;
 	case POSTED:
-		rc = -EPIPE;
+		rc = -ERR(EPIPE);
 		break;
 	}
 	return rc;
@@ -375,7 +375,7 @@ int smc_wr_rx_register_handler(struct smc_wr_rx_handler *handler)
 	spin_lock(&smc_wr_rx_hash_lock);
 	hash_for_each_possible(smc_wr_rx_hash, h_iter, list, handler->type) {
 		if (h_iter->type == handler->type) {
-			rc = -EEXIST;
+			rc = -ERR(EEXIST);
 			goto out_unlock;
 		}
 	}
@@ -716,14 +716,14 @@ int smc_wr_create_link(struct smc_link *lnk)
 		DMA_FROM_DEVICE);
 	if (ib_dma_mapping_error(ibdev, lnk->wr_rx_dma_addr)) {
 		lnk->wr_rx_dma_addr = 0;
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	lnk->wr_tx_dma_addr = ib_dma_map_single(
 		ibdev, lnk->wr_tx_bufs,	SMC_WR_BUF_SIZE * lnk->wr_tx_cnt,
 		DMA_TO_DEVICE);
 	if (ib_dma_mapping_error(ibdev, lnk->wr_tx_dma_addr)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto dma_unmap;
 	}
 	smc_wr_init_sge(lnk);

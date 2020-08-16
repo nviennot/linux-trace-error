@@ -100,7 +100,7 @@ static int __init snap_init(void)
 	snap_sap = llc_sap_open(0xAA, snap_rcv);
 	if (!snap_sap) {
 		printk(snap_err_msg);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;

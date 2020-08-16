@@ -155,7 +155,7 @@ efw_transaction(struct snd_efw *efw, unsigned int category,
 			be32_to_cpu(header->category),
 			be32_to_cpu(header->command),
 			efr_status_names[be32_to_cpu(header->status)]);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end;
 	}
 
@@ -187,7 +187,7 @@ int snd_efw_command_set_resp_addr(struct snd_efw *efw,
 	addr[1] = cpu_to_be32(addr_low);
 
 	if (!efw->resp_addr_changable)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	return efw_transaction(efw, EFC_CAT_HWCTL,
 			       EFC_CMD_HWINFO_SET_RESP_ADDR,
@@ -298,7 +298,7 @@ command_set_clock(struct snd_efw *efw,
 
 	/* check arguments */
 	if ((source == UINT_MAX) && (rate == UINT_MAX)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto end;
 	}
 

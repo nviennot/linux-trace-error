@@ -75,7 +75,7 @@ static int ebt_limit_mt_check(const struct xt_mtchk_param *par)
 	    user2credits(info->avg * info->burst) < user2credits(info->avg)) {
 		pr_info_ratelimited("overflow, try lower: %u/%u\n",
 				    info->avg, info->burst);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* User avg in seconds * EBT_LIMIT_SCALE: convert to jiffies * 128. */

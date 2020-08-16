@@ -20,11 +20,11 @@ bool afs_begin_vlserver_operation(struct afs_vl_cursor *vc, struct afs_cell *cel
 	memset(vc, 0, sizeof(*vc));
 	vc->cell = cell;
 	vc->key = key;
-	vc->error = -EDESTADDRREQ;
+	vc->error = -ERR(EDESTADDRREQ);
 	vc->ac.error = SHRT_MAX;
 
 	if (signal_pending(current)) {
-		vc->error = -EINTR;
+		vc->error = -ERR(EINTR);
 		vc->flags |= AFS_VL_CURSOR_STOP;
 		return false;
 	}
@@ -52,14 +52,14 @@ static bool afs_start_vl_iteration(struct afs_vl_cursor *vc)
 				    &cell->dns_lookup_count,
 				    smp_load_acquire(&cell->dns_lookup_count)
 				    != dns_lookup_count) < 0) {
-				vc->error = -ERESTARTSYS;
+				vc->error = -ERR(ERESTARTSYS);
 				return false;
 			}
 		}
 
 		/* Status load is ordered after lookup counter load */
 		if (cell->dns_source == DNS_RECORD_UNAVAILABLE) {
-			vc->error = -EDESTADDRREQ;
+			vc->error = -ERR(EDESTADDRREQ);
 			return false;
 		}
 	}
@@ -123,7 +123,7 @@ bool afs_select_vlserver(struct afs_vl_cursor *vc)
 		case AFSVL_BADVOLOPER:
 		case AFSVL_NOMEM:
 			/* The server went weird. */
-			vc->error = -EREMOTEIO;
+			vc->error = -ERR(EREMOTEIO);
 			//write_lock(&vc->cell->vl_servers_lock);
 			//vc->server_list->weird_mask |= 1 << vc->index;
 			//write_unlock(&vc->cell->vl_servers_lock);
@@ -257,7 +257,7 @@ no_more_servers:
 	if (vc->flags & AFS_VL_CURSOR_RETRY)
 		goto restart_from_beginning;
 
-	e.error = -EDESTADDRREQ;
+	e.error = -ERR(EDESTADDRREQ);
 	e.responded = false;
 	for (i = 0; i < vc->server_list->nr_servers; i++) {
 		struct afs_vlserver *s = vc->server_list->servers[i].server;

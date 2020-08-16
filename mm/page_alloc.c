@@ -156,7 +156,7 @@ static int __init early_init_on_alloc(char *buf)
 	bool bool_result;
 
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = kstrtobool(buf, &bool_result);
 	if (bool_result && page_poisoning_enabled())
 		pr_info("mem auto-init: CONFIG_PAGE_POISONING is on, will take precedence over init_on_alloc\n");
@@ -174,7 +174,7 @@ static int __init early_init_on_free(char *buf)
 	bool bool_result;
 
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = kstrtobool(buf, &bool_result);
 	if (bool_result && page_poisoning_enabled())
 		pr_info("mem auto-init: CONFIG_PAGE_POISONING is on, will take precedence over init_on_free\n");
@@ -5570,7 +5570,7 @@ static int __parse_numa_zonelist_order(char *s)
 	 */
 	if (!(*s == 'd' || *s == 'D' || *s == 'n' || *s == 'N')) {
 		pr_warn("Ignoring unsupported numa_zonelist_order value:  %s\n", s);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -7445,7 +7445,7 @@ static int __init cmdline_parse_core(char *p, unsigned long *core,
 	char *endptr;
 
 	if (!p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Value may be a percentage of total memory, otherwise bytes */
 	coremem = simple_strtoull(p, &endptr, 0);
@@ -8033,7 +8033,7 @@ int percpu_pagelist_fraction_sysctl_handler(struct ctl_table *table, int write,
 	if (percpu_pagelist_fraction &&
 	    percpu_pagelist_fraction < MIN_PERCPU_PAGELIST_FRACTION) {
 		percpu_pagelist_fraction = old_percpu_pagelist_fraction;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -8346,7 +8346,7 @@ static int __alloc_contig_migrate_range(struct compact_control *cc,
 
 	while (pfn < end || !list_empty(&cc->migratepages)) {
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -8354,12 +8354,12 @@ static int __alloc_contig_migrate_range(struct compact_control *cc,
 			cc->nr_migratepages = 0;
 			pfn = isolate_migratepages_range(cc, pfn, end);
 			if (!pfn) {
-				ret = -EINTR;
+				ret = -ERR(EINTR);
 				break;
 			}
 			tries = 0;
 		} else if (++tries == 5) {
-			ret = ret < 0 ? ret : -EBUSY;
+			ret = ret < 0 ? ret : -ERR(EBUSY);
 			break;
 		}
 
@@ -8507,14 +8507,14 @@ int alloc_contig_range(unsigned long start, unsigned long end,
 	if (test_pages_isolated(outer_start, end, 0)) {
 		pr_info_ratelimited("%s: [%lx, %lx) PFNs busy\n",
 			__func__, outer_start, end);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto done;
 	}
 
 	/* Grab isolated pages from freelists. */
 	outer_end = isolate_freepages_range(&cc, outer_start, end);
 	if (!outer_end) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto done;
 	}
 

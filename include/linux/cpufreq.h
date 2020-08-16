@@ -638,7 +638,7 @@ static inline int dev_pm_opp_init_cpufreq_table(struct device *dev,
 						struct cpufreq_frequency_table
 						**table)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void dev_pm_opp_free_cpufreq_table(struct device *dev,
@@ -941,7 +941,7 @@ static inline int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 		return cpufreq_table_find_index_c(policy, target_freq);
 	default:
 		pr_err("%s: Invalid relation: %d\n", __func__, relation);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -970,7 +970,7 @@ static inline int cpufreq_boost_enabled(void)
 
 static inline int cpufreq_enable_boost_support(void)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline bool policy_has_boost_freq(struct cpufreq_policy *policy)

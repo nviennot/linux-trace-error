@@ -695,7 +695,7 @@ int afs_validate(struct afs_vnode *vnode, struct key *key)
 		if (ret < 0) {
 			if (ret == -ENOENT) {
 				set_bit(AFS_VNODE_DELETED, &vnode->flags);
-				ret = -ESTALE;
+				ret = -ERR(ESTALE);
 			}
 			goto error_unlock;
 		}
@@ -704,7 +704,7 @@ int afs_validate(struct afs_vnode *vnode, struct key *key)
 
 	if (test_bit(AFS_VNODE_DELETED, &vnode->flags)) {
 		_debug("file already deleted");
-		ret = -ESTALE;
+		ret = -ERR(ESTALE);
 		goto error_unlock;
 	}
 
@@ -849,7 +849,7 @@ int afs_setattr(struct dentry *dentry, struct iattr *attr)
 
 	if (attr->ia_valid & ATTR_SIZE) {
 		if (!S_ISREG(vnode->vfs_inode.i_mode))
-			return -EISDIR;
+			return -ERR(EISDIR);
 
 		ret = inode_newsize_ok(&vnode->vfs_inode, attr->ia_size);
 		if (ret)

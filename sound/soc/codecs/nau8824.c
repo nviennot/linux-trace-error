@@ -434,7 +434,7 @@ static int nau8824_output_dac_event(struct snd_soc_dapm_widget *w,
 			NAU8824_TEST_DAC_EN, NAU8824_TEST_DAC_EN);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -458,7 +458,7 @@ static int nau8824_spk_event(struct snd_soc_dapm_widget *w,
 			NAU8824_CLASSD_CLAMP_DIS, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -484,7 +484,7 @@ static int nau8824_pump_event(struct snd_soc_dapm_widget *w,
 			NAU8824_JAMNODCLOW, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1043,17 +1043,17 @@ static int nau8824_clock_check(struct nau8824 *nau8824,
 
 	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (osr >= ARRAY_SIZE(osr_dac_sel))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		osrate = osr_dac_sel[osr].osr;
 	} else {
 		if (osr >= ARRAY_SIZE(osr_adc_sel))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		osrate = osr_adc_sel[osr].osr;
 	}
 
 	if (!osrate || rate * osr > CLK_DA_AD_MAX) {
 		dev_err(nau8824->dev, "exceed the maximum frequency of CLK_ADC or CLK_DAC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1081,7 +1081,7 @@ static int nau8824_hw_params(struct snd_pcm_substream *substream,
 		osr &= NAU8824_DAC_OVERSAMPLE_MASK;
 		if (nau8824_clock_check(nau8824, substream->stream,
 			nau8824->fs, osr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		regmap_update_bits(nau8824->regmap, NAU8824_REG_CLK_DIVIDER,
 			NAU8824_CLK_DAC_SRC_MASK,
 			osr_dac_sel[osr].clk_src << NAU8824_CLK_DAC_SRC_SFT);
@@ -1091,7 +1091,7 @@ static int nau8824_hw_params(struct snd_pcm_substream *substream,
 		osr &= NAU8824_ADC_SYNC_DOWN_MASK;
 		if (nau8824_clock_check(nau8824, substream->stream,
 			nau8824->fs, osr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		regmap_update_bits(nau8824->regmap, NAU8824_REG_CLK_DIVIDER,
 			NAU8824_CLK_ADC_SRC_MASK,
 			osr_adc_sel[osr].clk_src << NAU8824_CLK_ADC_SRC_SFT);
@@ -1112,7 +1112,7 @@ static int nau8824_hw_params(struct snd_pcm_substream *substream,
 		else if (bclk_fs <= 256)
 			bclk_div = 0;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		regmap_update_bits(nau8824->regmap,
 			NAU8824_REG_PORT0_I2S_PCM_CTRL_2,
 			NAU8824_I2S_LRC_DIV_MASK | NAU8824_I2S_BLK_DIV_MASK,
@@ -1133,7 +1133,7 @@ static int nau8824_hw_params(struct snd_pcm_substream *substream,
 		val_len |= NAU8824_I2S_DL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8824->regmap, NAU8824_REG_PORT0_I2S_PCM_CTRL_1,
@@ -1159,7 +1159,7 @@ static int nau8824_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1169,7 +1169,7 @@ static int nau8824_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= NAU8824_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1190,7 +1190,7 @@ static int nau8824_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= NAU8824_I2S_PCMB_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8824->regmap, NAU8824_REG_PORT0_I2S_PCM_CTRL_1,
@@ -1231,7 +1231,7 @@ static int nau8824_set_tdm_slot(struct snd_soc_dai *dai,
 		((rx_mask & 0xf0) && (rx_mask & 0xf)) ||
 		((rx_mask & 0xf0) && (tx_mask & 0xf)) ||
 		((rx_mask & 0xf) && (tx_mask & 0xf0)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctrl_val |= (NAU8824_TDM_MODE | NAU8824_TDM_OFFSET_EN);
 	if (tx_mask & 0xf0) {
@@ -1281,7 +1281,7 @@ static int nau8824_calc_fll_param(unsigned int fll_in,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_pre_scalar))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->clk_ref_div = fll_pre_scalar[i].val;
 
 	/* Choose the FLL ratio based on FREF */
@@ -1290,7 +1290,7 @@ static int nau8824_calc_fll_param(unsigned int fll_in,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_ratio))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->ratio = fll_ratio[i].val;
 
 	/* Calculate the frequency of DCO (FDCO) given freq_out = 256 * Fs.
@@ -1309,7 +1309,7 @@ static int nau8824_calc_fll_param(unsigned int fll_in,
 		}
 	}
 	if (ARRAY_SIZE(mclk_src_scaling) == fvco_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->mclk_src = mclk_src_scaling[fvco_sel].val;
 
 	/* Calculate the FLL 10-bit integer input and the FLL 16-bit fractional
@@ -1439,7 +1439,7 @@ static int nau8824_config_sysclk(struct nau8824 *nau8824,
 
 	default:
 		dev_err(nau8824->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(nau8824->dev, "Sysclk is %dHz and clock id is %d\n", freq,

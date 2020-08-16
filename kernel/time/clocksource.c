@@ -993,14 +993,14 @@ static int clocksource_unbind(struct clocksource *cs)
 		/* Select and try to install a replacement watchdog. */
 		clocksource_select_watchdog(true);
 		if (clocksource_is_watchdog(cs))
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	if (cs == curr_clocksource) {
 		/* Select and try to install a replacement clock source */
 		clocksource_select_fallback();
 		if (curr_clocksource == cs)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	if (clocksource_is_suspend(cs)) {
@@ -1064,7 +1064,7 @@ ssize_t sysfs_get_uname(const char *buf, char *dst, size_t cnt)
 
 	/* strings from sysfs write are not 0 terminated! */
 	if (!cnt || cnt >= CS_NAME_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* strip of \n: */
 	if (buf[cnt-1] == '\n')
@@ -1124,7 +1124,7 @@ static ssize_t unbind_clocksource_store(struct device *dev,
 	if (ret < 0)
 		return ret;
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	mutex_lock(&clocksource_mutex);
 	list_for_each_entry(cs, &clocksource_list, list) {
 		if (strcmp(cs->name, name))

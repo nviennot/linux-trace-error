@@ -95,7 +95,7 @@ int squashfs_readpage_block(struct page *target_page, u64 block, int bsize,
 		goto mark_errored;
 
 	if (res != expected) {
-		res = -EIO;
+		res = -ERR(EIO);
 		goto mark_errored;
 	}
 

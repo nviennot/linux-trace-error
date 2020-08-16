@@ -169,7 +169,7 @@ int __init tfrc_li_init(void)
 	tfrc_lh_slab = kmem_cache_create("tfrc_li_hist",
 					 sizeof(struct tfrc_loss_interval), 0,
 					 SLAB_HWCACHE_ALIGN, NULL);
-	return tfrc_lh_slab == NULL ? -ENOBUFS : 0;
+	return tfrc_lh_slab == NULL ? -ERR(ENOBUFS) : 0;
 }
 
 void tfrc_li_exit(void)

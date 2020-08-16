@@ -407,26 +407,26 @@ static int gred_change_table_def(struct Qdisc *sch, struct nlattr *dps,
 	int i;
 
 	if (!dps)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sopt = nla_data(dps);
 
 	if (sopt->DPs > MAX_DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "number of virtual queues too high");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (sopt->DPs == 0) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "number of virtual queues can't be 0");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (sopt->def_DP >= sopt->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "default virtual queue above virtual queue count");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (sopt->flags && gred_per_vq_red_flags_used(table)) {
 		NL_SET_ERR_MSG_MOD(extack, "can't set per-Qdisc RED flags when per-virtual queue flags are used");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sch_tree_lock(sch);
@@ -482,7 +482,7 @@ static inline int gred_change_vq(struct Qdisc *sch, int dp,
 
 	if (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog)) {
 		NL_SET_ERR_MSG_MOD(extack, "invalid RED parameters");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!q) {
@@ -571,16 +571,16 @@ static int gred_vq_validate(struct gred_sched *table, u32 cdp,
 
 	if (!tb[TCA_GRED_VQ_DP]) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue with no index specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dp = nla_get_u32(tb[TCA_GRED_VQ_DP]);
 	if (dp >= table->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue with index out of bounds");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (dp != cdp && !table->tab[dp]) {
 		NL_SET_ERR_MSG_MOD(extack, "Virtual queue not yet instantiated");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[TCA_GRED_VQ_FLAGS]) {
@@ -588,12 +588,12 @@ static int gred_vq_validate(struct gred_sched *table, u32 cdp,
 
 		if (table->red_flags && table->red_flags != red_flags) {
 			NL_SET_ERR_MSG_MOD(extack, "can't change per-virtual queue RED flags when per-Qdisc flags are used");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (red_flags & ~GRED_VQ_RED_FLAGS) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "invalid RED flags specified");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -620,13 +620,13 @@ static int gred_vqs_validate(struct gred_sched *table, u32 cdp,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "GRED_VQ_LIST can contain only entry attributes");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (rem > 0) {
 		NL_SET_ERR_MSG_MOD(extack, "Trailing data after parsing virtual queue list");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -644,7 +644,7 @@ static int gred_change(struct Qdisc *sch, struct nlattr *opt,
 	struct gred_sched_data *prealloc;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_GRED_MAX, opt, gred_policy,
 					  extack);
@@ -661,7 +661,7 @@ static int gred_change(struct Qdisc *sch, struct nlattr *opt,
 	    tb[TCA_GRED_STAB] == NULL ||
 	    tb[TCA_GRED_LIMIT] != NULL) {
 		NL_SET_ERR_MSG_MOD(extack, "can't configure Qdisc and virtual queue at the same time");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max_P = tb[TCA_GRED_MAX_P] ? nla_get_u32(tb[TCA_GRED_MAX_P]) : 0;
@@ -671,7 +671,7 @@ static int gred_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (ctl->DP >= table->DPs) {
 		NL_SET_ERR_MSG_MOD(extack, "virtual queue index above virtual queue count");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[TCA_GRED_VQ_LIST]) {
@@ -732,7 +732,7 @@ static int gred_init(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_GRED_MAX, opt, gred_policy,
 					  extack);
@@ -742,7 +742,7 @@ static int gred_init(struct Qdisc *sch, struct nlattr *opt,
 	if (tb[TCA_GRED_PARMS] || tb[TCA_GRED_STAB]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "virtual queue configuration can't be specified at initialization time");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[TCA_GRED_LIMIT])
@@ -894,7 +894,7 @@ append_opt:
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void gred_destroy(struct Qdisc *sch)

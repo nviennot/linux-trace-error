@@ -236,7 +236,7 @@ static void __pollwait(struct file *filp, wait_queue_head_t *wait_address,
 static int poll_schedule_timeout(struct poll_wqueues *pwq, int state,
 			  ktime_t *expires, unsigned long slack)
 {
-	int rc = -EINTR;
+	int rc = -ERR(EINTR);
 
 	set_current_state(state);
 	if (!pwq->triggered)
@@ -275,7 +275,7 @@ int poll_select_set_timeout(struct timespec64 *to, time64_t sec, long nsec)
 	struct timespec64 ts = {.tv_sec = sec, .tv_nsec = nsec};
 
 	if (!timespec64_valid(&ts))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Optimize for the zero timeout value here */
 	if (!sec && !nsec) {
@@ -362,7 +362,7 @@ static int poll_select_finish(struct timespec64 *end_time,
 
 sticky:
 	if (ret == -ERESTARTNOHAND)
-		ret = -EINTR;
+		ret = -ERR(EINTR);
 	return ret;
 }
 
@@ -434,7 +434,7 @@ static int max_select_fd(unsigned long n, fd_set_bits *fds)
 		if (set) {
 			if (!(set & ~*open_fds))
 				goto get_max;
-			return -EBADF;
+			return -ERR(EBADF);
 		}
 	}
 	while (n) {
@@ -444,7 +444,7 @@ static int max_select_fd(unsigned long n, fd_set_bits *fds)
 		if (!set)
 			continue;
 		if (set & ~*open_fds)
-			return -EBADF;
+			return -ERR(EBADF);
 		if (max)
 			continue;
 get_max:
@@ -629,7 +629,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
 	/* Allocate small arguments on the stack to save memory and be faster */
 	long stack_fds[SELECT_STACK_ALLOC/sizeof(long)];
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (n < 0)
 		goto out_nofds;
 
@@ -679,7 +679,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
 	if (ret < 0)
 		goto out;
 	if (!ret) {
-		ret = -ERESTARTNOHAND;
+		ret = -ERR(ERESTARTNOHAND);
 		if (signal_pending(current))
 			goto out;
 		ret = 0;
@@ -712,7 +712,7 @@ static int kern_select(int n, fd_set __user *inp, fd_set __user *outp,
 		if (poll_select_set_timeout(to,
 				tv.tv_sec + (tv.tv_usec / USEC_PER_SEC),
 				(tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = core_sys_select(n, inp, outp, exp, to);
@@ -749,7 +749,7 @@ static long do_pselect(int n, fd_set __user *inp, fd_set __user *outp,
 
 		to = &end_time;
 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = set_user_sigmask(sigmask, sigsetsize);
@@ -932,7 +932,7 @@ static int do_poll(struct poll_list *list, struct poll_wqueues *wait,
 		if (!count) {
 			count = wait->error;
 			if (signal_pending(current))
-				count = -ERESTARTNOHAND;
+				count = -ERR(ERESTARTNOHAND);
 		}
 		if (count || timed_out)
 			break;
@@ -981,7 +981,7 @@ static int do_sys_poll(struct pollfd __user *ufds, unsigned int nfds,
  	unsigned long todo = nfds;
 
 	if (nfds > rlimit(RLIMIT_NOFILE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = min_t(unsigned int, nfds, N_STACK_PPS);
 	for (;;) {
@@ -1101,7 +1101,7 @@ SYSCALL_DEFINE5(ppoll, struct pollfd __user *, ufds, unsigned int, nfds,
 
 		to = &end_time;
 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = set_user_sigmask(sigmask, sigsetsize);
@@ -1127,7 +1127,7 @@ SYSCALL_DEFINE5(ppoll_time32, struct pollfd __user *, ufds, unsigned int, nfds,
 
 		to = &end_time;
 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = set_user_sigmask(sigmask, sigsetsize);
@@ -1187,7 +1187,7 @@ static int compat_core_sys_select(int n, compat_ulong_t __user *inp,
 {
 	fd_set_bits fds;
 	void *bits;
-	int size, max_fds, ret = -EINVAL;
+	int size, max_fds, ret = -ERR(EINVAL);
 	struct fdtable *fdt;
 	long stack_fds[SELECT_STACK_ALLOC/sizeof(long)];
 
@@ -1235,7 +1235,7 @@ static int compat_core_sys_select(int n, compat_ulong_t __user *inp,
 	if (ret < 0)
 		goto out;
 	if (!ret) {
-		ret = -ERESTARTNOHAND;
+		ret = -ERR(ERESTARTNOHAND);
 		if (signal_pending(current))
 			goto out;
 		ret = 0;
@@ -1268,7 +1268,7 @@ static int do_compat_select(int n, compat_ulong_t __user *inp,
 		if (poll_select_set_timeout(to,
 				tv.tv_sec + (tv.tv_usec / USEC_PER_SEC),
 				(tv.tv_usec % USEC_PER_SEC) * NSEC_PER_USEC))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = compat_core_sys_select(n, inp, outp, exp, to);
@@ -1324,7 +1324,7 @@ static long do_compat_pselect(int n, compat_ulong_t __user *inp,
 
 		to = &end_time;
 		if (poll_select_set_timeout(to, ts.tv_sec, ts.tv_nsec))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = set_compat_user_sigmask(sigmask, sigsetsize);

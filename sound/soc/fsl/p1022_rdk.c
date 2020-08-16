@@ -211,7 +211,7 @@ static int p1022_rdk_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "codec-handle", 0);
 	if (!codec_np) {
 		dev_err(dev, "could not find codec node\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mdata = kzalloc(sizeof(struct machine_data), GFP_KERNEL);
@@ -277,14 +277,14 @@ static int p1022_rdk_probe(struct platform_device *pdev)
 	iprop = of_get_property(codec_np, "clock-frequency", NULL);
 	if (!iprop || !*iprop) {
 		dev_err(&pdev->dev, "codec bus-frequency property is missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 	mdata->clk_frequency = be32_to_cpup(iprop);
 
 	if (!mdata->clk_frequency) {
 		dev_err(&pdev->dev, "unknown clock frequency\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -384,7 +384,7 @@ static int __init p1022_rdk_init(void)
 	if (of_address_to_resource(guts_np, 0, &res)) {
 		pr_err("snd-soc-p1022rdk: missing/invalid global utils node\n");
 		of_node_put(guts_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	guts_phys = res.start;
 	of_node_put(guts_np);

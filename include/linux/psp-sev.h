@@ -602,25 +602,25 @@ void *psp_copy_user_blob(u64 uaddr, u32 len);
 #else	/* !CONFIG_CRYPTO_DEV_SP_PSP */
 
 static inline int
-sev_platform_status(struct sev_user_data_status *status, int *error) { return -ENODEV; }
+sev_platform_status(struct sev_user_data_status *status, int *error) { return -ERR(ENODEV); }
 
-static inline int sev_platform_init(int *error) { return -ENODEV; }
-
-static inline int
-sev_guest_deactivate(struct sev_data_deactivate *data, int *error) { return -ENODEV; }
+static inline int sev_platform_init(int *error) { return -ERR(ENODEV); }
 
 static inline int
-sev_guest_decommission(struct sev_data_decommission *data, int *error) { return -ENODEV; }
+sev_guest_deactivate(struct sev_data_deactivate *data, int *error) { return -ERR(ENODEV); }
 
 static inline int
-sev_guest_activate(struct sev_data_activate *data, int *error) { return -ENODEV; }
-
-static inline int sev_guest_df_flush(int *error) { return -ENODEV; }
+sev_guest_decommission(struct sev_data_decommission *data, int *error) { return -ERR(ENODEV); }
 
 static inline int
-sev_issue_cmd_external_user(struct file *filep, unsigned int id, void *data, int *error) { return -ENODEV; }
+sev_guest_activate(struct sev_data_activate *data, int *error) { return -ERR(ENODEV); }
 
-static inline void *psp_copy_user_blob(u64 __user uaddr, u32 len) { return ERR_PTR(-EINVAL); }
+static inline int sev_guest_df_flush(int *error) { return -ERR(ENODEV); }
+
+static inline int
+sev_issue_cmd_external_user(struct file *filep, unsigned int id, void *data, int *error) { return -ERR(ENODEV); }
+
+static inline void *psp_copy_user_blob(u64 __user uaddr, u32 len) { return ERR_PTR(-ERR(EINVAL)); }
 
 #endif	/* CONFIG_CRYPTO_DEV_SP_PSP */
 

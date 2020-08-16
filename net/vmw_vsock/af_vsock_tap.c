@@ -17,7 +17,7 @@ static struct list_head vsock_tap_all __read_mostly =
 int vsock_add_tap(struct vsock_tap *vt)
 {
 	if (unlikely(vt->dev->type != ARPHRD_VSOCKMON))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	__module_get(vt->module);
 
@@ -53,7 +53,7 @@ out:
 	if (found)
 		module_put(vt->module);
 
-	return found ? 0 : -ENODEV;
+	return found ? 0 : -ERR(ENODEV);
 }
 EXPORT_SYMBOL_GPL(vsock_remove_tap);
 

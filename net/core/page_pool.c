@@ -30,14 +30,14 @@ static int page_pool_init(struct page_pool *pool,
 
 	/* Validate only known flags were used */
 	if (pool->p.flags & ~(PP_FLAG_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pool->p.pool_size)
 		ring_qsize = pool->p.pool_size;
 
 	/* Sanity limit mem that can be pinned down */
 	if (ring_qsize > 32768)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	/* DMA direction is either DMA_FROM_DEVICE or DMA_BIDIRECTIONAL.
 	 * DMA_BIDIRECTIONAL is for allowing page used for DMA sending,
@@ -46,7 +46,7 @@ static int page_pool_init(struct page_pool *pool,
 	if (pool->p.flags & PP_FLAG_DMA_MAP) {
 		if ((pool->p.dma_dir != DMA_FROM_DEVICE) &&
 		    (pool->p.dma_dir != DMA_BIDIRECTIONAL))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (pool->p.flags & PP_FLAG_DMA_SYNC_DEV) {
@@ -54,10 +54,10 @@ static int page_pool_init(struct page_pool *pool,
 		 * needs to be mapped
 		 */
 		if (!(pool->p.flags & PP_FLAG_DMA_MAP))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!pool->p.max_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* pool->p.offset has to be set according to the address
 		 * offset used by the DMA engine to start copying rx data

@@ -532,7 +532,7 @@ static int i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int rfs,
 					&& (mod & cdcon_mask))))) {
 			dev_err(&i2s->pdev->dev,
 				"%s:%d Other DAI busy\n", __func__, __LINE__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto err;
 		}
 
@@ -590,7 +590,7 @@ static int i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int rfs,
 				|| (clk_id && !(mod & rsrc_mask))) {
 			dev_err(&i2s->pdev->dev,
 				"%s:%d Other DAI busy\n", __func__, __LINE__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto err;
 		} else {
 			/* Call can't be on the active DAI */
@@ -602,7 +602,7 @@ static int i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id, unsigned int rfs,
 		break;
 	default:
 		dev_err(&i2s->pdev->dev, "We don't serve that!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -650,7 +650,7 @@ static int i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(&i2s->pdev->dev, "Format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -668,7 +668,7 @@ static int i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(&i2s->pdev->dev, "Polarity not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -687,7 +687,7 @@ static int i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(&i2s->pdev->dev, "master/slave format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pm_runtime_get_sync(dai->dev);
@@ -703,7 +703,7 @@ static int i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		pm_runtime_put(dai->dev);
 		dev_err(&i2s->pdev->dev,
 				"%s:%d Other DAI busy\n", __func__, __LINE__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	mod &= ~(sdf_mask | lrp_rlow | mod_slave);
@@ -753,7 +753,7 @@ static int i2s_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(&i2s->pdev->dev, "%d channels not supported\n",
 				params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (is_secondary(i2s))
@@ -792,7 +792,7 @@ static int i2s_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(&i2s->pdev->dev, "Format(%d) not supported\n",
 				params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irqsave(&priv->lock, flags);
@@ -891,7 +891,7 @@ static int config_setup(struct i2s_dai *i2s)
 	if ((rfs == 256 || rfs == 512) && (blc == 24)) {
 		dev_err(&i2s->pdev->dev,
 			"%d-RFS not supported for 24-blc\n", rfs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!rfs) {
@@ -905,7 +905,7 @@ static int config_setup(struct i2s_dai *i2s)
 	if (any_active(i2s) && (get_rfs(i2s) != rfs || get_bfs(i2s) != bfs)) {
 		dev_err(&i2s->pdev->dev,
 				"%s:%d Other DAI busy\n", __func__, __LINE__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	set_bfs(i2s, bfs);
@@ -944,7 +944,7 @@ static int i2s_trigger(struct snd_pcm_substream *substream,
 
 		if (config_setup(i2s)) {
 			spin_unlock_irqrestore(&priv->lock, flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (capture)
@@ -989,7 +989,7 @@ static int i2s_set_clkdiv(struct snd_soc_dai *dai,
 			pm_runtime_put(dai->dev);
 			dev_err(&i2s->pdev->dev,
 				"%s:%d Other DAI busy\n", __func__, __LINE__);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		i2s->bfs = div;
 		pm_runtime_put(dai->dev);
@@ -997,7 +997,7 @@ static int i2s_set_clkdiv(struct snd_soc_dai *dai,
 	default:
 		dev_err(&i2s->pdev->dev,
 			"Invalid clock divider(%d)\n", div_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1409,7 +1409,7 @@ static int samsung_i2s_probe(struct platform_device *pdev)
 	} else {
 		if (!i2s_pdata) {
 			dev_err(&pdev->dev, "Missing platform data\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		priv->quirks = i2s_pdata->type.quirks;
 	}
@@ -1508,7 +1508,7 @@ static int samsung_i2s_probe(struct platform_device *pdev)
 
 	if (i2s_pdata && i2s_pdata->cfg_gpio && i2s_pdata->cfg_gpio(pdev)) {
 		dev_err(&pdev->dev, "Unable to configure gpio\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_del_sec;
 	}
 

@@ -350,7 +350,7 @@ nfsd4_unlink_clid_dir(char *name, int namlen, struct nfsd_net *nn)
 		status = PTR_ERR(dentry);
 		goto out_unlock;
 	}
-	status = -ENOENT;
+	status = -ERR(ENOENT);
 	if (d_really_is_negative(dentry))
 		goto out;
 	status = vfs_rmdir(d_inode(dir), dentry);
@@ -616,7 +616,7 @@ nfsd4_legacy_tracking_init(struct net *net)
 	/* XXX: The legacy code won't work in a container */
 	if (net != &init_net) {
 		pr_warn("NFSD: attempt to initialize legacy client tracking in a container ignored.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	status = nfs4_legacy_state_init(net);
@@ -656,7 +656,7 @@ nfs4_reset_recoverydir(char *recdir)
 	status = kern_path(recdir, LOOKUP_FOLLOW, &path);
 	if (status)
 		return status;
-	status = -ENOTDIR;
+	status = -ERR(ENOTDIR);
 	if (d_is_dir(path.dentry)) {
 		strcpy(user_recovery_dirname, recdir);
 		status = 0;
@@ -707,7 +707,7 @@ nfsd4_check_legacy_client(struct nfs4_client *clp)
 	}
 
 out_enoent:
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static const struct nfsd4_client_tracking_ops nfsd4_legacy_tracking_ops = {
@@ -863,7 +863,7 @@ cld_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	if (mlen != nn->client_tracking_ops->msglen) {
 		dprintk("%s: got %zu bytes, expected %zu\n", __func__, mlen,
 			nn->client_tracking_ops->msglen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* copy just the xid so we can try to find that */
@@ -898,7 +898,7 @@ cld_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	/* couldn't find upcall? */
 	if (!cup) {
 		dprintk("%s: couldn't find upcall -- xid=%u\n", __func__, xid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (status == -EINPROGRESS)
@@ -938,7 +938,7 @@ nfsd4_cld_register_sb(struct super_block *sb, struct rpc_pipe *pipe)
 
 	dir = rpc_d_lookup_sb(sb, NFSD_PIPE_DIR);
 	if (dir == NULL)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	dentry = rpc_mkpipe_dentry(dir, NFSD_CLD_PIPE, NULL, pipe);
 	dput(dir);
 	return dentry;
@@ -1299,13 +1299,13 @@ nfsd4_cld_check(struct nfs4_client *clp)
 	if (cn->cn_has_legacy) {
 		status = nfs4_make_rec_clidname(dname, &clp->cl_name);
 		if (status)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		name.data = kmemdup(dname, HEXDIR_LEN, GFP_KERNEL);
 		if (!name.data) {
 			dprintk("%s: failed to allocate memory for name.data!\n",
 				__func__);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		name.len = HEXDIR_LEN;
 		crp = nfsd4_find_reclaim_client(name, nn);
@@ -1314,7 +1314,7 @@ nfsd4_cld_check(struct nfs4_client *clp)
 			goto found;
 
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 found:
 	crp->cr_clp = clp;
 	return 0;
@@ -1345,13 +1345,13 @@ nfsd4_cld_check_v2(struct nfs4_client *clp)
 	if (cn->cn_has_legacy) {
 		status = nfs4_make_rec_clidname(dname, &clp->cl_name);
 		if (status)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		name.data = kmemdup(dname, HEXDIR_LEN, GFP_KERNEL);
 		if (!name.data) {
 			dprintk("%s: failed to allocate memory for name.data\n",
 					__func__);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		name.len = HEXDIR_LEN;
 		crp = nfsd4_find_reclaim_client(name, nn);
@@ -1360,7 +1360,7 @@ nfsd4_cld_check_v2(struct nfs4_client *clp)
 			goto found;
 
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 found:
 	if (crp->cr_princhash.len) {
 		if (clp->cl_cred.cr_raw_principal)
@@ -1368,21 +1368,21 @@ found:
 		else if (clp->cl_cred.cr_principal)
 			principal = clp->cl_cred.cr_principal;
 		if (principal == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		cksum.len = crypto_shash_digestsize(tfm);
 		cksum.data = kmalloc(cksum.len, GFP_KERNEL);
 		if (cksum.data == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		status = crypto_shash_tfm_digest(tfm, principal,
 						 strlen(principal), cksum.data);
 		if (status) {
 			kfree(cksum.data);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		if (memcmp(crp->cr_princhash.data, cksum.data,
 				crp->cr_princhash.len)) {
 			kfree(cksum.data);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		kfree(cksum.data);
 	}
@@ -1586,7 +1586,7 @@ nfsd4_cld_tracking_init(struct net *net)
 		msleep(100);
 
 	if (!running) {
-		status = -ETIMEDOUT;
+		status = -ERR(ETIMEDOUT);
 		goto err_remove;
 	}
 	tfm = crypto_alloc_shash("sha256", 0, 0);
@@ -1801,7 +1801,7 @@ nfsd4_umh_cltrack_upcall(char *cmd, char *arg, char *env0, char *env1)
 
 	if (unlikely(!cltrack_prog[0])) {
 		dprintk("%s: cltrack_prog is disabled\n", __func__);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	dprintk("%s: cmd: %s\n", __func__, cmd);
@@ -1860,7 +1860,7 @@ nfsd4_umh_cltrack_init(struct net *net)
 	if (net != &init_net) {
 		pr_warn("NFSD: attempt to initialize umh client tracking in a container ignored.\n");
 		kfree(grace_start);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = nfsd4_umh_cltrack_upcall("init", NULL, grace_start, NULL);
@@ -2048,7 +2048,7 @@ nfsd4_client_tracking_init(struct net *net)
 		status = d_is_dir(path.dentry);
 		path_put(&path);
 		if (!status) {
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -2102,7 +2102,7 @@ nfsd4_client_record_check(struct nfs4_client *clp)
 	if (nn->client_tracking_ops)
 		return nn->client_tracking_ops->check(clp);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 void
@@ -2144,7 +2144,7 @@ rpc_pipefs_event(struct notifier_block *nb, unsigned long event, void *ptr)
 			nfsd4_cld_unregister_sb(cn->cn_pipe);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 	module_put(THIS_MODULE);

@@ -301,7 +301,7 @@ static inline int nfc_set_vendor_cmds(struct nfc_dev *dev,
 				      int n_cmds)
 {
 	if (dev->vendor_cmds || dev->n_vendor_cmds)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->vendor_cmds = cmds;
 	dev->n_vendor_cmds = n_cmds;

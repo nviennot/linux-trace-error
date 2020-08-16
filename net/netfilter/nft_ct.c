@@ -397,7 +397,7 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 	switch (priv->key) {
 	case NFT_CT_DIRECTION:
 		if (tb[NFTA_CT_DIRECTION] != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof(u8);
 		break;
 	case NFT_CT_STATE:
@@ -410,19 +410,19 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 #endif
 	case NFT_CT_EXPIRATION:
 		if (tb[NFTA_CT_DIRECTION] != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof(u32);
 		break;
 #ifdef CONFIG_NF_CONNTRACK_LABELS
 	case NFT_CT_LABELS:
 		if (tb[NFTA_CT_DIRECTION] != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = NF_CT_LABELS_MAX_SIZE;
 		break;
 #endif
 	case NFT_CT_HELPER:
 		if (tb[NFTA_CT_DIRECTION] != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = NF_CT_HELPER_NAME_LEN;
 		break;
 
@@ -436,7 +436,7 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 	case NFT_CT_SRC:
 	case NFT_CT_DST:
 		if (tb[NFTA_CT_DIRECTION] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (ctx->family) {
 		case NFPROTO_IPV4:
@@ -449,27 +449,27 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 					   src.u3.ip6);
 			break;
 		default:
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 		}
 		break;
 	case NFT_CT_SRC_IP:
 	case NFT_CT_DST_IP:
 		if (tb[NFTA_CT_DIRECTION] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = sizeof_field(struct nf_conntrack_tuple, src.u3.ip);
 		break;
 	case NFT_CT_SRC_IP6:
 	case NFT_CT_DST_IP6:
 		if (tb[NFTA_CT_DIRECTION] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = sizeof_field(struct nf_conntrack_tuple, src.u3.ip6);
 		break;
 	case NFT_CT_PROTO_SRC:
 	case NFT_CT_PROTO_DST:
 		if (tb[NFTA_CT_DIRECTION] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof_field(struct nf_conntrack_tuple, src.u.all);
 		break;
 	case NFT_CT_BYTES:
@@ -486,7 +486,7 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 		len = sizeof(u32);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (tb[NFTA_CT_DIRECTION] != NULL) {
@@ -496,7 +496,7 @@ static int nft_ct_get_init(const struct nft_ctx *ctx,
 		case IP_CT_DIR_REPLY:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -550,14 +550,14 @@ static int nft_ct_set_init(const struct nft_ctx *ctx,
 #ifdef CONFIG_NF_CONNTRACK_MARK
 	case NFT_CT_MARK:
 		if (tb[NFTA_CT_DIRECTION])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof_field(struct nf_conn, mark);
 		break;
 #endif
 #ifdef CONFIG_NF_CONNTRACK_LABELS
 	case NFT_CT_LABELS:
 		if (tb[NFTA_CT_DIRECTION])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = NF_CT_LABELS_MAX_SIZE;
 		err = nf_connlabels_get(ctx->net, (len * BITS_PER_BYTE) - 1);
 		if (err)
@@ -575,19 +575,19 @@ static int nft_ct_set_init(const struct nft_ctx *ctx,
 #ifdef CONFIG_NF_CONNTRACK_EVENTS
 	case NFT_CT_EVENTMASK:
 		if (tb[NFTA_CT_DIRECTION])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof(u32);
 		break;
 #endif
 #ifdef CONFIG_NF_CONNTRACK_SECMARK
 	case NFT_CT_SECMARK:
 		if (tb[NFTA_CT_DIRECTION])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		len = sizeof(u32);
 		break;
 #endif
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (tb[NFTA_CT_DIRECTION]) {
@@ -597,7 +597,7 @@ static int nft_ct_set_init(const struct nft_ctx *ctx,
 		case IP_CT_DIR_REPLY:
 			break;
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err1;
 		}
 	}
@@ -732,10 +732,10 @@ nft_ct_select_ops(const struct nft_ctx *ctx,
 		    const struct nlattr * const tb[])
 {
 	if (tb[NFTA_CT_KEY] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tb[NFTA_CT_DREG] && tb[NFTA_CT_SREG])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tb[NFTA_CT_DREG])
 		return &nft_ct_get_ops;
@@ -748,7 +748,7 @@ nft_ct_select_ops(const struct nft_ctx *ctx,
 		return &nft_ct_set_ops;
 	}
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct nft_expr_type nft_ct_type __read_mostly = {
@@ -870,7 +870,7 @@ static int nft_ct_timeout_obj_init(const struct nft_ctx *ctx,
 
 	if (!tb[NFTA_CT_TIMEOUT_L4PROTO] ||
 	    !tb[NFTA_CT_TIMEOUT_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_CT_TIMEOUT_L3PROTO])
 		l3num = ntohs(nla_get_be16(tb[NFTA_CT_TIMEOUT_L3PROTO]));
@@ -881,7 +881,7 @@ static int nft_ct_timeout_obj_init(const struct nft_ctx *ctx,
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	if (l4proto->l4proto != l4num) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto err_proto_put;
 	}
 
@@ -984,11 +984,11 @@ static int nft_ct_helper_obj_init(const struct nft_ctx *ctx,
 	int err;
 
 	if (!tb[NFTA_CT_HELPER_NAME] || !tb[NFTA_CT_HELPER_L4PROTO])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->l4proto = nla_get_u8(tb[NFTA_CT_HELPER_L4PROTO]);
 	if (!priv->l4proto)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	nla_strlcpy(name, tb[NFTA_CT_HELPER_NAME], sizeof(name));
 
@@ -1001,14 +1001,14 @@ static int nft_ct_helper_obj_init(const struct nft_ctx *ctx,
 	switch (family) {
 	case NFPROTO_IPV4:
 		if (ctx->family == NFPROTO_IPV6)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		help4 = nf_conntrack_helper_try_module_get(name, family,
 							   priv->l4proto);
 		break;
 	case NFPROTO_IPV6:
 		if (ctx->family == NFPROTO_IPV4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		help6 = nf_conntrack_helper_try_module_get(name, family,
 							   priv->l4proto);
@@ -1022,12 +1022,12 @@ static int nft_ct_helper_obj_init(const struct nft_ctx *ctx,
 							   priv->l4proto);
 		break;
 	default:
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 
 	/* && is intentional; only error if INET found neither ipv4 or ipv6 */
 	if (!help4 && !help6)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	priv->helper4 = help4;
 	priv->helper6 = help6;
@@ -1172,7 +1172,7 @@ static int nft_ct_expect_obj_init(const struct nft_ctx *ctx,
 	    !tb[NFTA_CT_EXPECT_DPORT] ||
 	    !tb[NFTA_CT_EXPECT_TIMEOUT] ||
 	    !tb[NFTA_CT_EXPECT_SIZE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->l3num = ctx->family;
 	if (tb[NFTA_CT_EXPECT_L3PROTO])

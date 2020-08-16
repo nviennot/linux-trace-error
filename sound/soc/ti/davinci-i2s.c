@@ -256,7 +256,7 @@ static int davinci_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 			break;
 		default:
 			dev_err(dev->dev, "bad clk_input_pin\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		break;
@@ -266,7 +266,7 @@ static int davinci_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		printk(KERN_ERR "%s:bad master\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -298,7 +298,7 @@ static int davinci_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		printk(KERN_ERR "%s:bad format\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -351,7 +351,7 @@ static int davinci_i2s_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		 */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (inv_fs == true)
 		pcr ^= (DAVINCI_MCBSP_PCR_FSXP | DAVINCI_MCBSP_PCR_FSRP);
@@ -367,7 +367,7 @@ static int davinci_i2s_dai_set_clkdiv(struct snd_soc_dai *cpu_dai,
 	struct davinci_mcbsp_dev *dev = snd_soc_dai_get_drvdata(cpu_dai);
 
 	if (div_id != DAVINCI_MCBSP_CLKGDV)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev->clk_div = div;
 	return 0;
@@ -446,7 +446,7 @@ static int davinci_i2s_hw_params(struct snd_pcm_substream *substream,
 		srgr |= DAVINCI_MCBSP_SRGR_FPER(snd_interval_value(i) - 1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	davinci_mcbsp_write_reg(dev, DAVINCI_MCBSP_SRGR_REG, srgr);
 
@@ -463,7 +463,7 @@ static int davinci_i2s_hw_params(struct snd_pcm_substream *substream,
 	fmt = params_format(params);
 	if ((fmt > SNDRV_PCM_FORMAT_S32_LE) || !data_type[fmt]) {
 		printk(KERN_WARNING "davinci-i2s: unsupported PCM format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params_channels(params) == 2) {
@@ -486,7 +486,7 @@ static int davinci_i2s_hw_params(struct snd_pcm_substream *substream,
 			xcr |= DAVINCI_MCBSP_XCR_XFRLEN2(element_cnt - 1);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	mcbsp_word_length = asp_word_length[fmt];
@@ -503,7 +503,7 @@ static int davinci_i2s_hw_params(struct snd_pcm_substream *substream,
 		xcr |= DAVINCI_MCBSP_XCR_XFRLEN1(element_cnt - 1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rcr |= DAVINCI_MCBSP_RCR_RWDLEN1(mcbsp_word_length) |
@@ -584,7 +584,7 @@ static int davinci_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		davinci_mcbsp_stop(dev, playback);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -659,7 +659,7 @@ static int davinci_i2s_probe(struct platform_device *pdev)
 		mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		if (!mem) {
 			dev_err(&pdev->dev, "no mem resource?\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -687,7 +687,7 @@ static int davinci_i2s_probe(struct platform_device *pdev)
 		dma_data->filter_data = "tx";
 	} else {
 		dev_err(&pdev->dev, "Missing DMA tx resource\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dma_data = &dev->dma_data[SNDRV_PCM_STREAM_CAPTURE];
@@ -702,12 +702,12 @@ static int davinci_i2s_probe(struct platform_device *pdev)
 		dma_data->filter_data = "rx";
 	} else {
 		dev_err(&pdev->dev, "Missing DMA rx resource\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev->clk = clk_get(&pdev->dev, NULL);
 	if (IS_ERR(dev->clk))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	clk_enable(dev->clk);
 
 	dev->dev = &pdev->dev;

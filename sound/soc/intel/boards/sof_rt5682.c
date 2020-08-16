@@ -321,7 +321,7 @@ static int sof_card_late_probe(struct snd_soc_card *card)
 		return 0;
 
 	if (list_empty(&ctx->hdmi_pcm_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctx->common_hdmi_codec_drv) {
 		pcm = list_first_entry(&ctx->hdmi_pcm_list, struct sof_hdmi_pcm,

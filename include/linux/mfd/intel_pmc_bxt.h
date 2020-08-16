@@ -35,18 +35,18 @@ int intel_pmc_s0ix_counter_read(struct intel_pmc_dev *pmc, u64 *data);
 static inline int intel_pmc_gcr_read64(struct intel_pmc_dev *pmc, u32 offset,
 				       u64 *data)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int intel_pmc_gcr_update(struct intel_pmc_dev *pmc, u32 offset,
 				       u32 mask, u32 val)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int intel_pmc_s0ix_counter_read(struct intel_pmc_dev *pmc, u64 *data)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 

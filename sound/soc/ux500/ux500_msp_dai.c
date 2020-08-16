@@ -92,7 +92,7 @@ static int setup_frameper(struct snd_soc_dai *dai, unsigned int rate,
 			dev_err(dai->dev,
 				"%s: Error: Unsupported sample-rate (freq = %d)!\n",
 				__func__, rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -111,7 +111,7 @@ static int setup_frameper(struct snd_soc_dai *dai, unsigned int rate,
 		dev_err(dai->dev,
 			"%s: Error: Unsupported slot-count (slots = %d)!\n",
 			__func__, drvdata->slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prot_desc->clocks_per_frame =
@@ -153,7 +153,7 @@ static int setup_pcm_framing(struct snd_soc_dai *dai, unsigned int rate,
 		dev_err(dai->dev,
 			"%s: Error: Unsupported slot-count (slots = %d)!\n",
 			__func__, drvdata->slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prot_desc->tx_frame_len_1 = frame_length;
@@ -188,7 +188,7 @@ static int setup_clocking(struct snd_soc_dai *dai,
 			"%s: Error: Unsupported inversion (fmt = 0x%x)!\n",
 			__func__, fmt);
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -219,7 +219,7 @@ static int setup_clocking(struct snd_soc_dai *dai,
 		dev_err(dai->dev, "%s: Error: Unsupported master (fmt = 0x%x)!\n",
 			__func__, fmt);
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -374,7 +374,7 @@ static int setup_msp_config(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "%s: Error: Unsupported format (%d)!\n",
 			__func__, fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return setup_clocking(dai, fmt, msp_config);
@@ -530,7 +530,7 @@ static int ux500_msp_dai_hw_params(struct snd_pcm_substream *substream,
 		dev_err(dai->dev,
 			"%s: Error: Unsupported protocol (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -557,7 +557,7 @@ static int ux500_msp_dai_set_dai_fmt(struct snd_soc_dai *dai,
 		dev_err(dai->dev,
 			"%s: Error: Unsupported protocol/master (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -570,7 +570,7 @@ static int ux500_msp_dai_set_dai_fmt(struct snd_soc_dai *dai,
 		dev_err(dai->dev,
 			"%s: Error: Unsupported inversion (fmt = 0x%x)!\n",
 			__func__, drvdata->fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	drvdata->fmt = fmt;
@@ -601,14 +601,14 @@ static int ux500_msp_dai_set_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "%s: Error: Unsupported slot-count (%d)!\n",
 			__func__, slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	drvdata->slots = slots;
 
 	if (!(slot_width == 16)) {
 		dev_err(dai->dev, "%s: Error: Unsupported slot-width (%d)!\n",
 			__func__, slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	drvdata->slot_width = slot_width;
 
@@ -634,7 +634,7 @@ static int ux500_msp_dai_set_dai_sysclk(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "%s: MSP %d: Invalid clk-id (%d)!\n",
 			__func__, dai->id, clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -744,7 +744,7 @@ static int ux500_msp_drv_probe(struct platform_device *pdev)
 
 	if (!pdata && !np) {
 		dev_err(&pdev->dev, "No platform data or Device Tree found\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	drvdata = devm_kzalloc(&pdev->dev,

@@ -461,7 +461,7 @@ static int ad1983_auto_smux_enum_info(struct snd_kcontrol *kcontrol,
 	else if (num_conns == 3)
 		return snd_hda_enum_helper_info(kcontrol, uinfo, 3, texts3);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int ad1983_auto_smux_enum_get(struct snd_kcontrol *kcontrol,
@@ -484,7 +484,7 @@ static int ad1983_auto_smux_enum_put(struct snd_kcontrol *kcontrol,
 	int num_conns = spec->num_smux_conns;
 
 	if (val >= num_conns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (spec->cur_smux == val)
 		return 0;
 	spec->cur_smux = val;
@@ -762,7 +762,7 @@ static int ad1988_auto_smux_enum_put(struct snd_kcontrol *kcontrol,
 	int num_conns = spec->num_smux_conns;
 
 	if (val >= num_conns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (spec->cur_smux == val)
 		return 0;
 

@@ -21,7 +21,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 	/* validate existing data */
 	if (!(rdev->wiphy.pmsr_capa->ftm.bandwidths & BIT(out->chandef.width))) {
 		NL_SET_ERR_MSG(info->extack, "FTM: unsupported bandwidth");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* no validation needed - was already done via nested policy */
@@ -42,7 +42,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		if (!tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE]) {
 			NL_SET_ERR_MSG(info->extack,
 				       "FTM: must specify preamble");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -50,7 +50,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE],
 				    "FTM: invalid preamble");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	out->ftm.preamble = preamble;
@@ -65,13 +65,13 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_ASAP],
 				    "FTM: ASAP mode not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!out->ftm.asap && !capa->ftm.non_asap) {
 		NL_SET_ERR_MSG(info->extack,
 			       "FTM: non-ASAP mode not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	out->ftm.num_bursts_exp = 0;
@@ -84,7 +84,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_NUM_BURSTS_EXP],
 				    "FTM: max NUM_BURSTS_EXP must be set lower than the device limit");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	out->ftm.burst_duration = 15;
@@ -103,7 +103,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_FTMS_PER_BURST],
 				    "FTM: FTMs per burst must be set lower than the device limit but non-zero");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	out->ftm.ftmr_retries = 3;
@@ -132,7 +132,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_TRIGGER_BASED],
 				    "FTM: trigger based ranging is not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	out->ftm.non_trigger_based =
@@ -141,13 +141,13 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_NON_TRIGGER_BASED],
 				    "FTM: trigger based ranging is not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (out->ftm.trigger_based && out->ftm.non_trigger_based) {
 		NL_SET_ERR_MSG(info->extack,
 			       "FTM: can't set both trigger based and non trigger based");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((out->ftm.trigger_based || out->ftm.non_trigger_based) &&
@@ -155,7 +155,7 @@ static int pmsr_parse_ftm(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_FTM_REQ_ATTR_PREAMBLE],
 				    "FTM: non EDCA based ranging must use HE preamble");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -180,7 +180,7 @@ static int pmsr_parse_peer(struct cfg80211_registered_device *rdev,
 	    !tb[NL80211_PMSR_PEER_ATTR_REQ]) {
 		NL_SET_ERR_MSG_ATTR(info->extack, peer,
 				    "insufficient peer data");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memcpy(out->addr, nla_data(tb[NL80211_PMSR_PEER_ATTR_ADDR]), ETH_ALEN);
@@ -206,7 +206,7 @@ static int pmsr_parse_peer(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    tb[NL80211_PMSR_PEER_ATTR_REQ],
 				    "missing request type/data");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (req[NL80211_PMSR_REQ_ATTR_GET_AP_TSF])
@@ -216,7 +216,7 @@ static int pmsr_parse_peer(struct cfg80211_registered_device *rdev,
 		NL_SET_ERR_MSG_ATTR(info->extack,
 				    req[NL80211_PMSR_REQ_ATTR_GET_AP_TSF],
 				    "reporting AP TSF is not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nla_for_each_nested(treq, req[NL80211_PMSR_REQ_ATTR_DATA], rem) {
@@ -227,7 +227,7 @@ static int pmsr_parse_peer(struct cfg80211_registered_device *rdev,
 		default:
 			NL_SET_ERR_MSG_ATTR(info->extack, treq,
 					    "unsupported measurement type");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 
@@ -247,15 +247,15 @@ int nl80211_pmsr_start(struct sk_buff *skb, struct genl_info *info)
 	int count, rem, err, idx;
 
 	if (!rdev->wiphy.pmsr_capa)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!reqattr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	peers = nla_find(nla_data(reqattr), nla_len(reqattr),
 			 NL80211_PMSR_ATTR_PEERS);
 	if (!peers)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	count = 0;
 	nla_for_each_nested(peer, peers, rem) {
@@ -264,7 +264,7 @@ int nl80211_pmsr_start(struct sk_buff *skb, struct genl_info *info)
 		if (count > rdev->wiphy.pmsr_capa->max_peers) {
 			NL_SET_ERR_MSG_ATTR(info->extack, peer,
 					    "Too many peers used");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -280,7 +280,7 @@ int nl80211_pmsr_start(struct sk_buff *skb, struct genl_info *info)
 			NL_SET_ERR_MSG_ATTR(info->extack,
 					    info->attrs[NL80211_ATTR_MAC],
 					    "device cannot randomize MAC address");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_err;
 		}
 
@@ -445,7 +445,7 @@ static int nl80211_pmsr_send_ftm_res(struct sk_buff *msg,
 
 	return 0;
 error:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static int nl80211_pmsr_send_result(struct sk_buff *msg,
@@ -511,7 +511,7 @@ static int nl80211_pmsr_send_result(struct sk_buff *msg,
 
 	return 0;
 error:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 void cfg80211_pmsr_report(struct wireless_dev *wdev,

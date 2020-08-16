@@ -508,13 +508,13 @@ tcf_change_indev(struct net *net, struct nlattr *indev_tlv,
 	if (nla_strlcpy(indev, indev_tlv, IFNAMSIZ) >= IFNAMSIZ) {
 		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
 				    "Interface name too long");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev = __dev_get_by_name(net, indev);
 	if (!dev) {
 		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
 				    "Network device not found");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return dev->ifindex;
 }

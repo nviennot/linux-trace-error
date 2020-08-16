@@ -200,25 +200,25 @@ static int icmpv6_nlattr_to_tuple(struct nlattr *tb[],
 {
 	if (flags & CTA_FILTER_FLAG(CTA_PROTO_ICMPV6_TYPE)) {
 		if (!tb[CTA_PROTO_ICMPV6_TYPE])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tuple->dst.u.icmp.type = nla_get_u8(tb[CTA_PROTO_ICMPV6_TYPE]);
 		if (tuple->dst.u.icmp.type < 128 ||
 		    tuple->dst.u.icmp.type - 128 >= sizeof(invmap) ||
 		    !invmap[tuple->dst.u.icmp.type - 128])
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (flags & CTA_FILTER_FLAG(CTA_PROTO_ICMPV6_CODE)) {
 		if (!tb[CTA_PROTO_ICMPV6_CODE])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tuple->dst.u.icmp.code = nla_get_u8(tb[CTA_PROTO_ICMPV6_CODE]);
 	}
 
 	if (flags & CTA_FILTER_FLAG(CTA_PROTO_ICMPV6_ID)) {
 		if (!tb[CTA_PROTO_ICMPV6_ID])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tuple->src.u.icmp.id = nla_get_be16(tb[CTA_PROTO_ICMPV6_ID]);
 	}
@@ -270,7 +270,7 @@ icmpv6_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
 	return 0;
 
 nla_put_failure:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static const struct nla_policy

@@ -212,7 +212,7 @@ static int jz4725b_out_stage_enable(struct snd_soc_dapm_widget *w,
 			       val, val & BIT(REG_IFR_RAMP_DOWN_DONE_OFFSET),
 			       100000, 500000);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -392,7 +392,7 @@ static int jz4725b_codec_hw_params(struct snd_pcm_substream *substream,
 		bit_width = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (rate = 0; rate < ARRAY_SIZE(jz4725b_codec_sample_rates); rate++) {
@@ -401,7 +401,7 @@ static int jz4725b_codec_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	if (rate == ARRAY_SIZE(jz4725b_codec_sample_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		regmap_update_bits(icdc->regmap,

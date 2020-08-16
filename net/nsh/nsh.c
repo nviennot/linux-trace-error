@@ -22,7 +22,7 @@ int nsh_push(struct sk_buff *skb, const struct nshhdr *pushed_nh)
 	} else {
 		next_proto = tun_p_from_eth_p(skb->protocol);
 		if (!next_proto)
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 	}
 
 	/* Add the NSH header */
@@ -55,13 +55,13 @@ int nsh_pop(struct sk_buff *skb)
 	nh = (struct nshhdr *)(skb->data);
 	length = nsh_hdr_len(nh);
 	if (length < NSH_BASE_HDR_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	inner_proto = tun_p_to_eth_p(nh->np);
 	if (!pskb_may_pull(skb, length))
 		return -ENOMEM;
 
 	if (!inner_proto)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	skb_pull_rcsum(skb, length);
 	skb_reset_mac_header(skb);
@@ -76,7 +76,7 @@ EXPORT_SYMBOL_GPL(nsh_pop);
 static struct sk_buff *nsh_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	unsigned int nsh_len, mac_len;
 	__be16 proto;
 	int nhoff;

@@ -74,7 +74,7 @@ static int linkinfo_fill_reply(struct sk_buff *skb,
 		       data->lsettings->eth_tp_mdix_ctrl) ||
 	    nla_put_u8(skb, ETHTOOL_A_LINKINFO_TRANSCEIVER,
 		       data->lsettings->transceiver))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -128,7 +128,7 @@ int ethnl_set_linkinfo(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	dev = req_info.dev;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!dev->ethtool_ops->get_link_ksettings ||
 	    !dev->ethtool_ops->set_link_ksettings)
 		goto out_dev;

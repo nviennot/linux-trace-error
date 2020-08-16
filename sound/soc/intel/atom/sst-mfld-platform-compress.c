@@ -56,7 +56,7 @@ static int sst_platform_compr_open(struct snd_soc_component *component,
 	/* get the sst ops */
 	if (!sst || !try_module_get(sst->dev->driver->owner)) {
 		pr_err("no device available to run\n");
-		ret_val = -ENODEV;
+		ret_val = -ERR(ENODEV);
 		goto out_ops;
 	}
 	stream->compr_ops = sst->compr_ops;
@@ -133,7 +133,7 @@ static int sst_platform_compr_set_params(struct snd_soc_component *component,
 							AAC_BIT_STREAM_RAW;
 		else {
 			pr_err("Undefined format%d\n", params->codec.format);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		str_params.sparams.uc.aac_params.externalsr =
 						params->codec.sample_rate;
@@ -142,7 +142,7 @@ static int sst_platform_compr_set_params(struct snd_soc_component *component,
 
 	default:
 		pr_err("codec not supported, id =%d\n", params->codec.id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	str_params.aparams.ring_buf_info[0].addr  =
@@ -198,7 +198,7 @@ static int sst_platform_compr_trigger(struct snd_soc_component *component,
 			return stream->compr_ops->stream_pause_release(sst->dev, stream->id);
 		break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int sst_platform_compr_pointer(struct snd_soc_component *component,

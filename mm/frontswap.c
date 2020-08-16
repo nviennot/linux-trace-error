@@ -382,7 +382,7 @@ static unsigned long __frontswap_curr_pages(void)
 static int __frontswap_unuse_pages(unsigned long total, unsigned long *unused,
 					int *swapid)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	struct swap_info_struct *si = NULL;
 	int si_frontswap_pages;
 	unsigned long total_pages_to_unuse = total;
@@ -484,7 +484,7 @@ static int __init init_frontswap(void)
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *root = debugfs_create_dir("frontswap", NULL);
 	if (root == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	debugfs_create_u64("loads", 0444, root, &frontswap_loads);
 	debugfs_create_u64("succ_stores", 0444, root, &frontswap_succ_stores);
 	debugfs_create_u64("failed_stores", 0444, root,

@@ -97,12 +97,12 @@ static int hpfs_get_block(struct inode *inode, sector_t iblock, struct buffer_he
 	if (!create) goto ret_0;
 	if (iblock<<9 != hpfs_i(inode)->mmu_private) {
 		BUG();
-		r = -EIO;
+		r = -ERR(EIO);
 		goto ret_r;
 	}
 	if ((s = hpfs_add_sector_to_btree(inode->i_sb, inode->i_ino, 1, inode->i_blocks - 1)) == -1) {
 		hpfs_truncate_btree(inode->i_sb, inode->i_ino, 1, inode->i_blocks - 1);
-		r = -ENOSPC;
+		r = -ERR(ENOSPC);
 		goto ret_r;
 	}
 	inode->i_blocks++;

@@ -64,7 +64,7 @@ void hfsplus_fill_defaults(struct hfsplus_sb_info *opts)
 static inline int match_fourchar(substring_t *arg, u32 *result)
 {
 	if (arg->to - arg->from != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	memcpy(result, arg->from, 4);
 	return 0;
 }

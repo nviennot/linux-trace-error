@@ -1385,7 +1385,7 @@ void *__xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
 	void *curr;
 
 	if (WARN_ON_ONCE(xa_is_advanced(entry)))
-		return XA_ERROR(-EINVAL);
+		return XA_ERROR(-ERR(EINVAL));
 	if (xa_track_free(xa) && !entry)
 		entry = XA_ZERO_ENTRY;
 
@@ -1451,7 +1451,7 @@ void *__xa_cmpxchg(struct xarray *xa, unsigned long index,
 	void *curr;
 
 	if (WARN_ON_ONCE(xa_is_advanced(entry)))
-		return XA_ERROR(-EINVAL);
+		return XA_ERROR(-ERR(EINVAL));
 
 	do {
 		curr = xas_load(&xas);
@@ -1488,7 +1488,7 @@ int __xa_insert(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
 	void *curr;
 
 	if (WARN_ON_ONCE(xa_is_advanced(entry)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!entry)
 		entry = XA_ZERO_ENTRY;
 
@@ -1563,9 +1563,9 @@ void *xa_store_range(struct xarray *xa, unsigned long first,
 	XA_STATE(xas, xa, 0);
 
 	if (WARN_ON_ONCE(xa_is_internal(entry)))
-		return XA_ERROR(-EINVAL);
+		return XA_ERROR(-ERR(EINVAL));
 	if (last < first)
-		return XA_ERROR(-EINVAL);
+		return XA_ERROR(-ERR(EINVAL));
 
 	do {
 		xas_lock(&xas);
@@ -1617,9 +1617,9 @@ int __xa_alloc(struct xarray *xa, u32 *id, void *entry,
 	XA_STATE(xas, xa, 0);
 
 	if (WARN_ON_ONCE(xa_is_advanced(entry)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN_ON_ONCE(!xa_track_free(xa)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!entry)
 		entry = XA_ZERO_ENTRY;

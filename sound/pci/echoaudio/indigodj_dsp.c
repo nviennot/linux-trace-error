@@ -39,7 +39,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != INDIGO_DJ))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -110,13 +110,13 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	default:
 		dev_err(chip->card->dev,
 			"set_sample_rate: %d invalid!\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set the control register if it has changed */
 	if (control_reg != le32_to_cpu(chip->comm_page->control_register)) {
 		if (wait_handshake(chip))
-			return -EIO;
+			return -ERR(EIO);
 
 		chip->comm_page->sample_rate = cpu_to_le32(rate);	/* ignored by the DSP */
 		chip->comm_page->control_register = cpu_to_le32(control_reg);
@@ -138,10 +138,10 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 
 	if (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
 		       output >= num_busses_out(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->vmixer_gain[output][pipe] = gain;
 	index = output * num_pipes_out(chip) + pipe;
@@ -158,7 +158,7 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 static int update_vmixer_level(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
 }

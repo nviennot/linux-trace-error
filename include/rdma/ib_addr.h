@@ -150,7 +150,7 @@ static inline int rdma_ip2gid(struct sockaddr *addr, union ib_gid *gid)
 			((struct sockaddr_in6 *)addr)->sin6_addr;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

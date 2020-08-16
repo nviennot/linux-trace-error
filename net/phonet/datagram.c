@@ -47,7 +47,7 @@ static int pn_ioctl(struct sock *sk, int cmd, unsigned long arg)
 			if (get_user(res, (u32 __user *)arg))
 				return -EFAULT;
 			if (res >= 256)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (cmd == SIOCPNADDRESOURCE)
 				return pn_sock_bind_res(sk, res);
 			else
@@ -55,7 +55,7 @@ static int pn_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		}
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 /* Destroy socket. All references are gone. */
@@ -78,16 +78,16 @@ static int pn_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_NOSIGNAL|
 				MSG_CMSG_COMPAT))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (target == NULL)
-		return -EDESTADDRREQ;
+		return -ERR(EDESTADDRREQ);
 
 	if (msg->msg_namelen < sizeof(struct sockaddr_pn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (target->spn_family != AF_PHONET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	skb = sock_alloc_send_skb(sk, MAX_PHONET_HEADER + len,
 					msg->msg_flags & MSG_DONTWAIT, &err);
@@ -116,7 +116,7 @@ static int pn_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 {
 	struct sk_buff *skb = NULL;
 	struct sockaddr_pn sa;
-	int rval = -EOPNOTSUPP;
+	int rval = -ERR(EOPNOTSUPP);
 	int copylen;
 
 	if (flags & ~(MSG_PEEK|MSG_TRUNC|MSG_DONTWAIT|MSG_NOSIGNAL|

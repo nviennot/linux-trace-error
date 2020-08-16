@@ -102,7 +102,7 @@ int mb_cache_entry_create(struct mb_cache *cache, gfp_t mask, u32 key,
 		if (dup->e_key == key && dup->e_value == value) {
 			hlist_bl_unlock(head);
 			kmem_cache_free(mb_entry_cache, entry);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	hlist_bl_add_head(&entry->e_hash_list, head);

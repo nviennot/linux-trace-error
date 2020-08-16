@@ -153,7 +153,7 @@ int ceph_pagelist_truncate(struct ceph_pagelist *pl,
 	struct page *page;
 
 	if (pl != c->pl)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ceph_pagelist_unmap_tail(pl);
 	while (pl->head.prev != c->page_lru) {
 		page = list_entry(pl->head.prev, struct page, lru);

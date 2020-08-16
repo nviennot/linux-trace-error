@@ -174,49 +174,49 @@ void tegra_pmc_enter_suspend_mode(enum tegra_suspend_mode mode);
 #else
 static inline int tegra_powergate_power_on(unsigned int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_powergate_power_off(unsigned int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_powergate_remove_clamping(unsigned int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_powergate_sequence_power_up(unsigned int id,
 						    struct clk *clk,
 						    struct reset_control *rst)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_io_pad_power_enable(enum tegra_io_pad id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_io_pad_power_disable(enum tegra_io_pad id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_io_pad_get_voltage(enum tegra_io_pad id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_io_rail_power_on(unsigned int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int tegra_io_rail_power_off(unsigned int id)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void tegra_pmc_set_suspend_mode(enum tegra_suspend_mode mode)

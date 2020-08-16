@@ -38,7 +38,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != GINA20))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -106,7 +106,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	u8 clock_state, spdif_status;
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (rate) {
 	case 44100:
@@ -166,7 +166,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 		chip->input_clock = clock;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -178,10 +178,10 @@ static int set_input_clock(struct echoaudio *chip, u16 clock)
 static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
 {
 	if (snd_BUG_ON(input >= num_busses_in(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->input_gain[input] = gain;
 	gain += GL20_INPUT_GAIN_MAGIC_NUMBER;
@@ -195,7 +195,7 @@ static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
 static int update_flags(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
 }

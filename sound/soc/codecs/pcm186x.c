@@ -302,7 +302,7 @@ static int pcm186x_hw_params(struct snd_pcm_substream *substream,
 			  PCM186X_PCM_CFG_TX_WLEN_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, PCM186X_PCM_CFG,
@@ -325,7 +325,7 @@ static int pcm186x_hw_params(struct snd_pcm_substream *substream,
 			tdm_tx_sel = PCM186X_TDM_TX_SEL_6CH;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, PCM186X_TDM_TX_SEL,
@@ -369,7 +369,7 @@ static int pcm186x_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 	case SND_SOC_DAIFMT_CBM_CFM:
 		if (!priv->sysclk) {
 			dev_err(component->dev, "operating in master mode requires sysclock to be configured\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		clk_ctrl |= PCM186X_CLK_CTRL_MST_MODE;
 		priv->is_master_mode = true;
@@ -379,7 +379,7 @@ static int pcm186x_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI master/slave interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set interface polarity */
@@ -388,7 +388,7 @@ static int pcm186x_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 		break;
 	default:
 		dev_err(component->dev, "Inverted DAI clocks not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set interface format */
@@ -411,7 +411,7 @@ static int pcm186x_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, PCM186X_CLK_CTRL,
@@ -438,7 +438,7 @@ static int pcm186x_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 
 	if (!tx_mask) {
 		dev_err(component->dev, "tdm tx mask must not be 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	first_slot = __ffs(tx_mask);
@@ -446,14 +446,14 @@ static int pcm186x_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 
 	if (last_slot - first_slot != hweight32(tx_mask) - 1) {
 		dev_err(component->dev, "tdm tx mask must be contiguous\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tdm_offset = first_slot * slot_width;
 
 	if (tdm_offset > 255) {
 		dev_err(component->dev, "tdm tx slot selection out of bounds\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->tdm_offset = tdm_offset;

@@ -189,7 +189,7 @@ static int max98371_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "DAI clock mode unsupported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -204,7 +204,7 @@ static int max98371_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "DAI wrong mode unsupported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(max98371->regmap, MAX98371_FMT,
 			MAX98371_FMT_MODE_MASK, val);
@@ -242,7 +242,7 @@ static int max98371_dai_hw_params(struct snd_pcm_substream *substream,
 		ch_size = 32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* BCLK/LRCLK ratio calculation */
@@ -264,7 +264,7 @@ static int max98371_dai_hw_params(struct snd_pcm_substream *substream,
 			MAX98371_DAI_BSEL_MASK, MAX98371_DAI_BSEL_64);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rate) {
@@ -294,7 +294,7 @@ static int max98371_dai_hw_params(struct snd_pcm_substream *substream,
 			MAX98371_SPK_SR_MASK, MAX98371_SPK_SR_96);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* enabling both the RX channels*/

@@ -60,7 +60,7 @@ static int checkentry_lsm(struct xt_secmark_target_info *info)
 	if (!info->secid) {
 		pr_info_ratelimited("unable to map security context \'%s\'\n",
 				    info->secctx);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = security_secmark_relabel_packet(info->secid);
@@ -82,13 +82,13 @@ static int secmark_tg_check(const struct xt_tgchk_param *par)
 	    strcmp(par->table, "security") != 0) {
 		pr_info_ratelimited("only valid in \'mangle\' or \'security\' table, not \'%s\'\n",
 				    par->table);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mode && mode != info->mode) {
 		pr_info_ratelimited("mode already set to %hu cannot mix with rules for mode %hu\n",
 				    mode, info->mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (info->mode) {
@@ -96,7 +96,7 @@ static int secmark_tg_check(const struct xt_tgchk_param *par)
 		break;
 	default:
 		pr_info_ratelimited("invalid mode: %hu\n", info->mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = checkentry_lsm(info);

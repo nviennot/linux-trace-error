@@ -1182,7 +1182,7 @@ int fib_table_insert(struct net *net, struct fib_table *tb,
 	key = ntohl(cfg->fc_dst);
 
 	if (!fib_valid_key_len(key, plen, extack))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("Insert table=%u %08x/%d\n", tb->tb_id, key, plen);
 
@@ -1209,7 +1209,7 @@ int fib_table_insert(struct net *net, struct fib_table *tb,
 	    fa->fa_info->fib_priority == fi->fib_priority) {
 		struct fib_alias *fa_first, *fa_match;
 
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		if (cfg->fc_nlflags & NLM_F_EXCL)
 			goto out;
 
@@ -1247,7 +1247,7 @@ int fib_table_insert(struct net *net, struct fib_table *tb,
 					err = 0;
 				goto out;
 			}
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			new_fa = kmem_cache_alloc(fn_alias_kmem, GFP_KERNEL);
 			if (!new_fa)
 				goto out;
@@ -1304,12 +1304,12 @@ int fib_table_insert(struct net *net, struct fib_table *tb,
 		else
 			fa = fa_first;
 	}
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!(cfg->fc_nlflags & NLM_F_CREATE))
 		goto out;
 
 	nlflags |= NLM_F_CREATE;
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	new_fa = kmem_cache_alloc(fn_alias_kmem, GFP_KERNEL);
 	if (!new_fa)
 		goto out;
@@ -1411,7 +1411,7 @@ int fib_table_lookup(struct fib_table *tb, const struct flowi4 *flp,
 	n = get_child_rcu(pn, cindex);
 	if (!n) {
 		trace_fib_table_lookup(tb->tb_id, flp, NULL, -EAGAIN);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 #ifdef CONFIG_IP_FIB_TRIE_STATS
@@ -1498,7 +1498,7 @@ backtrace:
 				if (IS_TRIE(pn)) {
 					trace_fib_table_lookup(tb->tb_id, flp,
 							       NULL, -EAGAIN);
-					return -EAGAIN;
+					return -ERR(EAGAIN);
 				}
 #ifdef CONFIG_IP_FIB_TRIE_STATS
 				this_cpu_inc(stats->backtrack);
@@ -1672,15 +1672,15 @@ int fib_table_delete(struct net *net, struct fib_table *tb,
 	key = ntohl(cfg->fc_dst);
 
 	if (!fib_valid_key_len(key, plen, extack))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	l = fib_find_node(t, &tp, key);
 	if (!l)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	fa = fib_find_alias(&l->leaf, slen, tos, 0, tb->tb_id, false);
 	if (!fa)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	pr_debug("Deleting %08x/%d tos=%d t=%p\n", key, plen, tos, t);
 
@@ -1708,7 +1708,7 @@ int fib_table_delete(struct net *net, struct fib_table *tb,
 	}
 
 	if (!fa_to_delete)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	fib_notify_alias_delete(net, key, &l->leaf, fa_to_delete, extack);
 	rtmsg_fib(RTM_DELROUTE, htonl(key), fa_to_delete, plen, tb->tb_id,

@@ -244,7 +244,7 @@ static int snd_card_sb16_pnp(int dev, struct snd_card_sb16 *acard,
 
 	acard->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->dev == NULL)
-		return -ENODEV; 
+		return -ERR(ENODEV); 
 
 #ifdef SNDRV_SBAWE_EMU8000
 	acard->devwt = pnp_request_card_device(card, id->devs[1].id, acard->dev);
@@ -353,7 +353,7 @@ static int snd_sb16_probe(struct snd_card *card, int dev)
 	acard->chip = chip;
 	if (chip->hardware != SB_HW_16) {
 		snd_printk(KERN_ERR PFX "SB 16 chip was not detected at 0x%lx\n", port[dev]);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	chip->mpu_port = mpu_port[dev];
 	if (! is_isapnp_selected(dev) && (err = snd_sb16dsp_configure(chip)) < 0)
@@ -516,19 +516,19 @@ static int snd_sb16_isa_probe(struct device *pdev, unsigned int dev)
 	if (irq[dev] == SNDRV_AUTO_IRQ) {
 		if ((irq[dev] = snd_legacy_find_free_irq(possible_irqs)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma8[dev] == SNDRV_AUTO_DMA) {
 		if ((dma8[dev] = snd_legacy_find_free_dma(possible_dmas8)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free 8-bit DMA\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma16[dev] == SNDRV_AUTO_DMA) {
 		if ((dma16[dev] = snd_legacy_find_free_dma(possible_dmas16)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free 16-bit DMA\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -610,7 +610,7 @@ static int snd_sb16_pnp_detect(struct pnp_card_link *pcard,
 		return 0;
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void snd_sb16_pnp_remove(struct pnp_card_link *pcard)

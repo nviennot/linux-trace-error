@@ -489,12 +489,12 @@ int ubifs_validate_entry(struct ubifs_info *c,
 	    le64_to_cpu(dent->inum) > MAX_INUM) {
 		ubifs_err(c, "bad %s node", key_type == UBIFS_DENT_KEY ?
 			  "directory entry" : "extended attribute entry");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (key_type != UBIFS_DENT_KEY && key_type != UBIFS_XENT_KEY) {
 		ubifs_err(c, "bad key type %d", key_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -616,7 +616,7 @@ static int authenticate_sleb(struct ubifs_info *c, struct ubifs_scan_leb *sleb,
 
 			err = ubifs_check_hmac(c, auth->hmac, hmac);
 			if (err) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto out;
 			}
 			n_not_auth = 0;
@@ -642,7 +642,7 @@ static int authenticate_sleb(struct ubifs_info *c, struct ubifs_scan_leb *sleb,
 		} else {
 			dbg_mnt("%d unauthenticated nodes found on non-last LEB %d",
 				n_not_auth, sleb->lnum);
-			err = -EPERM;
+			err = -ERR(EPERM);
 		}
 	} else {
 		err = 0;
@@ -801,7 +801,7 @@ static int replay_bud(struct ubifs_info *c, struct bud_entry *b)
 		default:
 			ubifs_err(c, "unexpected node type %d in bud LEB %d:%d",
 				  snod->type, lnum, snod->offs);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_dump;
 		}
 		if (err)
@@ -829,7 +829,7 @@ out_dump:
 	ubifs_err(c, "bad node is at LEB %d:%d", lnum, snod->offs);
 	ubifs_dump_node(c, snod->node);
 	ubifs_scan_destroy(sleb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -953,7 +953,7 @@ static int validate_ref(struct ubifs_info *c, const struct ubifs_ref_node *ref)
 	if (jhead >= c->jhead_cnt || lnum >= c->leb_cnt ||
 	    lnum < c->main_first || offs > c->leb_size ||
 	    offs & (c->min_io_size - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Make sure we have not already looked at this bud */
 	bud = ubifs_search_bud(c, lnum);
@@ -961,7 +961,7 @@ static int validate_ref(struct ubifs_info *c, const struct ubifs_ref_node *ref)
 		if (bud->jhead == jhead && bud->start <= offs)
 			return 1;
 		ubifs_err(c, "bud at LEB %d:%d was already referred", lnum, offs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1127,7 +1127,7 @@ out_dump:
 		  lnum, offs + snod->offs);
 	ubifs_dump_node(c, snod->node);
 	ubifs_scan_destroy(sleb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -1187,7 +1187,7 @@ int ubifs_replay_journal(struct ubifs_info *c)
 	if (c->ihead_offs != c->leb_size - free) {
 		ubifs_err(c, "bad index head LEB %d:%d", c->ihead_lnum,
 			  c->ihead_offs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dbg_mnt("start replaying the journal");
@@ -1210,7 +1210,7 @@ int ubifs_replay_journal(struct ubifs_info *c)
 			 */
 			ubifs_err(c, "no UBIFS nodes found at the log head LEB %d:%d, possibly corrupted",
 				  lnum, 0);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		if (err)
 			goto out;

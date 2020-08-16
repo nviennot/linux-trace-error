@@ -96,7 +96,7 @@ int __cfg80211_join_ibss(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (wdev->ssid_len)
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	if (!params->basic_rates) {
 		/*
@@ -124,7 +124,7 @@ int __cfg80211_join_ibss(struct cfg80211_registered_device *rdev,
 	}
 
 	if (WARN_ON(connkeys && connkeys->def < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wdev->connect_keys))
 		kzfree(wdev->connect_keys);
@@ -207,7 +207,7 @@ int __cfg80211_leave_ibss(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (!wdev->ssid_len)
-		return -ENOLINK;
+		return -ERR(ENOLINK);
 
 	err = rdev_leave_ibss(rdev, dev);
 
@@ -273,7 +273,7 @@ int cfg80211_ibss_wext_join(struct cfg80211_registered_device *rdev,
 		}
 
 		if (!new_chan)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		cfg80211_chandef_create(&wdev->wext.ibss.chandef, new_chan,
 					NL80211_CHAN_NO_HT);
@@ -317,10 +317,10 @@ int cfg80211_ibss_wext_siwfreq(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rdev->ops->join_ibss)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	freq = cfg80211_wext_freq(wextfreq);
 	if (freq < 0)
@@ -329,10 +329,10 @@ int cfg80211_ibss_wext_siwfreq(struct net_device *dev,
 	if (freq) {
 		chan = ieee80211_get_channel(wdev->wiphy, freq);
 		if (!chan)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (chan->flags & IEEE80211_CHAN_NO_IR ||
 		    chan->flags & IEEE80211_CHAN_DISABLED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (wdev->wext.ibss.chandef.chan == chan)
@@ -372,7 +372,7 @@ int cfg80211_ibss_wext_giwfreq(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wdev_lock(wdev);
 	if (wdev->current_bss)
@@ -388,7 +388,7 @@ int cfg80211_ibss_wext_giwfreq(struct net_device *dev,
 	}
 
 	/* no channel if not joining */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int cfg80211_ibss_wext_siwessid(struct net_device *dev,
@@ -402,10 +402,10 @@ int cfg80211_ibss_wext_siwessid(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rdev->ops->join_ibss)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	wdev_lock(wdev);
 	err = 0;
@@ -439,7 +439,7 @@ int cfg80211_ibss_wext_giwessid(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data->flags = 0;
 
@@ -469,20 +469,20 @@ int cfg80211_ibss_wext_siwap(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rdev->ops->join_ibss)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (ap_addr->sa_family != ARPHRD_ETHER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* automatic mode */
 	if (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid))
 		bssid = NULL;
 
 	if (bssid && !is_valid_ether_addr(bssid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* both automatic */
 	if (!bssid && !wdev->wext.ibss.bssid)
@@ -523,7 +523,7 @@ int cfg80211_ibss_wext_giwap(struct net_device *dev,
 
 	/* call only for ibss! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_ADHOC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ap_addr->sa_family = ARPHRD_ETHER;
 

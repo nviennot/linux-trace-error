@@ -46,7 +46,7 @@ static struct ebt_replace_kernel initial_table = {
 static int check(const struct ebt_table_info *info, unsigned int valid_hooks)
 {
 	if (valid_hooks & ~FILTER_VALID_HOOKS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

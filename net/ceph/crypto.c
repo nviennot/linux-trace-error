@@ -34,11 +34,11 @@ static int set_secret(struct ceph_crypto_key *key, void *buf)
 	case CEPH_CRYPTO_AES:
 		break;
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	if (!key->len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	key->key = kmemdup(buf, key->len, GFP_NOIO);
 	if (!key->key) {
@@ -78,7 +78,7 @@ int ceph_crypto_key_encode(struct ceph_crypto_key *key, void **p, void *end)
 {
 	if (*p + sizeof(u16) + sizeof(key->created) +
 	    sizeof(u16) + key->len > end)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	ceph_encode_16(p, key->type);
 	ceph_encode_copy(p, &key->created, sizeof(key->created));
 	ceph_encode_16(p, key->len);
@@ -101,7 +101,7 @@ int ceph_crypto_key_decode(struct ceph_crypto_key *key, void **p, void *end)
 
 bad:
 	dout("failed to decode crypto key\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int ceph_crypto_key_unarmor(struct ceph_crypto_key *key, const char *inkey)
@@ -170,7 +170,7 @@ static int setup_sgtable(struct sg_table *sgt, struct scatterlist *prealloc_sg,
 
 	if (buf_len == 0) {
 		memset(sgt, 0, sizeof(*sgt));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (is_vmalloc) {
@@ -269,7 +269,7 @@ static int ceph_aes_crypt(const struct ceph_crypto_key *key, bool encrypt,
 		} else {
 			pr_err("%s got bad padding %d on in_len %d\n",
 			       __func__, pad_byte, in_len);
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto out_sgt;
 		}
 	}
@@ -290,7 +290,7 @@ int ceph_crypt(const struct ceph_crypto_key *key, bool encrypt,
 		return ceph_aes_crypt(key, encrypt, buf, buf_len, in_len,
 				      pout_len);
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 }
 
@@ -301,7 +301,7 @@ static int ceph_key_preparse(struct key_preparsed_payload *prep)
 	int ret;
 	void *p;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
 		goto err;
 

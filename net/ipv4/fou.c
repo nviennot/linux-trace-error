@@ -265,7 +265,7 @@ static int fou_gro_complete(struct sock *sk, struct sk_buff *skb,
 {
 	const struct net_offload *ops;
 	u8 proto = fou_from_sock(sk)->protocol;
-	int err = -ENOSYS;
+	int err = -ERR(ENOSYS);
 	const struct net_offload **offloads;
 
 	rcu_read_lock();
@@ -462,7 +462,7 @@ static int gue_gro_complete(struct sock *sk, struct sk_buff *skb, int nhoff)
 	const struct net_offload *ops;
 	unsigned int guehlen = 0;
 	u8 proto;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	switch (guehdr->version) {
 	case 0:
@@ -540,7 +540,7 @@ static int fou_add_to_port_list(struct net *net, struct fou *fou,
 	list_for_each_entry(fout, &fn->fou_list, list) {
 		if (fou_cfg_cmp(fout, cfg)) {
 			mutex_unlock(&fn->fou_lock);
-			return -EALREADY;
+			return -ERR(EALREADY);
 		}
 	}
 
@@ -608,7 +608,7 @@ static int fou_create(struct net *net, struct fou_cfg *cfg,
 		tunnel_cfg.gro_complete = gue_gro_complete;
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -636,7 +636,7 @@ error:
 static int fou_destroy(struct net *net, struct fou_cfg *cfg)
 {
 	struct fou_net *fn = net_generic(net, fou_net_id);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct fou *fou;
 
 	mutex_lock(&fn->fou_lock);
@@ -690,7 +690,7 @@ static int parse_nl_config(struct genl_info *info,
 			cfg->udp_config.ipv6_v6only = 1;
 			break;
 		default:
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 		}
 
 		cfg->udp_config.family = family;
@@ -743,13 +743,13 @@ static int parse_nl_config(struct genl_info *info,
 			port = nla_get_be16(info->attrs[FOU_ATTR_PEER_PORT]);
 			cfg->udp_config.peer_udp_port = port;
 		} else {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (info->attrs[FOU_ATTR_IFINDEX]) {
 		if (!has_local)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ifindex = nla_get_s32(info->attrs[FOU_ATTR_IFINDEX]);
 
@@ -838,7 +838,7 @@ static int fou_dump_info(struct fou *fou, u32 portid, u32 seq,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int fou_nl_cmd_get_port(struct sk_buff *skb, struct genl_info *info)
@@ -857,17 +857,17 @@ static int fou_nl_cmd_get_port(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	port = cfg.udp_config.local_udp_port;
 	if (port == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	family = cfg.udp_config.family;
 	if (family != AF_INET && family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!msg)
 		return -ENOMEM;
 
-	ret = -ESRCH;
+	ret = -ERR(ESRCH);
 	mutex_lock(&fn->fou_lock);
 	list_for_each_entry(fout, &fn->fou_list, list) {
 		if (fou_cfg_cmp(fout, &cfg)) {
@@ -1036,7 +1036,7 @@ int __gue_build_header(struct sk_buff *skb, struct ip_tunnel_encap *e,
 			__be16 *pd = data;
 
 			if (csum_start < hdrlen)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			csum_start -= hdrlen;
 			pd[0] = htons(csum_start);
@@ -1121,7 +1121,7 @@ static int gue_err_proto_handler(int proto, struct sk_buff *skb, u32 info)
 			return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int gue_err(struct sk_buff *skb, u32 info)
@@ -1133,7 +1133,7 @@ static int gue_err(struct sk_buff *skb, u32 info)
 
 	len = sizeof(struct udphdr) + sizeof(struct guehdr);
 	if (!pskb_may_pull(skb, transport_offset + len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 
@@ -1154,25 +1154,25 @@ static int gue_err(struct sk_buff *skb, u32 info)
 			goto out;
 #endif
 		default:
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 	}
 	default: /* Undefined version */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (guehdr->control)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	optlen = guehdr->hlen << 2;
 
 	if (!pskb_may_pull(skb, transport_offset + len + optlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	guehdr = (struct guehdr *)&udp_hdr(skb)[1];
 	if (validate_gue_flags(guehdr, optlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Handling exceptions for direct UDP encapsulation in GUE would lead to
 	 * recursion. Besides, this kind of encapsulation can't even be
@@ -1180,7 +1180,7 @@ static int gue_err(struct sk_buff *skb, u32 info)
 	 */
 	if (guehdr->proto_ctype == IPPROTO_UDP ||
 	    guehdr->proto_ctype == IPPROTO_UDPLITE)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb_set_transport_header(skb, -(int)sizeof(struct icmphdr));
 	ret = gue_err_proto_handler(guehdr->proto_ctype, skb, info);

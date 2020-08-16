@@ -682,7 +682,7 @@ switch_to_data1_zone:		search_zone = 2;
 		if (zone == MFT_ZONE || mft_zone_size <= 0) {
 			ntfs_debug("No free clusters left, going to out.");
 			/* Really no more space left on device. */
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto out;
 		} /* zone == DATA_ZONE && mft_zone_size > 0 */
 		ntfs_debug("Shrinking mft zone.");
@@ -876,7 +876,7 @@ s64 __ntfs_cluster_free(ntfs_inode *ni, const VCN start_vcn, s64 count,
 		if (!is_rollback)
 			ntfs_error(vol->sb, "First runlist element has "
 					"invalid lcn, aborting.");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto err_out;
 	}
 	/* Find the starting cluster inside the run that needs freeing. */
@@ -935,7 +935,7 @@ s64 __ntfs_cluster_free(ntfs_inode *ni, const VCN start_vcn, s64 count,
 							"(0x%llx).",
 							(unsigned long long)
 							rl->lcn);
-				err = -EIO;
+				err = -ERR(EIO);
 				goto err_out;
 			}
 		}

@@ -75,11 +75,11 @@ static struct pid_namespace *create_pid_namespace(struct user_namespace *user_ns
 	struct ucounts *ucounts;
 	int err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!in_userns(parent_pid_ns->user_ns, user_ns))
 		goto out;
 
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	if (level > MAX_PID_NS_LEVEL)
 		goto out;
 	ucounts = inc_pid_namespaces(user_ns);
@@ -144,7 +144,7 @@ struct pid_namespace *copy_pid_ns(unsigned long flags,
 	if (!(flags & CLONE_NEWPID))
 		return get_pid_ns(old_ns);
 	if (task_active_pid_ns(current) != old_ns)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	return create_pid_namespace(user_ns, old_ns);
 }
 
@@ -270,7 +270,7 @@ static int pid_ns_ctl_handler(struct ctl_table *table, int write,
 	int ret, next;
 
 	if (write && !ns_capable(pid_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * Writing directly to ns' last_pid field is OK, since this field
@@ -319,7 +319,7 @@ int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
 		pid_ns->reboot = SIGINT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	read_lock(&tasklist_lock);
@@ -386,7 +386,7 @@ static int pidns_install(struct nsset *nsset, struct ns_common *ns)
 
 	if (!ns_capable(new->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * Only allow entering the current active pid namespace
@@ -397,13 +397,13 @@ static int pidns_install(struct nsset *nsset, struct ns_common *ns)
 	 * children can not escape their current pid namespace.
 	 */
 	if (new->level < active->level)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ancestor = new;
 	while (ancestor->level > active->level)
 		ancestor = ancestor->parent;
 	if (ancestor != active)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	put_pid_ns(nsproxy->pid_ns_for_children);
 	nsproxy->pid_ns_for_children = get_pid_ns(new);
@@ -419,7 +419,7 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
 	pid_ns = p = to_pid_ns(ns)->parent;
 	for (;;) {
 		if (!p)
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 		if (p == active)
 			break;
 		p = p->parent;

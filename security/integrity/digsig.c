@@ -40,7 +40,7 @@ static const char * const keyring_name[INTEGRITY_KEYRING_MAX] = {
 static struct key *integrity_keyring_from_id(const unsigned int id)
 {
 	if (id >= INTEGRITY_KEYRING_MAX)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (!keyring[id]) {
 		keyring[id] =
@@ -62,7 +62,7 @@ int integrity_digsig_verify(const unsigned int id, const char *sig, int siglen,
 	struct key *keyring;
 
 	if (siglen < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	keyring = integrity_keyring_from_id(id);
 	if (IS_ERR(keyring))
@@ -78,7 +78,7 @@ int integrity_digsig_verify(const unsigned int id, const char *sig, int siglen,
 					 digestlen);
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 int integrity_modsig_verify(const unsigned int id, const struct modsig *modsig)
@@ -149,7 +149,7 @@ int __init integrity_add_key(const unsigned int id, const void *data,
 	int rc = 0;
 
 	if (!keyring[id])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	key = key_create_or_update(make_key_ref(keyring[id], 1), "asymmetric",
 				   NULL, data, size, perm,
@@ -194,7 +194,7 @@ int __init integrity_load_cert(const unsigned int id, const char *source,
 			       const void *data, size_t len, key_perm_t perm)
 {
 	if (!data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_info("Loading X.509 certificate: %s\n", source);
 	return integrity_add_key(id, data, len, perm);

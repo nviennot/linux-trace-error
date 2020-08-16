@@ -173,7 +173,7 @@ struct nfs4_slot *nfs4_lookup_slot(struct nfs4_slot_table *tbl, u32 slotid)
 {
 	if (slotid <= tbl->max_slotid)
 		return nfs4_find_or_create_slot(tbl, slotid, 0, GFP_NOWAIT);
-	return ERR_PTR(-E2BIG);
+	return ERR_PTR(-ERR(E2BIG));
 }
 
 static int nfs4_slot_get_seqid(struct nfs4_slot_table  *tbl, u32 slotid,
@@ -226,7 +226,7 @@ int nfs4_slot_wait_on_seqid(struct nfs4_slot_table *tbl,
 	if (wait_event_timeout(tbl->slot_waitq,
 			!nfs4_slot_seqid_in_use(tbl, slotid, seq_nr),
 			timeout) == 0)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	return 0;
 }
 
@@ -241,7 +241,7 @@ int nfs4_slot_wait_on_seqid(struct nfs4_slot_table *tbl,
  */
 struct nfs4_slot *nfs4_alloc_slot(struct nfs4_slot_table *tbl)
 {
-	struct nfs4_slot *ret = ERR_PTR(-EBUSY);
+	struct nfs4_slot *ret = ERR_PTR(-ERR(EBUSY));
 	u32 slotid;
 
 	dprintk("--> %s used_slots=%04lx highest_used=%u max_slots=%u\n",
@@ -610,7 +610,7 @@ static int nfs41_check_session_ready(struct nfs_client *clp)
 			return ret;
 	}
 	if (clp->cl_cons_state < NFS_CS_READY)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 	smp_rmb();
 	return 0;
 }
@@ -645,7 +645,7 @@ int nfs4_init_ds_session(struct nfs_client *clp, unsigned long lease_time)
 		return ret;
 	/* Test for the DS role */
 	if (!is_ds_client(clp))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(nfs4_init_ds_session);

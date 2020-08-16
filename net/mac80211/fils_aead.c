@@ -210,7 +210,7 @@ static int aes_siv_decrypt(const u8 *key, size_t key_len,
 	if (res)
 		return res;
 	if (memcmp(check, frame_iv, AES_BLOCK_SIZE) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -234,7 +234,7 @@ int fils_encrypt_assoc_req(struct sk_buff *skb,
 	session = cfg80211_find_ext_ie(WLAN_EID_EXT_FILS_SESSION,
 				       ies, skb->data + skb->len - ies);
 	if (!session || session[1] != 1 + 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* encrypt after FILS Session element */
 	encr = (u8 *)session + 2 + 1 + 8;
 
@@ -276,7 +276,7 @@ int fils_decrypt_assoc_resp(struct ieee80211_sub_if_data *sdata,
 	size_t crypt_len;
 
 	if (*frame_len < 24 + 6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	capab = (u8 *)&mgmt->u.assoc_resp.capab_info;
 	ies = mgmt->u.assoc_resp.variable;
@@ -286,7 +286,7 @@ int fils_decrypt_assoc_resp(struct ieee80211_sub_if_data *sdata,
 		mlme_dbg(sdata,
 			 "No (valid) FILS Session element in (Re)Association Response frame from %pM",
 			 mgmt->sa);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* decrypt after FILS Session element */
 	encr = (u8 *)session + 2 + 1 + 8;
@@ -316,7 +316,7 @@ int fils_decrypt_assoc_resp(struct ieee80211_sub_if_data *sdata,
 		mlme_dbg(sdata,
 			 "Not enough room for AES-SIV data after FILS Session element in (Re)Association Response frame from %pM",
 			 mgmt->sa);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	res = aes_siv_decrypt(assoc_data->fils_kek, assoc_data->fils_kek_len,
 			      encr, crypt_len, 5, addr, len, encr);

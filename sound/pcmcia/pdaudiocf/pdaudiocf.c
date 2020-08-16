@@ -94,10 +94,10 @@ static int snd_pdacf_probe(struct pcmcia_device *link)
 	}
 	if (i >= SNDRV_CARDS) {
 		snd_printk(KERN_ERR "pdacf: too many cards found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (! enable[i])
-		return -ENODEV; /* disabled explicitly */
+		return -ERR(ENODEV); /* disabled explicitly */
 
 	/* ok, create a card instance */
 	err = snd_card_new(&link->dev, index[i], id[i], THIS_MODULE,
@@ -231,7 +231,7 @@ static int pdacf_config(struct pcmcia_device *link)
 	free_irq(link->irq, link->priv);
 failed_preirq:
 	pcmcia_disable_device(link);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #ifdef CONFIG_PM

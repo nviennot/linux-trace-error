@@ -118,7 +118,7 @@ static int fsl_asrc_dma_trigger(struct snd_soc_component *component,
 		dmaengine_terminate_all(pair->dma_chan[IN]);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -166,7 +166,7 @@ static int fsl_asrc_dma_hw_params(struct snd_soc_component *component,
 
 	if (!dma_params_be) {
 		dev_err(dev, "failed to get the substream of Back-End\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Override dma_data of the Front-End and config its dmaengine */
@@ -177,7 +177,7 @@ static int fsl_asrc_dma_hw_params(struct snd_soc_component *component,
 	pair->dma_chan[!dir] = asrc->get_dma_channel(pair, !dir);
 	if (!pair->dma_chan[!dir]) {
 		dev_err(dev, "failed to request DMA channel\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&config_fe, 0, sizeof(config_fe));
@@ -242,12 +242,12 @@ static int fsl_asrc_dma_hw_params(struct snd_soc_component *component,
 
 	if (!pair->dma_chan[dir]) {
 		dev_err(dev, "failed to request DMA channel for Back-End\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	width = snd_pcm_format_physical_width(asrc->asrc_format);
 	if (width < 8 || width > 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (width == 8)
 		buswidth = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	else if (width == 16)
@@ -354,7 +354,7 @@ static int fsl_asrc_dma_startup(struct snd_soc_component *component,
 	tmp_chan = asrc->get_dma_channel(pair, dir);
 	if (!tmp_chan) {
 		dev_err(dev, "failed to get dma channel\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto dma_chan_err;
 	}
 

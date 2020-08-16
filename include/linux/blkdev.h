@@ -382,14 +382,14 @@ static inline int blkdev_report_zones_ioctl(struct block_device *bdev,
 					    fmode_t mode, unsigned int cmd,
 					    unsigned long arg)
 {
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 static inline int blkdev_zone_mgmt_ioctl(struct block_device *bdev,
 					 fmode_t mode, unsigned int cmd,
 					 unsigned long arg)
 {
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 #endif /* CONFIG_BLK_DEV_ZONED */

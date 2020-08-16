@@ -188,12 +188,12 @@ int snd_pcm_update_state(struct snd_pcm_substream *substream,
 	if (runtime->status->state == SNDRV_PCM_STATE_DRAINING) {
 		if (avail >= runtime->buffer_size) {
 			snd_pcm_drain_done(substream);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 	} else {
 		if (avail >= runtime->stop_threshold) {
 			__snd_pcm_xrun(substream);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 	}
 	if (runtime->twake) {
@@ -294,7 +294,7 @@ static int snd_pcm_update_hw_ptr0(struct snd_pcm_substream *substream,
 
 	if (pos == SNDRV_PCM_POS_XRUN) {
 		__snd_pcm_xrun(substream);
-		return -EPIPE;
+		return -ERR(EPIPE);
 	}
 	if (pos >= runtime->buffer_size) {
 		if (printk_ratelimit()) {
@@ -581,7 +581,7 @@ int snd_interval_refine(struct snd_interval *i, const struct snd_interval *v)
 {
 	int changed = 0;
 	if (snd_BUG_ON(snd_interval_empty(i)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i->min < v->min) {
 		i->min = v->min;
 		i->openmin = v->openmin;
@@ -615,7 +615,7 @@ int snd_interval_refine(struct snd_interval *i, const struct snd_interval *v)
 		i->integer = 1;
 	if (snd_interval_checkempty(i)) {
 		snd_interval_none(i);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return changed;
 }
@@ -626,7 +626,7 @@ static int snd_interval_refine_first(struct snd_interval *i)
 	const unsigned int last_max = i->max;
 
 	if (snd_BUG_ON(snd_interval_empty(i)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_interval_single(i))
 		return 0;
 	i->max = i->min;
@@ -642,7 +642,7 @@ static int snd_interval_refine_last(struct snd_interval *i)
 	const unsigned int last_min = i->min;
 
 	if (snd_BUG_ON(snd_interval_empty(i)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_interval_single(i))
 		return 0;
 	i->min = i->max;
@@ -825,7 +825,7 @@ int snd_interval_ratnum(struct snd_interval *i,
 	}
 	if (best_den == 0) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	t.min = div_down(best_num, best_den);
 	t.openmin = !!(best_num % best_den);
@@ -841,7 +841,7 @@ int snd_interval_ratnum(struct snd_interval *i,
 		int diff;
 		if (q == 0) {
 			i->empty = 1;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		den = div_down(num, q);
 		if (den > rats[k].den_max)
@@ -866,7 +866,7 @@ int snd_interval_ratnum(struct snd_interval *i,
 	}
 	if (best_den == 0) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	t.max = div_up(best_num, best_den);
 	t.openmax = !!(best_num % best_den);
@@ -937,7 +937,7 @@ static int snd_interval_ratden(struct snd_interval *i,
 	}
 	if (best_den == 0) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	t.min = div_down(best_num, best_den);
 	t.openmin = !!(best_num % best_den);
@@ -969,7 +969,7 @@ static int snd_interval_ratden(struct snd_interval *i,
 	}
 	if (best_den == 0) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	t.max = div_up(best_num, best_den);
 	t.openmax = !!(best_num % best_den);
@@ -1009,7 +1009,7 @@ int snd_interval_list(struct snd_interval *i, unsigned int count,
 
 	if (!count) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_interval_any(&list_range);
 	list_range.min = UINT_MAX;
@@ -1049,7 +1049,7 @@ int snd_interval_ranges(struct snd_interval *i, unsigned int count,
 
 	if (!count) {
 		snd_interval_none(i);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_interval_any(&range_union);
 	range_union.min = UINT_MAX;
@@ -1098,7 +1098,7 @@ static int snd_interval_step(struct snd_interval *i, unsigned int step)
 	}
 	if (snd_interval_checkempty(i)) {
 		i->empty = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return changed;
 }
@@ -1147,7 +1147,7 @@ int snd_pcm_hw_rule_add(struct snd_pcm_runtime *runtime, unsigned int cond,
 	while (1) {
 		if (snd_BUG_ON(k >= ARRAY_SIZE(c->deps))) {
 			va_end(args);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		c->deps[k++] = dep;
 		if (dep < 0)
@@ -1178,7 +1178,7 @@ int snd_pcm_hw_constraint_mask(struct snd_pcm_runtime *runtime, snd_pcm_hw_param
 	*maskp->bits &= mask;
 	memset(maskp->bits + 1, 0, (SNDRV_MASK_MAX-32) / 8); /* clear rest */
 	if (*maskp->bits == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -1201,7 +1201,7 @@ int snd_pcm_hw_constraint_mask64(struct snd_pcm_runtime *runtime, snd_pcm_hw_par
 	maskp->bits[1] &= (u_int32_t)(mask >> 32);
 	memset(maskp->bits + 2, 0, (SNDRV_MASK_MAX-64) / 8); /* clear rest */
 	if (! maskp->bits[0] && ! maskp->bits[1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 EXPORT_SYMBOL(snd_pcm_hw_constraint_mask64);
@@ -1554,7 +1554,7 @@ int snd_pcm_hw_param_value(const struct snd_pcm_hw_params *params,
 	if (hw_is_mask(var)) {
 		const struct snd_mask *mask = hw_param_mask_c(params, var);
 		if (!snd_mask_single(mask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dir)
 			*dir = 0;
 		return snd_mask_value(mask);
@@ -1562,12 +1562,12 @@ int snd_pcm_hw_param_value(const struct snd_pcm_hw_params *params,
 	if (hw_is_interval(var)) {
 		const struct snd_interval *i = hw_param_interval_c(params, var);
 		if (!snd_interval_single(i))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dir)
 			*dir = i->openmin;
 		return snd_interval_value(i);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(snd_pcm_hw_param_value);
 
@@ -1597,7 +1597,7 @@ static int _snd_pcm_hw_param_first(struct snd_pcm_hw_params *params,
 	else if (hw_is_interval(var))
 		changed = snd_interval_refine_first(hw_param_interval(params, var));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (changed > 0) {
 		params->cmask |= 1 << var;
 		params->rmask |= 1 << var;
@@ -1643,7 +1643,7 @@ static int _snd_pcm_hw_param_last(struct snd_pcm_hw_params *params,
 	else if (hw_is_interval(var))
 		changed = snd_interval_refine_last(hw_param_interval(params, var));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (changed > 0) {
 		params->cmask |= 1 << var;
 		params->rmask |= 1 << var;
@@ -1773,7 +1773,7 @@ int snd_pcm_lib_ioctl(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_IOCTL1_FIFO_SIZE:
 		return snd_pcm_lib_ioctl_fifo_size(substream, arg);
 	}
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 EXPORT_SYMBOL(snd_pcm_lib_ioctl);
 
@@ -1856,7 +1856,7 @@ static int wait_for_avail(struct snd_pcm_substream *substream,
 
 	for (;;) {
 		if (signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			break;
 		}
 
@@ -1878,21 +1878,21 @@ static int wait_for_avail(struct snd_pcm_substream *substream,
 		set_current_state(TASK_INTERRUPTIBLE);
 		switch (runtime->status->state) {
 		case SNDRV_PCM_STATE_SUSPENDED:
-			err = -ESTRPIPE;
+			err = -ERR(ESTRPIPE);
 			goto _endloop;
 		case SNDRV_PCM_STATE_XRUN:
-			err = -EPIPE;
+			err = -ERR(EPIPE);
 			goto _endloop;
 		case SNDRV_PCM_STATE_DRAINING:
 			if (is_playback)
-				err = -EPIPE;
+				err = -ERR(EPIPE);
 			else 
 				avail = 0; /* indicate draining */
 			goto _endloop;
 		case SNDRV_PCM_STATE_OPEN:
 		case SNDRV_PCM_STATE_SETUP:
 		case SNDRV_PCM_STATE_DISCONNECTED:
-			err = -EBADFD;
+			err = -ERR(EBADFD);
 			goto _endloop;
 		case SNDRV_PCM_STATE_PAUSED:
 			continue;
@@ -1901,7 +1901,7 @@ static int wait_for_avail(struct snd_pcm_substream *substream,
 			pcm_dbg(substream->pcm,
 				"%s write error (DMA or IRQ trouble?)\n",
 				is_playback ? "playback" : "capture");
-			err = -EIO;
+			err = -ERR(EIO);
 			break;
 		}
 	}
@@ -2060,12 +2060,12 @@ static int pcm_sanity_check(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime;
 	if (PCM_RUNTIME_CHECK(substream))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	runtime = substream->runtime;
 	if (snd_BUG_ON(!substream->ops->copy_user && !runtime->dma_area))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
+		return -ERR(EBADFD);
 	return 0;
 }
 
@@ -2077,11 +2077,11 @@ static int pcm_accessible_state(struct snd_pcm_runtime *runtime)
 	case SNDRV_PCM_STATE_PAUSED:
 		return 0;
 	case SNDRV_PCM_STATE_XRUN:
-		return -EPIPE;
+		return -ERR(EPIPE);
 	case SNDRV_PCM_STATE_SUSPENDED:
-		return -ESTRPIPE;
+		return -ERR(ESTRPIPE);
 	default:
-		return -EBADFD;
+		return -ERR(EBADFD);
 	}
 }
 
@@ -2135,11 +2135,11 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
 	if (interleaved) {
 		if (runtime->access != SNDRV_PCM_ACCESS_RW_INTERLEAVED &&
 		    runtime->channels > 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		writer = interleaved_copy;
 	} else {
 		if (runtime->access != SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		writer = noninterleaved_copy;
 	}
 
@@ -2147,7 +2147,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
 		if (is_playback)
 			transfer = fill_silence;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (in_kernel) {
 		if (substream->ops->copy_kernel)
 			transfer = substream->ops->copy_kernel;
@@ -2200,7 +2200,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
 				goto _end_unlock;
 			}
 			if (nonblock) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				goto _end_unlock;
 			}
 			runtime->twake = min_t(snd_pcm_uframes_t, size,
@@ -2218,7 +2218,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
 		if (frames > cont)
 			frames = cont;
 		if (snd_BUG_ON(!frames)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto _end_unlock;
 		}
 		snd_pcm_stream_unlock_irq(substream);
@@ -2337,10 +2337,10 @@ static int pcm_chmap_ctl_get(struct snd_kcontrol *kcontrol,
 	const struct snd_pcm_chmap_elem *map;
 
 	if (!info->chmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	substream = snd_pcm_chmap_substream(info, idx);
 	if (!substream)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	memset(ucontrol->value.integer.value, 0,
 	       sizeof(long) * info->max_channels);
 	if (!substream->runtime)
@@ -2354,7 +2354,7 @@ static int pcm_chmap_ctl_get(struct snd_kcontrol *kcontrol,
 			return 0;
 		}
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* tlv callback for channel map ctl element
@@ -2369,7 +2369,7 @@ static int pcm_chmap_ctl_tlv(struct snd_kcontrol *kcontrol, int op_flag,
 	int c, count = 0;
 
 	if (!info->chmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (size < 8)
 		return -ENOMEM;
 	if (put_user(SNDRV_CTL_TLVT_CONTAINER, tlv))
@@ -2441,7 +2441,7 @@ int snd_pcm_add_chmap_ctls(struct snd_pcm *pcm, int stream,
 	int err;
 
 	if (WARN_ON(pcm->streams[stream].chmap_kctl))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
 	if (!info)
 		return -ENOMEM;

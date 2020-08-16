@@ -340,7 +340,7 @@ int x25_subscr_ioctl(unsigned int cmd, void __user *arg)
 	struct x25_subscrip_struct x25_subscr;
 	struct x25_neigh *nb;
 	struct net_device *dev;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (cmd != SIOCX25GSUBSCRIP && cmd != SIOCX25SSUBSCRIP)
 		goto out;
@@ -349,7 +349,7 @@ int x25_subscr_ioctl(unsigned int cmd, void __user *arg)
 	if (copy_from_user(&x25_subscr, arg, sizeof(x25_subscr)))
 		goto out;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if ((dev = x25_dev_get(x25_subscr.device)) == NULL)
 		goto out;
 
@@ -366,7 +366,7 @@ int x25_subscr_ioctl(unsigned int cmd, void __user *arg)
 		rc = copy_to_user(arg, &x25_subscr,
 				  sizeof(x25_subscr)) ? -EFAULT : 0;
 	} else {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		if (!(x25_subscr.extended && x25_subscr.extended != 1)) {
 			rc = 0;
 			write_lock_bh(&x25_neigh_list_lock);

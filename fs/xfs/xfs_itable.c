@@ -62,7 +62,7 @@ xfs_bulkstat_one_int(
 	struct xfs_inode	*ip;		/* incore inode pointer */
 	struct inode		*inode;
 	struct xfs_bulkstat	*buf = bc->buf;
-	int			error = -EINVAL;
+	int			error = -ERR(EINVAL);
 
 	if (xfs_internal_inum(mp, ino))
 		goto out_advance;

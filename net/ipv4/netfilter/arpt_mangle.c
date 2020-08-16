@@ -61,11 +61,11 @@ static int checkentry(const struct xt_tgchk_param *par)
 
 	if (mangle->flags & ~ARPT_MANGLE_MASK ||
 	    !(mangle->flags & ARPT_MANGLE_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (mangle->target != NF_DROP && mangle->target != NF_ACCEPT &&
 	   mangle->target != XT_CONTINUE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

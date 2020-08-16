@@ -133,7 +133,7 @@ static int wm8731_put_deemph(struct snd_kcontrol *kcontrol,
 	int ret = 0;
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&wm8731->lock);
 	if (wm8731->deemph != deemph) {
@@ -389,11 +389,11 @@ static int wm8731_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	case WM8731_SYSCLK_XTAL:
 	case WM8731_SYSCLK_MCLK:
 		if (wm8731->mclk && clk_set_rate(wm8731->mclk, freq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		wm8731->sysclk_type = clk_id;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -412,7 +412,7 @@ static int wm8731_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8731->constraints = &wm8731_constraints_11289600_16934400;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8731->sysclk = freq;
@@ -437,7 +437,7 @@ static int wm8731_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -457,7 +457,7 @@ static int wm8731_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0003;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -474,7 +474,7 @@ static int wm8731_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface */

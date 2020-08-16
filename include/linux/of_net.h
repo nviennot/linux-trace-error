@@ -19,12 +19,12 @@ extern struct net_device *of_find_net_device_by_node(struct device_node *np);
 static inline int of_get_phy_mode(struct device_node *np,
 				  phy_interface_t *interface)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline const void *of_get_mac_address(struct device_node *np)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct net_device *of_find_net_device_by_node(struct device_node *np)

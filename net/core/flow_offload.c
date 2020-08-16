@@ -288,14 +288,14 @@ int flow_block_cb_setup_simple(struct flow_block_offload *f,
 
 	if (ingress_only &&
 	    f->binder_type != FLOW_BLOCK_BINDER_TYPE_CLSACT_INGRESS)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	f->driver_block_list = driver_block_list;
 
 	switch (f->command) {
 	case FLOW_BLOCK_BIND:
 		if (flow_block_cb_is_busy(cb, cb_ident, driver_block_list))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		block_cb = flow_block_cb_alloc(cb, cb_ident, cb_priv, NULL);
 		if (IS_ERR(block_cb))
@@ -307,13 +307,13 @@ int flow_block_cb_setup_simple(struct flow_block_offload *f,
 	case FLOW_BLOCK_UNBIND:
 		block_cb = flow_block_cb_lookup(f->block, cb, cb_ident);
 		if (!block_cb)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		flow_block_cb_remove(block_cb, f);
 		list_del(&block_cb->driver_list);
 		return 0;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 EXPORT_SYMBOL(flow_block_cb_setup_simple);
@@ -476,6 +476,6 @@ int flow_indr_dev_setup_offload(struct net_device *dev,
 
 	mutex_unlock(&flow_indr_block_lock);
 
-	return list_empty(&bo->cb_list) ? -EOPNOTSUPP : 0;
+	return list_empty(&bo->cb_list) ? -ERR(EOPNOTSUPP) : 0;
 }
 EXPORT_SYMBOL(flow_indr_dev_setup_offload);

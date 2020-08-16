@@ -92,7 +92,7 @@ static inline int validate_clock_permissions(const clockid_t clock)
 	int ret;
 
 	rcu_read_lock();
-	ret = pid_for_clock(clock, false) ? 0 : -EINVAL;
+	ret = pid_for_clock(clock, false) ? 0 : -ERR(EINVAL);
 	rcu_read_unlock();
 
 	return ret;
@@ -178,7 +178,7 @@ posix_cpu_clock_set(const clockid_t clock, const struct timespec64 *tp)
 	 * You can never reset a CPU clock, but we check for other errors
 	 * in the call before failing with EPERM.
 	 */
-	return error ? : -EPERM;
+	return error ? : -ERR(EPERM);
 }
 
 /*
@@ -357,7 +357,7 @@ static int posix_cpu_clock_get(const clockid_t clock, struct timespec64 *tp)
 	tsk = pid_task(pid_for_clock(clock, true), clock_pid_type(clock));
 	if (!tsk) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (CPUCLOCK_PERTHREAD(clock))
@@ -383,7 +383,7 @@ static int posix_cpu_timer_create(struct k_itimer *new_timer)
 	pid = pid_for_clock(new_timer->it_clock, false);
 	if (!pid) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	new_timer->kclock = &clock_posix_cpu;
@@ -576,7 +576,7 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 		 * longer get any information about it at all.
 		 */
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	/*
@@ -596,7 +596,7 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	 */
 	if (unlikely(sighand == NULL)) {
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	/*
@@ -1305,14 +1305,14 @@ static int posix_cpu_nsleep(const clockid_t which_clock, int flags,
 	if (CPUCLOCK_PERTHREAD(which_clock) &&
 	    (CPUCLOCK_PID(which_clock) == 0 ||
 	     CPUCLOCK_PID(which_clock) == task_pid_vnr(current)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = do_cpu_nanosleep(which_clock, flags, rqtp);
 
 	if (error == -ERESTART_RESTARTBLOCK) {
 
 		if (flags & TIMER_ABSTIME)
-			return -ERESTARTNOHAND;
+			return -ERR(ERESTARTNOHAND);
 
 		restart_block->fn = posix_cpu_nsleep_restart;
 		restart_block->nanosleep.clockid = which_clock;

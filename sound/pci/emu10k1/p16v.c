@@ -457,7 +457,7 @@ static int snd_p16v_pcm_trigger_playback(struct snd_pcm_substream *substream,
 		snd_p16v_intr_disable(emu, inte);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -487,7 +487,7 @@ static int snd_p16v_pcm_trigger_capture(struct snd_pcm_substream *substream,
 		epcm->running = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -716,7 +716,7 @@ static int snd_p16v_capture_source_put(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.enumerated.item[0] ;
 	if (val > 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->p16v_capture_source != val);
 	if (change) {
 		emu->p16v_capture_source = val;
@@ -754,7 +754,7 @@ static int snd_p16v_capture_channel_put(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.enumerated.item[0] ;
 	if (val > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->p16v_capture_channel != val);
 	if (change) {
 		emu->p16v_capture_channel = val;

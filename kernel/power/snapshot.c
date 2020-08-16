@@ -2183,7 +2183,7 @@ static int check_header(struct swsusp_info *info)
 		reason = "memory size";
 	if (reason) {
 		pr_err("Image mismatch: %s\n", reason);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	return 0;
 }
@@ -2429,7 +2429,7 @@ static inline int prepare_highmem_image(struct memory_bitmap *bm,
 static inline void *get_highmem_page_buffer(struct page *page,
 					    struct chain_allocator *ca)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void copy_last_highmem_page(void) {}

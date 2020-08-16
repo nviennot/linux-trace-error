@@ -193,7 +193,7 @@ static int axg_card_parse_cpu_tdm_slots(struct snd_soc_card *card,
 	/* ... but the interface should at least have one of them */
 	if (!tx && !rx) {
 		dev_err(card->dev, "tdm link has no cpu slots\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	of_property_read_u32(node, "dai-tdm-slot-num", &be->slots);
@@ -209,7 +209,7 @@ static int axg_card_parse_cpu_tdm_slots(struct snd_soc_card *card,
 		 * if it is just too big
 		 */
 		dev_err(card->dev, "bad slot number\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	of_property_read_u32(node, "dai-tdm-slot-width", &be->slot_width);

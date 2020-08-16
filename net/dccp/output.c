@@ -92,7 +92,7 @@ static int dccp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 
 		if (dccp_insert_options(sk, skb)) {
 			kfree_skb(skb);
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 
 
@@ -138,7 +138,7 @@ static int dccp_transmit_skb(struct sock *sk, struct sk_buff *skb)
 		err = icsk->icsk_af_ops->queue_xmit(sk, skb, &inet->cork.fl);
 		return net_xmit_eval(err);
 	}
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /**
@@ -379,7 +379,7 @@ int dccp_retransmit_skb(struct sock *sk)
 	WARN_ON(sk->sk_send_head == NULL);
 
 	if (inet_csk(sk)->icsk_af_ops->rebuild_header(sk) != 0)
-		return -EHOSTUNREACH; /* Routing failure or similar. */
+		return -ERR(EHOSTUNREACH); /* Routing failure or similar. */
 
 	/* this count is used to distinguish original and retransmitted skb */
 	inet_csk(sk)->icsk_retransmits++;
@@ -516,7 +516,7 @@ int dccp_send_reset(struct sock *sk, enum dccp_reset_codes code)
 
 	skb = sock_wmalloc(sk, sk->sk_prot->max_header, 1, GFP_ATOMIC);
 	if (skb == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* Reserve space for headers and prepare control bits. */
 	skb_reserve(skb, sk->sk_prot->max_header);
@@ -543,14 +543,14 @@ int dccp_connect(struct sock *sk)
 
 	/* do not connect if feature negotiation setup fails */
 	if (dccp_feat_finalise_settings(dccp_sk(sk)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	/* Initialise GAR as per 8.5; AWL/AWH are set in dccp_transmit_skb() */
 	dp->dccps_gar = dp->dccps_iss;
 
 	skb = alloc_skb(sk->sk_prot->max_header, sk->sk_allocation);
 	if (unlikely(skb == NULL))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* Reserve space for headers. */
 	skb_reserve(skb, sk->sk_prot->max_header);

@@ -105,14 +105,14 @@ static int bnep_ctrl_set_netfilter(struct bnep_session *s, __be16 *data, int len
 	int n;
 
 	if (len < 2)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	n = get_unaligned_be16(data);
 	data++;
 	len -= 2;
 
 	if (len < n)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	BT_DBG("filter len %d", n);
 
@@ -151,14 +151,14 @@ static int bnep_ctrl_set_mcfilter(struct bnep_session *s, u8 *data, int len)
 	int n;
 
 	if (len < 2)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	n = get_unaligned_be16(data);
 	data += 2;
 	len -= 2;
 
 	if (len < n)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	BT_DBG("filter len %d", n);
 
@@ -262,7 +262,7 @@ static int bnep_rx_extension(struct bnep_session *s, struct sk_buff *skb)
 	do {
 		h = (void *) skb->data;
 		if (!skb_pull(skb, sizeof(*h))) {
-			err = -EILSEQ;
+			err = -ERR(EILSEQ);
 			break;
 		}
 
@@ -279,7 +279,7 @@ static int bnep_rx_extension(struct bnep_session *s, struct sk_buff *skb)
 		}
 
 		if (!skb_pull(skb, h->len)) {
-			err = -EILSEQ;
+			err = -ERR(EILSEQ);
 			break;
 		}
 	} while (!err && (h->type & BNEP_EXT_HEADER));
@@ -524,7 +524,7 @@ static int bnep_session(void *arg)
 	unregister_netdev(dev);
 
 	/* Wakeup user-space polling for socket errors */
-	s->sock->sk->sk_err = EUNATCH;
+	s->sock->sk->sk_err = ERR(EUNATCH);
 
 	wake_up_interruptible(sk_sleep(s->sock->sk));
 
@@ -564,10 +564,10 @@ int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock)
 	BT_DBG("");
 
 	if (!l2cap_is_socket(sock))
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	baswap((void *) dst, &l2cap_pi(sock->sk)->chan->dst);
 	baswap((void *) src, &l2cap_pi(sock->sk)->chan->src);
@@ -584,7 +584,7 @@ int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock)
 
 	ss = __bnep_get_session(dst);
 	if (ss && ss->state == BT_CONNECTED) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto failed;
 	}
 
@@ -656,7 +656,7 @@ int bnep_del_connection(struct bnep_conndel_req *req)
 	BT_DBG("");
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_read(&bnep_session_sem);
 
@@ -665,7 +665,7 @@ int bnep_del_connection(struct bnep_conndel_req *req)
 		atomic_inc(&s->terminate);
 		wake_up_interruptible(sk_sleep(s->sock->sk));
 	} else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	up_read(&bnep_session_sem);
 	return err;
@@ -722,7 +722,7 @@ int bnep_get_conninfo(struct bnep_conninfo *ci)
 	if (s)
 		__bnep_copy_ci(ci, s);
 	else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	up_read(&bnep_session_sem);
 	return err;

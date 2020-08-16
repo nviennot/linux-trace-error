@@ -140,7 +140,7 @@ int btrfs_update_root(struct btrfs_trans_handle *trans, struct btrfs_root
 			"unable to find root key (%llu %u %llu) in tree %llu",
 			key->objectid, key->type, key->offset,
 			root->root_key.objectid);
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		btrfs_abort_transaction(trans, ret);
 		goto out;
 	}
@@ -345,7 +345,7 @@ again:
 		if ((btrfs_root_ref_dirid(leaf, ref) != dirid) ||
 		    (btrfs_root_ref_name_len(leaf, ref) != name_len) ||
 		    memcmp_extent_buffer(leaf, name, ptr, name_len)) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto out;
 		}
 		*sequence = btrfs_root_ref_sequence(leaf, ref);
@@ -356,7 +356,7 @@ again:
 			goto out;
 		}
 	} else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	if (key.type == BTRFS_ROOT_BACKREF_KEY) {
 		btrfs_release_path(path);

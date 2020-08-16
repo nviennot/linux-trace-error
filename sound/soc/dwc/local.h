@@ -128,7 +128,7 @@ void dw_pcm_push_tx(struct dw_i2s_dev *dev) { }
 void dw_pcm_pop_rx(struct dw_i2s_dev *dev) { }
 int dw_pcm_register(struct platform_device *pdev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

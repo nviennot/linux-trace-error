@@ -241,7 +241,7 @@ restart:
 				break;
 			ceph_put_snap_realm(mdsc, realm);
 			if (!retry)
-				return ERR_PTR(-EAGAIN);
+				return ERR_PTR(-ERR(EAGAIN));
 			goto restart;
 		}
 
@@ -559,7 +559,7 @@ int ceph_quota_check_rename(struct ceph_mds_client *mdsc,
 						   ci_old->i_rfiles +
 						   ci_old->i_rsubdirs);
 		if (ret)
-			ret = -EXDEV;
+			ret = -ERR(EXDEV);
 	} else {
 		ret = check_quota_exceeded(new, QUOTA_CHECK_MAX_BYTES_OP,
 					   i_size_read(old));
@@ -567,7 +567,7 @@ int ceph_quota_check_rename(struct ceph_mds_client *mdsc,
 			ret = check_quota_exceeded(new,
 						   QUOTA_CHECK_MAX_FILES_OP, 1);
 		if (ret)
-			ret = -EDQUOT;
+			ret = -ERR(EDQUOT);
 	}
 
 	return ret;

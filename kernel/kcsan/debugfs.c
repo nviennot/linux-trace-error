@@ -221,7 +221,7 @@ static ssize_t insert_report_filterlist(const char *func)
 
 	if (!addr) {
 		pr_err("KCSAN: could not find function: '%s'\n", func);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	spin_lock_irqsave(&report_filterlist_lock, flags);
@@ -311,13 +311,13 @@ debugfs_write(struct file *file, const char __user *buf, size_t count, loff_t *o
 		unsigned long iters;
 
 		if (kstrtoul(&arg[sizeof("microbench=") - 1], 0, &iters))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		microbenchmark(iters);
 	} else if (!strncmp(arg, "test=", sizeof("test=") - 1)) {
 		unsigned long iters;
 
 		if (kstrtoul(&arg[sizeof("test=") - 1], 0, &iters))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		test_thread(iters);
 	} else if (!strcmp(arg, "whitelist")) {
 		set_report_filterlist_whitelist(true);
@@ -329,7 +329,7 @@ debugfs_write(struct file *file, const char __user *buf, size_t count, loff_t *o
 		if (ret < 0)
 			return ret;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return count;

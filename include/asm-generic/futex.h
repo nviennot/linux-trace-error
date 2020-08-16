@@ -59,7 +59,7 @@ arch_futex_atomic_op_inuser(int op, u32 oparg, int *oval, u32 __user *uaddr)
 		tmp ^= oparg;
 		break;
 	default:
-		ret = -ENOSYS;
+		ret = -ERR(ENOSYS);
 	}
 
 	if (ret == 0 && unlikely(put_user(tmp, uaddr) != 0))
@@ -116,14 +116,14 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 static inline int
 arch_futex_atomic_op_inuser(int op, u32 oparg, int *oval, u32 __user *uaddr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_SMP */

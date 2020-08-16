@@ -339,7 +339,7 @@ static int adfs_map_read(struct adfs_discmap *dm, struct super_block *sb,
 	for (zone = 0; zone < nzones; zone++) {
 		dm[zone].dm_bh = sb_bread(sb, map_addr + zone);
 		if (!dm[zone].dm_bh)
-			return -EIO;
+			return -ERR(EIO);
 	}
 
 	return 0;
@@ -395,7 +395,7 @@ struct adfs_discmap *adfs_read_map(struct super_block *sb, struct adfs_discrecor
 error_free:
 	adfs_map_relse(dm, nzones);
 	kfree(dm);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 void adfs_free_map(struct super_block *sb)

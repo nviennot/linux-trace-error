@@ -104,7 +104,7 @@ static int rt1308_clock_config(struct device *dev)
 		value = 0x5;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt1308->regmap, 0xe0, value);
@@ -515,10 +515,10 @@ static int rt1308_sdw_set_tdm_slot(struct snd_soc_dai *dai,
 		snd_soc_component_get_drvdata(component);
 
 	if (tx_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (slots > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rt1308->rx_mask = rx_mask;
 	rt1308->slots = slots;
@@ -543,10 +543,10 @@ static int rt1308_sdw_hw_params(struct snd_pcm_substream *substream,
 	stream = snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rt1308->sdw_slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* SoundWire specific configuration */
 	/* port 1 for playback */
@@ -554,7 +554,7 @@ static int rt1308_sdw_hw_params(struct snd_pcm_substream *substream,
 		direction = SDW_DATA_DIR_RX;
 		port = 1;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rt1308->slots) {
@@ -593,7 +593,7 @@ static int rt1308_sdw_pcm_hw_free(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!rt1308->sdw_slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdw_stream_remove_slave(rt1308->sdw_slave, stream->sdw_stream);
 	return 0;
@@ -685,7 +685,7 @@ static int rt1308_sdw_probe(struct sdw_slave *slave,
 	/* Regmap Initialization */
 	regmap = devm_regmap_init_sdw(slave, &rt1308_sdw_regmap);
 	if (!regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rt1308_sdw_init(&slave->dev, regmap, slave);
 
@@ -728,7 +728,7 @@ static int __maybe_unused rt1308_dev_resume(struct device *dev)
 				msecs_to_jiffies(RT1308_PROBE_TIMEOUT));
 	if (!time) {
 		dev_err(&slave->dev, "Initialization not complete, timed out\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 regmap_sync:

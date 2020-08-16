@@ -35,12 +35,12 @@ static int ncsi_validate_rsp_pkt(struct ncsi_request *nr,
 	if (h->common.revision != NCSI_PKT_REVISION) {
 		netdev_dbg(nr->ndp->ndev.dev,
 			   "NCSI: unsupported header revision\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ntohs(h->common.length) != payload) {
 		netdev_dbg(nr->ndp->ndev.dev,
 			   "NCSI: payload length mismatched\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check on code and reason */
@@ -49,7 +49,7 @@ static int ncsi_validate_rsp_pkt(struct ncsi_request *nr,
 		netdev_dbg(nr->ndp->ndev.dev,
 			   "NCSI: non zero response/reason code %04xh, %04xh\n",
 			    ntohs(h->code), ntohs(h->reason));
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	/* Validate checksum, which might be zeroes if the
@@ -67,7 +67,7 @@ static int ncsi_validate_rsp_pkt(struct ncsi_request *nr,
 		netdev_dbg(nr->ndp->ndev.dev,
 			   "NCSI: checksum mismatched; recd: %08x calc: %08x\n",
 			   *pchecksum, htonl(checksum));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -85,13 +85,13 @@ static int ncsi_rsp_handler_cis(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel, &np, &nc);
 	if (!nc) {
 		if (ndp->flags & NCSI_DEV_PROBED)
-			return -ENXIO;
+			return -ERR(ENXIO);
 
 		id = NCSI_CHANNEL_INDEX(rsp->rsp.common.channel);
 		nc = ncsi_add_channel(np, id);
 	}
 
-	return nc ? 0 : -ENODEV;
+	return nc ? 0 : -ERR(ENODEV);
 }
 
 static int ncsi_rsp_handler_sp(struct ncsi_request *nr)
@@ -109,12 +109,12 @@ static int ncsi_rsp_handler_sp(struct ncsi_request *nr)
 				      &np, NULL);
 	if (!np) {
 		if (ndp->flags & NCSI_DEV_PROBED)
-			return -ENXIO;
+			return -ERR(ENXIO);
 
 		id = NCSI_PACKAGE_INDEX(rsp->rsp.common.channel);
 		np = ncsi_add_package(ndp, id);
 		if (!np)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -133,7 +133,7 @@ static int ncsi_rsp_handler_dp(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      &np, NULL);
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Change state of all channels attached to the package */
 	NCSI_FOR_EACH_CHANNEL(np, nc) {
@@ -157,7 +157,7 @@ static int ncsi_rsp_handler_ec(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ncm = &nc->modes[NCSI_MODE_ENABLE];
 	if (ncm->enable)
@@ -184,7 +184,7 @@ static int ncsi_rsp_handler_dc(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ncm = &nc->modes[NCSI_MODE_ENABLE];
 	if (!ncm->enable)
@@ -206,7 +206,7 @@ static int ncsi_rsp_handler_rc(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update state for the specified channel */
 	spin_lock_irqsave(&nc->lock, flags);
@@ -228,7 +228,7 @@ static int ncsi_rsp_handler_ecnt(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ncm = &nc->modes[NCSI_MODE_TX_ENABLE];
 	if (ncm->enable)
@@ -250,7 +250,7 @@ static int ncsi_rsp_handler_dcnt(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ncm = &nc->modes[NCSI_MODE_TX_ENABLE];
 	if (!ncm->enable)
@@ -273,7 +273,7 @@ static int ncsi_rsp_handler_ae(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if the AEN has been enabled */
 	ncm = &nc->modes[NCSI_MODE_AEN];
@@ -302,7 +302,7 @@ static int ncsi_rsp_handler_sl(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	cmd = (struct ncsi_cmd_sl_pkt *)skb_network_header(nr->cmd);
 	ncm = &nc->modes[NCSI_MODE_LINK];
@@ -325,7 +325,7 @@ static int ncsi_rsp_handler_gls(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ncm = &nc->modes[NCSI_MODE_LINK];
 	ncm->data[2] = ntohl(rsp->status);
@@ -358,12 +358,12 @@ static int ncsi_rsp_handler_svf(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	cmd = (struct ncsi_cmd_svf_pkt *)skb_network_header(nr->cmd);
 	ncf = &nc->vlan_filter;
 	if (cmd->index == 0 || cmd->index > ncf->n_vids)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* Add or remove the VLAN filter. Remember HW indexes from 1 */
 	spin_lock_irqsave(&nc->lock, flags);
@@ -393,7 +393,7 @@ static int ncsi_rsp_handler_ev(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if VLAN mode has been enabled */
 	ncm = &nc->modes[NCSI_MODE_VLAN];
@@ -420,7 +420,7 @@ static int ncsi_rsp_handler_dv(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if VLAN mode has been enabled */
 	ncm = &nc->modes[NCSI_MODE_VLAN];
@@ -450,7 +450,7 @@ static int ncsi_rsp_handler_sma(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* According to NCSI spec 1.01, the mixed filter table
 	 * isn't supported yet.
@@ -462,7 +462,7 @@ static int ncsi_rsp_handler_sma(struct ncsi_request *nr)
 
 	if (cmd->index == 0 ||
 	    cmd->index > ncf->n_uc + ncf->n_mc + ncf->n_mixed)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	index = (cmd->index - 1) * ETH_ALEN;
 	spin_lock_irqsave(&nc->lock, flags);
@@ -490,7 +490,7 @@ static int ncsi_rsp_handler_ebf(struct ncsi_request *nr)
 	rsp = (struct ncsi_rsp_pkt *)skb_network_header(nr->rsp);
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel, NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if broadcast filter has been enabled */
 	ncm = &nc->modes[NCSI_MODE_BC];
@@ -516,7 +516,7 @@ static int ncsi_rsp_handler_dbf(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if broadcast filter isn't enabled */
 	ncm = &nc->modes[NCSI_MODE_BC];
@@ -543,7 +543,7 @@ static int ncsi_rsp_handler_egmf(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if multicast filter has been enabled */
 	ncm = &nc->modes[NCSI_MODE_MC];
@@ -569,7 +569,7 @@ static int ncsi_rsp_handler_dgmf(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if multicast filter has been enabled */
 	ncm = &nc->modes[NCSI_MODE_MC];
@@ -596,7 +596,7 @@ static int ncsi_rsp_handler_snfc(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if flow control has been enabled */
 	ncm = &nc->modes[NCSI_MODE_FC];
@@ -672,7 +672,7 @@ static int ncsi_rsp_handler_oem_bcm_gma(struct ncsi_request *nr)
 	/* Increase mac address by 1 for BMC's address */
 	eth_addr_inc((u8 *)saddr.sa_data);
 	if (!is_valid_ether_addr((const u8 *)saddr.sa_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* Set the flag for GMA command which should only be called once */
 	ndp->gma_flag = 1;
@@ -733,7 +733,7 @@ static int ncsi_rsp_handler_oem(struct ncsi_request *nr)
 	if (!nrh) {
 		netdev_err(nr->ndp->ndev.dev, "Received unrecognized OEM packet with MFR-ID (0x%x)\n",
 			   mfr_id);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Process the packet */
@@ -753,7 +753,7 @@ static int ncsi_rsp_handler_gvi(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update to channel's version info */
 	ncv = &nc->version;
@@ -780,7 +780,7 @@ static int ncsi_rsp_handler_gc(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update channel's capabilities */
 	nc->caps[NCSI_CAP_GENERIC].cap = ntohl(rsp->cap) &
@@ -835,7 +835,7 @@ static int ncsi_rsp_handler_gp(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Modes with explicit enabled indications */
 	if (ntohl(rsp->valid_modes) & 0x1) {	/* BC filter mode */
@@ -905,7 +905,7 @@ static int ncsi_rsp_handler_gcps(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update HNC's statistics */
 	ncs = &nc->stats;
@@ -966,7 +966,7 @@ static int ncsi_rsp_handler_gns(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update HNC's statistics */
 	ncs = &nc->stats;
@@ -993,7 +993,7 @@ static int ncsi_rsp_handler_gnpts(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      NULL, &nc);
 	if (!nc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Update HNC's statistics */
 	ncs = &nc->stats;
@@ -1021,7 +1021,7 @@ static int ncsi_rsp_handler_gps(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      &np, NULL);
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -1037,7 +1037,7 @@ static int ncsi_rsp_handler_gpuuid(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      &np, NULL);
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	memcpy(np->uuid, rsp->uuid, sizeof(rsp->uuid));
 
@@ -1062,7 +1062,7 @@ static int ncsi_rsp_handler_netlink(struct ncsi_request *nr)
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      &np, &nc);
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = ncsi_send_netlink_rsp(nr, np, nc);
 
@@ -1123,7 +1123,7 @@ int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
 	nd = ncsi_find_dev(dev);
 	ndp = nd ? TO_NCSI_DEV_PRIV(nd) : NULL;
 	if (!ndp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check if it is AEN packet */
 	hdr = (struct ncsi_pkt_hdr *)skb_network_header(skb);
@@ -1145,7 +1145,7 @@ int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
 	if (!nrh) {
 		netdev_err(nd->dev, "Received unrecognized packet (0x%x)\n",
 			   hdr->type);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Associate with the request */
@@ -1153,13 +1153,13 @@ int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
 	nr = &ndp->requests[hdr->id];
 	if (!nr->used) {
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	nr->rsp = skb;
 	if (!nr->enabled) {
 		spin_unlock_irqrestore(&ndp->lock, flags);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

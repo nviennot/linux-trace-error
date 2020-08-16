@@ -94,7 +94,7 @@ static int stream_start(struct snd_usb_caiaqdev *cdev)
 	dev_dbg(dev, "%s(%p)\n", __func__, cdev);
 
 	if (cdev->streaming)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(cdev->sub_playback, 0, sizeof(cdev->sub_playback));
 	memset(cdev->sub_capture, 0, sizeof(cdev->sub_capture));
@@ -110,7 +110,7 @@ static int stream_start(struct snd_usb_caiaqdev *cdev)
 			dev_err(dev, "unable to trigger read #%d! (ret %d)\n",
 				i, ret);
 			cdev->streaming = 0;
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 	}
 
@@ -262,7 +262,7 @@ static int snd_usb_caiaq_pcm_prepare(struct snd_pcm_substream *substream)
 	wait_event_timeout(cdev->prepare_wait_queue, cdev->output_running, HZ);
 	if (!cdev->output_running) {
 		stream_stop(cdev);
-		return -EPIPE;
+		return -ERR(EPIPE);
 	}
 
 	return 0;
@@ -285,7 +285,7 @@ static int snd_usb_caiaq_pcm_trigger(struct snd_pcm_substream *sub, int cmd)
 		deactivate_substream(cdev, sub);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -787,12 +787,12 @@ int snd_usb_caiaq_audio_init(struct snd_usb_caiaqdev *cdev)
 
 	if (cdev->n_streams > MAX_STREAMS) {
 		dev_err(dev, "unable to initialize device, too many streams.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cdev->n_streams < 1) {
 		dev_err(dev, "bogus number of streams: %d\n", cdev->n_streams);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_pcm_new(cdev->chip.card, cdev->product_name, 0,

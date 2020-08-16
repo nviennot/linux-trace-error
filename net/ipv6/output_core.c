@@ -110,17 +110,17 @@ int ip6_find_1stfragopt(struct sk_buff *skb, u8 **nexthdr)
 		}
 
 		if (offset + sizeof(struct ipv6_opt_hdr) > packet_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		exthdr = (struct ipv6_opt_hdr *)(skb_network_header(skb) +
 						 offset);
 		offset += ipv6_optlen(exthdr);
 		if (offset > IPV6_MAXPLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*nexthdr = &exthdr->nexthdr;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(ip6_find_1stfragopt);
 

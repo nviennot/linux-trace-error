@@ -32,7 +32,7 @@ static int create_page_table(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return snd_sof_create_page_table(component->dev, dmab,
 		spcm->stream[stream].page_table.area, size);
@@ -134,7 +134,7 @@ static int sof_pcm_hw_params(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Handle repeated calls to hw_params() without free_pcm() in
@@ -198,7 +198,7 @@ static int sof_pcm_hw_params(struct snd_soc_component *component,
 		pcm.params.frame_fmt = SOF_IPC_FRAME_FLOAT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* firmware already configured host stream */
@@ -248,7 +248,7 @@ static int sof_pcm_hw_free(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(component->dev, "pcm: free stream %d dir %d\n",
 		spcm->pcm.pcm_id, substream->stream);
@@ -283,7 +283,7 @@ static int sof_pcm_prepare(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (spcm->prepared[substream->stream])
 		return 0;
@@ -325,7 +325,7 @@ static int sof_pcm_trigger(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(component->dev, "pcm: trigger stream %d dir %d cmd %d\n",
 		spcm->pcm.pcm_id, substream->stream, cmd);
@@ -395,7 +395,7 @@ static int sof_pcm_trigger(struct snd_soc_component *component,
 	default:
 		dev_err(component->dev, "error: unhandled trigger cmd %d\n",
 			cmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -438,7 +438,7 @@ static snd_pcm_uframes_t sof_pcm_pointer(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* read position from DSP */
 	host = bytes_to_frames(substream->runtime,
@@ -470,7 +470,7 @@ static int sof_pcm_open(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(component->dev, "pcm: open stream %d dir %d\n",
 		spcm->pcm.pcm_id, substream->stream);
@@ -539,7 +539,7 @@ static int sof_pcm_close(struct snd_soc_component *component,
 
 	spcm = snd_sof_find_spcm_dai(component, rtd);
 	if (!spcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(component->dev, "pcm: close stream %d dir %d\n",
 		spcm->pcm.pcm_id, substream->stream);
@@ -594,7 +594,7 @@ static int sof_pcm_new(struct snd_soc_component *component,
 
 	if (!pcm->streams[stream].substream) {
 		dev_err(component->dev, "error: NULL playback substream!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_set_managed_buffer(pcm->streams[stream].substream,
@@ -616,7 +616,7 @@ capture:
 
 	if (!pcm->streams[stream].substream) {
 		dev_err(component->dev, "error: NULL capture substream!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_set_managed_buffer(pcm->streams[stream].substream,
@@ -675,7 +675,7 @@ static int sof_pcm_dai_link_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 	default:
 		dev_err(component->dev, "error: No available DAI format!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* read rate and channels from topology */

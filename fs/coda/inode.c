@@ -153,7 +153,7 @@ static int coda_fill_super(struct super_block *sb, void *data, int silent)
 	int idx;
 
 	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	idx = get_device_index((struct coda_mount_data *) data);
 
@@ -168,13 +168,13 @@ static int coda_fill_super(struct super_block *sb, void *data, int silent)
 
 	if (!vc->vc_inuse) {
 		pr_warn("%s: No pseudo device\n", __func__);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto unlock_out;
 	}
 
 	if (vc->vc_sb) {
 		pr_warn("%s: Device already mounted\n", __func__);
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto unlock_out;
 	}
 
@@ -218,7 +218,7 @@ static int coda_fill_super(struct super_block *sb, void *data, int silent)
 		__func__, root->i_ino, root->i_sb->s_id);
 	sb->s_root = d_make_root(root);
 	if (!sb->s_root) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto error;
 	}
 	return 0;

@@ -372,10 +372,10 @@ static int rose_setsockopt(struct socket *sock, int level, int optname,
 	int opt;
 
 	if (level != SOL_ROSE)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(opt, (int __user *)optval))
 		return -EFAULT;
@@ -387,31 +387,31 @@ static int rose_setsockopt(struct socket *sock, int level, int optname,
 
 	case ROSE_T1:
 		if (opt < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rose->t1 = opt * HZ;
 		return 0;
 
 	case ROSE_T2:
 		if (opt < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rose->t2 = opt * HZ;
 		return 0;
 
 	case ROSE_T3:
 		if (opt < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rose->t3 = opt * HZ;
 		return 0;
 
 	case ROSE_HOLDBACK:
 		if (opt < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rose->hb = opt * HZ;
 		return 0;
 
 	case ROSE_IDLE:
 		if (opt < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rose->idle = opt * 60 * HZ;
 		return 0;
 
@@ -420,7 +420,7 @@ static int rose_setsockopt(struct socket *sock, int level, int optname,
 		return 0;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 }
 
@@ -433,13 +433,13 @@ static int rose_getsockopt(struct socket *sock, int level, int optname,
 	int len;
 
 	if (level != SOL_ROSE)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case ROSE_DEFER:
@@ -471,7 +471,7 @@ static int rose_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	len = min_t(unsigned int, len, sizeof(int));
@@ -498,7 +498,7 @@ static int rose_listen(struct socket *sock, int backlog)
 		return 0;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static struct proto rose_proto = {
@@ -514,10 +514,10 @@ static int rose_create(struct net *net, struct socket *sock, int protocol,
 	struct rose_sock *rose;
 
 	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (sock->type != SOCK_SEQPACKET || protocol != 0)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sk = sk_alloc(net, PF_ROSE, GFP_ATOMIC, &rose_proto, kern);
 	if (sk == NULL)
@@ -662,22 +662,22 @@ static int rose_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	int n;
 
 	if (!sock_flag(sk, SOCK_ZAPPED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr_len != sizeof(struct sockaddr_rose) && addr_len != sizeof(struct full_sockaddr_rose))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr->srose_family != AF_ROSE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr_len == sizeof(struct sockaddr_rose) && addr->srose_ndigis > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((unsigned int) addr->srose_ndigis > ROSE_MAX_DIGIS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((dev = rose_dev_get(&addr->srose_addr)) == NULL)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	source = &addr->srose_call;
 
@@ -688,7 +688,7 @@ static int rose_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	} else {
 		if (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) {
 			dev_put(dev);
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 		rose->source_call   = *source;
 	}
@@ -725,20 +725,20 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 	int n, err = 0;
 
 	if (addr_len != sizeof(struct sockaddr_rose) && addr_len != sizeof(struct full_sockaddr_rose))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr->srose_family != AF_ROSE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr_len == sizeof(struct sockaddr_rose) && addr->srose_ndigis > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((unsigned int) addr->srose_ndigis > ROSE_MAX_DIGIS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Source + Destination digis should not exceed ROSE_MAX_DIGIS */
 	if ((rose->source_ndigis + addr->srose_ndigis) > ROSE_MAX_DIGIS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -750,13 +750,13 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 
 	if (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) {
 		sock->state = SS_UNCONNECTED;
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 		goto out_release;
 	}
 
 	if (sk->sk_state == TCP_ESTABLISHED) {
 		/* No reconnect on a seqpacket socket */
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out_release;
 	}
 
@@ -766,13 +766,13 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 	rose->neighbour = rose_get_neigh(&addr->srose_addr, &cause,
 					 &diagnostic, 0);
 	if (!rose->neighbour) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto out_release;
 	}
 
 	rose->lci = rose_new_lci(rose->neighbour);
 	if (!rose->lci) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto out_release;
 	}
 
@@ -780,13 +780,13 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 		sock_reset_flag(sk, SOCK_ZAPPED);
 
 		if ((dev = rose_dev_first()) == NULL) {
-			err = -ENETUNREACH;
+			err = -ERR(ENETUNREACH);
 			goto out_release;
 		}
 
 		user = ax25_findbyuid(current_euid());
 		if (!user) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_release;
 		}
 
@@ -826,7 +826,7 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 
 	/* Now the loop */
 	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) {
-		err = -EINPROGRESS;
+		err = -ERR(EINPROGRESS);
 		goto out_release;
 	}
 
@@ -848,7 +848,7 @@ static int rose_connect(struct socket *sock, struct sockaddr *uaddr, int addr_le
 				lock_sock(sk);
 				continue;
 			}
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			break;
 		}
 		finish_wait(sk_sleep(sk), &wait);
@@ -881,16 +881,16 @@ static int rose_accept(struct socket *sock, struct socket *newsock, int flags,
 	int err = 0;
 
 	if ((sk = sock->sk) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sk->sk_type != SOCK_SEQPACKET) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out_release;
 	}
 
 	if (sk->sk_state != TCP_LISTEN) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_release;
 	}
 
@@ -915,7 +915,7 @@ static int rose_accept(struct socket *sock, struct socket *newsock, int flags,
 			lock_sock(sk);
 			continue;
 		}
-		err = -ERESTARTSYS;
+		err = -ERR(ERESTARTSYS);
 		break;
 	}
 	finish_wait(sk_sleep(sk), &wait);
@@ -947,7 +947,7 @@ static int rose_getname(struct socket *sock, struct sockaddr *uaddr,
 	memset(srose, 0, sizeof(*srose));
 	if (peer != 0) {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		srose->srose_family = AF_ROSE;
 		srose->srose_addr   = rose->dest_addr;
 		srose->srose_call   = rose->dest_call;
@@ -1059,40 +1059,40 @@ static int rose_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	int n, size, qbit = 0;
 
 	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sock_flag(sk, SOCK_ZAPPED))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
-		return -EPIPE;
+		return -ERR(EPIPE);
 	}
 
 	if (rose->neighbour == NULL || rose->device == NULL)
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 
 	if (usrose != NULL) {
 		if (msg->msg_namelen != sizeof(struct sockaddr_rose) && msg->msg_namelen != sizeof(struct full_sockaddr_rose))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memset(&srose, 0, sizeof(struct full_sockaddr_rose));
 		memcpy(&srose, usrose, msg->msg_namelen);
 		if (rosecmp(&rose->dest_addr, &srose.srose_addr) != 0 ||
 		    ax25cmp(&rose->dest_call, &srose.srose_call) != 0)
-			return -EISCONN;
+			return -ERR(EISCONN);
 		if (srose.srose_ndigis != rose->dest_ndigis)
-			return -EISCONN;
+			return -ERR(EISCONN);
 		if (srose.srose_ndigis == rose->dest_ndigis) {
 			for (n = 0 ; n < srose.srose_ndigis ; n++)
 				if (ax25cmp(&rose->dest_digis[n],
 					    &srose.srose_digis[n]))
-					return -EISCONN;
+					return -ERR(EISCONN);
 		}
 		if (srose.srose_family != AF_ROSE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 
 		srose.srose_family = AF_ROSE;
 		srose.srose_addr   = rose->dest_addr;
@@ -1105,7 +1105,7 @@ static int rose_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	/* Build a packet */
 	/* Sanity check the packet size */
 	if (len > 65535)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	size = len + AX25_BPQ_HEADER_LEN + AX25_MAX_HEADER_LEN + ROSE_MIN_LEN;
 
@@ -1151,7 +1151,7 @@ static int rose_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 	if (sk->sk_state != TCP_ESTABLISHED) {
 		kfree_skb(skb);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 #ifdef M_BIT
@@ -1226,7 +1226,7 @@ static int rose_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 	 * us! We do one quick check first though
 	 */
 	if (sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	/* Now we can treat all alike */
 	if ((skb = skb_recv_datagram(sk, flags & ~MSG_DONTWAIT, flags & MSG_DONTWAIT, &er)) == NULL)
@@ -1308,13 +1308,13 @@ static int rose_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCSIFNETMASK:
 	case SIOCGIFMETRIC:
 	case SIOCSIFMETRIC:
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	case SIOCADDRT:
 	case SIOCDELRT:
 	case SIOCRSCLRRT:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		return rose_rt_ioctl(cmd, argp);
 
 	case SIOCRSGCAUSE: {
@@ -1334,7 +1334,7 @@ static int rose_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	}
 
 	case SIOCRSSL2CALL:
-		if (!capable(CAP_NET_ADMIN)) return -EPERM;
+		if (!capable(CAP_NET_ADMIN)) return -ERR(EPERM);
 		if (ax25cmp(&rose_callsign, &null_ax25_address) != 0)
 			ax25_listen_release(&rose_callsign, NULL);
 		if (copy_from_user(&rose_callsign, argp, sizeof(ax25_address)))
@@ -1361,7 +1361,7 @@ static int rose_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		return 0;
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -1498,7 +1498,7 @@ static int __init rose_proto_init(void)
 
 	if (rose_ndevs > 0x7FFFFFFF/sizeof(struct net_device *)) {
 		printk(KERN_ERR "ROSE: rose_proto_init - rose_ndevs parameter too large\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 

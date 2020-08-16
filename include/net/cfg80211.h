@@ -1658,7 +1658,7 @@ static inline int cfg80211_get_station(struct net_device *dev,
 				       const u8 *mac_addr,
 				       struct station_info *sinfo)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 

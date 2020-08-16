@@ -93,14 +93,14 @@ static int snd_gusextreme_es1688_create(struct snd_card *card,
 		irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (irq[n] < 0) {
 			dev_err(dev, "unable to find a free IRQ for ES1688\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma8[n] == SNDRV_AUTO_DMA) {
 		dma8[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma8[n] < 0) {
 			dev_err(dev, "unable to find a free DMA for ES1688\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -129,14 +129,14 @@ static int snd_gusextreme_gus_card_create(struct snd_card *card,
 		gf1_irq[n] = snd_legacy_find_free_irq(possible_irqs);
 		if (gf1_irq[n] < 0) {
 			dev_err(dev, "unable to find a free IRQ for GF1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1[n] == SNDRV_AUTO_DMA) {
 		dma1[n] = snd_legacy_find_free_dma(possible_dmas);
 		if (dma1[n] < 0) {
 			dev_err(dev, "unable to find a free DMA for GF1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	return snd_gus_create(card, gf1_port[n], gf1_irq[n], dma1[n], -1,
@@ -180,14 +180,14 @@ static int snd_gusextreme_detect(struct snd_gus_card *gus,
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) {
 		snd_printdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	udelay(160);
 	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
 	udelay(160);
 	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) {
 		snd_printdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -261,7 +261,7 @@ static int snd_gusextreme_probe(struct device *dev, unsigned int n)
 	if (error < 0)
 		goto out;
 
-	error = -ENODEV;
+	error = -ERR(ENODEV);
 	if (!gus->ess_flag) {
 		dev_err(dev, "GUS Extreme soundcard was not "
 			"detected at 0x%lx\n", gus->gf1.port);

@@ -49,18 +49,18 @@ static int snapshot_open(struct inode *inode, struct file *filp)
 	int error, nr_calls = 0;
 
 	if (!hibernation_available())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	lock_system_sleep();
 
 	if (!hibernate_acquire()) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto Unlock;
 	}
 
 	if ((filp->f_flags & O_ACCMODE) == O_RDWR) {
 		hibernate_release();
-		error = -ENOSYS;
+		error = -ERR(ENOSYS);
 		goto Unlock;
 	}
 	nonseekable_open(inode, filp);
@@ -146,7 +146,7 @@ static ssize_t snapshot_read(struct file *filp, char __user *buf,
 
 	data = filp->private_data;
 	if (!data->ready) {
-		res = -ENODATA;
+		res = -ERR(ENODATA);
 		goto Unlock;
 	}
 	if (!pg_offp) { /* on page boundary? */
@@ -188,7 +188,7 @@ static ssize_t snapshot_write(struct file *filp, const char __user *buf,
 	}
 
 	if (!data_of(data->handle)) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -215,7 +215,7 @@ static int snapshot_set_swap_area(struct snapshot_data *data,
 	dev_t swdev;
 
 	if (swsusp_swap_in_use())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (in_compat_syscall()) {
 		struct compat_resume_swap_area swap_area;
@@ -239,11 +239,11 @@ static int snapshot_set_swap_area(struct snapshot_data *data,
 	 */
 	if (!swdev) {
 		data->swap = -1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	data->swap = swap_type_of(swdev, offset, &bdev);
 	if (data->swap < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	data->bd_inode = bdev->bd_inode;
 	bdput(bdev);
@@ -259,14 +259,14 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 	sector_t offset;
 
 	if (_IOC_TYPE(cmd) != SNAPSHOT_IOC_MAGIC)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	if (_IOC_NR(cmd) > SNAPSHOT_IOC_MAXNR)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!mutex_trylock(&system_transition_mutex))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	lock_device_hotplug();
 	data = filp->private_data;
@@ -303,7 +303,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 
 	case SNAPSHOT_CREATE_IMAGE:
 		if (data->mode != O_RDONLY || !data->frozen  || data->ready) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			break;
 		}
 		pm_restore_gfp_mask();
@@ -319,7 +319,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 		snapshot_write_finalize(&data->handle);
 		if (data->mode != O_WRONLY || !data->frozen ||
 		    !snapshot_image_loaded(&data->handle)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			break;
 		}
 		error = hibernation_restore(data->platform_support);
@@ -346,7 +346,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 
 	case SNAPSHOT_GET_IMAGE_SIZE:
 		if (!data->ready) {
-			error = -ENODATA;
+			error = -ERR(ENODATA);
 			break;
 		}
 		size = snapshot_get_image_size();
@@ -362,7 +362,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 
 	case SNAPSHOT_ALLOC_SWAP_PAGE:
 		if (data->swap < 0 || data->swap >= MAX_SWAPFILES) {
-			error = -ENODEV;
+			error = -ERR(ENODEV);
 			break;
 		}
 		offset = alloc_swapdev_block(data->swap);
@@ -370,13 +370,13 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 			offset <<= PAGE_SHIFT;
 			error = put_user(offset, (loff_t __user *)arg);
 		} else {
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 		}
 		break;
 
 	case SNAPSHOT_FREE_SWAP_PAGES:
 		if (data->swap < 0 || data->swap >= MAX_SWAPFILES) {
-			error = -ENODEV;
+			error = -ERR(ENODEV);
 			break;
 		}
 		free_all_swap_pages(data->swap);
@@ -384,7 +384,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 
 	case SNAPSHOT_S2RAM:
 		if (!data->frozen) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			break;
 		}
 		/*
@@ -409,7 +409,7 @@ static long snapshot_ioctl(struct file *filp, unsigned int cmd,
 		break;
 
 	default:
-		error = -ENOTTY;
+		error = -ERR(ENOTTY);
 
 	}
 

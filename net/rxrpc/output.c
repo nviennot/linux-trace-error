@@ -140,7 +140,7 @@ int rxrpc_send_ack_packet(struct rxrpc_call *call, bool ping,
 	u8 reason;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
-		return -ECONNRESET;
+		return -ERR(ECONNRESET);
 
 	pkt = kzalloc(sizeof(*pkt), GFP_KERNEL);
 	if (!pkt)
@@ -267,7 +267,7 @@ int rxrpc_send_abort_packet(struct rxrpc_call *call)
 		return 0;
 
 	if (test_bit(RXRPC_CALL_DISCONNECTED, &call->flags))
-		return -ECONNRESET;
+		return -ERR(ECONNRESET);
 
 	conn = call->conn;
 

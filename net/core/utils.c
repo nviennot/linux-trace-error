@@ -305,11 +305,11 @@ static int inet4_pton(const char *src, u16 port_num,
 	int srclen = strlen(src);
 
 	if (srclen > INET_ADDRSTRLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (in4_pton(src, srclen, (u8 *)&addr4->sin_addr.s_addr,
 		     '\n', NULL) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	addr4->sin_family = AF_INET;
 	addr4->sin_port = htons(port_num);
@@ -325,11 +325,11 @@ static int inet6_pton(struct net *net, const char *src, u16 port_num,
 	int srclen = strlen(src);
 
 	if (srclen > INET6_ADDRSTRLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (in6_pton(src, srclen, (u8 *)&addr6->sin6_addr.s6_addr,
 		     '%', &scope_delim) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv6_addr_type(&addr6->sin6_addr) & IPV6_ADDR_LINKLOCAL &&
 	    src + srclen != scope_delim && *scope_delim == '%') {
@@ -346,7 +346,7 @@ static int inet6_pton(struct net *net, const char *src, u16 port_num,
 			addr6->sin6_scope_id = dev->ifindex;
 			dev_put(dev);
 		} else if (kstrtouint(scope_id, 0, &addr6->sin6_scope_id)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -370,11 +370,11 @@ int inet_pton_with_scope(struct net *net, __kernel_sa_family_t af,
 		const char *src, const char *port, struct sockaddr_storage *addr)
 {
 	u16 port_num;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (port) {
 		if (kstrtou16(port, 0, &port_num))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		port_num = 0;
 	}

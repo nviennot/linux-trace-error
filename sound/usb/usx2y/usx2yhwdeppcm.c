@@ -117,7 +117,7 @@ static int usX2Y_hwdep_urb_play_prepare(struct snd_usX2Y_substream *subs,
 		counts = shm->captured_iso[shm->playback_iso_head].length / usX2Y->stride;
 		if (counts < 43 || counts > 50) {
 			snd_printk(KERN_ERR "should not be here with counts=%i\n", counts);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		/* set up descriptor */
 		urb->iso_frame_desc[pack].offset = shm->captured_iso[shm->playback_iso_head].offset;
@@ -308,7 +308,7 @@ static int usX2Y_usbpcm_urbs_allocate(struct snd_usX2Y_substream *subs)
 			usb_rcvisocpipe(dev, subs->endpoint);
 	subs->maxpacksize = usb_maxpacket(dev, pipe, is_playback);
 	if (!subs->maxpacksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* allocate and initialize data urbs */
 	for (i = 0; i < NRURBS; i++) {
@@ -433,7 +433,7 @@ static int usX2Y_usbpcm_urbs_start(struct snd_usX2Y_substream *subs)
 					urb->transfer_buffer_length = subs->maxpacksize * nr_of_packs(); 
 					if ((err = usb_submit_urb(urb, GFP_KERNEL)) < 0) {
 						snd_printk (KERN_ERR "cannot usb_submit_urb() for urb %d, err = %d\n", u, err);
-						err = -EPIPE;
+						err = -ERR(EPIPE);
 						goto cleanup;
 					}  else {
 						snd_printdd("%i\n", urb->start_frame);
@@ -451,7 +451,7 @@ static int usX2Y_usbpcm_urbs_start(struct snd_usX2Y_substream *subs)
 	err = 0;
 	wait_event(usX2Y->prepare_wait_queue, NULL == usX2Y->prepare_subs);
 	if (atomic_read(&subs->state) != state_PREPARED)
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		
  cleanup:
 	if (err) {
@@ -510,7 +510,7 @@ static int snd_usX2Y_usbpcm_prepare(struct snd_pcm_substream *substream)
 					    usX2Y_iso_frames_per_buffer(runtime, usX2Y),
 					    usX2Y->hwdep_pcm_shm->captured_iso_frames);
 				if (msleep_interruptible(10)) {
-					err = -ERESTARTSYS;
+					err = -ERR(ERESTARTSYS);
 					goto up_prepare_mutex;
 				}
 			} 
@@ -556,7 +556,7 @@ static int snd_usX2Y_usbpcm_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime	*runtime = substream->runtime;
 
 	if (!(subs->usX2Y->chip_status & USX2Y_STAT_CHIP_MMAP_PCM_URBS))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	runtime->hw = SNDRV_PCM_STREAM_PLAYBACK == substream->stream ? snd_usX2Y_2c :
 		(subs->usX2Y->subs[3] ? snd_usX2Y_4c : snd_usX2Y_2c);
@@ -598,7 +598,7 @@ static int usX2Y_pcms_busy_check(struct snd_card *card)
 		struct snd_usX2Y_substream *subs = dev->subs[i];
 		if (subs && subs->pcm_substream &&
 		    SUBSTREAM_BUSY(subs->pcm_substream))
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 	return 0;
 }
@@ -667,16 +667,16 @@ static int snd_usX2Y_hwdep_pcm_mmap(struct snd_hwdep * hw, struct file *filp, st
 	struct usX2Ydev	*usX2Y = hw->private_data;
 
 	if (!(usX2Y->chip_status & USX2Y_STAT_CHIP_INIT))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* if userspace tries to mmap beyond end of our buffer, fail */ 
 	if (size > PAGE_ALIGN(sizeof(struct snd_usX2Y_hwdep_pcm_shm))) {
 		snd_printd("%lu > %lu\n", size, (unsigned long)sizeof(struct snd_usX2Y_hwdep_pcm_shm)); 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!usX2Y->hwdep_pcm_shm) {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	area->vm_ops = &snd_usX2Y_hwdep_pcm_vm_ops;
 	area->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;

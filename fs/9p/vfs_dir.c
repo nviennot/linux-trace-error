@@ -124,7 +124,7 @@ static int v9fs_dir_readdir(struct file *file, struct dir_context *ctx)
 					  rdir->tail - rdir->head, &st);
 			if (err <= 0) {
 				p9_debug(P9_DEBUG_VFS, "returned %d\n", err);
-				return -EIO;
+				return -ERR(EIO);
 			}
 
 			over = !dir_emit(ctx, st.name, strlen(st.name),
@@ -180,7 +180,7 @@ static int v9fs_dir_readdir_dotl(struct file *file, struct dir_context *ctx)
 					    &curdirent);
 			if (err < 0) {
 				p9_debug(P9_DEBUG_VFS, "returned %d\n", err);
-				return -EIO;
+				return -ERR(EIO);
 			}
 
 			if (!dir_emit(ctx, curdirent.d_name,

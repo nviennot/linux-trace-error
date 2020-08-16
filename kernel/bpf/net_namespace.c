@@ -80,16 +80,16 @@ static int bpf_netns_link_update_prog(struct bpf_link *link,
 	int ret = 0;
 
 	if (old_prog && old_prog != link->prog)
-		return -EPERM;
+		return -ERR(EPERM);
 	if (new_prog->type != link->prog->type)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&netns_bpf_mutex);
 
 	net = net_link->net;
 	if (!net || !check_net(net)) {
 		/* Link auto-detached or netns dying */
-		ret = -ENOLINK;
+		ret = -ERR(ENOLINK);
 		goto out_unlock;
 	}
 
@@ -179,11 +179,11 @@ int netns_bpf_prog_query(const union bpf_attr *attr,
 	int ret;
 
 	if (attr->query.query_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	type = to_netns_bpf_attach_type(attr->query.attach_type);
 	if (type < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	net = get_net_ns_by_fd(attr->query.target_fd);
 	if (IS_ERR(net))
@@ -206,18 +206,18 @@ int netns_bpf_prog_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 	int ret;
 
 	if (attr->target_fd || attr->attach_flags || attr->replace_bpf_fd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	type = to_netns_bpf_attach_type(attr->attach_type);
 	if (type < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	net = current->nsproxy->net_ns;
 	mutex_lock(&netns_bpf_mutex);
 
 	/* Attaching prog directly is not compatible with links */
 	if (!list_empty(&net->bpf.links[type])) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out_unlock;
 	}
 
@@ -226,7 +226,7 @@ int netns_bpf_prog_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 		ret = flow_dissector_bpf_prog_attach_check(net, prog);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	if (ret)
@@ -235,7 +235,7 @@ int netns_bpf_prog_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 	attached = net->bpf.progs[type];
 	if (attached == prog) {
 		/* The same program cannot be attached twice */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -272,11 +272,11 @@ static int __netns_bpf_prog_detach(struct net *net,
 
 	/* Progs attached via links cannot be detached */
 	if (!list_empty(&net->bpf.links[type]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	attached = net->bpf.progs[type];
 	if (!attached || attached != old)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	netns_bpf_run_array_detach(net, type);
 	net->bpf.progs[type] = NULL;
 	bpf_prog_put(attached);
@@ -290,11 +290,11 @@ int netns_bpf_prog_detach(const union bpf_attr *attr, enum bpf_prog_type ptype)
 	int ret;
 
 	if (attr->target_fd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	type = to_netns_bpf_attach_type(attr->attach_type);
 	if (type < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	prog = bpf_prog_get_type(attr->attach_bpf_fd, ptype);
 	if (IS_ERR(prog))
@@ -321,12 +321,12 @@ static int netns_bpf_link_attach(struct net *net, struct bpf_link *link,
 
 	/* Allow attaching only one prog or link for now */
 	if (!list_empty(&net->bpf.links[type])) {
-		err = -E2BIG;
+		err = -ERR(E2BIG);
 		goto out_unlock;
 	}
 	/* Links are not compatible with attaching prog directly */
 	if (net->bpf.progs[type]) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out_unlock;
 	}
 
@@ -335,7 +335,7 @@ static int netns_bpf_link_attach(struct net *net, struct bpf_link *link,
 		err = flow_dissector_bpf_prog_attach_check(net, link->prog);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	if (err)
@@ -366,12 +366,12 @@ int netns_bpf_link_create(const union bpf_attr *attr, struct bpf_prog *prog)
 	int err;
 
 	if (attr->link_create.flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	type = attr->link_create.attach_type;
 	netns_type = to_netns_bpf_attach_type(type);
 	if (netns_type < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	net = get_net_ns_by_fd(attr->link_create.target_fd);
 	if (IS_ERR(net))

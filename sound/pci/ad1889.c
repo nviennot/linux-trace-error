@@ -250,7 +250,7 @@ snd_ad1889_ac97_ready(struct snd_ad1889 *chip)
 	if (!retry) {
 		dev_err(chip->card->dev, "[%s] Link is not ready.\n",
 			__func__);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	dev_dbg(chip->card->dev, "[%s] ready after %d ms\n", __func__, 400 - retry);
 
@@ -455,7 +455,7 @@ snd_ad1889_playback_trigger(struct snd_pcm_substream *ss, int cmd)
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	
 	chip->wave.reg = wsmc;
@@ -493,7 +493,7 @@ snd_ad1889_capture_trigger(struct snd_pcm_substream *ss, int cmd)
 		ramc &= ~AD_DS_RAMC_ADEN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	
 	chip->ramc.reg = ramc;
@@ -861,7 +861,7 @@ snd_ad1889_create(struct snd_card *card,
 	    dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) {
 		dev_err(card->dev, "error setting 32-bit DMA mask.\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* allocate chip specific data with zero-filled memory */
@@ -883,7 +883,7 @@ snd_ad1889_create(struct snd_card *card,
 	chip->iobase = pci_ioremap_bar(pci, 0);
 	if (chip->iobase == NULL) {
 		dev_err(card->dev, "unable to reserve region.\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto free_and_ret;
 	}
 	
@@ -895,7 +895,7 @@ snd_ad1889_create(struct snd_card *card,
 			IRQF_SHARED, KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "cannot obtain IRQ %d\n", pci->irq);
 		snd_ad1889_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	chip->irq = pci->irq;
@@ -934,10 +934,10 @@ snd_ad1889_probe(struct pci_dev *pci,
 
 	/* (1) */
 	if (devno >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[devno]) {
 		devno++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* (2) */

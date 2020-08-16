@@ -290,7 +290,7 @@ ufs_inode_getfrag(struct inode *inode, unsigned index,
 				goal, nfrags, err, locked_page);
 
 	if (!tmp) {
-		*err = -ENOSPC;
+		*err = -ERR(ENOSPC);
 		return 0;
 	}
 
@@ -347,7 +347,7 @@ ufs_inode_getblock(struct inode *inode, u64 ind_block,
 
 	bh = sb_bread(sb, ind_block + (index >> shift));
 	if (unlikely(!bh)) {
-		*err = -EIO;
+		*err = -ERR(EIO);
 		return 0;
 	}
 
@@ -424,7 +424,7 @@ static int ufs_getfrag_block(struct inode *inode, sector_t fragment, struct buff
 	UFSD("ENTER, ino %lu, fragment %llu\n", inode->i_ino, (unsigned long long)fragment);
 	if (unlikely(!depth)) {
 		ufs_warning(sb, "ufs_get_block", "block > big");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -569,7 +569,7 @@ static int ufs1_read_inode(struct inode *inode, struct ufs_inode *ufs_inode)
 	inode->i_mode = mode = fs16_to_cpu(sb, ufs_inode->ui_mode);
 	set_nlink(inode, fs16_to_cpu(sb, ufs_inode->ui_nlink));
 	if (inode->i_nlink == 0)
-		return -ESTALE;
+		return -ERR(ESTALE);
 
 	/*
 	 * Linux now has 32-bit uid and gid, so we can support EFT.
@@ -615,7 +615,7 @@ static int ufs2_read_inode(struct inode *inode, struct ufs2_inode *ufs2_inode)
 	inode->i_mode = mode = fs16_to_cpu(sb, ufs2_inode->ui_mode);
 	set_nlink(inode, fs16_to_cpu(sb, ufs2_inode->ui_nlink));
 	if (inode->i_nlink == 0)
-		return -ESTALE;
+		return -ERR(ESTALE);
 
         /*
          * Linux now has 32-bit uid and gid, so we can support EFT.
@@ -655,14 +655,14 @@ struct inode *ufs_iget(struct super_block *sb, unsigned long ino)
 	struct ufs_sb_private_info *uspi = UFS_SB(sb)->s_uspi;
 	struct buffer_head * bh;
 	struct inode *inode;
-	int err = -EIO;
+	int err = -ERR(EIO);
 
 	UFSD("ENTER, ino %lu\n", ino);
 
 	if (ino < UFS_ROOTINO || ino > (uspi->s_ncg * uspi->s_ipg)) {
 		ufs_warning(sb, "ufs_read_inode", "bad inode number (%lu)\n",
 			    ino);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	inode = iget_locked(sb, ino);
@@ -1067,7 +1067,7 @@ static int ufs_alloc_lastblock(struct inode *inode, loff_t size)
 	lastpage = ufs_get_locked_page(mapping, lastfrag >>
 				       (PAGE_SHIFT - inode->i_blkbits));
        if (IS_ERR(lastpage)) {
-               err = -EIO;
+               err = -ERR(EIO);
                goto out;
        }
 
@@ -1190,9 +1190,9 @@ static int ufs_truncate(struct inode *inode, loff_t size)
 
 	if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
 	      S_ISLNK(inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = ufs_alloc_lastblock(inode, size);
 

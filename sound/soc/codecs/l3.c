@@ -103,7 +103,7 @@ int l3_set_gpio_ops(struct device *dev, struct l3_pins *adap)
 	int ret;
 
 	if (!adap->use_gpios)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = devm_gpio_request_one(dev, adap->gpio_data,
 				GPIOF_OUT_INIT_LOW, "l3_data");

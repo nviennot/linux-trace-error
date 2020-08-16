@@ -93,7 +93,7 @@ int nfc_hci_hcp_message_tx(struct nfc_hci_dev *hdev, u8 pipe,
 	mutex_lock(&hdev->msg_tx_mutex);
 
 	if (hdev->shutting_down) {
-		err = -ESHUTDOWN;
+		err = -ERR(ESHUTDOWN);
 		mutex_unlock(&hdev->msg_tx_mutex);
 		goto out_skb_err;
 	}

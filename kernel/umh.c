@@ -136,7 +136,7 @@ static void call_usermodehelper_exec_sync(struct subprocess_info *sub_info)
 	if (pid < 0) {
 		sub_info->retval = pid;
 	} else {
-		int ret = -ECHILD;
+		int ret = -ERR(ECHILD);
 		/*
 		 * Normally it is bogus to call wait4() from in-kernel because
 		 * wait4() wants to write the exit code to a userspace address.
@@ -243,7 +243,7 @@ int usermodehelper_read_trylock(void)
 			break;
 
 		if (usermodehelper_disabled == UMH_DISABLED)
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 
 		up_read(&umhelper_sem);
 
@@ -265,7 +265,7 @@ long usermodehelper_read_lock_wait(long timeout)
 	DEFINE_WAIT(wait);
 
 	if (timeout < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_read(&umhelper_sem);
 	for (;;) {
@@ -319,7 +319,7 @@ int __usermodehelper_disable(enum umh_disable_depth depth)
 	long retval;
 
 	if (!depth)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_write(&umhelper_sem);
 	usermodehelper_disabled = depth;
@@ -338,7 +338,7 @@ int __usermodehelper_disable(enum umh_disable_depth depth)
 		return 0;
 
 	__usermodehelper_set_disable_depth(UMH_ENABLED);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void helper_lock(void)
@@ -563,11 +563,11 @@ int call_usermodehelper_exec(struct subprocess_info *sub_info, int wait)
 
 	if (!sub_info->path) {
 		call_usermodehelper_freeinfo(sub_info);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	helper_lock();
 	if (usermodehelper_disabled) {
-		retval = -EBUSY;
+		retval = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -650,7 +650,7 @@ static int proc_cap_handler(struct ctl_table *table, int write,
 
 	if (write && (!capable(CAP_SETPCAP) ||
 		      !capable(CAP_SYS_MODULE)))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * convert from the global kernel_cap_t to the ulong array to print to

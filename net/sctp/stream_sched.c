@@ -139,7 +139,7 @@ int sctp_sched_set_sched(struct sctp_association *asoc,
 		return ret;
 
 	if (sched > SCTP_SS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (old) {
 		old->free(&asoc->stream);
@@ -200,7 +200,7 @@ int sctp_sched_set_value(struct sctp_association *asoc, __u16 sid,
 			 __u16 value, gfp_t gfp)
 {
 	if (sid >= asoc->stream.outcnt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!SCTP_SO(&asoc->stream, sid)->ext) {
 		int ret;
@@ -217,7 +217,7 @@ int sctp_sched_get_value(struct sctp_association *asoc, __u16 sid,
 			 __u16 *value)
 {
 	if (sid >= asoc->stream.outcnt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!SCTP_SO(&asoc->stream, sid)->ext)
 		return 0;

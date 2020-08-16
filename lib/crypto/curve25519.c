@@ -19,7 +19,7 @@ static int __init mod_init(void)
 {
 	if (!IS_ENABLED(CONFIG_CRYPTO_MANAGER_DISABLE_TESTS) &&
 	    WARN_ON(!curve25519_selftest()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return 0;
 }
 

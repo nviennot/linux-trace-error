@@ -319,7 +319,7 @@ static inline int devm_mdiobus_register(struct mii_bus *bus)
 	int ret;
 
 	if (!bus->is_managed)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = mdiobus_register(bus);
 	if (!ret)
@@ -1277,7 +1277,7 @@ int phy_start_cable_test(struct phy_device *phydev,
 			 struct netlink_ext_ack *extack)
 {
 	NL_SET_ERR_MSG(extack, "Kernel not compiled with PHYLIB support");
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline
 int phy_start_cable_test_tdr(struct phy_device *phydev,
@@ -1285,7 +1285,7 @@ int phy_start_cable_test_tdr(struct phy_device *phydev,
 			     const struct phy_tdr_config *config)
 {
 	NL_SET_ERR_MSG(extack, "Kernel not compiled with PHYLIB support");
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -1391,7 +1391,7 @@ int gen10g_config_aneg(struct phy_device *phydev);
 static inline int phy_read_status(struct phy_device *phydev)
 {
 	if (!phydev->drv)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (phydev->drv->read_status)
 		return phydev->drv->read_status(phydev);
@@ -1471,7 +1471,7 @@ void mdio_bus_exit(void);
 static inline int phy_ethtool_get_strings(struct phy_device *phydev, u8 *data)
 {
 	if (!phydev->drv)
-		return -EIO;
+		return -ERR(EIO);
 
 	mutex_lock(&phydev->lock);
 	phydev->drv->get_strings(phydev, data);
@@ -1485,7 +1485,7 @@ static inline int phy_ethtool_get_sset_count(struct phy_device *phydev)
 	int ret;
 
 	if (!phydev->drv)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (phydev->drv->get_sset_count &&
 	    phydev->drv->get_strings &&
@@ -1497,14 +1497,14 @@ static inline int phy_ethtool_get_sset_count(struct phy_device *phydev)
 		return ret;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int phy_ethtool_get_stats(struct phy_device *phydev,
 					struct ethtool_stats *stats, u64 *data)
 {
 	if (!phydev->drv)
-		return -EIO;
+		return -ERR(EIO);
 
 	mutex_lock(&phydev->lock);
 	phydev->drv->get_stats(phydev, stats, data);
@@ -1518,7 +1518,7 @@ static inline int phy_package_read(struct phy_device *phydev, u32 regnum)
 	struct phy_package_shared *shared = phydev->shared;
 
 	if (!shared)
-		return -EIO;
+		return -ERR(EIO);
 
 	return mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
 }
@@ -1528,7 +1528,7 @@ static inline int __phy_package_read(struct phy_device *phydev, u32 regnum)
 	struct phy_package_shared *shared = phydev->shared;
 
 	if (!shared)
-		return -EIO;
+		return -ERR(EIO);
 
 	return __mdiobus_read(phydev->mdio.bus, shared->addr, regnum);
 }
@@ -1539,7 +1539,7 @@ static inline int phy_package_write(struct phy_device *phydev,
 	struct phy_package_shared *shared = phydev->shared;
 
 	if (!shared)
-		return -EIO;
+		return -ERR(EIO);
 
 	return mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
 }
@@ -1550,7 +1550,7 @@ static inline int __phy_package_write(struct phy_device *phydev,
 	struct phy_package_shared *shared = phydev->shared;
 
 	if (!shared)
-		return -EIO;
+		return -ERR(EIO);
 
 	return __mdiobus_write(phydev->mdio.bus, shared->addr, regnum, val);
 }

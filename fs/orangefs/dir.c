@@ -118,8 +118,8 @@ again:
 	 */
 	if (op->downcall.trailer_size > PART_SIZE) {
 		vfree(op->downcall.trailer_buf);
-		od->error = -EIO;
-		return -EIO;
+		od->error = -ERR(EIO);
+		return -ERR(EIO);
 	}
 
 	resp = (struct orangefs_readdir_response_s *)
@@ -254,8 +254,8 @@ static int orangefs_dir_fill(struct orangefs_inode_s *oi,
 	}
 	/* This means the userspace file offset is invalid. */
 	if (count) {
-		od->error = -EIO;
-		return -EIO;
+		od->error = -ERR(EIO);
+		return -ERR(EIO);
 	}
 
 	while (part && part->len) {
@@ -332,7 +332,7 @@ static int orangefs_dir_iterate(struct file *file,
 	 * valid.
 	 */
 	if ((ctx->pos & PART_MASK) == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	r = 0;
 
@@ -347,7 +347,7 @@ static int orangefs_dir_iterate(struct file *file,
 			return r;
 	}
 	if (od->token == ORANGEFS_ITERATE_END && ctx->pos > od->end)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Then try to fill if there's any left in the buffer. */
 	if (ctx->pos < od->end) {

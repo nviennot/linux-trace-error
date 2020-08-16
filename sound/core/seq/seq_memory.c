@@ -58,7 +58,7 @@ static inline int snd_seq_output_ok(struct snd_seq_pool *pool)
 static int get_var_len(const struct snd_seq_event *event)
 {
 	if ((event->flags & SNDRV_SEQ_EVENT_LENGTH_MASK) != SNDRV_SEQ_EVENT_LENGTH_VARIABLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return event->data.ext.len & ~SNDRV_SEQ_EXT_MASK;
 }
@@ -139,11 +139,11 @@ int snd_seq_expand_var_event(const struct snd_seq_event *event, int count, char 
 	if (size_aligned > 0)
 		newlen = roundup(len, size_aligned);
 	if (count < newlen)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR) {
 		if (! in_kernel)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(buf, (void __force __user *)event->data.ext.ptr, len))
 			return -EFAULT;
 		return newlen;
@@ -211,11 +211,11 @@ static int snd_seq_cell_alloc(struct snd_seq_pool *pool,
 {
 	struct snd_seq_event_cell *cell;
 	unsigned long flags;
-	int err = -EAGAIN;
+	int err = -ERR(EAGAIN);
 	wait_queue_entry_t wait;
 
 	if (pool == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*cellp = NULL;
 
@@ -223,7 +223,7 @@ static int snd_seq_cell_alloc(struct snd_seq_pool *pool,
 	spin_lock_irqsave(&pool->lock, flags);
 	if (pool->ptr == NULL) {	/* not initialized */
 		pr_debug("ALSA: seq: pool is not initialized\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __error;
 	}
 	while (pool->free == NULL && ! nonblock && ! pool->closing) {
@@ -240,7 +240,7 @@ static int snd_seq_cell_alloc(struct snd_seq_pool *pool,
 		remove_wait_queue(&pool->output_sleep, &wait);
 		/* interrupted? */
 		if (signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto __error;
 		}
 	}
@@ -372,7 +372,7 @@ int snd_seq_pool_init(struct snd_seq_pool *pool)
 	struct snd_seq_event_cell *cellptr;
 
 	if (snd_BUG_ON(!pool))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cellptr = kvmalloc_array(sizeof(struct snd_seq_event_cell), pool->size,
 				 GFP_KERNEL);
@@ -423,7 +423,7 @@ int snd_seq_pool_done(struct snd_seq_pool *pool)
 	struct snd_seq_event_cell *ptr;
 
 	if (snd_BUG_ON(!pool))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* wait for closing all threads */
 	if (waitqueue_active(&pool->output_sleep))

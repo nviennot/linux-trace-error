@@ -132,7 +132,7 @@ static int imx_ssi_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		break;
 	default:
 		/* Master mode not implemented, needs handling of clocks. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	strcr |= SSI_STCR_TFEN0;
@@ -169,7 +169,7 @@ static int imx_ssi_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 			scr &= ~SSI_SCR_SYS_CLK_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(scr, ssi->base + SSI_SCR);
@@ -216,7 +216,7 @@ static int imx_ssi_set_dai_clkdiv(struct snd_soc_dai *cpu_dai,
 		stccr |= SSI_STCCR_PM(div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(stccr, ssi->base + SSI_STCCR);
@@ -315,7 +315,7 @@ static int imx_ssi_trigger(struct snd_pcm_substream *substream, int cmd,
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!(ssi->flags & IMX_SSI_USE_AC97))
@@ -543,7 +543,7 @@ static int imx_ssi_probe(struct platform_device *pdev)
 	if (ssi->flags & IMX_SSI_USE_AC97) {
 		if (ac97_ssi) {
 			dev_err(&pdev->dev, "AC'97 SSI already registered\n");
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto failed_register;
 		}
 		ac97_ssi = ssi;

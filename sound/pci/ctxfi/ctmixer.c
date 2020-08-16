@@ -430,7 +430,7 @@ static int output_switch_put(struct snd_kcontrol *kcontrol,
 {
 	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return atc->output_switch_put(atc, ucontrol->value.enumerated.item[0]);
 }
 
@@ -465,7 +465,7 @@ static int mic_source_switch_put(struct snd_kcontrol *kcontrol,
 {
 	struct ct_atc *atc = snd_kcontrol_chip(kcontrol);
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return atc->mic_source_switch_put(atc,
 					ucontrol->value.enumerated.item[0]);
 }

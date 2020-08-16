@@ -192,7 +192,7 @@ static int dsa_master_get_phys_port_name(struct net_device *dev,
 	struct dsa_port *cpu_dp = dev->dsa_ptr;
 
 	if (snprintf(name, len, "p%d", cpu_dp->index) >= len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -202,7 +202,7 @@ static int dsa_master_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	struct dsa_port *cpu_dp = dev->dsa_ptr;
 	struct dsa_switch *ds = cpu_dp->ds;
 	struct dsa_switch_tree *dst;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	struct dsa_port *dp;
 
 	dst = ds->dst;
@@ -216,7 +216,7 @@ static int dsa_master_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		list_for_each_entry(dp, &dst->ports, list)
 			if (dp->ds->ops->port_hwtstamp_get ||
 			    dp->ds->ops->port_hwtstamp_set)
-				return -EBUSY;
+				return -ERR(EBUSY);
 		break;
 	}
 

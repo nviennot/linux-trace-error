@@ -35,7 +35,7 @@ EXPORT_SYMBOL_GPL(soundbus_dev_put);
 
 static int soundbus_probe(struct device *dev)
 {
-	int error = -ENODEV;
+	int error = -ERR(ENODEV);
 	struct soundbus_driver *drv;
 	struct soundbus_dev *soundbus_dev;
 
@@ -64,11 +64,11 @@ static int soundbus_uevent(struct device *dev, struct kobj_uevent_env *env)
 	int cplen, seen = 0;
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	soundbus_dev = to_soundbus_device(dev);
 	if (!soundbus_dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	of = &soundbus_dev->ofdev;
 
@@ -146,7 +146,7 @@ int soundbus_add_one(struct soundbus_dev *dev)
 	    dev->pcmname ||
 	    dev->pcmid != -1) {
 		printk(KERN_ERR "soundbus: adding device failed sanity check!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_set_name(&dev->ofdev.dev, "soundbus:%x", ++devcount);

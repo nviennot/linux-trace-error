@@ -1466,7 +1466,7 @@ static int mt6351_codec_driver_probe(struct platform_device *pdev)
 
 	priv->regmap = dev_get_regmap(pdev->dev.parent, NULL);
 	if (!priv->regmap)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev_dbg(priv->dev, "%s(), dev name %s\n",
 		__func__, dev_name(&pdev->dev));

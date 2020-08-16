@@ -963,7 +963,7 @@ static int stac_create_spdif_mux_ctls(struct hda_codec *codec)
 		labels = stac_spdif_labels;
 	for (i = 0; i < num_cons; i++) {
 		if (snd_BUG_ON(!labels[i]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		snd_hda_add_imux_item(codec, &spec->spdif_mux, labels[i], i, NULL);
 	}
 
@@ -5024,7 +5024,7 @@ static int patch_stac9872(struct hda_codec *codec)
 	err = stac_parse_auto_config(codec);
 	if (err < 0) {
 		stac_free(codec);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_hda_apply_fixup(codec, HDA_FIXUP_ACT_PROBE);

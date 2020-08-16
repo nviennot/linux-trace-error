@@ -63,7 +63,7 @@ static inline int cmp_hashes(const struct fsverity_info *vi,
 		     index, level,
 		     vi->tree_params.hash_alg->name, hsize, want_hash,
 		     vi->tree_params.hash_alg->name, hsize, real_hash);
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 }
 
 /*

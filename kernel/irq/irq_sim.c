@@ -46,7 +46,7 @@ static int irq_sim_set_type(struct irq_data *data, unsigned int type)
 {
 	/* We only support rising and falling edge trigger types. */
 	if (type & ~IRQ_TYPE_EDGE_BOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	irqd_set_trigger_type(data, type);
 
@@ -65,7 +65,7 @@ static int irq_sim_get_irqchip_state(struct irq_data *data,
 			*state = test_bit(hwirq, irq_ctx->work_ctx->pending);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -86,7 +86,7 @@ static int irq_sim_set_irqchip_state(struct irq_data *data,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

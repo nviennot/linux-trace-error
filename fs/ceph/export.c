@@ -48,7 +48,7 @@ static int ceph_encode_snapfh(struct inode *inode, u32 *rawfh, int *max_len,
 		goto out;
 	}
 
-	ret =  -EINVAL;
+	ret =  -ERR(EINVAL);
 	if (snapid != CEPH_SNAPDIR) {
 		struct inode *dir;
 		struct dentry *dentry = d_find_alias(inode);
@@ -152,7 +152,7 @@ static struct inode *__lookup_inode(struct super_block *sb, u64 ino)
 			ihold(inode);
 		ceph_mdsc_put_request(req);
 		if (!inode)
-			return err < 0 ? ERR_PTR(err) : ERR_PTR(-ESTALE);
+			return err < 0 ? ERR_PTR(err) : ERR_PTR(-ERR(ESTALE));
 	}
 	return inode;
 }
@@ -164,7 +164,7 @@ struct inode *ceph_lookup_inode(struct super_block *sb, u64 ino)
 		return inode;
 	if (inode->i_nlink == 0) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return inode;
 }
@@ -183,7 +183,7 @@ static struct dentry *__fh_to_dentry(struct super_block *sb, u64 ino)
 	/* -ESTALE if inode as been unlinked and no file is open */
 	if ((inode->i_nlink == 0) && (atomic_read(&inode->i_count) == 1)) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return d_obtain_alias(inode);
 }
@@ -248,7 +248,7 @@ static struct dentry *__snapfh_to_dentry(struct super_block *sb,
 			ihold(inode);
 		} else {
 			/* mds does not support lookup snapped inode */
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			inode = NULL;
 		}
 	}
@@ -262,7 +262,7 @@ static struct dentry *__snapfh_to_dentry(struct super_block *sb,
 		      vino.ino, vino.snap, sfh->parent_ino, sfh->hash, err);
 	}
 	if (!inode)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	/* see comments in ceph_get_parent() */
 	return unlinked ? d_obtain_root(inode) : d_obtain_alias(inode);
 }
@@ -332,7 +332,7 @@ static struct dentry *__get_parent(struct super_block *sb,
 		ihold(inode);
 	ceph_mdsc_put_request(req);
 	if (!inode)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	return d_obtain_alias(inode);
 }
@@ -347,7 +347,7 @@ static struct dentry *ceph_get_parent(struct dentry *child)
 		bool unlinked = false;
 		/* do not support non-directory */
 		if (!d_is_dir(child)) {
-			dn = ERR_PTR(-EINVAL);
+			dn = ERR_PTR(-ERR(EINVAL));
 			goto out;
 		}
 		dir = __lookup_inode(inode->i_sb, ceph_ino(inode));
@@ -420,7 +420,7 @@ static int __get_snap_name(struct dentry *parent, char *name,
 	struct ceph_mds_request *req = NULL;
 	char *last_name = NULL;
 	unsigned next_offset = 2;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (ceph_ino(inode) != ceph_ino(dir))
 		goto out;
@@ -498,7 +498,7 @@ static int __get_snap_name(struct dentry *parent, char *name,
 		ceph_mdsc_put_request(req);
 		req = NULL;
 	}
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 out:
 	if (req)
 		ceph_mdsc_put_request(req);

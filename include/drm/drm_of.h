@@ -75,28 +75,28 @@ drm_of_component_probe(struct device *dev,
 		       int (*compare_of)(struct device *, void *),
 		       const struct component_master_ops *m_ops)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int drm_of_encoder_active_endpoint(struct device_node *node,
 						 struct drm_encoder *encoder,
 						 struct of_endpoint *endpoint)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int drm_of_find_panel_or_bridge(const struct device_node *np,
 					      int port, int endpoint,
 					      struct drm_panel **panel,
 					      struct drm_bridge **bridge)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int
 drm_of_lvds_get_dual_link_pixel_order(const struct device_node *port1,
 				      const struct device_node *port2)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -117,14 +117,14 @@ static inline int drm_of_panel_bridge_remove(const struct device_node *np,
 
 	remote = of_graph_get_remote_node(np, port, endpoint);
 	if (!remote)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	bridge = of_drm_find_bridge(remote);
 	drm_panel_bridge_remove(bridge);
 
 	return 0;
 #else
-	return -EINVAL;
+	return -ERR(EINVAL);
 #endif
 }
 

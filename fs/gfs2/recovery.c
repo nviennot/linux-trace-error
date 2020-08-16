@@ -44,7 +44,7 @@ int gfs2_replay_read_block(struct gfs2_jdesc *jd, unsigned int blk,
 		return error;
 	if (!dblock) {
 		gfs2_consist_inode(ip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*bh = gfs2_meta_ra(gl, dblock, extlen);
@@ -209,7 +209,7 @@ static int foreach_descriptor(struct gfs2_jdesc *jd, u32 start,
 			return error;
 		if (gfs2_meta_check(sdp, bh)) {
 			brelse(bh);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		ld = (struct gfs2_log_descriptor *)bh->b_data;
 		length = be32_to_cpu(ld->ld_length);
@@ -224,13 +224,13 @@ static int foreach_descriptor(struct gfs2_jdesc *jd, u32 start,
 			}
 			if (error == 1) {
 				gfs2_consist_inode(GFS2_I(jd->jd_inode));
-				error = -EIO;
+				error = -ERR(EIO);
 			}
 			brelse(bh);
 			return error;
 		} else if (gfs2_metatype_check(sdp, bh, GFS2_METATYPE_LD)) {
 			brelse(bh);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		ptr = (__be64 *)(bh->b_data + offset);
 		error = lops_scan_elements(jd, start, ld, ptr, pass);
@@ -390,7 +390,7 @@ void gfs2_recover_func(struct work_struct *work)
 		if (ro) {
 			fs_warn(sdp, "jid=%u: Can't replay: read-only block "
 				"device\n", jd->jd_jid);
-			error = -EROFS;
+			error = -ERR(EROFS);
 			goto fail_gunlock_thaw;
 		}
 
@@ -459,7 +459,7 @@ int gfs2_recover_journal(struct gfs2_jdesc *jd, bool wait)
 	int rv;
 
 	if (test_and_set_bit(JDF_RECOVERY, &jd->jd_flags))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* we have JDF_RECOVERY, queue should always succeed */
 	rv = queue_work(gfs_recovery_wq, &jd->jd_work);

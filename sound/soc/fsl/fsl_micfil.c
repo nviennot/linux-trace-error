@@ -218,7 +218,7 @@ static int fsl_micfil_startup(struct snd_pcm_substream *substream,
 
 	if (!micfil) {
 		dev_err(dai->dev, "micfil dai priv_data not set\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -286,7 +286,7 @@ static int fsl_micfil_trigger(struct snd_pcm_substream *substream, int cmd,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -313,7 +313,7 @@ static int fsl_set_clock_params(struct device *dev, unsigned int rate)
 	/* set CLK_DIV */
 	clk_div = get_clk_div(micfil, rate);
 	if (clk_div < 0)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	ret |= regmap_update_bits(micfil->regmap, REG_MICFIL_CTRL2,
 				 MICFIL_CTRL2_CLKDIV_MASK, clk_div);
@@ -653,7 +653,7 @@ static int fsl_micfil_probe(struct platform_device *pdev)
 
 	of_id = of_match_device(fsl_micfil_dt_ids, &pdev->dev);
 	if (!of_id || !of_id->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	micfil->soc = of_id->data;
 
@@ -694,7 +694,7 @@ static int fsl_micfil_probe(struct platform_device *pdev)
 	if (micfil->dataline & ~micfil->soc->dataline) {
 		dev_err(&pdev->dev, "dataline setting error, Mask is 0x%X\n",
 			micfil->soc->dataline);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* get IRQs */

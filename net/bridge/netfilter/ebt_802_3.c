@@ -48,7 +48,7 @@ static int ebt_802_3_mt_check(const struct xt_mtchk_param *par)
 	const struct ebt_802_3_info *info = par->matchinfo;
 
 	if (info->bitmask & ~EBT_802_3_MASK || info->invflags & ~EBT_802_3_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

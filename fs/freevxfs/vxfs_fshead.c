@@ -114,7 +114,7 @@ vxfs_read_fshead(struct super_block *sbp)
 	infp->vsi_fship = vxfs_blkiget(sbp, infp->vsi_iext, infp->vsi_fshino);
 	if (!infp->vsi_fship) {
 		printk(KERN_ERR "vxfs: unable to read fsh inode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	vip = VXFS_INO(infp->vsi_fship);
@@ -186,5 +186,5 @@ vxfs_read_fshead(struct super_block *sbp)
  	kfree(sfp);
  out_iput_fship:
 	iput(infp->vsi_fship);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

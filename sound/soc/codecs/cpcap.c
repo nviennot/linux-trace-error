@@ -970,13 +970,13 @@ static int cpcap_set_sysclk(struct cpcap_audio *cpcap, enum cpcap_dai dai,
 		break;
 	default:
 		dev_err(cpcap->component->dev, "invalid DAI: %d", dai);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* setup clk id */
 	if (clk_id < 0 || clk_id > 1) {
 		dev_err(cpcap->component->dev, "invalid clk id %d", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	err = regmap_update_bits(cpcap->regmap, clkidreg, BIT(clkidshift),
 				 clk_id ? BIT(clkidshift) : 0);
@@ -1016,7 +1016,7 @@ static int cpcap_set_sysclk(struct cpcap_audio *cpcap, enum cpcap_dai dai,
 		break;
 	default:
 		dev_err(cpcap->component->dev, "unsupported freq %u", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = regmap_update_bits(cpcap->regmap, clkfreqreg,
@@ -1054,7 +1054,7 @@ static int cpcap_set_samprate(struct cpcap_audio *cpcap, enum cpcap_dai dai,
 		break;
 	default:
 		dev_err(component->dev, "invalid DAI: %d", dai);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sampmask = 0xF << sampshift | sampreset;
@@ -1088,7 +1088,7 @@ static int cpcap_set_samprate(struct cpcap_audio *cpcap, enum cpcap_dai dai,
 		break;
 	default:
 		dev_err(component->dev, "unsupported samplerate %d", samplerate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	err = regmap_update_bits(cpcap->regmap, sampreg,
 				 sampmask, sampval | sampreset);
@@ -1105,7 +1105,7 @@ static int cpcap_set_samprate(struct cpcap_audio *cpcap, enum cpcap_dai dai,
 	if (sampreadval & sampreset) {
 		dev_err(component->dev, "reset self-clear failed: %04x",
 			sampreadval);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -1168,7 +1168,7 @@ static int cpcap_hifi_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(dev, "HiFi dai fmt failed: CPCAP should be master");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1190,7 +1190,7 @@ static int cpcap_hifi_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(dev, "HiFi dai fmt failed: unsupported clock invert mode");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (val & BIT(CPCAP_BIT_ST_CLK_INV))
@@ -1513,7 +1513,7 @@ static int cpcap_soc_probe(struct snd_soc_component *component)
 
 	cpcap->regmap = dev_get_regmap(component->dev->parent, NULL);
 	if (!cpcap->regmap)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	snd_soc_component_init_regmap(component, cpcap->regmap);
 
 	err = cpcap_get_vendor(component->dev, cpcap->regmap, &cpcap->vendor);

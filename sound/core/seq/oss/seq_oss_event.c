@@ -62,7 +62,7 @@ snd_seq_oss_process_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd
 
 	case SEQ_MIDIPUTC:
 		if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* put a midi byte */
 		if (! is_write_mode(dp->file_mode))
 			break;
@@ -74,20 +74,20 @@ snd_seq_oss_process_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd
 
 	case SEQ_ECHO:
 		if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return set_echo_event(dp, q, ev);
 
 	case SEQ_PRIVATE:
 		if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return snd_seq_oss_synth_raw_event(dp, q->c[1], q->c, ev);
 
 	default:
 		if (dp->seq_mode == SNDRV_SEQ_OSS_MODE_MUSIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return old_event(dp, q, ev);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* old type events: mode1 only */
@@ -113,7 +113,7 @@ old_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *ev)
 		return snd_seq_oss_timer_reset(dp->timer);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* 8bytes extended event: mode1 only */
@@ -167,7 +167,7 @@ extended_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event 
 		return snd_seq_oss_synth_raw_event(dp, q->e.dev, q->c, ev);
 
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* channel voice events: mode1 and 2 */
@@ -175,7 +175,7 @@ static int
 chn_voice_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *ev)
 {
 	if (q->v.chn >= 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (q->v.cmd) {
 	case MIDI_NOTEON:
 		return note_on_event(dp, q->v.dev, q->v.chn, q->v.note, q->v.parm, ev);
@@ -188,7 +188,7 @@ chn_voice_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event
 				       q->v.chn, q->v.note, q->v.parm, ev);
 
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* channel common events: mode1 and 2 */
@@ -196,7 +196,7 @@ static int
 chn_common_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *ev)
 {
 	if (q->l.chn >= 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (q->l.cmd) {
 	case MIDI_PGM_CHANGE:
 		return set_control_event(dp, q->l.dev, SNDRV_SEQ_EVENT_PGMCHANGE,
@@ -215,7 +215,7 @@ chn_common_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_even
 		return set_control_event(dp, q->l.dev, SNDRV_SEQ_EVENT_CHANPRESS,
 					  q->l.chn, 0, q->l.val, ev);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* timer events: mode1 and mode2 */
@@ -250,14 +250,14 @@ timing_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *e
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* local events: mode1 and 2 */
 static int
 local_event(struct seq_oss_devinfo *dp, union evrec *q, struct snd_seq_event *ev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -277,7 +277,7 @@ note_on_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, st
 
 	info = snd_seq_oss_synth_info(dp, dev);
 	if (!info)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (info->arg.event_passing) {
 	case SNDRV_SEQ_OSS_PROCESS_EVENTS:
@@ -303,7 +303,7 @@ note_on_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, st
 			info->ch[ch].vel = vel;
 			return set_note_event(dp, dev, type, ch, info->ch[ch].note, vel, ev);
 		} else if (note >= 128)
-			return -EINVAL; /* invalid */
+			return -ERR(EINVAL); /* invalid */
 
 		if (note != info->ch[ch].note && info->ch[ch].note >= 0)
 			/* note changed - note off at beginning */
@@ -313,7 +313,7 @@ note_on_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, st
 		info->ch[ch].vel = vel;
 		if (vel) /* non-zero velocity - start the note now */
 			return set_note_event(dp, dev, SNDRV_SEQ_EVENT_NOTEON, ch, note, vel, ev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 		
 	case SNDRV_SEQ_OSS_PASS_EVENTS:
 		/* pass the event anyway */
@@ -325,7 +325,7 @@ note_on_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, st
 		else /* normal note-on event */
 			return set_note_event(dp, dev, SNDRV_SEQ_EVENT_NOTEON, ch, note, vel, ev);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -338,7 +338,7 @@ note_off_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, s
 
 	info = snd_seq_oss_synth_info(dp, dev);
 	if (!info)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (info->arg.event_passing) {
 	case SNDRV_SEQ_OSS_PROCESS_EVENTS:
@@ -354,7 +354,7 @@ note_off_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, s
 			info->ch[ch].note = -1;
 			return set_note_event(dp, dev, SNDRV_SEQ_EVENT_NOTEOFF, ch, note, vel, ev);
 		}
-		return -EINVAL; /* invalid */
+		return -ERR(EINVAL); /* invalid */
 
 	case SNDRV_SEQ_OSS_PASS_EVENTS:
 	case SNDRV_SEQ_OSS_PROCESS_KEYPRESS:
@@ -362,7 +362,7 @@ note_off_event(struct seq_oss_devinfo *dp, int dev, int ch, int note, int vel, s
 		return set_note_event(dp, dev, SNDRV_SEQ_EVENT_NOTEOFF, ch, note, vel, ev);
 
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -372,7 +372,7 @@ static int
 set_note_event(struct seq_oss_devinfo *dp, int dev, int type, int ch, int note, int vel, struct snd_seq_event *ev)
 {
 	if (!snd_seq_oss_synth_info(dp, dev))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	
 	ev->type = type;
 	snd_seq_oss_synth_addr(dp, dev, ev);
@@ -390,7 +390,7 @@ static int
 set_control_event(struct seq_oss_devinfo *dp, int dev, int type, int ch, int param, int val, struct snd_seq_event *ev)
 {
 	if (!snd_seq_oss_synth_info(dp, dev))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	
 	ev->type = type;
 	snd_seq_oss_synth_addr(dp, dev, ev);

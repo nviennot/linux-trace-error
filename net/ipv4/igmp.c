@@ -1484,26 +1484,26 @@ static int ip_mc_check_iphdr(struct sk_buff *skb)
 	unsigned int offset = skb_network_offset(skb) + sizeof(*iph);
 
 	if (!pskb_may_pull(skb, offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iph = ip_hdr(skb);
 
 	if (iph->version != 4 || ip_hdrlen(skb) < sizeof(*iph))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	offset += ip_hdrlen(skb) - sizeof(*iph);
 
 	if (!pskb_may_pull(skb, offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iph = ip_hdr(skb);
 
 	if (unlikely(ip_fast_csum((u8 *)iph, iph->ihl)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = skb_network_offset(skb) + ntohs(iph->tot_len);
 	if (skb->len < len || len < offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_set_transport_header(skb, offset);
 
@@ -1516,7 +1516,7 @@ static int ip_mc_check_igmp_reportv3(struct sk_buff *skb)
 
 	len += sizeof(struct igmpv3_report);
 
-	return ip_mc_may_pull(skb, len) ? 0 : -EINVAL;
+	return ip_mc_may_pull(skb, len) ? 0 : -ERR(EINVAL);
 }
 
 static int ip_mc_check_igmp_query(struct sk_buff *skb)
@@ -1528,11 +1528,11 @@ static int ip_mc_check_igmp_query(struct sk_buff *skb)
 	if (transport_len != sizeof(struct igmphdr)) {
 		/* or IGMPv3? */
 		if (transport_len < sizeof(struct igmpv3_query))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = skb_transport_offset(skb) + sizeof(struct igmpv3_query);
 		if (!ip_mc_may_pull(skb, len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* RFC2236+RFC3376 (IGMPv2+IGMPv3) require the multicast link layer
@@ -1540,7 +1540,7 @@ static int ip_mc_check_igmp_query(struct sk_buff *skb)
 	 */
 	if (!igmp_hdr(skb)->group &&
 	    ip_hdr(skb)->daddr != htonl(INADDR_ALLHOSTS_GROUP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1557,7 +1557,7 @@ static int ip_mc_check_igmp_msg(struct sk_buff *skb)
 	case IGMP_HOST_MEMBERSHIP_QUERY:
 		return ip_mc_check_igmp_query(skb);
 	default:
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	}
 }
 
@@ -1573,12 +1573,12 @@ static int ip_mc_check_igmp_csum(struct sk_buff *skb)
 	struct sk_buff *skb_chk;
 
 	if (!ip_mc_may_pull(skb, len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_chk = skb_checksum_trimmed(skb, transport_len,
 				       ip_mc_validate_checksum);
 	if (!skb_chk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (skb_chk != skb)
 		kfree_skb(skb_chk);
@@ -1609,7 +1609,7 @@ int ip_mc_check_igmp(struct sk_buff *skb)
 		return ret;
 
 	if (ip_hdr(skb)->protocol != IPPROTO_IGMP)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	ret = ip_mc_check_igmp_csum(skb);
 	if (ret < 0)
@@ -1855,7 +1855,7 @@ static int ip_mc_del1_src(struct ip_mc_list *pmc, int sfmode,
 	}
 	if (!psf || psf->sf_count[sfmode] == 0) {
 		/* source filter not found, or count wrong =>  bug */
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	psf->sf_count[sfmode]--;
 	if (psf->sf_count[sfmode] == 0) {
@@ -1898,7 +1898,7 @@ static int ip_mc_del_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 	int	i, err;
 
 	if (!in_dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	rcu_read_lock();
 	for_each_pmc_rcu(in_dev, pmc) {
 		if (*pmca == pmc->multiaddr)
@@ -1907,7 +1907,7 @@ static int ip_mc_del_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 	if (!pmc) {
 		/* MCA not found?? bug */
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	spin_lock_bh(&pmc->lock);
 	rcu_read_unlock();
@@ -1915,7 +1915,7 @@ static int ip_mc_del_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 	sf_markstate(pmc);
 #endif
 	if (!delta) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!pmc->sfcount[sfmode])
 			goto out_unlock;
 		pmc->sfcount[sfmode]--;
@@ -1970,7 +1970,7 @@ static int ip_mc_add1_src(struct ip_mc_list *pmc, int sfmode,
 	if (!psf) {
 		psf = kzalloc(sizeof(*psf), GFP_ATOMIC);
 		if (!psf)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		psf->sf_inaddr = *psfsrc;
 		if (psf_prev) {
 			psf_prev->sf_next = psf;
@@ -2070,7 +2070,7 @@ static int ip_mc_add_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 	int	i, err;
 
 	if (!in_dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	rcu_read_lock();
 	for_each_pmc_rcu(in_dev, pmc) {
 		if (*pmca == pmc->multiaddr)
@@ -2079,7 +2079,7 @@ static int ip_mc_add_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
 	if (!pmc) {
 		/* MCA not found?? bug */
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	spin_lock_bh(&pmc->lock);
 	rcu_read_unlock();
@@ -2166,16 +2166,16 @@ static int __ip_mc_join_group(struct sock *sk, struct ip_mreqn *imr,
 	ASSERT_RTNL();
 
 	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	in_dev = ip_mc_find_dev(net, imr);
 
 	if (!in_dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto done;
 	}
 
-	err = -EADDRINUSE;
+	err = -ERR(EADDRINUSE);
 	ifindex = imr->imr_ifindex;
 	for_each_pmc_rtnl(inet, i) {
 		if (i->multi.imr_multiaddr.s_addr == addr &&
@@ -2183,7 +2183,7 @@ static int __ip_mc_join_group(struct sock *sk, struct ip_mreqn *imr,
 			goto done;
 		count++;
 	}
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (count >= net->ipv4.sysctl_igmp_max_memberships)
 		goto done;
 	iml = sock_kmalloc(sk, sizeof(*iml), GFP_KERNEL);
@@ -2246,13 +2246,13 @@ int ip_mc_leave_group(struct sock *sk, struct ip_mreqn *imr)
 	struct net *net = sock_net(sk);
 	__be32 group = imr->imr_multiaddr.s_addr;
 	u32 ifindex;
-	int ret = -EADDRNOTAVAIL;
+	int ret = -ERR(EADDRNOTAVAIL);
 
 	ASSERT_RTNL();
 
 	in_dev = ip_mc_find_dev(net, imr);
 	if (!imr->imr_ifindex && !imr->imr_address.s_addr && !in_dev) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 	ifindex = imr->imr_ifindex;
@@ -2300,7 +2300,7 @@ int ip_mc_source(int add, int omode, struct sock *sk, struct
 	int i, j, rv;
 
 	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ASSERT_RTNL();
 
@@ -2310,10 +2310,10 @@ int ip_mc_source(int add, int omode, struct sock *sk, struct
 	in_dev = ip_mc_find_dev(net, &imr);
 
 	if (!in_dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto done;
 	}
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 
 	for_each_pmc_rtnl(inet, pmc) {
 		if ((pmc->multi.imr_multiaddr.s_addr ==
@@ -2322,13 +2322,13 @@ int ip_mc_source(int add, int omode, struct sock *sk, struct
 			break;
 	}
 	if (!pmc) {		/* must have a prior join */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 	/* if a source filter was set, must be the same mode as before */
 	if (pmc->sflist) {
 		if (pmc->sfmode != omode) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto done;
 		}
 	} else if (pmc->sfmode != omode) {
@@ -2372,7 +2372,7 @@ int ip_mc_source(int add, int omode, struct sock *sk, struct
 	/* else, add a new source to the filter */
 
 	if (psl && psl->sl_count >= net->ipv4.sysctl_igmp_max_msf) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto done;
 	}
 	if (!psl || psl->sl_count == psl->sl_max) {
@@ -2383,7 +2383,7 @@ int ip_mc_source(int add, int omode, struct sock *sk, struct
 			count += psl->sl_max;
 		newpsl = sock_kmalloc(sk, IP_SFLSIZE(count), GFP_KERNEL);
 		if (!newpsl) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto done;
 		}
 		newpsl->sl_max = count;
@@ -2434,10 +2434,10 @@ int ip_mc_msfilter(struct sock *sk, struct ip_msfilter *msf, int ifindex)
 	int leavegroup = 0;
 
 	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (msf->imsf_fmode != MCAST_INCLUDE &&
 	    msf->imsf_fmode != MCAST_EXCLUDE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ASSERT_RTNL();
 
@@ -2447,7 +2447,7 @@ int ip_mc_msfilter(struct sock *sk, struct ip_msfilter *msf, int ifindex)
 	in_dev = ip_mc_find_dev(net, &imr);
 
 	if (!in_dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto done;
 	}
 
@@ -2463,14 +2463,14 @@ int ip_mc_msfilter(struct sock *sk, struct ip_msfilter *msf, int ifindex)
 			break;
 	}
 	if (!pmc) {		/* must have a prior join */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 	if (msf->imsf_numsrc) {
 		newpsl = sock_kmalloc(sk, IP_SFLSIZE(msf->imsf_numsrc),
 							   GFP_KERNEL);
 		if (!newpsl) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto done;
 		}
 		newpsl->sl_max = newpsl->sl_count = msf->imsf_numsrc;
@@ -2521,7 +2521,7 @@ int ip_mc_msfget(struct sock *sk, struct ip_msfilter *msf,
 	ASSERT_RTNL();
 
 	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	imr.imr_multiaddr.s_addr = msf->imsf_multiaddr;
 	imr.imr_address.s_addr = msf->imsf_interface;
@@ -2529,10 +2529,10 @@ int ip_mc_msfget(struct sock *sk, struct ip_msfilter *msf,
 	in_dev = ip_mc_find_dev(net, &imr);
 
 	if (!in_dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto done;
 	}
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 
 	for_each_pmc_rtnl(inet, pmc) {
 		if (pmc->multi.imr_multiaddr.s_addr == msf->imsf_multiaddr &&
@@ -2578,10 +2578,10 @@ int ip_mc_gsfget(struct sock *sk, struct group_filter *gsf,
 
 	psin = (struct sockaddr_in *)&gsf->gf_group;
 	if (psin->sin_family != AF_INET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	addr = psin->sin_addr.s_addr;
 	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_pmc_rtnl(inet, pmc) {
 		if (pmc->multi.imr_multiaddr.s_addr == addr &&
@@ -2589,7 +2589,7 @@ int ip_mc_gsfget(struct sock *sk, struct group_filter *gsf,
 			break;
 	}
 	if (!pmc)		/* must have a prior join */
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	gsf->gf_fmode = pmc->sfmode;
 	psl = rtnl_dereference(pmc->sflist);
 	count = psl ? psl->sl_count : 0;

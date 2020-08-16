@@ -240,7 +240,7 @@ static int snd_cs423x_pnp_init_wss(int dev, struct pnp_dev *pdev)
 {
 	if (pnp_activate_dev(pdev) < 0) {
 		printk(KERN_ERR IDENT " WSS PnP configure failed for WSS (out of resources?)\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	port[dev] = pnp_port_start(pdev, 0);
 	if (fm_port[dev] > 0)
@@ -261,7 +261,7 @@ static int snd_cs423x_pnp_init_ctrl(int dev, struct pnp_dev *pdev)
 {
 	if (pnp_activate_dev(pdev) < 0) {
 		printk(KERN_ERR IDENT " CTRL PnP configure failed for WSS (out of resources?)\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	cport[dev] = pnp_port_start(pdev, 0);
 	snd_printdd("isapnp CTRL: control port=0x%lx\n", cport[dev]);
@@ -295,7 +295,7 @@ static int snd_card_cs423x_pnp(int dev, struct snd_card_cs4236 *acard,
 {
 	acard->wss = pdev;
 	if (snd_cs423x_pnp_init_wss(dev, acard->wss) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (cdev)
 		cport[dev] = pnp_port_start(cdev, 0);
 	else
@@ -309,29 +309,29 @@ static int snd_card_cs423x_pnpc(int dev, struct snd_card_cs4236 *acard,
 {
 	acard->wss = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->wss == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	acard->ctrl = pnp_request_card_device(card, id->devs[1].id, NULL);
 	if (acard->ctrl == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (id->devs[2].id[0]) {
 		acard->mpu = pnp_request_card_device(card, id->devs[2].id, NULL);
 		if (acard->mpu == NULL)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	/* WSS initialization */
 	if (snd_cs423x_pnp_init_wss(dev, acard->wss) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* CTRL initialization */
 	if (acard->ctrl && cport[dev] > 0) {
 		if (snd_cs423x_pnp_init_ctrl(dev, acard->ctrl) < 0)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 	/* MPU initialization */
 	if (acard->mpu && mpu_port[dev] > 0) {
 		if (snd_cs423x_pnp_init_mpu(dev, acard->mpu) < 0)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 	return 0;
 }
@@ -376,7 +376,7 @@ static int snd_cs423x_probe(struct snd_card *card, int dev)
 	if (sb_port[dev] > 0 && sb_port[dev] != SNDRV_AUTO_PORT)
 		if ((acard->res_sb_port = request_region(sb_port[dev], 16, IDENT " SB")) == NULL) {
 			printk(KERN_ERR IDENT ": unable to register SB port at 0x%lx\n", sb_port[dev]);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 	err = snd_cs4236_create(card, port[dev], cport[dev],
@@ -548,13 +548,13 @@ static int snd_cs423x_pnpbios_detect(struct pnp_dev *pdev,
 	char cid[PNP_ID_LEN];
 
 	if (pnp_device_is_isapnp(pdev))
-		return -ENOENT;	/* we have another procedure - card */
+		return -ERR(ENOENT);	/* we have another procedure - card */
 	for (; dev < SNDRV_CARDS; dev++) {
 		if (enable[dev] && isapnp[dev])
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* prepare second id */
 	strcpy(cid, pdev->id[0].id);
@@ -622,7 +622,7 @@ static int snd_cs423x_pnpc_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	res = snd_cs423x_card_new(&pcard->card->dev, dev, &card);
 	if (res < 0)

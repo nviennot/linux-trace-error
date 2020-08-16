@@ -354,20 +354,20 @@ static int ax25_ctl_ioctl(const unsigned int cmd, void __user *arg)
 		return -EFAULT;
 
 	if ((ax25_dev = ax25_addr_ax25dev(&ax25_ctl.port_addr)) == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (ax25_ctl.digi_count > AX25_MAX_DIGIS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ax25_ctl.arg > ULONG_MAX / HZ && ax25_ctl.cmd != AX25_KILL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	digi.ndigi = ax25_ctl.digi_count;
 	for (k = 0; k < digi.ndigi; k++)
 		digi.calls[k] = ax25_ctl.digi_addr[k];
 
 	if ((ax25 = ax25_find_cb(&ax25_ctl.source_addr, &ax25_ctl.dest_addr, &digi, ax25_dev->dev)) == NULL)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	switch (ax25_ctl.cmd) {
 	case AX25_KILL:
@@ -438,7 +438,7 @@ out_put:
 	return ret;
 
 einval_put:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out_put;
 }
 
@@ -538,10 +538,10 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 	int res = 0;
 
 	if (level != SOL_AX25)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (optlen < sizeof(unsigned int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(opt, (unsigned int __user *)optval))
 		return -EFAULT;
@@ -553,12 +553,12 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 	case AX25_WINDOW:
 		if (ax25->modulus == AX25_MODULUS) {
 			if (opt < 1 || opt > 7) {
-				res = -EINVAL;
+				res = -ERR(EINVAL);
 				break;
 			}
 		} else {
 			if (opt < 1 || opt > 63) {
-				res = -EINVAL;
+				res = -ERR(EINVAL);
 				break;
 			}
 		}
@@ -567,7 +567,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_T1:
 		if (opt < 1 || opt > ULONG_MAX / HZ) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->rtt = (opt * HZ) >> 1;
@@ -576,7 +576,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_T2:
 		if (opt < 1 || opt > ULONG_MAX / HZ) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->t2 = opt * HZ;
@@ -584,7 +584,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_N2:
 		if (opt < 1 || opt > 31) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->n2 = opt;
@@ -592,7 +592,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_T3:
 		if (opt < 1 || opt > ULONG_MAX / HZ) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->t3 = opt * HZ;
@@ -600,7 +600,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_IDLE:
 		if (opt > ULONG_MAX / (60 * HZ)) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->idle = opt * 60 * HZ;
@@ -608,7 +608,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_BACKOFF:
 		if (opt > 2) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->backoff = opt;
@@ -628,7 +628,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 
 	case AX25_PACLEN:
 		if (opt < 16 || opt > 65535) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25->paclen = opt;
@@ -648,7 +648,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 		if (sk->sk_type == SOCK_SEQPACKET &&
 		   (sock->state != SS_UNCONNECTED ||
 		    sk->sk_state == TCP_LISTEN)) {
-			res = -EADDRNOTAVAIL;
+			res = -ERR(EADDRNOTAVAIL);
 			break;
 		}
 
@@ -656,14 +656,14 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 		dev = __dev_get_by_name(&init_net, devname);
 		if (!dev) {
 			rtnl_unlock();
-			res = -ENODEV;
+			res = -ERR(ENODEV);
 			break;
 		}
 
 		ax25->ax25_dev = ax25_dev_ax25dev(dev);
 		if (!ax25->ax25_dev) {
 			rtnl_unlock();
-			res = -ENODEV;
+			res = -ERR(ENODEV);
 			break;
 		}
 		ax25_fillin_cb(ax25, ax25->ax25_dev);
@@ -671,7 +671,7 @@ static int ax25_setsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		res = -ENOPROTOOPT;
+		res = -ERR(ENOPROTOOPT);
 	}
 	release_sock(sk);
 
@@ -690,7 +690,7 @@ static int ax25_getsockopt(struct socket *sock, int level, int optname,
 	int maxlen, length;
 
 	if (level != SOL_AX25)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(maxlen, optlen))
 		return -EFAULT;
@@ -765,7 +765,7 @@ static int ax25_getsockopt(struct socket *sock, int level, int optname,
 
 	default:
 		release_sock(sk);
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 	release_sock(sk);
 
@@ -786,7 +786,7 @@ static int ax25_listen(struct socket *sock, int backlog)
 		sk->sk_state           = TCP_LISTEN;
 		goto out;
 	}
-	res = -EOPNOTSUPP;
+	res = -ERR(EOPNOTSUPP);
 
 out:
 	release_sock(sk);
@@ -811,10 +811,10 @@ static int ax25_create(struct net *net, struct socket *sock, int protocol,
 	ax25_cb *ax25;
 
 	if (protocol < 0 || protocol > U8_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	switch (sock->type) {
 	case SOCK_DGRAM:
@@ -839,17 +839,17 @@ static int ax25_create(struct net *net, struct socket *sock, int protocol,
 #ifdef CONFIG_ROSE
 		case AX25_P_ROSE:
 #endif
-			return -ESOCKTNOSUPPORT;
+			return -ERR(ESOCKTNOSUPPORT);
 #ifdef CONFIG_NETROM_MODULE
 		case AX25_P_NETROM:
 			if (ax25_protocol_is_registered(AX25_P_NETROM))
-				return -ESOCKTNOSUPPORT;
+				return -ERR(ESOCKTNOSUPPORT);
 			break;
 #endif
 #ifdef CONFIG_ROSE_MODULE
 		case AX25_P_ROSE:
 			if (ax25_protocol_is_registered(AX25_P_ROSE))
-				return -ESOCKTNOSUPPORT;
+				return -ERR(ESOCKTNOSUPPORT);
 #endif
 		default:
 			break;
@@ -858,10 +858,10 @@ static int ax25_create(struct net *net, struct socket *sock, int protocol,
 
 	case SOCK_RAW:
 		if (!capable(CAP_NET_RAW))
-			return -EPERM;
+			return -ERR(EPERM);
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	sk = sk_alloc(net, PF_AX25, GFP_ATOMIC, &ax25_proto, kern);
@@ -1059,10 +1059,10 @@ static int ax25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		 */
 		if ((addr_len < sizeof(struct sockaddr_ax25) + sizeof(ax25_address) * 6) ||
 		    (addr_len > sizeof(struct full_sockaddr_ax25)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	if (addr->fsa_ax25.sax25_family != AF_AX25)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	user = ax25_findbyuid(current_euid());
 	if (user) {
@@ -1070,7 +1070,7 @@ static int ax25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		ax25_uid_put(user);
 	} else {
 		if (ax25_uid_policy && !capable(CAP_NET_ADMIN))
-			return -EACCES;
+			return -ERR(EACCES);
 
 		call = addr->fsa_ax25.sax25_call;
 	}
@@ -1079,7 +1079,7 @@ static int ax25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 
 	ax25 = sk_to_ax25(sk);
 	if (!sock_flag(sk, SOCK_ZAPPED)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1094,12 +1094,12 @@ static int ax25_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	if (addr_len > sizeof(struct sockaddr_ax25) && addr->fsa_ax25.sax25_ndigis == 1) {
 		if (ax25cmp(&addr->fsa_digipeater[0], &null_ax25_address) != 0 &&
 		    (ax25_dev = ax25_addr_ax25dev(&addr->fsa_digipeater[0])) == NULL) {
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 			goto out;
 		}
 	} else {
 		if ((ax25_dev = ax25_addr_ax25dev(&addr->fsa_ax25.sax25_call)) == NULL) {
-			err = -EADDRNOTAVAIL;
+			err = -ERR(EADDRNOTAVAIL);
 			goto out;
 		}
 	}
@@ -1144,11 +1144,11 @@ static int __must_check ax25_connect(struct socket *sock,
 		 */
 		if ((addr_len < sizeof(struct sockaddr_ax25) + sizeof(ax25_address) * 6) ||
 		    (addr_len > sizeof(struct full_sockaddr_ax25)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 
 	if (fsa->fsa_ax25.sax25_family != AF_AX25)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -1156,7 +1156,7 @@ static int __must_check ax25_connect(struct socket *sock,
 	if (sock->state == SS_CONNECTING) {
 		switch (sk->sk_state) {
 		case TCP_SYN_SENT: /* still trying */
-			err = -EINPROGRESS;
+			err = -ERR(EINPROGRESS);
 			goto out_release;
 
 		case TCP_ESTABLISHED: /* connection established */
@@ -1165,13 +1165,13 @@ static int __must_check ax25_connect(struct socket *sock,
 
 		case TCP_CLOSE: /* connection refused */
 			sock->state = SS_UNCONNECTED;
-			err = -ECONNREFUSED;
+			err = -ERR(ECONNREFUSED);
 			goto out_release;
 		}
 	}
 
 	if (sk->sk_state == TCP_ESTABLISHED && sk->sk_type == SOCK_SEQPACKET) {
-		err = -EISCONN;	/* No reconnect on a seqpacket socket */
+		err = -ERR(EISCONN);	/* No reconnect on a seqpacket socket */
 		goto out_release;
 	}
 
@@ -1191,12 +1191,12 @@ static int __must_check ax25_connect(struct socket *sock,
 		    fsa->fsa_ax25.sax25_ndigis > AX25_MAX_DIGIS ||
 		    addr_len < sizeof(struct sockaddr_ax25) +
 		    sizeof(ax25_address) * fsa->fsa_ax25.sax25_ndigis) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_release;
 		}
 
 		if ((digi = kmalloc(sizeof(ax25_digi), GFP_KERNEL)) == NULL) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto out_release;
 		}
 
@@ -1235,7 +1235,7 @@ static int __must_check ax25_connect(struct socket *sock,
 	} else {
 		if (ax25->ax25_dev == NULL) {
 			kfree(digi);
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			goto out_release;
 		}
 	}
@@ -1244,7 +1244,7 @@ static int __must_check ax25_connect(struct socket *sock,
 	    (ax25t=ax25_find_cb(&ax25->source_addr, &fsa->fsa_ax25.sax25_call, digi,
 			 ax25->ax25_dev->dev))) {
 		kfree(digi);
-		err = -EADDRINUSE;		/* Already such a connection */
+		err = -ERR(EADDRINUSE);		/* Already such a connection */
 		ax25_cb_put(ax25t);
 		goto out_release;
 	}
@@ -1287,7 +1287,7 @@ static int __must_check ax25_connect(struct socket *sock,
 
 	/* Now the loop */
 	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) {
-		err = -EINPROGRESS;
+		err = -ERR(EINPROGRESS);
 		goto out_release;
 	}
 
@@ -1305,7 +1305,7 @@ static int __must_check ax25_connect(struct socket *sock,
 				lock_sock(sk);
 				continue;
 			}
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			break;
 		}
 		finish_wait(sk_sleep(sk), &wait);
@@ -1340,19 +1340,19 @@ static int ax25_accept(struct socket *sock, struct socket *newsock, int flags,
 	int err = 0;
 
 	if (sock->state != SS_UNCONNECTED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((sk = sock->sk) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sk->sk_type != SOCK_SEQPACKET) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (sk->sk_state != TCP_LISTEN) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1376,7 +1376,7 @@ static int ax25_accept(struct socket *sock, struct socket *newsock, int flags,
 			lock_sock(sk);
 			continue;
 		}
-		err = -ERESTARTSYS;
+		err = -ERR(ERESTARTSYS);
 		break;
 	}
 	finish_wait(sk_sleep(sk), &wait);
@@ -1413,7 +1413,7 @@ static int ax25_getname(struct socket *sock, struct sockaddr *uaddr,
 
 	if (peer != 0) {
 		if (sk->sk_state != TCP_ESTABLISHED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			goto out;
 		}
 
@@ -1458,35 +1458,35 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	int lv, err, addr_len = msg->msg_namelen;
 
 	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	ax25 = sk_to_ax25(sk);
 
 	if (sock_flag(sk, SOCK_ZAPPED)) {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		goto out;
 	}
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		goto out;
 	}
 
 	if (ax25->ax25_dev == NULL) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto out;
 	}
 
 	if (len > ax25->ax25_dev->dev->mtu) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
 	if (usax != NULL) {
 		if (usax->sax25_family != AF_AX25) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1500,7 +1500,7 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 			 */
 			if ((addr_len < sizeof(struct sockaddr_ax25) + sizeof(ax25_address) * 6) ||
 			    (addr_len > sizeof(struct full_sockaddr_ax25))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -1514,7 +1514,7 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 			    usax->sax25_ndigis > AX25_MAX_DIGIS ||
 			    addr_len < sizeof(struct sockaddr_ax25) +
 			    sizeof(ax25_address) * usax->sax25_ndigis) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -1532,7 +1532,7 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 		sax = *usax;
 		if (sk->sk_type == SOCK_SEQPACKET &&
 		    ax25cmp(&ax25->dest_addr, &sax.sax25_call)) {
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 			goto out;
 		}
 		if (usax->sax25_ndigis == 0)
@@ -1546,7 +1546,7 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 		 *	we ought to SIGPIPE, EPIPE
 		 */
 		if (sk->sk_state != TCP_ESTABLISHED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			goto out;
 		}
 		sax.sax25_family = AF_AX25;
@@ -1581,7 +1581,7 @@ static int ax25_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 		/* Connected mode sockets go via the LAPB machine */
 		if (sk->sk_state != TCP_ESTABLISHED) {
 			kfree_skb(skb);
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			goto out;
 		}
 
@@ -1629,7 +1629,7 @@ static int ax25_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 	 *	queue for us! We do one quick check first though
 	 */
 	if (sk->sk_type == SOCK_SEQPACKET && sk->sk_state != TCP_ESTABLISHED) {
-		err =  -ENOTCONN;
+		err =  -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -1690,7 +1690,7 @@ out:
 static int ax25_shutdown(struct socket *sk, int how)
 {
 	/* FIXME - generate DM and RNR states */
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
@@ -1736,7 +1736,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCAX25NOUID: {	/* Set the default policy (default/bar) */
 		long amount;
 		if (!capable(CAP_NET_ADMIN)) {
-			res = -EPERM;
+			res = -ERR(EPERM);
 			break;
 		}
 		if (get_user(amount, (long __user *)argp)) {
@@ -1744,7 +1744,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 			break;
 		}
 		if (amount < 0 || amount > AX25_NOUID_BLOCK) {
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 			break;
 		}
 		ax25_uid_policy = amount;
@@ -1756,7 +1756,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCDELRT:
 	case SIOCAX25OPTRT:
 		if (!capable(CAP_NET_ADMIN)) {
-			res = -EPERM;
+			res = -ERR(EPERM);
 			break;
 		}
 		res = ax25_rt_ioctl(cmd, argp);
@@ -1764,7 +1764,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 
 	case SIOCAX25CTLCON:
 		if (!capable(CAP_NET_ADMIN)) {
-			res = -EPERM;
+			res = -ERR(EPERM);
 			break;
 		}
 		res = ax25_ctl_ioctl(cmd, argp);
@@ -1810,7 +1810,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 			}
 		} else {
 			if (copy_to_user(argp, &ax25_info, sizeof(struct ax25_info_struct))) {
-				res = -EINVAL;
+				res = -ERR(EINVAL);
 				break;
 			}
 		}
@@ -1822,7 +1822,7 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCAX25DELFWD: {
 		struct ax25_fwd_struct ax25_fwd;
 		if (!capable(CAP_NET_ADMIN)) {
-			res = -EPERM;
+			res = -ERR(EPERM);
 			break;
 		}
 		if (copy_from_user(&ax25_fwd, argp, sizeof(ax25_fwd))) {
@@ -1843,11 +1843,11 @@ static int ax25_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCSIFNETMASK:
 	case SIOCGIFMETRIC:
 	case SIOCSIFMETRIC:
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		break;
 
 	default:
-		res = -ENOIOCTLCMD;
+		res = -ERR(ENOIOCTLCMD);
 		break;
 	}
 	release_sock(sk);

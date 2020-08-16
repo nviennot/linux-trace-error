@@ -90,10 +90,10 @@ static ssize_t key_tx_spec_write(struct file *file, const char __user *userbuf,
 	switch (key->conf.cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
 	case WLAN_CIPHER_SUITE_WEP104:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	case WLAN_CIPHER_SUITE_TKIP:
 		/* not supported yet */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	case WLAN_CIPHER_SUITE_CCMP:
 	case WLAN_CIPHER_SUITE_CCMP_256:
 	case WLAN_CIPHER_SUITE_AES_CMAC:
@@ -107,7 +107,7 @@ static ssize_t key_tx_spec_write(struct file *file, const char __user *userbuf,
 			return ret;
 		/* PN is a 48-bit counter */
 		if (pn >= (1ULL << 48))
-			return -ERANGE;
+			return -ERR(ERANGE);
 		atomic64_set(&key->conf.tx_pn, pn);
 		return count;
 	default:
@@ -288,7 +288,7 @@ static ssize_t key_mic_failures_read(struct file *file, char __user *userbuf,
 	int len;
 
 	if (key->conf.cipher != WLAN_CIPHER_SUITE_TKIP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = scnprintf(buf, sizeof(buf), "%u\n", key->u.tkip.mic_failures);
 

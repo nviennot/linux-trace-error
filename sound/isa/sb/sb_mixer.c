@@ -218,7 +218,7 @@ static int snd_dt019x_input_sw_put(struct snd_kcontrol *kcontrol, struct snd_ctl
 	unsigned char nval, oval;
 	
 	if (ucontrol->value.enumerated.item[0] > 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (ucontrol->value.enumerated.item[0]) {
 	case 0:
 		nval = SB_DT019X_CAP_CD;
@@ -288,7 +288,7 @@ static int snd_als4k_mono_capture_route_put(struct snd_kcontrol *kcontrol,
 	unsigned char nval, oval;
 
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irqsave(&sb->mixer_lock, flags);
 	oval = snd_sbmixer_read(sb, SB_ALS4000_MONO_IO_CTRL);
 
@@ -346,7 +346,7 @@ static int snd_sb8mixer_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 	unsigned char nval, oval;
 	
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (ucontrol->value.enumerated.item[0]) {
 	case 1:
 		nval = SB_DSP_MIXS_CD;
@@ -727,7 +727,7 @@ int snd_sbmixer_new(struct snd_sb *chip)
 	int err;
 
 	if (snd_BUG_ON(!chip || !chip->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 

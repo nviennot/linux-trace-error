@@ -677,7 +677,7 @@ static noinline int iw_handler_get_iwstats(struct net_device *	dev,
 			stats->qual.updated &= ~IW_QUAL_ALL_UPDATED;
 		return 0;
 	} else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 }
 
 static iw_handler get_handler(struct net_device *dev, unsigned int cmd)
@@ -764,9 +764,9 @@ static int ioctl_standard_iw_point(struct iw_point *iwp, unsigned int cmd,
 			return -EFAULT;
 		/* Check if number of token fits within bounds */
 		if (iwp->length > descr->max_tokens)
-			return -E2BIG;
+			return -ERR(E2BIG);
 		if (iwp->length < descr->min_tokens)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		/* Check NULL pointer */
 		if (!iwp->pointer)
@@ -844,7 +844,7 @@ static int ioctl_standard_iw_point(struct iw_point *iwp, unsigned int cmd,
 	if (!err && IW_IS_GET(cmd)) {
 		/* Check if there is enough buffer up there */
 		if (user_length < iwp->length) {
-			err = -E2BIG;
+			err = -ERR(E2BIG);
 			goto out;
 		}
 
@@ -927,7 +927,7 @@ static int wireless_process_ioctl(struct net *net, struct iwreq *iwr,
 
 	/* Make sure the device exist */
 	if ((dev = __dev_get_by_name(net, iwr->ifr_name)) == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* A bunch of special cases, then the generic case...
 	 * Note that 'cmd' is already filtered in dev_ioctl() with
@@ -944,7 +944,7 @@ static int wireless_process_ioctl(struct net *net, struct iwreq *iwr,
 
 	/* Basic check */
 	if (!netif_device_present(dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* New driver API : try to find the handler */
 	handler = get_handler(dev, cmd);
@@ -955,7 +955,7 @@ static int wireless_process_ioctl(struct net *net, struct iwreq *iwr,
 		else if (private)
 			return private(dev, iwr, cmd, info, handler);
 	}
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* If command is `set a parameter', or `get the encoding parameters',
@@ -966,7 +966,7 @@ static int wext_permission_check(unsigned int cmd)
 	if ((IW_IS_SET(cmd) || cmd == SIOCGIWENCODE ||
 	     cmd == SIOCGIWENCODEEXT) &&
 	    !capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -1002,11 +1002,11 @@ static int ioctl_standard_call(struct net_device *	dev,
 			       iw_handler		handler)
 {
 	const struct iw_ioctl_description *	descr;
-	int					ret = -EINVAL;
+	int					ret = -ERR(EINVAL);
 
 	/* Get the description of the IOCTL */
 	if (IW_IOCTL_IDX(cmd) >= standard_ioctl_num)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	descr = &(standard_ioctl[IW_IOCTL_IDX(cmd)]);
 
 	/* Check if we have a pointer to user space data or not */

@@ -106,24 +106,24 @@ static int seg6_genl_sethmac(struct sk_buff *skb, struct genl_info *info)
 	if (!info->attrs[SEG6_ATTR_HMACKEYID] ||
 	    !info->attrs[SEG6_ATTR_SECRETLEN] ||
 	    !info->attrs[SEG6_ATTR_ALGID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hmackeyid = nla_get_u32(info->attrs[SEG6_ATTR_HMACKEYID]);
 	slen = nla_get_u8(info->attrs[SEG6_ATTR_SECRETLEN]);
 	algid = nla_get_u8(info->attrs[SEG6_ATTR_ALGID]);
 
 	if (hmackeyid == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (slen > SEG6_HMAC_SECRET_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&sdata->lock);
 	hinfo = seg6_hmac_info_lookup(net, hmackeyid);
 
 	if (!slen) {
 		if (!hinfo)
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 
 		err = seg6_hmac_info_del(net, hmackeyid);
 
@@ -131,7 +131,7 @@ static int seg6_genl_sethmac(struct sk_buff *skb, struct genl_info *info)
 	}
 
 	if (!info->attrs[SEG6_ATTR_SECRET]) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -167,7 +167,7 @@ out_unlock:
 
 static int seg6_genl_sethmac(struct sk_buff *skb, struct genl_info *info)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif
@@ -181,7 +181,7 @@ static int seg6_genl_set_tunsrc(struct sk_buff *skb, struct genl_info *info)
 	sdata = seg6_pernet(net);
 
 	if (!info->attrs[SEG6_ATTR_DST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val = nla_data(info->attrs[SEG6_ATTR_DST]);
 	t_new = kmemdup(val, sizeof(*val), GFP_KERNEL);
@@ -267,7 +267,7 @@ static int __seg6_genl_dumphmac_element(struct seg6_hmac_info *hinfo,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int seg6_genl_dumphmac_start(struct netlink_callback *cb)
@@ -353,7 +353,7 @@ static int seg6_genl_dumphmac_done(struct netlink_callback *cb)
 
 static int seg6_genl_dumphmac(struct sk_buff *skb, struct netlink_callback *cb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif

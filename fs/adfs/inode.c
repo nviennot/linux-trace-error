@@ -27,7 +27,7 @@ adfs_get_block(struct inode *inode, sector_t block, struct buffer_head *bh,
 		return 0;
 	}
 	/* don't support allocation of blocks yet */
-	return -EIO;
+	return -ERR(EIO);
 
 abort_toobig:
 	return 0;
@@ -307,7 +307,7 @@ adfs_notify_change(struct dentry *dentry, struct iattr *attr)
 	 */
 	if ((ia_valid & ATTR_UID && !uid_eq(attr->ia_uid, ADFS_SB(sb)->s_uid)) ||
 	    (ia_valid & ATTR_GID && !gid_eq(attr->ia_gid, ADFS_SB(sb)->s_gid)))
-		error = -EPERM;
+		error = -ERR(EPERM);
 
 	if (error)
 		goto out;

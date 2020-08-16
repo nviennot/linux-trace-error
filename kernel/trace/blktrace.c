@@ -350,7 +350,7 @@ static int __blk_trace_remove(struct request_queue *q)
 	bt = rcu_replace_pointer(q->blk_trace, NULL,
 				 lockdep_is_held(&q->blk_trace_mutex));
 	if (!bt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bt->trace_state != Blktrace_running)
 		blk_trace_cleanup(bt);
@@ -395,7 +395,7 @@ static ssize_t blk_msg_write(struct file *filp, const char __user *buffer,
 	struct blk_trace *bt;
 
 	if (count >= BLK_TN_MAX_MSG)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg = memdup_user_nul(buffer, count);
 	if (IS_ERR(msg))
@@ -484,10 +484,10 @@ static int do_blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
 	int ret;
 
 	if (!buts->buf_size || !buts->buf_nr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!blk_debugfs_root)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	strncpy(buts->name, name, BLKTRACE_BDEV_SIZE);
 	buts->name[BLKTRACE_BDEV_SIZE - 1] = '\0';
@@ -506,7 +506,7 @@ static int do_blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
 				      lockdep_is_held(&q->blk_trace_mutex))) {
 		pr_warn("Concurrent blktraces are not allowed on %s\n",
 			buts->name);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	bt = kzalloc(sizeof(*bt), GFP_KERNEL);
@@ -522,7 +522,7 @@ static int do_blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
 	if (!bt->msg_data)
 		goto err;
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 
 	dir = debugfs_lookup(buts->name, blk_debugfs_root);
 	if (!dir)
@@ -532,7 +532,7 @@ static int do_blk_trace_setup(struct request_queue *q, char *name, dev_t dev,
 	atomic_set(&bt->dropped, 0);
 	INIT_LIST_HEAD(&bt->running_list);
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	bt->dropped_file = debugfs_create_file("dropped", 0444, dir, bt,
 					       &blk_dropped_fops);
 
@@ -647,13 +647,13 @@ static int __blk_trace_startstop(struct request_queue *q, int start)
 	bt = rcu_dereference_protected(q->blk_trace,
 				       lockdep_is_held(&q->blk_trace_mutex));
 	if (bt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * For starting a trace, we can transition from a setup or stopped
 	 * trace. For stopping a trace, the state must be running
 	 */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (start) {
 		if (bt->trace_state == Blktrace_setup ||
 		    bt->trace_state == Blktrace_stopped) {
@@ -714,7 +714,7 @@ int blk_trace_ioctl(struct block_device *bdev, unsigned cmd, char __user *arg)
 
 	q = bdev_get_queue(bdev);
 	if (!q)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mutex_lock(&q->blk_trace_mutex);
 
@@ -739,7 +739,7 @@ int blk_trace_ioctl(struct block_device *bdev, unsigned cmd, char __user *arg)
 		ret = __blk_trace_remove(q);
 		break;
 	default:
-		ret = -ENOTTY;
+		ret = -ERR(ENOTTY);
 		break;
 	}
 
@@ -1644,7 +1644,7 @@ static int blk_trace_remove_queue(struct request_queue *q)
 	bt = rcu_replace_pointer(q->blk_trace, NULL,
 				 lockdep_is_held(&q->blk_trace_mutex));
 	if (bt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	put_probe_ref();
 	synchronize_rcu();
@@ -1766,7 +1766,7 @@ static int blk_trace_str2mask(const char *str)
 			}
 		}
 		if (i == ARRAY_SIZE(mask_maps)) {
-			mask = -EINVAL;
+			mask = -ERR(EINVAL);
 			break;
 		}
 	}
@@ -1807,7 +1807,7 @@ static ssize_t sysfs_blk_trace_attr_show(struct device *dev,
 	struct request_queue *q;
 	struct block_device *bdev;
 	struct blk_trace *bt;
-	ssize_t ret = -ENXIO;
+	ssize_t ret = -ERR(ENXIO);
 
 	bdev = bdget(part_devt(p));
 	if (bdev == NULL)
@@ -1854,7 +1854,7 @@ static ssize_t sysfs_blk_trace_attr_store(struct device *dev,
 	struct hd_struct *p;
 	struct blk_trace *bt;
 	u64 value;
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (count == 0)
 		goto out;
@@ -1870,7 +1870,7 @@ static ssize_t sysfs_blk_trace_attr_store(struct device *dev,
 	} else if (kstrtoull(buf, 0, &value))
 		goto out;
 
-	ret = -ENXIO;
+	ret = -ERR(ENXIO);
 
 	p = dev_to_part(dev);
 	bdev = bdget(part_devt(p));

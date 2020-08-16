@@ -111,7 +111,7 @@ static int pcm179x_hw_params(struct snd_pcm_substream *substream,
 			val = 0;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -124,12 +124,12 @@ static int pcm179x_hw_params(struct snd_pcm_substream *substream,
 			val = 4;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = val << PCM179X_FMT_SHIFT | PCM179X_ATLD_ENABLE;

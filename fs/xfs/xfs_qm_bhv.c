@@ -103,7 +103,7 @@ xfs_qm_newmount(
 			(uquotaondisk ? " usrquota" : ""),
 			(gquotaondisk ? " grpquota" : ""),
 			(pquotaondisk ? " prjquota" : ""));
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	if (XFS_IS_QUOTA_ON(mp) || quotaondisk) {

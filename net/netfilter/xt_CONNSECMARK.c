@@ -89,7 +89,7 @@ static int connsecmark_tg_check(const struct xt_tgchk_param *par)
 	    strcmp(par->table, "security") != 0) {
 		pr_info_ratelimited("only valid in \'mangle\' or \'security\' table, not \'%s\'\n",
 				    par->table);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (info->mode) {
@@ -99,7 +99,7 @@ static int connsecmark_tg_check(const struct xt_tgchk_param *par)
 
 	default:
 		pr_info_ratelimited("invalid mode: %hu\n", info->mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = nf_ct_netns_get(par->net, par->family);

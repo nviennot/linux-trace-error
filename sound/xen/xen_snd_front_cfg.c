@@ -317,7 +317,7 @@ static int cfg_get_stream_type(const char *path, int index,
 			      sizeof(XENSND_STREAM_TYPE_CAPTURE))) {
 		(*num_cap)++;
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 	ret = 0;
@@ -359,7 +359,7 @@ static int cfg_stream(struct xen_snd_front_info *front_info,
 			      sizeof(XENSND_STREAM_TYPE_CAPTURE))) {
 		stream = &pcm_instance->streams_cap[(*cur_cap)++];
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
@@ -494,7 +494,7 @@ int xen_snd_front_cfg_card(struct xen_snd_front_info *front_info,
 		dev_warn(&xb_dev->dev,
 			 "No devices configured for sound card at %s\n",
 			 xb_dev->nodename);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Start from default PCM HW configuration for the card. */

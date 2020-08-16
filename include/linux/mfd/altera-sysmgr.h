@@ -22,7 +22,7 @@ static inline struct regmap *
 altr_sysmgr_regmap_lookup_by_phandle(struct device_node *np,
 				     const char *property)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 #endif
 

@@ -120,7 +120,7 @@ static int davinci_vcif_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		printk(KERN_WARNING "davinci-vcif: unsupported PCM format");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(w, davinci_vc->base + DAVINCI_VC_CTRL);
@@ -145,7 +145,7 @@ static int davinci_vcif_trigger(struct snd_pcm_substream *substream, int cmd,
 		davinci_vcif_stop(substream);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;

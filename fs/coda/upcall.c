@@ -485,12 +485,12 @@ int venus_pioctl(struct super_block *sb, struct CodaFid *fid,
 
         /* build packet for Venus */
         if (data->vi.in_size > VC_MAXDATASIZE) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto exit;
         }
 
         if (data->vi.out_size > VC_MAXDATASIZE) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -510,7 +510,7 @@ int venus_pioctl(struct super_block *sb, struct CodaFid *fid,
         /* get the data out of user space */
 	if (copy_from_user((char *)inp + (long)inp->coda_ioctl.data,
 			   data->vi.in, data->vi.in_size)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	        goto exit;
 	}
 
@@ -524,13 +524,13 @@ int venus_pioctl(struct super_block *sb, struct CodaFid *fid,
 	}
 
 	if (outsize < (long)outp->coda_ioctl.data + outp->coda_ioctl.len) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto exit;
 	}
         
 	/* Copy out the OUT buffer. */
         if (outp->coda_ioctl.len > data->vi.out_size) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto exit;
         }
 
@@ -719,7 +719,7 @@ static int coda_upcall(struct venus_comm *vcp,
 
 	if (!vcp->vc_inuse) {
 		pr_notice("Venus dead, not sending upcall\n");
-		error = -ENXIO;
+		error = -ERR(ENXIO);
 		goto exit;
 	}
 
@@ -770,7 +770,7 @@ static int coda_upcall(struct venus_comm *vcp,
 		goto exit;
 	}
 
-	error = -EINTR;
+	error = -ERR(EINTR);
 	if ((req->uc_flags & CODA_REQ_ABORT) || !signal_pending(current)) {
 		pr_warn("Unexpected interruption.\n");
 		goto exit;
@@ -796,7 +796,7 @@ static int coda_upcall(struct venus_comm *vcp,
 		goto exit;
 	}
 
-	error = -EINTR;
+	error = -ERR(EINTR);
 	sig_inputArgs->ih.opcode = CODA_SIGNAL;
 	sig_inputArgs->ih.unique = req->uc_unique;
 
@@ -865,27 +865,27 @@ int coda_downcall(struct venus_comm *vcp, int opcode, union outputArgs *out,
 	switch (opcode) {
 	case CODA_PURGEUSER:
 		if (nbytes < sizeof(struct coda_purgeuser_out))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case CODA_ZAPDIR:
 		if (nbytes < sizeof(struct coda_zapdir_out))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case CODA_ZAPFILE:
 		if (nbytes < sizeof(struct coda_zapfile_out))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case CODA_PURGEFID:
 		if (nbytes < sizeof(struct coda_purgefid_out))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case CODA_REPLACE:
 		if (nbytes < sizeof(struct coda_replace_out))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	}
 

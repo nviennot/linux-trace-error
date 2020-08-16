@@ -417,7 +417,7 @@ static void cmtp_register_appl(struct capi_ctr *ctrl, __u16 appl, capi_register_
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		}
 
@@ -430,7 +430,7 @@ static void cmtp_register_appl(struct capi_ctr *ctrl, __u16 appl, capi_register_
 			break;
 
 		if (signal_pending(current)) {
-			err = -EINTR;
+			err = -ERR(EINTR);
 			break;
 		}
 
@@ -539,10 +539,10 @@ int cmtp_attach_device(struct cmtp_session *session)
 	BT_INFO("Found %d CAPI controller(s) on device %s", session->ncontroller, session->name);
 
 	if (!ret)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 
 	if (!session->ncontroller)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (session->ncontroller > 1)
 		BT_INFO("Setting up only CAPI controller 1");
@@ -563,7 +563,7 @@ int cmtp_attach_device(struct cmtp_session *session)
 
 	if (attach_capi_ctr(&session->ctrl) < 0) {
 		BT_ERR("Can't attach new controller");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	session->num = session->ctrl.cnr;

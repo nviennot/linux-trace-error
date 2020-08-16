@@ -79,16 +79,16 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
 
 	/* Make sure a caller can chown. */
 	if ((ia_valid & ATTR_UID) && !chown_ok(inode, attr->ia_uid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Make sure caller can chgrp. */
 	if ((ia_valid & ATTR_GID) && !chgrp_ok(inode, attr->ia_gid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Make sure a caller can chmod. */
 	if (ia_valid & ATTR_MODE) {
 		if (!inode_owner_or_capable(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 		/* Also check the setgid bit! */
 		if (!in_group_p((ia_valid & ATTR_GID) ? attr->ia_gid :
 				inode->i_gid) &&
@@ -99,7 +99,7 @@ int setattr_prepare(struct dentry *dentry, struct iattr *attr)
 	/* Check for setting the inode time. */
 	if (ia_valid & (ATTR_MTIME_SET | ATTR_ATIME_SET | ATTR_TIMES_SET)) {
 		if (!inode_owner_or_capable(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 kill_priv:
@@ -149,14 +149,14 @@ int inode_newsize_ok(const struct inode *inode, loff_t offset)
 		 * blocks.
 		 */
 		if (IS_SWAPFILE(inode))
-			return -ETXTBSY;
+			return -ERR(ETXTBSY);
 	}
 
 	return 0;
 out_sig:
 	send_sig(SIGXFSZ, current, 0);
 out_big:
-	return -EFBIG;
+	return -ERR(EFBIG);
 }
 EXPORT_SYMBOL(inode_newsize_ok);
 
@@ -232,7 +232,7 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
 
 	if (ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) {
 		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	/*
@@ -241,7 +241,7 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
 	 */
 	if (ia_valid & ATTR_TOUCH) {
 		if (IS_IMMUTABLE(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (!inode_owner_or_capable(inode)) {
 			error = inode_permission(inode, MAY_WRITE);
@@ -312,18 +312,18 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
 	 */
 	if (ia_valid & ATTR_UID &&
 	    !kuid_has_mapping(inode->i_sb->s_user_ns, attr->ia_uid))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	if (ia_valid & ATTR_GID &&
 	    !kgid_has_mapping(inode->i_sb->s_user_ns, attr->ia_gid))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Don't allow modifications of files with invalid uids or
 	 * gids unless those uids & gids are being made valid.
 	 */
 	if (!(ia_valid & ATTR_UID) && !uid_valid(inode->i_uid))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	if (!(ia_valid & ATTR_GID) && !gid_valid(inode->i_gid))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	error = security_inode_setattr(dentry, attr);
 	if (error)

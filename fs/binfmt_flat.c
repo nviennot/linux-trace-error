@@ -154,7 +154,7 @@ static int create_flat_tables(struct linux_binprm *bprm, unsigned long arg_start
 			return -EFAULT;
 		len = strnlen_user(p, MAX_ARG_STRLEN);
 		if (!len || len > MAX_ARG_STRLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p += len;
 	}
 	if (put_user(0, sp++))
@@ -167,7 +167,7 @@ static int create_flat_tables(struct linux_binprm *bprm, unsigned long arg_start
 			return -EFAULT;
 		len = strnlen_user(p, MAX_ARG_STRLEN);
 		if (!len || len > MAX_ARG_STRLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p += len;
 	}
 	if (put_user(0, sp++))
@@ -221,7 +221,7 @@ static int decompress_exec(struct linux_binprm *bprm, loff_t fpos, char *dst,
 	strm.avail_in = ret;
 	strm.total_in = 0;
 
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 
 	/* Check minimum size -- gzip header */
 	if (ret < 10) {
@@ -465,7 +465,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 		 * error message is confusing.
 		 * because a lot of people do not manage to produce good
 		 */
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 
@@ -476,7 +476,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 	if (rev != FLAT_VERSION && rev != OLD_FLAT_VERSION) {
 		pr_err("bad flat file version 0x%x (supported 0x%lx and 0x%lx)\n",
 		       rev, FLAT_VERSION, OLD_FLAT_VERSION);
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 
@@ -484,7 +484,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 	if (rev == OLD_FLAT_VERSION && id != 0) {
 		pr_err("shared libraries are not available before rev 0x%lx\n",
 		       FLAT_VERSION);
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 
@@ -500,7 +500,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 	if (rev != FLAT_VERSION) {
 		pr_err("bad flat file version 0x%x (supported 0x%lx)\n",
 		       rev, FLAT_VERSION);
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 #endif /* !CONFIG_BINFMT_FLAT_OLD */
@@ -512,14 +512,14 @@ static int load_flat_file(struct linux_binprm *bprm,
 	*/
 	if ((text_len | data_len | bss_len | stack_len | full_data) >> 28) {
 		pr_err("bad header\n");
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 
 #ifndef CONFIG_BINFMT_ZFLAT
 	if (flags & (FLAT_FLAG_GZIP|FLAT_FLAG_GZDATA)) {
 		pr_err("Support for ZFLAT executables is not enabled.\n");
-		ret = -ENOEXEC;
+		ret = -ERR(ENOEXEC);
 		goto err;
 	}
 #endif
@@ -779,7 +779,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 			if (rp_val) {
 				addr = calc_reloc(rp_val, libinfo, id, 0);
 				if (addr == RELOC_FAILED) {
-					ret = -ENOEXEC;
+					ret = -ERR(ENOEXEC);
 					goto err;
 				}
 				if (put_user(addr, rp))
@@ -815,7 +815,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 			addr = flat_get_relocate_addr(relval);
 			rp = (u32 __user *)calc_reloc(addr, libinfo, id, 1);
 			if (rp == (u32 __user *)RELOC_FAILED) {
-				ret = -ENOEXEC;
+				ret = -ERR(ENOEXEC);
 				goto err;
 			}
 
@@ -838,7 +838,7 @@ static int load_flat_file(struct linux_binprm *bprm,
 				}
 				addr = calc_reloc(addr, libinfo, id, 0);
 				if (addr == RELOC_FAILED) {
-					ret = -ENOEXEC;
+					ret = -ERR(ENOEXEC);
 					goto err;
 				}
 

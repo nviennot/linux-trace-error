@@ -39,13 +39,13 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 		ddr_base = relocate_imr_addr_mrfld(ctx->ddr_base);
 		if (!ctx->pdata->lib_info) {
 			dev_err(ctx->dev, "lib_info pointer NULL\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto do_release_regions;
 		}
 		if (ddr_base != ctx->pdata->lib_info->mod_base) {
 			dev_err(ctx->dev,
 					"FW LSP DDR BASE does not match with IFWI\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto do_release_regions;
 		}
 		ctx->ddr_end = pci_resource_end(pci, 0);
@@ -53,7 +53,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 		ctx->ddr = pcim_iomap(pci, 0,
 					pci_resource_len(pci, 0));
 		if (!ctx->ddr) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto do_release_regions;
 		}
 		dev_dbg(ctx->dev, "sst: DDR Ptr %p\n", ctx->ddr);
@@ -64,7 +64,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 	ctx->shim_phy_add = pci_resource_start(pci, 1);
 	ctx->shim = pcim_iomap(pci, 1, pci_resource_len(pci, 1));
 	if (!ctx->shim) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto do_release_regions;
 	}
 	dev_dbg(ctx->dev, "SST Shim Ptr %p\n", ctx->shim);
@@ -73,7 +73,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 	ctx->mailbox_add = pci_resource_start(pci, 2);
 	ctx->mailbox = pcim_iomap(pci, 2, pci_resource_len(pci, 2));
 	if (!ctx->mailbox) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto do_release_regions;
 	}
 	dev_dbg(ctx->dev, "SRAM Ptr %p\n", ctx->mailbox);
@@ -83,7 +83,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 	ctx->iram_base = pci_resource_start(pci, 3);
 	ctx->iram = pcim_iomap(pci, 3, pci_resource_len(pci, 3));
 	if (!ctx->iram) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto do_release_regions;
 	}
 	dev_dbg(ctx->dev, "IRAM Ptr %p\n", ctx->iram);
@@ -93,7 +93,7 @@ static int sst_platform_get_resources(struct intel_sst_drv *ctx)
 	ctx->dram_base = pci_resource_start(pci, 4);
 	ctx->dram = pcim_iomap(pci, 4, pci_resource_len(pci, 4));
 	if (!ctx->dram) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto do_release_regions;
 	}
 	dev_dbg(ctx->dev, "DRAM Ptr %p\n", ctx->dram);

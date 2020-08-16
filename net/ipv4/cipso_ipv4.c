@@ -241,7 +241,7 @@ static int cipso_v4_cache_check(const unsigned char *key,
 	u32 hash;
 
 	if (!cipso_v4_cache_enabled)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hash = cipso_v4_map_cache_hash(key, key_len);
 	bkt = hash & (CIPSO_V4_CACHE_BUCKETS - 1);
@@ -278,7 +278,7 @@ static int cipso_v4_cache_check(const unsigned char *key,
 	}
 	spin_unlock_bh(&cipso_v4_cache[bkt].lock);
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /**
@@ -297,7 +297,7 @@ static int cipso_v4_cache_check(const unsigned char *key,
 int cipso_v4_cache_add(const unsigned char *cipso_ptr,
 		       const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -EPERM;
+	int ret_val = -ERR(EPERM);
 	u32 bkt;
 	struct cipso_v4_map_cache_entry *entry = NULL;
 	struct cipso_v4_map_cache_entry *old_entry = NULL;
@@ -382,7 +382,7 @@ static struct cipso_v4_doi *cipso_v4_doi_search(u32 doi)
 int cipso_v4_doi_add(struct cipso_v4_doi *doi_def,
 		     struct netlbl_audit *audit_info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	u32 iter;
 	u32 doi;
 	u32 doi_type;
@@ -420,7 +420,7 @@ int cipso_v4_doi_add(struct cipso_v4_doi *doi_def,
 	spin_lock(&cipso_v4_doi_list_lock);
 	if (cipso_v4_doi_search(doi_def->doi)) {
 		spin_unlock(&cipso_v4_doi_list_lock);
-		ret_val = -EEXIST;
+		ret_val = -ERR(EEXIST);
 		goto doi_add_return;
 	}
 	list_add_tail_rcu(&doi_def->list, &cipso_v4_doi_list);
@@ -516,12 +516,12 @@ int cipso_v4_doi_remove(u32 doi, struct netlbl_audit *audit_info)
 	doi_def = cipso_v4_doi_search(doi);
 	if (!doi_def) {
 		spin_unlock(&cipso_v4_doi_list_lock);
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 		goto doi_remove_return;
 	}
 	if (!refcount_dec_and_test(&doi_def->refcount)) {
 		spin_unlock(&cipso_v4_doi_list_lock);
-		ret_val = -EBUSY;
+		ret_val = -ERR(EBUSY);
 		goto doi_remove_return;
 	}
 	list_del_rcu(&doi_def->list);
@@ -610,7 +610,7 @@ int cipso_v4_doi_walk(u32 *skip_cnt,
 		     int (*callback) (struct cipso_v4_doi *doi_def, void *arg),
 		     void *cb_arg)
 {
-	int ret_val = -ENOENT;
+	int ret_val = -ERR(ENOENT);
 	u32 doi_cnt = 0;
 	struct cipso_v4_doi *iter_doi;
 
@@ -688,10 +688,10 @@ static int cipso_v4_map_lvl_hton(const struct cipso_v4_doi *doi_def,
 			*net_lvl = doi_def->map.std->lvl.local[host_lvl];
 			return 0;
 		}
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -723,10 +723,10 @@ static int cipso_v4_map_lvl_ntoh(const struct cipso_v4_doi *doi_def,
 			*host_lvl = doi_def->map.std->lvl.cipso[net_lvl];
 			return 0;
 		}
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -818,14 +818,14 @@ static int cipso_v4_map_cat_rbm_hton(const struct cipso_v4_doi *doi_def,
 			break;
 		case CIPSO_V4_MAP_TRANS:
 			if (host_spot >= host_cat_size)
-				return -EPERM;
+				return -ERR(EPERM);
 			net_spot = host_cat_array[host_spot];
 			if (net_spot >= CIPSO_V4_INV_CAT)
-				return -EPERM;
+				return -ERR(EPERM);
 			break;
 		}
 		if (net_spot >= net_clen_bits)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		netlbl_bitmap_setbit(net_cat, net_spot, 1);
 
 		if (net_spot > net_spot_max)
@@ -884,10 +884,10 @@ static int cipso_v4_map_cat_rbm_ntoh(const struct cipso_v4_doi *doi_def,
 			break;
 		case CIPSO_V4_MAP_TRANS:
 			if (net_spot >= net_cat_size)
-				return -EPERM;
+				return -ERR(EPERM);
 			host_spot = net_cat_array[net_spot];
 			if (host_spot >= CIPSO_V4_INV_CAT)
-				return -EPERM;
+				return -ERR(EPERM);
 			break;
 		}
 		ret_val = netlbl_catmap_setbit(&secattr->attr.mls.cat,
@@ -897,7 +897,7 @@ static int cipso_v4_map_cat_rbm_ntoh(const struct cipso_v4_doi *doi_def,
 			return ret_val;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -960,7 +960,7 @@ static int cipso_v4_map_cat_enum_hton(const struct cipso_v4_doi *doi_def,
 		if (cat < 0)
 			break;
 		if ((cat_iter + 2) > net_cat_len)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 		*((__be16 *)&net_cat[cat_iter]) = htons(cat);
 		cat_iter += 2;
@@ -1068,7 +1068,7 @@ static int cipso_v4_map_cat_rng_hton(const struct cipso_v4_doi *doi_def,
 	/* make sure we don't overflow the 'array[]' variable */
 	if (net_cat_len >
 	    (CIPSO_V4_OPT_LEN_MAX - CIPSO_V4_HDR_LEN - CIPSO_V4_TAG_RNG_BLEN))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	for (;;) {
 		iter = netlbl_catmap_walk(secattr->attr.mls.cat, iter + 1);
@@ -1076,7 +1076,7 @@ static int cipso_v4_map_cat_rng_hton(const struct cipso_v4_doi *doi_def,
 			break;
 		cat_size += (iter == 0 ? 0 : sizeof(u16));
 		if (cat_size > net_cat_len)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		array[array_cnt++] = iter;
 
 		iter = netlbl_catmap_walkrng(secattr->attr.mls.cat, iter);
@@ -1084,7 +1084,7 @@ static int cipso_v4_map_cat_rng_hton(const struct cipso_v4_doi *doi_def,
 			return -EFAULT;
 		cat_size += sizeof(u16);
 		if (cat_size > net_cat_len)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		array[array_cnt++] = iter;
 	}
 
@@ -1189,7 +1189,7 @@ static int cipso_v4_gentag_rbm(const struct cipso_v4_doi *doi_def,
 	u32 level;
 
 	if ((secattr->flags & NETLBL_SECATTR_MLS_LVL) == 0)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret_val = cipso_v4_map_lvl_hton(doi_def,
 					secattr->attr.mls.lvl,
@@ -1287,7 +1287,7 @@ static int cipso_v4_gentag_enum(const struct cipso_v4_doi *doi_def,
 	u32 level;
 
 	if (!(secattr->flags & NETLBL_SECATTR_MLS_LVL))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret_val = cipso_v4_map_lvl_hton(doi_def,
 					secattr->attr.mls.lvl,
@@ -1378,7 +1378,7 @@ static int cipso_v4_gentag_rng(const struct cipso_v4_doi *doi_def,
 	u32 level;
 
 	if (!(secattr->flags & NETLBL_SECATTR_MLS_LVL))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret_val = cipso_v4_map_lvl_hton(doi_def,
 					secattr->attr.mls.lvl,
@@ -1465,7 +1465,7 @@ static int cipso_v4_gentag_loc(const struct cipso_v4_doi *doi_def,
 			       u32 buffer_len)
 {
 	if (!(secattr->flags & NETLBL_SECATTR_SECID))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	buffer[0] = CIPSO_V4_TAG_LOCAL;
 	buffer[1] = CIPSO_V4_TAG_LOC_BLEN;
@@ -1772,7 +1772,7 @@ static int cipso_v4_genopt(unsigned char *buf, u32 buf_len,
 	u32 iter;
 
 	if (buf_len <= CIPSO_V4_HDR_LEN)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* XXX - This code assumes only one tag per CIPSO option which isn't
 	 * really a good assumption to make but since we only support the MAC
@@ -1806,7 +1806,7 @@ static int cipso_v4_genopt(unsigned char *buf, u32 buf_len,
 						   buf_len - CIPSO_V4_HDR_LEN);
 			break;
 		default:
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 
 		iter++;
@@ -1837,7 +1837,7 @@ int cipso_v4_sock_setattr(struct sock *sk,
 			  const struct cipso_v4_doi *doi_def,
 			  const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -EPERM;
+	int ret_val = -ERR(EPERM);
 	unsigned char *buf = NULL;
 	u32 buf_len;
 	u32 opt_len;
@@ -1922,7 +1922,7 @@ int cipso_v4_req_setattr(struct request_sock *req,
 			 const struct cipso_v4_doi *doi_def,
 			 const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -EPERM;
+	int ret_val = -ERR(EPERM);
 	unsigned char *buf = NULL;
 	u32 buf_len;
 	u32 opt_len;
@@ -2090,7 +2090,7 @@ void cipso_v4_req_delattr(struct request_sock *req)
 int cipso_v4_getattr(const unsigned char *cipso,
 		     struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	u32 doi;
 	struct cipso_v4_doi *doi_def;
 
@@ -2142,7 +2142,7 @@ getattr_return:
 int cipso_v4_sock_getattr(struct sock *sk, struct netlbl_lsm_secattr *secattr)
 {
 	struct ip_options_rcu *opt;
-	int res = -ENOMSG;
+	int res = -ERR(ENOMSG);
 
 	rcu_read_lock();
 	opt = rcu_dereference(inet_sk(sk)->inet_opt);

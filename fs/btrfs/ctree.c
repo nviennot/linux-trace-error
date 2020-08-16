@@ -382,7 +382,7 @@ __tree_mod_log_insert(struct btrfs_fs_info *fs_info, struct tree_mod_elem *tm)
 		else if (cur->seq > tm->seq)
 			new = &((*new)->rb_right);
 		else
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	rb_link_node(&tm->node, parent, new);
@@ -878,7 +878,7 @@ static noinline int update_ref_for_cow(struct btrfs_trans_handle *trans,
 		if (ret)
 			return ret;
 		if (refs == 0) {
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			btrfs_handle_fs_error(fs_info, ret, NULL);
 			return ret;
 		}
@@ -1617,7 +1617,7 @@ int btrfs_realloc_node(struct btrfs_trans_handle *trans,
 					return PTR_ERR(cur);
 				} else if (!extent_buffer_uptodate(cur)) {
 					free_extent_buffer(cur);
-					return -EIO;
+					return -ERR(EIO);
 				}
 			} else if (!uptodate) {
 				err = btrfs_read_buffer(cur, gen,
@@ -1676,7 +1676,7 @@ static noinline int generic_bin_search(struct extent_buffer *eb,
 		 "%s: low (%d) > high (%d) eb %llu owner %llu level %d",
 			  __func__, low, high, eb->start,
 			  btrfs_header_owner(eb), btrfs_header_level(eb));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	while (low < high) {
@@ -1763,7 +1763,7 @@ struct extent_buffer *btrfs_read_node_slot(struct extent_buffer *parent,
 	struct btrfs_key first_key;
 
 	if (slot < 0 || slot >= btrfs_header_nritems(parent))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	BUG_ON(level == 0);
 
@@ -1773,7 +1773,7 @@ struct extent_buffer *btrfs_read_node_slot(struct extent_buffer *parent,
 			     level - 1, &first_key);
 	if (!IS_ERR(eb) && !extent_buffer_uptodate(eb)) {
 		free_extent_buffer(eb);
-		eb = ERR_PTR(-EIO);
+		eb = ERR_PTR(-ERR(EIO));
 	}
 
 	return eb;
@@ -1939,7 +1939,7 @@ static noinline int balance_level(struct btrfs_trans_handle *trans,
 		 * right
 		 */
 		if (!left) {
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			btrfs_handle_fs_error(fs_info, ret, NULL);
 			goto enospc;
 		}
@@ -2357,7 +2357,7 @@ read_block_for_search(struct btrfs_root *root, struct btrfs_path *p,
 			if (btrfs_verify_level_key(tmp,
 					parent_level - 1, &first_key, gen)) {
 				free_extent_buffer(tmp);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 			*eb_ret = tmp;
 			return 0;
@@ -2379,7 +2379,7 @@ read_block_for_search(struct btrfs_root *root, struct btrfs_path *p,
 		}
 		free_extent_buffer(tmp);
 		btrfs_release_path(p);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -2395,7 +2395,7 @@ read_block_for_search(struct btrfs_root *root, struct btrfs_path *p,
 	if (p->reada != READA_NONE)
 		reada_for_search(fs_info, p, level, slot, key->objectid);
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	tmp = read_tree_block(fs_info, blocknr, gen, parent_level - 1,
 			      &first_key);
 	if (!IS_ERR(tmp)) {
@@ -2406,7 +2406,7 @@ read_block_for_search(struct btrfs_root *root, struct btrfs_path *p,
 		 * on our EAGAINs.
 		 */
 		if (!extent_buffer_uptodate(tmp))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		free_extent_buffer(tmp);
 	} else {
 		ret = PTR_ERR(tmp);
@@ -2482,7 +2482,7 @@ setup_nodes_for_search(struct btrfs_trans_handle *trans,
 	return 0;
 
 again:
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 done:
 	return ret;
 }
@@ -2908,7 +2908,7 @@ int btrfs_search_old_slot(struct btrfs_root *root, const struct btrfs_key *key,
 again:
 	b = get_old_root(root, time_seq);
 	if (!b) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto done;
 	}
 	level = btrfs_header_level(b);
@@ -4132,7 +4132,7 @@ static noinline int split_leaf(struct btrfs_trans_handle *trans,
 	slot = path->slots[0];
 	if (extend && data_size + btrfs_item_size_nr(l, slot) +
 	    sizeof(struct btrfs_item) > BTRFS_LEAF_DATA_SIZE(fs_info))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* first try to make some room by pushing left and right */
 	if (data_size && path->nodes[1]) {
@@ -4302,11 +4302,11 @@ static noinline int setup_leaf_for_split(struct btrfs_trans_handle *trans,
 	ret = btrfs_search_slot(trans, root, &key, path, 0, 1);
 	path->search_for_split = 0;
 	if (ret > 0)
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	if (ret < 0)
 		goto err;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	leaf = path->nodes[0];
 	/* if our item isn't there, return now */
 	if (item_size != btrfs_item_size_nr(leaf, path->slots[0]))
@@ -4749,7 +4749,7 @@ int btrfs_insert_empty_items(struct btrfs_trans_handle *trans,
 	total_size = total_data + (nr * sizeof(struct btrfs_item));
 	ret = btrfs_search_slot(trans, root, cpu_key, path, total_size, 1);
 	if (ret == 0)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	if (ret < 0)
 		return ret;
 

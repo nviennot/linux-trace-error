@@ -93,7 +93,7 @@ static int ecryptfs_statfs(struct dentry *dentry, struct kstatfs *buf)
 	int rc;
 
 	if (!lower_dentry->d_sb->s_op->statfs)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	rc = lower_dentry->d_sb->s_op->statfs(lower_dentry, buf);
 	if (rc)

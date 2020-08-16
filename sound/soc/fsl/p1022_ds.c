@@ -200,7 +200,7 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	struct device_node *codec_np = NULL;
 	struct machine_data *mdata;
 	struct snd_soc_dai_link_component *comp;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 	const char *sprop;
 	const u32 *iprop;
 
@@ -208,7 +208,7 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "codec-handle", 0);
 	if (!codec_np) {
 		dev_err(dev, "could not find codec node\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mdata = kzalloc(sizeof(struct machine_data), GFP_KERNEL);
@@ -260,7 +260,7 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	iprop = of_get_property(np, "cell-index", NULL);
 	if (!iprop) {
 		dev_err(&pdev->dev, "cell-index property not found\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 	mdata->ssi_id = be32_to_cpup(iprop);
@@ -269,7 +269,7 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	sprop = of_get_property(np, "fsl,mode", NULL);
 	if (!sprop) {
 		dev_err(&pdev->dev, "fsl,mode property not found\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -287,7 +287,7 @@ static int p1022_ds_probe(struct platform_device *pdev)
 		if (!iprop || !*iprop) {
 			dev_err(&pdev->dev, "codec bus-frequency "
 				"property is missing or invalid\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 		mdata->clk_frequency = be32_to_cpup(iprop);
@@ -329,13 +329,13 @@ static int p1022_ds_probe(struct platform_device *pdev)
 	} else {
 		dev_err(&pdev->dev,
 			"unrecognized fsl,mode property '%s'\n", sprop);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
 	if (!mdata->clk_frequency) {
 		dev_err(&pdev->dev, "unknown clock frequency\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -435,7 +435,7 @@ static int __init p1022_ds_init(void)
 	if (of_address_to_resource(guts_np, 0, &res)) {
 		pr_err("snd-soc-p1022ds: missing/invalid global utils node\n");
 		of_node_put(guts_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	guts_phys = res.start;
 	of_node_put(guts_np);

@@ -36,7 +36,7 @@ static int get_clock(struct snd_tscm *tscm, u32 *data)
 
 	// Still in the intermediate state.
 	if (trial >= 5)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return 0;
 }
@@ -67,7 +67,7 @@ static int set_clock(struct snd_tscm *tscm, unsigned int rate,
 			if (rate / 48000 == 2)
 				data |= 0x00008000;
 		} else {
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 	}
 
@@ -111,13 +111,13 @@ int snd_tscm_stream_get_rate(struct snd_tscm *tscm, unsigned int *rate)
 	else if ((data & 0x0f) == 0x02)
 		*rate = 48000;
 	else
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/* Check multiplier. */
 	if ((data & 0xf0) == 0x80)
 		*rate *= 2;
 	else if ((data & 0xf0) != 0x00)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return err;
 }
@@ -133,7 +133,7 @@ int snd_tscm_stream_get_clock(struct snd_tscm *tscm, enum snd_tscm_clock *clock)
 
 	*clock = ((data & 0x00ff0000) >> 16) - 1;
 	if (*clock < 0 || *clock > SND_TSCM_CLOCK_ADAT)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -481,7 +481,7 @@ int snd_tscm_stream_start_duplex(struct snd_tscm *tscm, unsigned int rate)
 						CALLBACK_TIMEOUT) ||
 		    !amdtp_stream_wait_callback(&tscm->tx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 	}
@@ -519,7 +519,7 @@ int snd_tscm_stream_lock_try(struct snd_tscm *tscm)
 
 	/* user land lock this */
 	if (tscm->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

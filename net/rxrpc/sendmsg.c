@@ -88,7 +88,7 @@ static int rxrpc_wait_for_tx_window_waitall(struct rxrpc_sock *rx,
 
 		if (timeout == 0 &&
 		    tx_win == tx_start && signal_pending(current))
-			return -EINTR;
+			return -ERR(EINTR);
 
 		if (tx_win != tx_start) {
 			timeout = rtt;
@@ -305,15 +305,15 @@ static int rxrpc_send_data(struct rxrpc_sock *rx,
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	more = msg->msg_flags & MSG_MORE;
 
 	if (call->tx_total_len != -1) {
 		if (len > call->tx_total_len)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		if (!more && len != call->tx_total_len)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 
 	skb = call->tx_pending;
@@ -332,7 +332,7 @@ static int rxrpc_send_data(struct rxrpc_sock *rx,
 			_debug("alloc");
 
 			if (!rxrpc_check_tx_space(call, NULL)) {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				if (msg->msg_flags & MSG_DONTWAIT)
 					goto maybe_error;
 				ret = rxrpc_wait_for_tx_window(rx, call,
@@ -491,11 +491,11 @@ static int rxrpc_sendmsg_cmsg(struct msghdr *msg, struct rxrpc_send_params *p)
 	int len;
 
 	if (msg->msg_controllen == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = cmsg->cmsg_len - sizeof(struct cmsghdr);
 		_debug("CMSG %d, %d, %d",
@@ -508,11 +508,11 @@ static int rxrpc_sendmsg_cmsg(struct msghdr *msg, struct rxrpc_send_params *p)
 		case RXRPC_USER_CALL_ID:
 			if (msg->msg_flags & MSG_CMSG_COMPAT) {
 				if (len != sizeof(u32))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				p->call.user_call_ID = *(u32 *)CMSG_DATA(cmsg);
 			} else {
 				if (len != sizeof(unsigned long))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				p->call.user_call_ID = *(unsigned long *)
 					CMSG_DATA(cmsg);
 			}
@@ -521,65 +521,65 @@ static int rxrpc_sendmsg_cmsg(struct msghdr *msg, struct rxrpc_send_params *p)
 
 		case RXRPC_ABORT:
 			if (p->command != RXRPC_CMD_SEND_DATA)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			p->command = RXRPC_CMD_SEND_ABORT;
 			if (len != sizeof(p->abort_code))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			p->abort_code = *(unsigned int *)CMSG_DATA(cmsg);
 			if (p->abort_code == 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		case RXRPC_ACCEPT:
 			if (p->command != RXRPC_CMD_SEND_DATA)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			p->command = RXRPC_CMD_ACCEPT;
 			if (len != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		case RXRPC_EXCLUSIVE_CALL:
 			p->exclusive = true;
 			if (len != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		case RXRPC_UPGRADE_SERVICE:
 			p->upgrade = true;
 			if (len != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		case RXRPC_TX_LENGTH:
 			if (p->call.tx_total_len != -1 || len != sizeof(__s64))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			p->call.tx_total_len = *(__s64 *)CMSG_DATA(cmsg);
 			if (p->call.tx_total_len < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		case RXRPC_SET_CALL_TIMEOUT:
 			if (len & 3 || len < 4 || len > 12)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			memcpy(&p->call.timeouts, CMSG_DATA(cmsg), len);
 			p->call.nr_timeouts = len / 4;
 			if (p->call.timeouts.hard > INT_MAX / HZ)
-				return -ERANGE;
+				return -ERR(ERANGE);
 			if (p->call.nr_timeouts >= 2 && p->call.timeouts.idle > 60 * 60 * 1000)
-				return -ERANGE;
+				return -ERR(ERANGE);
 			if (p->call.nr_timeouts >= 3 && p->call.timeouts.normal > 60 * 60 * 1000)
-				return -ERANGE;
+				return -ERR(ERANGE);
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (!got_user_ID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (p->call.tx_total_len != -1 && p->command != RXRPC_CMD_SEND_DATA)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	_leave(" = 0");
 	return 0;
 }
@@ -605,7 +605,7 @@ rxrpc_new_client_call_for_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg,
 
 	if (!msg->msg_name) {
 		release_sock(&rx->sk);
-		return ERR_PTR(-EDESTADDRREQ);
+		return ERR_PTR(-ERR(EDESTADDRREQ));
 	}
 
 	key = rx->key;
@@ -660,7 +660,7 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 		goto error_release_sock;
 
 	if (p.command == RXRPC_CMD_ACCEPT) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (rx->sk.sk_state != RXRPC_SERVER_LISTENING)
 			goto error_release_sock;
 		call = rxrpc_accept_call(rx, p.call.user_call_ID, NULL);
@@ -673,7 +673,7 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 
 	call = rxrpc_find_call_by_user_ID(rx, p.call.user_call_ID);
 	if (!call) {
-		ret = -EBADSLT;
+		ret = -ERR(EBADSLT);
 		if (p.command != RXRPC_CMD_SEND_DATA)
 			goto error_release_sock;
 		call = rxrpc_new_client_call_for_sendmsg(rx, msg, &p);
@@ -692,7 +692,7 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 		case RXRPC_CALL_SERVER_SECURING:
 		case RXRPC_CALL_SERVER_ACCEPTING:
 			rxrpc_put_call(call, rxrpc_call_put);
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto error_release_sock;
 		default:
 			break;
@@ -701,12 +701,12 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 		ret = mutex_lock_interruptible(&call->user_mutex);
 		release_sock(&rx->sk);
 		if (ret < 0) {
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			goto error_put;
 		}
 
 		if (p.call.tx_total_len != -1) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			if (call->tx_total_len != -1 ||
 			    call->tx_pending ||
 			    call->tx_top != 0)
@@ -746,22 +746,22 @@ int rxrpc_do_sendmsg(struct rxrpc_sock *rx, struct msghdr *msg, size_t len)
 
 	if (state >= RXRPC_CALL_COMPLETE) {
 		/* it's too late for this call */
-		ret = -ESHUTDOWN;
+		ret = -ERR(ESHUTDOWN);
 	} else if (p.command == RXRPC_CMD_SEND_ABORT) {
 		ret = 0;
 		if (rxrpc_abort_call("CMD", call, 0, p.abort_code, -ECONNABORTED))
 			ret = rxrpc_send_abort_packet(call);
 	} else if (p.command != RXRPC_CMD_SEND_DATA) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else if (rxrpc_is_client_call(call) &&
 		   state != RXRPC_CALL_CLIENT_SEND_REQUEST) {
 		/* request phase complete for this client call */
-		ret = -EPROTO;
+		ret = -ERR(EPROTO);
 	} else if (rxrpc_is_service_call(call) &&
 		   state != RXRPC_CALL_SERVER_ACK_REQUEST &&
 		   state != RXRPC_CALL_SERVER_SEND_REPLY) {
 		/* Reply phase not begun or not complete for service call. */
-		ret = -EPROTO;
+		ret = -ERR(EPROTO);
 	} else {
 		ret = rxrpc_send_data(rx, call, msg, len, NULL);
 	}
@@ -822,7 +822,7 @@ int rxrpc_kernel_send_data(struct socket *sock, struct rxrpc_call *call,
 	default:
 		/* Request phase complete for this client call */
 		trace_rxrpc_rx_eproto(call, 0, tracepoint_string("late_send"));
-		ret = -EPROTO;
+		ret = -ERR(EPROTO);
 		break;
 	}
 

@@ -30,7 +30,7 @@
 
 static int enable_locking(struct dlm_ls *ls, uint64_t seq)
 {
-	int error = -EINTR;
+	int error = -ERR(EINTR);
 
 	down_write(&ls->ls_recv_active);
 

@@ -239,10 +239,10 @@ int ceph_lock(struct file *file, int cmd, struct file_lock *fl)
 	u8 lock_cmd;
 
 	if (!(fl->fl_flags & FL_POSIX))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 	/* No mandatory locks */
 	if (__mandatory_lock(file->f_mapping->host) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	dout("ceph_lock, fl_owner: %p\n", fl->fl_owner);
 
@@ -254,7 +254,7 @@ int ceph_lock(struct file *file, int cmd, struct file_lock *fl)
 
 	spin_lock(&ci->i_ceph_lock);
 	if (ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK) {
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	spin_unlock(&ci->i_ceph_lock);
 	if (err < 0) {
@@ -304,16 +304,16 @@ int ceph_flock(struct file *file, int cmd, struct file_lock *fl)
 	u8 lock_cmd;
 
 	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 	/* No mandatory locks */
 	if (fl->fl_type & LOCK_MAND)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	dout("ceph_flock, fl_file: %p\n", fl->fl_file);
 
 	spin_lock(&ci->i_ceph_lock);
 	if (ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK) {
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	spin_unlock(&ci->i_ceph_lock);
 	if (err < 0) {
@@ -402,7 +402,7 @@ static int lock_to_ceph_filelock(struct file_lock *lock,
 		break;
 	default:
 		dout("Have unknown lock type %d\n", lock->fl_type);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	return err;
@@ -434,7 +434,7 @@ int ceph_encode_locks_to_buffer(struct inode *inode,
 	list_for_each_entry(lock, &ctx->flc_posix, fl_list) {
 		++seen_fcntl;
 		if (seen_fcntl > num_fcntl_locks) {
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto fail;
 		}
 		err = lock_to_ceph_filelock(lock, &flocks[l]);
@@ -445,7 +445,7 @@ int ceph_encode_locks_to_buffer(struct inode *inode,
 	list_for_each_entry(lock, &ctx->flc_flock, fl_list) {
 		++seen_flock;
 		if (seen_flock > num_flock_locks) {
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto fail;
 		}
 		err = lock_to_ceph_filelock(lock, &flocks[l]);

@@ -112,22 +112,22 @@ static inline void profile_hit(int type, void *ip)
 
 static inline int task_handoff_register(struct notifier_block * n)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int task_handoff_unregister(struct notifier_block * n)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int profile_event_register(enum profile_type t, struct notifier_block * n)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int profile_event_unregister(enum profile_type t, struct notifier_block * n)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #define profile_task_exit(a) do { } while (0)

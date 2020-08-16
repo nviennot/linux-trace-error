@@ -116,7 +116,7 @@ int nf_ct_gre_keymap_add(struct nf_conn *ct, enum ip_conntrack_dir dir,
 		}
 		pr_debug("trying to override keymap_%s for ct %p\n",
 			 dir == IP_CT_DIR_REPLY ? "reply" : "orig", ct);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	km = kmalloc(sizeof(*km), GFP_ATOMIC);
@@ -289,7 +289,7 @@ gre_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
 	return 0;
 
 nla_put_failure:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static const struct nla_policy

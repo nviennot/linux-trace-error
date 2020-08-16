@@ -79,19 +79,19 @@ static inline struct thermal_cooling_device *
 of_devfreq_cooling_register_power(struct device_node *np, struct devfreq *df,
 				  struct devfreq_cooling_power *dfc_power)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline struct thermal_cooling_device *
 of_devfreq_cooling_register(struct device_node *np, struct devfreq *df)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline struct thermal_cooling_device *
 devfreq_cooling_register(struct devfreq *df)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void

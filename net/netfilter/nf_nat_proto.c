@@ -1023,7 +1023,7 @@ int nf_nat_inet_register_fn(struct net *net, const struct nf_hook_ops *ops)
 	int ret;
 
 	if (WARN_ON_ONCE(ops->pf != NFPROTO_INET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nf_nat_register_fn(net, NFPROTO_IPV6, ops, nf_nat_ipv6_ops,
 				 ARRAY_SIZE(nf_nat_ipv6_ops));

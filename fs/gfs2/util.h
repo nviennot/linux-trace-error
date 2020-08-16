@@ -103,7 +103,7 @@ static inline int gfs2_meta_check(struct gfs2_sbd *sdp,
 	if (unlikely(magic != GFS2_MAGIC)) {
 		fs_err(sdp, "Magic number missing at %llu\n",
 		       (unsigned long long)bh->b_blocknr);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }

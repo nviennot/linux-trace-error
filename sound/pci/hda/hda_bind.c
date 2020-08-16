@@ -88,12 +88,12 @@ static int hda_codec_driver_probe(struct device *dev)
 
 	if (codec->bus->core.ext_ops) {
 		if (WARN_ON(!codec->bus->core.ext_ops->hdev_attach))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return codec->bus->core.ext_ops->hdev_attach(&codec->core);
 	}
 
 	if (WARN_ON(!codec->preset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = snd_hda_codec_set_name(codec, codec->preset->name);
 	if (err < 0)
@@ -103,7 +103,7 @@ static int hda_codec_driver_probe(struct device *dev)
 		goto error;
 
 	if (!try_module_get(owner)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -148,7 +148,7 @@ static int hda_codec_driver_remove(struct device *dev)
 
 	if (codec->bus->core.ext_ops) {
 		if (WARN_ON(!codec->bus->core.ext_ops->hdev_detach))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return codec->bus->core.ext_ops->hdev_detach(&codec->core);
 	}
 
@@ -261,7 +261,7 @@ static bool is_likely_hdmi_codec(struct hda_codec *codec)
 static int codec_bind_generic(struct hda_codec *codec)
 {
 	if (codec->probe_id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (is_likely_hdmi_codec(codec)) {
 		codec->probe_id = HDA_CODEC_ID_GENERIC_HDMI;
@@ -274,7 +274,7 @@ static int codec_bind_generic(struct hda_codec *codec)
 	request_codec_module(codec);
 	if (codec_probed(codec))
 		return 0;
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #if IS_ENABLED(CONFIG_SND_HDA_GENERIC)

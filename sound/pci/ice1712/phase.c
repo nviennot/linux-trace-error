@@ -121,7 +121,7 @@ static int phase22_init(struct snd_ice1712 *ice)
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Initialize analog chips */
@@ -655,7 +655,7 @@ static int wm_pcm_vol_put(struct snd_kcontrol *kcontrol,
 
 	nvol = ucontrol->value.integer.value[0];
 	if (nvol > PCM_RES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_ice1712_save_gpio_status(ice);
 	nvol = (nvol ? (nvol + PCM_MIN) : 0) & 0xff;
 	ovol = wm_get(ice, WM_DAC_DIG_MASTER_ATTEN) & 0xff;

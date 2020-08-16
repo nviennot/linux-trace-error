@@ -3035,13 +3035,13 @@ static int mem_cgroup_move_swap_account(swp_entry_t entry,
 		mod_memcg_state(to, MEMCG_SWAP, 1);
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #else
 static inline int mem_cgroup_move_swap_account(swp_entry_t entry,
 				struct mem_cgroup *from, struct mem_cgroup *to)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -3058,7 +3058,7 @@ static int mem_cgroup_resize_max(struct mem_cgroup *memcg,
 
 	do {
 		if (signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -3071,7 +3071,7 @@ static int mem_cgroup_resize_max(struct mem_cgroup *memcg,
 					   max <= memcg->memsw.max;
 		if (!limits_invariant) {
 			mutex_unlock(&memcg_max_mutex);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (max > counter->max)
@@ -3090,7 +3090,7 @@ static int mem_cgroup_resize_max(struct mem_cgroup *memcg,
 
 		if (!try_to_free_mem_cgroup_pages(memcg, 1,
 					GFP_KERNEL, !memsw)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			break;
 		}
 	} while (true);
@@ -3219,7 +3219,7 @@ static int mem_cgroup_force_empty(struct mem_cgroup *memcg)
 		int progress;
 
 		if (signal_pending(current))
-			return -EINTR;
+			return -ERR(EINTR);
 
 		progress = try_to_free_mem_cgroup_pages(memcg, 1,
 							GFP_KERNEL, true);
@@ -3241,7 +3241,7 @@ static ssize_t mem_cgroup_force_empty_write(struct kernfs_open_file *of,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(of_css(of));
 
 	if (mem_cgroup_is_root(memcg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return mem_cgroup_force_empty(memcg) ?: nbytes;
 }
 
@@ -3274,9 +3274,9 @@ static int mem_cgroup_hierarchy_write(struct cgroup_subsys_state *css,
 		if (!memcg_has_children(memcg))
 			memcg->use_hierarchy = val;
 		else
-			retval = -EBUSY;
+			retval = -ERR(EBUSY);
 	} else
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 
 	return retval;
 }
@@ -3570,7 +3570,7 @@ static ssize_t mem_cgroup_write(struct kernfs_open_file *of,
 	switch (MEMFILE_ATTR(of_cft(of)->private)) {
 	case RES_LIMIT:
 		if (mem_cgroup_is_root(memcg)) { /* Can't set limit on root */
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		switch (MEMFILE_TYPE(of_cft(of)->private)) {
@@ -3649,7 +3649,7 @@ static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	if (val & ~MOVE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * No kind of locking is needed in here, because ->can_attach() will
@@ -3664,7 +3664,7 @@ static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
 static int mem_cgroup_move_charge_write(struct cgroup_subsys_state *css,
 					struct cftype *cft, u64 val)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif
 
@@ -3886,7 +3886,7 @@ static int mem_cgroup_swappiness_write(struct cgroup_subsys_state *css,
 	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
 
 	if (val > 100)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (css->parent)
 		memcg->swappiness = val;
@@ -4240,7 +4240,7 @@ static int mem_cgroup_oom_control_write(struct cgroup_subsys_state *css,
 
 	/* cannot set to root cgroup and only 0 and 1 are allowed */
 	if (!css->parent || !((val == 0) || (val == 1)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcg->oom_kill_disable = val;
 	if (!val)
@@ -4587,12 +4587,12 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 
 	efd = simple_strtoul(buf, &endp, 10);
 	if (*endp != ' ')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	buf = endp + 1;
 
 	cfd = simple_strtoul(buf, &endp, 10);
 	if ((*endp != ' ') && (*endp != '\0'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	buf = endp + 1;
 
 	event = kzalloc(sizeof(*event), GFP_KERNEL);
@@ -4607,7 +4607,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 
 	efile = fdget(efd);
 	if (!efile.file) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_kfree;
 	}
 
@@ -4619,7 +4619,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 
 	cfile = fdget(cfd);
 	if (!cfile.file) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_put_eventfd;
 	}
 
@@ -4652,7 +4652,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 		event->register_event = memsw_cgroup_usage_register_event;
 		event->unregister_event = memsw_cgroup_usage_unregister_event;
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_put_cfile;
 	}
 
@@ -4663,7 +4663,7 @@ static ssize_t memcg_write_event_control(struct kernfs_open_file *of,
 	 */
 	cfile_css = css_tryget_online_from_dir(cfile.file->f_path.dentry->d_parent,
 					       &memory_cgrp_subsys);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (IS_ERR(cfile_css))
 		goto out_put_cfile;
 	if (cfile_css != css) {
@@ -5376,11 +5376,11 @@ static int mem_cgroup_move_account(struct page *page,
 	 * Prevent mem_cgroup_migrate() from looking at
 	 * page->mem_cgroup of its source page while we change it.
 	 */
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (!trylock_page(page))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (page->mem_cgroup != from)
 		goto out_unlock;
 
@@ -6183,14 +6183,14 @@ static ssize_t memory_oom_group_write(struct kernfs_open_file *of,
 
 	buf = strstrip(buf);
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = kstrtoint(buf, 0, &oom_group);
 	if (ret)
 		return ret;
 
 	if (oom_group != 0 && oom_group != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcg->oom_group = oom_group;
 

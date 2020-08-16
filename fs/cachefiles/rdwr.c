@@ -88,19 +88,19 @@ static int cachefiles_read_reissue(struct cachefiles_object *object,
 	/* skip if the page was truncated away completely */
 	if (backpage->mapping != bmapping) {
 		_leave(" = -ENODATA [mapping]");
-		return -ENODATA;
+		return -ERR(ENODATA);
 	}
 
 	backpage2 = find_get_page(bmapping, backpage->index);
 	if (!backpage2) {
 		_leave(" = -ENODATA [gone]");
-		return -ENODATA;
+		return -ERR(ENODATA);
 	}
 
 	if (backpage != backpage2) {
 		put_page(backpage2);
 		_leave(" = -ENODATA [different]");
-		return -ENODATA;
+		return -ERR(ENODATA);
 	}
 
 	/* the page is still there and we already have a ref on it, so we don't
@@ -111,7 +111,7 @@ static int cachefiles_read_reissue(struct cachefiles_object *object,
 	add_page_wait_queue(backpage, &monitor->monitor);
 
 	if (trylock_page(backpage)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		if (PageError(backpage))
 			goto unlock_discard;
 		ret = 0;
@@ -134,7 +134,7 @@ static int cachefiles_read_reissue(struct cachefiles_object *object,
 
 	/* it'll reappear on the todo list */
 	_leave(" = -EINPROGRESS");
-	return -EINPROGRESS;
+	return -ERR(EINPROGRESS);
 
 unlock_discard:
 	unlock_page(backpage);
@@ -177,7 +177,7 @@ static void cachefiles_read_copier(struct fscache_operation *_op)
 	recheck:
 		if (test_bit(FSCACHE_COOKIE_INVALIDATING,
 			     &object->fscache.cookie->flags)) {
-			error = -ESTALE;
+			error = -ERR(ESTALE);
 		} else if (PageUptodate(monitor->back_page)) {
 			copy_highpage(monitor->netfs_page, monitor->back_page);
 			fscache_mark_page_cached(monitor->op,
@@ -194,7 +194,7 @@ static void cachefiles_read_copier(struct fscache_operation *_op)
 				object,
 				"Readpage failed on backing file %lx",
 				(unsigned long) monitor->back_page->flags);
-			error = -EIO;
+			error = -ERR(EIO);
 		}
 
 		put_page(monitor->back_page);
@@ -361,7 +361,7 @@ read_error:
 io_error:
 	cachefiles_io_error_obj(object, "Page read error on backing file");
 	fscache_retrieval_complete(op, 1);
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 	goto out;
 
 nomem_page:
@@ -445,7 +445,7 @@ int cachefiles_read_or_alloc_page(struct fscache_retrieval *op,
 		/* there's space in the cache we can use */
 		fscache_mark_page_cached(op, page);
 		fscache_retrieval_complete(op, 1);
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 	} else {
 		goto enobufs;
 	}
@@ -456,7 +456,7 @@ int cachefiles_read_or_alloc_page(struct fscache_retrieval *op,
 enobufs:
 	fscache_retrieval_complete(op, 1);
 	_leave(" = -ENOBUFS");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -670,7 +670,7 @@ read_error:
 		goto record_page_complete;
 io_error:
 	cachefiles_io_error_obj(object, "Page read error on backing file");
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 record_page_complete:
 	fscache_retrieval_complete(op, 1);
 	goto out;
@@ -726,7 +726,7 @@ int cachefiles_read_or_alloc_pages(struct fscache_retrieval *op,
 	INIT_LIST_HEAD(&backpages);
 	nrbackpages = 0;
 
-	ret = space ? -ENODATA : -ENOBUFS;
+	ret = space ? -ERR(ENODATA) : -ERR(ENOBUFS);
 	list_for_each_entry_safe(page, _n, pages, lru) {
 		sector_t block;
 
@@ -755,7 +755,7 @@ int cachefiles_read_or_alloc_pages(struct fscache_retrieval *op,
 		} else if (space && pagevec_add(&pagevec, page) == 0) {
 			fscache_mark_pages_cached(op, &pagevec);
 			fscache_retrieval_complete(op, 1);
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 		} else {
 			fscache_retrieval_complete(op, 1);
 		}
@@ -781,7 +781,7 @@ int cachefiles_read_or_alloc_pages(struct fscache_retrieval *op,
 
 all_enobufs:
 	fscache_retrieval_complete(op, *nr_pages);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*
@@ -814,7 +814,7 @@ int cachefiles_allocate_page(struct fscache_retrieval *op,
 	if (ret == 0)
 		fscache_mark_page_cached(op, page);
 	else
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 
 	fscache_retrieval_complete(op, 1);
 	_leave(" = %d", ret);
@@ -861,9 +861,9 @@ int cachefiles_allocate_pages(struct fscache_retrieval *op,
 
 		if (pagevec_count(&pagevec) > 0)
 			fscache_mark_pages_cached(op, &pagevec);
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 	} else {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	}
 
 	fscache_retrieval_complete(op, *nr_pages);
@@ -887,7 +887,7 @@ int cachefiles_write_page(struct fscache_storage *op, struct page *page)
 	loff_t pos, eof;
 	size_t len;
 	void *data;
-	int ret = -ENOBUFS;
+	int ret = -ERR(ENOBUFS);
 
 	ASSERT(op != NULL);
 	ASSERT(page != NULL);
@@ -899,7 +899,7 @@ int cachefiles_write_page(struct fscache_storage *op, struct page *page)
 
 	if (!object->backer) {
 		_leave(" = -ENOBUFS");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	ASSERT(d_is_reg(object->backer));
@@ -947,14 +947,14 @@ int cachefiles_write_page(struct fscache_storage *op, struct page *page)
 	return 0;
 
 error_eio:
-	ret = -EIO;
+	ret = -ERR(EIO);
 error_2:
 	if (ret == -EIO)
 		cachefiles_io_error_obj(object,
 					"Write page to backing file failed");
 error:
 	_leave(" = -ENOBUFS [%d]", ret);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /*

@@ -95,7 +95,7 @@ static int safe_errno(int err)
 {
 	if ((err > 0) || (err < -MAX_ERRNO)) {
 		p9_debug(P9_DEBUG_ERROR, "Invalid error code %d\n", err);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	return err;
 }
@@ -104,7 +104,7 @@ static int safe_errno(int err)
 /* Interpret mount option for protocol version */
 static int get_protocol_version(char *s)
 {
-	int version = -EINVAL;
+	int version = -ERR(EINVAL);
 
 	if (!strcmp(s, "9p2000")) {
 		version = p9_proto_legacy;
@@ -169,7 +169,7 @@ static int parse_opts(char *opts, struct p9_client *clnt)
 			if (option < 4096) {
 				p9_debug(P9_DEBUG_ERROR,
 					 "msize should be at least 4k\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				continue;
 			}
 			clnt->msize = option;
@@ -188,7 +188,7 @@ static int parse_opts(char *opts, struct p9_client *clnt)
 			if (clnt->trans_mod == NULL) {
 				pr_info("Could not find request transport: %s\n",
 					s);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			}
 			kfree(s);
 			break;
@@ -466,7 +466,7 @@ p9_parse_header(struct p9_fcall *pdu, int32_t *size, int8_t *type, int16_t *tag,
 		*size = r_size;
 
 	if (pdu->size != r_size || r_size < 7) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto rewind_and_exit;
 	}
 
@@ -505,7 +505,7 @@ static int p9_check_errors(struct p9_client *c, struct p9_req_t *req)
 		p9_debug(P9_DEBUG_ERROR,
 			 "requested packet size too big: %d\n",
 			 req->rc.size);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	/*
 	 * dump the response from server
@@ -690,11 +690,11 @@ static struct p9_req_t *p9_client_prepare_req(struct p9_client *c,
 
 	/* we allow for any status other than disconnected */
 	if (c->status == Disconnected)
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	/* if status is begin_disconnected we allow only clunk request */
 	if ((c->status == BeginDisconnect) && (type != P9_TCLUNK))
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	req = p9_tag_alloc(c, type, req_size);
 	if (IS_ERR(req))
@@ -954,7 +954,7 @@ static int p9_client_version(struct p9_client *c)
 					c->msize, "9P2000");
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (IS_ERR(req))
@@ -977,14 +977,14 @@ static int p9_client_version(struct p9_client *c)
 	else {
 		p9_debug(P9_DEBUG_ERROR,
 			 "server returned an unknown version: %s\n", version);
-		err = -EREMOTEIO;
+		err = -ERR(EREMOTEIO);
 		goto error;
 	}
 
 	if (msize < 4096) {
 		p9_debug(P9_DEBUG_ERROR,
 			 "server returned a msize < 4096: %d\n", msize);
-		err = -EREMOTEIO;
+		err = -ERR(EREMOTEIO);
 		goto error;
 	}
 	if (msize < c->msize)
@@ -1027,7 +1027,7 @@ struct p9_client *p9_client_create(const char *dev_name, char *options)
 		clnt->trans_mod = v9fs_get_default_trans();
 
 	if (clnt->trans_mod == NULL) {
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 		p9_debug(P9_DEBUG_ERROR,
 			 "No transport defined or default transport\n");
 		goto free_client;
@@ -1046,7 +1046,7 @@ struct p9_client *p9_client_create(const char *dev_name, char *options)
 	if (clnt->msize < 4096) {
 		p9_debug(P9_DEBUG_ERROR,
 			 "Please specify a msize of at least 4k\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto close_trans;
 	}
 
@@ -1206,7 +1206,7 @@ struct p9_fid *p9_client_walk(struct p9_fid *oldfid, uint16_t nwname,
 	p9_debug(P9_DEBUG_9P, "<<< RWALK nwqid %d:\n", nwqids);
 
 	if (nwqids != nwname) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto clunk_fid;
 	}
 
@@ -1251,7 +1251,7 @@ int p9_client_open(struct p9_fid *fid, int mode)
 	err = 0;
 
 	if (fid->mode != -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (p9_is_proto_dotl(clnt))
 		req = p9_client_rpc(clnt, P9_TLOPEN, "dd", fid->fid, mode);
@@ -1297,7 +1297,7 @@ int p9_client_create_dotl(struct p9_fid *ofid, const char *name, u32 flags, u32 
 	clnt = ofid->clnt;
 
 	if (ofid->mode != -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	req = p9_client_rpc(clnt, P9_TLCREATE, "dsddg", ofid->fid, name, flags,
 			mode, gid);
@@ -1342,7 +1342,7 @@ int p9_client_fcreate(struct p9_fid *fid, const char *name, u32 perm, int mode,
 	clnt = fid->clnt;
 
 	if (fid->mode != -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	req = p9_client_rpc(clnt, P9_TCREATE, "dsdb?s", fid->fid, name, perm,
 				mode, extension);

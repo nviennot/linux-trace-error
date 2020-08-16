@@ -59,7 +59,7 @@ static int ah_mt_check(const struct xt_mtchk_param *par)
 	/* Must specify no unknown invflags */
 	if (ahinfo->invflags & ~IPT_AH_INV_MASK) {
 		pr_debug("unknown flags %X\n", ahinfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

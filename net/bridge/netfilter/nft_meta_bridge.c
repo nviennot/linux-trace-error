@@ -116,10 +116,10 @@ nft_meta_bridge_select_ops(const struct nft_ctx *ctx,
 			   const struct nlattr * const tb[])
 {
 	if (tb[NFTA_META_KEY] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tb[NFTA_META_DREG] && tb[NFTA_META_SREG])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tb[NFTA_META_DREG])
 		return &nft_meta_bridge_get_ops;
@@ -127,7 +127,7 @@ nft_meta_bridge_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_META_SREG])
 		return &nft_meta_bridge_set_ops;
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct nft_expr_type nft_meta_bridge_type __read_mostly = {

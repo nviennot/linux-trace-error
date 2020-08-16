@@ -165,7 +165,7 @@ struct jffs2_full_dnode *jffs2_write_dnode(struct jffs2_sb_info *c, struct jffs2
 		}
 		/* Release the full_dnode which is now useless, and return */
 		jffs2_free_full_dnode(fn);
-		return ERR_PTR(ret?ret:-EIO);
+		return ERR_PTR(ret?ret:-ERR(EIO));
 	}
 	/* Mark the space used */
 	/* If node covers at least a whole page, or if it starts at the
@@ -231,7 +231,7 @@ struct jffs2_full_dirent *jffs2_write_dirent(struct jffs2_sb_info *c, struct jff
 			je32_to_cpu(rd->pino), name, name, je32_to_cpu(rd->ino),
 			je32_to_cpu(rd->name_crc));
 		WARN_ON(1);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	vecs[0].iov_base = rd;
@@ -315,7 +315,7 @@ struct jffs2_full_dirent *jffs2_write_dirent(struct jffs2_sb_info *c, struct jff
 		}
 		/* Release the full_dnode which is now useless, and return */
 		jffs2_free_full_dirent(fd);
-		return ERR_PTR(ret?ret:-EIO);
+		return ERR_PTR(ret?ret:-ERR(EIO));
 	}
 	/* Mark the space used */
 	fd->raw = jffs2_add_physical_node_ref(c, flash_ofs | dirent_node_state(rd),
@@ -425,7 +425,7 @@ int jffs2_write_inode_range(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 		jffs2_complete_reservation(c);
 		if (!datalen) {
 			pr_warn("Eep. We didn't actually write any data in jffs2_write_inode_range()\n");
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 		}
 		jffs2_dbg(1, "increasing writtenlen by %d\n", datalen);

@@ -366,7 +366,7 @@ unsigned int irq_calc_affinity_vectors(unsigned int minvec, unsigned int maxvec,
 
 static inline int irq_set_affinity(unsigned int irq, const struct cpumask *m)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int irq_force_affinity(unsigned int irq, const struct cpumask *cpumask)
@@ -384,7 +384,7 @@ static inline int irq_select_affinity(unsigned int irq)  { return 0; }
 static inline int irq_set_affinity_hint(unsigned int irq,
 					const struct cpumask *m)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int

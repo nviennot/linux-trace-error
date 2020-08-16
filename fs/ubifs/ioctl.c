@@ -154,16 +154,16 @@ long ubifs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	case FS_IOC_SETFLAGS: {
 		if (IS_RDONLY(inode))
-			return -EROFS;
+			return -ERR(EROFS);
 
 		if (!inode_owner_or_capable(inode))
-			return -EACCES;
+			return -ERR(EACCES);
 
 		if (get_user(flags, (int __user *) arg))
 			return -EFAULT;
 
 		if (flags & ~UBIFS_GETTABLE_IOCTL_FLAGS)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		flags &= UBIFS_SETTABLE_IOCTL_FLAGS;
 
 		if (!S_ISDIR(inode->i_mode))
@@ -212,7 +212,7 @@ long ubifs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		return fscrypt_ioctl_get_nonce(file, (void __user *)arg);
 
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -236,7 +236,7 @@ long ubifs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case FS_IOC_GET_ENCRYPTION_NONCE:
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 	return ubifs_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
 }

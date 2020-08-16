@@ -94,9 +94,9 @@ static inline int prepare_hugepage_range(struct file *file,
 	struct hstate *h = hstate_file(file);
 
 	if (len & ~huge_page_mask(h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (addr & ~huge_page_mask(h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

@@ -58,7 +58,7 @@ static int tx_wait_done(struct sst_generic_ipc *ipc,
 			ipc->ops.shim_dbg(ipc, "message timeout");
 
 		list_del(&msg->list);
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	} else {
 
 		/* copy the data returned from DSP */
@@ -87,7 +87,7 @@ static int ipc_tx_message(struct sst_generic_ipc *ipc,
 	msg = msg_get_empty(ipc);
 	if (msg == NULL) {
 		spin_unlock_irqrestore(&ipc->dsp->spinlock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	msg->tx.header = request.header;
@@ -189,13 +189,13 @@ int sst_ipc_tx_message_wait(struct sst_generic_ipc *ipc,
 	 */
 	if (ipc->ops.check_dsp_lp_on)
 		if (ipc->ops.check_dsp_lp_on(ipc->dsp, true))
-			return -EIO;
+			return -ERR(EIO);
 
 	ret = ipc_tx_message(ipc, request, reply, 1);
 
 	if (ipc->ops.check_dsp_lp_on)
 		if (ipc->ops.check_dsp_lp_on(ipc->dsp, false))
-			return -EIO;
+			return -ERR(EIO);
 
 	return ret;
 }

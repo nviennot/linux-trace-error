@@ -109,12 +109,12 @@ int icc_provider_del(struct icc_provider *provider);
 static inline int icc_std_aggregate(struct icc_node *node, u32 tag, u32 avg_bw,
 				    u32 peak_bw, u32 *agg_avg, u32 *agg_peak)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline struct icc_node *icc_node_create(int id)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 void icc_node_destroy(int id)
@@ -123,12 +123,12 @@ void icc_node_destroy(int id)
 
 static inline int icc_link_create(struct icc_node *node, const int dst_id)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 int icc_link_destroy(struct icc_node *src, struct icc_node *dst)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 void icc_node_add(struct icc_node *node, struct icc_provider *provider)
@@ -141,17 +141,17 @@ void icc_node_del(struct icc_node *node)
 
 static inline int icc_nodes_remove(struct icc_provider *provider)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int icc_provider_add(struct icc_provider *provider)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int icc_provider_del(struct icc_provider *provider)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif /* CONFIG_INTERCONNECT */

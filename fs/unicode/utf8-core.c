@@ -27,17 +27,17 @@ int utf8_strncmp(const struct unicode_map *um,
 	int c1, c2;
 
 	if (utf8ncursor(&cur1, data, s1->name, s1->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (utf8ncursor(&cur2, data, s2->name, s2->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	do {
 		c1 = utf8byte(&cur1);
 		c2 = utf8byte(&cur2);
 
 		if (c1 < 0 || c2 < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (c1 != c2)
 			return 1;
 	} while (c1);
@@ -54,17 +54,17 @@ int utf8_strncasecmp(const struct unicode_map *um,
 	int c1, c2;
 
 	if (utf8ncursor(&cur1, data, s1->name, s1->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (utf8ncursor(&cur2, data, s2->name, s2->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	do {
 		c1 = utf8byte(&cur1);
 		c2 = utf8byte(&cur2);
 
 		if (c1 < 0 || c2 < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (c1 != c2)
 			return 1;
 	} while (c1);
@@ -86,13 +86,13 @@ int utf8_strncasecmp_folded(const struct unicode_map *um,
 	int i = 0;
 
 	if (utf8ncursor(&cur1, data, s1->name, s1->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	do {
 		c1 = utf8byte(&cur1);
 		c2 = cf->name[i++];
 		if (c1 < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (c1 != c2)
 			return 1;
 	} while (c1);
@@ -109,7 +109,7 @@ int utf8_casefold(const struct unicode_map *um, const struct qstr *str,
 	size_t nlen = 0;
 
 	if (utf8ncursor(&cur, data, str->name, str->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (nlen = 0; nlen < dlen; nlen++) {
 		int c = utf8byte(&cur);
@@ -120,7 +120,7 @@ int utf8_casefold(const struct unicode_map *um, const struct qstr *str,
 		if (c == -1)
 			break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 EXPORT_SYMBOL(utf8_casefold);
@@ -133,7 +133,7 @@ int utf8_normalize(const struct unicode_map *um, const struct qstr *str,
 	ssize_t nlen = 0;
 
 	if (utf8ncursor(&cur, data, str->name, str->len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (nlen = 0; nlen < dlen; nlen++) {
 		int c = utf8byte(&cur);
@@ -144,7 +144,7 @@ int utf8_normalize(const struct unicode_map *um, const struct qstr *str,
 		if (c == -1)
 			break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 EXPORT_SYMBOL(utf8_normalize);
@@ -162,11 +162,11 @@ static int utf8_parse_version(const char *version, unsigned int *maj,
 	strncpy(version_string, version, sizeof(version_string));
 
 	if (match_token(version_string, token, args) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (match_int(&args[0], maj) || match_int(&args[1], min) ||
 	    match_int(&args[2], rev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -180,10 +180,10 @@ struct unicode_map *utf8_load(const char *version)
 		unsigned int maj, min, rev;
 
 		if (utf8_parse_version(version, &maj, &min, &rev) < 0)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		if (!utf8version_is_supported(maj, min, rev))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		unicode_version = UNICODE_AGE(maj, min, rev);
 	} else {

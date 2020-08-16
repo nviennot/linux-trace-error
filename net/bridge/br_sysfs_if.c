@@ -179,7 +179,7 @@ static int store_group_fwd_mask(struct net_bridge_port *p,
 				unsigned long v)
 {
 	if (v & BR_GROUPFWD_MACPAUSE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	p->group_fwd_mask = v;
 
 	return 0;
@@ -212,7 +212,7 @@ static int store_backup_port(struct net_bridge_port *p, char *buf)
 	if (strlen(buf) > 0) {
 		backup_dev = __dev_get_by_name(dev_net(p->dev), buf);
 		if (!backup_dev)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	return nbp_backup_change(p, backup_dev);
@@ -295,7 +295,7 @@ static ssize_t brport_show(struct kobject *kobj,
 	struct net_bridge_port *p = kobj_to_brport(kobj);
 
 	if (!brport_attr->show)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return brport_attr->show(p, buf);
 }
@@ -306,12 +306,12 @@ static ssize_t brport_store(struct kobject *kobj,
 {
 	struct brport_attribute *brport_attr = to_brport_attr(attr);
 	struct net_bridge_port *p = kobj_to_brport(kobj);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 	unsigned long val;
 	char *endp;
 
 	if (!ns_capable(dev_net(p->dev)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!rtnl_trylock())
 		return restart_syscall();

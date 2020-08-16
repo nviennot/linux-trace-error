@@ -51,7 +51,7 @@ static int subflow_rebuild_header(struct sock *sk)
 
 		local_id = mptcp_pm_get_local_id(msk, (struct sock_common *)sk);
 		if (local_id < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		subflow->local_id = local_id;
 	}
@@ -764,7 +764,7 @@ static bool subflow_check_data_avail(struct sock *ssk)
 		status = get_mapping_status(ssk);
 		pr_debug("msk=%p ssk=%p status=%d", msk, ssk, status);
 		if (status == MAPPING_INVALID) {
-			ssk->sk_err = EBADMSG;
+			ssk->sk_err = ERR(EBADMSG);
 			goto fatal;
 		}
 
@@ -780,7 +780,7 @@ static bool subflow_check_data_avail(struct sock *ssk)
 		 */
 		if (unlikely(!READ_ONCE(msk->can_ack))) {
 			if (!subflow->mpc_map) {
-				ssk->sk_err = EBADMSG;
+				ssk->sk_err = ERR(EBADMSG);
 				goto fatal;
 			}
 			WRITE_ONCE(msk->remote_key, subflow->remote_key);
@@ -980,7 +980,7 @@ int __mptcp_subflow_connect(struct sock *sk, int ifindex,
 	int err;
 
 	if (sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	err = mptcp_subflow_create_socket(sk, &sf);
 	if (err)
@@ -1143,7 +1143,7 @@ static int subflow_ulp_init(struct sock *sk)
 	 * created with sock_create_kern()
 	 */
 	if (!sk->sk_kern_sock) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 

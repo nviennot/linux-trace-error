@@ -284,7 +284,7 @@ static inline int ssm2602_get_coeff(int mclk, int rate)
 			ssm2602_coeff_table[i].mclk == mclk)
 			return ssm2602_coeff_table[i].srate;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ssm2602_hw_params(struct snd_pcm_substream *substream,
@@ -316,7 +316,7 @@ static int ssm2602_hw_params(struct snd_pcm_substream *substream,
 		iface = 0xc;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(ssm2602->regmap, SSM2602_IFACE,
 		IFACE_AUDIO_DATA_LEN, iface);
@@ -360,7 +360,7 @@ static int ssm2602_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	if (dir == SND_SOC_CLOCK_IN) {
 		if (clk_id != SSM2602_SYSCLK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (freq) {
 		case 12288000:
@@ -375,7 +375,7 @@ static int ssm2602_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 			ssm2602->sysclk_constraints = NULL;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ssm2602->sysclk = freq;
 	} else {
@@ -389,7 +389,7 @@ static int ssm2602_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 			mask = PWR_OSC_PDN;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (freq == 0)
@@ -418,7 +418,7 @@ static int ssm2602_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -438,7 +438,7 @@ static int ssm2602_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0003;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -455,7 +455,7 @@ static int ssm2602_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface */

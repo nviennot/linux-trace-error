@@ -114,7 +114,7 @@ static int ieee802154_sock_connect(struct socket *sock, struct sockaddr *uaddr,
 	struct sock *sk = sock->sk;
 
 	if (addr_len < sizeof(uaddr->sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (uaddr->sa_family == AF_UNSPEC)
 		return sk->sk_prot->disconnect(sk, flags);
@@ -126,7 +126,7 @@ static int ieee802154_dev_ioctl(struct sock *sk, struct ifreq __user *arg,
 				unsigned int cmd)
 {
 	struct ifreq ifr;
-	int ret = -ENOIOCTLCMD;
+	int ret = -ERR(ENOIOCTLCMD);
 	struct net_device *dev;
 
 	if (copy_from_user(&ifr, arg, sizeof(struct ifreq)))
@@ -138,7 +138,7 @@ static int ieee802154_dev_ioctl(struct sock *sk, struct ifreq __user *arg,
 	dev = dev_get_by_name(sock_net(sk), ifr.ifr_name);
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (dev->type == ARPHRD_IEEE802154 && dev->netdev_ops->ndo_do_ioctl)
 		ret = dev->netdev_ops->ndo_do_ioctl(dev, &ifr, cmd);
@@ -162,7 +162,7 @@ static int ieee802154_sock_ioctl(struct socket *sock, unsigned int cmd,
 				cmd);
 	default:
 		if (!sk->sk_prot->ioctl)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		return sk->sk_prot->ioctl(sk, cmd, arg);
 	}
 }
@@ -202,18 +202,18 @@ static int raw_bind(struct sock *sk, struct sockaddr *_uaddr, int len)
 	struct net_device *dev = NULL;
 
 	if (len < sizeof(*uaddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	uaddr = (struct sockaddr_ieee802154 *)_uaddr;
 	if (uaddr->family != AF_IEEE802154)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
 	ieee802154_addr_from_sa(&addr, &uaddr->addr);
 	dev = ieee802154_get_dev(sock_net(sk), &addr);
 	if (!dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -230,7 +230,7 @@ out:
 static int raw_connect(struct sock *sk, struct sockaddr *uaddr,
 		       int addr_len)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int raw_disconnect(struct sock *sk, int flags)
@@ -248,7 +248,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (msg->msg_flags & MSG_OOB) {
 		pr_debug("msg->msg_flags = 0x%x\n", msg->msg_flags);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	lock_sock(sk);
@@ -260,7 +260,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (!dev) {
 		pr_debug("no dev\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto out;
 	}
 
@@ -269,7 +269,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (size > mtu) {
 		pr_debug("size = %zu, mtu = %u\n", size, mtu);
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out_dev;
 	}
 
@@ -312,7 +312,7 @@ static int raw_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 		       int noblock, int flags, int *addr_len)
 {
 	size_t copied = 0;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	struct sk_buff *skb;
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
@@ -378,13 +378,13 @@ static void ieee802154_raw_deliver(struct net_device *dev, struct sk_buff *skb)
 static int raw_getsockopt(struct sock *sk, int level, int optname,
 			  char __user *optval, int __user *optlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int raw_setsockopt(struct sock *sk, int level, int optname,
 			  char __user *optval, unsigned int optlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static struct proto ieee802154_raw_prot = {
@@ -491,7 +491,7 @@ static int dgram_bind(struct sock *sk, struct sockaddr *uaddr, int len)
 	struct sockaddr_ieee802154 *addr = (struct sockaddr_ieee802154 *)uaddr;
 	struct ieee802154_addr haddr;
 	struct dgram_sock *ro = dgram_sk(sk);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct net_device *dev;
 
 	lock_sock(sk);
@@ -507,12 +507,12 @@ static int dgram_bind(struct sock *sk, struct sockaddr *uaddr, int len)
 	ieee802154_addr_from_sa(&haddr, &addr->addr);
 	dev = ieee802154_get_dev(sock_net(sk), &haddr);
 	if (!dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
 	if (dev->type != ARPHRD_IEEE802154) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out_put;
 	}
 
@@ -558,7 +558,7 @@ static int dgram_ioctl(struct sock *sk, int cmd, unsigned long arg)
 	}
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 /* FIXME: autobind */
@@ -570,15 +570,15 @@ static int dgram_connect(struct sock *sk, struct sockaddr *uaddr,
 	int err = 0;
 
 	if (len < sizeof(*addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr->family != AF_IEEE802154)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
 	if (!ro->bound) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto out;
 	}
 
@@ -614,13 +614,13 @@ static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (msg->msg_flags & MSG_OOB) {
 		pr_debug("msg->msg_flags = 0x%x\n", msg->msg_flags);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!ro->connected && !msg->msg_name)
-		return -EDESTADDRREQ;
+		return -ERR(EDESTADDRREQ);
 	else if (ro->connected && msg->msg_name)
-		return -EISCONN;
+		return -ERR(EISCONN);
 
 	if (!ro->bound)
 		dev = dev_getfirstbyhwtype(sock_net(sk), ARPHRD_IEEE802154);
@@ -629,7 +629,7 @@ static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (!dev) {
 		pr_debug("no dev\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto out;
 	}
 	mtu = IEEE802154_MTU;
@@ -637,7 +637,7 @@ static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 
 	if (size > mtu) {
 		pr_debug("size = %zu, mtu = %u\n", size, mtu);
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out_dev;
 	}
 
@@ -703,7 +703,7 @@ static int dgram_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 			 int noblock, int flags, int *addr_len)
 {
 	size_t copied = 0;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	struct sk_buff *skb;
 	struct dgram_sock *ro = dgram_sk(sk);
 	DECLARE_SOCKADDR(struct sockaddr_ieee802154 *, saddr, msg->msg_name);
@@ -836,7 +836,7 @@ static int dgram_getsockopt(struct sock *sk, int level, int optname,
 	int val, len;
 
 	if (level != SOL_IEEE802154)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
@@ -865,7 +865,7 @@ static int dgram_getsockopt(struct sock *sk, int level, int optname,
 			val = ro->seclevel;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))
@@ -884,7 +884,7 @@ static int dgram_setsockopt(struct sock *sk, int level, int optname,
 	int err = 0;
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
@@ -901,7 +901,7 @@ static int dgram_setsockopt(struct sock *sk, int level, int optname,
 	case WPAN_SECURITY:
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
 		    !ns_capable(net->user_ns, CAP_NET_RAW)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			break;
 		}
 
@@ -918,20 +918,20 @@ static int dgram_setsockopt(struct sock *sk, int level, int optname,
 			ro->secen = 0;
 			break;
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		break;
 	case WPAN_SECURITY_LEVEL:
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
 		    !ns_capable(net->user_ns, CAP_NET_RAW)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			break;
 		}
 
 		if (val < WPAN_SECURITY_LEVEL_DEFAULT ||
 		    val > IEEE802154_SCF_SECLEVEL_ENC_MIC128) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		} else if (val == WPAN_SECURITY_LEVEL_DEFAULT) {
 			ro->seclevel_override = 0;
 		} else {
@@ -940,7 +940,7 @@ static int dgram_setsockopt(struct sock *sk, int level, int optname,
 		}
 		break;
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1004,11 +1004,11 @@ static int ieee802154_create(struct net *net, struct socket *sock,
 	const struct proto_ops *ops;
 
 	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	switch (sock->type) {
 	case SOCK_RAW:
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		if (!capable(CAP_NET_RAW))
 			goto out;
 		proto = &ieee802154_raw_prot;
@@ -1019,7 +1019,7 @@ static int ieee802154_create(struct net *net, struct socket *sock,
 		ops = &ieee802154_dgram_ops;
 		break;
 	default:
-		rc = -ESOCKTNOSUPPORT;
+		rc = -ERR(ESOCKTNOSUPPORT);
 		goto out;
 	}
 

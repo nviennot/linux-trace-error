@@ -18,7 +18,7 @@ int snd_motu_transaction_read(struct snd_motu *motu, u32 offset, __be32 *reg,
 	int tcode;
 
 	if (size % sizeof(__be32) > 0 || size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (size == sizeof(__be32))
 		tcode = TCODE_READ_QUADLET_REQUEST;
 	else
@@ -34,7 +34,7 @@ int snd_motu_transaction_write(struct snd_motu *motu, u32 offset, __be32 *reg,
 	int tcode;
 
 	if (size % sizeof(__be32) > 0 || size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (size == sizeof(__be32))
 		tcode = TCODE_WRITE_QUADLET_REQUEST;
 	else
@@ -79,7 +79,7 @@ int snd_motu_transaction_reregister(struct snd_motu *motu)
 	int err;
 
 	if (motu->async_handler.callback_data == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Register messaging address. Block transaction is not allowed. */
 	data = cpu_to_be32((device->card->node_id << 16) |

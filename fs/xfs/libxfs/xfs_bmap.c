@@ -714,7 +714,7 @@ xfs_bmap_extents_to_btree(
 		goto out_root_realloc;
 
 	if (WARN_ON_ONCE(args.fsbno == NULLFSBLOCK)) {
-		error = -ENOSPC;
+		error = -ERR(ENOSPC);
 		goto out_root_realloc;
 	}
 
@@ -948,7 +948,7 @@ xfs_bmap_add_attrfork_btree(
 			goto error0;
 		if (stat == 0) {
 			xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 		cur->bc_ino.allocated = 0;
 		xfs_btree_del_cursor(cur, XFS_BTREE_NOERROR);
@@ -1048,7 +1048,7 @@ xfs_bmap_set_attrforkoff(
 		break;
 	default:
 		ASSERT(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -3073,7 +3073,7 @@ xfs_bmap_extsize_align(
 		if (orig_off < align_off ||
 		    orig_end > align_off + align_alen ||
 		    align_alen - temp < orig_alen)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * Try to fix it by moving the start up.
 		 */
@@ -3098,7 +3098,7 @@ xfs_bmap_extsize_align(
 		 * Result doesn't cover the request, fail it.
 		 */
 		if (orig_off < align_off || orig_end > align_off + align_alen)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		ASSERT(orig_off >= align_off);
 		/* see MAXEXTLEN handling above */
@@ -3889,7 +3889,7 @@ xfs_bmapi_read(
 		return -EFSCORRUPTED;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	XFS_STATS_INC(mp, xs_blk_mapr);
 
@@ -4249,7 +4249,7 @@ xfs_bmapi_convert_unwritten(
 	 * so generate another request.
 	 */
 	if (mval->br_blockcount < len)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	return 0;
 }
 
@@ -4366,7 +4366,7 @@ xfs_bmapi_write(
 	}
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	XFS_STATS_INC(mp, xs_blk_mapw);
 
@@ -4533,7 +4533,7 @@ xfs_bmapi_convert_delalloc(
 		 * might have moved the extent to the data fork in the meantime.
 		 */
 		WARN_ON_ONCE(whichfork != XFS_COW_FORK);
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_trans_cancel;
 	}
 
@@ -4578,7 +4578,7 @@ xfs_bmapi_convert_delalloc(
 	if (error)
 		goto out_finish;
 
-	error = -ENOSPC;
+	error = -ERR(ENOSPC);
 	if (WARN_ON_ONCE(bma.blkno == NULLFSBLOCK))
 		goto out_finish;
 	error = -EFSCORRUPTED;
@@ -4645,7 +4645,7 @@ xfs_bmapi_remap(
 	}
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
 		error = xfs_iread_extents(tp, ip, whichfork);
@@ -5038,7 +5038,7 @@ xfs_bmap_del_extent_real(
 	    ifp->if_format == XFS_DINODE_FMT_EXTENTS &&
 	    ifp->if_nextents >= XFS_IFORK_MAXEXT(ip, whichfork) &&
 	    del->br_startoff > got.br_startoff && del_endoff < got_endoff)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	flags = XFS_ILOG_CORE;
 	if (whichfork == XFS_DATA_FORK && XFS_IS_REALTIME_INODE(ip)) {
@@ -5188,7 +5188,7 @@ xfs_bmap_del_extent_real(
 				 */
 				xfs_iext_update_extent(ip, state, icur, &old);
 				flags = 0;
-				error = -ENOSPC;
+				error = -ERR(ENOSPC);
 				goto done;
 			}
 			if (XFS_IS_CORRUPT(mp, i != 1)) {
@@ -5281,7 +5281,7 @@ __xfs_bunmapi(
 	if (XFS_IS_CORRUPT(mp, !xfs_ifork_has_extents(ifp)))
 		return -EFSCORRUPTED;
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	ASSERT(xfs_isilocked(ip, XFS_ILOCK_EXCL));
 	ASSERT(len > 0);
@@ -5781,7 +5781,7 @@ xfs_bmap_collapse_extents(
 	}
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL | XFS_ILOCK_EXCL));
 
@@ -5808,7 +5808,7 @@ xfs_bmap_collapse_extents(
 	new_startoff = got.br_startoff - offset_shift_fsb;
 	if (xfs_iext_peek_prev_extent(ifp, &icur, &prev)) {
 		if (new_startoff < prev.br_startoff + prev.br_blockcount) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto del_cursor;
 		}
 
@@ -5822,7 +5822,7 @@ xfs_bmap_collapse_extents(
 		}
 	} else {
 		if (got.br_startoff < offset_shift_fsb) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto del_cursor;
 		}
 	}
@@ -5861,13 +5861,13 @@ xfs_bmap_can_insert_extents(
 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL));
 
 	if (XFS_FORCED_SHUTDOWN(ip->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	error = xfs_bmap_last_extent(NULL, ip, XFS_DATA_FORK, &got, &is_empty);
 	if (!error && !is_empty && got.br_startoff >= off &&
 	    ((got.br_startoff + shift) & BMBT_STARTOFF_MASK) < got.br_startoff)
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
 
 	return error;
@@ -5898,7 +5898,7 @@ xfs_bmap_insert_extents(
 	}
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	ASSERT(xfs_isilocked(ip, XFS_IOLOCK_EXCL | XFS_ILOCK_EXCL));
 
@@ -5939,7 +5939,7 @@ xfs_bmap_insert_extents(
 	new_startoff = got.br_startoff + offset_shift_fsb;
 	if (xfs_iext_peek_next_extent(ifp, &icur, &next)) {
 		if (new_startoff + got.br_blockcount > next.br_startoff) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto del_cursor;
 		}
 
@@ -6003,7 +6003,7 @@ xfs_bmap_split_extent(
 	}
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!(ifp->if_flags & XFS_IFEXTENTS)) {
 		/* Read in all the extents */
@@ -6189,7 +6189,7 @@ xfs_bmap_finish_one(
 
 	if (XFS_TEST_ERROR(false, tp->t_mountp,
 			XFS_ERRTAG_BMAP_FINISH_ONE))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (type) {
 	case XFS_BMAP_MAP:

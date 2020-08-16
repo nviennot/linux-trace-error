@@ -108,7 +108,7 @@ int llc_conn_ac_disc_ind(struct sock *sk, struct sk_buff *skb)
 	} else if (ev->type == LLC_CONN_EV_TYPE_ACK_TMR)
 		reason = LLC_DISC_REASON_ACK_TMR_EXP;
 	else
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	if (!rc) {
 		ev->reason   = reason;
 		ev->ind_prim = LLC_DISC_PRIM;
@@ -197,7 +197,7 @@ int llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2(struct sock *sk,
 
 int llc_conn_ac_send_disc_cmd_p_set_x(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -222,7 +222,7 @@ free:
 
 int llc_conn_ac_send_dm_rsp_f_set_p(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -248,7 +248,7 @@ free:
 
 int llc_conn_ac_send_dm_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -273,7 +273,7 @@ free:
 int llc_conn_ac_send_frmr_rsp_f_set_x(struct sock *sk, struct sk_buff *skb)
 {
 	u8 f_bit;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct sk_buff *nskb;
 	struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
 	struct llc_sock *llc = llc_sk(sk);
@@ -306,7 +306,7 @@ free:
 
 int llc_conn_ac_resend_frmr_rsp_f_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U,
 					       sizeof(struct llc_frmr_info));
@@ -334,7 +334,7 @@ free:
 int llc_conn_ac_resend_frmr_rsp_f_set_p(struct sock *sk, struct sk_buff *skb)
 {
 	u8 f_bit;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct sk_buff *nskb;
 	struct llc_sock *llc = llc_sk(sk);
 
@@ -429,7 +429,7 @@ int llc_conn_ac_resend_i_xxx_x_set_0_or_send_rr(struct sock *sk,
 {
 	u8 nr;
 	struct llc_pdu_sn *pdu = llc_pdu_sn_hdr(skb);
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -464,7 +464,7 @@ int llc_conn_ac_resend_i_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 
 int llc_conn_ac_send_rej_cmd_p_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -488,7 +488,7 @@ free:
 
 int llc_conn_ac_send_rej_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -512,7 +512,7 @@ free:
 
 int llc_conn_ac_send_rej_xxx_x_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -536,7 +536,7 @@ free:
 
 int llc_conn_ac_send_rnr_cmd_p_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -560,7 +560,7 @@ free:
 
 int llc_conn_ac_send_rnr_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -584,7 +584,7 @@ free:
 
 int llc_conn_ac_send_rnr_xxx_x_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -620,7 +620,7 @@ int llc_conn_ac_set_remote_busy(struct sock *sk, struct sk_buff *skb)
 
 int llc_conn_ac_opt_send_rnr_xxx_x_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -644,7 +644,7 @@ free:
 
 int llc_conn_ac_send_rr_cmd_p_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -668,7 +668,7 @@ free:
 
 int llc_conn_ac_send_rr_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -693,7 +693,7 @@ free:
 
 int llc_conn_ac_send_ack_rsp_f_set_1(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -717,7 +717,7 @@ free:
 
 int llc_conn_ac_send_rr_xxx_x_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -741,7 +741,7 @@ free:
 
 int llc_conn_ac_send_ack_xxx_x_set_0(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 
@@ -775,7 +775,7 @@ void llc_conn_set_p_flag(struct sock *sk, u8 value)
 
 int llc_conn_ac_send_sabme_cmd_p_set_x(struct sock *sk, struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -804,7 +804,7 @@ free:
 int llc_conn_ac_send_ua_rsp_f_set_p(struct sock *sk, struct sk_buff *skb)
 {
 	u8 f_bit;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_U, 0);
 
@@ -965,7 +965,7 @@ int llc_conn_ac_send_i_as_ack(struct sock *sk, struct sk_buff *skb)
 static int llc_conn_ac_send_rr_rsp_f_set_ackpf(struct sock *sk,
 					       struct sk_buff *skb)
 {
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct llc_sock *llc = llc_sk(sk);
 	struct sk_buff *nskb = llc_alloc_frame(sk, llc->dev, LLC_PDU_TYPE_S, 0);
 

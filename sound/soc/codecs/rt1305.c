@@ -612,14 +612,14 @@ static int rt1305_get_clk_info(int sclk, int rate)
 	static const int pd[] = {1, 2, 3, 4, 6, 8, 12, 16};
 
 	if (sclk <= 0 || rate <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rate = rate << 8;
 	for (i = 0; i < ARRAY_SIZE(pd); i++)
 		if (sclk == rate * pd[i])
 			return i;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rt1305_hw_params(struct snd_pcm_substream *substream,
@@ -644,7 +644,7 @@ static int rt1305_hw_params(struct snd_pcm_substream *substream,
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_ms = frame_size > 32;
@@ -670,7 +670,7 @@ static int rt1305_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT1305_I2S_DL_SEL_8B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -683,7 +683,7 @@ static int rt1305_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT1305_CLK_2,
@@ -708,7 +708,7 @@ static int rt1305_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt1305->master = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -718,7 +718,7 @@ static int rt1305_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg1_val |= RT1305_I2S_BCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -734,7 +734,7 @@ static int rt1305_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg1_val |= RT1305_I2S_DF_SEL_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -747,7 +747,7 @@ static int rt1305_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -776,7 +776,7 @@ static int rt1305_set_component_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT1305_CLK_1,
 		RT1305_SEL_FS_SYS_PRE_MASK, reg_val);
@@ -836,7 +836,7 @@ static int rt1305_set_component_pll(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL Source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -1143,7 +1143,7 @@ static int rt1305_i2c_probe(struct i2c_client *i2c,
 	if (val != RT1305_DEVICE_ID_NUM) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt1305\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	rt1305_reset(rt1305->regmap);

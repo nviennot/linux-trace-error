@@ -361,7 +361,7 @@ struct inode *jffs2_iget(struct super_block *sb, unsigned long ino)
 	return inode;
 
 error_io:
-	ret = -EIO;
+	ret = -ERR(EIO);
 error:
 	mutex_unlock(&f->sem);
 	iget_failed(inode);
@@ -397,7 +397,7 @@ int jffs2_do_remount_fs(struct super_block *sb, struct fs_context *fc)
 	struct jffs2_sb_info *c = JFFS2_SB_INFO(sb);
 
 	if (c->flags & JFFS2_SB_FLAG_RO && !sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* We stop if it was running, then restart if it needs to.
 	   This also catches the case where it was stopped and this
@@ -484,7 +484,7 @@ struct inode *jffs2_new_inode (struct inode *dir_i, umode_t mode, struct jffs2_r
 		mutex_unlock(&f->sem);
 		make_bad_inode(inode);
 		iput(inode);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return inode;
@@ -521,16 +521,16 @@ int jffs2_do_fill_super(struct super_block *sb, struct fs_context *fc)
 
 	/* Do not support the MLC nand */
 	if (c->mtd->type == MTD_MLCNANDFLASH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifndef CONFIG_JFFS2_FS_WRITEBUFFER
 	if (c->mtd->type == MTD_NANDFLASH) {
 		errorf(fc, "Cannot operate on NAND flash unless jffs2 NAND support is compiled in");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (c->mtd->type == MTD_DATAFLASH) {
 		errorf(fc, "Cannot operate on DataFlash unless jffs2 DataFlash support is compiled in");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 
@@ -550,7 +550,7 @@ int jffs2_do_fill_super(struct super_block *sb, struct fs_context *fc)
 	if (c->flash_size < 5*c->sector_size) {
 		errorf(fc, "Too few erase blocks (%d)",
 		       c->flash_size / c->sector_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	c->cleanmarker_size = sizeof(struct jffs2_unknown_node);
@@ -676,7 +676,7 @@ struct jffs2_inode_info *jffs2_gc_fetch_inode(struct jffs2_sb_info *c,
 			  inum, unlinked);
 		/* NB. This will happen again. We need to do something appropriate here. */
 		iput(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	return JFFS2_INODE_INFO(inode);

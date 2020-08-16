@@ -121,9 +121,9 @@ vxfs_read_olt(struct super_block *sbp, u_long bsize)
 	}
 
 	brelse(bp);
-	return (infp->vsi_fshino && infp->vsi_iext) ? 0 : -EINVAL;
+	return (infp->vsi_fshino && infp->vsi_iext) ? 0 : -ERR(EINVAL);
 
 fail:
 	brelse(bp);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

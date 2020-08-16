@@ -55,7 +55,7 @@ static int announce_port = -1;
 static int setheader(struct snd_seq_event * ev, int client, int port)
 {
 	if (announce_port < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	memset(ev, 0, sizeof(struct snd_seq_event));
 

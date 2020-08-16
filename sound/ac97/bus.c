@@ -39,13 +39,13 @@ to_ac97_controller(struct device *ac97_adapter)
 static int ac97_unbound_ctrl_write(struct ac97_controller *adrv, int slot,
 		     unsigned short reg, unsigned short val)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int ac97_unbound_ctrl_read(struct ac97_controller *adrv, int slot,
 				  unsigned short reg)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static const struct ac97_controller_ops ac97_unbound_ctrl_ops = {
@@ -61,7 +61,7 @@ static struct ac97_codec_device *
 ac97_codec_find(struct ac97_controller *ac97_ctrl, unsigned int codec_num)
 {
 	if (codec_num >= AC97_BUS_MAX_CODECS)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return ac97_ctrl->codecs[codec_num];
 }
@@ -257,7 +257,7 @@ static ssize_t warm_reset_store(struct device *dev,
 	struct ac97_controller *ac97_ctrl;
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&ac97_controllers_mutex);
 	ac97_ctrl = to_ac97_controller(dev);

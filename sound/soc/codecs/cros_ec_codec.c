@@ -173,7 +173,7 @@ static int dmic_put_gain(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (left > max_dmic_gain || right > max_dmic_gain)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(component->dev, "set mic gain to %u, %u\n", left, right);
 
@@ -252,7 +252,7 @@ static int i2s_rx_hw_params(struct snd_pcm_substream *substream,
 	int ret;
 
 	if (params_rate(params) != 48000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (params_format(params)) {
 	case SNDRV_PCM_FORMAT_S16_LE:
@@ -262,7 +262,7 @@ static int i2s_rx_hw_params(struct snd_pcm_substream *substream,
 		depth = EC_CODEC_I2S_RX_SAMPLE_DEPTH_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "set depth to %u\n", depth);
@@ -309,14 +309,14 @@ static int i2s_rx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -330,7 +330,7 @@ static int i2s_rx_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		daifmt = EC_CODEC_I2S_RX_DAIFMT_LEFT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "set format to %u\n", daifmt);
@@ -589,7 +589,7 @@ static int wov_read_audio_shm(struct cros_ec_codec_priv *priv)
 	else
 		wov_queue_enqueue(priv, priv->wov_audio_shm_p + r.offset, r.len,
 			priv->wov_audio_shm_type == EC_CODEC_SHM_TYPE_EC_RAM);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int wov_read_audio(struct cros_ec_codec_priv *priv)
@@ -620,7 +620,7 @@ static int wov_read_audio(struct cros_ec_codec_priv *priv)
 		remain -= r.len;
 	}
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void wov_copy_work(struct work_struct *w)
@@ -698,7 +698,7 @@ static int wov_set_lang_shm(struct cros_ec_codec_priv *priv,
 	if (size > priv->wov_lang_shm_len) {
 		dev_err(priv->dev, "no enough SHM size: %d\n",
 			priv->wov_lang_shm_len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	switch (priv->wov_lang_shm_type) {

@@ -51,14 +51,14 @@ static struct posix_acl *f2fs_acl_from_disk(const char *value, size_t size)
 	const char *end = value + size;
 
 	if (size < sizeof(struct f2fs_acl_header))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (hdr->a_version != cpu_to_le32(F2FS_ACL_VERSION))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	count = f2fs_acl_count(size);
 	if (count < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (count == 0)
 		return NULL;
 
@@ -106,7 +106,7 @@ static struct posix_acl *f2fs_acl_from_disk(const char *value, size_t size)
 	return acl;
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static void *f2fs_acl_to_disk(struct f2fs_sb_info *sbi,
@@ -161,7 +161,7 @@ static void *f2fs_acl_to_disk(struct f2fs_sb_info *sbi,
 
 fail:
 	kvfree(f2fs_acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct posix_acl *__f2fs_get_acl(struct inode *inode, int type,
@@ -223,11 +223,11 @@ static int __f2fs_set_acl(struct inode *inode, int type,
 	case ACL_TYPE_DEFAULT:
 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_DEFAULT;
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
+			return acl ? -ERR(EACCES) : 0;
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (acl) {
@@ -251,7 +251,7 @@ static int __f2fs_set_acl(struct inode *inode, int type,
 int f2fs_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 {
 	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
-		return -EIO;
+		return -ERR(EIO);
 
 	return __f2fs_set_acl(inode, type, acl, NULL);
 }
@@ -311,7 +311,7 @@ static int f2fs_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
 			break;
 
 		default:
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -320,7 +320,7 @@ static int f2fs_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
 		mode &= (mask_obj->e_perm << 3) | ~S_IRWXG;
 	} else {
 		if (!group_obj)
-			return -EIO;
+			return -ERR(EIO);
 		group_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (group_obj->e_perm << 3) | ~S_IRWXG;
 	}

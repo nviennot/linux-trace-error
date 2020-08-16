@@ -114,15 +114,15 @@ static int internal_create_group(struct kobject *kobj, int update,
 	int error;
 
 	if (WARN_ON(!kobj || (!update && !kobj->sd)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Updates may happen before the object has been instantiated */
 	if (unlikely(update && !kobj->sd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!grp->attrs && !grp->bin_attrs) {
 		WARN(1, "sysfs: (bin_)attrs not set by subsystem for group: %s/%s\n",
 			kobj->name, grp->name ?: "");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	kobject_get_ownership(kobj, &uid, &gid);
 	if (grp->name) {
@@ -131,7 +131,7 @@ static int internal_create_group(struct kobject *kobj, int update,
 			if (!kn) {
 				pr_warn("Can't update unknown attr grp name: %s/%s\n",
 					kobj->name, grp->name);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		} else {
 			kn = kernfs_create_dir_ns(kobj->sd, grp->name,
@@ -335,7 +335,7 @@ int sysfs_merge_group(struct kobject *kobj,
 
 	parent = kernfs_find_and_get(kobj->sd, grp->name);
 	if (!parent)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kobject_get_ownership(kobj, &uid, &gid);
 
@@ -387,7 +387,7 @@ int sysfs_add_link_to_group(struct kobject *kobj, const char *group_name,
 
 	parent = kernfs_find_and_get(kobj->sd, group_name);
 	if (!parent)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = sysfs_create_link_sd(parent, target, link_name);
 	kernfs_put(parent);
@@ -444,12 +444,12 @@ int compat_only_sysfs_link_entry_to_kobj(struct kobject *kobj,
 		kernfs_get(target);
 	spin_unlock(&sysfs_symlink_target_lock);
 	if (!target)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	entry = kernfs_find_and_get(target_kobj->sd, target_name);
 	if (!entry) {
 		kernfs_put(target);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (!symlink_name)
@@ -478,7 +478,7 @@ static int sysfs_group_attrs_change_owner(struct kernfs_node *grp_kn,
 		for (attr = grp->attrs; *attr; attr++) {
 			kn = kernfs_find_and_get(grp_kn, (*attr)->name);
 			if (!kn)
-				return -ENOENT;
+				return -ERR(ENOENT);
 
 			error = kernfs_setattr(kn, newattrs);
 			kernfs_put(kn);
@@ -493,7 +493,7 @@ static int sysfs_group_attrs_change_owner(struct kernfs_node *grp_kn,
 		for (bin_attr = grp->bin_attrs; *bin_attr; bin_attr++) {
 			kn = kernfs_find_and_get(grp_kn, (*bin_attr)->attr.name);
 			if (!kn)
-				return -ENOENT;
+				return -ERR(ENOENT);
 
 			error = kernfs_setattr(kn, newattrs);
 			kernfs_put(kn);
@@ -527,7 +527,7 @@ int sysfs_group_change_owner(struct kobject *kobj,
 	};
 
 	if (!kobj->state_in_sysfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (grp->name) {
 		grp_kn = kernfs_find_and_get(kobj->sd, grp->name);
@@ -536,7 +536,7 @@ int sysfs_group_change_owner(struct kobject *kobj,
 		grp_kn = kobj->sd;
 	}
 	if (!grp_kn)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	error = kernfs_setattr(grp_kn, &newattrs);
 	if (!error)
@@ -564,7 +564,7 @@ int sysfs_groups_change_owner(struct kobject *kobj,
 	int error = 0, i;
 
 	if (!kobj->state_in_sysfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!groups)
 		return 0;

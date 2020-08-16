@@ -307,13 +307,13 @@ static int omap_mcpdm_dai_hw_params(struct snd_pcm_substream *substream,
 	case 5:
 		if (stream == SNDRV_PCM_STREAM_CAPTURE)
 			/* up to 3 channels for capture */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		link_mask |= 1 << 4;
 		/* fall through */
 	case 4:
 		if (stream == SNDRV_PCM_STREAM_CAPTURE)
 			/* up to 3 channels for capture */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		link_mask |= 1 << 3;
 		/* fall through */
 	case 3:
@@ -327,7 +327,7 @@ static int omap_mcpdm_dai_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		/* unsupported number of channels */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma_data = snd_soc_dai_get_dma_data(dai, substream);

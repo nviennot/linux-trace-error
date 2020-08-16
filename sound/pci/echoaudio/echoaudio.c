@@ -264,7 +264,7 @@ static int pcm_open(struct snd_pcm_substream *substream,
 	int err, i;
 
 	if (max_channels <= 0)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	chip = snd_pcm_substream_chip(substream);
 	runtime = substream->runtime;
@@ -698,13 +698,13 @@ static int pcm_prepare(struct snd_pcm_substream *substream)
 		dev_err(chip->card->dev,
 			"Prepare error: unsupported format %d\n",
 			runtime->format);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (snd_BUG_ON(pipe_index >= px_num(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!is_pipe_allocated(chip, pipe_index)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	set_audio_format(chip, pipe_index, &format);
 	return 0;
 }
@@ -774,7 +774,7 @@ static int pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		err = pause_transport(chip, channelmask);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->lock);
 	return err;
@@ -1245,7 +1245,7 @@ static int snd_echo_mixer_get(struct snd_kcontrol *kcontrol,
 	unsigned int in = ucontrol->id.index % num_busses_in(chip);
 
 	if (out >= ECHO_MAXAUDIOOUTPUTS || in >= ECHO_MAXAUDIOINPUTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ucontrol->value.integer.value[0] = chip->monitor_gain[out][in];
 	return 0;
@@ -1263,10 +1263,10 @@ static int snd_echo_mixer_put(struct snd_kcontrol *kcontrol,
 	out = ucontrol->id.index / num_busses_in(chip);
 	in = ucontrol->id.index % num_busses_in(chip);
 	if (out >= ECHO_MAXAUDIOOUTPUTS || in >= ECHO_MAXAUDIOINPUTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	gain = ucontrol->value.integer.value[0];
 	if (gain < ECHOGAIN_MINOUT || gain > ECHOGAIN_MAXOUT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (chip->monitor_gain[out][in] != gain) {
 		spin_lock_irq(&chip->lock);
 		set_monitor_gain(chip, out, in, gain);
@@ -1329,7 +1329,7 @@ static int snd_echo_vmixer_put(struct snd_kcontrol *kcontrol,
 	vch = ucontrol->id.index % num_pipes_out(chip);
 	gain = ucontrol->value.integer.value[0];
 	if (gain < ECHOGAIN_MINOUT || gain > ECHOGAIN_MAXOUT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (chip->vmixer_gain[out][vch] != ucontrol->value.integer.value[0]) {
 		spin_lock_irq(&chip->lock);
 		set_vmixer_gain(chip, out, vch, ucontrol->value.integer.value[0]);
@@ -1398,7 +1398,7 @@ static int snd_echo_digital_mode_put(struct snd_kcontrol *kcontrol,
 
 	emode = ucontrol->value.enumerated.item[0];
 	if (emode >= chip->num_digital_modes)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dmode = chip->digital_mode_list[emode];
 
 	if (dmode != chip->digital_mode) {
@@ -1410,7 +1410,7 @@ static int snd_echo_digital_mode_put(struct snd_kcontrol *kcontrol,
 		device is open because it also changes the number of channels
 		and the allowed sample rates */
 		if (atomic_read(&chip->opencount)) {
-			changed = -EAGAIN;
+			changed = -ERR(EAGAIN);
 		} else {
 			changed = set_digital_mode(chip, dmode);
 			/* If we had to change the clock source, report it */
@@ -1534,7 +1534,7 @@ static int snd_echo_clock_source_put(struct snd_kcontrol *kcontrol,
 	chip = snd_kcontrol_chip(kcontrol);
 	eclock = ucontrol->value.enumerated.item[0];
 	if (eclock >= chip->input_clock_types)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dclock = chip->clock_source_list[eclock];
 	if (chip->input_clock != dclock) {
 		mutex_lock(&chip->mode_mutex);
@@ -1894,7 +1894,7 @@ static int snd_echo_create(struct snd_card *card,
 					      ECHOCARD_NAME)) == NULL) {
 		dev_err(chip->card->dev, "cannot get memory region\n");
 		snd_echo_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dsp_registers = (volatile u32 __iomem *)
 		ioremap(chip->dsp_registers_phys, sz);
@@ -1908,7 +1908,7 @@ static int snd_echo_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(chip->card->dev, "cannot grab irq\n");
 		snd_echo_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1958,10 +1958,10 @@ static int snd_echo_probe(struct pci_dev *pci,
 	int i, err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	i = 0;
@@ -2123,12 +2123,12 @@ static int snd_echo_suspend(struct device *dev)
 	spin_lock_irq(&chip->lock);
 	if (wait_handshake(chip)) {
 		spin_unlock_irq(&chip->lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	clear_handshake(chip);
 	if (send_vector(chip, DSP_VC_GO_COMATOSE) < 0) {
 		spin_unlock_irq(&chip->lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	spin_unlock_irq(&chip->lock);
 
@@ -2186,7 +2186,7 @@ static int snd_echo_resume(struct device *dev)
 			KBUILD_MODNAME, chip)) {
 		dev_err(chip->card->dev, "cannot grab irq\n");
 		snd_echo_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	chip->card->sync_irq = chip->irq;

@@ -64,12 +64,12 @@ static inline void __handle_sysrq(int key, bool check_mask)
 
 static inline int register_sysrq_key(int key, const struct sysrq_key_op *op)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int unregister_sysrq_key(int key, const struct sysrq_key_op *op)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int sysrq_mask(void)

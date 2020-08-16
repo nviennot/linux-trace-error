@@ -244,11 +244,11 @@ EXPORT_SYMBOL_GPL(sunrpc_cache_update);
 static inline int cache_is_valid(struct cache_head *h)
 {
 	if (!test_bit(CACHE_VALID, &h->flags))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	else {
 		/* entry is valid */
 		if (test_bit(CACHE_NEGATIVE, &h->flags))
-			return -ENOENT;
+			return -ERR(ENOENT);
 		else {
 			/*
 			 * In combination with write barrier in
@@ -272,7 +272,7 @@ static int try_to_negate_entry(struct cache_detail *detail, struct cache_head *h
 		cache_make_negative(detail, h);
 		cache_fresh_locked(h, seconds_since_boot()+CACHE_NEW_EXPIRY,
 				   detail);
-		rv = -ENOENT;
+		rv = -ERR(ENOENT);
 	}
 	spin_unlock(&detail->hash_lock);
 	cache_fresh_unlocked(h, detail);
@@ -308,7 +308,7 @@ int cache_check(struct cache_detail *detail,
 
 	if (rqstp == NULL) {
 		if (rv == -EAGAIN)
-			rv = -ENOENT;
+			rv = -ERR(ENOENT);
 	} else if (rv == -EAGAIN ||
 		   (h->expiry_time != 0 && age > refresh_age/2)) {
 		dprintk("RPC:       Want update, refage=%lld, age=%lld\n",
@@ -331,7 +331,7 @@ int cache_check(struct cache_detail *detail,
 			 */
 			rv = cache_is_valid(h);
 			if (rv == -EAGAIN)
-				rv = -ETIMEDOUT;
+				rv = -ERR(ETIMEDOUT);
 		}
 	}
 	if (rv)
@@ -803,7 +803,7 @@ static int cache_request(struct cache_detail *detail,
 
 	detail->cache_request(detail, crq->item, &bp, &len);
 	if (len < 0)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	return PAGE_SIZE - len;
 }
 
@@ -849,7 +849,7 @@ static ssize_t cache_read(struct file *filp, char __user *buf, size_t count,
 	}
 
 	if (rp->offset == 0 && !test_bit(CACHE_PENDING, &rq->item->flags)) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		spin_lock(&queue_lock);
 		list_move(&rp->q.list, &rq->q.list);
 		spin_unlock(&queue_lock);
@@ -895,7 +895,7 @@ static ssize_t cache_do_downcall(char *kaddr, const char __user *buf,
 	ssize_t ret;
 
 	if (count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(kaddr, buf, count))
 		return -EFAULT;
 	kaddr[count] = '\0';
@@ -909,7 +909,7 @@ static ssize_t cache_slow_downcall(const char __user *buf,
 				   size_t count, struct cache_detail *cd)
 {
 	static char write_buf[8192]; /* protected by queue_io_mutex */
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (count >= sizeof(write_buf))
 		goto out;
@@ -951,7 +951,7 @@ static ssize_t cache_write(struct file *filp, const char __user *buf,
 {
 	struct address_space *mapping = filp->f_mapping;
 	struct inode *inode = file_inode(filp);
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 
 	if (!cd->cache_parse)
 		goto out;
@@ -1001,7 +1001,7 @@ static int cache_ioctl(struct inode *ino, struct file *filp,
 	struct cache_queue *cq;
 
 	if (cmd != FIONREAD || !rp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&queue_lock);
 
@@ -1027,7 +1027,7 @@ static int cache_open(struct inode *inode, struct file *filp,
 	struct cache_reader *rp = NULL;
 
 	if (!cd || !try_module_get(cd->owner))
-		return -EACCES;
+		return -ERR(EACCES);
 	nonseekable_open(inode, filp);
 	if (filp->f_mode & FMODE_READ) {
 		rp = kmalloc(sizeof(*rp), GFP_KERNEL);
@@ -1212,16 +1212,16 @@ static int cache_pipe_upcall(struct cache_detail *detail, struct cache_head *h)
 
 	if (test_bit(CACHE_CLEANED, &h->flags))
 		/* Too late to make an upcall */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!buf)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	crq = kmalloc(sizeof (*crq), GFP_KERNEL);
 	if (!crq) {
 		kfree(buf);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	crq->q.reader = 0;
@@ -1235,7 +1235,7 @@ static int cache_pipe_upcall(struct cache_detail *detail, struct cache_head *h)
 		trace_cache_entry_upcall(detail, h);
 	} else
 		/* Lost a race, no longer PENDING, so don't enqueue */
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	spin_unlock(&queue_lock);
 	wake_up(&queue_wait);
 	if (ret == -EAGAIN) {
@@ -1259,7 +1259,7 @@ int sunrpc_cache_pipe_upcall_timeout(struct cache_detail *detail,
 	if (!cache_listeners_exist(detail)) {
 		warn_no_listener(detail);
 		trace_cache_entry_no_listener(detail, h);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return sunrpc_cache_pipe_upcall(detail, h);
 }
@@ -1460,7 +1460,7 @@ static int content_open(struct inode *inode, struct file *file,
 	int err;
 
 	if (!cd || !try_module_get(cd->owner))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	err = seq_open(file, &cache_content_op);
 	if (err) {
@@ -1485,7 +1485,7 @@ static int open_flush(struct inode *inode, struct file *file,
 			struct cache_detail *cd)
 {
 	if (!cd || !try_module_get(cd->owner))
-		return -EACCES;
+		return -ERR(EACCES);
 	return nonseekable_open(inode, file);
 }
 
@@ -1517,13 +1517,13 @@ static ssize_t write_flush(struct file *file, const char __user *buf,
 	time64_t now;
 
 	if (*ppos || count > sizeof(tbuf)-1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(tbuf, buf, count))
 		return -EFAULT;
 	tbuf[count] = 0;
 	simple_strtoul(tbuf, &ep, 0);
 	if (*ep && *ep != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Note that while we check that 'buf' holds a valid number,
 	 * we always ignore the value and just flush everything.
 	 * Making use of the number leads to races.

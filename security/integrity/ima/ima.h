@@ -374,7 +374,7 @@ static inline bool ima_hook_supports_modsig(enum ima_hooks func)
 static inline int ima_read_modsig(enum ima_hooks func, const void *buf,
 				  loff_t buf_len, struct modsig **modsig)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void ima_collect_modsig(struct modsig *modsig, const void *buf,
@@ -386,13 +386,13 @@ static inline int ima_get_modsig_digest(const struct modsig *modsig,
 					enum hash_algo *algo, const u8 **digest,
 					u32 *digest_size)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int ima_get_raw_modsig(const struct modsig *modsig,
 				     const void **data, u32 *data_len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void ima_free_modsig(struct modsig *modsig)
@@ -411,13 +411,13 @@ static inline void ima_free_modsig(struct modsig *modsig)
 static inline int security_filter_rule_init(u32 field, u32 op, char *rulestr,
 					    void **lsmrule)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int security_filter_rule_match(u32 secid, u32 field, u32 op,
 					     void *lsmrule)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_IMA_LSM_RULES */
 

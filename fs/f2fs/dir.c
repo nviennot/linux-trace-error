@@ -90,7 +90,7 @@ int f2fs_init_casefolded_name(const struct inode *dir,
 			kfree(fname->cf_name.name);
 			fname->cf_name.name = NULL;
 			if (f2fs_has_strict_mode(sbi))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			/* fall back to treating name as opaque byte sequence */
 		}
 	}
@@ -677,11 +677,11 @@ int f2fs_add_regular_entry(struct inode *dir, const struct f2fs_filename *fname,
 start:
 	if (time_to_inject(F2FS_I_SB(dir), FAULT_DIR_DEPTH)) {
 		f2fs_show_injection_info(F2FS_I_SB(dir), FAULT_DIR_DEPTH);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (unlikely(current_depth == MAX_DIR_HASH_DEPTH))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* Increase the depth, if required */
 	if (level == current_depth)
@@ -751,7 +751,7 @@ fail:
 int f2fs_add_dentry(struct inode *dir, const struct f2fs_filename *fname,
 		    struct inode *inode, nid_t ino, umode_t mode)
 {
-	int err = -EAGAIN;
+	int err = -ERR(EAGAIN);
 
 	if (f2fs_has_inline_dentry(dir))
 		err = f2fs_add_inline_entry(dir, fname, inode, ino, mode);
@@ -791,7 +791,7 @@ int f2fs_do_add_link(struct inode *dir, const struct qstr *name,
 	}
 	if (de) {
 		f2fs_put_page(page, 0);
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	} else if (IS_ERR(page)) {
 		err = PTR_ERR(page);
 	} else {
@@ -1046,7 +1046,7 @@ static int f2fs_readdir(struct file *file, struct dir_context *ctx)
 
 		/* allow readdir() to be interrupted */
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto out_free;
 		}
 		cond_resched();
@@ -1090,7 +1090,7 @@ out:
 static int f2fs_dir_open(struct inode *inode, struct file *filp)
 {
 	if (IS_ENCRYPTED(inode))
-		return fscrypt_get_encryption_info(inode) ? -EACCES : 0;
+		return fscrypt_get_encryption_info(inode) ? -ERR(EACCES) : 0;
 	return 0;
 }
 
@@ -1140,7 +1140,7 @@ static int f2fs_d_compare(const struct dentry *dentry, unsigned int len,
 		return res;
 
 	if (f2fs_has_strict_mode(sbi))
-		return -EINVAL;
+		return -ERR(EINVAL);
 fallback:
 	if (len != name->len)
 		return 1;
@@ -1165,7 +1165,7 @@ static int f2fs_d_hash(const struct dentry *dentry, struct qstr *str)
 	len = utf8_casefold(um, str, norm, PATH_MAX);
 	if (len < 0) {
 		if (f2fs_has_strict_mode(sbi))
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		goto out;
 	}
 	str->hash = full_name_hash(dentry, norm, len);

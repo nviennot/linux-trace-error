@@ -19,7 +19,7 @@ static int lowpan_ctx_flag_active_set(void *data, u64 val)
 	struct lowpan_iphc_ctx *ctx = data;
 
 	if (val != 0 && val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val)
 		set_bit(LOWPAN_IPHC_CTX_FLAG_ACTIVE, &ctx->flags);
@@ -44,7 +44,7 @@ static int lowpan_ctx_flag_c_set(void *data, u64 val)
 	struct lowpan_iphc_ctx *ctx = data;
 
 	if (val != 0 && val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val)
 		set_bit(LOWPAN_IPHC_CTX_FLAG_COMPRESSION, &ctx->flags);
@@ -70,7 +70,7 @@ static int lowpan_ctx_plen_set(void *data, u64 val)
 		container_of(ctx, struct lowpan_iphc_ctx_table, table[ctx->id]);
 
 	if (val > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&t->lock);
 	ctx->plen = val;
@@ -142,7 +142,7 @@ static ssize_t lowpan_ctx_pfx_write(struct file *fp,
 		   &addr[0], &addr[1], &addr[2], &addr[3], &addr[4],
 		   &addr[5], &addr[6], &addr[7]);
 	if (n != LOWPAN_DEBUGFS_CTX_PFX_NUM_ARGS) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto out;
 	}
 

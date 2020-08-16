@@ -57,7 +57,7 @@ static int to_atmarpd(enum atmarp_ctrl_type type, int itf, __be32 ip)
 
 	pr_debug("(%d)\n", type);
 	if (!atmarpd)
-		return -EUNATCH;
+		return -ERR(EUNATCH);
 	skb = alloc_skb(sizeof(struct atmarp_ctrl), GFP_ATOMIC);
 	if (!skb)
 		return -ENOMEM;
@@ -292,10 +292,10 @@ static int clip_constructor(struct net_device *dev, struct neighbour *neigh)
 	struct atmarp_entry *entry = neighbour_priv(neigh);
 
 	if (neigh->tbl->family != AF_INET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (neigh->type != RTN_UNICAST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	neigh->nud_state = NUD_NONE;
 	neigh->ops = &clip_neigh_ops;
@@ -319,7 +319,7 @@ static int clip_constructor(struct net_device *dev, struct neighbour *neigh)
 static int clip_encap(struct atm_vcc *vcc, int mode)
 {
 	if (!CLIP_VCC(vcc))
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	CLIP_VCC(vcc)->encap = mode;
 	return 0;
@@ -417,7 +417,7 @@ static int clip_mkip(struct atm_vcc *vcc, int timeout)
 	struct clip_vcc *clip_vcc;
 
 	if (!vcc->push)
-		return -EBADFD;
+		return -ERR(EBADFD);
 	clip_vcc = kmalloc(sizeof(struct clip_vcc), GFP_KERNEL);
 	if (!clip_vcc)
 		return -ENOMEM;
@@ -451,7 +451,7 @@ static int clip_setentry(struct atm_vcc *vcc, __be32 ip)
 
 	if (vcc->push != clip_push) {
 		pr_warn("non-CLIP VCC\n");
-		return -EBADF;
+		return -ERR(EBADF);
 	}
 	clip_vcc = CLIP_VCC(vcc);
 	if (!ip) {
@@ -516,7 +516,7 @@ static int clip_create(int number)
 	if (number != -1) {
 		for (dev = clip_devs; dev; dev = PRIV(dev)->next)
 			if (PRIV(dev)->number == number)
-				return -EEXIST;
+				return -ERR(EEXIST);
 	} else {
 		number = 0;
 		for (dev = clip_devs; dev; dev = PRIV(dev)->next)
@@ -635,7 +635,7 @@ static int atm_init_atmarp(struct atm_vcc *vcc)
 	rtnl_lock();
 	if (atmarpd) {
 		rtnl_unlock();
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 	}
 
 	mod_timer(&idle_timer, jiffies + CLIP_CHECK_INTERVAL * HZ);
@@ -665,10 +665,10 @@ static int clip_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case ATMARP_SETENTRY:
 	case ATMARP_ENCAP:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	switch (cmd) {

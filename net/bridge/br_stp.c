@@ -554,7 +554,7 @@ int br_set_hello_time(struct net_bridge *br, unsigned long val)
 	unsigned long t = clock_t_to_jiffies(val);
 
 	if (t < BR_MIN_HELLO_TIME || t > BR_MAX_HELLO_TIME)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	spin_lock_bh(&br->lock);
 	br->bridge_hello_time = t;
@@ -569,7 +569,7 @@ int br_set_max_age(struct net_bridge *br, unsigned long val)
 	unsigned long t = clock_t_to_jiffies(val);
 
 	if (t < BR_MIN_MAX_AGE || t > BR_MAX_MAX_AGE)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	spin_lock_bh(&br->lock);
 	br->bridge_max_age = t;
@@ -664,7 +664,7 @@ void __br_set_forward_delay(struct net_bridge *br, unsigned long t)
 int br_set_forward_delay(struct net_bridge *br, unsigned long val)
 {
 	unsigned long t = clock_t_to_jiffies(val);
-	int err = -ERANGE;
+	int err = -ERR(ERANGE);
 
 	spin_lock_bh(&br->lock);
 	if (br->stp_enabled != BR_NO_STP &&

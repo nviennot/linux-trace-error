@@ -104,9 +104,9 @@ int fscrypt_crypt_block(const struct inode *inode, fscrypt_direction_t rw,
 	int res = 0;
 
 	if (WARN_ON_ONCE(len <= 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN_ON_ONCE(len % FS_CRYPTO_BLOCK_SIZE != 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fscrypt_generate_iv(&iv, lblk_num, ci);
 
@@ -177,10 +177,10 @@ struct page *fscrypt_encrypt_pagecache_blocks(struct page *page,
 	int err;
 
 	if (WARN_ON_ONCE(!PageLocked(page)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (WARN_ON_ONCE(len <= 0 || !IS_ALIGNED(len | offs, blocksize)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ciphertext_page = fscrypt_alloc_bounce_page(gfp_flags);
 	if (!ciphertext_page)
@@ -256,10 +256,10 @@ int fscrypt_decrypt_pagecache_blocks(struct page *page, unsigned int len,
 	int err;
 
 	if (WARN_ON_ONCE(!PageLocked(page)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON_ONCE(len <= 0 || !IS_ALIGNED(len | offs, blocksize)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = offs; i < offs + len; i += blocksize, lblk_num++) {
 		err = fscrypt_crypt_block(inode, FS_DECRYPT, lblk_num, page,

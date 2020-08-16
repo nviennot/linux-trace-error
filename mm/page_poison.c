@@ -13,7 +13,7 @@ static bool want_page_poisoning __read_mostly;
 static int __init early_page_poison_param(char *buf)
 {
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return strtobool(buf, &want_page_poisoning);
 }
 early_param("page_poison", early_page_poison_param);

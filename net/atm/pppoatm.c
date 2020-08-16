@@ -376,7 +376,7 @@ static int pppoatm_devppp_ioctl(struct ppp_channel *chan, unsigned int cmd,
 		return get_user(chan_to_pvcc(chan)->flags, (int __user *) arg)
 		    ? -EFAULT : 0;
 	}
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 static const struct ppp_channel_ops pppoatm_ops = {
@@ -398,7 +398,7 @@ static int pppoatm_assign_vcc(struct atm_vcc *atmvcc, void __user *arg)
 		return -EFAULT;
 	if (be.encaps != PPPOATM_ENCAPS_AUTODETECT &&
 	    be.encaps != PPPOATM_ENCAPS_VC && be.encaps != PPPOATM_ENCAPS_LLC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pvcc = kzalloc(sizeof(*pvcc), GFP_KERNEL);
 	if (pvcc == NULL)
 		return -ENOMEM;
@@ -446,18 +446,18 @@ static int pppoatm_ioctl(struct socket *sock, unsigned int cmd,
 	void __user *argp = (void __user *)arg;
 
 	if (cmd != ATM_SETBACKEND && atmvcc->push != pppoatm_push)
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	switch (cmd) {
 	case ATM_SETBACKEND: {
 		atm_backend_t b;
 		if (get_user(b, (atm_backend_t __user *) argp))
 			return -EFAULT;
 		if (b != ATM_BACKEND_PPP)
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (sock->state != SS_CONNECTED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return pppoatm_assign_vcc(atmvcc, argp);
 		}
 	case PPPIOCGCHAN:
@@ -467,7 +467,7 @@ static int pppoatm_ioctl(struct socket *sock, unsigned int cmd,
 		return put_user(ppp_unit_number(&atmvcc_to_pvcc(atmvcc)->
 		    chan), (int __user *) argp) ? -EFAULT : 0;
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static struct atm_ioctl pppoatm_ioctl_ops = {

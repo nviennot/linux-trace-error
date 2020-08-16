@@ -149,7 +149,7 @@ int vboxsf_stat(struct vboxsf_sbi *sbi, struct shfl_string *path,
 		return err;
 
 	if (params.result != SHFL_FILE_EXISTS)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (info)
 		*info = params.info;
@@ -182,7 +182,7 @@ int vboxsf_inode_revalidate(struct dentry *dentry)
 	int err;
 
 	if (!dentry || !d_really_is_positive(dentry))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode = d_inode(dentry);
 	prev_mtime = inode->i_mtime;
@@ -257,7 +257,7 @@ int vboxsf_setattr(struct dentry *dentry, struct iattr *iattr)
 
 	err = vboxsf_create_at_dentry(dentry, &params);
 	if (err || params.result != SHFL_FILE_EXISTS)
-		return err ? err : -ENOENT;
+		return err ? err : -ERR(ENOENT);
 
 #define mode_set(r) ((iattr->ia_mode & (S_##r)) ? SHFL_UNIX_##r : 0)
 
@@ -377,7 +377,7 @@ struct shfl_string *vboxsf_path_from_dentry(struct vboxsf_sbi *sbi,
 			if (nb < 0) {
 				__putname(shfl_path);
 				__putname(buf);
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 			}
 			path += nb;
 			path_len -= nb;
@@ -386,7 +386,7 @@ struct shfl_string *vboxsf_path_from_dentry(struct vboxsf_sbi *sbi,
 			if (nb < 0) {
 				__putname(shfl_path);
 				__putname(buf);
-				return ERR_PTR(-ENAMETOOLONG);
+				return ERR_PTR(-ERR(ENAMETOOLONG));
 			}
 			out += nb;
 			out_len -= nb;
@@ -398,7 +398,7 @@ struct shfl_string *vboxsf_path_from_dentry(struct vboxsf_sbi *sbi,
 	} else {
 		if ((SHFLSTRING_HEADER_SIZE + path_len + 1) > PATH_MAX) {
 			__putname(buf);
-			return ERR_PTR(-ENAMETOOLONG);
+			return ERR_PTR(-ERR(ENAMETOOLONG));
 		}
 		/*
 		 * dentry_path stores the name at the end of buf, but the
@@ -437,7 +437,7 @@ int vboxsf_nlscpy(struct vboxsf_sbi *sbi, char *name, size_t name_bound_len,
 
 		nb = utf8_to_utf32(in, in_bound_len, &uni);
 		if (nb < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		in += nb;
 		in_bound_len -= nb;

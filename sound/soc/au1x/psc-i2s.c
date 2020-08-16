@@ -55,7 +55,7 @@ static int au1xpsc_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 	unsigned long ct;
 	int ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 
 	ct = pscdata->cfg;
 
@@ -123,7 +123,7 @@ static int au1xpsc_i2s_hw_params(struct snd_pcm_substream *substream,
 		cfgbits = __raw_readl(I2S_CFG(pscdata));
 		if ((PSC_I2SCFG_GET_LEN(cfgbits) != params->msbits) ||
 		    (params_rate(params) != pscdata->rate))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		/* set sample bitdepth */
 		pscdata->cfg &= ~(0x1f << 4);
@@ -173,7 +173,7 @@ psc_err:
 	__raw_writel(0, I2S_CFG(pscdata));
 	__raw_writel(PSC_CTRL_SUSPEND, PSC_CTRL(pscdata));
 	wmb(); /* drain writebuffer */
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int au1xpsc_i2s_start(struct au1xpsc_audio_data *pscdata, int stype)
@@ -204,7 +204,7 @@ static int au1xpsc_i2s_start(struct au1xpsc_audio_data *pscdata, int stype)
 	if (!tmo) {
 		__raw_writel(I2SPCR_STOP(stype), I2S_PCR(pscdata));
 		wmb(); /* drain writebuffer */
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	}
 out:
 	return ret;
@@ -249,7 +249,7 @@ static int au1xpsc_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		ret = au1xpsc_i2s_stop(pscdata, stype);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -306,12 +306,12 @@ static int au1xpsc_i2s_drvprobe(struct platform_device *pdev)
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	wd->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	wd->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
 	/* preserve PSC clock source set up by platform (dev.platform_data

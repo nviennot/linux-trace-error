@@ -47,7 +47,7 @@ static inline int posix_xattr_acl(const char *xattrname)
 
 static inline int evm_set_key(void *key, size_t keylen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #ifdef CONFIG_INTEGRITY

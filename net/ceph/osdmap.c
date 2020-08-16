@@ -60,7 +60,7 @@ static int crush_decode_uniform_bucket(void **p, void *end,
 	b->item_weight = ceph_decode_32(p);
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int crush_decode_list_bucket(void **p, void *end,
@@ -81,7 +81,7 @@ static int crush_decode_list_bucket(void **p, void *end,
 	}
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int crush_decode_tree_bucket(void **p, void *end,
@@ -98,7 +98,7 @@ static int crush_decode_tree_bucket(void **p, void *end,
 		b->node_weights[j] = ceph_decode_32(p);
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int crush_decode_straw_bucket(void **p, void *end,
@@ -119,7 +119,7 @@ static int crush_decode_straw_bucket(void **p, void *end,
 	}
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int crush_decode_straw2_bucket(void **p, void *end,
@@ -135,7 +135,7 @@ static int crush_decode_straw2_bucket(void **p, void *end,
 		b->item_weights[j] = ceph_decode_32(p);
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct crush_name_node {
@@ -190,14 +190,14 @@ static int decode_crush_names(void **p, void *end, struct rb_root *root)
 
 		if (!__insert_crush_name(root, cn)) {
 			free_crush_name(cn);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 void clear_crush_names(struct rb_root *root)
@@ -283,7 +283,7 @@ static u32 *decode_array_32_alloc(void **p, void *end, u32 *plen)
 	return a;
 
 e_inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 fail:
 	kfree(a);
 	return ERR_PTR(ret);
@@ -328,7 +328,7 @@ static int decode_choose_arg(void **p, void *end, struct crush_choose_arg *arg)
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int decode_choose_args(void **p, void *end, struct crush_map *c)
@@ -380,7 +380,7 @@ static int decode_choose_args(void **p, void *end, struct crush_map *c)
 	return 0;
 
 e_inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 fail:
 	free_choose_arg_map(arg_map);
 	return ret;
@@ -654,7 +654,7 @@ fail:
 	return ERR_PTR(err);
 
 bad:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	goto fail;
 }
 
@@ -749,7 +749,7 @@ int ceph_pg_poolid_by_name(struct ceph_osdmap *map, const char *name)
 		if (pi->name && strcmp(pi->name, name) == 0)
 			return pi->id;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL(ceph_pg_poolid_by_name);
 
@@ -780,11 +780,11 @@ static int decode_pool(void **p, void *end, struct ceph_pg_pool_info *pi)
 	cv = ceph_decode_8(p); /* compat version */
 	if (ev < 5) {
 		pr_warn("got v %d < 5 cv %d of ceph_pg_pool\n", ev, cv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (cv > 9) {
 		pr_warn("got v %d cv %d > 9 of ceph_pg_pool\n", ev, cv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	len = ceph_decode_32(p);
 	ceph_decode_need(p, end, len, bad);
@@ -930,7 +930,7 @@ static int decode_pool(void **p, void *end, struct ceph_pg_pool_info *pi)
 	return 0;
 
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int decode_pool_names(void **p, void *end, struct ceph_osdmap *map)
@@ -961,7 +961,7 @@ static int decode_pool_names(void **p, void *end, struct ceph_osdmap *map)
 	return 0;
 
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -1149,7 +1149,7 @@ static int get_osdmap_client_data_v(void **p, void *end,
 			pr_warn("got v %d cv %d > %d of %s ceph_osdmap\n",
 				struct_v, struct_compat,
 				OSDMAP_WRAPPER_COMPAT_VER, prefix);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*p += 4; /* ignore wrapper struct_len */
 
@@ -1159,7 +1159,7 @@ static int get_osdmap_client_data_v(void **p, void *end,
 			pr_warn("got v %d cv %d > %d of %s ceph_osdmap client data\n",
 				struct_v, struct_compat,
 				OSDMAP_CLIENT_DATA_COMPAT_VER, prefix);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*p += 4; /* ignore client data struct_len */
 	} else {
@@ -1170,7 +1170,7 @@ static int get_osdmap_client_data_v(void **p, void *end,
 		if (version < 6) {
 			pr_warn("got v %d < 6 of %s ceph_osdmap\n",
 				version, prefix);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* old osdmap enconding */
@@ -1181,7 +1181,7 @@ static int get_osdmap_client_data_v(void **p, void *end,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __decode_pools(void **p, void *end, struct ceph_osdmap *map,
@@ -1208,7 +1208,7 @@ static int __decode_pools(void **p, void *end, struct ceph_osdmap *map,
 
 			if (!__insert_pg_pool(&map->pg_pools, pi)) {
 				kfree(pi);
-				return -EEXIST;
+				return -ERR(EEXIST);
 			}
 		}
 
@@ -1220,7 +1220,7 @@ static int __decode_pools(void **p, void *end, struct ceph_osdmap *map,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int decode_pools(void **p, void *end, struct ceph_osdmap *map)
@@ -1274,7 +1274,7 @@ static int decode_pg_mapping(void **p, void *end, struct rb_root *mapping_root,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct ceph_pg_mapping *__decode_pg_temp(void **p, void *end,
@@ -1287,7 +1287,7 @@ static struct ceph_pg_mapping *__decode_pg_temp(void **p, void *end,
 	if (len == 0 && incremental)
 		return NULL;	/* new_pg_temp: [] to remove */
 	if (len > (SIZE_MAX - sizeof(*pg)) / sizeof(u32))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ceph_decode_need(p, end, len * sizeof(u32), e_inval);
 	pg = alloc_pg_mapping(len * sizeof(u32));
@@ -1301,7 +1301,7 @@ static struct ceph_pg_mapping *__decode_pg_temp(void **p, void *end,
 	return pg;
 
 e_inval:
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static int decode_pg_temp(void **p, void *end, struct ceph_osdmap *map)
@@ -1334,7 +1334,7 @@ static struct ceph_pg_mapping *__decode_primary_temp(void **p, void *end,
 	return pg;
 
 e_inval:
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static int decode_primary_temp(void **p, void *end, struct ceph_osdmap *map)
@@ -1410,7 +1410,7 @@ static int decode_primary_affinity(void **p, void *end,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int decode_new_primary_affinity(void **p, void *end,
@@ -1436,7 +1436,7 @@ static int decode_new_primary_affinity(void **p, void *end,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct ceph_pg_mapping *__decode_pg_upmap(void **p, void *end,
@@ -1470,7 +1470,7 @@ static struct ceph_pg_mapping *__decode_pg_upmap_items(void **p, void *end,
 
 	ceph_decode_32_safe(p, end, len, e_inval);
 	if (len > (SIZE_MAX - sizeof(*pg)) / (2 * sizeof(u32)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ceph_decode_need(p, end, 2 * len * sizeof(u32), e_inval);
 	pg = alloc_pg_mapping(2 * len * sizeof(u32));
@@ -1486,7 +1486,7 @@ static struct ceph_pg_mapping *__decode_pg_upmap_items(void **p, void *end,
 	return pg;
 
 e_inval:
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static int decode_pg_upmap_items(void **p, void *end, struct ceph_osdmap *map)
@@ -1641,7 +1641,7 @@ static int osdmap_decode(void **p, void *end, struct ceph_osdmap *map)
 	return 0;
 
 e_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 bad:
 	pr_err("corrupt full osdmap (%d) epoch %d off %d (%p of %p-%p)\n",
 	       err, epoch, (int)(*p - start), *p, start, end);
@@ -1785,7 +1785,7 @@ static int decode_new_up_state_weight(void **p, void *end, u8 struct_v,
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -1934,7 +1934,7 @@ struct ceph_osdmap *osdmap_apply_incremental(void **p, void *end,
 	return map;
 
 e_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 bad:
 	pr_err("corrupt inc osdmap (%d) epoch %d off %d (%p of %p-%p)\n",
 	       err, epoch, (int)(*p - start), *p, start, end);
@@ -2262,7 +2262,7 @@ int ceph_object_locator_to_pg(struct ceph_osdmap *osdmap,
 
 	pi = ceph_pg_pool_by_id(osdmap, oloc->pool);
 	if (!pi)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	__ceph_object_locator_to_pg(pi, oid, oloc, raw_pgid);
 	return 0;
@@ -2762,16 +2762,16 @@ int ceph_parse_crush_location(char *crush_location, struct rb_root *locs)
 	while ((type_name = strsep(&crush_location, "|"))) {
 		colon = strchr(type_name, ':');
 		if (!colon)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		type_name_len = colon - type_name;
 		if (type_name_len == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		name = colon + 1;
 		name_len = strlen(name);
 		if (name_len == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		loc = alloc_crush_loc(type_name_len, name_len);
 		if (!loc)
@@ -2787,7 +2787,7 @@ int ceph_parse_crush_location(char *crush_location, struct rb_root *locs)
 
 		if (!__insert_crush_loc(locs, loc)) {
 			free_crush_loc(loc);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 
 		dout("%s type_name '%s' name '%s'\n", __func__,

@@ -63,7 +63,7 @@ static int affs_symlink_readpage(struct file *file, struct page *page)
 fail:
 	SetPageError(page);
 	unlock_page(page);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 const struct address_space_operations affs_symlink_aops = {

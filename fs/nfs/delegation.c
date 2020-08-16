@@ -200,7 +200,7 @@ again:
 		if (!err)
 			err = nfs_delegation_claim_locks(state, stateid);
 		if (!err && read_seqcount_retry(&sp->so_reclaim_seqcount, seq))
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 		mutex_unlock(&sp->so_delegreturn_mutex);
 		put_nfs_open_context(ctx);
 		if (err != 0)
@@ -1003,7 +1003,7 @@ int nfs_async_inode_return_delegation(struct inode *inode,
 	return 0;
 out_enoent:
 	rcu_read_unlock();
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static struct inode *
@@ -1029,11 +1029,11 @@ nfs_delegation_find_inode_server(struct nfs_server *server,
 				iput(freeme);
 				rcu_read_lock();
 			}
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 		}
 		spin_unlock(&delegation->lock);
 	}
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 /**
@@ -1059,7 +1059,7 @@ struct inode *nfs_delegation_find_inode(struct nfs_client *clp,
 		}
 	}
 	rcu_read_unlock();
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static void nfs_delegation_mark_reclaim_server(struct nfs_server *server)
@@ -1258,7 +1258,7 @@ restart_locked:
 		}
 		nfs_inode_mark_test_expired_delegation(server,inode);
 		iput(inode);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	rcu_read_unlock();
 	return 0;

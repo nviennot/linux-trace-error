@@ -629,7 +629,7 @@ int rsnd_src_probe(struct rsnd_priv *priv)
 
 	nr = of_get_child_count(node);
 	if (!nr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto rsnd_src_probe_done;
 	}
 
@@ -654,7 +654,7 @@ int rsnd_src_probe(struct rsnd_priv *priv)
 
 		src->irq = irq_of_parse_and_map(np, 0);
 		if (!src->irq) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			of_node_put(np);
 			goto rsnd_src_probe_done;
 		}

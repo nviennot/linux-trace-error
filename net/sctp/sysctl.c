@@ -376,7 +376,7 @@ static int proc_sctp_do_hmac_alg(struct ctl_table *ctl, int write,
 			changed = true;
 		}
 		if (!changed)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -402,7 +402,7 @@ static int proc_sctp_do_rto_min(struct ctl_table *ctl, int write,
 	ret = proc_dointvec(&tbl, write, buffer, lenp, ppos);
 	if (write && ret == 0) {
 		if (new_value > max || new_value < min)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		net->sctp.rto_min = new_value;
 	}
@@ -430,7 +430,7 @@ static int proc_sctp_do_rto_max(struct ctl_table *ctl, int write,
 	ret = proc_dointvec(&tbl, write, buffer, lenp, ppos);
 	if (write && ret == 0) {
 		if (new_value > max || new_value < min)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		net->sctp.rto_max = new_value;
 	}

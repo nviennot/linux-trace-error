@@ -173,11 +173,11 @@ static int aes_cmac(struct crypto_shash *tfm, const u8 k[16], const u8 *m,
 	int err;
 
 	if (len > CMAC_MSG_MAX)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	if (!tfm) {
 		BT_ERR("tfm %p", tfm);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Swap key and message from LSB to MSB */
@@ -519,7 +519,7 @@ int smp_generate_rpa(struct hci_dev *hdev, const u8 irk[16], bdaddr_t *rpa)
 	int err;
 
 	if (!chan || !chan->data)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	get_random_bytes(&rpa->b[3], 3);
 
@@ -542,7 +542,7 @@ int smp_generate_oob(struct hci_dev *hdev, u8 hash[16], u8 rand[16])
 	int err;
 
 	if (!chan || !chan->data)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	smp = chan->data;
 
@@ -900,7 +900,7 @@ static int tk_request(struct l2cap_conn *conn, u8 remote_oob, u8 auth,
 	 * can only recover the just-works case.
 	 */
 	if (test_bit(SMP_FLAG_SC, &smp->flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Not Just Works/Confirm results in MITM Authentication */
 	if (smp->method != JUST_CFM) {
@@ -1601,7 +1601,7 @@ static int sc_user_reply(struct smp_chan *smp, u16 mgmt_op, __le32 passkey)
 			smp_op = 0;
 
 		if (sc_passkey_round(smp, smp_op))
-			return -EIO;
+			return -ERR(EIO);
 
 		return 0;
 	}
@@ -1629,15 +1629,15 @@ int smp_user_confirm_reply(struct hci_conn *hcon, u16 mgmt_op, __le32 passkey)
 	BT_DBG("");
 
 	if (!conn)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	chan = conn->smp;
 	if (!chan)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	l2cap_chan_lock(chan);
 	if (!chan->data) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto unlock;
 	}
 
@@ -1665,7 +1665,7 @@ int smp_user_confirm_reply(struct hci_conn *hcon, u16 mgmt_op, __le32 passkey)
 		goto unlock;
 	default:
 		smp_failure(conn, SMP_PASSKEY_ENTRY_FAILED);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto unlock;
 	}
 
@@ -2932,7 +2932,7 @@ static int smp_sig_channel(struct l2cap_chan *chan, struct sk_buff *skb)
 	int err = 0;
 
 	if (skb->len < 1)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	if (!hci_dev_test_flag(hcon->hdev, HCI_LE_ENABLED)) {
 		reason = SMP_PAIRING_NOTSUPP;
@@ -2963,7 +2963,7 @@ static int smp_sig_channel(struct l2cap_chan *chan, struct sk_buff *skb)
 
 	case SMP_CMD_PAIRING_FAIL:
 		smp_failure(conn, 0);
-		err = -EPERM;
+		err = -ERR(EPERM);
 		break;
 
 	case SMP_CMD_PAIRING_RSP:
@@ -3379,7 +3379,7 @@ static ssize_t force_bredr_smp_write(struct file *file,
 		return err;
 
 	if (enable == hci_dev_test_flag(hdev, HCI_FORCE_BREDR_SMP))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	if (enable) {
 		struct l2cap_chan *chan;
@@ -3502,7 +3502,7 @@ static int __init test_debug_key(struct crypto_kpp *tfm_ecdh)
 		return err;
 
 	if (crypto_memneq(pk, debug_pk, 64))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3522,7 +3522,7 @@ static int __init test_ah(void)
 		return err;
 
 	if (crypto_memneq(res, exp, 3))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3552,7 +3552,7 @@ static int __init test_c1(void)
 		return err;
 
 	if (crypto_memneq(res, exp, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3577,7 +3577,7 @@ static int __init test_s1(void)
 		return err;
 
 	if (crypto_memneq(res, exp, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3609,7 +3609,7 @@ static int __init test_f4(struct crypto_shash *tfm_cmac)
 		return err;
 
 	if (crypto_memneq(res, exp, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3643,10 +3643,10 @@ static int __init test_f5(struct crypto_shash *tfm_cmac)
 		return err;
 
 	if (crypto_memneq(mackey, exp_mackey, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (crypto_memneq(ltk, exp_ltk, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3679,7 +3679,7 @@ static int __init test_f6(struct crypto_shash *tfm_cmac)
 		return err;
 
 	if (crypto_memneq(res, exp, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3711,7 +3711,7 @@ static int __init test_g2(struct crypto_shash *tfm_cmac)
 		return err;
 
 	if (val != exp_val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3733,7 +3733,7 @@ static int __init test_h6(struct crypto_shash *tfm_cmac)
 		return err;
 
 	if (crypto_memneq(res, exp, 16))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

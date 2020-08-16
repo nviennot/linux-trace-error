@@ -933,7 +933,7 @@ static int st_hp_volume_offset_put(struct snd_kcontrol *ctl,
 	int changed;
 
 	if (value->value.enumerated.item[0] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	offset = offsets[value->value.enumerated.item[0]];
 	mutex_lock(&chip->mutex);
 	changed = offset != data->hp_gain_offset;
@@ -1349,7 +1349,7 @@ int get_xonar_pcm179x_model(struct oxygen *chip,
 		chip->model.mixer_init = xonar_xense_mixer_init;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

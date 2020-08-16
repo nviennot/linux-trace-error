@@ -37,13 +37,13 @@ static struct buffer_head *omfs_scan_list(struct inode *dir, u64 block,
 {
 	struct buffer_head *bh;
 	struct omfs_inode *oi;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	*prev_block = ~0;
 
 	while (block != ~0) {
 		bh = omfs_bread(dir->i_sb, block);
 		if (!bh) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto err;
 		}
 
@@ -73,7 +73,7 @@ static struct buffer_head *omfs_find_entry(struct inode *dir,
 
 	bh = omfs_get_bucket(dir, name, namelen, &ofs);
 	if (!bh)
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	block = be64_to_cpu(*((__be64 *) &bh->b_data[ofs]));
 	brelse(bh);
@@ -243,7 +243,7 @@ static int omfs_remove(struct inode *dir, struct dentry *dentry)
 
 	if (S_ISDIR(inode->i_mode) &&
 	    !omfs_dir_is_empty(inode))
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	ret = omfs_delete_entry(dentry);
 	if (ret)
@@ -297,7 +297,7 @@ static struct dentry *omfs_lookup(struct inode *dir, struct dentry *dentry,
 	struct inode *inode = NULL;
 
 	if (dentry->d_name.len > OMFS_NAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	bh = omfs_find_entry(dir, dentry->d_name.name, dentry->d_name.len);
 	if (!IS_ERR(bh)) {
@@ -378,7 +378,7 @@ static int omfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (new_inode) {
 		/* overwriting existing file/dir */
@@ -413,7 +413,7 @@ static int omfs_readdir(struct file *file, struct dir_context *ctx)
 	int nbuckets;
 
 	if (ctx->pos >> 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctx->pos < 1 << 20) {
 		if (!dir_emit_dots(file, ctx))
@@ -429,7 +429,7 @@ static int omfs_readdir(struct file *file, struct dir_context *ctx)
 
 	bh = omfs_bread(dir->i_sb, dir->i_ino);
 	if (!bh)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p = (__be64 *)(bh->b_data + OMFS_DIR_START) + hchain;
 

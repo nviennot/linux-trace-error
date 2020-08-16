@@ -21,7 +21,7 @@ int amdtp_tscm_set_parameters(struct amdtp_stream *s, unsigned int rate)
 	unsigned int data_channels;
 
 	if (amdtp_stream_running(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	data_channels = p->pcm_channels;
 

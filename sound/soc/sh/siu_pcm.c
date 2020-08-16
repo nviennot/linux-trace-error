@@ -42,7 +42,7 @@ static int siu_pcm_stmwrite_stop(struct siu_port *port_info)
 	u32 stfifo;
 
 	if (!siu_stream->rw_flg)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* output FIFO disable */
 	stfifo = siu_read32(base + SIU_STFIFO);
@@ -61,7 +61,7 @@ static int siu_pcm_stmwrite_start(struct siu_port *port_info)
 	struct siu_stream *siu_stream = &port_info->playback;
 
 	if (siu_stream->rw_flg)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Current period in buffer */
 	port_info->playback.cur_period = 0;
@@ -243,9 +243,9 @@ static int siu_pcm_stmread_start(struct siu_port *port_info)
 	struct siu_stream *siu_stream = &port_info->capture;
 
 	if (siu_stream->xfer_cnt > 0x1000000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (siu_stream->rw_flg)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Current period in buffer */
 	siu_stream->cur_period = 0;
@@ -267,7 +267,7 @@ static int siu_pcm_stmread_stop(struct siu_port *port_info)
 	u32 stfifo;
 
 	if (!siu_stream->rw_flg)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* input FIFO disable */
 	stfifo = siu_read32(base + SIU_STFIFO);
@@ -325,7 +325,7 @@ static int siu_pcm_open(struct snd_soc_component *component,
 	siu_stream->chan = dma_request_channel(mask, filter, param);
 	if (!siu_stream->chan) {
 		dev_err(dev, "DMA channel allocation failed!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	siu_stream->substream = ss;
@@ -384,12 +384,12 @@ static int siu_pcm_prepare(struct snd_soc_component *component,
 		dev_err(dev, "%s() - buffer=%d not multiple of period=%d\n",
 		       __func__, siu_stream->buf_bytes,
 		       siu_stream->period_bytes);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	xfer_cnt = bytes_to_frames(rt, siu_stream->period_bytes);
 	if (!xfer_cnt || xfer_cnt > 0x1000000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	siu_stream->format = rt->format;
 	siu_stream->xfer_cnt = xfer_cnt;
@@ -436,7 +436,7 @@ static int siu_pcm_trigger(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(dev, "%s() unsupported cmd=%d\n", __func__, cmd);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -496,7 +496,7 @@ static int siu_pcm_new(struct snd_soc_component *component,
 
 	/* pdev->id selects between SIUA and SIUB */
 	if (pdev->id < 0 || pdev->id >= SIU_PORT_NUM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info->port_id = pdev->id;
 

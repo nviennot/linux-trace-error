@@ -323,7 +323,7 @@ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&sta->lock);
@@ -336,7 +336,7 @@ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
 	tid_tx = rcu_dereference_protected_tid_tx(sta, tid);
 	if (!tid_tx) {
 		spin_unlock_bh(&sta->lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -346,7 +346,7 @@ int ___ieee80211_stop_tx_ba_session(struct sta_info *sta, u16 tid,
 	if (test_bit(HT_AGG_STATE_STOPPING, &tid_tx->state)) {
 		spin_unlock_bh(&sta->lock);
 		if (reason != AGG_STOP_DESTROY_STA)
-			return -EALREADY;
+			return -ERR(EALREADY);
 		params.action = IEEE80211_AMPDU_TX_STOP_FLUSH_CONT;
 		ret = drv_ampdu_action(local, sta->sdata, &params);
 		WARN_ON_ONCE(ret);
@@ -591,22 +591,22 @@ int ieee80211_start_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid,
 
 	if (WARN(sta->reserved_tid == tid,
 		 "Requested to start BA session on reserved tid=%d", tid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!pubsta->ht_cap.ht_supported &&
 	    sta->sdata->vif.bss_conf.chandef.chan->band != NL80211_BAND_6GHZ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON_ONCE(!local->ops->ampdu_action))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((tid >= IEEE80211_NUM_TIDS) ||
 	    !ieee80211_hw_check(&local->hw, AMPDU_AGGREGATION) ||
 	    ieee80211_hw_check(&local->hw, TX_AMPDU_SETUP_IN_HW))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(tid >= IEEE80211_FIRST_TSPEC_TSID))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ht_dbg(sdata, "Open BA session requested for %pM tid %u\n",
 	       pubsta->addr, tid);
@@ -616,13 +616,13 @@ int ieee80211_start_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid,
 	    sdata->vif.type != NL80211_IFTYPE_AP_VLAN &&
 	    sdata->vif.type != NL80211_IFTYPE_AP &&
 	    sdata->vif.type != NL80211_IFTYPE_ADHOC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (test_sta_flag(sta, WLAN_STA_BLOCK_BA)) {
 		ht_dbg(sdata,
 		       "BA sessions blocked - Denying BA session request %pM tid %d\n",
 		       sta->sta.addr, tid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -642,14 +642,14 @@ int ieee80211_start_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid,
 		ht_dbg(sdata,
 		       "BA request denied - IBSS STA %pM does not advertise HT support\n",
 		       pubsta->addr);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&sta->lock);
 
 	/* we have tried too many times, receiver does not want A-MPDU */
 	if (sta->ampdu_mlme.addba_req_num[tid] > HT_AGG_MAX_RETRIES) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto err_unlock_sta;
 	}
 
@@ -664,7 +664,7 @@ int ieee80211_start_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid,
 		ht_dbg(sdata,
 		       "BA request denied - %d failed requests on %pM tid %u\n",
 		       sta->ampdu_mlme.addba_req_num[tid], sta->sta.addr, tid);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto err_unlock_sta;
 	}
 
@@ -674,7 +674,7 @@ int ieee80211_start_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid,
 		ht_dbg(sdata,
 		       "BA request denied - session is not idle on %pM tid %u\n",
 		       sta->sta.addr, tid);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto err_unlock_sta;
 	}
 
@@ -853,16 +853,16 @@ int ieee80211_stop_tx_ba_session(struct ieee80211_sta *pubsta, u16 tid)
 	trace_api_stop_tx_ba_session(pubsta, tid);
 
 	if (!local->ops->ampdu_action)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tid >= IEEE80211_NUM_TIDS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&sta->lock);
 	tid_tx = rcu_dereference_protected_tid_tx(sta, tid);
 
 	if (!tid_tx) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto unlock;
 	}
 

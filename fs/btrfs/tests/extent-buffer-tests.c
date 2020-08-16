@@ -87,14 +87,14 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (key.objectid != 0 || key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    key.offset != 0) {
 		test_err("invalid key at slot 0");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	item = btrfs_item_nr(0);
 	if (btrfs_item_size(eb, item) != strlen(split1)) {
 		test_err("invalid len in the first split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -104,7 +104,7 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 		test_err(
 "data in the buffer doesn't match what it should in the first split have='%.*s' want '%s'",
 			 (int)strlen(split1), buf, split1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -112,14 +112,14 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (key.objectid != 0 || key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    key.offset != 3) {
 		test_err("invalid key at slot 1");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	item = btrfs_item_nr(1);
 	if (btrfs_item_size(eb, item) != strlen(split2)) {
 		test_err("invalid len in the second split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -128,7 +128,7 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (memcmp(buf, split2, strlen(split2))) {
 		test_err(
 	"data in the buffer doesn't match what it should in the second split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -144,14 +144,14 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (key.objectid != 0 || key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    key.offset != 0) {
 		test_err("invalid key at slot 0");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	item = btrfs_item_nr(0);
 	if (btrfs_item_size(eb, item) != strlen(split3)) {
 		test_err("invalid len in the first split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -160,7 +160,7 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (memcmp(buf, split3, strlen(split3))) {
 		test_err(
 	"data in the buffer doesn't match what it should in the third split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -168,14 +168,14 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (key.objectid != 0 || key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    key.offset != 1) {
 		test_err("invalid key at slot 1");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	item = btrfs_item_nr(1);
 	if (btrfs_item_size(eb, item) != strlen(split4)) {
 		test_err("invalid len in the second split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -184,7 +184,7 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (memcmp(buf, split4, strlen(split4))) {
 		test_err(
 	"data in the buffer doesn't match what it should in the fourth split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -192,14 +192,14 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (key.objectid != 0 || key.type != BTRFS_EXTENT_CSUM_KEY ||
 	    key.offset != 3) {
 		test_err("invalid key at slot 2");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	item = btrfs_item_nr(2);
 	if (btrfs_item_size(eb, item) != strlen(split2)) {
 		test_err("invalid len in the second split");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -208,7 +208,7 @@ static int test_btrfs_split_item(u32 sectorsize, u32 nodesize)
 	if (memcmp(buf, split2, strlen(split2))) {
 		test_err(
 	"data in the buffer doesn't match what it should in the last chunk");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 out:

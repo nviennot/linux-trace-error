@@ -66,26 +66,26 @@ static int nft_reject_inet_init(const struct nft_ctx *ctx,
 	int icmp_code;
 
 	if (tb[NFTA_REJECT_TYPE] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->type = ntohl(nla_get_be32(tb[NFTA_REJECT_TYPE]));
 	switch (priv->type) {
 	case NFT_REJECT_ICMP_UNREACH:
 	case NFT_REJECT_ICMPX_UNREACH:
 		if (tb[NFTA_REJECT_ICMP_CODE] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		icmp_code = nla_get_u8(tb[NFTA_REJECT_ICMP_CODE]);
 		if (priv->type == NFT_REJECT_ICMPX_UNREACH &&
 		    icmp_code > NFT_REJECT_ICMPX_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		priv->icmp_code = icmp_code;
 		break;
 	case NFT_REJECT_TCP_RST:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

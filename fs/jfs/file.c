@@ -37,7 +37,7 @@ int jfs_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 	rc |= jfs_commit_inode(inode, 1);
 	inode_unlock(inode);
 
-	return rc ? -EIO : 0;
+	return rc ? -ERR(EIO) : 0;
 }
 
 static int jfs_open(struct inode *inode, struct file *file)

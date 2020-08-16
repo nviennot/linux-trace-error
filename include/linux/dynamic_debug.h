@@ -197,7 +197,7 @@ static inline int ddebug_dyndbg_module_param_cb(char *param, char *val,
 			"CONFIG_DYNAMIC_DEBUG builds\n");
 		return 0; /* allow and ignore */
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #define dynamic_pr_debug(fmt, ...)					\

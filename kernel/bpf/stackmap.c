@@ -93,24 +93,24 @@ static struct bpf_map *stack_map_alloc(union bpf_attr *attr)
 	int err;
 
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	if (attr->map_flags & ~STACK_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* check sanity of attributes */
 	if (attr->max_entries == 0 || attr->key_size != 4 ||
 	    value_size < 8 || value_size % 8)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	BUILD_BUG_ON(sizeof(struct bpf_stack_build_id) % sizeof(u64));
 	if (attr->map_flags & BPF_F_STACK_BUILD_ID) {
 		if (value_size % sizeof(struct bpf_stack_build_id) ||
 		    value_size / sizeof(struct bpf_stack_build_id)
 		    > sysctl_perf_event_max_stack)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	} else if (value_size / 8 > sysctl_perf_event_max_stack)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* hash table size must be power of 2 */
 	n_buckets = roundup_pow_of_two(attr->max_entries);
@@ -166,11 +166,11 @@ static inline int stack_map_parse_build_id(void *page_addr,
 
 	/* check for overflow */
 	if (note_start < page_addr || note_start + note_size < note_start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* only supports note that fits in the first page */
 	if (note_start + note_size > page_addr + PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (note_offs + sizeof(Elf32_Nhdr) < note_size) {
 		Elf32_Nhdr *nhdr = (Elf32_Nhdr *)(note_start + note_offs);
@@ -193,7 +193,7 @@ static inline int stack_map_parse_build_id(void *page_addr,
 			break;
 		note_offs = new_offs;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Parse build ID from 32-bit ELF */
@@ -207,7 +207,7 @@ static int stack_map_get_build_id_32(void *page_addr,
 	/* only supports phdr that fits in one page */
 	if (ehdr->e_phnum >
 	    (PAGE_SIZE - sizeof(Elf32_Ehdr)) / sizeof(Elf32_Phdr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	phdr = (Elf32_Phdr *)(page_addr + sizeof(Elf32_Ehdr));
 
@@ -216,7 +216,7 @@ static int stack_map_get_build_id_32(void *page_addr,
 			return stack_map_parse_build_id(page_addr, build_id,
 					page_addr + phdr[i].p_offset,
 					phdr[i].p_filesz);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Parse build ID from 64-bit ELF */
@@ -230,7 +230,7 @@ static int stack_map_get_build_id_64(void *page_addr,
 	/* only supports phdr that fits in one page */
 	if (ehdr->e_phnum >
 	    (PAGE_SIZE - sizeof(Elf64_Ehdr)) / sizeof(Elf64_Phdr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	phdr = (Elf64_Phdr *)(page_addr + sizeof(Elf64_Ehdr));
 
@@ -239,7 +239,7 @@ static int stack_map_get_build_id_64(void *page_addr,
 			return stack_map_parse_build_id(page_addr, build_id,
 					page_addr + phdr[i].p_offset,
 					phdr[i].p_filesz);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Parse build ID of ELF file mapped to vma */
@@ -253,13 +253,13 @@ static int stack_map_get_build_id(struct vm_area_struct *vma,
 
 	/* only works for page backed storage  */
 	if (!vma->vm_file)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = find_get_page(vma->vm_file->f_mapping, 0);
 	if (!page)
 		return -EFAULT;	/* page not mapped */
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	page_addr = kmap_atomic(page);
 	ehdr = (Elf32_Ehdr *)page_addr;
 
@@ -518,7 +518,7 @@ const struct bpf_func_proto bpf_get_stack_proto = {
 /* Called from eBPF program */
 static void *stack_map_lookup_elem(struct bpf_map *map, void *key)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 /* Called from syscall */
@@ -529,11 +529,11 @@ int bpf_stackmap_copy(struct bpf_map *map, void *key, void *value)
 	u32 id = *(u32 *)key, trace_len;
 
 	if (unlikely(id >= smap->n_buckets))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	bucket = xchg(&smap->buckets[id], NULL);
 	if (!bucket)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	trace_len = bucket->nr * stack_map_data_size(map);
 	memcpy(value, bucket->data, trace_len);
@@ -568,7 +568,7 @@ static int stack_map_get_next_key(struct bpf_map *map, void *key,
 		id++;
 
 	if (id >= smap->n_buckets)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*(u32 *)next_key = id;
 	return 0;
@@ -577,7 +577,7 @@ static int stack_map_get_next_key(struct bpf_map *map, void *key,
 static int stack_map_update_elem(struct bpf_map *map, void *key, void *value,
 				 u64 map_flags)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Called from syscall or from eBPF program */
@@ -588,14 +588,14 @@ static int stack_map_delete_elem(struct bpf_map *map, void *key)
 	u32 id = *(u32 *)key;
 
 	if (unlikely(id >= smap->n_buckets))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	old_bucket = xchg(&smap->buckets[id], NULL);
 	if (old_bucket) {
 		pcpu_freelist_push(&smap->freelist, &old_bucket->fnode);
 		return 0;
 	} else {
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 }
 

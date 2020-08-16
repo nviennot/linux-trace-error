@@ -365,7 +365,7 @@ static int rx51_soc_probe(struct platform_device *pdev)
 	int err;
 
 	if (!machine_is_nokia_rx51() && !of_machine_is_compatible("nokia,omap3-n900"))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	card->dev = &pdev->dev;
 
@@ -375,7 +375,7 @@ static int rx51_soc_probe(struct platform_device *pdev)
 		dai_node = of_parse_phandle(np, "nokia,cpu-dai", 0);
 		if (!dai_node) {
 			dev_err(&pdev->dev, "McBSP node is not provided\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		rx51_dai[0].cpus->dai_name = NULL;
 		rx51_dai[0].platforms->name = NULL;
@@ -385,7 +385,7 @@ static int rx51_soc_probe(struct platform_device *pdev)
 		dai_node = of_parse_phandle(np, "nokia,audio-codec", 0);
 		if (!dai_node) {
 			dev_err(&pdev->dev, "Codec node is not provided\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		rx51_dai[0].codecs->name = NULL;
 		rx51_dai[0].codecs->of_node = dai_node;
@@ -393,7 +393,7 @@ static int rx51_soc_probe(struct platform_device *pdev)
 		dai_node = of_parse_phandle(np, "nokia,audio-codec", 1);
 		if (!dai_node) {
 			dev_err(&pdev->dev, "Auxiliary Codec node is not provided\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		rx51_aux_dev[0].dlc.name = NULL;
 		rx51_aux_dev[0].dlc.of_node = dai_node;
@@ -403,7 +403,7 @@ static int rx51_soc_probe(struct platform_device *pdev)
 		dai_node = of_parse_phandle(np, "nokia,headphone-amplifier", 0);
 		if (!dai_node) {
 			dev_err(&pdev->dev, "Headphone amplifier node is not provided\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		rx51_aux_dev[1].dlc.name = NULL;
 		rx51_aux_dev[1].dlc.of_node = dai_node;

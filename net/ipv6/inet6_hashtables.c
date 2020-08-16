@@ -259,7 +259,7 @@ static int __inet6_check_established(struct inet_timewait_death_row *death_row,
 
 not_unique:
 	spin_unlock(lock);
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 }
 
 static u32 inet6_sk_port_offset(const struct sock *sk)

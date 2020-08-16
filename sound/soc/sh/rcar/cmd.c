@@ -39,7 +39,7 @@ static int rsnd_cmd_init(struct rsnd_mod *mod,
 		return 0;
 
 	if (ARRAY_SIZE(path) < rsnd_mod_id(mod) + 1)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (mix) {
 		struct rsnd_dai *rdai;
@@ -80,7 +80,7 @@ static int rsnd_cmd_init(struct rsnd_mod *mod,
 		};
 
 		if (unlikely(!src))
-			return -EIO;
+			return -ERR(EIO);
 
 		data = path[rsnd_mod_id(src)] |
 			cmd_case[rsnd_mod_id(src)] << 16;

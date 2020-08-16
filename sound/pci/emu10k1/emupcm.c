@@ -776,7 +776,7 @@ static int snd_emu10k1_playback_trigger(struct snd_pcm_substream *substream,
 		snd_emu10k1_playback_stop_voice(emu, epcm->extra);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&emu->reg_lock);
@@ -846,7 +846,7 @@ static int snd_emu10k1_capture_trigger(struct snd_pcm_substream *substream,
 		}
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	spin_unlock(&emu->reg_lock);
 	return result;
@@ -928,7 +928,7 @@ static int snd_emu10k1_efx_playback_trigger(struct snd_pcm_substream *substream,
 		snd_emu10k1_playback_stop_voice(emu, epcm->extra);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&emu->reg_lock);
@@ -1508,7 +1508,7 @@ static int snd_emu10k1_pcm_efx_voices_mask_put(struct snd_kcontrol *kcontrol, st
 			break;
 	
 	if (idx >= nefxb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irq(&emu->reg_lock);
 	change = (nval[0] != emu->efx_voices_mask[0]) ||
@@ -1689,7 +1689,7 @@ static int snd_emu10k1_fx8010_playback_trigger(struct snd_pcm_substream *substre
 		pcm->tram_shift = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
       __err:
@@ -1741,7 +1741,7 @@ static int snd_emu10k1_fx8010_playback_open(struct snd_pcm_substream *substream)
 	spin_lock_irq(&emu->reg_lock);
 	if (pcm->valid == 0) {
 		spin_unlock_irq(&emu->reg_lock);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	pcm->opened = 1;
 	spin_unlock_irq(&emu->reg_lock);

@@ -107,7 +107,7 @@ static int lzo_uncompress(struct squashfs_sb_info *msblk, void *strm,
 	return res;
 
 failed:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 const struct squashfs_decompressor squashfs_lzo_comp_ops = {

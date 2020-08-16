@@ -44,7 +44,7 @@ int imx_pcm_dma_init(struct platform_device *pdev, size_t size);
 #else
 static inline int imx_pcm_dma_init(struct platform_device *pdev, size_t size)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 
@@ -56,7 +56,7 @@ void imx_pcm_fiq_exit(struct platform_device *pdev);
 static inline int imx_pcm_fiq_init(struct platform_device *pdev,
 		struct imx_pcm_fiq_params *params)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void imx_pcm_fiq_exit(struct platform_device *pdev)

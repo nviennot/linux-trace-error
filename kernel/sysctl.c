@@ -219,7 +219,7 @@ static int bpf_stats_handler(struct ctl_table *table, int write,
 	};
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&bpf_stats_enabled_mutex);
 	val = saved_val;
@@ -408,7 +408,7 @@ static int strtoul_lenient(const char *cp, char **endp, unsigned int base,
 	cp = _parse_integer_fixup_radix(cp, &base);
 	rv = _parse_integer(cp, base, &result);
 	if ((rv & KSTRTOX_OVERFLOW) || (result != (unsigned long)result))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	cp += rv;
 
@@ -444,7 +444,7 @@ static int proc_get_long(char **buf, size_t *size,
 	char *p, tmp[TMPBUFLEN];
 
 	if (!*size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = *size;
 	if (len > TMPBUFLEN - 1)
@@ -460,10 +460,10 @@ static int proc_get_long(char **buf, size_t *size,
 	} else
 		*neg = false;
 	if (!isdigit(*p))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strtoul_lenient(p, &p, 0, val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = p - tmp;
 
@@ -471,10 +471,10 @@ static int proc_get_long(char **buf, size_t *size,
 	 * invalid integers (e.g. 1234...a) or two integers instead of one
 	 * (e.g. 123...1). So lets not allow such large numbers. */
 	if (len == TMPBUFLEN - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (len < *size && perm_tr_len && !memchr(perm_tr, *p, perm_tr_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tr && (len < *size))
 		*tr = *p;
@@ -530,11 +530,11 @@ static int do_proc_dointvec_conv(bool *negp, unsigned long *lvalp,
 	if (write) {
 		if (*negp) {
 			if (*lvalp > (unsigned long) INT_MAX + 1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			*valp = -*lvalp;
 		} else {
 			if (*lvalp > (unsigned long) INT_MAX)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			*valp = *lvalp;
 		}
 	} else {
@@ -556,7 +556,7 @@ static int do_proc_douintvec_conv(unsigned long *lvalp,
 {
 	if (write) {
 		if (*lvalp > UINT_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*valp = *lvalp;
 	} else {
 		unsigned int val = *valp;
@@ -614,12 +614,12 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 			if (err)
 				break;
 			if (conv(&neg, &lval, i, 1, data)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 		} else {
 			if (conv(&neg, &lval, i, 0, data)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 			if (!first)
@@ -633,7 +633,7 @@ static int __do_proc_dointvec(void *tbl_data, struct ctl_table *table,
 	if (write && !err && left)
 		left -= proc_skip_spaces(&p);
 	if (write && first)
-		return err ? : -EINVAL;
+		return err ? : -ERR(EINVAL);
 	*lenp -= left;
 out:
 	*ppos += *lenp;
@@ -675,7 +675,7 @@ static int do_proc_douintvec_w(unsigned int *tbl_data,
 
 	left -= proc_skip_spaces(&p);
 	if (!left) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free;
 	}
 
@@ -683,12 +683,12 @@ static int do_proc_douintvec_w(unsigned int *tbl_data,
 			     proc_wspace_sep,
 			     sizeof(proc_wspace_sep), NULL);
 	if (err || neg) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free;
 	}
 
 	if (conv(&lval, tbl_data, 1, data)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free;
 	}
 
@@ -697,7 +697,7 @@ static int do_proc_douintvec_w(unsigned int *tbl_data,
 
 out_free:
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 
@@ -721,7 +721,7 @@ static int do_proc_douintvec_r(unsigned int *tbl_data, void *buffer,
 	left = *lenp;
 
 	if (conv(&lval, tbl_data, 0, data)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -762,7 +762,7 @@ static int __do_proc_douintvec(void *tbl_data, struct ctl_table *table,
 	 */
 	if (vleft != 1) {
 		*lenp = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!conv)
@@ -857,7 +857,7 @@ static int proc_taint(struct ctl_table *table, int write,
 	int err;
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	t = *table;
 	t.data = &tmptaint;
@@ -874,7 +874,7 @@ static int proc_taint(struct ctl_table *table, int write,
 		 * before setting the requested taint flags.
 		 */
 		if (panic_on_taint_nousertaint && (tmptaint & panic_on_taint))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Poor man's atomic or. Not worth adding a primitive
@@ -893,7 +893,7 @@ static int proc_dointvec_minmax_sysadmin(struct ctl_table *table, int write,
 				void *buffer, size_t *lenp, loff_t *ppos)
 {
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 }
@@ -932,7 +932,7 @@ static int do_proc_dointvec_minmax_conv(bool *negp, unsigned long *lvalp,
 	if (write) {
 		if ((param->min && *param->min > tmp) ||
 		    (param->max && *param->max < tmp))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*valp = tmp;
 	}
 
@@ -997,7 +997,7 @@ static int do_proc_douintvec_minmax_conv(unsigned long *lvalp,
 	if (write) {
 		if ((param->min && *param->min > tmp) ||
 		    (param->max && *param->max < tmp))
-			return -ERANGE;
+			return -ERR(ERANGE);
 
 		*valp = tmp;
 	}
@@ -1044,7 +1044,7 @@ static int do_proc_dopipe_max_size_conv(unsigned long *lvalp,
 
 		val = round_pipe_size(*lvalp);
 		if (val == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		*valp = val;
 	} else {
@@ -1164,7 +1164,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table,
 				continue;
 			val = convmul * val / convdiv;
 			if ((min && val < *min) || (max && val > *max)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 			*i = val;
@@ -1181,7 +1181,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table,
 	if (write && !err)
 		left -= proc_skip_spaces(&p);
 	if (write && first)
-		return err ? : -EINVAL;
+		return err ? : -ERR(EINVAL);
 	*lenp -= left;
 out:
 	*ppos += *lenp;
@@ -1397,7 +1397,7 @@ static int proc_do_cad_pid(struct ctl_table *table, int write, void *buffer,
 
 	new_pid = find_get_pid(tmp);
 	if (!new_pid)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	put_pid(xchg(&cad_pid, new_pid));
 	return 0;
@@ -1472,7 +1472,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 			if (err)
 				break;
 			if (val_a >= bitmap_len || neg) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 
@@ -1499,7 +1499,7 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 					break;
 				if (val_b >= bitmap_len || neg ||
 				    val_a > val_b) {
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					break;
 				}
 				if (left) {
@@ -1556,67 +1556,67 @@ int proc_do_large_bitmap(struct ctl_table *table, int write,
 int proc_dostring(struct ctl_table *table, int write,
 		  void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_dointvec(struct ctl_table *table, int write,
 		  void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_douintvec(struct ctl_table *table, int write,
 		  void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_dointvec_minmax(struct ctl_table *table, int write,
 		    void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_douintvec_minmax(struct ctl_table *table, int write,
 			  void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_dointvec_jiffies(struct ctl_table *table, int write,
 		    void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_dointvec_userhz_jiffies(struct ctl_table *table, int write,
 		    void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_dointvec_ms_jiffies(struct ctl_table *table, int write,
 			     void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_doulongvec_minmax(struct ctl_table *table, int write,
 		    void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_doulongvec_ms_jiffies_minmax(struct ctl_table *table, int write,
 				      void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 int proc_do_large_bitmap(struct ctl_table *table, int write,
 			 void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_PROC_SYSCTL */
@@ -1637,7 +1637,7 @@ int proc_do_static_key(struct ctl_table *table, int write,
 	};
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&static_key_mutex);
 	val = static_key_enabled(key);

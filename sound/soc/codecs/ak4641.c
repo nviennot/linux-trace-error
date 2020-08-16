@@ -96,7 +96,7 @@ static int ak4641_put_deemph(struct snd_kcontrol *kcontrol,
 	int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ak4641->deemph = deemph;
 
@@ -323,7 +323,7 @@ static int ak4641_i2s_hw_params(struct snd_pcm_substream *substream,
 	if (rate)
 		fs = ak4641->sysclk / rate;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set fs */
 	switch (fs) {
@@ -338,7 +338,7 @@ static int ak4641_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Error: unsupported fs=%d\n", fs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AK4641_MODE2, (0x3 << 5), mode2);
@@ -374,7 +374,7 @@ static int ak4641_pcm_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		btif = (0x1 << 5);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, AK4641_BTIF, (0x3 << 5), btif);
@@ -399,7 +399,7 @@ static int ak4641_i2s_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		mode1 = 0x01;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_write(component, AK4641_MODE1, mode1);

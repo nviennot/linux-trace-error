@@ -103,7 +103,7 @@ long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	int err = 0;
 
 	if (cmd != HPI_IOCTL_LINUX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hm = kmalloc(sizeof(*hm), GFP_KERNEL);
 	hr = kzalloc(sizeof(*hr), GFP_KERNEL);
@@ -197,7 +197,7 @@ long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		}
 
 		if (mutex_lock_interruptible(&pa->mutex)) {
-			err = -EINTR;
+			err = -ERR(EINTR);
 			goto out;
 		}
 
@@ -233,7 +233,7 @@ long asihpi_hpi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 							size);
 
 						mutex_unlock(&pa->mutex);
-						err = -EINVAL;
+						err = -ERR(EINVAL);
 						goto out;
 					}
 				}
@@ -355,7 +355,7 @@ int asihpi_adapter_probe(struct pci_dev *pci_dev,
 	if (pci_enable_device(pci_dev) < 0) {
 		dev_err(&pci_dev->dev,
 			"pci_enable_device failed, disabling device\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	pci_set_master(pci_dev);	/* also sets latency timer if < 16 */
@@ -512,7 +512,7 @@ err:
 	}
 
 	HPI_DEBUG_LOG(ERROR, "adapter_probe failed\n");
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 void asihpi_adapter_remove(struct pci_dev *pci_dev)

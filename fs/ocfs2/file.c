@@ -105,7 +105,7 @@ static int ocfs2_file_open(struct inode *inode, struct file *file)
 	if (oi->ip_flags & OCFS2_INODE_DELETED) {
 		spin_unlock(&oi->ip_lock);
 
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		goto leave;
 	}
 
@@ -182,7 +182,7 @@ static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
 			      (unsigned long long)datasync);
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	err = file_write_and_wait_range(file, start, end);
 	if (err)
@@ -202,7 +202,7 @@ static int ocfs2_sync_file(struct file *file, loff_t start, loff_t end,
 	if (err)
 		mlog_errno(err);
 
-	return (err < 0) ? -EIO : 0;
+	return (err < 0) ? -ERR(EIO) : 0;
 }
 
 int ocfs2_should_update_atime(struct inode *inode,
@@ -461,7 +461,7 @@ int ocfs2_truncate_file(struct inode *inode,
 		trace_ocfs2_truncate_file_error(
 			(unsigned long long)le64_to_cpu(fe->i_size),
 			(unsigned long long)new_i_size);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -1212,7 +1212,7 @@ int ocfs2_setattr(struct dentry *dentry, struct iattr *attr)
 		if (status < 0) {
 			if (status != -ENOSPC)
 				mlog_errno(status);
-			status = -ENOSPC;
+			status = -ERR(ENOSPC);
 			goto bail_unlock;
 		}
 	}
@@ -1336,7 +1336,7 @@ int ocfs2_permission(struct inode *inode, int mask)
 	struct ocfs2_lock_holder oh;
 
 	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	had_lock = ocfs2_inode_lock_tracker(inode, NULL, 0, &oh);
 	if (had_lock < 0) {
@@ -1868,7 +1868,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 	unsigned long long max_off = inode->i_sb->s_maxbytes;
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	inode_lock(inode);
 
@@ -1888,7 +1888,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 	}
 
 	if (inode->i_flags & (S_IMMUTABLE|S_APPEND)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_inode_unlock;
 	}
 
@@ -1902,7 +1902,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 		sr->l_start += i_size_read(inode);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_inode_unlock;
 	}
 	sr->l_whence = 0;
@@ -1913,7 +1913,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 	    || sr->l_start > max_off
 	    || (sr->l_start + llen) < 0
 	    || (sr->l_start + llen) > max_off) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_inode_unlock;
 	}
 	size = sr->l_start + sr->l_len;
@@ -1921,7 +1921,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 	if (cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64 ||
 	    cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) {
 		if (sr->l_len <= 0) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_inode_unlock;
 		}
 	}
@@ -1951,7 +1951,7 @@ static int __ocfs2_change_file_space(struct file *file, struct inode *inode,
 					       sr->l_len);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	up_write(&OCFS2_I(inode)->ip_alloc_sem);
 	if (ret) {
@@ -2002,16 +2002,16 @@ int ocfs2_change_file_space(struct file *file, unsigned int cmd,
 
 	if ((cmd == OCFS2_IOC_RESVSP || cmd == OCFS2_IOC_RESVSP64) &&
 	    !ocfs2_writes_unwritten_extents(osb))
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	else if ((cmd == OCFS2_IOC_UNRESVSP || cmd == OCFS2_IOC_UNRESVSP64) &&
 		 !ocfs2_sparse_alloc(osb))
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	ret = mnt_want_write_file(file);
 	if (ret)
@@ -2031,9 +2031,9 @@ static long ocfs2_fallocate(struct file *file, int mode, loff_t offset,
 	int cmd = OCFS2_IOC_RESVSP64;
 
 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!ocfs2_writes_unwritten_extents(osb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (mode & FALLOC_FL_KEEP_SIZE)
 		change_size = 0;
@@ -2125,7 +2125,7 @@ static int ocfs2_inode_lock_for_extent_tree(struct inode *inode,
 			ret = down_read_trylock(&OCFS2_I(inode)->ip_alloc_sem);
 
 		if (!ret) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out_unlock;
 		}
 	}
@@ -2297,14 +2297,14 @@ static ssize_t ocfs2_file_write_iter(struct kiocb *iocb,
 		(unsigned int)from->nr_segs);	/* GRRRRR */
 
 	if (!direct_io && nowait)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (count == 0)
 		return 0;
 
 	if (nowait) {
 		if (!inode_trylock(inode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else
 		inode_lock(inode);
 
@@ -2446,13 +2446,13 @@ static ssize_t ocfs2_file_read_iter(struct kiocb *iocb,
 
 
 	if (!inode) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto bail;
 	}
 
 	if (!direct_io && nowait)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * buffered reads protect themselves in ->readpage().  O_DIRECT reads
@@ -2547,7 +2547,7 @@ static loff_t ocfs2_file_llseek(struct file *file, loff_t offset, int whence)
 			goto out;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2573,11 +2573,11 @@ static loff_t ocfs2_remap_file_range(struct file *file_in, loff_t pos_in,
 	ssize_t ret;
 
 	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!ocfs2_refcount_tree(osb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* Lock both files against IO */
 	ret = ocfs2_reflink_inodes_lock(inode_in, &in_bh, inode_out, &out_bh);
@@ -2585,7 +2585,7 @@ static loff_t ocfs2_remap_file_range(struct file *file_in, loff_t pos_in,
 		return ret;
 
 	/* Check file eligibility and prepare for block sharing. */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if ((OCFS2_I(inode_in)->ip_flags & OCFS2_INODE_SYSTEM_FILE) ||
 	    (OCFS2_I(inode_out)->ip_flags & OCFS2_INODE_SYSTEM_FILE))
 		goto out_unlock;

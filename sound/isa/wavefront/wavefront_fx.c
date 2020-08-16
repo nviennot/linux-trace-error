@@ -66,13 +66,13 @@ wavefront_fx_memset (snd_wavefront_t *dev,
 	if (page < 0 || page > 7) {
 		snd_printk ("FX memset: "
 			"page must be >= 0 and <= 7\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (addr < 0 || addr > 0x7f) {
 		snd_printk ("FX memset: "
 			"addr must be >= 0 and <= 7f\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cnt == 1) {
@@ -105,7 +105,7 @@ wavefront_fx_memset (snd_wavefront_t *dev,
 			snd_printk ("FX memset "
 				    "(0x%x, 0x%x, 0x%lx, %d) incomplete\n",
 				    page, addr, (unsigned long) data, cnt);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -163,9 +163,9 @@ snd_wavefront_fx_ioctl (struct snd_hwdep *sdev, struct file *file,
 
 	card = sdev->card;
 	if (snd_BUG_ON(!card))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (snd_BUG_ON(!card->private_data))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	acard = card->private_data;
 	dev = &acard->wavefront;
@@ -176,20 +176,20 @@ snd_wavefront_fx_ioctl (struct snd_hwdep *sdev, struct file *file,
 	switch (r.request) {
 	case WFFX_MUTE:
 		wavefront_fx_mute (dev, r.data[0]);
-		return -EIO;
+		return -ERR(EIO);
 
 	case WFFX_MEMSET:
 		if (r.data[2] <= 0) {
 			snd_printk ("cannot write "
 				"<= 0 bytes to FX\n");
-			return -EIO;
+			return -ERR(EIO);
 		} else if (r.data[2] == 1) {
 			pd = (unsigned short *) &r.data[3];
 		} else {
 			if (r.data[2] > 256) {
 				snd_printk ("cannot write "
 					    "> 512 bytes to FX\n");
-				return -EIO;
+				return -ERR(EIO);
 			}
 			page_data = memdup_user((unsigned char __user *)
 						r.data[3],
@@ -210,7 +210,7 @@ snd_wavefront_fx_ioctl (struct snd_hwdep *sdev, struct file *file,
 	default:
 		snd_printk ("FX: ioctl %d not yet supported\n",
 			    r.request);
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 	return err;
 }

@@ -148,11 +148,11 @@ tcf_proto_lookup_ops(const char *kind, bool rtnl_held,
 	 */
 	if (ops) {
 		module_put(ops->owner);
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	}
 #endif
 	NL_SET_ERR_MSG(extack, "TC classifier not found");
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 /* Register(unregister) new classifier type */
@@ -160,7 +160,7 @@ tcf_proto_lookup_ops(const char *kind, bool rtnl_held,
 int register_tcf_proto_ops(struct tcf_proto_ops *ops)
 {
 	struct tcf_proto_ops *t;
-	int rc = -EEXIST;
+	int rc = -ERR(EEXIST);
 
 	write_lock(&cls_mod_lock);
 	list_for_each_entry(t, &tcf_proto_base, head)
@@ -180,7 +180,7 @@ static struct workqueue_struct *tc_filter_wq;
 int unregister_tcf_proto_ops(struct tcf_proto_ops *ops)
 {
 	struct tcf_proto_ops *t;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* Wait for outstanding call_rcu()s, if any, from a
 	 * tcf_proto_ops's destroy() handler.
@@ -258,7 +258,7 @@ static struct tcf_proto *tcf_proto_create(const char *kind, u32 protocol,
 
 	tp = kzalloc(sizeof(*tp), GFP_KERNEL);
 	if (!tp)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	tp->ops = tcf_proto_lookup_ops(kind, rtnl_held, extack);
 	if (IS_ERR(tp->ops)) {
@@ -693,7 +693,7 @@ static int tcf_block_offload_cmd(struct tcf_block *block,
 				    tc_block_indr_cleanup);
 	tcf_block_setup(block, &bo);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int tcf_block_offload_bind(struct tcf_block *block, struct Qdisc *q,
@@ -712,7 +712,7 @@ static int tcf_block_offload_bind(struct tcf_block *block, struct Qdisc *q,
 	    !tc_can_offload(dev) &&
 	    tcf_block_offload_in_use(block)) {
 		NL_SET_ERR_MSG(extack, "Bind to offloaded block failed as dev has offload disabled");
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto err_unlock;
 	}
 
@@ -1037,7 +1037,7 @@ static int __tcf_qdisc_find(struct net *net, struct Qdisc **q,
 	dev = dev_get_by_index_rcu(net, ifindex);
 	if (!dev) {
 		rcu_read_unlock();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Find qdisc */
@@ -1048,7 +1048,7 @@ static int __tcf_qdisc_find(struct net *net, struct Qdisc **q,
 		*q = qdisc_lookup_rcu(dev, TC_H_MAJ(*parent));
 		if (!*q) {
 			NL_SET_ERR_MSG(extack, "Parent Qdisc doesn't exists");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout_rcu;
 		}
 	}
@@ -1056,7 +1056,7 @@ static int __tcf_qdisc_find(struct net *net, struct Qdisc **q,
 	*q = qdisc_refcount_inc_nz(*q);
 	if (!*q) {
 		NL_SET_ERR_MSG(extack, "Parent Qdisc doesn't exists");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout_rcu;
 	}
 
@@ -1064,13 +1064,13 @@ static int __tcf_qdisc_find(struct net *net, struct Qdisc **q,
 	cops = (*q)->ops->cl_ops;
 	if (!cops) {
 		NL_SET_ERR_MSG(extack, "Qdisc not classful");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout_qdisc;
 	}
 
 	if (!cops->tcf_block) {
 		NL_SET_ERR_MSG(extack, "Class doesn't support blocks");
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto errout_qdisc;
 	}
 
@@ -1108,7 +1108,7 @@ static int __tcf_qdisc_cl_find(struct Qdisc *q, u32 parent, unsigned long *cl,
 		*cl = cops->find(q, parent);
 		if (*cl == 0) {
 			NL_SET_ERR_MSG(extack, "Specified class doesn't exist");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -1126,18 +1126,18 @@ static struct tcf_block *__tcf_block_find(struct net *net, struct Qdisc *q,
 		block = tcf_block_refcnt_get(net, block_index);
 		if (!block) {
 			NL_SET_ERR_MSG(extack, "Block of given index was not found");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 	} else {
 		const struct Qdisc_class_ops *cops = q->ops->cl_ops;
 
 		block = cops->tcf_block(q, cl, extack);
 		if (!block)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		if (tcf_block_shared(block)) {
 			NL_SET_ERR_MSG(extack, "This filter block is shared. Please use the block index to manipulate the filters");
-			return ERR_PTR(-EOPNOTSUPP);
+			return ERR_PTR(-ERR(EOPNOTSUPP));
 		}
 
 		/* Always take reference to block in order to support execution
@@ -1420,7 +1420,7 @@ tcf_block_playback_offloads(struct tcf_block *block, flow_setup_cb_t *cb,
 				if (err && add)
 					goto err_playback_remove;
 			} else if (add && offload_in_use) {
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 				NL_SET_ERR_MSG(extack, "Filter HW offload failed - classifier without re-offloading support");
 				goto err_playback_remove;
 			}
@@ -1512,7 +1512,7 @@ static int tcf_block_setup(struct tcf_block *block,
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 
 	return err;
@@ -1650,7 +1650,7 @@ static int tcf_chain_tp_insert(struct tcf_chain *chain,
 			       struct tcf_proto *tp)
 {
 	if (chain->flushing)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (*chain_info->pprev == chain->filter_chain)
 		tcf_chain0_head_change(chain, tp);
@@ -1697,7 +1697,7 @@ static struct tcf_proto *tcf_chain_tp_insert_unique(struct tcf_chain *chain,
 	if (tcf_proto_exists_destroying(chain, tp_new)) {
 		mutex_unlock(&chain->filter_chain_lock);
 		tcf_proto_destroy(tp_new, rtnl_held, false, NULL);
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	}
 
 	tp = tcf_chain_tp_find(chain, &chain_info,
@@ -1774,7 +1774,7 @@ static struct tcf_proto *tcf_chain_tp_find(struct tcf_chain *chain,
 			if (tp->prio == prio) {
 				if (prio_allocate ||
 				    (tp->protocol != protocol && protocol))
-					return ERR_PTR(-EINVAL);
+					return ERR_PTR(-ERR(EINVAL));
 			} else {
 				tp = NULL;
 			}
@@ -1857,13 +1857,13 @@ static int tfilter_notify(struct net *net, struct sk_buff *oskb,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tcf_fill_node(net, skb, tp, block, q, parent, fh, portid,
 			  n->nlmsg_seq, n->nlmsg_flags, event,
 			  false, rtnl_held) <= 0) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unicast)
@@ -1889,14 +1889,14 @@ static int tfilter_del_notify(struct net *net, struct sk_buff *oskb,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tcf_fill_node(net, skb, tp, block, q, parent, fh, portid,
 			  n->nlmsg_seq, n->nlmsg_flags, RTM_DELTFILTER,
 			  false, rtnl_held) <= 0) {
 		NL_SET_ERR_MSG(extack, "Failed to build del event notification");
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = tp->ops->delete(tp, fh, last, rtnl_held, extack);
@@ -1962,7 +1962,7 @@ static int tc_new_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	bool rtnl_held = false;
 
 	if (!netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 replay:
 	tp_created = 0;
@@ -1990,7 +1990,7 @@ replay:
 			prio_allocate = true;
 		} else {
 			NL_SET_ERR_MSG(extack, "Invalid filter command with priority of zero");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -2002,7 +2002,7 @@ replay:
 
 	if (tcf_proto_check_kind(tca[TCA_KIND], name)) {
 		NL_SET_ERR_MSG(extack, "Specified TC filter name too long");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2032,7 +2032,7 @@ replay:
 	chain_index = tca[TCA_CHAIN] ? nla_get_u32(tca[TCA_CHAIN]) : 0;
 	if (chain_index > TC_ACT_EXT_VAL_MASK) {
 		NL_SET_ERR_MSG(extack, "Specified chain index exceeds upper limit");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 	chain = tcf_chain_get(block, chain_index, true);
@@ -2055,7 +2055,7 @@ replay:
 		struct tcf_proto *tp_new = NULL;
 
 		if (chain->flushing) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto errout_locked;
 		}
 
@@ -2063,13 +2063,13 @@ replay:
 
 		if (tca[TCA_KIND] == NULL || !protocol) {
 			NL_SET_ERR_MSG(extack, "Filter kind and protocol must be specified");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout_locked;
 		}
 
 		if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 			NL_SET_ERR_MSG(extack, "Need both RTM_NEWTFILTER and NLM_F_CREATE to create a new filter");
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto errout_locked;
 		}
 
@@ -2098,7 +2098,7 @@ replay:
 
 	if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], tp->ops->kind)) {
 		NL_SET_ERR_MSG(extack, "Specified filter kind does not match existing one");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2107,19 +2107,19 @@ replay:
 	if (!fh) {
 		if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 			NL_SET_ERR_MSG(extack, "Need both RTM_NEWTFILTER and NLM_F_CREATE to create a new filter");
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto errout;
 		}
 	} else if (n->nlmsg_flags & NLM_F_EXCL) {
 		tfilter_put(tp, fh);
 		NL_SET_ERR_MSG(extack, "Filter already exists");
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto errout;
 	}
 
 	if (chain->tmplt_ops && chain->tmplt_ops != tp->ops) {
 		NL_SET_ERR_MSG(extack, "Chain template is set to a different filter kind");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2187,7 +2187,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	bool rtnl_held = false;
 
 	if (!netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = nlmsg_parse_deprecated(n, sizeof(*t), tca, TCA_MAX,
 				     rtm_tca_policy, extack);
@@ -2201,7 +2201,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (prio == 0 && (protocol || t->tcm_handle || tca[TCA_KIND])) {
 		NL_SET_ERR_MSG(extack, "Cannot flush filters with protocol, handle or kind set");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Find head of filter chain. */
@@ -2212,7 +2212,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (tcf_proto_check_kind(tca[TCA_KIND], name)) {
 		NL_SET_ERR_MSG(extack, "Specified TC filter name too long");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 	/* Take rtnl mutex if flushing whole chain, block is shared (no qdisc
@@ -2240,7 +2240,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	chain_index = tca[TCA_CHAIN] ? nla_get_u32(tca[TCA_CHAIN]) : 0;
 	if (chain_index > TC_ACT_EXT_VAL_MASK) {
 		NL_SET_ERR_MSG(extack, "Specified chain index exceeds upper limit");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 	chain = tcf_chain_get(block, chain_index, false);
@@ -2253,7 +2253,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 			goto errout;
 		}
 		NL_SET_ERR_MSG(extack, "Cannot find specified filter chain");
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto errout;
 	}
 
@@ -2270,11 +2270,11 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 			       prio, false);
 	if (!tp || IS_ERR(tp)) {
 		NL_SET_ERR_MSG(extack, "Filter with specified priority/protocol not found");
-		err = tp ? PTR_ERR(tp) : -ENOENT;
+		err = tp ? PTR_ERR(tp) : -ERR(ENOENT);
 		goto errout_locked;
 	} else if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], tp->ops->kind)) {
 		NL_SET_ERR_MSG(extack, "Specified filter kind does not match existing one");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout_locked;
 	} else if (t->tcm_handle == 0) {
 		tcf_proto_signal_destroying(chain, tp);
@@ -2293,7 +2293,7 @@ static int tc_del_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (!fh) {
 		NL_SET_ERR_MSG(extack, "Specified filter handle not found");
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	} else {
 		bool last;
 
@@ -2358,7 +2358,7 @@ static int tc_get_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (prio == 0) {
 		NL_SET_ERR_MSG(extack, "Invalid filter command with priority of zero");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Find head of filter chain. */
@@ -2369,7 +2369,7 @@ static int tc_get_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (tcf_proto_check_kind(tca[TCA_KIND], name)) {
 		NL_SET_ERR_MSG(extack, "Specified TC filter name too long");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 	/* Take rtnl mutex if block is shared (no qdisc found), qdisc is not
@@ -2396,13 +2396,13 @@ static int tc_get_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	chain_index = tca[TCA_CHAIN] ? nla_get_u32(tca[TCA_CHAIN]) : 0;
 	if (chain_index > TC_ACT_EXT_VAL_MASK) {
 		NL_SET_ERR_MSG(extack, "Specified chain index exceeds upper limit");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 	chain = tcf_chain_get(block, chain_index, false);
 	if (!chain) {
 		NL_SET_ERR_MSG(extack, "Cannot find specified filter chain");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2412,11 +2412,11 @@ static int tc_get_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	mutex_unlock(&chain->filter_chain_lock);
 	if (!tp || IS_ERR(tp)) {
 		NL_SET_ERR_MSG(extack, "Filter with specified priority/protocol not found");
-		err = tp ? PTR_ERR(tp) : -ENOENT;
+		err = tp ? PTR_ERR(tp) : -ERR(ENOENT);
 		goto errout;
 	} else if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], tp->ops->kind)) {
 		NL_SET_ERR_MSG(extack, "Specified filter kind does not match existing one");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2424,7 +2424,7 @@ static int tc_get_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (!fh) {
 		NL_SET_ERR_MSG(extack, "Specified filter handle not found");
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	} else {
 		err = tfilter_notify(net, skb, n, tp, block, q, parent,
 				     fh, RTM_NEWTFILTER, true, rtnl_held);
@@ -2622,7 +2622,7 @@ static int tc_dump_tfilter(struct sk_buff *skb, struct netlink_callback *cb)
 		if (!tcf_chain_dump(chain, q, parent, skb, cb,
 				    index_start, &index, terse_dump)) {
 			tcf_chain_put(chain);
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			break;
 		}
 	}
@@ -2685,7 +2685,7 @@ static int tc_chain_fill_node(const struct tcf_proto_ops *tmplt_ops,
 out_nlmsg_trim:
 nla_put_failure:
 	nlmsg_trim(skb, b);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int tc_chain_notify(struct tcf_chain *chain, struct sk_buff *oskb,
@@ -2699,13 +2699,13 @@ static int tc_chain_notify(struct tcf_chain *chain, struct sk_buff *oskb,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tc_chain_fill_node(chain->tmplt_ops, chain->tmplt_priv,
 			       chain->index, net, skb, block, portid,
 			       seq, flags, event) <= 0) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unicast)
@@ -2730,12 +2730,12 @@ static int tc_chain_notify_delete(const struct tcf_proto_ops *tmplt_ops,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tc_chain_fill_node(tmplt_ops, tmplt_priv, chain_index, net, skb,
 			       block, portid, seq, flags, RTM_DELCHAIN) <= 0) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unicast)
@@ -2758,7 +2758,7 @@ static int tc_chain_tmplt_add(struct tcf_chain *chain, struct net *net,
 
 	if (tcf_proto_check_kind(tca[TCA_KIND], name)) {
 		NL_SET_ERR_MSG(extack, "Specified TC chain template name too long");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ops = tcf_proto_lookup_ops(name, true, extack);
@@ -2766,7 +2766,7 @@ static int tc_chain_tmplt_add(struct tcf_chain *chain, struct net *net,
 		return PTR_ERR(ops);
 	if (!ops->tmplt_create || !ops->tmplt_destroy || !ops->tmplt_dump) {
 		NL_SET_ERR_MSG(extack, "Chain templates are not supported with specified classifier");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	tmplt_priv = ops->tmplt_create(net, chain, tca, extack);
@@ -2808,7 +2808,7 @@ static int tc_ctl_chain(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if (n->nlmsg_type != RTM_GETCHAIN &&
 	    !netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 replay:
 	err = nlmsg_parse_deprecated(n, sizeof(*t), tca, TCA_MAX,
@@ -2828,7 +2828,7 @@ replay:
 	chain_index = tca[TCA_CHAIN] ? nla_get_u32(tca[TCA_CHAIN]) : 0;
 	if (chain_index > TC_ACT_EXT_VAL_MASK) {
 		NL_SET_ERR_MSG(extack, "Specified chain index exceeds upper limit");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout_block;
 	}
 
@@ -2843,13 +2843,13 @@ replay:
 				tcf_chain_hold(chain);
 			} else {
 				NL_SET_ERR_MSG(extack, "Filter chain already exists");
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 				goto errout_block_locked;
 			}
 		} else {
 			if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 				NL_SET_ERR_MSG(extack, "Need both RTM_NEWCHAIN and NLM_F_CREATE to create a new chain");
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 				goto errout_block_locked;
 			}
 			chain = tcf_chain_create(block, chain_index);
@@ -2862,7 +2862,7 @@ replay:
 	} else {
 		if (!chain || tcf_chain_held_by_acts_only(chain)) {
 			NL_SET_ERR_MSG(extack, "Cannot find specified filter chain");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout_block_locked;
 		}
 		tcf_chain_hold(chain);
@@ -2907,7 +2907,7 @@ replay:
 			NL_SET_ERR_MSG(extack, "Failed to send chain notify message");
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		NL_SET_ERR_MSG(extack, "Unsupported message type");
 		goto errout;
 	}
@@ -3078,7 +3078,7 @@ int tcf_exts_validate(struct net *net, struct tcf_proto *tp, struct nlattr **tb,
 	if ((exts->action && tb[exts->action]) ||
 	    (exts->police && tb[exts->police])) {
 		NL_SET_ERR_MSG(extack, "Classifier actions are not supported per compile options (CONFIG_NET_CLS_ACT)");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 #endif
 
@@ -3310,7 +3310,7 @@ retry:
 
 	/* Make sure all netdevs sharing this block are offload-capable. */
 	if (block->nooffloaddevcnt && err_stop) {
-		ok_count = -EOPNOTSUPP;
+		ok_count = -ERR(EOPNOTSUPP);
 		goto err_unlock;
 	}
 
@@ -3362,7 +3362,7 @@ retry:
 
 	/* Make sure all netdevs sharing this block are offload-capable. */
 	if (block->nooffloaddevcnt && err_stop) {
-		ok_count = -EOPNOTSUPP;
+		ok_count = -ERR(EOPNOTSUPP);
 		goto err_unlock;
 	}
 
@@ -3533,7 +3533,7 @@ static int tcf_gate_get_entries(struct flow_action_entry *entry,
 	entry->gate.entries = tcf_gate_get_list(act);
 
 	if (!entry->gate.entries)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	entry->destructor = tcf_gate_entry_destructor;
 	entry->destructor_priv = entry->gate.entries;
@@ -3615,7 +3615,7 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 				entry->vlan.prio = tcf_vlan_push_prio(act);
 				break;
 			default:
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 				goto err_out_locked;
 			}
 		} else if (is_tcf_tunnel_set(act)) {
@@ -3635,7 +3635,7 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 					entry->id = FLOW_ACTION_ADD;
 					break;
 				default:
-					err = -EOPNOTSUPP;
+					err = -ERR(EOPNOTSUPP);
 					goto err_out_locked;
 				}
 				entry->mangle.htype = tcf_pedit_htype(act, k);
@@ -3709,7 +3709,7 @@ int tc_setup_flow_action(struct flow_action *flow_action,
 			if (err)
 				goto err_out;
 		} else {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto err_out_locked;
 		}
 		spin_unlock_bh(&act->tcfa_lock);

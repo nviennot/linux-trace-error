@@ -87,7 +87,7 @@ static int sirf_usp_pcm_set_dai_fmt(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Only CBM and CFM supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -97,7 +97,7 @@ static int sirf_usp_pcm_set_dai_fmt(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Only I2S and DSP_A format supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -107,7 +107,7 @@ static int sirf_usp_pcm_set_dai_fmt(struct snd_soc_dai *dai,
 		usp->daifmt_format |= (fmt & SND_SOC_DAIFMT_INV_MASK);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -182,7 +182,7 @@ static int sirf_usp_pcm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "Format unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	shifter_len = data_len;
@@ -200,7 +200,7 @@ static int sirf_usp_pcm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "Only support I2S and DSP_A mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (usp->daifmt_format & SND_SOC_DAIFMT_INV_MASK) {
@@ -212,7 +212,7 @@ static int sirf_usp_pcm_hw_params(struct snd_pcm_substream *substream,
 			USP_RXD_ACT_EDGE_FALLING);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)

@@ -403,7 +403,7 @@ static int wm8996_get_retune_mobile_block(const char *name)
 		return 0;
 	if (strcmp(name, "DSP2 EQ Mode") == 0)
 		return 1;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8996_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
@@ -419,7 +419,7 @@ static int wm8996_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
 		return block;
 
 	if (value >= pdata->num_retune_mobile_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8996->retune_mobile_cfg[block] = value;
 
@@ -608,7 +608,7 @@ static int bg_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -644,7 +644,7 @@ static int rmv_short_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -764,7 +764,7 @@ static int dcs_start(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1651,7 +1651,7 @@ static int wm8996_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		WARN(1, "Invalid dai id %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1687,7 +1687,7 @@ static int wm8996_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		lrclk_rx |= WM8996_AIF1RX_LRCLK_MSTR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1703,7 +1703,7 @@ static int wm8996_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aifctrl |= 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, aifctrl_reg, WM8996_AIF1_FMT_MASK, aifctrl);
@@ -1763,7 +1763,7 @@ static int wm8996_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		WARN(1, "Invalid dai id %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_rate = snd_soc_params_to_bclk(params);
@@ -1841,7 +1841,7 @@ static int wm8996_set_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (wm8996->sysclk) {
@@ -1868,7 +1868,7 @@ static int wm8996_set_sysclk(struct snd_soc_dai *dai,
 	default:
 		dev_warn(component->dev, "Unsupported clock rate %dHz\n",
 			 wm8996->sysclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8996_update_bclk(component);
@@ -1929,7 +1929,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1955,7 +1955,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 64) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * div;
@@ -1973,7 +1973,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fll_div->n = target / (fratio * Fref);
@@ -2045,7 +2045,7 @@ static int wm8996_set_fll(struct snd_soc_component *component, int fll_id, int s
 		break;
 	default:
 		dev_err(component->dev, "Unknown FLL source %d\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg |= fll_div.fll_refclk_div << WM8996_FLL_REFCLK_DIV_SHIFT;
@@ -2123,7 +2123,7 @@ static int wm8996_set_fll(struct snd_soc_component *component, int fll_id, int s
 	}
 	if (retry == 10) {
 		dev_err(component->dev, "Timed out waiting for FLL\n");
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	}
 
 	dev_dbg(component->dev, "FLL configured for %dHz->%dHz\n", Fref, Fout);
@@ -2833,7 +2833,7 @@ static int wm8996_i2c_probe(struct i2c_client *i2c,
 	}
 	if (reg != 0x8915) {
 		dev_err(&i2c->dev, "Device is not a WM8996, ID %x\n", reg);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_regmap;
 	}
 

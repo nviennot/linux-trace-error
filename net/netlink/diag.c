@@ -52,7 +52,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*rep),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rep = nlmsg_data(nlh);
 	rep->ndiag_family	= AF_NETLINK;
@@ -83,7 +83,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 
 out_nlmsg_trim:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int __netlink_diag_dump(struct sk_buff *skb, struct netlink_callback *cb,
@@ -201,7 +201,7 @@ static int netlink_diag_dump(struct sk_buff *skb, struct netlink_callback *cb)
 		cb->args[1] = i;
 	} else {
 		if (req->sdiag_protocol >= MAX_LINKS)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		err = __netlink_diag_dump(skb, cb, req->sdiag_protocol, s_num);
 	}
@@ -227,7 +227,7 @@ static int netlink_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
 	struct net *net = sock_net(skb->sk);
 
 	if (nlmsg_len(h) < hdrlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (h->nlmsg_flags & NLM_F_DUMP) {
 		struct netlink_dump_control c = {
@@ -236,7 +236,7 @@ static int netlink_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
 		};
 		return netlink_dump_start(net->diag_nlsk, skb, h, &c);
 	} else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 }
 
 static const struct sock_diag_handler netlink_diag_handler = {

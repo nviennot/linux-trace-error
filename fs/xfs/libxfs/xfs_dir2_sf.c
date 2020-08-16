@@ -413,7 +413,7 @@ xfs_dir2_sf_addname(
 		 * Just checking or no space reservation, it doesn't fit.
 		 */
 		if ((args->op_flags & XFS_DA_OP_JUSTCHECK) || args->total == 0)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		/*
 		 * Convert to block form then add the name.
 		 */
@@ -890,7 +890,7 @@ xfs_dir2_sf_lookup(
 		args->inumber = dp->i_ino;
 		args->cmpresult = XFS_CMP_EXACT;
 		args->filetype = XFS_DIR3_FT_DIR;
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	/*
 	 * Special case for ..
@@ -900,7 +900,7 @@ xfs_dir2_sf_lookup(
 		args->inumber = xfs_dir2_sf_get_parent_ino(sfp);
 		args->cmpresult = XFS_CMP_EXACT;
 		args->filetype = XFS_DIR3_FT_DIR;
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	/*
 	 * Loop over all the entries trying to match ours.
@@ -919,7 +919,7 @@ xfs_dir2_sf_lookup(
 			args->inumber = xfs_dir2_sf_get_ino(mp, sfp, sfep);
 			args->filetype = xfs_dir2_sf_get_ftype(mp, sfep);
 			if (cmp == XFS_CMP_EXACT)
-				return -EEXIST;
+				return -ERR(EEXIST);
 			ci_sfep = sfep;
 		}
 	}
@@ -929,7 +929,7 @@ xfs_dir2_sf_lookup(
 	 * If a case-insensitive match was not found, return -ENOENT.
 	 */
 	if (!ci_sfep)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/* otherwise process the CI match as required by the caller */
 	error = xfs_dir_cilookup_result(args, ci_sfep->name, ci_sfep->namelen);
 	return error;
@@ -978,7 +978,7 @@ xfs_dir2_sf_removename(
 	 * Didn't find it.
 	 */
 	if (i == sfp->count)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/*
 	 * Calculate sizes.
 	 */
@@ -1117,7 +1117,7 @@ xfs_dir2_sf_replace(
 			ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
 			if (i8elevated)
 				xfs_dir2_sf_toino4(args);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	/*

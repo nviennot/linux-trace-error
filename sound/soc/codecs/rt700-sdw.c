@@ -453,7 +453,7 @@ static int rt700_sdw_probe(struct sdw_slave *slave,
 	/* Regmap Initialization */
 	sdw_regmap = devm_regmap_init_sdw(slave, &rt700_sdw_regmap);
 	if (!sdw_regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap = devm_regmap_init(&slave->dev, NULL,
 		&slave->dev, &rt700_regmap);
@@ -513,7 +513,7 @@ static int __maybe_unused rt700_dev_resume(struct device *dev)
 				msecs_to_jiffies(RT700_PROBE_TIMEOUT));
 	if (!time) {
 		dev_err(&slave->dev, "Initialization not complete, timed out\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 regmap_sync:

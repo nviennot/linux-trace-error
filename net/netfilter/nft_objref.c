@@ -32,14 +32,14 @@ static int nft_objref_init(const struct nft_ctx *ctx,
 
 	if (!tb[NFTA_OBJREF_IMM_NAME] ||
 	    !tb[NFTA_OBJREF_IMM_TYPE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	objtype = ntohl(nla_get_be32(tb[NFTA_OBJREF_IMM_TYPE]));
 	obj = nft_obj_lookup(ctx->net, ctx->table,
 			     tb[NFTA_OBJREF_IMM_NAME], objtype,
 			     genmask);
 	if (IS_ERR(obj))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	nft_objref_priv(expr) = obj;
 	obj->use++;
@@ -135,7 +135,7 @@ static int nft_objref_map_init(const struct nft_ctx *ctx,
 		return PTR_ERR(set);
 
 	if (!(set->flags & NFT_SET_OBJECT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->sreg = nft_parse_register(tb[NFTA_OBJREF_SET_SREG]);
 	err = nft_validate_register_load(priv->sreg, set->klen);
@@ -215,7 +215,7 @@ nft_objref_select_ops(const struct nft_ctx *ctx,
 		 tb[NFTA_OBJREF_IMM_TYPE])
 		return &nft_objref_ops;
 
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static const struct nla_policy nft_objref_policy[NFTA_OBJREF_MAX + 1] = {

@@ -546,20 +546,20 @@ static void hvs_destruct(struct vsock_sock *vsk)
 
 static int hvs_dgram_bind(struct vsock_sock *vsk, struct sockaddr_vm *addr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int hvs_dgram_dequeue(struct vsock_sock *vsk, struct msghdr *msg,
 			     size_t len, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int hvs_dgram_enqueue(struct vsock_sock *vsk,
 			     struct sockaddr_vm *remote, struct msghdr *msg,
 			     size_t dgram_len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static bool hvs_dgram_allow(u32 cid, u32 port)
@@ -576,7 +576,7 @@ static int hvs_update_recv_data(struct hvsock *hvs)
 	payload_len = recv_buf->hdr.data_size;
 
 	if (payload_len > HVS_MTU_SIZE)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (payload_len == 0)
 		hvs->vsk->peer_shutdown |= SEND_SHUTDOWN;
@@ -597,7 +597,7 @@ static ssize_t hvs_stream_dequeue(struct vsock_sock *vsk, struct msghdr *msg,
 	int ret;
 
 	if (flags & MSG_PEEK)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (need_refill) {
 		hvs->recv_desc = hv_pkt_iter_first(hvs->chan);
@@ -904,7 +904,7 @@ static int __init hvs_init(void)
 	int ret;
 
 	if (vmbus_proto_version < VERSION_WIN10)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = vmbus_driver_register(&hvs_drv);
 	if (ret != 0)

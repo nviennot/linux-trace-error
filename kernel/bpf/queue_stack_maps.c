@@ -46,20 +46,20 @@ static bool queue_stack_map_is_full(struct bpf_queue_stack *qs)
 static int queue_stack_map_alloc_check(union bpf_attr *attr)
 {
 	if (!bpf_capable())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* check sanity of attributes */
 	if (attr->max_entries == 0 || attr->key_size != 0 ||
 	    attr->value_size == 0 ||
 	    attr->map_flags & ~QUEUE_STACK_CREATE_FLAG_MASK ||
 	    !bpf_map_flags_access_ok(attr->map_flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (attr->value_size > KMALLOC_MAX_SIZE)
 		/* if value_size is bigger, the user space won't be able to
 		 * access the elements.
 		 */
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	return 0;
 }
@@ -122,7 +122,7 @@ static int __queue_map_get(struct bpf_map *map, void *value, bool delete)
 
 	if (queue_stack_map_is_empty(qs)) {
 		memset(value, 0, qs->map.value_size);
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -152,7 +152,7 @@ static int __stack_map_get(struct bpf_map *map, void *value, bool delete)
 
 	if (queue_stack_map_is_empty(qs)) {
 		memset(value, 0, qs->map.value_size);
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -211,13 +211,13 @@ static int queue_stack_map_push_elem(struct bpf_map *map, void *value,
 
 	/* Check supported flags for queue and stack maps */
 	if (flags & BPF_NOEXIST || flags > BPF_EXIST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	raw_spin_lock_irqsave(&qs->lock, irq_flags);
 
 	if (queue_stack_map_is_full(qs)) {
 		if (!replace) {
-			err = -E2BIG;
+			err = -ERR(E2BIG);
 			goto out;
 		}
 		/* advance tail pointer to overwrite oldest element */
@@ -246,20 +246,20 @@ static void *queue_stack_map_lookup_elem(struct bpf_map *map, void *key)
 static int queue_stack_map_update_elem(struct bpf_map *map, void *key,
 				       void *value, u64 flags)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Called from syscall or from eBPF program */
 static int queue_stack_map_delete_elem(struct bpf_map *map, void *key)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Called from syscall */
 static int queue_stack_map_get_next_key(struct bpf_map *map, void *key,
 					void *next_key)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 const struct bpf_map_ops queue_map_ops = {

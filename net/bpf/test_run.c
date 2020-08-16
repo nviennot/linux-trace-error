@@ -49,7 +49,7 @@ static int bpf_test_run(struct bpf_prog *prog, void *ctx, u32 repeat,
 			*retval = BPF_PROG_RUN(prog, ctx);
 
 		if (signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -92,7 +92,7 @@ static int bpf_test_finish(const union bpf_attr *kattr,
 	if (kattr->test.data_size_out &&
 	    copy_size > kattr->test.data_size_out) {
 		copy_size = kattr->test.data_size_out;
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 	}
 
 	if (data_out && copy_to_user(data_out, data, copy_size))
@@ -178,10 +178,10 @@ static void *bpf_test_init(const union bpf_attr *kattr, u32 size,
 	void *data;
 
 	if (size < ETH_HLEN || size > PAGE_SIZE - headroom - tailroom)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (user_size > size)
-		return ERR_PTR(-EMSGSIZE);
+		return ERR_PTR(-ERR(EMSGSIZE));
 
 	data = kzalloc(size + headroom + tailroom, GFP_USER);
 	if (!data)
@@ -280,7 +280,7 @@ static int bpf_ctx_finish(const union bpf_attr *kattr,
 
 	if (copy_size > kattr->test.ctx_size_out) {
 		copy_size = kattr->test.ctx_size_out;
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 	}
 
 	if (copy_to_user(data_out, data, copy_size))
@@ -316,25 +316,25 @@ static int convert___skb_to_skb(struct sk_buff *skb, struct __sk_buff *__skb)
 
 	/* make sure the fields we don't use are zeroed */
 	if (!range_is_zero(__skb, 0, offsetof(struct __sk_buff, mark)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* mark is allowed */
 
 	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, mark),
 			   offsetof(struct __sk_buff, priority)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* priority is allowed */
 
 	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, priority),
 			   offsetof(struct __sk_buff, cb)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* cb is allowed */
 
 	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, cb),
 			   offsetof(struct __sk_buff, tstamp)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* tstamp is allowed */
 	/* wire_len is allowed */
@@ -342,13 +342,13 @@ static int convert___skb_to_skb(struct sk_buff *skb, struct __sk_buff *__skb)
 
 	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, gso_segs),
 			   offsetof(struct __sk_buff, gso_size)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* gso_size is allowed */
 
 	if (!range_is_zero(__skb, offsetofend(struct __sk_buff, gso_size),
 			   sizeof(struct __sk_buff)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb->mark = __skb->mark;
 	skb->priority = __skb->priority;
@@ -360,12 +360,12 @@ static int convert___skb_to_skb(struct sk_buff *skb, struct __sk_buff *__skb)
 	} else {
 		if (__skb->wire_len < skb->len ||
 		    __skb->wire_len > GSO_MAX_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		cb->pkt_len = __skb->wire_len;
 	}
 
 	if (__skb->gso_segs > GSO_MAX_SEGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	skb_shinfo(skb)->gso_segs = __skb->gso_segs;
 	skb_shinfo(skb)->gso_size = __skb->gso_size;
 
@@ -503,7 +503,7 @@ int bpf_prog_test_run_xdp(struct bpf_prog *prog, const union bpf_attr *kattr,
 	int ret;
 
 	if (kattr->test.ctx_in || kattr->test.ctx_out)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* XDP have extra tailroom as (most) drivers use full page */
 	max_data_sz = 4096 - headroom - tailroom;
@@ -537,13 +537,13 @@ static int verify_user_bpf_flow_keys(struct bpf_flow_keys *ctx)
 {
 	/* make sure the fields we don't use are zeroed */
 	if (!range_is_zero(ctx, 0, offsetof(struct bpf_flow_keys, flags)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* flags is allowed */
 
 	if (!range_is_zero(ctx, offsetofend(struct bpf_flow_keys, flags),
 			   sizeof(struct bpf_flow_keys)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -566,10 +566,10 @@ int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
 	u32 i;
 
 	if (prog->type != BPF_PROG_TYPE_FLOW_DISSECTOR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (size < ETH_HLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = bpf_test_init(kattr, size, 0, 0);
 	if (IS_ERR(data))
@@ -607,7 +607,7 @@ int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
 			preempt_enable();
 			rcu_read_unlock();
 
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto out;
 		}
 

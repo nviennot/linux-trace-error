@@ -164,20 +164,20 @@ test_hash_init(void)
 				pr_err("hashlen_string(%d..%d) returned length"
 					" %u, expected %d",
 					i, j, hashlen_len(hashlen), j-i);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			/* Check that the hashes match */
 			if (hashlen_hash(hashlen) != h0) {
 				pr_err("hashlen_string(%d..%d) = %08x != "
 					"full_name_hash() = %08x",
 					i, j, hashlen_hash(hashlen), h0);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			string_or |= h0;
 			h64 = h64 << 32 | h0;	/* For use with hash_64 */
 			if (!test_int_hash(h64, hash_or))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			tests++;
 		} /* i */
 	} /* j */
@@ -186,19 +186,19 @@ test_hash_init(void)
 	if (~string_or) {
 		pr_err("OR of all string hash results = %#x != %#x",
 			string_or, -1u);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (~hash_or[0][0]) {
 		pr_err("OR of all __hash_32 results = %#x != %#x",
 			hash_or[0][0], -1u);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #ifdef HAVE_ARCH__HASH_32
 #if HAVE_ARCH__HASH_32 != 1	/* Test is pointless if results match */
 	if (~hash_or[1][0]) {
 		pr_err("OR of all __hash_32_generic results = %#x != %#x",
 			hash_or[1][0], -1u);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 #endif
@@ -210,12 +210,12 @@ test_hash_init(void)
 		if (hash_or[0][i] != m) {
 			pr_err("OR of all hash_32(%d) results = %#x "
 				"(%#x expected)", i, hash_or[0][i], m);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (hash_or[1][i] != m) {
 			pr_err("OR of all hash_64(%d) results = %#x "
 				"(%#x expected)", i, hash_or[1][i], m);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

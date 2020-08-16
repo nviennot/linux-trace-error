@@ -672,7 +672,7 @@ int lmGroupCommit(struct jfs_log * log, struct tblock * tblk)
 	/* group committed already ? */
 	if (tblk->flag & tblkGC_COMMITTED) {
 		if (tblk->flag & tblkGC_ERROR)
-			rc = -EIO;
+			rc = -ERR(EIO);
 
 		LOGGC_UNLOCK(log);
 		return rc;
@@ -707,7 +707,7 @@ int lmGroupCommit(struct jfs_log * log, struct tblock * tblk)
 
 	if (tblk->flag & tblkGC_COMMITTED) {
 		if (tblk->flag & tblkGC_ERROR)
-			rc = -EIO;
+			rc = -ERR(EIO);
 
 		LOGGC_UNLOCK(log);
 		return rc;
@@ -723,7 +723,7 @@ int lmGroupCommit(struct jfs_log * log, struct tblock * tblk)
 
 	/* removed from commit queue */
 	if (tblk->flag & tblkGC_ERROR)
-		rc = -EIO;
+		rc = -ERR(EIO);
 
 	LOGGC_UNLOCK(log);
 	return rc;
@@ -1082,7 +1082,7 @@ int lmLogOpen(struct super_block *sb)
 			if (!uuid_equal(&log->uuid, &sbi->loguuid)) {
 				jfs_warn("wrong uuid on JFS journal");
 				mutex_unlock(&jfs_log_mutex);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			/*
 			 * add file system to log active file system list
@@ -1302,21 +1302,21 @@ int lmLogInit(struct jfs_log * log)
 
 		if (logsuper->magic != cpu_to_le32(LOGMAGIC)) {
 			jfs_warn("*** Log Format Error ! ***");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto errout20;
 		}
 
 		/* logredo() should have been run successfully. */
 		if (logsuper->state != cpu_to_le32(LOGREDONE)) {
 			jfs_warn("*** Log Is Dirty ! ***");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto errout20;
 		}
 
 		/* initialize log from log superblock */
 		if (test_bit(log_INLINELOG,&log->flag)) {
 			if (log->size != le32_to_cpu(logsuper->size)) {
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 				goto errout20;
 			}
 			jfs_info("lmLogInit: inline log:0x%p base:0x%Lx size:0x%x",
@@ -1737,7 +1737,7 @@ static int lmLogFileSystem(struct jfs_log * log, struct jfs_sb_info *sbi,
 		if (i == MAX_ACTIVE) {
 			jfs_warn("Too many file systems sharing journal!");
 			lbmFree(bpsuper);
-			return -EMFILE;	/* Is there a better rc? */
+			return -ERR(EMFILE);	/* Is there a better rc? */
 		}
 	} else {
 		for (i = 0; i < MAX_ACTIVE; i++)
@@ -1749,7 +1749,7 @@ static int lmLogFileSystem(struct jfs_log * log, struct jfs_sb_info *sbi,
 		if (i == MAX_ACTIVE) {
 			jfs_warn("Somebody stomped on the journal!");
 			lbmFree(bpsuper);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 	}
@@ -2160,7 +2160,7 @@ static int lbmIOWait(struct lbuf * bp, int flag)
 
 	LCACHE_SLEEP_COND(bp->l_ioevent, (bp->l_flag & lbmDONE), flags);
 
-	rc = (bp->l_flag & lbmERROR) ? -EIO : 0;
+	rc = (bp->l_flag & lbmERROR) ? -ERR(EIO) : 0;
 
 	if (flag & lbmFREE)
 		lbmfree(bp);
@@ -2363,7 +2363,7 @@ int jfsIOWait(void *arg)
  */
 int lmLogFormat(struct jfs_log *log, s64 logAddress, int logSize)
 {
-	int rc = -EIO;
+	int rc = -ERR(EIO);
 	struct jfs_sb_info *sbi;
 	struct logsuper *logsuper;
 	struct logpage *lp;

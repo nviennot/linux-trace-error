@@ -48,7 +48,7 @@ static int nft_fwd_netdev_init(const struct nft_ctx *ctx,
 	struct nft_fwd_netdev *priv = nft_expr_priv(expr);
 
 	if (tb[NFTA_FWD_SREG_DEV] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->sreg_dev = nft_parse_register(tb[NFTA_FWD_SREG_DEV]);
 	return nft_validate_register_load(priv->sreg_dev, sizeof(int));
@@ -154,7 +154,7 @@ static int nft_fwd_neigh_init(const struct nft_ctx *ctx,
 	if (!tb[NFTA_FWD_SREG_DEV] ||
 	    !tb[NFTA_FWD_SREG_ADDR] ||
 	    !tb[NFTA_FWD_NFPROTO])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->sreg_dev = nft_parse_register(tb[NFTA_FWD_SREG_DEV]);
 	priv->sreg_addr = nft_parse_register(tb[NFTA_FWD_SREG_ADDR]);
@@ -168,7 +168,7 @@ static int nft_fwd_neigh_init(const struct nft_ctx *ctx,
 		addr_len = sizeof(struct in6_addr);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	err = nft_validate_register_load(priv->sreg_dev, sizeof(int));
@@ -229,7 +229,7 @@ nft_fwd_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_FWD_SREG_DEV])
 		return &nft_fwd_netdev_ops;
 
-        return ERR_PTR(-EOPNOTSUPP);
+        return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static struct nft_expr_type nft_fwd_netdev_type __read_mostly = {

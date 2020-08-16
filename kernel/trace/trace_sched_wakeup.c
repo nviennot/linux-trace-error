@@ -688,7 +688,7 @@ static int __wakeup_tracer_init(struct trace_array *tr)
 static int wakeup_tracer_init(struct trace_array *tr)
 {
 	if (wakeup_busy)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wakeup_dl = 0;
 	wakeup_rt = 0;
@@ -698,7 +698,7 @@ static int wakeup_tracer_init(struct trace_array *tr)
 static int wakeup_rt_tracer_init(struct trace_array *tr)
 {
 	if (wakeup_busy)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wakeup_dl = 0;
 	wakeup_rt = 1;
@@ -708,7 +708,7 @@ static int wakeup_rt_tracer_init(struct trace_array *tr)
 static int wakeup_dl_tracer_init(struct trace_array *tr)
 {
 	if (wakeup_busy)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wakeup_dl = 1;
 	wakeup_rt = 0;

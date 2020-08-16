@@ -198,7 +198,7 @@ static struct configfs_dirent *configfs_new_dirent(struct configfs_dirent *paren
 	if (parent_sd->s_type & CONFIGFS_USET_DROPPING) {
 		spin_unlock(&configfs_dirent_lock);
 		kmem_cache_free(configfs_dir_cachep, sd);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 	sd->s_frag = get_fragment(frag);
 	list_add(&sd->s_sibling, &parent_sd->s_children);
@@ -225,7 +225,7 @@ static int configfs_dirent_exists(struct configfs_dirent *parent_sd,
 			if (strcmp(existing, new))
 				continue;
 			else
-				return -EEXIST;
+				return -ERR(EEXIST);
 		}
 	}
 
@@ -465,7 +465,7 @@ static struct dentry * configfs_lookup(struct inode *dir,
 	 * not complete their initialization, since the dentries of the
 	 * attributes won't be instantiated.
 	 */
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!configfs_dirent_is_ready(parent_sd))
 		goto out;
 
@@ -488,7 +488,7 @@ static struct dentry * configfs_lookup(struct inode *dir,
 		 * it must be negative.
 		 */
 		if (dentry->d_name.len > NAME_MAX)
-			return ERR_PTR(-ENAMETOOLONG);
+			return ERR_PTR(-ERR(ENAMETOOLONG));
 		d_add(dentry, NULL);
 		return NULL;
 	}
@@ -514,7 +514,7 @@ static int configfs_detach_prep(struct dentry *dentry, struct dentry **wait)
 	/* Mark that we're trying to drop the group */
 	parent_sd->s_type |= CONFIGFS_USET_DROPPING;
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (parent_sd->s_links)
 		goto out;
 
@@ -528,7 +528,7 @@ static int configfs_detach_prep(struct dentry *dentry, struct dentry **wait)
 			if (sd->s_type & CONFIGFS_USET_IN_MKDIR) {
 				if (wait)
 					*wait= dget(sd->s_dentry);
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 			}
 
 			/*
@@ -539,7 +539,7 @@ static int configfs_detach_prep(struct dentry *dentry, struct dentry **wait)
 			if (!ret)
 				continue;
 		} else
-			ret = -ENOTEMPTY;
+			ret = -ERR(ENOTEMPTY);
 
 		break;
 	}
@@ -602,7 +602,7 @@ static int populate_attrs(struct config_item *item)
 	int i;
 
 	if (!t)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (t->ct_attrs) {
 		for (i = 0; (attr = t->ct_attrs[i]) != NULL; i++) {
 			if ((error = configfs_create_file(item, attr)))
@@ -1071,7 +1071,7 @@ static int configfs_depend_prep(struct dentry *origin,
 	}
 
 	/* We looped all our children and didn't find target */
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 
 out:
 	return ret;
@@ -1146,7 +1146,7 @@ int configfs_depend_item(struct configfs_subsystem *subsys,
 
 	subsys_sd = configfs_find_subsys_dentry(root->d_fsdata, s_item);
 	if (!subsys_sd) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_unlock_fs;
 	}
 
@@ -1209,11 +1209,11 @@ int configfs_depend_item_unlocked(struct configfs_subsystem *caller_subsys,
 	struct configfs_subsystem *target_subsys;
 	struct config_group *root, *parent;
 	struct configfs_dirent *subsys_sd;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	/* Disallow this function for configfs root */
 	if (configfs_is_root(target))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parent = target->ci_group;
 	/*
@@ -1288,12 +1288,12 @@ static int configfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 	 * being attached
 	 */
 	if (!configfs_dirent_is_ready(sd)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (!(sd->s_type & CONFIGFS_USET_DIR)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -1312,7 +1312,7 @@ static int configfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 	if (!type || !type->ct_group_ops ||
 	    (!type->ct_group_ops->make_group &&
 	     !type->ct_group_ops->make_item)) {
-		ret = -EPERM;  /* Lack-of-mkdir returns -EPERM */
+		ret = -ERR(EPERM);  /* Lack-of-mkdir returns -EPERM */
 		goto out_put;
 	}
 
@@ -1322,12 +1322,12 @@ static int configfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 	 * fail to pin the subsystem it sits under.
 	 */
 	if (!subsys->su_group.cg_item.ci_type) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_put;
 	}
 	subsys_owner = subsys->su_group.cg_item.ci_type->ct_owner;
 	if (!try_module_get(subsys_owner)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_put;
 	}
 
@@ -1376,13 +1376,13 @@ static int configfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode
 
 	type = item->ci_type;
 	if (!type) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlink;
 	}
 
 	new_item_owner = type->ct_owner;
 	if (!try_module_get(new_item_owner)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlink;
 	}
 
@@ -1462,7 +1462,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 
 	sd = dentry->d_fsdata;
 	if (sd->s_type & CONFIGFS_USET_DEFAULT)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Get a working ref until we have the child */
 	parent_item = configfs_get_config_item(dentry->d_parent);
@@ -1471,7 +1471,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 
 	if (!parent_item->ci_type) {
 		config_item_put(parent_item);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* configfs_mkdir() shouldn't have allowed this */
@@ -1492,7 +1492,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 		 * configfs_dirent_lock.
 		 * If no dependent, atomically tag the item as dropping.
 		 */
-		ret = sd->s_dependent_count ? -EBUSY : 0;
+		ret = sd->s_dependent_count ? -ERR(EBUSY) : 0;
 		if (!ret) {
 			ret = configfs_detach_prep(dentry, &wait);
 			if (ret)
@@ -1520,7 +1520,7 @@ static int configfs_rmdir(struct inode *dir, struct dentry *dentry)
 		configfs_detach_rollback(dentry);
 		spin_unlock(&configfs_dirent_lock);
 		config_item_put(parent_item);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 	frag->frag_dead = true;
 	up_write(&frag->frag_sem);
@@ -1585,7 +1585,7 @@ static int configfs_dir_open(struct inode *inode, struct file *file)
 	 * Fake invisibility if dir belongs to a group/default groups hierarchy
 	 * being attached
 	 */
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (configfs_dirent_is_ready(parent_sd)) {
 		file->private_data = configfs_new_dirent(parent_sd, NULL, 0, NULL);
 		if (IS_ERR(file->private_data))
@@ -1694,7 +1694,7 @@ static loff_t configfs_dir_lseek(struct file *file, loff_t offset, int whence)
 				break;
 			/* fall through */
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (offset != file->f_pos) {
 		file->f_pos = offset;

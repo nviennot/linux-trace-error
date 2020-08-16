@@ -205,7 +205,7 @@ static int atmel_ac97c_playback_prepare(struct snd_pcm_substream *substream)
 		break;
 	default:
 		/* TODO: support more than two channels */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ac97c_writel(chip, OCA, word);
 
@@ -226,7 +226,7 @@ static int atmel_ac97c_playback_prepare(struct snd_pcm_substream *substream)
 		word = ac97c_readl(chip, OCA);
 		word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
 		ac97c_writel(chip, OCA, word);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Enable underrun interrupt on channel A */
@@ -287,7 +287,7 @@ static int atmel_ac97c_capture_prepare(struct snd_pcm_substream *substream)
 		break;
 	default:
 		/* TODO: support more than two channels */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ac97c_writel(chip, ICA, word);
 
@@ -308,7 +308,7 @@ static int atmel_ac97c_capture_prepare(struct snd_pcm_substream *substream)
 		word = ac97c_readl(chip, ICA);
 		word &= ~(AC97C_CH_MASK(PCM_LEFT) | AC97C_CH_MASK(PCM_RIGHT));
 		ac97c_writel(chip, ICA, word);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Enable overrun interrupt on channel A */
@@ -370,7 +370,7 @@ atmel_ac97c_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 			camr &= ~AC97C_CMR_CENA;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ac97c_writel(chip, CAMR, camr);
@@ -402,7 +402,7 @@ atmel_ac97c_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 			camr &= ~AC97C_CMR_CENA;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ac97c_writel(chip, CAMR, camr);
@@ -712,7 +712,7 @@ static int atmel_ac97c_probe(struct platform_device *pdev)
 	regs = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!regs) {
 		dev_dbg(&pdev->dev, "no memory resource\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	irq = platform_get_irq(pdev, 0);

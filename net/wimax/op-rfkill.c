@@ -201,7 +201,7 @@ int __wimax_rf_toggle_radio(struct wimax_dev *wimax_dev,
 	if (wimax_dev->op_rfkill_sw_toggle != NULL)
 		result = wimax_dev->op_rfkill_sw_toggle(wimax_dev, state);
 	else if (state == WIMAX_RF_OFF)	/* No op? can't turn off */
-		result = -ENXIO;
+		result = -ERR(ENXIO);
 	else				/* No op? can turn on */
 		result = 0;		/* should never happen tho */
 	if (result >= 0) {
@@ -310,7 +310,7 @@ int wimax_rfkill(struct wimax_dev *wimax_dev, enum wimax_rf_state state)
 	case WIMAX_RF_QUERY:
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto error;
 	}
 	result = wimax_dev->rf_sw << 1 | wimax_dev->rf_hw;
@@ -403,7 +403,7 @@ int wimax_gnl_doit_rfkill(struct sk_buff *skb, struct genl_info *info)
 	enum wimax_rf_state new_state;
 
 	d_fnstart(3, NULL, "(skb %p info %p)\n", skb, info);
-	result = -ENODEV;
+	result = -ERR(ENODEV);
 	if (info->attrs[WIMAX_GNL_RFKILL_IFIDX] == NULL) {
 		pr_err("WIMAX_GNL_OP_RFKILL: can't find IFIDX attribute\n");
 		goto error_no_wimax_dev;
@@ -413,7 +413,7 @@ int wimax_gnl_doit_rfkill(struct sk_buff *skb, struct genl_info *info)
 	if (wimax_dev == NULL)
 		goto error_no_wimax_dev;
 	dev = wimax_dev_to_dev(wimax_dev);
-	result = -EINVAL;
+	result = -ERR(EINVAL);
 	if (info->attrs[WIMAX_GNL_RFKILL_STATE] == NULL) {
 		dev_err(dev, "WIMAX_GNL_RFKILL: can't find RFKILL_STATE "
 			"attribute\n");

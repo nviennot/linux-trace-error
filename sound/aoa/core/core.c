@@ -25,9 +25,9 @@ static int attach_codec_to_fabric(struct aoa_codec *c)
 	int err;
 
 	if (!try_module_get(c->owner))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	/* found_codec has to be assigned */
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (fabric->found_codec)
 		err = fabric->found_codec(c);
 	if (err) {
@@ -89,13 +89,13 @@ int aoa_fabric_register(struct aoa_fabric *new_fabric, struct device *dev)
 	/* allow querying for presence of fabric
 	 * (i.e. do this test first!) */
 	if (new_fabric == fabric) {
-		err = -EALREADY;
+		err = -ERR(EALREADY);
 		goto attach;
 	}
 	if (fabric)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	if (!new_fabric)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = aoa_alsa_init(new_fabric->name, new_fabric->owner, dev);
 	if (err)

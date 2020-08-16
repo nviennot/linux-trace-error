@@ -122,7 +122,7 @@ static inline int wm8994_request_irq(struct wm8994 *wm8994, int irq,
 				     void *data)
 {
 	if (!wm8994->irq_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return request_threaded_irq(regmap_irq_get_virq(wm8994->irq_data, irq),
 				    NULL, handler, IRQF_TRIGGER_RISING, name,
 				    data);

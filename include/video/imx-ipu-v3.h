@@ -179,7 +179,7 @@ static inline int ipu_channel_alpha_channel(int ch_num)
 	case IPUV3_CHANNEL_MEM_VDI_PLANE1_COMB:
 		return IPUV3_CHANNEL_MEM_VDI_PLANE1_COMB_ALPHA;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

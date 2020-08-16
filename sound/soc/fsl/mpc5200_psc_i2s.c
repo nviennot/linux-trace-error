@@ -63,7 +63,7 @@ static int psc_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_dbg(psc_dma->dev, "invalid format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	out_be32(&psc_dma->psc_regs->sicr, psc_dma->sicr | mode);
 
@@ -90,7 +90,7 @@ static int psc_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
 	struct psc_dma *psc_dma = snd_soc_dai_get_drvdata(cpu_dai);
 	dev_dbg(psc_dma->dev, "psc_i2s_set_sysclk(cpu_dai=%p, dir=%i)\n",
 				cpu_dai, dir);
-	return (dir == SND_SOC_CLOCK_IN) ? 0 : -EINVAL;
+	return (dir == SND_SOC_CLOCK_IN) ? 0 : -ERR(EINVAL);
 }
 
 /**
@@ -109,7 +109,7 @@ static int psc_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int format)
 	struct psc_dma *psc_dma = snd_soc_dai_get_drvdata(cpu_dai);
 	dev_dbg(psc_dma->dev, "psc_i2s_set_fmt(cpu_dai=%p, format=%i)\n",
 				cpu_dai, format);
-	return (format == SND_SOC_DAIFMT_I2S) ? 0 : -EINVAL;
+	return (format == SND_SOC_DAIFMT_I2S) ? 0 : -ERR(EINVAL);
 }
 
 /* ---------------------------------------------------------------------

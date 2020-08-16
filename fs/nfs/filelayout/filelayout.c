@@ -195,7 +195,7 @@ reset:
 		return -NFS4ERR_RESET_TO_MDS;
 	}
 	task->tk_status = 0;
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /* NFS_PROTO call done callback routines */
@@ -215,7 +215,7 @@ static int filelayout_read_done_cb(struct rpc_task *task,
 		return task->tk_status;
 	case -EAGAIN:
 		rpc_restart_call_prepare(task);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	return 0;
@@ -327,7 +327,7 @@ static int filelayout_write_done_cb(struct rpc_task *task,
 		return task->tk_status;
 	case -EAGAIN:
 		rpc_restart_call_prepare(task);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	filelayout_set_layoutcommit(hdr);
@@ -352,10 +352,10 @@ static int filelayout_commit_done_cb(struct rpc_task *task,
 	switch (err) {
 	case -NFS4ERR_RESET_TO_MDS:
 		pnfs_generic_prepare_to_resend_writes(data);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case -EAGAIN:
 		rpc_restart_call_prepare(task);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	pnfs_set_layoutcommit(data->inode, data->lseg, data->lwb);
@@ -541,7 +541,7 @@ filelayout_check_deviceid(struct pnfs_layout_hdr *lo,
 {
 	struct nfs4_deviceid_node *d;
 	struct nfs4_file_layout_dsaddr *dsaddr;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 
 	/* Is the deviceid already set? If so, we're good. */
 	if (fl->dsaddr != NULL)
@@ -601,7 +601,7 @@ filelayout_check_layout(struct pnfs_layout_hdr *lo,
 			struct nfs4_layoutget_res *lgr,
 			gfp_t gfp_flags)
 {
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 
 	dprintk("--> %s\n", __func__);
 
@@ -737,7 +737,7 @@ filelayout_decode_layout(struct pnfs_layout_hdr *flo,
 
 out_err:
 	__free_page(scratch);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static void
@@ -1008,7 +1008,7 @@ static int filelayout_initiate_commit(struct nfs_commit_data *data, int how)
 out_err:
 	pnfs_generic_prepare_to_resend_writes(data);
 	pnfs_generic_commit_release(data);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int

@@ -148,7 +148,7 @@ static Indirect *ext4_get_branch(struct inode *inode, int depth,
 	struct super_block *sb = inode->i_sb;
 	Indirect *p = chain;
 	struct buffer_head *bh;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	*err = 0;
 	/* i_data is not going away, no lock needed */
@@ -523,7 +523,7 @@ int ext4_ind_map_blocks(handle_t *handle, struct inode *inode,
 			int flags)
 {
 	struct ext4_allocation_request ar;
-	int err = -EIO;
+	int err = -ERR(EIO);
 	ext4_lblk_t offsets[4];
 	Indirect chain[4];
 	Indirect *partial;

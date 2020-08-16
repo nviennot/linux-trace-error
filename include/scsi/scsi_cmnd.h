@@ -171,7 +171,7 @@ extern blk_status_t scsi_init_io(struct scsi_cmnd *cmd);
 extern int scsi_dma_map(struct scsi_cmnd *cmd);
 extern void scsi_dma_unmap(struct scsi_cmnd *cmd);
 #else /* !CONFIG_SCSI_DMA */
-static inline int scsi_dma_map(struct scsi_cmnd *cmd) { return -ENOSYS; }
+static inline int scsi_dma_map(struct scsi_cmnd *cmd) { return -ERR(ENOSYS); }
 static inline void scsi_dma_unmap(struct scsi_cmnd *cmd) { }
 #endif /* !CONFIG_SCSI_DMA */
 

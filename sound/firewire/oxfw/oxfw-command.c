@@ -36,11 +36,11 @@ int avc_stream_set_format(struct fw_unit *unit, enum avc_general_plug_dir dir,
 	if (err < 0)
 		;
 	else if (err < len + 10)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else
 		err = 0;
 
@@ -81,16 +81,16 @@ int avc_stream_get_format(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 12)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08)	/* NOT IMPLEMENTED */
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 	else if (buf[0] == 0x0a)	/* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b)	/* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	/* LIST subfunction has entry ID */
 	else if ((subfunc == 0xc1) && (buf[10] != eid))
-		err = -EIO;
+		err = -ERR(EIO);
 	if (err < 0)
 		goto end;
 
@@ -121,7 +121,7 @@ int avc_general_inquiry_sig_fmt(struct fw_unit *unit, unsigned int rate,
 			break;
 	}
 	if (sfc == CIP_SFC_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = kzalloc(8, GFP_KERNEL);
 	if (buf == NULL)
@@ -145,9 +145,9 @@ int avc_general_inquiry_sig_fmt(struct fw_unit *unit, unsigned int rate,
 	if (err < 0)
 		;
 	else if (err < 8)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08)	/* NOT IMPLEMENTED */
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 	if (err < 0)
 		goto end;
 

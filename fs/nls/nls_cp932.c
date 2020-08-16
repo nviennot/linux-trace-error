@@ -7842,7 +7842,7 @@ static int uni2char(const wchar_t uni,
 	unsigned char ch = (uni>>8)&0xFF;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (ch == 0xFF && 0x61 <= cl && cl <= 0x9F) {
 		out[0] = cl + 0x40;
@@ -7851,12 +7851,12 @@ static int uni2char(const wchar_t uni,
 	uni2charset = page_uni2charset[ch];
 	if (uni2charset) {
 		if (boundlen < 2)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 
 		out[0] = uni2charset[cl*2];
 		out[1] = uni2charset[cl*2+1];
 		if (out[0] == 0x00 && out[1] == 0x00)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 2;
 	} else if (ch == 0) {
 		if (cl <= 0x7F) {
@@ -7868,10 +7868,10 @@ static int uni2char(const wchar_t uni,
 			if (out[0] && out[1])
 				return 2;
 		}
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int char2uni(const unsigned char *rawstring, int boundlen,
@@ -7881,7 +7881,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	const wchar_t *charset2uni;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (rawstring[0] <= 0x7F) {
 		*uni = rawstring[0];
@@ -7893,18 +7893,18 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	}
 
 	if (boundlen < 2)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	ch = rawstring[0];
 	cl = rawstring[1];
 	charset2uni = page_charset2uni[ch];
 	if (charset2uni && cl) {
 		*uni = charset2uni[cl];
 		if (*uni == 0x0000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 2;
 	}
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static struct nls_table table = {

@@ -109,7 +109,7 @@ int snd_bebob_maudio_load_firmware(struct fw_unit *unit)
 	if (date < 0x3230303730343031LL) {
 		dev_err(&unit->device,
 			"Use firmware version 5058 or later\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	cues = kmalloc_array(3, sizeof(*cues), GFP_KERNEL);
@@ -128,7 +128,7 @@ int snd_bebob_maudio_load_firmware(struct fw_unit *unit)
 	if (rcode != RCODE_COMPLETE) {
 		dev_err(&unit->device,
 			"Failed to send a cue to load firmware\n");
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 
 	return err;
@@ -178,7 +178,7 @@ avc_maudio_set_special_clk(struct snd_bebob *bebob, unsigned int clk_src,
 
 	if (amdtp_stream_running(&bebob->rx_stream) ||
 	    amdtp_stream_running(&bebob->tx_stream))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	buf = kmalloc(12, GFP_KERNEL);
 	if (buf == NULL)
@@ -202,11 +202,11 @@ avc_maudio_set_special_clk(struct snd_bebob *bebob, unsigned int clk_src,
 				  BIT(5) | BIT(6) | BIT(7) | BIT(8) |
 				  BIT(9));
 	if ((err > 0) && (err < 10))
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	if (err < 0)
 		goto end;
 
@@ -381,7 +381,7 @@ static int special_clk_ctl_put(struct snd_kcontrol *kctl,
 
 	id = uval->value.enumerated.item[0];
 	if (id >= ARRAY_SIZE(special_clk_types))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&bebob->mutex);
 
@@ -488,7 +488,7 @@ static int special_dig_in_iface_ctl_set(struct snd_kcontrol *kctl,
 
 	id = uval->value.enumerated.item[0];
 	if (id >= ARRAY_SIZE(special_dig_in_iface_labels))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* decode user value */
 	dig_in_fmt = (id >> 1) & 0x01;
@@ -561,7 +561,7 @@ static int special_dig_out_iface_ctl_set(struct snd_kcontrol *kctl,
 
 	id = uval->value.enumerated.item[0];
 	if (id >= ARRAY_SIZE(special_dig_out_iface_labels))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&bebob->mutex);
 
@@ -634,7 +634,7 @@ special_meter_get(struct snd_bebob *bebob, u32 *target, unsigned int size)
 
 	channels = ARRAY_SIZE(special_meter_labels) * 2;
 	if (size < channels * sizeof(u32))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* omit last 4 bytes because it's clock info. */
 	buf = kmalloc(METER_SIZE_SPECIAL - 4, GFP_KERNEL);
@@ -693,7 +693,7 @@ normal_meter_get(struct snd_bebob *bebob, u32 *buf, unsigned int size)
 
 	channels = spec->num * 2;
 	if (size < channels * sizeof(u32))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = get_meter(bebob, (void *)buf, size);
 	if (err < 0)

@@ -122,7 +122,7 @@ static int ip6_finish_output2(struct net *net, struct sock *sk, struct sk_buff *
 
 	IP6_INC_STATS(net, ip6_dst_idev(dst), IPSTATS_MIB_OUTNOROUTES);
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __ip6_finish_output(struct net *net, struct sock *sk, struct sk_buff *skb)
@@ -217,7 +217,7 @@ int ip6_xmit(const struct sock *sk, struct sk_buff *skb, struct flowi6 *fl6,
 			IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 				      IPSTATS_MIB_OUTDISCARDS);
 			kfree_skb(skb);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		if (skb->sk)
 			skb_set_owner_w(skb2, skb->sk);
@@ -290,7 +290,7 @@ int ip6_xmit(const struct sock *sk, struct sk_buff *skb, struct flowi6 *fl6,
 
 	IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)), IPSTATS_MIB_FRAGFAILS);
 	kfree_skb(skb);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 EXPORT_SYMBOL(ip6_xmit);
 
@@ -474,7 +474,7 @@ int ip6_forward(struct sk_buff *skb)
 		__IP6_INC_STATS(net, idev, IPSTATS_MIB_INHDRERRORS);
 
 		kfree_skb(skb);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	/* XXX: idev->cnf.proxy_ndp? */
@@ -551,7 +551,7 @@ int ip6_forward(struct sk_buff *skb)
 		__IP6_INC_STATS(net, ip6_dst_idev(dst),
 				IPSTATS_MIB_FRAGFAILS);
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	if (skb_cow(skb, dst->dev->hard_header_len)) {
@@ -574,7 +574,7 @@ error:
 	__IP6_INC_STATS(net, idev, IPSTATS_MIB_INADDRERRORS);
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void ip6_copy_metadata(struct sk_buff *to, struct sk_buff *from)
@@ -934,7 +934,7 @@ fail_toobig:
 		sk_nocaps_add(skb->sk, NETIF_F_GSO_MASK);
 
 	icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 
 fail:
 	IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
@@ -1069,7 +1069,7 @@ static int ip6_dst_lookup_tail(struct net *net, const struct sock *sk,
 	rcu_read_lock_bh();
 	n = __ipv6_neigh_lookup_noref(rt->dst.dev,
 				      rt6_nexthop(rt, &fl6->daddr));
-	err = n && !(n->nud_state & NUD_VALID) ? -EINVAL : 0;
+	err = n && !(n->nud_state & NUD_VALID) ? -ERR(EINVAL) : 0;
 	rcu_read_unlock_bh();
 
 	if (err) {
@@ -1101,7 +1101,7 @@ static int ip6_dst_lookup_tail(struct net *net, const struct sock *sk,
 #endif
 	if (ipv6_addr_v4mapped(&fl6->saddr) &&
 	    !(ipv6_addr_v4mapped(&fl6->daddr) || ipv6_addr_any(&fl6->daddr))) {
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		goto out_err_release;
 	}
 
@@ -1250,12 +1250,12 @@ struct dst_entry *ip6_dst_lookup_tunnel(struct sk_buff *skb,
 					      NULL);
 	if (IS_ERR(dst)) {
 		netdev_dbg(dev, "no route to %pI6\n", &fl6.daddr);
-		return ERR_PTR(-ENETUNREACH);
+		return ERR_PTR(-ERR(ENETUNREACH));
 	}
 	if (dst->dev == dev) { /* is this necessary? */
 		netdev_dbg(dev, "circular route to %pI6\n", &fl6.daddr);
 		dst_release(dst);
-		return ERR_PTR(-ELOOP);
+		return ERR_PTR(-ERR(ELOOP));
 	}
 #ifdef CONFIG_DST_CACHE
 	if (use_cache)
@@ -1315,11 +1315,11 @@ static int ip6_setup_cork(struct sock *sk, struct inet_cork_full *cork,
 	 */
 	if (opt) {
 		if (WARN_ON(v6_cork->opt))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		v6_cork->opt = kzalloc(sizeof(*opt), sk->sk_allocation);
 		if (unlikely(!v6_cork->opt))
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		v6_cork->opt->tot_len = sizeof(*opt);
 		v6_cork->opt->opt_flen = opt->opt_flen;
@@ -1328,22 +1328,22 @@ static int ip6_setup_cork(struct sock *sk, struct inet_cork_full *cork,
 		v6_cork->opt->dst0opt = ip6_opt_dup(opt->dst0opt,
 						    sk->sk_allocation);
 		if (opt->dst0opt && !v6_cork->opt->dst0opt)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		v6_cork->opt->dst1opt = ip6_opt_dup(opt->dst1opt,
 						    sk->sk_allocation);
 		if (opt->dst1opt && !v6_cork->opt->dst1opt)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		v6_cork->opt->hopopt = ip6_opt_dup(opt->hopopt,
 						   sk->sk_allocation);
 		if (opt->hopopt && !v6_cork->opt->hopopt)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		v6_cork->opt->srcrt = ip6_rthdr_dup(opt->srcrt,
 						    sk->sk_allocation);
 		if (opt->srcrt && !v6_cork->opt->srcrt)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		/* need source address above miyazawa*/
 	}
@@ -1363,7 +1363,7 @@ static int ip6_setup_cork(struct sock *sk, struct inet_cork_full *cork,
 			mtu = np->frag_size;
 	}
 	if (mtu < IPV6_MIN_MTU)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	cork->base.fragsize = mtu;
 	cork->base.gso_size = ipc6->gso_size;
 	cork->base.tx_flags = 0;
@@ -1457,7 +1457,7 @@ static int __ip6_append_data(struct sock *sk,
 emsgsize:
 		pmtu = max_t(int, mtu - headersize + sizeof(struct ipv6hdr), 0);
 		ipv6_local_error(sk, EMSGSIZE, fl6, pmtu);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	/* CHECKSUM_PARTIAL only with no extension headers and when
@@ -1473,7 +1473,7 @@ emsgsize:
 	if (flags & MSG_ZEROCOPY && length && sock_flag(sk, SOCK_ZEROCOPY)) {
 		uarg = sock_zerocopy_realloc(sk, length, skb_zcopy(skb));
 		if (!uarg)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		extra_uref = !skb_zcopy(skb);	/* only ref on new uarg */
 		if (rt->dst.dev->features & NETIF_F_SG &&
 		    csummode == CHECKSUM_PARTIAL) {
@@ -1574,7 +1574,7 @@ alloc_new_skb:
 
 			copy = datalen - transhdrlen - fraggap - pagedlen;
 			if (copy < 0) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto error;
 			}
 			if (transhdrlen) {
@@ -1588,7 +1588,7 @@ alloc_new_skb:
 					skb = alloc_skb(alloclen + hh_len,
 							sk->sk_allocation);
 				if (unlikely(!skb))
-					err = -ENOBUFS;
+					err = -ERR(ENOBUFS);
 			}
 			if (!skb)
 				goto error;
@@ -1678,7 +1678,7 @@ alloc_new_skb:
 
 			if (!skb_can_coalesce(skb, i, pfrag->page,
 					      pfrag->offset)) {
-				err = -EMSGSIZE;
+				err = -ERR(EMSGSIZE);
 				if (i == MAX_SKB_FRAGS)
 					goto error;
 

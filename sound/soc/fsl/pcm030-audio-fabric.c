@@ -64,7 +64,7 @@ static int pcm030_fabric_probe(struct platform_device *op)
 	int i;
 
 	if (!of_machine_is_compatible("phytec,pcm030"))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	pdata = devm_kzalloc(&op->dev, sizeof(struct pcm030_audio_data),
 			     GFP_KERNEL);
@@ -78,7 +78,7 @@ static int pcm030_fabric_probe(struct platform_device *op)
 	platform_np = of_parse_phandle(np, "asoc-platform", 0);
 	if (!platform_np) {
 		dev_err(&op->dev, "ac97 not registered\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	for_each_card_prelinks(card, i, dai_link)

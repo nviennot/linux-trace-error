@@ -171,7 +171,7 @@ static int _rsnd_gen_regmap_init(struct rsnd_priv *priv,
 	if (!res)
 		res = platform_get_resource(pdev, IORESOURCE_MEM, reg_id);
 	if (!res)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	base = devm_ioremap_resource(dev, res);
 	if (IS_ERR(base))
@@ -469,7 +469,7 @@ int rsnd_gen_probe(struct rsnd_priv *priv)
 
 	priv->gen = gen;
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	if (rsnd_is_gen1(priv))
 		ret = rsnd_gen1_probe(priv);
 	else if (rsnd_is_gen2(priv) ||

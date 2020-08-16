@@ -93,7 +93,7 @@ try_again:
 		goto try_again;
 	}
 
-	sk->sk_err = EHOSTUNREACH;
+	sk->sk_err = ERR(EHOSTUNREACH);
 	if (!sock_flag(sk, SOCK_DEAD))
 		sk->sk_state_change(sk);
 }

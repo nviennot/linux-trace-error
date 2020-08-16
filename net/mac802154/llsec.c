@@ -218,11 +218,11 @@ int mac802154_llsec_key_add(struct mac802154_llsec *sec,
 
 	if (!(key->frame_types & (1 << IEEE802154_FC_TYPE_MAC_CMD)) &&
 	    key->cmd_frame_ids)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(pos, &sec->table.keys, list) {
 		if (llsec_key_id_equal(&pos->id, id))
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		if (memcmp(pos->key->key, key->key,
 			   IEEE802154_LLSEC_KEY_SIZE))
@@ -236,7 +236,7 @@ int mac802154_llsec_key_add(struct mac802154_llsec *sec,
 		 */
 		if (pos->key->frame_types != key->frame_types ||
 		    pos->key->cmd_frame_ids != key->cmd_frame_ids)
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		break;
 	}
@@ -282,7 +282,7 @@ int mac802154_llsec_key_del(struct mac802154_llsec *sec,
 		}
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static bool llsec_dev_use_shortaddr(__le16 short_addr)
@@ -359,7 +359,7 @@ int mac802154_llsec_dev_add(struct mac802154_llsec *sec,
 	if ((llsec_dev_use_shortaddr(dev->short_addr) &&
 	     llsec_dev_find_short(sec, dev->short_addr, dev->pan_id)) ||
 	     llsec_dev_find_long(sec, dev->hwaddr))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
 	if (!entry)
@@ -391,7 +391,7 @@ int mac802154_llsec_dev_del(struct mac802154_llsec *sec, __le64 device_addr)
 
 	pos = llsec_dev_find_long(sec, device_addr);
 	if (!pos)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hash_del_rcu(&pos->bucket_s);
 	hash_del_rcu(&pos->bucket_hw);
@@ -428,10 +428,10 @@ int mac802154_llsec_devkey_add(struct mac802154_llsec *sec,
 	dev = llsec_dev_find_long(sec, dev_addr);
 
 	if (!dev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (llsec_devkey_find(dev, &key->key_id))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	devkey = kmalloc(sizeof(*devkey), GFP_KERNEL);
 	if (!devkey)
@@ -452,11 +452,11 @@ int mac802154_llsec_devkey_del(struct mac802154_llsec *sec,
 	dev = llsec_dev_find_long(sec, dev_addr);
 
 	if (!dev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	devkey = llsec_devkey_find(dev, &key->key_id);
 	if (!devkey)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	list_del_rcu(&devkey->devkey.list);
 	kfree_rcu(devkey, rcu);
@@ -490,7 +490,7 @@ int mac802154_llsec_seclevel_add(struct mac802154_llsec *sec,
 	struct mac802154_llsec_seclevel *entry;
 
 	if (llsec_find_seclevel(sec, sl))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	entry = kmalloc(sizeof(*entry), GFP_KERNEL);
 	if (!entry)
@@ -510,7 +510,7 @@ int mac802154_llsec_seclevel_del(struct mac802154_llsec *sec,
 
 	pos = llsec_find_seclevel(sec, sl);
 	if (!pos)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	list_del_rcu(&pos->level.list);
 	kfree_rcu(pos, rcu);
@@ -526,7 +526,7 @@ static int llsec_recover_addr(struct mac802154_llsec *sec,
 	addr->pan_id = sec->params.pan_id;
 
 	if (caddr == cpu_to_le16(IEEE802154_ADDR_BROADCAST)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (caddr == cpu_to_le16(IEEE802154_ADDR_UNDEF)) {
 		addr->extended_addr = sec->params.coord_hwaddr;
 		addr->mode = IEEE802154_ADDR_LONG;
@@ -708,7 +708,7 @@ int mac802154_llsec_encrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
 	hlen = ieee802154_hdr_pull(skb, &hdr);
 
 	if (hlen < 0 || hdr.fc.type != IEEE802154_FC_TYPE_DATA)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!hdr.fc.security_enabled ||
 	    (hdr.sec.level == IEEE802154_SCF_SECLEVEL_NONE)) {
@@ -719,20 +719,20 @@ int mac802154_llsec_encrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
 	authlen = ieee802154_sechdr_authtag_len(&hdr.sec);
 
 	if (skb->len + hlen + authlen + IEEE802154_MFR_SIZE > IEEE802154_MTU)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rcu_read_lock();
 
 	read_lock_bh(&sec->lock);
 
 	if (!sec->params.enabled) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto fail_read;
 	}
 
 	key = llsec_lookup_key(sec, &hdr, &hdr.dest, NULL);
 	if (!key) {
-		rc = -ENOKEY;
+		rc = -ERR(ENOKEY);
 		goto fail_read;
 	}
 
@@ -745,7 +745,7 @@ int mac802154_llsec_encrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
 	if (frame_ctr == 0xFFFFFFFF) {
 		write_unlock_bh(&sec->lock);
 		llsec_key_put(key);
-		rc = -EOVERFLOW;
+		rc = -ERR(EOVERFLOW);
 		goto fail;
 	}
 
@@ -820,7 +820,7 @@ llsec_lookup_seclevel(const struct mac802154_llsec *sec,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int
@@ -944,7 +944,7 @@ llsec_update_devkey_info(struct mac802154_llsec_device *dev,
 	if (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RESTRICT) {
 		devkey = llsec_devkey_find(dev, in_key);
 		if (!devkey)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	if (dev->dev.key_mode == IEEE802154_LLSEC_DEVKEY_RECORD) {
@@ -959,7 +959,7 @@ llsec_update_devkey_info(struct mac802154_llsec_device *dev,
 	if ((!devkey && frame_counter < dev->dev.frame_counter) ||
 	    (devkey && frame_counter < devkey->devkey.frame_counter)) {
 		spin_unlock_bh(&dev->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (devkey)
@@ -984,16 +984,16 @@ int mac802154_llsec_decrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
 	u32 frame_ctr;
 
 	if (ieee802154_hdr_peek(skb, &hdr) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!hdr.fc.security_enabled)
 		return 0;
 	if (hdr.fc.version == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock_bh(&sec->lock);
 	if (!sec->params.enabled) {
 		read_unlock_bh(&sec->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	read_unlock_bh(&sec->lock);
 
@@ -1001,32 +1001,32 @@ int mac802154_llsec_decrypt(struct mac802154_llsec *sec, struct sk_buff *skb)
 
 	key = llsec_lookup_key(sec, &hdr, &hdr.source, &key_id);
 	if (!key) {
-		err = -ENOKEY;
+		err = -ERR(ENOKEY);
 		goto fail;
 	}
 
 	dev = llsec_lookup_dev(sec, &hdr.source);
 	if (!dev) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto fail_dev;
 	}
 
 	if (llsec_lookup_seclevel(sec, hdr.fc.type, 0, &seclevel) < 0) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto fail_dev;
 	}
 
 	if (!(seclevel.sec_levels & BIT(hdr.sec.level)) &&
 	    (hdr.sec.level == 0 && seclevel.device_override &&
 	     !dev->dev.seclevel_exempt)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto fail_dev;
 	}
 
 	frame_ctr = le32_to_cpu(hdr.sec.frame_counter);
 
 	if (frame_ctr == 0xffffffff) {
-		err = -EOVERFLOW;
+		err = -ERR(EOVERFLOW);
 		goto fail_dev;
 	}
 

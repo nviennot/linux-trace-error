@@ -328,7 +328,7 @@ static int audio_ssp_init_portregs(struct cygnus_aio_port *aio)
 		break;
 	default:
 		dev_err(aio->cygaud->dev, "Port not supported\n");
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 
 	return status;
@@ -419,7 +419,7 @@ static int audio_ssp_out_enable(struct cygnus_aio_port *aio)
 	default:
 		dev_err(aio->cygaud->dev,
 			"Port not supported %d\n", aio->portnum);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 
 	return status;
@@ -482,7 +482,7 @@ static int audio_ssp_out_disable(struct cygnus_aio_port *aio)
 	default:
 		dev_err(aio->cygaud->dev,
 			"Port not supported %d\n", aio->portnum);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 
 	return status;
@@ -506,7 +506,7 @@ static int pll_configure_mclk(struct cygnus_audio *cygaud, u32 mclk,
 	if (!found) {
 		dev_err(cygaud->dev,
 			"%s No valid mclk freq (%u) found!\n", __func__, mclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ch_clk = cygaud->audio_clk[p_entry->pll_ch_num];
@@ -558,7 +558,7 @@ static int cygnus_ssp_set_clocks(struct cygnus_aio_port *aio)
 	 * following values... (2,4,6,8,10,12,14)
 	 */
 	if ((aio->mclk % bit_rate) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ratio = aio->mclk / bit_rate;
 	switch (ratio) {
@@ -577,7 +577,7 @@ static int cygnus_ssp_set_clocks(struct cygnus_aio_port *aio)
 			"Invalid combination of MCLK and BCLK\n");
 		dev_err(aio->cygaud->dev, "lrclk = %u, bits/frame = %u, mclk = %u\n",
 			aio->lrclk, aio->bit_per_frame, aio->mclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set sclk rate */
@@ -602,7 +602,7 @@ static int cygnus_ssp_set_clocks(struct cygnus_aio_port *aio)
 		break;
 	default:
 		dev_err(aio->cygaud->dev, "Unknown port type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set MCLK_RATE ssp port (spdif and ssp are the same) */
@@ -640,7 +640,7 @@ static int cygnus_ssp_hw_params(struct snd_pcm_substream *substream,
 		if ((rate == 192000) && (params_channels(params) > 4)) {
 			dev_err(aio->cygaud->dev, "Cannot run %d channels at %dHz\n",
 				params_channels(params), rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case CYGNUS_SSPMODE_I2S:
@@ -649,7 +649,7 @@ static int cygnus_ssp_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(aio->cygaud->dev,
 			"%s port running in unknown mode\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -669,7 +669,7 @@ static int cygnus_ssp_hw_params(struct snd_pcm_substream *substream,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		value = readl(aio->cygaud->audio + aio->regs.bf_sourcech_cfg);
@@ -697,7 +697,7 @@ static int cygnus_ssp_hw_params(struct snd_pcm_substream *substream,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -726,7 +726,7 @@ static int cygnus_ssp_set_sysclk(struct snd_soc_dai *dai,
 	if (sel < 0) {
 		dev_err(aio->cygaud->dev,
 			"%s Setting mclk failed.\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aio->mclk = freq;
@@ -826,7 +826,7 @@ int cygnus_ssp_set_custom_fsync_width(struct snd_soc_dai *cpu_dai, int len)
 		aio->fsync_width = len;
 		return 0;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 EXPORT_SYMBOL_GPL(cygnus_ssp_set_custom_fsync_width);
@@ -844,7 +844,7 @@ static int cygnus_ssp_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	dev_dbg(aio->cygaud->dev, "%s Enter  fmt: %x\n", __func__, fmt);
 
 	if (aio->port_type == PORT_SPDIF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ssp_newcfg = 0;
 
@@ -858,7 +858,7 @@ static int cygnus_ssp_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		aio->is_slave = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -886,7 +886,7 @@ static int cygnus_ssp_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -961,7 +961,7 @@ static int cygnus_ssp_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -981,17 +981,17 @@ static int cygnus_set_dai_tdm_slot(struct snd_soc_dai *cpu_dai,
 	if (tx_mask != rx_mask) {
 		dev_err(aio->cygaud->dev,
 			"%s tx_mask must equal rx_mask\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	active_slots = hweight32(tx_mask);
 
 	if (active_slots > 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Slot value must be even */
 	if (active_slots % 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We encode 16 slots as 0 in the reg */
 	if (active_slots == 16)
@@ -1024,7 +1024,7 @@ static int cygnus_set_dai_tdm_slot(struct snd_soc_dai *cpu_dai,
 		dev_err(aio->cygaud->dev,
 			"%s In TDM mode, frame bits INVALID (%d)\n",
 			__func__, frame_bits);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aio->bit_per_frame = frame_bits;
@@ -1067,7 +1067,7 @@ static int __cygnus_ssp_suspend(struct snd_soc_dai *cpu_dai)
 		if (val >= ARRAY_SIZE(aio->cygaud->audio_clk)) {
 			dev_err(aio->cygaud->dev, "Clk index %u is out of bounds\n",
 				val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (aio->clk_trace.cap_clk_en)
@@ -1107,7 +1107,7 @@ static int __cygnus_ssp_resume(struct snd_soc_dai *cpu_dai)
 			if (error) {
 				dev_err(aio->cygaud->dev, "%s clk_prepare_enable failed\n",
 					__func__);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		if (aio->clk_trace.play_clk_en) {
@@ -1119,7 +1119,7 @@ static int __cygnus_ssp_resume(struct snd_soc_dai *cpu_dai)
 						audio_clk[aio->pll_clk_num]);
 				dev_err(aio->cygaud->dev, "%s clk_prepare_enable failed\n",
 					__func__);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -1224,7 +1224,7 @@ static int parse_ssp_child_node(struct platform_device *pdev,
 
 	if (of_property_read_u32(dn, "reg", &rawval)) {
 		dev_err(&pdev->dev, "Missing reg property\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	portnum = rawval;
@@ -1246,7 +1246,7 @@ static int parse_ssp_child_node(struct platform_device *pdev,
 		break;
 	default:
 		dev_err(&pdev->dev, "Bad value for reg %u\n", rawval);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aio = &cygaud->portinfo[portnum];
@@ -1274,7 +1274,7 @@ static int parse_ssp_child_node(struct platform_device *pdev,
 		break;
 	default:
 		dev_err(&pdev->dev, "Bad value for port_type %d\n", port_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(&pdev->dev, "%s portnum = %d\n", __func__, aio->portnum);
@@ -1310,7 +1310,7 @@ static int cygnus_ssp_probe(struct platform_device *pdev)
 	struct device_node *child_node;
 	struct resource *res;
 	struct cygnus_audio *cygaud;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int node_count;
 	int active_port_count;
 
@@ -1338,7 +1338,7 @@ static int cygnus_ssp_probe(struct platform_device *pdev)
 	if ((node_count < 1) || (node_count > CYGNUS_MAX_PORTS)) {
 		dev_err(dev, "child nodes is %d.  Must be between 1 and %d\n",
 			node_count, CYGNUS_MAX_PORTS);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	active_port_count = 0;

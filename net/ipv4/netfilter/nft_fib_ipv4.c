@@ -170,7 +170,7 @@ nft_fib4_select_ops(const struct nft_ctx *ctx,
 	enum nft_fib_result result;
 
 	if (!tb[NFTA_FIB_RESULT])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	result = ntohl(nla_get_be32(tb[NFTA_FIB_RESULT]));
 
@@ -182,7 +182,7 @@ nft_fib4_select_ops(const struct nft_ctx *ctx,
 	case NFT_FIB_RESULT_ADDRTYPE:
 		return &nft_fib4_type_ops;
 	default:
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 }
 

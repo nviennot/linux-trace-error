@@ -53,7 +53,7 @@ static struct atmel_classd_pdata *atmel_classd_dt_init(struct device *dev)
 
 	if (!np) {
 		dev_err(dev, "device node not found\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
@@ -83,7 +83,7 @@ static struct atmel_classd_pdata *atmel_classd_dt_init(struct device *dev)
 static inline struct atmel_classd_pdata *
 atmel_classd_dt_init(struct device *dev)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 #endif
 
@@ -165,7 +165,7 @@ atmel_classd_platform_configure_dma(struct snd_pcm_substream *substream,
 	if (params_physical_width(params) != 16) {
 		dev_err(dd->dev,
 			"only supports 16-bit audio data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params_channels(params) == 1)
@@ -460,7 +460,7 @@ static int atmel_classd_codec_dai_trigger(struct snd_pcm_substream *substream,
 			| (CLASSD_MR_REN_DIS << CLASSD_MR_REN_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, CLASSD_MR, mask, val);

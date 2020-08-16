@@ -148,7 +148,7 @@ unx_marshal(struct rpc_task *task, struct xdr_stream *xdr)
 	return 0;
 
 marshal_failed:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /*
@@ -170,21 +170,21 @@ unx_validate(struct rpc_task *task, struct xdr_stream *xdr)
 
 	p = xdr_inline_decode(xdr, 2 * sizeof(*p));
 	if (!p)
-		return -EIO;
+		return -ERR(EIO);
 	switch (*p++) {
 	case rpc_auth_null:
 	case rpc_auth_unix:
 	case rpc_auth_short:
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 	size = be32_to_cpup(p);
 	if (size > RPC_MAX_AUTH_SIZE)
-		return -EIO;
+		return -ERR(EIO);
 	p = xdr_inline_decode(xdr, size);
 	if (!p)
-		return -EIO;
+		return -ERR(EIO);
 
 	auth->au_verfsize = XDR_QUADLEN(size) + 2;
 	auth->au_rslack = XDR_QUADLEN(size) + 2;

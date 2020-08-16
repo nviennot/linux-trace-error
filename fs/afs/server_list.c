@@ -85,7 +85,7 @@ struct afs_server_list *afs_alloc_server_list(struct afs_cell *cell,
 	}
 
 	if (slist->nr_servers == 0) {
-		ret = -EDESTADDRREQ;
+		ret = -ERR(EDESTADDRREQ);
 		goto error_2;
 	}
 

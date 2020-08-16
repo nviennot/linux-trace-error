@@ -161,7 +161,7 @@ static ssize_t mmio_read(struct trace_iterator *iter, struct file *filp,
 
 print_out:
 	ret = trace_seq_to_user(s, ubuf, cnt);
-	return (ret == -EBUSY) ? 0 : ret;
+	return (ret == -ERR(EBUSY)) ? 0 : ret;
 }
 
 static enum print_line_t mmio_print_rw(struct trace_iterator *iter)

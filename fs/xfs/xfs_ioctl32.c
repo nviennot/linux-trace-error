@@ -250,10 +250,10 @@ xfs_compat_ioc_fsbulkstat(
 	/* should be called again (unused here, but used in dmapi) */
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (get_user(addr, &p32->lastip))
 		return -EFAULT;
@@ -270,10 +270,10 @@ xfs_compat_ioc_fsbulkstat(
 		return -EFAULT;
 
 	if (bulkreq.icount <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bulkreq.ubuffer == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	breq.ubuffer = bulkreq.ubuffer;
 	breq.icount = bulkreq.icount;
@@ -303,7 +303,7 @@ xfs_compat_ioc_fsbulkstat(
 		error = xfs_bulkstat(&breq, bs_one_func);
 		lastino = breq.startino - 1;
 	} else {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	}
 	if (error)
 		return error;
@@ -359,7 +359,7 @@ xfs_compat_attrlist_by_handle(
 	int			error;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (copy_from_user(&al_hreq, p, sizeof(al_hreq)))
 		return -EFAULT;
 
@@ -386,20 +386,20 @@ xfs_compat_attrmulti_by_handle(
 	unsigned int				i, size;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (copy_from_user(&am_hreq, arg,
 			   sizeof(compat_xfs_fsop_attrmulti_handlereq_t)))
 		return -EFAULT;
 
 	/* overflow check */
 	if (am_hreq.opcount >= INT_MAX / sizeof(compat_xfs_attr_multiop_t))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	dentry = xfs_compat_handlereq_to_dentry(parfilp, &am_hreq.hreq);
 	if (IS_ERR(dentry))
 		return PTR_ERR(dentry);
 
-	error = -E2BIG;
+	error = -ERR(E2BIG);
 	size = am_hreq.opcount * sizeof(compat_xfs_attr_multiop_t);
 	if (!size || size > 16 * PAGE_SIZE)
 		goto out_dput;

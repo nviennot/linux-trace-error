@@ -158,12 +158,12 @@ void dev_pm_opp_cpumask_remove_table(const struct cpumask *cpumask);
 #else
 static inline struct opp_table *dev_pm_opp_get_opp_table(struct device *dev)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct opp_table *dev_pm_opp_get_opp_table_indexed(struct device *dev, int index)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put_opp_table(struct opp_table *opp_table) {}
@@ -216,31 +216,31 @@ static inline unsigned long dev_pm_opp_get_suspend_opp_freq(struct device *dev)
 static inline struct dev_pm_opp *dev_pm_opp_find_freq_exact(struct device *dev,
 					unsigned long freq, bool available)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct dev_pm_opp *dev_pm_opp_find_level_exact(struct device *dev,
 					unsigned int level)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct dev_pm_opp *dev_pm_opp_find_freq_floor(struct device *dev,
 					unsigned long *freq)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct dev_pm_opp *dev_pm_opp_find_freq_ceil_by_volt(struct device *dev,
 					unsigned long u_volt)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct dev_pm_opp *dev_pm_opp_find_freq_ceil(struct device *dev,
 					unsigned long *freq)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put(struct dev_pm_opp *opp) {}
@@ -248,7 +248,7 @@ static inline void dev_pm_opp_put(struct dev_pm_opp *opp) {}
 static inline int dev_pm_opp_add(struct device *dev, unsigned long freq,
 					unsigned long u_volt)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void dev_pm_opp_remove(struct device *dev, unsigned long freq)
@@ -279,19 +279,19 @@ static inline int dev_pm_opp_disable(struct device *dev, unsigned long freq)
 
 static inline int dev_pm_opp_register_notifier(struct device *dev, struct notifier_block *nb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_unregister_notifier(struct device *dev, struct notifier_block *nb)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline struct opp_table *dev_pm_opp_set_supported_hw(struct device *dev,
 							    const u32 *versions,
 							    unsigned int count)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put_supported_hw(struct opp_table *opp_table) {}
@@ -299,57 +299,57 @@ static inline void dev_pm_opp_put_supported_hw(struct opp_table *opp_table) {}
 static inline struct opp_table *dev_pm_opp_register_set_opp_helper(struct device *dev,
 			int (*set_opp)(struct dev_pm_set_opp_data *data))
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_unregister_set_opp_helper(struct opp_table *opp_table) {}
 
 static inline struct opp_table *dev_pm_opp_set_prop_name(struct device *dev, const char *name)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put_prop_name(struct opp_table *opp_table) {}
 
 static inline struct opp_table *dev_pm_opp_set_regulators(struct device *dev, const char * const names[], unsigned int count)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put_regulators(struct opp_table *opp_table) {}
 
 static inline struct opp_table *dev_pm_opp_set_clkname(struct device *dev, const char * name)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_put_clkname(struct opp_table *opp_table) {}
 
 static inline struct opp_table *dev_pm_opp_attach_genpd(struct device *dev, const char **names, struct device ***virt_devs)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline void dev_pm_opp_detach_genpd(struct opp_table *opp_table) {}
 
 static inline int dev_pm_opp_xlate_performance_state(struct opp_table *src_table, struct opp_table *dst_table, unsigned int pstate)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_set_rate(struct device *dev, unsigned long target_freq)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_set_sharing_cpus(struct device *cpu_dev, const struct cpumask *cpumask)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_get_sharing_cpus(struct device *cpu_dev, struct cpumask *cpumask)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void dev_pm_opp_remove_table(struct device *dev)
@@ -377,12 +377,12 @@ void dev_pm_opp_of_register_em(struct cpumask *cpus);
 #else
 static inline int dev_pm_opp_of_add_table(struct device *dev)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_of_add_table_indexed(struct device *dev, int index)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void dev_pm_opp_of_remove_table(struct device *dev)
@@ -391,7 +391,7 @@ static inline void dev_pm_opp_of_remove_table(struct device *dev)
 
 static inline int dev_pm_opp_of_cpumask_add_table(const struct cpumask *cpumask)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void dev_pm_opp_of_cpumask_remove_table(const struct cpumask *cpumask)
@@ -400,7 +400,7 @@ static inline void dev_pm_opp_of_cpumask_remove_table(const struct cpumask *cpum
 
 static inline int dev_pm_opp_of_get_sharing_cpus(struct device *cpu_dev, struct cpumask *cpumask)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline struct device_node *dev_pm_opp_of_get_opp_desc_node(struct device *dev)
@@ -419,12 +419,12 @@ static inline void dev_pm_opp_of_register_em(struct cpumask *cpus)
 
 static inline int of_get_required_opp_performance_state(struct device_node *np, int index)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int dev_pm_opp_of_find_icc_paths(struct device *dev, struct opp_table *opp_table)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 

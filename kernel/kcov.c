@@ -116,7 +116,7 @@ static struct kcov_remote *kcov_remote_add(struct kcov *kcov, u64 handle)
 	struct kcov_remote *remote;
 
 	if (kcov_remote_find(handle))
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 	remote = kmalloc(sizeof(*remote), GFP_ATOMIC);
 	if (!remote)
 		return ERR_PTR(-ENOMEM);
@@ -470,7 +470,7 @@ static int kcov_mmap(struct file *filep, struct vm_area_struct *vma)
 	size = kcov->size * sizeof(unsigned long);
 	if (kcov->mode != KCOV_MODE_INIT || vma->vm_pgoff != 0 ||
 	    vma->vm_end - vma->vm_start != size) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto exit;
 	}
 	if (!kcov->area) {
@@ -574,7 +574,7 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 		 * Must happen before anything else.
 		 */
 		if (kcov->mode != KCOV_MODE_DISABLED)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		/*
 		 * Size must be at least 2 to hold current position and one PC.
 		 * Later we allocate size * sizeof(unsigned long) memory,
@@ -582,7 +582,7 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 		 */
 		size = arg;
 		if (size < 2 || size > INT_MAX / sizeof(unsigned long))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		kcov->size = size;
 		kcov->mode = KCOV_MODE_INIT;
 		return 0;
@@ -595,10 +595,10 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 		 * be enabled for another task.
 		 */
 		if (kcov->mode != KCOV_MODE_INIT || !kcov->area)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		t = current;
 		if (kcov->t != NULL || t->kcov != NULL)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		mode = kcov_get_mode(arg);
 		if (mode < 0)
 			return mode;
@@ -614,25 +614,25 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 		/* Disable coverage for the current task. */
 		unused = arg;
 		if (unused != 0 || current->kcov != kcov)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		t = current;
 		if (WARN_ON(kcov->t != t))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		kcov_disable(t, kcov);
 		kcov_put(kcov);
 		return 0;
 	case KCOV_REMOTE_ENABLE:
 		if (kcov->mode != KCOV_MODE_INIT || !kcov->area)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		t = current;
 		if (kcov->t != NULL || t->kcov != NULL)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		remote_arg = (struct kcov_remote_arg *)arg;
 		mode = kcov_get_mode(remote_arg->trace_mode);
 		if (mode < 0)
 			return mode;
 		if (remote_arg->area_size > LONG_MAX / sizeof(unsigned long))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		kcov->mode = mode;
 		t->kcov = kcov;
 		kcov->t = t;
@@ -645,7 +645,7 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 				spin_unlock_irqrestore(&kcov_remote_lock,
 							flags);
 				kcov_disable(t, kcov);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			remote = kcov_remote_add(kcov, remote_arg->handles[i]);
 			if (IS_ERR(remote)) {
@@ -661,7 +661,7 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 				spin_unlock_irqrestore(&kcov_remote_lock,
 							flags);
 				kcov_disable(t, kcov);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			remote = kcov_remote_add(kcov,
 					remote_arg->common_handle);
@@ -678,7 +678,7 @@ static int kcov_ioctl_locked(struct kcov *kcov, unsigned int cmd,
 		kcov_get(kcov);
 		return 0;
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -696,7 +696,7 @@ static long kcov_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 				offsetof(struct kcov_remote_arg, num_handles))))
 			return -EFAULT;
 		if (remote_num_handles > KCOV_REMOTE_MAX_HANDLES)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		remote_arg_size = struct_size(remote_arg, handles,
 					remote_num_handles);
 		remote_arg = memdup_user((void __user *)arg, remote_arg_size);
@@ -704,7 +704,7 @@ static long kcov_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			return PTR_ERR(remote_arg);
 		if (remote_arg->num_handles != remote_num_handles) {
 			kfree(remote_arg);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		arg = (unsigned long)remote_arg;
 	}

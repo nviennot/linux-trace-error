@@ -110,20 +110,20 @@ void wiphy_read_of_freq_limits(struct wiphy *wiphy)
 
 		p = of_prop_next_u32(prop, p, &limit->start_freq_khz);
 		if (!p) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_kfree;
 		}
 
 		p = of_prop_next_u32(prop, p, &limit->end_freq_khz);
 		if (!p) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_kfree;
 		}
 
 		if (!limit->start_freq_khz ||
 		    !limit->end_freq_khz ||
 		    limit->start_freq_khz >= limit->end_freq_khz) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_kfree;
 		}
 	}

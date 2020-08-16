@@ -348,7 +348,7 @@ static struct inode *mqueue_get_inode(struct super_block *sb,
 		 * posix_msg_tree_node.
 		 */
 
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (info->attr.mq_maxmsg <= 0 || info->attr.mq_msgsize <= 0)
 			goto out_inode;
 		if (capable(CAP_SYS_RESOURCE)) {
@@ -360,7 +360,7 @@ static struct inode *mqueue_get_inode(struct super_block *sb,
 					info->attr.mq_msgsize > ipc_ns->mq_msgsize_max)
 				goto out_inode;
 		}
-		ret = -EOVERFLOW;
+		ret = -ERR(EOVERFLOW);
 		/* check for overflow */
 		if (info->attr.mq_msgsize > ULONG_MAX/info->attr.mq_maxmsg)
 			goto out_inode;
@@ -376,7 +376,7 @@ static struct inode *mqueue_get_inode(struct super_block *sb,
 		    u->mq_bytes + mq_bytes > rlimit(RLIMIT_MSGQUEUE)) {
 			spin_unlock(&mq_lock);
 			/* mqueue_evict_inode() releases info->messages */
-			ret = -EMFILE;
+			ret = -ERR(EMFILE);
 			goto out_inode;
 		}
 		u->mq_bytes += mq_bytes;
@@ -560,13 +560,13 @@ static int mqueue_create_attr(struct dentry *dentry, umode_t mode, void *arg)
 	spin_lock(&mq_lock);
 	ipc_ns = __get_ns_from_inode(dir);
 	if (!ipc_ns) {
-		error = -EACCES;
+		error = -ERR(EACCES);
 		goto out_unlock;
 	}
 
 	if (ipc_ns->mq_queues_count >= ipc_ns->mq_queues_max &&
 	    !capable(CAP_SYS_RESOURCE)) {
-		error = -ENOSPC;
+		error = -ERR(ENOSPC);
 		goto out_unlock;
 	}
 	ipc_ns->mq_queues_count++;
@@ -727,11 +727,11 @@ static int wq_sleep(struct mqueue_inode_info *info, int sr,
 			goto out_unlock;
 		}
 		if (signal_pending(current)) {
-			retval = -ERESTARTSYS;
+			retval = -ERR(ERESTARTSYS);
 			break;
 		}
 		if (time == 0) {
-			retval = -ETIMEDOUT;
+			retval = -ERR(ETIMEDOUT);
 			break;
 		}
 	}
@@ -832,7 +832,7 @@ static int prepare_timeout(const struct __kernel_timespec __user *u_abs_timeout,
 	if (get_timespec64(ts, u_abs_timeout))
 		return -EFAULT;
 	if (!timespec64_valid(ts))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -859,7 +859,7 @@ static int prepare_open(struct dentry *dentry, int oflag, int ro,
 
 	if (d_really_is_negative(dentry)) {
 		if (!(oflag & O_CREAT))
-			return -ENOENT;
+			return -ERR(ENOENT);
 		if (ro)
 			return ro;
 		audit_inode_parent_hidden(name, dentry->d_parent);
@@ -869,9 +869,9 @@ static int prepare_open(struct dentry *dentry, int oflag, int ro,
 	/* it already existed */
 	audit_inode(name, dentry, 0);
 	if ((oflag & (O_CREAT|O_EXCL)) == (O_CREAT|O_EXCL))
-		return -EEXIST;
+		return -ERR(EEXIST);
 	if ((oflag & O_ACCMODE) == (O_RDWR | O_WRONLY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	acc = oflag2acc[oflag & O_ACCMODE];
 	return inode_permission(d_inode(dentry), acc);
 }
@@ -962,7 +962,7 @@ SYSCALL_DEFINE1(mq_unlink, const char __user *, u_name)
 
 	inode = d_inode(dentry);
 	if (!inode) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	} else {
 		ihold(inode);
 		err = vfs_unlink(d_inode(dentry->d_parent), dentry, NULL);
@@ -1057,7 +1057,7 @@ static int do_mq_timedsend(mqd_t mqdes, const char __user *u_msg_ptr,
 	DEFINE_WAKE_Q(wake_q);
 
 	if (unlikely(msg_prio >= (unsigned long) MQ_PRIO_MAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ts) {
 		expires = timespec64_to_ktime(*ts);
@@ -1068,25 +1068,25 @@ static int do_mq_timedsend(mqd_t mqdes, const char __user *u_msg_ptr,
 
 	f = fdget(mqdes);
 	if (unlikely(!f.file)) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out;
 	}
 
 	inode = file_inode(f.file);
 	if (unlikely(f.file->f_op != &mqueue_file_operations)) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_fput;
 	}
 	info = MQUEUE_I(inode);
 	audit_file(f.file);
 
 	if (unlikely(!(f.file->f_mode & FMODE_WRITE))) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_fput;
 	}
 
 	if (unlikely(msg_len > info->attr.mq_msgsize)) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out_fput;
 	}
 
@@ -1121,7 +1121,7 @@ static int do_mq_timedsend(mqd_t mqdes, const char __user *u_msg_ptr,
 
 	if (info->attr.mq_curmsgs == info->attr.mq_maxmsg) {
 		if (f.file->f_flags & O_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		} else {
 			wait.task = current;
 			wait.msg = (void *) msg_ptr;
@@ -1183,26 +1183,26 @@ static int do_mq_timedreceive(mqd_t mqdes, char __user *u_msg_ptr,
 
 	f = fdget(mqdes);
 	if (unlikely(!f.file)) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out;
 	}
 
 	inode = file_inode(f.file);
 	if (unlikely(f.file->f_op != &mqueue_file_operations)) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_fput;
 	}
 	info = MQUEUE_I(inode);
 	audit_file(f.file);
 
 	if (unlikely(!(f.file->f_mode & FMODE_READ))) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_fput;
 	}
 
 	/* checks if buffer is big enough */
 	if (unlikely(msg_len < info->attr.mq_msgsize)) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out_fput;
 	}
 
@@ -1227,7 +1227,7 @@ static int do_mq_timedreceive(mqd_t mqdes, char __user *u_msg_ptr,
 	if (info->attr.mq_curmsgs == 0) {
 		if (f.file->f_flags & O_NONBLOCK) {
 			spin_unlock(&info->lock);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		} else {
 			wait.task = current;
 
@@ -1315,10 +1315,10 @@ static int do_mq_notify(mqd_t mqdes, const struct sigevent *notification)
 		if (unlikely(notification->sigev_notify != SIGEV_NONE &&
 			     notification->sigev_notify != SIGEV_SIGNAL &&
 			     notification->sigev_notify != SIGEV_THREAD))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (notification->sigev_notify == SIGEV_SIGNAL &&
 			!valid_signal(notification->sigev_signo)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (notification->sigev_notify == SIGEV_THREAD) {
 			long timeo;
@@ -1341,7 +1341,7 @@ static int do_mq_notify(mqd_t mqdes, const struct sigevent *notification)
 retry:
 			f = fdget(notification->sigev_signo);
 			if (!f.file) {
-				ret = -EBADF;
+				ret = -ERR(EBADF);
 				goto out;
 			}
 			sock = netlink_getsockbyfilp(f.file);
@@ -1364,13 +1364,13 @@ retry:
 
 	f = fdget(mqdes);
 	if (!f.file) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out;
 	}
 
 	inode = file_inode(f.file);
 	if (unlikely(f.file->f_op != &mqueue_file_operations)) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out_fput;
 	}
 	info = MQUEUE_I(inode);
@@ -1383,7 +1383,7 @@ retry:
 			inode->i_atime = inode->i_ctime = current_time(inode);
 		}
 	} else if (info->notify_owner != NULL) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else {
 		switch (notification->sigev_notify) {
 		case SIGEV_NONE:
@@ -1440,15 +1440,15 @@ static int do_mq_getsetattr(int mqdes, struct mq_attr *new, struct mq_attr *old)
 	struct mqueue_inode_info *info;
 
 	if (new && (new->mq_flags & (~O_NONBLOCK)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = fdget(mqdes);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (unlikely(f.file->f_op != &mqueue_file_operations)) {
 		fdput(f);
-		return -EBADF;
+		return -ERR(EBADF);
 	}
 
 	inode = file_inode(f.file);
@@ -1603,7 +1603,7 @@ static int compat_prepare_timeout(const struct old_timespec32 __user *p,
 	if (get_old_timespec32(ts, p))
 		return -EFAULT;
 	if (!timespec64_valid(ts))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

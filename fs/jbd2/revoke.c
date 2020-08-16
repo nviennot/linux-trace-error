@@ -338,7 +338,7 @@ int jbd2_journal_revoke(handle_t *handle, unsigned long long blocknr,
 	journal = handle->h_transaction->t_journal;
 	if (!jbd2_journal_set_features(journal, 0, 0, JBD2_FEATURE_INCOMPAT_REVOKE)){
 		J_ASSERT (!"Cannot set revoke feature!");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bdev = journal->j_fs_dev;
@@ -374,7 +374,7 @@ int jbd2_journal_revoke(handle_t *handle, unsigned long long blocknr,
 	if (WARN_ON_ONCE(handle->h_revoke_credits <= 0)) {
 		if (!bh_in)
 			brelse(bh);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	/* We really ought not ever to revoke twice in a row without
            first having the revoke cancelled: it's illegal to free a
@@ -384,7 +384,7 @@ int jbd2_journal_revoke(handle_t *handle, unsigned long long blocknr,
 				 "inconsistent data on disk")) {
 			if (!bh_in)
 				brelse(bh);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		set_buffer_revoked(bh);
 		set_buffer_revokevalid(bh);

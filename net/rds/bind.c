@@ -94,14 +94,14 @@ struct rds_sock *rds_find_bound(const struct in6_addr *addr, __be16 port,
 static int rds_add_bound(struct rds_sock *rs, const struct in6_addr *addr,
 			 __be16 *port, __u32 scope_id)
 {
-	int ret = -EADDRINUSE;
+	int ret = -ERR(EADDRINUSE);
 	u16 rover, last;
 	u8 key[RDS_BOUND_KEY_LEN];
 
 	if (*port != 0) {
 		rover = be16_to_cpu(*port);
 		if (rover == RDS_FLAG_PROBE_PORT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		last = rover;
 	} else {
 		rover = max_t(u16, prandom_u32(), 2);
@@ -174,7 +174,7 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	 * address.
 	 */
 	if (addr_len < offsetofend(struct sockaddr, sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (uaddr->sa_family == AF_INET) {
 		struct sockaddr_in *sin = (struct sockaddr_in *)uaddr;
 
@@ -182,7 +182,7 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		    sin->sin_addr.s_addr == htonl(INADDR_ANY) ||
 		    sin->sin_addr.s_addr == htonl(INADDR_BROADCAST) ||
 		    ipv4_is_multicast(sin->sin_addr.s_addr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &v6addr);
 		binding_addr = &v6addr;
 		port = sin->sin_port;
@@ -192,13 +192,13 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		int addr_type;
 
 		if (addr_len < sizeof(struct sockaddr_in6))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		addr_type = ipv6_addr_type(&sin6->sin6_addr);
 		if (!(addr_type & IPV6_ADDR_UNICAST)) {
 			__be32 addr4;
 
 			if (!(addr_type & IPV6_ADDR_MAPPED))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* It is a mapped address.  Need to do some sanity
 			 * checks.
@@ -207,25 +207,25 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 			if (addr4 == htonl(INADDR_ANY) ||
 			    addr4 == htonl(INADDR_BROADCAST) ||
 			    ipv4_is_multicast(addr4))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		/* The scope ID must be specified for link local address. */
 		if (addr_type & IPV6_ADDR_LINKLOCAL) {
 			if (sin6->sin6_scope_id == 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			scope_id = sin6->sin6_scope_id;
 		}
 		binding_addr = &sin6->sin6_addr;
 		port = sin6->sin6_port;
 #endif
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	lock_sock(sk);
 
 	/* RDS socket does not allow re-binding. */
 	if (!ipv6_addr_any(&rs->rs_bound_addr)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	/* Socket is connected.  The binding address should have the same
@@ -235,7 +235,7 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	if (!ipv6_addr_any(&rs->rs_conn_addr) && scope_id &&
 	    rs->rs_bound_scope_id &&
 	    scope_id != rs->rs_bound_scope_id) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -247,14 +247,14 @@ int rds_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		if (!trans->laddr_check ||
 		    trans->laddr_check(sock_net(sock->sk),
 				       binding_addr, scope_id) != 0) {
-			ret = -ENOPROTOOPT;
+			ret = -ERR(ENOPROTOOPT);
 			goto out;
 		}
 	} else {
 		trans = rds_trans_get_preferred(sock_net(sock->sk),
 						binding_addr, scope_id);
 		if (!trans) {
-			ret = -EADDRNOTAVAIL;
+			ret = -ERR(EADDRNOTAVAIL);
 			pr_info_ratelimited("RDS: %s could not find a transport for %pI6c, load rds_tcp or rds_rdma?\n",
 					    __func__, binding_addr);
 			goto out;

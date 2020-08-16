@@ -50,7 +50,7 @@ int ext4_resize_begin(struct super_block *sb)
 	int ret = 0;
 
 	if (!capable(CAP_SYS_RESOURCE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * If we are not using the primary superblock/GDT copy don't resize,
@@ -61,7 +61,7 @@ int ext4_resize_begin(struct super_block *sb)
 	    le32_to_cpu(EXT4_SB(sb)->s_es->s_first_data_block)) {
 		ext4_warning(sb, "won't resize using backup superblock at %llu",
 			(unsigned long long)EXT4_SB(sb)->s_sbh->b_blocknr);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	/*
@@ -71,12 +71,12 @@ int ext4_resize_begin(struct super_block *sb)
 	if (EXT4_SB(sb)->s_mount_state & EXT4_ERROR_FS) {
 		ext4_warning(sb, "There are errors in the filesystem, "
 			     "so online resizing is not allowed");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	if (test_and_set_bit_lock(EXT4_FLAGS_RESIZING,
 				  &EXT4_SB(sb)->s_ext4_flags))
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 
 	return ret;
 }
@@ -125,12 +125,12 @@ static int verify_group_input(struct super_block *sb,
 	ext4_fsblk_t metaend;
 	struct buffer_head *bh = NULL;
 	ext4_grpblk_t free_blocks_count, offset;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (group != sbi->s_groups_count) {
 		ext4_warning(sb, "Cannot add at group %u (only %u groups)",
 			     input->group, sbi->s_groups_count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	overhead = ext4_group_overhead_blocks(sb, group);
@@ -302,7 +302,7 @@ static int ext4_alloc_group_tables(struct super_block *sb,
 next_group:
 	group = group_data[0].group;
 	if (src_group >= group_data[0].group + flex_gd->count)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	start_blk = ext4_group_first_block_no(sb, src_group);
 	last_blk = start_blk + group_data[src_group - group].blocks_count;
 
@@ -763,10 +763,10 @@ static int verify_reserved_gdb(struct super_block *sb,
 				     grp *
 				     (ext4_fsblk_t)EXT4_BLOCKS_PER_GROUP(sb) +
 				     blk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (++gdbackups > EXT4_ADDR_PER_BLOCK(sb))
-			return -EFBIG;
+			return -ERR(EFBIG);
 	}
 
 	return gdbackups;
@@ -827,7 +827,7 @@ static int add_new_gdb(handle_t *handle, struct inode *inode,
 	if (le32_to_cpu(data[gdb_num % EXT4_ADDR_PER_BLOCK(sb)]) != gdblock) {
 		ext4_warning(sb, "new group %u GDT block %llu not reserved",
 			     group, gdblock);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -1011,7 +1011,7 @@ static int reserve_backup_gdb(handle_t *handle, struct inode *inode,
 				     " not at offset %ld",
 				     blk,
 				     (long)(data - (__le32 *)dind->b_data));
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto exit_bh;
 		}
 		primary[res] = ext4_sb_bread(sb, blk, 0);
@@ -1264,14 +1264,14 @@ static int ext4_set_bitmap_checksums(struct super_block *sb,
 
 	bh = ext4_get_bitmap(sb, group_data->inode_bitmap);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	ext4_inode_bitmap_csum_set(sb, group, gdp, bh,
 				   EXT4_INODES_PER_GROUP(sb) / 8);
 	brelse(bh);
 
 	bh = ext4_get_bitmap(sb, group_data->block_bitmap);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	ext4_block_bitmap_csum_set(sb, group, gdp, bh);
 	brelse(bh);
 
@@ -1637,19 +1637,19 @@ int ext4_group_add(struct super_block *sb, struct ext4_new_group_data *input)
 
 	if (gdb_off == 0 && !ext4_has_feature_sparse_super(sb)) {
 		ext4_warning(sb, "Can't resize non-sparse filesystem further");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	if (ext4_blocks_count(es) + input->blocks_count <
 	    ext4_blocks_count(es)) {
 		ext4_warning(sb, "blocks_count overflow");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (le32_to_cpu(es->s_inodes_count) + EXT4_INODES_PER_GROUP(sb) <
 	    le32_to_cpu(es->s_inodes_count)) {
 		ext4_warning(sb, "inodes_count overflow");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (reserved_gdb || gdb_off == 0) {
@@ -1657,7 +1657,7 @@ int ext4_group_add(struct super_block *sb, struct ext4_new_group_data *input)
 		    !le16_to_cpu(es->s_reserved_gdt_blocks)) {
 			ext4_warning(sb,
 				     "No reserved GDT blocks, can't resize");
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		inode = ext4_iget(sb, EXT4_RESIZE_INO, EXT4_IGET_SPECIAL);
 		if (IS_ERR(inode)) {
@@ -1775,12 +1775,12 @@ int ext4_group_extend(struct super_block *sb, struct ext4_super_block *es,
 		ext4_msg(sb, KERN_ERR,
 			 "filesystem too large to resize to %llu blocks safely",
 			 n_blocks_count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (n_blocks_count < o_blocks_count) {
 		ext4_warning(sb, "can't shrink FS - resize aborted");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Handle the remaining blocks in the last group only. */
@@ -1788,14 +1788,14 @@ int ext4_group_extend(struct super_block *sb, struct ext4_super_block *es,
 
 	if (last == 0) {
 		ext4_warning(sb, "need to use ext2online to resize further");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	add = EXT4_BLOCKS_PER_GROUP(sb) - last;
 
 	if (o_blocks_count + add < o_blocks_count) {
 		ext4_warning(sb, "blocks_count overflow");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (o_blocks_count + add > n_blocks_count)
@@ -1809,7 +1809,7 @@ int ext4_group_extend(struct super_block *sb, struct ext4_super_block *es,
 	bh = sb_bread(sb, o_blocks_count + add - 1);
 	if (!bh) {
 		ext4_warning(sb, "can't read last block, resize aborted");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	brelse(bh);
 
@@ -1843,7 +1843,7 @@ static int ext4_convert_meta_bg(struct super_block *sb, struct inode *inode)
 		if (es->s_reserved_gdt_blocks) {
 			ext4_error(sb, "Unexpected non-zero "
 				   "s_reserved_gdt_blocks");
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 
 		/* Do a quick sanity check of the resize inode */
@@ -1904,7 +1904,7 @@ errout:
 
 invalid_resize_inode:
 	ext4_error(sb, "corrupted/inconsistent resize inode");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -1935,7 +1935,7 @@ int ext4_resize_fs(struct super_block *sb, ext4_fsblk_t n_blocks_count)
 	bh = sb_bread(sb, n_blocks_count - 1);
 	if (!bh) {
 		ext4_warning(sb, "can't read last block, resize aborted");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	brelse(bh);
 
@@ -1948,7 +1948,7 @@ retry:
 	if (n_blocks_count < o_blocks_count) {
 		/* On-line shrinking not supported */
 		ext4_warning(sb, "can't shrink FS - resize aborted");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (n_blocks_count == o_blocks_count)
@@ -1958,7 +1958,7 @@ retry:
 	n_group = ext4_get_group_number(sb, n_blocks_count - 1);
 	if (n_group >= (0xFFFFFFFFUL / EXT4_INODES_PER_GROUP(sb))) {
 		ext4_warning(sb, "resize would cause inodes_count overflow");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ext4_get_group_no_and_offset(sb, o_blocks_count - 1, &o_group, &offset);
 
@@ -1971,7 +1971,7 @@ retry:
 		if (meta_bg) {
 			ext4_error(sb, "resize_inode and meta_bg enabled "
 				   "simultaneously");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (n_desc_blocks > o_desc_blocks +
 		    le16_to_cpu(es->s_reserved_gdt_blocks)) {

@@ -135,7 +135,7 @@ static int apq8016_lpass_alloc_dma_channel(struct lpass_data *drvdata,
 					v->rdma_channels);
 
 		if (chan >= v->rdma_channels)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	} else {
 		chan = find_next_zero_bit(&drvdata->dma_ch_bit_map,
 					v->wrdma_channel_start +
@@ -143,7 +143,7 @@ static int apq8016_lpass_alloc_dma_channel(struct lpass_data *drvdata,
 					v->wrdma_channel_start);
 
 		if (chan >=  v->wrdma_channel_start + v->wrdma_channels)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	set_bit(chan, &drvdata->dma_ch_bit_map);

@@ -946,27 +946,27 @@ int rt6_route_rcv(struct net_device *dev, u8 *opt, int len,
 	struct fib6_info *rt;
 
 	if (len < sizeof(struct route_info)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Sanity check for prefix_len and length */
 	if (rinfo->length > 3) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (rinfo->prefix_len > 128) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (rinfo->prefix_len > 64) {
 		if (rinfo->length < 2) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (rinfo->prefix_len > 0) {
 		if (rinfo->length < 1) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	pref = rinfo->route_pref;
 	if (pref == ICMPV6_ROUTER_PREF_INVALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lifetime = addrconf_timeout_fixup(ntohl(rinfo->lifetime), HZ);
 
@@ -1679,7 +1679,7 @@ static int rt6_insert_exception(struct rt6_info *nrt,
 		}
 		rcu_assign_pointer(nh->rt6i_exception_bucket, bucket);
 	} else if (fib6_nh_excptn_bucket_flushed(bucket)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1698,7 +1698,7 @@ static int rt6_insert_exception(struct rt6_info *nrt,
 	 * is less than f6i's mtu value.
 	 */
 	if (dst_metric_raw(&nrt->dst, RTAX_MTU) >= fib6_mtu(res)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1838,7 +1838,7 @@ static int fib6_nh_remove_exception(const struct fib6_nh *nh, int plen,
 	int err;
 
 	if (!rcu_access_pointer(nh->rt6i_exception_bucket))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	spin_lock_bh(&rt6_exception_lock);
 	bucket = fib6_nh_get_excptn_bucket(nh, &rt6_exception_lock);
@@ -1860,7 +1860,7 @@ static int fib6_nh_remove_exception(const struct fib6_nh *nh, int plen,
 		rt6_remove_exception(bucket, rt6_ex);
 		err = 0;
 	} else {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	}
 
 	spin_unlock_bh(&rt6_exception_lock);
@@ -1890,7 +1890,7 @@ static int rt6_remove_exception_rt(struct rt6_info *rt)
 
 	from = rcu_dereference(rt->from);
 	if (!from || !(rt->rt6i_flags & RTF_CACHE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (from->nh) {
 		struct fib6_nh_excptn_arg arg = {
@@ -1903,7 +1903,7 @@ static int rt6_remove_exception_rt(struct rt6_info *rt)
 		rc = nexthop_for_each_fib6_nh(from->nh,
 					      rt6_nh_remove_exception_rt,
 					      &arg);
-		return rc ? 0 : -ENOENT;
+		return rc ? 0 : -ERR(ENOENT);
 	}
 
 	return fib6_nh_remove_exception(from->fib6_nh,
@@ -3160,7 +3160,7 @@ struct dst_entry *icmp6_dst_alloc(struct net_device *dev,
 	struct net *net = dev_net(dev);
 
 	if (unlikely(!idev))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	rt = ip6_dst_alloc(net, dev, 0);
 	if (unlikely(!rt)) {
@@ -3231,7 +3231,7 @@ static int ip6_nh_lookup_table(struct net *net, struct fib6_config *cfg,
 
 	table = fib6_get_table(net, tbid);
 	if (!table)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ipv6_addr_any(&cfg->fc_prefsrc))
 		flags |= RT6_LOOKUP_F_HAS_SADDR;
@@ -3263,7 +3263,7 @@ static int ip6_route_check_nh_onlink(struct net *net,
 	    (res.fib6_type != RTN_UNICAST || dev != res.nh->fib_nh_dev)) {
 		NL_SET_ERR_MSG(extack,
 			       "Nexthop has invalid gateway or device mismatch");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	return err;
@@ -3278,7 +3278,7 @@ static int ip6_route_check_nh(struct net *net,
 	struct net_device *dev = _dev ? *_dev : NULL;
 	int flags = RT6_LOOKUP_F_IFACE;
 	struct fib6_result res = {};
-	int err = -EHOSTUNREACH;
+	int err = -ERR(EHOSTUNREACH);
 
 	if (cfg->fc_table) {
 		err = ip6_nh_lookup_table(net, cfg, gw_addr,
@@ -3289,7 +3289,7 @@ static int ip6_route_check_nh(struct net *net,
 		if (err || res.fib6_flags & RTF_REJECT ||
 		    res.nh->fib_nh_gw_family ||
 		    (dev && dev != res.nh->fib_nh_dev))
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 	}
 
 	if (err < 0) {
@@ -3301,7 +3301,7 @@ static int ip6_route_check_nh(struct net *net,
 		err = fib6_lookup(net, cfg->fc_ifindex, &fl6, &res, flags);
 		if (err || res.fib6_flags & RTF_REJECT ||
 		    res.nh->fib_nh_gw_family)
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 
 		if (err)
 			return err;
@@ -3313,7 +3313,7 @@ static int ip6_route_check_nh(struct net *net,
 	err = 0;
 	if (dev) {
 		if (dev != res.nh->fib_nh_dev)
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 	} else {
 		*_dev = dev = res.nh->fib_nh_dev;
 		dev_hold(dev);
@@ -3332,7 +3332,7 @@ static int ip6_validate_gw(struct net *net, struct fib6_config *cfg,
 	bool skip_dev = gwa_type & IPV6_ADDR_LINKLOCAL ? false : true;
 	const struct net_device *dev = *_dev;
 	bool need_addr_check = !dev;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	/* if gw_addr is local we will fail to detect this in case
 	 * address is still TENTATIVE (DAD in progress). rt6_lookup()
@@ -3376,7 +3376,7 @@ static int ip6_validate_gw(struct net *net, struct fib6_config *cfg,
 	/* reload in case device was changed */
 	dev = *_dev;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!dev) {
 		NL_SET_ERR_MSG(extack, "Egress device not specified");
 		goto out;
@@ -3430,7 +3430,7 @@ int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 		return 0;
 	}
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	if (cfg->fc_ifindex) {
 		dev = dev_get_by_index(net, cfg->fc_ifindex);
 		if (!dev)
@@ -3449,7 +3449,7 @@ int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 
 		if (!(dev->flags & IFF_UP)) {
 			NL_SET_ERR_MSG(extack, "Nexthop device is not up");
-			err = -ENETDOWN;
+			err = -ERR(ENETDOWN);
 			goto out;
 		}
 
@@ -3473,7 +3473,7 @@ int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 			dev_hold(dev);
 			idev = in6_dev_get(dev);
 			if (!idev) {
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto out;
 			}
 		}
@@ -3489,19 +3489,19 @@ int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 		fib6_nh->fib_nh_gw_family = AF_INET6;
 	}
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	if (!dev)
 		goto out;
 
 	if (idev->cnf.disable_ipv6) {
 		NL_SET_ERR_MSG(extack, "IPv6 is disabled on nexthop device");
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 
 	if (!(dev->flags & IFF_UP) && !cfg->fc_ignore_dev_down) {
 		NL_SET_ERR_MSG(extack, "Nexthop device is not up");
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		goto out;
 	}
 
@@ -3584,7 +3584,7 @@ static struct fib6_info *ip6_route_info_create(struct fib6_config *cfg,
 	struct nexthop *nh = NULL;
 	struct fib6_table *table;
 	struct fib6_nh *fib6_nh;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int addr_type;
 
 	/* RTF_PCPU is an internal flag; can not be set by userspace */
@@ -3630,7 +3630,7 @@ static struct fib6_info *ip6_route_info_create(struct fib6_config *cfg,
 			goto out;
 	}
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (cfg->fc_nlinfo.nlh &&
 	    !(cfg->fc_nlinfo.nlh->nlmsg_flags & NLM_F_CREATE)) {
 		table = fib6_get_table(net, cfg->fc_table);
@@ -3716,7 +3716,7 @@ static struct fib6_info *ip6_route_info_create(struct fib6_config *cfg,
 
 		if (!ipv6_chk_addr(net, &cfg->fc_prefsrc, dev, 0)) {
 			NL_SET_ERR_MSG(extack, "Invalid source address");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		rt->fib6_prefsrc.addr = cfg->fc_prefsrc;
@@ -3753,7 +3753,7 @@ static int __ip6_del_rt(struct fib6_info *rt, struct nl_info *info)
 	int err;
 
 	if (rt == net->ipv6.fib6_null_entry) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -3783,7 +3783,7 @@ static int __ip6_del_rt_siblings(struct fib6_info *rt, struct fib6_config *cfg)
 	struct net *net = info->nl_net;
 	struct sk_buff *skb = NULL;
 	struct fib6_table *table;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (rt == net->ipv6.fib6_null_entry)
 		goto out_put;
@@ -3858,7 +3858,7 @@ out_put:
 
 static int __ip6_del_cached_rt(struct rt6_info *rt, struct fib6_config *cfg)
 {
-	int rc = -ESRCH;
+	int rc = -ERR(ESRCH);
 
 	if (cfg->fc_ifindex && rt->dst.dev->ifindex != cfg->fc_ifindex)
 		goto out;
@@ -3899,7 +3899,7 @@ static int fib6_nh_del_cached_rt(struct fib6_nh *nh, void *_arg)
 	int rc;
 
 	rc = ip6_del_cached_rt(arg->cfg, arg->f6i, nh);
-	return rc != -ESRCH ? rc : 0;
+	return rc != -ERR(ESRCH) ? rc : 0;
 }
 
 static int ip6_del_cached_rt_nh(struct fib6_config *cfg, struct fib6_info *f6i)
@@ -3918,7 +3918,7 @@ static int ip6_route_del(struct fib6_config *cfg,
 	struct fib6_table *table;
 	struct fib6_info *rt;
 	struct fib6_node *fn;
-	int err = -ESRCH;
+	int err = -ERR(ESRCH);
 
 	table = fib6_get_table(cfg->fc_nlinfo.nl_net, cfg->fc_table);
 	if (!table) {
@@ -4350,9 +4350,9 @@ int ipv6_route_ioctl(struct net *net, unsigned int cmd, struct in6_rtmsg *rtmsg)
 	int err;
 
 	if (cmd != SIOCADDRT && cmd != SIOCDELRT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	rtmsg_to_fib6_config(net, rtmsg, &cfg);
 
@@ -4891,7 +4891,7 @@ static int rtm_to_fib6_config(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	rtm = nlmsg_data(nlh);
 
 	*cfg = (struct fib6_config){
@@ -5030,7 +5030,7 @@ static int ip6_route_info_append(struct net *net,
 				 struct fib6_config *r_cfg)
 {
 	struct rt6_nh *nh;
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 
 	list_for_each_entry(nh, rt6_nh_list, next) {
 		/* check if fib6_info already exists */
@@ -5152,7 +5152,7 @@ static int ip6_route_multipath_add(struct fib6_config *cfg,
 			goto cleanup;
 		}
 		if (!rt6_qualify_for_ecmp(rt)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			NL_SET_ERR_MSG(extack,
 				       "Device only routes can not be added for IPv6 using the multipath API.");
 			fib6_info_release(rt);
@@ -5174,7 +5174,7 @@ static int ip6_route_multipath_add(struct fib6_config *cfg,
 	if (list_empty(&rt6_nh_list)) {
 		NL_SET_ERR_MSG(extack,
 			       "Invalid nexthop configuration - no valid nexthops");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* for add and replace send one notification with all nexthops.
@@ -5329,7 +5329,7 @@ static int inet6_rtm_delroute(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (cfg.fc_nh_id &&
 	    !nexthop_find_by_id(sock_net(skb->sk), cfg.fc_nh_id)) {
 		NL_SET_ERR_MSG(extack, "Nexthop id does not exist");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cfg.fc_mp)
@@ -5443,7 +5443,7 @@ static int rt6_fill_node_nexthop(struct sk_buff *skb, struct nexthop *nh,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int rt6_fill_node(struct net *net, struct sk_buff *skb,
@@ -5462,7 +5462,7 @@ static int rt6_fill_node(struct net *net, struct sk_buff *skb,
 
 	nlh = nlmsg_put(skb, portid, seq, type, sizeof(*rtm), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (rt6) {
 		rt6_dst = &rt6->rt6i_dst;
@@ -5620,7 +5620,7 @@ static int rt6_fill_node(struct net *net, struct sk_buff *skb,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int fib6_info_nh_uses_dev(struct fib6_nh *nh, void *arg)
@@ -5798,7 +5798,7 @@ static int inet6_rtm_valid_getroute_req(struct sk_buff *skb,
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid header for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -5811,12 +5811,12 @@ static int inet6_rtm_valid_getroute_req(struct sk_buff *skb,
 	    rtm->rtm_table || rtm->rtm_protocol || rtm->rtm_scope ||
 	    rtm->rtm_type) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (rtm->rtm_flags & ~RTM_F_FIB_MATCH) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid flags for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*rtm), tb, RTA_MAX,
@@ -5827,7 +5827,7 @@ static int inet6_rtm_valid_getroute_req(struct sk_buff *skb,
 	if ((tb[RTA_SRC] && !rtm->rtm_src_len) ||
 	    (tb[RTA_DST] && !rtm->rtm_dst_len)) {
 		NL_SET_ERR_MSG_MOD(extack, "rtm_src_len and rtm_dst_len must be 128 for IPv6");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i <= RTA_MAX; i++) {
@@ -5847,7 +5847,7 @@ static int inet6_rtm_valid_getroute_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in get route request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -5872,7 +5872,7 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	rtm = nlmsg_data(nlh);
 	fl6.flowlabel = ip6_make_flowinfo(rtm->rtm_tos, 0);
 	fibmatch = !!(rtm->rtm_flags & RTM_F_FIB_MATCH);
@@ -5929,7 +5929,7 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		dev = dev_get_by_index_rcu(net, iif);
 		if (!dev) {
 			rcu_read_unlock();
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto errout;
 		}
 
@@ -5964,7 +5964,7 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb) {
 		ip6_rt_put(rt);
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errout;
 	}
 
@@ -5984,7 +5984,7 @@ static int inet6_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 					    NETLINK_CB(in_skb).portid,
 					    nlh->nlmsg_seq, 0);
 	} else {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 	}
 	rcu_read_unlock();
 
@@ -6006,7 +6006,7 @@ void inet6_rt_notify(int event, struct fib6_info *rt, struct nl_info *info,
 	u32 seq;
 	int err;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	seq = info->nlh ? info->nlh->nlmsg_seq : 0;
 
 	skb = nlmsg_new(rt6_nlmsg_size(rt), gfp_any());
@@ -6034,7 +6034,7 @@ void fib6_rt_update(struct net *net, struct fib6_info *rt,
 {
 	u32 seq = info->nlh ? info->nlh->nlmsg_seq : 0;
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	/* call_fib6_entry_notifiers will be removed when in-kernel notifier
 	 * is implemented and supported for nexthop objects
@@ -6125,7 +6125,7 @@ static int ipv6_sysctl_rtcache_flush(struct ctl_table *ctl, int write,
 	int delay;
 	int ret;
 	if (!write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	net = (struct net *)ctl->extra1;
 	delay = net->ipv6.sysctl.flush_delay;

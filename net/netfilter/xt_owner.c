@@ -23,14 +23,14 @@ static int owner_check(const struct xt_mtchk_param *par)
 	struct net *net = par->net;
 
 	if (info->match & ~XT_OWNER_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Only allow the common case where the userns of the writer
 	 * matches the userns of the network namespace.
 	 */
 	if ((info->match & (XT_OWNER_UID|XT_OWNER_GID)) &&
 	    (current_user_ns() != net->user_ns))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ensure the uids are valid */
 	if (info->match & XT_OWNER_UID) {
@@ -40,7 +40,7 @@ static int owner_check(const struct xt_mtchk_param *par)
 		if (!uid_valid(uid_min) || !uid_valid(uid_max) ||
 		    (info->uid_max < info->uid_min) ||
 		    uid_lt(uid_max, uid_min)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -52,7 +52,7 @@ static int owner_check(const struct xt_mtchk_param *par)
 		if (!gid_valid(gid_min) || !gid_valid(gid_max) ||
 		    (info->gid_max < info->gid_min) ||
 		    gid_lt(gid_max, gid_min)) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

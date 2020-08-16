@@ -1649,7 +1649,7 @@ static int get_sdp_info(struct snd_soc_component *component, int dai_id)
 	int ret = 0, val;
 
 	if (component == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val = snd_soc_component_read32(component, RT5640_I2S1_SDP);
 	val = (val & RT5640_I2S_IF_MASK) >> RT5640_I2S_IF_SFT;
@@ -1687,7 +1687,7 @@ static int get_sdp_info(struct snd_soc_component *component, int dai_id)
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -1707,7 +1707,7 @@ static int rt5640_hw_params(struct snd_pcm_substream *substream,
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting %d for DAI %d\n",
 			rt5640->lrck[dai->id], dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
@@ -1738,13 +1738,13 @@ static int rt5640_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5640_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dai_sel = get_sdp_info(component, dai->id);
 	if (dai_sel < 0) {
 		dev_err(component->dev, "Failed to get sdp info: %d\n", dai_sel);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (dai_sel & RT5640_U_IF1) {
 		mask_clk = RT5640_I2S_BCLK_MS1_MASK | RT5640_I2S_PD1_MASK;
@@ -1782,7 +1782,7 @@ static int rt5640_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5640->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1792,7 +1792,7 @@ static int rt5640_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5640_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1808,13 +1808,13 @@ static int rt5640_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val  |= RT5640_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dai_sel = get_sdp_info(component, dai->id);
 	if (dai_sel < 0) {
 		dev_err(component->dev, "Failed to get sdp info: %d\n", dai_sel);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (dai_sel & RT5640_U_IF1) {
 		snd_soc_component_update_bits(component, RT5640_I2S1_SDP,
@@ -1854,7 +1854,7 @@ static int rt5640_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5640_PWR_ANLG2,
 		RT5640_PWR_PLL, pll_bit);
@@ -1904,7 +1904,7 @@ static int rt5640_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -2036,11 +2036,11 @@ int rt5640_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!filter_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (filter_mask & RT5640_DA_STEREO_FILTER) {
 		asrc2_mask |= RT5640_STO_DAC_M_MASK;
@@ -2508,7 +2508,7 @@ static int rt5640_probe(struct snd_soc_component *component)
 	default:
 		dev_err(component->dev,
 			"The driver is for RT5639 RT5640 or RT5642 only\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/*
@@ -2787,7 +2787,7 @@ static int rt5640_i2c_probe(struct i2c_client *i2c,
 		if (ret)
 			return ret;
 	} else
-		rt5640->ldo1_en = -EINVAL;
+		rt5640->ldo1_en = -ERR(EINVAL);
 
 	rt5640->regmap = devm_regmap_init_i2c(i2c, &rt5640_regmap);
 	if (IS_ERR(rt5640->regmap)) {
@@ -2813,7 +2813,7 @@ static int rt5640_i2c_probe(struct i2c_client *i2c,
 	if (val != RT5640_DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5640/39\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt5640->regmap, RT5640_RESET, 0);
@@ -2845,7 +2845,7 @@ static int rt5640_i2c_probe(struct i2c_client *i2c,
 	} else {
 		dev_warn(&i2c->dev, "Failed to reguest IRQ %d: %d\n",
 			 rt5640->irq, ret);
-		rt5640->irq = -ENXIO;
+		rt5640->irq = -ERR(ENXIO);
 	}
 
 	return devm_snd_soc_register_component(&i2c->dev,

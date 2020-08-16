@@ -694,7 +694,7 @@ static inline void iommu_domain_free(struct iommu_domain *domain)
 static inline int iommu_attach_device(struct iommu_domain *domain,
 				      struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_detach_device(struct iommu_domain *domain,
@@ -710,14 +710,14 @@ static inline struct iommu_domain *iommu_get_domain_for_dev(struct device *dev)
 static inline int iommu_map(struct iommu_domain *domain, unsigned long iova,
 			    phys_addr_t paddr, size_t size, int prot)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_map_atomic(struct iommu_domain *domain,
 				   unsigned long iova, phys_addr_t paddr,
 				   size_t size, int prot)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline size_t iommu_unmap(struct iommu_domain *domain,
@@ -760,7 +760,7 @@ static inline int iommu_domain_window_enable(struct iommu_domain *domain,
 					     u32 wnd_nr, phys_addr_t paddr,
 					     u64 size, int prot)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_domain_window_disable(struct iommu_domain *domain,
@@ -791,7 +791,7 @@ static inline void iommu_put_resv_regions(struct device *dev,
 static inline int iommu_get_group_resv_regions(struct iommu_group *group,
 					       struct list_head *head)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_set_default_passthrough(bool cmd_line)
@@ -810,7 +810,7 @@ static inline bool iommu_default_passthrough(void)
 static inline int iommu_attach_group(struct iommu_domain *domain,
 				     struct iommu_group *group)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_detach_group(struct iommu_domain *domain,
@@ -820,7 +820,7 @@ static inline void iommu_detach_group(struct iommu_domain *domain,
 
 static inline struct iommu_group *iommu_group_alloc(void)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void *iommu_group_get_iommudata(struct iommu_group *group)
@@ -837,13 +837,13 @@ static inline void iommu_group_set_iommudata(struct iommu_group *group,
 static inline int iommu_group_set_name(struct iommu_group *group,
 				       const char *name)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_group_add_device(struct iommu_group *group,
 					 struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_group_remove_device(struct device *dev)
@@ -854,7 +854,7 @@ static inline int iommu_group_for_each_dev(struct iommu_group *group,
 					   void *data,
 					   int (*fn)(struct device *, void *))
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct iommu_group *iommu_group_get(struct device *dev)
@@ -869,7 +869,7 @@ static inline void iommu_group_put(struct iommu_group *group)
 static inline int iommu_group_register_notifier(struct iommu_group *group,
 						struct notifier_block *nb)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_group_unregister_notifier(struct iommu_group *group,
@@ -883,7 +883,7 @@ int iommu_register_device_fault_handler(struct device *dev,
 					iommu_dev_fault_handler_t handler,
 					void *data)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_unregister_device_fault_handler(struct device *dev)
@@ -894,35 +894,35 @@ static inline int iommu_unregister_device_fault_handler(struct device *dev)
 static inline
 int iommu_report_device_fault(struct device *dev, struct iommu_fault_event *evt)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_page_response(struct device *dev,
 				      struct iommu_page_response *msg)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_group_id(struct iommu_group *group)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_domain_get_attr(struct iommu_domain *domain,
 					enum iommu_attr attr, void *data)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int iommu_domain_set_attr(struct iommu_domain *domain,
 					enum iommu_attr attr, void *data)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int  iommu_device_register(struct iommu_device *iommu)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_device_set_ops(struct iommu_device *iommu,
@@ -959,7 +959,7 @@ static inline int  iommu_device_sysfs_add(struct iommu_device *iommu,
 					  const struct attribute_group **groups,
 					  const char *fmt, ...)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_device_sysfs_remove(struct iommu_device *iommu)
@@ -968,7 +968,7 @@ static inline void iommu_device_sysfs_remove(struct iommu_device *iommu)
 
 static inline int iommu_device_link(struct device *dev, struct device *link)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void iommu_device_unlink(struct device *dev, struct device *link)
@@ -979,7 +979,7 @@ static inline int iommu_fwspec_init(struct device *dev,
 				    struct fwnode_handle *iommu_fwnode,
 				    const struct iommu_ops *ops)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_fwspec_free(struct device *dev)
@@ -989,7 +989,7 @@ static inline void iommu_fwspec_free(struct device *dev)
 static inline int iommu_fwspec_add_ids(struct device *dev, u32 *ids,
 				       int num_ids)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline
@@ -1013,19 +1013,19 @@ iommu_dev_feature_enabled(struct device *dev, enum iommu_dev_features feat)
 static inline int
 iommu_dev_enable_feature(struct device *dev, enum iommu_dev_features feat)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int
 iommu_dev_disable_feature(struct device *dev, enum iommu_dev_features feat)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int
 iommu_aux_attach_device(struct iommu_domain *domain, struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void
@@ -1036,7 +1036,7 @@ iommu_aux_detach_device(struct iommu_domain *domain, struct device *dev)
 static inline int
 iommu_aux_get_pasid(struct iommu_domain *domain, struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct iommu_sva *
@@ -1059,18 +1059,18 @@ iommu_cache_invalidate(struct iommu_domain *domain,
 		       struct device *dev,
 		       struct iommu_cache_invalidate_info *inv_info)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int iommu_sva_bind_gpasid(struct iommu_domain *domain,
 				struct device *dev, struct iommu_gpasid_bind_data *data)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_sva_unbind_gpasid(struct iommu_domain *domain,
 					   struct device *dev, int pasid)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct iommu_fwspec *dev_iommu_fwspec_get(struct device *dev)

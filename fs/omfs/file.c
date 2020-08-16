@@ -45,7 +45,7 @@ int omfs_shrink_inode(struct inode *inode)
 	next = inode->i_ino;
 
 	/* only support truncate -> 0 for now */
-	ret = -EIO;
+	ret = -ERR(EIO);
 	if (inode->i_size != 0)
 		goto out;
 
@@ -136,7 +136,7 @@ static int omfs_grow_extent(struct inode *inode, struct omfs_extent *oe,
 
 	/* should always have a terminator */
 	if (extent_count < 1)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* trivially grow current extent, if next block is not taken */
 	terminator = entry + extent_count - 1;
@@ -156,7 +156,7 @@ static int omfs_grow_extent(struct inode *inode, struct omfs_extent *oe,
 
 	/* TODO: add a continuation block here */
 	if (be32_to_cpu(oe->e_extent_count) > max_count-1)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* try to allocate a new cluster */
 	ret = omfs_allocate_range(inode->i_sb, 1, sbi->s_clustersize,
@@ -229,7 +229,7 @@ static int omfs_get_block(struct inode *inode, sector_t block,
 	int max_blocks = bh_result->b_size >> inode->i_blkbits;
 	int remain;
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	bh = omfs_bread(inode->i_sb, inode->i_ino);
 	if (!bh)
 		goto out;

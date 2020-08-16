@@ -680,7 +680,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
 	struct rhashtable_params params = { 0 };
 	char *key = NULL;
 	struct aa_data *data;
-	int i, error = -EPROTO;
+	int i, error = -ERR(EPROTO);
 	kernel_cap_t tmpcap;
 	u32 tmp;
 
@@ -832,7 +832,7 @@ static struct aa_profile *unpack_profile(struct aa_ext *e, char **ns_name)
 			profile->policy.dfa = NULL;
 			goto fail;
 		} else if (!profile->policy.dfa) {
-			error = -EPROTO;
+			error = -ERR(EPROTO);
 			goto fail;
 		}
 		if (!unpack_u32(e, &profile->policy.start[0], "start"))
@@ -945,7 +945,7 @@ fail:
  */
 static int verify_header(struct aa_ext *e, int required, const char **ns)
 {
-	int error = -EPROTONOSUPPORT;
+	int error = -ERR(EPROTONOSUPPORT);
 	const char *name = NULL;
 	*ns = NULL;
 
@@ -1024,7 +1024,7 @@ static int verify_profile(struct aa_profile *profile)
 			       profile->file.trans.size)) {
 		audit_iface(profile, NULL, NULL, "Invalid named transition",
 			    NULL, -EPROTO);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	return 0;
@@ -1060,7 +1060,7 @@ static int deflate_compress(const char *src, size_t slen, char **dst,
 	memset(&strm, 0, sizeof(strm));
 
 	if (stglen < slen)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	strm.workspace = kvzalloc(zlib_deflate_workspacesize(MAX_WBITS,
 							     MAX_MEM_LEVEL),
@@ -1087,7 +1087,7 @@ static int deflate_compress(const char *src, size_t slen, char **dst,
 
 	error = zlib_deflate(&strm, Z_FINISH);
 	if (error != Z_STREAM_END) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto fail_deflate;
 	}
 	error = 0;

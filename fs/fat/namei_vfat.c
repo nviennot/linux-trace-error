@@ -56,7 +56,7 @@ static int vfat_revalidate_shortname(struct dentry *dentry)
 static int vfat_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	/* This is not negative dentry. Always valid. */
 	if (d_really_is_positive(dentry))
@@ -67,7 +67,7 @@ static int vfat_revalidate(struct dentry *dentry, unsigned int flags)
 static int vfat_revalidate_ci(struct dentry *dentry, unsigned int flags)
 {
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	/*
 	 * This is not negative dentry. Always valid.
@@ -225,10 +225,10 @@ static inline int vfat_is_used_badchars(const wchar_t *s, int len)
 
 	for (i = 0; i < len; i++)
 		if (vfat_bad_char(s[i]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	if (s[i - 1] == ' ') /* last character cannot be space */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -238,7 +238,7 @@ static int vfat_find_form(struct inode *dir, unsigned char *name)
 	struct fat_slot_info sinfo;
 	int err = fat_scan(dir, name, &sinfo);
 	if (err)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	brelse(sinfo.bh);
 	return 0;
 }
@@ -402,7 +402,7 @@ static int vfat_create_shortname(struct inode *dir, struct nls_table *nls,
 		}
 	}
 	if (baselen == 0) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	extlen = 0;
@@ -446,7 +446,7 @@ static int vfat_create_shortname(struct inode *dir, struct nls_table *nls,
 	*lcase = 0;
 	if (is_shortname && base_info.valid && ext_info.valid) {
 		if (vfat_find_form(dir, name_res) == 0)
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		if (opts->shortname & VFAT_SFN_CREATE_WIN95) {
 			return (base_info.upper && ext_info.upper);
@@ -523,7 +523,7 @@ xlate_to_uni(const unsigned char *name, int len, unsigned char *outname,
 		if (*outlen < 0)
 			return *outlen;
 		else if (*outlen > FAT_LFN_LEN)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 
 		op = &outname[*outlen * sizeof(wchar_t)];
 	} else {
@@ -534,10 +534,10 @@ xlate_to_uni(const unsigned char *name, int len, unsigned char *outname,
 				u8 uc[2];
 
 				if (i > len - 5)
-					return -EINVAL;
+					return -ERR(EINVAL);
 
 				if (hex2bin(uc, ip + 1, 2) < 0)
-					return -EINVAL;
+					return -ERR(EINVAL);
 
 				*(wchar_t *)op = uc[0] << 8 | uc[1];
 
@@ -548,14 +548,14 @@ xlate_to_uni(const unsigned char *name, int len, unsigned char *outname,
 				charlen = nls->char2uni(ip, len - i,
 							(wchar_t *)op);
 				if (charlen < 0)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				ip += charlen;
 				i += charlen;
 				op += 2;
 			}
 		}
 		if (i < len)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 	}
 
 	*longlen = *outlen;
@@ -663,7 +663,7 @@ static int vfat_add_entry(struct inode *dir, const struct qstr *qname,
 
 	len = vfat_striptail_len(qname);
 	if (len == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	slots = kmalloc_array(MSDOS_SLOTS, sizeof(*slots), GFP_NOFS);
 	if (slots == NULL)
@@ -694,7 +694,7 @@ static int vfat_find(struct inode *dir, const struct qstr *qname,
 {
 	unsigned int len = vfat_striptail_len(qname);
 	if (len == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return fat_search_long(dir, qname->name, len, sinfo);
 }
 
@@ -906,7 +906,7 @@ static int vfat_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct super_block *sb = old_dir->i_sb;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_sinfo.bh = sinfo.bh = dotdot_bh = NULL;
 	old_inode = d_inode(old_dentry);
@@ -920,7 +920,7 @@ static int vfat_rename(struct inode *old_dir, struct dentry *old_dentry,
 	update_dotdot = (is_dir && old_dir != new_dir);
 	if (update_dotdot) {
 		if (fat_get_dotdot_entry(old_inode, &dotdot_bh, &dotdot_de)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 	}

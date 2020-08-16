@@ -108,7 +108,7 @@ static void ocfs2_filecheck_release(struct kobject *kobj)
 static ssize_t
 ocfs2_filecheck_show(struct kobject *kobj, struct attribute *attr, char *buf)
 {
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 	struct kobj_attribute *kattr = container_of(attr,
 					struct kobj_attribute, attr);
 
@@ -123,7 +123,7 @@ static ssize_t
 ocfs2_filecheck_store(struct kobject *kobj, struct attribute *attr,
 			const char *buf, size_t count)
 {
-	ssize_t ret = -EIO;
+	ssize_t ret = -ERR(EIO);
 	struct kobj_attribute *kattr = container_of(attr,
 					struct kobj_attribute, attr);
 
@@ -215,7 +215,7 @@ ocfs2_filecheck_adjust_max(struct ocfs2_filecheck_sysfs_entry *ent,
 	int ret;
 
 	if ((len < OCFS2_FILECHECK_MINSIZE) || (len > OCFS2_FILECHECK_MAXSIZE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&ent->fs_fcheck->fc_lock);
 	if (len < (ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_done)) {
@@ -223,7 +223,7 @@ ocfs2_filecheck_adjust_max(struct ocfs2_filecheck_sysfs_entry *ent,
 		"Cannot set online file check maximum entry number "
 		"to %u due to too many pending entries(%u)\n",
 		len, ent->fs_fcheck->fc_size - ent->fs_fcheck->fc_done);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else {
 		if (len < ent->fs_fcheck->fc_size)
 			BUG_ON(!ocfs2_filecheck_erase_entries(ent,
@@ -308,7 +308,7 @@ static ssize_t ocfs2_filecheck_attr_show(struct kobject *kobj,
 				struct ocfs2_filecheck_sysfs_entry, fs_kobj);
 
 	if (ocfs2_filecheck_type_parse(attr->attr.name, &type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (type == OCFS2_FILECHECK_TYPE_SET) {
 		spin_lock(&ent->fs_fcheck->fc_lock);
@@ -334,7 +334,7 @@ static ssize_t ocfs2_filecheck_attr_show(struct kobject *kobj,
 		}
 		if (ret == remain) {
 			/* snprintf() didn't fit */
-			total = -E2BIG;
+			total = -ERR(E2BIG);
 			break;
 		}
 		total += ret;
@@ -462,7 +462,7 @@ static ssize_t ocfs2_filecheck_attr_store(struct kobject *kobj,
 		return count;
 
 	if (ocfs2_filecheck_args_parse(attr->attr.name, buf, count, &args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (args.fa_type == OCFS2_FILECHECK_TYPE_SET) {
 		ret = ocfs2_filecheck_adjust_max(ent, args.fa_len);
@@ -477,7 +477,7 @@ static ssize_t ocfs2_filecheck_attr_store(struct kobject *kobj,
 
 	spin_lock(&ent->fs_fcheck->fc_lock);
 	if (ocfs2_filecheck_is_dup_entry(ent, args.fa_ino)) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		kfree(entry);
 	} else if ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&
 		(ent->fs_fcheck->fc_done == 0)) {
@@ -485,7 +485,7 @@ static ssize_t ocfs2_filecheck_attr_store(struct kobject *kobj,
 		"Cannot do more file check "
 		"since file check queue(%u) is full now\n",
 		ent->fs_fcheck->fc_max);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		kfree(entry);
 	} else {
 		if ((ent->fs_fcheck->fc_size >= ent->fs_fcheck->fc_max) &&

@@ -368,7 +368,7 @@ static int sock_set_timeout(long *timeo_p, char __user *optval, int optlen, bool
 		struct old_timeval32 tv32;
 
 		if (optlen < sizeof(tv32))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&tv32, optval, sizeof(tv32)))
 			return -EFAULT;
@@ -378,19 +378,19 @@ static int sock_set_timeout(long *timeo_p, char __user *optval, int optlen, bool
 		struct __kernel_old_timeval old_tv;
 
 		if (optlen < sizeof(old_tv))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&old_tv, optval, sizeof(old_tv)))
 			return -EFAULT;
 		tv.tv_sec = old_tv.tv_sec;
 		tv.tv_usec = old_tv.tv_usec;
 	} else {
 		if (optlen < sizeof(tv))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&tv, optval, sizeof(tv)))
 			return -EFAULT;
 	}
 	if (tv.tv_usec < 0 || tv.tv_usec >= USEC_PER_SEC)
-		return -EDOM;
+		return -ERR(EDOM);
 
 	if (tv.tv_sec < 0) {
 		static int warned __read_mostly;
@@ -458,7 +458,7 @@ int __sock_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 
 	if (!sk_rmem_schedule(sk, skb, skb->truesize)) {
 		atomic_inc(&sk->sk_drops);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	skb->dev = NULL;
@@ -568,16 +568,16 @@ EXPORT_SYMBOL(sk_dst_check);
 
 static int sock_bindtoindex_locked(struct sock *sk, int ifindex)
 {
-	int ret = -ENOPROTOOPT;
+	int ret = -ERR(ENOPROTOOPT);
 #ifdef CONFIG_NETDEVICES
 	struct net *net = sock_net(sk);
 
 	/* Sorry... */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if (sk->sk_bound_dev_if && !ns_capable(net->user_ns, CAP_NET_RAW))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (ifindex < 0)
 		goto out;
 
@@ -611,13 +611,13 @@ EXPORT_SYMBOL(sock_bindtoindex);
 static int sock_setbindtodevice(struct sock *sk, char __user *optval,
 				int optlen)
 {
-	int ret = -ENOPROTOOPT;
+	int ret = -ERR(ENOPROTOOPT);
 #ifdef CONFIG_NETDEVICES
 	struct net *net = sock_net(sk);
 	char devname[IFNAMSIZ];
 	int index;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (optlen < 0)
 		goto out;
 
@@ -643,7 +643,7 @@ static int sock_setbindtodevice(struct sock *sk, char __user *optval,
 		if (dev)
 			index = dev->ifindex;
 		rcu_read_unlock();
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		if (!dev)
 			goto out;
 	}
@@ -658,7 +658,7 @@ out:
 static int sock_getbindtodevice(struct sock *sk, char __user *optval,
 				int __user *optlen, int len)
 {
-	int ret = -ENOPROTOOPT;
+	int ret = -ERR(ENOPROTOOPT);
 #ifdef CONFIG_NETDEVICES
 	struct net *net = sock_net(sk);
 	char devname[IFNAMSIZ];
@@ -668,7 +668,7 @@ static int sock_getbindtodevice(struct sock *sk, char __user *optval,
 		goto zero;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (len < IFNAMSIZ)
 		goto out;
 
@@ -851,7 +851,7 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
 		return sock_setbindtodevice(sk, optval, optlen);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
@@ -863,7 +863,7 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
 	switch (optname) {
 	case SO_DEBUG:
 		if (val && !capable(CAP_NET_ADMIN))
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 		else
 			sock_valbool_flag(sk, SOCK_DBG, valbool);
 		break;
@@ -877,7 +877,7 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
 	case SO_PROTOCOL:
 	case SO_DOMAIN:
 	case SO_ERROR:
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 		break;
 	case SO_DONTROUTE:
 		sock_valbool_flag(sk, SOCK_LOCALROUTE, valbool);
@@ -907,7 +907,7 @@ set_sndbuf:
 
 	case SO_SNDBUFFORCE:
 		if (!capable(CAP_NET_ADMIN)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			break;
 		}
 
@@ -929,7 +929,7 @@ set_sndbuf:
 
 	case SO_RCVBUFFORCE:
 		if (!capable(CAP_NET_ADMIN)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			break;
 		}
 
@@ -958,12 +958,12 @@ set_sndbuf:
 		    ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
 			sk->sk_priority = val;
 		else
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 		break;
 
 	case SO_LINGER:
 		if (optlen < sizeof(ling)) {
-			ret = -EINVAL;	/* 1003.1g */
+			ret = -ERR(EINVAL);	/* 1003.1g */
 			break;
 		}
 		if (copy_from_user(&ling, optval, sizeof(ling))) {
@@ -1011,7 +1011,7 @@ set_sndbuf:
 		/* fall through */
 	case SO_TIMESTAMPING_OLD:
 		if (val & ~SOF_TIMESTAMPING_MASK) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -1021,7 +1021,7 @@ set_sndbuf:
 			    sk->sk_type == SOCK_STREAM) {
 				if ((1 << sk->sk_state) &
 				    (TCPF_CLOSE | TCPF_LISTEN)) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					break;
 				}
 				sk->sk_tskey = tcp_sk(sk)->snd_una;
@@ -1032,7 +1032,7 @@ set_sndbuf:
 
 		if (val & SOF_TIMESTAMPING_OPT_STATS &&
 		    !(val & SOF_TIMESTAMPING_OPT_TSONLY)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -1069,7 +1069,7 @@ set_sndbuf:
 		break;
 
 	case SO_ATTACH_FILTER:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (optlen == sizeof(struct sock_fprog)) {
 			struct sock_fprog fprog;
 
@@ -1082,7 +1082,7 @@ set_sndbuf:
 		break;
 
 	case SO_ATTACH_BPF:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (optlen == sizeof(u32)) {
 			u32 ufd;
 
@@ -1095,7 +1095,7 @@ set_sndbuf:
 		break;
 
 	case SO_ATTACH_REUSEPORT_CBPF:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (optlen == sizeof(struct sock_fprog)) {
 			struct sock_fprog fprog;
 
@@ -1108,7 +1108,7 @@ set_sndbuf:
 		break;
 
 	case SO_ATTACH_REUSEPORT_EBPF:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (optlen == sizeof(u32)) {
 			u32 ufd;
 
@@ -1130,7 +1130,7 @@ set_sndbuf:
 
 	case SO_LOCK_FILTER:
 		if (sock_flag(sk, SOCK_FILTER_LOCKED) && !valbool)
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 		else
 			sock_valbool_flag(sk, SOCK_FILTER_LOCKED, valbool);
 		break;
@@ -1143,7 +1143,7 @@ set_sndbuf:
 		break;
 	case SO_MARK:
 		if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 		} else if (val != sk->sk_mark) {
 			sk->sk_mark = val;
 			sk_dst_reset(sk);
@@ -1162,7 +1162,7 @@ set_sndbuf:
 		if (sock->ops->set_peek_off)
 			ret = sock->ops->set_peek_off(sk, val);
 		else
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 		break;
 
 	case SO_NOFCS:
@@ -1177,10 +1177,10 @@ set_sndbuf:
 	case SO_BUSY_POLL:
 		/* allow unprivileged users to decrease the value */
 		if ((val > sk->sk_ll_usec) && !capable(CAP_NET_ADMIN))
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 		else {
 			if (val < 0)
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			else
 				sk->sk_ll_usec = val;
 		}
@@ -1220,13 +1220,13 @@ set_sndbuf:
 			       sk->sk_protocol == IPPROTO_TCP) ||
 			      (sk->sk_type == SOCK_DGRAM &&
 			       sk->sk_protocol == IPPROTO_UDP)))
-				ret = -ENOTSUPP;
+				ret = -ERR(ENOTSUPP);
 		} else if (sk->sk_family != PF_RDS) {
-			ret = -ENOTSUPP;
+			ret = -ERR(ENOTSUPP);
 		}
 		if (!ret) {
 			if (val < 0 || val > 1)
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			else
 				sock_valbool_flag(sk, SOCK_ZEROCOPY, valbool);
 		}
@@ -1234,14 +1234,14 @@ set_sndbuf:
 
 	case SO_TXTIME:
 		if (optlen != sizeof(struct sock_txtime)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		} else if (copy_from_user(&sk_txtime, optval,
 			   sizeof(struct sock_txtime))) {
 			ret = -EFAULT;
 			break;
 		} else if (sk_txtime.flags & ~SOF_TXTIME_FLAGS_MASK) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		/* CLOCK_MONOTONIC is only used by sch_fq, and this packet
@@ -1249,7 +1249,7 @@ set_sndbuf:
 		 */
 		if (sk_txtime.clockid != CLOCK_MONOTONIC &&
 		    !ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			break;
 		}
 		sock_valbool_flag(sk, SOCK_TXTIME, true);
@@ -1265,7 +1265,7 @@ set_sndbuf:
 		break;
 
 	default:
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 		break;
 	}
 	release_sock(sk);
@@ -1321,7 +1321,7 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 	if (get_user(len, optlen))
 		return -EFAULT;
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&v, 0, sizeof(v));
 
@@ -1458,12 +1458,12 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 		int ret, n;
 
 		if (!sk->sk_peer_cred)
-			return -ENODATA;
+			return -ERR(ENODATA);
 
 		n = sk->sk_peer_cred->group_info->ngroups;
 		if (len < n * sizeof(gid_t)) {
 			len = n * sizeof(gid_t);
-			return put_user(len, optlen) ? -EFAULT : -ERANGE;
+			return put_user(len, optlen) ? -EFAULT : -ERR(ERANGE);
 		}
 		len = n * sizeof(gid_t);
 
@@ -1480,9 +1480,9 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 
 		lv = sock->ops->getname(sock, (struct sockaddr *)address, 2);
 		if (lv < 0)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		if (lv < len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_to_user(optval, address, len))
 			return -EFAULT;
 		goto lenout;
@@ -1516,7 +1516,7 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case SO_PEEK_OFF:
 		if (!sock->ops->set_peek_off)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		v.val = sk->sk_peek_off;
 		break;
@@ -1593,7 +1593,7 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 	case SO_COOKIE:
 		lv = sizeof(u64);
 		if (len < lv)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		v.val64 = sock_gen_cookie(sk);
 		break;
 
@@ -1618,7 +1618,7 @@ int sock_getsockopt(struct socket *sock, int level, int optname,
 		/* We implement the SO_SNDLOWAT etc to not be settable
 		 * (1003.1g 7).
 		 */
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (len > lv)
@@ -2337,7 +2337,7 @@ struct sk_buff *sock_alloc_send_pskb(struct sock *sk, unsigned long header_len,
 		if (err != 0)
 			goto failure;
 
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		if (sk->sk_shutdown & SEND_SHUTDOWN)
 			goto failure;
 
@@ -2346,7 +2346,7 @@ struct sk_buff *sock_alloc_send_pskb(struct sock *sk, unsigned long header_len,
 
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 		set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		if (!timeo)
 			goto failure;
 		if (signal_pending(current))
@@ -2382,27 +2382,27 @@ int __sock_cmsg_send(struct sock *sk, struct msghdr *msg, struct cmsghdr *cmsg,
 	switch (cmsg->cmsg_type) {
 	case SO_MARK:
 		if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (cmsg->cmsg_len != CMSG_LEN(sizeof(u32)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		sockc->mark = *(u32 *)CMSG_DATA(cmsg);
 		break;
 	case SO_TIMESTAMPING_OLD:
 		if (cmsg->cmsg_len != CMSG_LEN(sizeof(u32)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tsflags = *(u32 *)CMSG_DATA(cmsg);
 		if (tsflags & ~SOF_TIMESTAMPING_TX_RECORD_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sockc->tsflags &= ~SOF_TIMESTAMPING_TX_RECORD_MASK;
 		sockc->tsflags |= tsflags;
 		break;
 	case SCM_TXTIME:
 		if (!sock_flag(sk, SOCK_TXTIME))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (cmsg->cmsg_len != CMSG_LEN(sizeof(u64)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		sockc->transmit_time = get_unaligned((u64 *)CMSG_DATA(cmsg));
 		break;
 	/* SCM_RIGHTS and SCM_CREDENTIALS are semantically in SOL_UNIX. */
@@ -2410,7 +2410,7 @@ int __sock_cmsg_send(struct sock *sk, struct msghdr *msg, struct cmsghdr *cmsg,
 	case SCM_CREDENTIALS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2424,7 +2424,7 @@ int sock_cmsg_send(struct sock *sk, struct msghdr *msg,
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (cmsg->cmsg_level != SOL_SOCKET)
 			continue;
 		ret = __sock_cmsg_send(sk, msg, cmsg, sockc);
@@ -2753,92 +2753,92 @@ EXPORT_SYMBOL_GPL(sk_set_peek_off);
 
 int sock_no_bind(struct socket *sock, struct sockaddr *saddr, int len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_bind);
 
 int sock_no_connect(struct socket *sock, struct sockaddr *saddr,
 		    int len, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_connect);
 
 int sock_no_socketpair(struct socket *sock1, struct socket *sock2)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_socketpair);
 
 int sock_no_accept(struct socket *sock, struct socket *newsock, int flags,
 		   bool kern)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_accept);
 
 int sock_no_getname(struct socket *sock, struct sockaddr *saddr,
 		    int peer)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_getname);
 
 int sock_no_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_ioctl);
 
 int sock_no_listen(struct socket *sock, int backlog)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_listen);
 
 int sock_no_shutdown(struct socket *sock, int how)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_shutdown);
 
 int sock_no_setsockopt(struct socket *sock, int level, int optname,
 		    char __user *optval, unsigned int optlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_setsockopt);
 
 int sock_no_getsockopt(struct socket *sock, int level, int optname,
 		    char __user *optval, int __user *optlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_getsockopt);
 
 int sock_no_sendmsg(struct socket *sock, struct msghdr *m, size_t len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_sendmsg);
 
 int sock_no_sendmsg_locked(struct sock *sk, struct msghdr *m, size_t len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_sendmsg_locked);
 
 int sock_no_recvmsg(struct socket *sock, struct msghdr *m, size_t len,
 		    int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL(sock_no_recvmsg);
 
 int sock_no_mmap(struct file *file, struct socket *sock, struct vm_area_struct *vma)
 {
 	/* Mirror missing mmap method error code */
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 EXPORT_SYMBOL(sock_no_mmap);
 
@@ -3123,7 +3123,7 @@ int sock_gettstamp(struct socket *sock, void __user *userstamp,
 	sock_enable_timestamp(sk, SOCK_TIMESTAMP);
 	ts = ktime_to_timespec64(sock_read_timestamp(sk));
 	if (ts.tv_sec == -1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (ts.tv_sec == 0) {
 		ktime_t kt = ktime_get_real();
 		sock_write_timestamp(sk, kt);
@@ -3177,7 +3177,7 @@ int sock_recv_errqueue(struct sock *sk, struct msghdr *msg, int len,
 	struct sk_buff *skb;
 	int copied, err;
 
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	skb = sock_dequeue_err_skb(sk);
 	if (skb == NULL)
 		goto out;
@@ -3416,7 +3416,7 @@ static int assign_proto_idx(struct proto *prot)
 
 	if (unlikely(prot->inuse_idx == PROTO_INUSE_NR - 1)) {
 		pr_err("PROTO_INUSE_NR exhausted\n");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	set_bit(prot->inuse_idx, proto_inuse_idx);
@@ -3480,7 +3480,7 @@ static int req_prot_init(const struct proto *prot)
 
 int proto_register(struct proto *prot, int alloc_slab)
 {
-	int ret = -ENOBUFS;
+	int ret = -ERR(ENOBUFS);
 
 	if (alloc_slab) {
 		prot->slab = kmem_cache_create_usercopy(prot->name,
@@ -3566,7 +3566,7 @@ int sock_load_diag_module(int family, int protocol)
 {
 	if (!protocol) {
 		if (!sock_is_registered(family))
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		return request_module("net-pf-%d-proto-%d-type-%d", PF_NETLINK,
 				      NETLINK_SOCK_DIAG, family);
@@ -3576,7 +3576,7 @@ int sock_load_diag_module(int family, int protocol)
 	if (family == AF_INET &&
 	    protocol != IPPROTO_RAW &&
 	    !rcu_access_pointer(inet_protos[protocol]))
-		return -ENOENT;
+		return -ERR(ENOENT);
 #endif
 
 	return request_module("net-pf-%d-proto-%d-type-%d-%d", PF_NETLINK,
@@ -3720,7 +3720,7 @@ EXPORT_SYMBOL(sk_busy_loop_end);
 int sock_bind_add(struct sock *sk, struct sockaddr *addr, int addr_len)
 {
 	if (!sk->sk_prot->bind_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return sk->sk_prot->bind_add(sk, addr, addr_len);
 }
 EXPORT_SYMBOL(sock_bind_add);

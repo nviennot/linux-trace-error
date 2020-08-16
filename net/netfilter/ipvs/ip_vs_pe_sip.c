@@ -39,23 +39,23 @@ static int get_callid(const char *dptr, unsigned int dataoff,
 		if (ret > 0)
 			break;
 		if (!ret)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		dataoff += *matchoff;
 	}
 
 	/* Too large is useless */
 	if (*matchlen > IP_VS_PEDATA_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* SIP headers are always followed by a line terminator */
 	if (*matchoff + *matchlen == datalen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* RFC 2543 allows lines to be terminated with CR, LF or CRLF,
 	 * RFC 3261 allows only CRLF, we support both. */
 	if (*(dptr + *matchoff + *matchlen) != '\r' &&
 	    *(dptr + *matchoff + *matchlen) != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	IP_VS_DBG_BUF(9, "SIP callid %s (%d bytes)\n",
 		      IP_VS_DEBUG_CALLID(dptr + *matchoff, *matchlen),
@@ -75,14 +75,14 @@ ip_vs_sip_fill_param(struct ip_vs_conn_param *p, struct sk_buff *skb)
 
 	/* Only useful with UDP */
 	if (!retc || iph.protocol != IPPROTO_UDP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* todo: IPv6 fragments:
 	 *       I think this only should be done for the first fragment. /HS
 	 */
 	dataoff = iph.len + sizeof(struct udphdr);
 
 	if (dataoff >= skb->len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	retc = skb_linearize(skb);
 	if (retc < 0)
 		return retc;
@@ -90,7 +90,7 @@ ip_vs_sip_fill_param(struct ip_vs_conn_param *p, struct sk_buff *skb)
 	datalen = skb->len - dataoff;
 
 	if (get_callid(dptr, 0, datalen, &matchoff, &matchlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* N.B: pe_data is only set on success,
 	 * this allows fallback to the default persistence logic on failure

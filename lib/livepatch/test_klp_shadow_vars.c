@@ -121,7 +121,7 @@ static int shadow_ctor(void *obj, void *shadow_data, void *ctor_data)
 	int **var = ctor_data;
 
 	if (!var)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*sv = *var;
 	pr_info("%s: PTR%d -> PTR%d\n",
@@ -190,20 +190,20 @@ static int test_klp_shadow_vars_init(void)
 	 */
 	sv = shadow_get(obj, id);
 	if (!sv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sv == sv1 && *sv1 == pv1)
 		pr_info("  got expected PTR%d -> PTR%d result\n",
 			ptr_id(sv1), ptr_id(*sv1));
 
 	sv = shadow_get(obj + 1, id);
 	if (!sv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sv == sv2 && *sv2 == pv2)
 		pr_info("  got expected PTR%d -> PTR%d result\n",
 			ptr_id(sv2), ptr_id(*sv2));
 	sv = shadow_get(obj, id + 1);
 	if (!sv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sv == sv3 && *sv3 == pv3)
 		pr_info("  got expected PTR%d -> PTR%d result\n",
 			ptr_id(sv3), ptr_id(*sv3));
@@ -218,7 +218,7 @@ static int test_klp_shadow_vars_init(void)
 
 	sv = shadow_get_or_alloc(obj + 2, id, sizeof(pv4), gfp_flags, shadow_ctor, &pv4);
 	if (!sv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sv == sv4 && *sv4 == pv4)
 		pr_info("  got expected PTR%d -> PTR%d result\n",
 			ptr_id(sv4), ptr_id(*sv4));
@@ -247,7 +247,7 @@ static int test_klp_shadow_vars_init(void)
 	 */
 	sv = shadow_get(obj, id + 1);
 	if (!sv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sv == sv3 && *sv3 == pv3)
 		pr_info("  got expected PTR%d -> PTR%d result\n",
 			ptr_id(sv3), ptr_id(*sv3));

@@ -120,7 +120,7 @@ static inline int __init
 trace_boot_add_kprobe_event(struct xbc_node *node, const char *event)
 {
 	pr_err("Kprobe event is not supported.\n");
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 
@@ -157,7 +157,7 @@ static inline int __init
 trace_boot_add_synth_event(struct xbc_node *node, const char *event)
 {
 	pr_err("Synthetic event is not supported.\n");
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 

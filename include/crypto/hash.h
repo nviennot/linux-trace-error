@@ -499,7 +499,7 @@ static inline int crypto_ahash_import(struct ahash_request *req, const void *in)
 	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
 
 	if (crypto_ahash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	return tfm->import(req, in);
 }
@@ -520,7 +520,7 @@ static inline int crypto_ahash_init(struct ahash_request *req)
 	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
 
 	if (crypto_ahash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	return tfm->init(req);
 }
@@ -908,7 +908,7 @@ static inline int crypto_shash_import(struct shash_desc *desc, const void *in)
 	struct crypto_shash *tfm = desc->tfm;
 
 	if (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	return crypto_shash_alg(tfm)->import(desc, in);
 }
@@ -930,7 +930,7 @@ static inline int crypto_shash_init(struct shash_desc *desc)
 	struct crypto_shash *tfm = desc->tfm;
 
 	if (crypto_shash_get_flags(tfm) & CRYPTO_TFM_NEED_KEY)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	return crypto_shash_alg(tfm)->init(desc);
 }

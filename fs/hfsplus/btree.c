@@ -288,7 +288,7 @@ int hfs_btree_write(struct hfs_btree *tree)
 	node = hfs_bnode_find(tree, 0);
 	if (IS_ERR(node))
 		/* panic? */
-		return -EIO;
+		return -ERR(EIO);
 	/* Load the header */
 	page = node->page[0];
 	head = (struct hfs_btree_header_rec *)(kmap(page) +

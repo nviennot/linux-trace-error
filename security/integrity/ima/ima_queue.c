@@ -171,7 +171,7 @@ int ima_add_template_entry(struct ima_template_entry *entry, int violation,
 	if (!violation) {
 		if (ima_lookup_digest_entry(digest, entry->pcr)) {
 			audit_cause = "hash_exists";
-			result = -EEXIST;
+			result = -ERR(EEXIST);
 			goto out;
 		}
 	}

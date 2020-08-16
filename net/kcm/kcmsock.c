@@ -46,7 +46,7 @@ static inline struct kcm_tx_msg *kcm_tx_msg(struct sk_buff *skb)
 
 static void report_csk_error(struct sock *csk, int err)
 {
-	csk->sk_err = EPIPE;
+	csk->sk_err = ERR(EPIPE);
 	csk->sk_error_report(csk);
 }
 
@@ -193,7 +193,7 @@ static int kcm_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 		return -ENOMEM;
 
 	if (!sk_rmem_schedule(sk, skb, skb->truesize))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	skb->dev = NULL;
 
@@ -603,7 +603,7 @@ static int kcm_write_msgs(struct kcm_sock *kcm)
 	if (txm->sent) {
 		/* Send of first skbuff in queue already in progress */
 		if (WARN_ON(!psock)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		sent = txm->sent;
@@ -626,7 +626,7 @@ try_again:
 
 do_frag_list:
 		if (WARN_ON(!skb_shinfo(skb)->nr_frags)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -638,7 +638,7 @@ do_frag_list:
 do_frag:
 			frag = &skb_shinfo(skb)->frags[fragidx];
 			if (WARN_ON(!skb_frag_size(frag))) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -774,7 +774,7 @@ static ssize_t kcm_sendpage(struct socket *sock, struct page *page,
 
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 	if (sk->sk_err)
 		goto out_error;
 
@@ -904,7 +904,7 @@ static int kcm_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	long timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
 	int eor = (sock->type == SOCK_DGRAM) ?
 		  !(msg->msg_flags & MSG_MORE) : !!(msg->msg_flags & MSG_EOR);
-	int err = -EPIPE;
+	int err = -ERR(EPIPE);
 
 	lock_sock(sk);
 
@@ -1094,7 +1094,7 @@ static struct sk_buff *kcm_wait_data(struct sock *sk, int flags,
 			return NULL;
 
 		if ((flags & MSG_DONTWAIT) || !timeo) {
-			*err = -EAGAIN;
+			*err = -ERR(EAGAIN);
 			return NULL;
 		}
 
@@ -1272,13 +1272,13 @@ static int kcm_setsockopt(struct socket *sock, int level, int optname,
 	int err = 0;
 
 	if (level != SOL_KCM)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	valbool = val ? 1 : 0;
 
@@ -1292,7 +1292,7 @@ static int kcm_setsockopt(struct socket *sock, int level, int optname,
 		release_sock(&kcm->sk);
 		break;
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 	}
 
 	return err;
@@ -1305,21 +1305,21 @@ static int kcm_getsockopt(struct socket *sock, int level, int optname,
 	int val, len;
 
 	if (level != SOL_KCM)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
 
 	len = min_t(unsigned int, len, sizeof(int));
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case KCM_RECV_DISABLE:
 		val = kcm->rx_disabled;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))
@@ -1384,20 +1384,20 @@ static int kcm_attach(struct socket *sock, struct socket *csock,
 
 	csk = csock->sk;
 	if (!csk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(csk);
 
 	/* Only allow TCP sockets to be attached for now */
 	if ((csk->sk_family != AF_INET && csk->sk_family != AF_INET6) ||
 	    csk->sk_protocol != IPPROTO_TCP) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	/* Don't allow listeners or closed sockets */
 	if (csk->sk_state == TCP_LISTEN || csk->sk_state == TCP_CLOSE) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -1427,7 +1427,7 @@ static int kcm_attach(struct socket *sock, struct socket *csock,
 		strp_stop(&psock->strp);
 		strp_done(&psock->strp);
 		kmem_cache_free(kcm_psockp, psock);
-		err = -EALREADY;
+		err = -ERR(EALREADY);
 		goto out;
 	}
 
@@ -1478,7 +1478,7 @@ static int kcm_attach_ioctl(struct socket *sock, struct kcm_attach *info)
 
 	csock = sockfd_lookup(info->fd, &err);
 	if (!csock)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	prog = bpf_prog_get_type(info->bpf_fd, BPF_PROG_TYPE_SOCKET_FILTER);
 	if (IS_ERR(prog)) {
@@ -1607,15 +1607,15 @@ static int kcm_unattach_ioctl(struct socket *sock, struct kcm_unattach *info)
 
 	csock = sockfd_lookup(info->fd, &err);
 	if (!csock)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	csk = csock->sk;
 	if (!csk) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 
 	spin_lock_bh(&mux->lock);
 
@@ -1626,7 +1626,7 @@ static int kcm_unattach_ioctl(struct socket *sock, struct kcm_unattach *info)
 		/* Found the matching psock */
 
 		if (psock->unattaching || WARN_ON(psock->done)) {
-			err = -EALREADY;
+			err = -ERR(EALREADY);
 			break;
 		}
 
@@ -1662,7 +1662,7 @@ static struct file *kcm_clone(struct socket *osock)
 
 	newsock = sock_alloc();
 	if (!newsock)
-		return ERR_PTR(-ENFILE);
+		return ERR_PTR(-ERR(ENFILE));
 
 	newsock->type = osock->type;
 	newsock->ops = osock->ops;
@@ -1730,7 +1730,7 @@ static int kcm_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	default:
-		err = -ENOIOCTLCMD;
+		err = -ERR(ENOIOCTLCMD);
 		break;
 	}
 
@@ -1952,11 +1952,11 @@ static int kcm_create(struct net *net, struct socket *sock,
 		sock->ops = &kcm_seqpacket_ops;
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	if (protocol != KCMPROTO_CONNECTED)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	sk = sk_alloc(net, PF_KCM, GFP_KERNEL, &kcm_proto, kern);
 	if (!sk)

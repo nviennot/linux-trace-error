@@ -88,7 +88,7 @@ static int kmem_cache_sanity_check(const char *name, unsigned int size)
 	if (!name || in_interrupt() || size < sizeof(void *) ||
 		size > KMALLOC_MAX_SIZE) {
 		pr_err("kmem_cache_create(%s) integrity check failed\n", name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	WARN_ON(strchr(name, ' '));	/* It confuses parsers */
@@ -482,7 +482,7 @@ kmem_cache_create_usercopy(const char *name,
 
 	/* Refuse requests with allocator specific flags */
 	if (flags & ~SLAB_FLAGS_PERMITTED) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -612,7 +612,7 @@ static int shutdown_cache(struct kmem_cache *s)
 	kasan_cache_shutdown(s);
 
 	if (__kmem_cache_shutdown(s) != 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	memcg_unlink_cache(s);
 	list_del(&s->list);
@@ -890,7 +890,7 @@ static int shutdown_memcg_caches(struct kmem_cache *s)
 	 * that all per memcg caches attached to it must be empty too.
 	 */
 	if (!list_empty(&s->memcg_params.children))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 

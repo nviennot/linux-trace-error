@@ -369,7 +369,7 @@ static int dccp_feat_clone_sp_val(dccp_feat_val *fval, u8 const *val, u8 len)
 		fval->sp.vec = kmemdup(val, len, gfp_any());
 		if (fval->sp.vec == NULL) {
 			fval->sp.len = 0;
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 	}
 	return 0;
@@ -699,7 +699,7 @@ static int __feat_register_nn(struct list_head *fn, u8 feat,
 
 	if (dccp_feat_type(feat) != FEAT_NN ||
 	    !dccp_feat_is_valid_nn_val(feat, nn_val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Don't bother with default values, they will be activated anyway. */
 	if (nn_val - (u64)dccp_feat_default_value(feat) == 0)
@@ -724,11 +724,11 @@ static int __feat_register_sp(struct list_head *fn, u8 feat, u8 is_local,
 
 	if (dccp_feat_type(feat) != FEAT_SP ||
 	    !dccp_feat_sp_list_ok(feat, sp_val, sp_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Avoid negotiating alien CCIDs by only advertising supported ones */
 	if (feat == DCCPF_CCID && !ccid_support_check(sp_val, sp_len))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (dccp_feat_clone_sp_val(&fval, sp_val, sp_len))
 		return -ENOMEM;
@@ -753,9 +753,9 @@ int dccp_feat_register_sp(struct sock *sk, u8 feat, u8 is_local,
 			  u8 const *list, u8 len)
 {	 /* any changes must be registered before establishing the connection */
 	if (sk->sk_state != DCCP_CLOSED)
-		return -EISCONN;
+		return -ERR(EISCONN);
 	if (dccp_feat_type(feat) != FEAT_SP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return __feat_register_sp(&dccp_sk(sk)->dccps_featneg, feat, is_local,
 				  0, list, len);
 }
@@ -809,7 +809,7 @@ int dccp_feat_signal_nn_change(struct sock *sk, u8 feat, u64 nn_val)
 
 	if (dccp_feat_type(feat) != FEAT_NN ||
 	    !dccp_feat_is_valid_nn_val(feat, nn_val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nn_val == dccp_feat_nn_get(sk, feat))
 		return 0;	/* already set or negotiation under way */
@@ -1472,10 +1472,10 @@ int dccp_feat_init(struct sock *sk)
 	 * These settings can still (later) be overridden via sockopts.
 	 */
 	if (ccid_get_builtin_ccids(&tx.val, &tx.len))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	if (ccid_get_builtin_ccids(&rx.val, &rx.len)) {
 		kfree(tx.val);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	if (!dccp_feat_prefer(sysctl_dccp_tx_ccid, tx.val, tx.len) ||

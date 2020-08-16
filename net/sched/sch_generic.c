@@ -726,7 +726,7 @@ static int pfifo_fast_init(struct Qdisc *qdisc, struct nlattr *opt,
 
 	/* guard against zero length rings */
 	if (!qlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (prio = 0; prio < PFIFO_FAST_BANDS; prio++) {
 		struct skb_array *q = band2list(priv, prio);
@@ -805,12 +805,12 @@ struct Qdisc *qdisc_alloc(struct netdev_queue *dev_queue,
 	void *p;
 	struct Qdisc *sch;
 	unsigned int size = QDISC_ALIGN(sizeof(*sch)) + ops->priv_size;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 	struct net_device *dev;
 
 	if (!dev_queue) {
 		NL_SET_ERR_MSG(extack, "No device queue given");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 

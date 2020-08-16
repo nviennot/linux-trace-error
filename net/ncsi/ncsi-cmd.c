@@ -336,7 +336,7 @@ int ncsi_xmit_cmd(struct ncsi_cmd_arg *nca)
 	if (!nch) {
 		netdev_err(nca->ndp->ndev.dev,
 			   "Cannot send packet with type 0x%02x\n", nca->type);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Get packet payload length and allocate the request

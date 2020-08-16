@@ -69,7 +69,7 @@ static int rpcrdma_bc_marshal_reply(struct rpc_rqst *rqst)
 
 	p = xdr_reserve_space(&req->rl_stream, 28);
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	*p++ = rqst->rq_xid;
 	*p++ = rpcrdma_version;
 	*p++ = cpu_to_be32(r_xprt->rx_buf.rb_bc_srv_max_requests);
@@ -80,7 +80,7 @@ static int rpcrdma_bc_marshal_reply(struct rpc_rqst *rqst)
 
 	if (rpcrdma_prepare_send_sges(r_xprt, req, RPCRDMA_HDRLEN_MIN,
 				      &rqst->rq_snd_buf, rpcrdma_noch_pullup))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_xprtrdma_cb_reply(rqst);
 	return 0;
@@ -106,10 +106,10 @@ int xprt_rdma_bc_send_reply(struct rpc_rqst *rqst)
 	int rc;
 
 	if (!xprt_connected(xprt))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (!xprt_request_get_cong(xprt, rqst))
-		return -EBADSLT;
+		return -ERR(EBADSLT);
 
 	rc = rpcrdma_bc_marshal_reply(rqst);
 	if (rc < 0)
@@ -124,7 +124,7 @@ failed_marshal:
 		return rc;
 drop_connection:
 	xprt_rdma_close(xprt);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 /**

@@ -41,18 +41,18 @@ int nft_reject_init(const struct nft_ctx *ctx,
 	struct nft_reject *priv = nft_expr_priv(expr);
 
 	if (tb[NFTA_REJECT_TYPE] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->type = ntohl(nla_get_be32(tb[NFTA_REJECT_TYPE]));
 	switch (priv->type) {
 	case NFT_REJECT_ICMP_UNREACH:
 		if (tb[NFTA_REJECT_ICMP_CODE] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		priv->icmp_code = nla_get_u8(tb[NFTA_REJECT_ICMP_CODE]);
 	case NFT_REJECT_TCP_RST:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -211,7 +211,7 @@ static int xattr_verify(enum ima_hooks func, struct integrity_iint_cache *iint,
 			struct evm_ima_xattr_data *xattr_value, int xattr_len,
 			enum integrity_status *status, const char **cause)
 {
-	int rc = -EINVAL, hash_start = 0;
+	int rc = -ERR(EINVAL), hash_start = 0;
 
 	switch (xattr_value->type) {
 	case IMA_XATTR_DIGEST_NG:
@@ -235,7 +235,7 @@ static int xattr_verify(enum ima_hooks func, struct integrity_iint_cache *iint,
 				    iint->ima_hash->digest,
 				    iint->ima_hash->length);
 		else
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		if (rc) {
 			*cause = "invalid-hash";
 			*status = INTEGRITY_FAIL;
@@ -517,7 +517,7 @@ static int ima_protect_xattr(struct dentry *dentry, const char *xattr_name,
 {
 	if (strcmp(xattr_name, XATTR_NAME_IMA) == 0) {
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		return 1;
 	}
 	return 0;
@@ -551,7 +551,7 @@ int ima_inode_setxattr(struct dentry *dentry, const char *xattr_name,
 				   xattr_value_len);
 	if (result == 1) {
 		if (!xattr_value_len || (xvalue->type >= IMA_XATTR_LAST))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ima_reset_appraise_flags(d_backing_inode(dentry),
 			xvalue->type == EVM_IMA_XATTR_DIGSIG);
 		result = 0;

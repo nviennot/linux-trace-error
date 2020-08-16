@@ -613,7 +613,7 @@ int __netpoll_setup(struct netpoll *np, struct net_device *ndev)
 	if (ndev->priv_flags & IFF_DISABLE_NETPOLL) {
 		np_err(np, "%s doesn't support polling, aborting\n",
 		       np->dev_name);
-		err = -ENOTSUPP;
+		err = -ERR(ENOTSUPP);
 		goto out;
 	}
 
@@ -668,14 +668,14 @@ int netpoll_setup(struct netpoll *np)
 	}
 	if (!ndev) {
 		np_err(np, "%s doesn't exist, aborting\n", np->dev_name);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto unlock;
 	}
 	dev_hold(ndev);
 
 	if (netdev_master_upper_dev_get(ndev)) {
 		np_err(np, "%s is a slave device, aborting\n", np->dev_name);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto put;
 	}
 
@@ -727,7 +727,7 @@ int netpoll_setup(struct netpoll *np)
 put_noaddr:
 				np_err(np, "no IP address for %s, aborting\n",
 				       np->dev_name);
-				err = -EDESTADDRREQ;
+				err = -ERR(EDESTADDRREQ);
 				goto put;
 			}
 
@@ -737,7 +737,7 @@ put_noaddr:
 #if IS_ENABLED(CONFIG_IPV6)
 			struct inet6_dev *idev;
 
-			err = -EDESTADDRREQ;
+			err = -ERR(EDESTADDRREQ);
 			idev = __in6_dev_get(ndev);
 			if (idev) {
 				struct inet6_ifaddr *ifp;
@@ -762,7 +762,7 @@ put_noaddr:
 #else
 			np_err(np, "IPv6 is not supported %s, aborting\n",
 			       np->dev_name);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto put;
 #endif
 		}

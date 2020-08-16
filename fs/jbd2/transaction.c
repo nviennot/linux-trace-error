@@ -343,7 +343,7 @@ static int start_this_handle(journal_t *journal, handle_t *handle,
 		       current->comm, blocks, rsv_blocks,
 		       journal->j_max_transaction_buffers);
 		WARN_ON(1);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 alloc_transaction:
@@ -373,7 +373,7 @@ repeat:
 	    (journal->j_errno != 0 && !(journal->j_flags & JBD2_ACK_ERR))) {
 		read_unlock(&journal->j_state_lock);
 		jbd2_journal_free_transaction(new_transaction);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	/*
@@ -471,7 +471,7 @@ handle_t *jbd2__journal_start(journal_t *journal, int nblocks, int rsv_blocks,
 	int err;
 
 	if (!journal)
-		return ERR_PTR(-EROFS);
+		return ERR_PTR(-ERR(EROFS));
 
 	if (handle) {
 		J_ASSERT(handle->h_transaction->t_journal == journal);
@@ -581,7 +581,7 @@ int jbd2_journal_start_reserved(handle_t *handle, unsigned int type,
 				unsigned int line_no)
 {
 	journal_t *journal = handle->h_journal;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	if (WARN_ON(!handle->h_reserved)) {
 		/* Someone passed in normal handle? Just stop it. */
@@ -646,7 +646,7 @@ int jbd2_journal_extend(handle_t *handle, int nblocks, int revoke_records)
 	int wanted;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 	journal = transaction->t_journal;
 
 	result = 1;
@@ -1004,7 +1004,7 @@ repeat:
 
 	unlock_buffer(bh);
 
-	error = -EROFS;
+	error = -ERR(EROFS);
 	if (is_handle_aborted(handle)) {
 		spin_unlock(&jh->b_state_lock);
 		goto out;
@@ -1196,7 +1196,7 @@ int jbd2_journal_get_write_access(handle_t *handle, struct buffer_head *bh)
 	int rc;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (jbd2_write_access_granted(handle, bh, false))
 		return 0;
@@ -1238,7 +1238,7 @@ int jbd2_journal_get_create_access(handle_t *handle, struct buffer_head *bh)
 	int err;
 
 	jbd_debug(5, "journal_head %p\n", jh);
-	err = -EROFS;
+	err = -ERR(EROFS);
 	if (is_handle_aborted(handle))
 		goto out;
 	journal = transaction->t_journal;
@@ -1336,7 +1336,7 @@ int jbd2_journal_get_undo_access(handle_t *handle, struct buffer_head *bh)
 	char *committed_data = NULL;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (jbd2_write_access_granted(handle, bh, true))
 		return 0;
@@ -1453,9 +1453,9 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 	int ret = 0;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!buffer_jbd(bh))
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	/*
 	 * We don't grab jh reference here since the buffer must be part
@@ -1507,7 +1507,7 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 		 * once a transaction -bzzz
 		 */
 		if (WARN_ON_ONCE(jbd2_handle_buffer_credits(handle) <= 0)) {
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			goto out_unlock_bh;
 		}
 		jh->b_modified = 1;
@@ -1535,7 +1535,7 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 			       journal->j_running_transaction,
 			       journal->j_running_transaction ?
 			       journal->j_running_transaction->t_tid : 0);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		goto out_unlock_bh;
 	}
@@ -1569,7 +1569,7 @@ int jbd2_journal_dirty_metadata(handle_t *handle, struct buffer_head *bh)
 			       jh->b_next_transaction->t_tid : 0,
 			       jh->b_jlist);
 			WARN_ON(1);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		/* And this case is illegal: we can't reuse another
 		 * transaction's data buffer, ever. */
@@ -1617,7 +1617,7 @@ int jbd2_journal_forget(handle_t *handle, struct buffer_head *bh)
 	int was_modified = 0;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 	journal = transaction->t_journal;
 
 	BUFFER_TRACE(bh, "entry");
@@ -1634,7 +1634,7 @@ int jbd2_journal_forget(handle_t *handle, struct buffer_head *bh)
 	 * Don't do any jbd operations, and return an error. */
 	if (!J_EXPECT_JH(jh, !jh->b_committed_data,
 			 "inconsistent data on disk")) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto drop;
 	}
 
@@ -1787,7 +1787,7 @@ int jbd2_journal_stop(handle_t *handle)
 		jbd_debug(4, "h_ref %d -> %d\n", handle->h_ref + 1,
 						 handle->h_ref);
 		if (is_handle_aborted(handle))
-			return -EIO;
+			return -ERR(EIO);
 		return 0;
 	}
 	if (!transaction) {
@@ -1802,7 +1802,7 @@ int jbd2_journal_stop(handle_t *handle)
 	tid = transaction->t_tid;
 
 	if (is_handle_aborted(handle))
-		err = -EIO;
+		err = -ERR(EIO);
 
 	jbd_debug(4, "Handle %p going down\n", handle);
 	trace_jbd2_handle_stats(journal->j_fs_dev->bd_dev,
@@ -2338,7 +2338,7 @@ static int journal_unmap_buffer(journal_t *journal, struct buffer_head *bh,
 			spin_unlock(&jh->b_state_lock);
 			write_unlock(&journal->j_state_lock);
 			jbd2_journal_put_journal_head(jh);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		/*
 		 * OK, buffer won't be reachable after truncate. We just clear
@@ -2622,7 +2622,7 @@ static int jbd2_journal_file_inode(handle_t *handle, struct jbd2_inode *jinode,
 	journal_t *journal;
 
 	if (is_handle_aborted(handle))
-		return -EROFS;
+		return -ERR(EROFS);
 	journal = transaction->t_journal;
 
 	jbd_debug(4, "Adding inode %lu, tid:%d\n", jinode->i_vfs_inode->i_ino,

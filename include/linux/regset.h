@@ -371,7 +371,7 @@ static inline int copy_regset_to_user(struct task_struct *target,
 	const struct user_regset *regset = &view->regsets[setno];
 
 	if (!regset->get)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!access_ok(data, size))
 		return -EFAULT;
@@ -397,7 +397,7 @@ static inline int copy_regset_from_user(struct task_struct *target,
 	const struct user_regset *regset = &view->regsets[setno];
 
 	if (!regset->set)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!access_ok(data, size))
 		return -EFAULT;

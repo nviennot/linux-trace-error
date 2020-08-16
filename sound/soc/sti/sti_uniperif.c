@@ -114,7 +114,7 @@ int  sti_uniperiph_reset(struct uniperif *uni)
 
 	if (!count) {
 		dev_err(uni->dev, "Failed to reset uniperif\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -130,7 +130,7 @@ int sti_uniperiph_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 
 	if (!UNIPERIF_TYPE_IS_TDM(uni)) {
 		dev_err(uni->dev, "cpu dai not in tdm mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* store info in unip context */
@@ -154,7 +154,7 @@ int sti_uniperiph_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	    (frame_size & ~(int)UNIPERIF_ALLOWED_FRAME_SZ)) {
 		dev_err(uni->dev, "frame size not allowed: %d bytes\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -192,7 +192,7 @@ int sti_uniperiph_fix_tdm_format(struct snd_pcm_hw_params *params,
 	default:
 		dev_err(uni->dev, "format not supported: %d bits\n",
 			uni->tdm_slot.slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	maskp->bits[0] &= (u_int32_t)format;
@@ -201,7 +201,7 @@ int sti_uniperiph_fix_tdm_format(struct snd_pcm_hw_params *params,
 	memset(maskp->bits + 2, 0, (SNDRV_MASK_MAX - 64) / 8);
 
 	if (!maskp->bits[0] && !maskp->bits[1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -318,7 +318,7 @@ static int sti_uniperiph_suspend(struct snd_soc_component *component)
 	if (uni->state != UNIPERIF_STATE_STOPPED) {
 		dev_err(uni->dev, "%s: invalid uni state( %d)\n",
 			__func__, (int)uni->state);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* Pinctrl: switch pinstate to sleep */
@@ -395,7 +395,7 @@ static int sti_uniperiph_cpu_dai_of(struct device_node *node,
 	of_id = of_match_node(snd_soc_sti_match, node);
 	if (!of_id->data) {
 		dev_err(dev, "data associated to device is missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_data = (struct sti_uniperiph_dev_data *)of_id->data;
 
@@ -414,7 +414,7 @@ static int sti_uniperiph_cpu_dai_of(struct device_node *node,
 
 	if (!uni->mem_region) {
 		dev_err(dev, "Failed to get memory resource\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	uni->base = devm_ioremap_resource(dev, uni->mem_region);
@@ -427,7 +427,7 @@ static int sti_uniperiph_cpu_dai_of(struct device_node *node,
 
 	uni->irq = platform_get_irq(priv->pdev, 0);
 	if (uni->irq < 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	uni->type = dev_data->type;
 

@@ -134,12 +134,12 @@ static struct dst_entry *eafnosupport_ipv6_dst_lookup_flow(struct net *net,
 							   struct flowi6 *fl6,
 							   const struct in6_addr *final_dst)
 {
-	return ERR_PTR(-EAFNOSUPPORT);
+	return ERR_PTR(-ERR(EAFNOSUPPORT));
 }
 
 static int eafnosupport_ipv6_route_input(struct sk_buff *skb)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static struct fib6_table *eafnosupport_fib6_get_table(struct net *net, u32 id)
@@ -152,14 +152,14 @@ eafnosupport_fib6_table_lookup(struct net *net, struct fib6_table *table,
 			       int oif, struct flowi6 *fl6,
 			       struct fib6_result *res, int flags)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static int
 eafnosupport_fib6_lookup(struct net *net, int oif, struct flowi6 *fl6,
 			 struct fib6_result *res, int flags)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static void
@@ -182,13 +182,13 @@ static int eafnosupport_fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
 				     struct netlink_ext_ack *extack)
 {
 	NL_SET_ERR_MSG(extack, "IPv6 support not enabled in kernel");
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static int eafnosupport_ip6_del_rt(struct net *net, struct fib6_info *rt,
 				   bool skip_notify)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 const struct ipv6_stub *ipv6_stub __read_mostly = &(struct ipv6_stub) {

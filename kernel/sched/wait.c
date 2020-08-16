@@ -292,7 +292,7 @@ long prepare_to_wait_event(struct wait_queue_head *wq_head, struct wait_queue_en
 		 * we fail.
 		 */
 		list_del_init(&wq_entry->entry);
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 	} else {
 		if (list_empty(&wq_entry->entry)) {
 			if (wq_entry->flags & WQ_FLAG_EXCLUSIVE)
@@ -322,7 +322,7 @@ int do_wait_intr(wait_queue_head_t *wq, wait_queue_entry_t *wait)
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	if (signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	spin_unlock(&wq->lock);
 	schedule();
@@ -339,7 +339,7 @@ int do_wait_intr_irq(wait_queue_head_t *wq, wait_queue_entry_t *wait)
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	if (signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	spin_unlock_irq(&wq->lock);
 	schedule();

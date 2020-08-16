@@ -55,5 +55,5 @@ int ceph_decode_buffer(struct ceph_buffer **b, void **p, void *end)
 	ceph_decode_copy(p, (*b)->vec.iov_base, len);
 	return 0;
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

@@ -173,7 +173,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 	 * never be greater than the current ns->level + 1.
 	 */
 	if (set_tid_size > ns->level + 1)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	pid = kmem_cache_alloc(ns->pid_cachep, GFP_KERNEL);
 	if (!pid)
@@ -188,7 +188,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 		if (set_tid_size) {
 			tid = set_tid[ns->level - i];
 
-			retval = -EINVAL;
+			retval = -ERR(EINVAL);
 			if (tid < 1 || tid >= pid_max)
 				goto out_free;
 			/*
@@ -197,7 +197,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 			 */
 			if (tid != 1 && !tmp->child_reaper)
 				goto out_free;
-			retval = -EPERM;
+			retval = -ERR(EPERM);
 			if (!ns_capable(tmp->user_ns, CAP_SYS_ADMIN))
 				goto out_free;
 			set_tid_size--;
@@ -214,7 +214,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 			 * alreay in use. Return EEXIST in that case.
 			 */
 			if (nr == -ENOSPC)
-				nr = -EEXIST;
+				nr = -ERR(EEXIST);
 		} else {
 			int pid_min = 1;
 			/*
@@ -235,7 +235,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
 		idr_preload_end();
 
 		if (nr < 0) {
-			retval = (nr == -ENOSPC) ? -EAGAIN : nr;
+			retval = (nr == -ERR(ENOSPC)) ? -ERR(EAGAIN) : nr;
 			goto out_free;
 		}
 
@@ -565,19 +565,19 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 	struct pid *p;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pid <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p = find_get_pid(pid);
 	if (!p)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	if (pid_has_task(p, PIDTYPE_TGID))
 		fd = pidfd_create(p);
 	else
-		fd = -EINVAL;
+		fd = -ERR(EINVAL);
 
 	put_pid(p);
 	return fd;
@@ -613,11 +613,11 @@ static struct file *__pidfd_fget(struct task_struct *task, int fd)
 	if (ptrace_may_access(task, PTRACE_MODE_ATTACH_REALCREDS))
 		file = fget_task(task, fd);
 	else
-		file = ERR_PTR(-EPERM);
+		file = ERR_PTR(-ERR(EPERM));
 
 	mutex_unlock(&task->signal->exec_update_mutex);
 
-	return file ?: ERR_PTR(-EBADF);
+	return file ?: ERR_PTR(-ERR(EBADF));
 }
 
 static int pidfd_getfd(struct pid *pid, int fd)
@@ -628,7 +628,7 @@ static int pidfd_getfd(struct pid *pid, int fd)
 
 	task = get_pid_task(pid, PIDTYPE_PID);
 	if (!task)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	file = __pidfd_fget(task, fd);
 	put_task_struct(task);
@@ -675,11 +675,11 @@ SYSCALL_DEFINE3(pidfd_getfd, int, pidfd, int, fd,
 
 	/* flags is currently unused - make sure it's unset */
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = fdget(pidfd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	pid = pidfd_pid(f.file);
 	if (IS_ERR(pid))

@@ -46,7 +46,7 @@ int snd_dice_detect_presonus_formats(struct snd_dice *dice)
 			break;
 	}
 	if (i == ARRAY_SIZE(entries))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	memcpy(dice->tx_pcm_chs, entry->spec->tx_pcm_chs,
 	       MAX_STREAMS * SND_DICE_RATE_MODE_COUNT * sizeof(unsigned int));

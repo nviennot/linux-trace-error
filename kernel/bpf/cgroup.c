@@ -380,10 +380,10 @@ static struct bpf_prog_list *find_attach_entry(struct list_head *progs,
 	list_for_each_entry(pl, progs, node) {
 		if (prog && pl->prog == prog && prog != replace_prog)
 			/* disallow attaching the same prog twice */
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		if (link && pl->link == link)
 			/* disallow attaching the same link twice */
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/* direct prog multi-attach w/ replacement case */
@@ -394,7 +394,7 @@ static struct bpf_prog_list *find_attach_entry(struct list_head *progs,
 				return pl;
 		}
 		/* prog to replace not found for cgroup */
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 
 	return NULL;
@@ -429,26 +429,26 @@ int __cgroup_bpf_attach(struct cgroup *cgrp,
 	if (((flags & BPF_F_ALLOW_OVERRIDE) && (flags & BPF_F_ALLOW_MULTI)) ||
 	    ((flags & BPF_F_REPLACE) && !(flags & BPF_F_ALLOW_MULTI)))
 		/* invalid combination */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (link && (prog || replace_prog))
 		/* only either link or prog/replace_prog can be specified */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!!replace_prog != !!(flags & BPF_F_REPLACE))
 		/* replace_prog implies BPF_F_REPLACE, and vice versa */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!hierarchy_allows_attach(cgrp, type))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!list_empty(progs) && cgrp->bpf.flags[type] != saved_flags)
 		/* Disallow attaching non-overridable on top
 		 * of existing overridable in this cgroup.
 		 * Disallow attaching multi-prog if overridable or none
 		 */
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (prog_list_length(progs) >= BPF_CGROUP_MAX_PROGS)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	pl = find_attach_entry(progs, prog, link, replace_prog,
 			       flags & BPF_F_ALLOW_MULTI);
@@ -567,7 +567,7 @@ static int __cgroup_bpf_replace(struct cgroup *cgrp,
 	bool found = false;
 
 	if (link->link.prog->type != new_prog->type)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(pl, progs, node) {
 		if (pl->link == link) {
@@ -576,7 +576,7 @@ static int __cgroup_bpf_replace(struct cgroup *cgrp,
 		}
 	}
 	if (!found)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	old_prog = xchg(&link->link.prog, new_prog);
 	replace_effective_prog(cgrp, link->type, link);
@@ -595,11 +595,11 @@ static int cgroup_bpf_replace(struct bpf_link *link, struct bpf_prog *new_prog,
 	mutex_lock(&cgroup_mutex);
 	/* link might have been auto-released by dying cgroup, so fail */
 	if (!cg_link->cgroup) {
-		ret = -ENOLINK;
+		ret = -ERR(ENOLINK);
 		goto out_unlock;
 	}
 	if (old_prog && link->prog != old_prog) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_unlock;
 	}
 	ret = __cgroup_bpf_replace(cg_link->cgroup, cg_link, new_prog);
@@ -618,7 +618,7 @@ static struct bpf_prog_list *find_detach_entry(struct list_head *progs,
 	if (!allow_multi) {
 		if (list_empty(progs))
 			/* report error when trying to detach and nothing is attached */
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 
 		/* to maintain backward compatibility NONE and OVERRIDE cgroups
 		 * allow detaching with invalid FD (prog==NULL) in legacy mode
@@ -630,14 +630,14 @@ static struct bpf_prog_list *find_detach_entry(struct list_head *progs,
 		/* to detach MULTI prog the user has to specify valid FD
 		 * of the program or link to be detached
 		 */
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* find the prog or link and detach it */
 	list_for_each_entry(pl, progs, node) {
 		if (pl->prog == prog && pl->link == link)
 			return pl;
 	}
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 /**
@@ -662,7 +662,7 @@ int __cgroup_bpf_detach(struct cgroup *cgrp, struct bpf_prog *prog,
 
 	if (prog && link)
 		/* only one of prog or link can be specified */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pl = find_detach_entry(progs, prog, link, flags & BPF_F_ALLOW_MULTI);
 	if (IS_ERR(pl))
@@ -726,7 +726,7 @@ int __cgroup_bpf_query(struct cgroup *cgrp, const union bpf_attr *attr,
 		return 0;
 	if (attr->query.prog_cnt < cnt) {
 		cnt = attr->query.prog_cnt;
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 	}
 
 	if (attr->query.query_flags & BPF_F_QUERY_EFFECTIVE) {
@@ -885,7 +885,7 @@ int cgroup_bpf_link_attach(const union bpf_attr *attr, struct bpf_prog *prog)
 	int err;
 
 	if (attr->link_create.flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cgrp = cgroup_get_from_fd(attr->link_create.target_fd);
 	if (IS_ERR(cgrp))
@@ -990,7 +990,7 @@ int __cgroup_bpf_run_filter_skb(struct sock *sk,
 	} else {
 		ret = BPF_PROG_RUN_ARRAY(cgrp->bpf.effective[type], skb,
 					  __bpf_prog_run_save_cb);
-		ret = (ret == 1 ? 0 : -EPERM);
+		ret = (ret == 1 ? 0 : -ERR(EPERM));
 	}
 	bpf_restore_data_end(skb, saved_data_end);
 	__skb_pull(skb, offset);
@@ -1020,7 +1020,7 @@ int __cgroup_bpf_run_filter_sk(struct sock *sk,
 	int ret;
 
 	ret = BPF_PROG_RUN_ARRAY(cgrp->bpf.effective[type], sk, BPF_PROG_RUN);
-	return ret == 1 ? 0 : -EPERM;
+	return ret == 1 ? 0 : -ERR(EPERM);
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_sk);
 
@@ -1065,7 +1065,7 @@ int __cgroup_bpf_run_filter_sock_addr(struct sock *sk,
 	cgrp = sock_cgroup_ptr(&sk->sk_cgrp_data);
 	ret = BPF_PROG_RUN_ARRAY(cgrp->bpf.effective[type], &ctx, BPF_PROG_RUN);
 
-	return ret == 1 ? 0 : -EPERM;
+	return ret == 1 ? 0 : -ERR(EPERM);
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_sock_addr);
 
@@ -1094,7 +1094,7 @@ int __cgroup_bpf_run_filter_sock_ops(struct sock *sk,
 
 	ret = BPF_PROG_RUN_ARRAY(cgrp->bpf.effective[type], sock_ops,
 				 BPF_PROG_RUN);
-	return ret == 1 ? 0 : -EPERM;
+	return ret == 1 ? 0 : -ERR(EPERM);
 }
 EXPORT_SYMBOL(__cgroup_bpf_run_filter_sock_ops);
 
@@ -1256,7 +1256,7 @@ int __cgroup_bpf_run_filter_sysctl(struct ctl_table_header *head,
 		kfree(ctx.new_val);
 	}
 
-	return ret == 1 ? 0 : -EPERM;
+	return ret == 1 ? 0 : -ERR(EPERM);
 }
 
 #ifdef CONFIG_NET
@@ -1277,7 +1277,7 @@ static bool __cgroup_bpf_prog_array_is_empty(struct cgroup *cgrp,
 static int sockopt_alloc_buf(struct bpf_sockopt_kern *ctx, int max_optlen)
 {
 	if (unlikely(max_optlen < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(max_optlen > PAGE_SIZE)) {
 		/* We don't expose optvals that are greater than PAGE_SIZE
@@ -1343,7 +1343,7 @@ int __cgroup_bpf_run_filter_setsockopt(struct sock *sk, int *level,
 	release_sock(sk);
 
 	if (!ret) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -1430,7 +1430,7 @@ int __cgroup_bpf_run_filter_getsockopt(struct sock *sk, int level,
 	release_sock(sk);
 
 	if (!ret) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -1529,14 +1529,14 @@ static int copy_sysctl_value(char *dst, size_t dst_len, char *src,
 			     size_t src_len)
 {
 	if (!dst)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!dst_len)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (!src || !src_len) {
 		memset(dst, 0, dst_len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memcpy(dst, src, min(dst_len, src_len));
@@ -1548,7 +1548,7 @@ static int copy_sysctl_value(char *dst, size_t dst_len, char *src,
 
 	dst[dst_len - 1] = '\0';
 
-	return -E2BIG;
+	return -ERR(E2BIG);
 }
 
 BPF_CALL_3(bpf_sysctl_get_current_value, struct bpf_sysctl_kern *, ctx,

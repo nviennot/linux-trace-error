@@ -65,7 +65,7 @@ int amdtp_motu_set_parameters(struct amdtp_stream *s, unsigned int rate,
 	int i, err;
 
 	if (amdtp_stream_running(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	for (i = 0; i < ARRAY_SIZE(snd_motu_clock_rates); ++i) {
 		if (snd_motu_clock_rates[i] == rate) {
@@ -74,7 +74,7 @@ int amdtp_motu_set_parameters(struct amdtp_stream *s, unsigned int rate,
 		}
 	}
 	if (i == ARRAY_SIZE(snd_motu_clock_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	// Each data block includes SPH in its head. Data chunks follow with
 	// 3 byte alignment. Padding follows with zero to conform to quadlet

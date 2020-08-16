@@ -209,7 +209,7 @@ static int jffs2_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		c->mount_opts.rp_size = opt;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

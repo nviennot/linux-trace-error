@@ -80,7 +80,7 @@ static int svc_rdma_bc_sendto(struct svcxprt_rdma *rdma,
 
 	ret = svc_rdma_map_reply_msg(rdma, ctxt, NULL, &rqst->rq_snd_buf);
 	if (ret < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Bump page refcnt so Send completion doesn't release
 	 * the rq_buffer before all retransmits are complete.
@@ -104,7 +104,7 @@ xprt_rdma_bc_allocate(struct rpc_task *task)
 	if (size > PAGE_SIZE) {
 		WARN_ONCE(1, "svcrdma: large bc buffer request (size %zu)\n",
 			  size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	page = alloc_page(RPCRDMA_DEF_GFP);
@@ -163,7 +163,7 @@ put_ctxt:
 	svc_rdma_send_ctxt_put(rdma, ctxt);
 
 drop_connection:
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 /**
@@ -182,7 +182,7 @@ static int xprt_rdma_bc_send_request(struct rpc_rqst *rqst)
 	int ret;
 
 	if (test_bit(XPT_DEAD, &sxprt->xpt_flags))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	ret = rpcrdma_bc_send_request(rdma, rqst);
 	if (ret == -ENOTCONN)
@@ -235,7 +235,7 @@ xprt_setup_rdma_bc(struct xprt_create *args)
 	struct rpcrdma_xprt *new_xprt;
 
 	if (args->addrlen > sizeof(xprt->addr))
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	xprt = xprt_alloc(args->net, sizeof(*new_xprt),
 			  RPCRDMA_MAX_BC_REQUESTS,

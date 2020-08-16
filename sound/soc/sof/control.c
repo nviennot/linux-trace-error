@@ -227,7 +227,7 @@ int snd_sof_bytes_get(struct snd_kcontrol *kcontrol,
 		dev_err_ratelimited(scomp->dev,
 				    "error: data max %d exceeds ucontrol data array size\n",
 				    be->max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	size = data->size + sizeof(*data);
@@ -235,7 +235,7 @@ int snd_sof_bytes_get(struct snd_kcontrol *kcontrol,
 		dev_err_ratelimited(scomp->dev,
 				    "error: DSP sent %zu bytes max is %d\n",
 				    size, be->max);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -261,14 +261,14 @@ int snd_sof_bytes_put(struct snd_kcontrol *kcontrol,
 		dev_err_ratelimited(scomp->dev,
 				    "error: data max %d exceeds ucontrol data array size\n",
 				    be->max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (size > be->max) {
 		dev_err_ratelimited(scomp->dev,
 				    "error: size too big %zu bytes max is %d\n",
 				    size, be->max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* copy from kcontrol */
@@ -310,7 +310,7 @@ int snd_sof_bytes_ext_put(struct snd_kcontrol *kcontrol,
 	if (header.length > be->max) {
 		dev_err_ratelimited(scomp->dev, "error: Bytes data size %d exceeds max %d.\n",
 				    header.length, be->max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check that header id matches the command */
@@ -318,7 +318,7 @@ int snd_sof_bytes_ext_put(struct snd_kcontrol *kcontrol,
 		dev_err_ratelimited(scomp->dev,
 				    "error: incorrect numid %d\n",
 				    header.numid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(cdata->data, tlvd->tlv, header.length))
@@ -328,18 +328,18 @@ int snd_sof_bytes_ext_put(struct snd_kcontrol *kcontrol,
 		dev_err_ratelimited(scomp->dev,
 				    "error: Wrong ABI magic 0x%08x.\n",
 				    cdata->data->magic);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, cdata->data->abi)) {
 		dev_err_ratelimited(scomp->dev, "error: Incompatible ABI version 0x%08x.\n",
 				    cdata->data->abi);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cdata->data->size + sizeof(const struct sof_abi_hdr) > be->max) {
 		dev_err_ratelimited(scomp->dev, "error: Mismatch in ABI data size (truncated?).\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* notify DSP of byte control updates */
@@ -385,7 +385,7 @@ int snd_sof_bytes_ext_get(struct snd_kcontrol *kcontrol,
 	if (data_size > be->max) {
 		dev_err_ratelimited(scomp->dev, "error: user data size %d exceeds max size %d.\n",
 				    data_size, be->max);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 

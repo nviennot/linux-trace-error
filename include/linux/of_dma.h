@@ -57,7 +57,7 @@ static inline int of_dma_controller_register(struct device_node *np,
 		(struct of_phandle_args *, struct of_dma *),
 		void *data)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void of_dma_controller_free(struct device_node *np)
@@ -69,7 +69,7 @@ static inline int of_dma_router_register(struct device_node *np,
 		(struct of_phandle_args *, struct of_dma *),
 		struct dma_router *dma_router)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #define of_dma_router_free of_dma_controller_free
@@ -77,7 +77,7 @@ static inline int of_dma_router_register(struct device_node *np,
 static inline struct dma_chan *of_dma_request_slave_channel(struct device_node *np,
 						     const char *name)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dma_chan *of_dma_simple_xlate(struct of_phandle_args *dma_spec,

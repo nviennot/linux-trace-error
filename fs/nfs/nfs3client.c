@@ -99,7 +99,7 @@ struct nfs_client *nfs3_set_ds_client(struct nfs_server *mds_srv,
 
 	/* fake a hostname because lockd wants it */
 	if (rpc_ntop(ds_addr, buf, sizeof(buf)) <= 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	cl_init.hostname = buf;
 
 	if (mds_clp->cl_nconnect > 1 && ds_proto == XPRT_TRANSPORT_TCP)

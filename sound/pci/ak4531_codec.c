@@ -376,7 +376,7 @@ int snd_ak4531_mixer(struct snd_card *card,
 	};
 
 	if (snd_BUG_ON(!card || !_ak4531))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (rak4531)
 		*rak4531 = NULL;
 	ak4531 = kzalloc(sizeof(*ak4531), GFP_KERNEL);

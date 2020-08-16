@@ -869,7 +869,7 @@ static void smc_conn_kill(struct smc_connection *conn, bool soft)
 	else
 		smc_close_abort(conn);
 	conn->killed = 1;
-	smc->sk.sk_err = ECONNABORTED;
+	smc->sk.sk_err = ERR(ECONNABORTED);
 	smc_sk_wake_ups(smc);
 	if (conn->lgr->is_smcd) {
 		smc_ism_unset_conn(conn);
@@ -1221,11 +1221,11 @@ int smc_vlan_by_tcpsk(struct socket *clcsock, struct smc_init_info *ini)
 
 	ini->vlan_id = 0;
 	if (!dst) {
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out;
 	}
 	if (!dst->dev) {
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 		goto out_rel;
 	}
 
@@ -1441,7 +1441,7 @@ static int smcr_buf_map_link(struct smc_buf_desc *buf_desc, bool is_rmb,
 			       is_rmb ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
 	/* SMC protocol depends on mapping to one DMA address only */
 	if (rc != 1) {
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 		goto free_table;
 	}
 
@@ -1472,7 +1472,7 @@ free_table:
 int smcr_link_reg_rmb(struct smc_link *link, struct smc_buf_desc *rmb_desc)
 {
 	if (list_empty(&link->lgr->list))
-		return -ENOLINK;
+		return -ERR(ENOLINK);
 	if (!rmb_desc->is_reg_mr[link->link_idx]) {
 		/* register memory region for new rmb */
 		if (smc_wr_reg_send(link, rmb_desc->mr_rx[link->link_idx])) {
@@ -1563,7 +1563,7 @@ static struct smc_buf_desc *smcr_new_buf_create(struct smc_link_group *lgr,
 				      buf_desc->order);
 	if (!buf_desc->pages) {
 		kfree(buf_desc);
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	}
 	buf_desc->cpu_addr = (void *)page_address(buf_desc->pages);
 	buf_desc->len = bufsize;
@@ -1604,7 +1604,7 @@ static struct smc_buf_desc *smcd_new_buf_create(struct smc_link_group *lgr,
 	int rc;
 
 	if (smc_compress_bufsize(bufsize) > SMCD_DMBE_SIZES)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 
 	/* try to alloc a new DMB */
 	buf_desc = kzalloc(sizeof(*buf_desc), GFP_KERNEL);
@@ -1614,7 +1614,7 @@ static struct smc_buf_desc *smcd_new_buf_create(struct smc_link_group *lgr,
 		rc = smc_ism_register_dmb(lgr, bufsize, buf_desc);
 		if (rc) {
 			kfree(buf_desc);
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 		}
 		buf_desc->pages = virt_to_page(buf_desc->cpu_addr);
 		/* CDC header stored in buf. So, pretend it was smaller */
@@ -1625,7 +1625,7 @@ static struct smc_buf_desc *smcd_new_buf_create(struct smc_link_group *lgr,
 					     __GFP_NOMEMALLOC);
 		if (!buf_desc->cpu_addr) {
 			kfree(buf_desc);
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 		}
 		buf_desc->len = bufsize;
 	}
@@ -1789,7 +1789,7 @@ static inline int smc_rmb_reserve_rtoken_idx(struct smc_link_group *lgr)
 		if (!test_and_set_bit(i, lgr->rtokens_used_mask))
 			return i;
 	}
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static int smc_rtoken_find_by_link(struct smc_link_group *lgr, int lnk_idx,
@@ -1802,7 +1802,7 @@ static int smc_rtoken_find_by_link(struct smc_link_group *lgr, int lnk_idx,
 		    lgr->rtokens[i][lnk_idx].rkey == rkey)
 			return i;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* set rtoken for a new link to an existing rmb */
@@ -1881,7 +1881,7 @@ int smc_rtoken_delete(struct smc_link *lnk, __be32 nw_rkey)
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* save rkey and dma_addr received from peer during clc handshake */

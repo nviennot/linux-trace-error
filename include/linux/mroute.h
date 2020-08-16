@@ -25,18 +25,18 @@ bool ipmr_rule_default(const struct fib_rule *rule);
 static inline int ip_mroute_setsockopt(struct sock *sock, int optname,
 				       char __user *optval, unsigned int optlen)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline int ip_mroute_getsockopt(struct sock *sock, int optname,
 				       char __user *optval, int __user *optlen)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline int ipmr_ioctl(struct sock *sk, int cmd, void __user *arg)
 {
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static inline int ip_mr_init(void)

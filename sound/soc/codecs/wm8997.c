@@ -940,7 +940,7 @@ static int wm8997_set_fll(struct snd_soc_component *component, int fll_id,
 		return arizona_set_fll_refclk(&wm8997->fll[1], source, Fref,
 					      Fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

@@ -52,7 +52,7 @@ static int __init early_cma(char *p)
 {
 	if (!p) {
 		pr_err("Config string not provided\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	size_cmdline = memparse(p, &p);
@@ -309,16 +309,16 @@ static int __init rmem_cma_setup(struct reserved_mem *rmem)
 	if (size_cmdline != -1 && default_cma) {
 		pr_info("Reserved memory: bypass %s node, using cmdline CMA params instead\n",
 			rmem->name);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!of_get_flat_dt_prop(node, "reusable", NULL) ||
 	    of_get_flat_dt_prop(node, "no-map", NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((rmem->base & mask) || (rmem->size & mask)) {
 		pr_err("Reserved memory: incorrect alignment of CMA region\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = cma_init_reserved_mem(rmem->base, rmem->size, 0, rmem->name, &cma);

@@ -174,7 +174,7 @@ void ovs_flow_stats_clear(struct sw_flow *flow)
 static int check_header(struct sk_buff *skb, int len)
 {
 	if (unlikely(skb->len < len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(!pskb_may_pull(skb, len)))
 		return -ENOMEM;
 	return 0;
@@ -199,7 +199,7 @@ static int check_iphdr(struct sk_buff *skb)
 	ip_len = ip_hdrlen(skb);
 	if (unlikely(ip_len < sizeof(struct iphdr) ||
 		     skb->len < nh_ofs + ip_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_set_transport_header(skb, nh_ofs + ip_len);
 	return 0;
@@ -278,7 +278,7 @@ static int parse_ipv6hdr(struct sk_buff *skb, struct sw_flow_key *key)
 	 * used to set key->ip.frag above.
 	 */
 	if (unlikely(nexthdr < 0))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	nh_len = payload_ofs - nh_ofs;
 	skb_set_transport_header(skb, nh_ofs + nh_len);
@@ -492,7 +492,7 @@ static int parse_nsh(struct sk_buff *skb, struct sw_flow_key *key)
 	length = nsh_hdr_len(nh);
 
 	if (version != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = check_header(skb, nh_ofs + length);
 	if (unlikely(err))
@@ -507,7 +507,7 @@ static int parse_nsh(struct sk_buff *skb, struct sw_flow_key *key)
 	switch (key->nsh.base.mdtype) {
 	case NSH_M_TYPE1:
 		if (length != NSH_M_TYPE1_LEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(key->nsh.context, nh->md1.context,
 		       sizeof(nh->md1));
 		break;
@@ -516,7 +516,7 @@ static int parse_nsh(struct sk_buff *skb, struct sw_flow_key *key)
 		       sizeof(nh->md1));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -774,7 +774,7 @@ static int key_extract(struct sk_buff *skb, struct sw_flow_key *key)
 	clear_vlan(key);
 	if (ovs_key_mac_proto(key) == MAC_PROTO_NONE) {
 		if (unlikely(eth_type_vlan(skb->protocol)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		skb_reset_network_header(skb);
 		key->eth.type = skb->protocol;
@@ -844,7 +844,7 @@ static int key_extract_mac_proto(struct sk_buff *skb)
 		return MAC_PROTO_NONE;
 	}
 	WARN_ON_ONCE(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int ovs_flow_key_extract(const struct ip_tunnel_info *tun_info,
@@ -913,7 +913,7 @@ int ovs_flow_key_extract_userspace(struct net *net, const struct nlattr *attr,
 
 	err = parse_flow_nlattrs(attr, a, &attrs, log);
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Extract metadata from netlink attributes. */
 	err = ovs_nla_get_flow_metadata(net, a, attrs, key, log);
@@ -940,11 +940,11 @@ int ovs_flow_key_extract_userspace(struct net *net, const struct nlattr *attr,
 	 */
 	if (attrs & (1 << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4) &&
 	    key->eth.type != htons(ETH_P_IP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (attrs & (1 << OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6) &&
 	    (key->eth.type != htons(ETH_P_IPV6) ||
 	     sw_flow_key_is_nd(key)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

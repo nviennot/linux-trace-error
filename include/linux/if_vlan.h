@@ -529,7 +529,7 @@ static inline int __vlan_get_tag(const struct sk_buff *skb, u16 *vlan_tci)
 	struct vlan_ethhdr *veth = (struct vlan_ethhdr *)skb->data;
 
 	if (!eth_type_vlan(veth->h_vlan_proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*vlan_tci = ntohs(veth->h_vlan_TCI);
 	return 0;
@@ -550,7 +550,7 @@ static inline int __vlan_hwaccel_get_tag(const struct sk_buff *skb,
 		return 0;
 	} else {
 		*vlan_tci = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

@@ -123,7 +123,7 @@ static int zx_spdif_chanstats(void __iomem *base, unsigned int rate)
 		cstas1 = IEC958_AES3_CON_FS_192000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	cstas1 = cstas1 << 24;
 	cstas1 |= IEC958_AES0_CON_NOT_COPYRIGHT;
@@ -165,7 +165,7 @@ static int zx_spdif_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(socdai->dev, "Format not support!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ch_num = params_channels(params);
@@ -231,7 +231,7 @@ static int zx_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

@@ -49,7 +49,7 @@ static int kimage_alloc_init(struct kimage **rimage, unsigned long entry,
 		/* Verify we have a valid entry point */
 		if ((entry < phys_to_boot_phys(crashk_res.start)) ||
 		    (entry > phys_to_boot_phys(crashk_res.end)))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 	}
 
 	/* Allocate and initialize a controlling structure */
@@ -202,7 +202,7 @@ static inline int kexec_load_check(unsigned long nr_segments,
 
 	/* We only trust the superuser with rebooting the system. */
 	if (!capable(CAP_SYS_BOOT) || kexec_load_disabled)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Permit LSMs and IMA to fail the kexec */
 	result = security_kernel_load_data(LOADING_KEXEC_IMAGE);
@@ -222,13 +222,13 @@ static inline int kexec_load_check(unsigned long nr_segments,
 	 * This leaves us room for future extensions.
 	 */
 	if ((flags & KEXEC_FLAGS) != (flags & ~KEXEC_ARCH_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Put an artificial cap on the number
 	 * of segments passed to kexec_load.
 	 */
 	if (nr_segments > KEXEC_SEGMENT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -245,7 +245,7 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
 	/* Verify we are on the appropriate architecture */
 	if (((flags & KEXEC_ARCH_MASK) != KEXEC_ARCH) &&
 		((flags & KEXEC_ARCH_MASK) != KEXEC_ARCH_DEFAULT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Because we write directly to the reserved memory
 	 * region when loading crash kernels we need a mutex here to
@@ -256,7 +256,7 @@ SYSCALL_DEFINE4(kexec_load, unsigned long, entry, unsigned long, nr_segments,
 	 * KISS: always take the mutex.
 	 */
 	if (!mutex_trylock(&kexec_mutex))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	result = do_kexec_load(entry, nr_segments, segments, flags);
 

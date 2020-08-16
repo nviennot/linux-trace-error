@@ -90,7 +90,7 @@ static int alarmtimer_rtc_add_device(struct device *dev,
 	int ret = 0;
 
 	if (rtcdev)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!rtc->ops->set_alarm)
 		return -1;
@@ -282,7 +282,7 @@ static int alarmtimer_suspend(struct device *dev)
 
 	if (ktime_to_ns(min) < 2 * NSEC_PER_SEC) {
 		pm_wakeup_event(dev, 2 * MSEC_PER_SEC);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	trace_alarmtimer_suspend(expires, type);
@@ -649,7 +649,7 @@ static void alarm_timer_arm(struct k_itimer *timr, ktime_t expires,
 static int alarm_clock_getres(const clockid_t which_clock, struct timespec64 *tp)
 {
 	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tp->tv_sec = 0;
 	tp->tv_nsec = hrtimer_resolution;
@@ -668,7 +668,7 @@ static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp
 	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
 
 	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	base->get_timespec(tp);
 
@@ -686,7 +686,7 @@ static ktime_t alarm_clock_get_ktime(clockid_t which_clock)
 	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
 
 	if (!alarmtimer_get_rtcdev())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return base->get_ktime();
 }
@@ -702,10 +702,10 @@ static int alarm_timer_create(struct k_itimer *new_timer)
 	enum  alarmtimer_type type;
 
 	if (!alarmtimer_get_rtcdev())
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!capable(CAP_WAKE_ALARM))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	type = clock2alarm(new_timer->it_clock);
 	alarm_init(&new_timer->it.alarm.alarmtimer, type, alarm_handle_timer);
@@ -820,13 +820,13 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
 	int ret = 0;
 
 	if (!alarmtimer_get_rtcdev())
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (flags & ~TIMER_ABSTIME)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!capable(CAP_WAKE_ALARM))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	alarm_init_on_stack(&alarm, type, alarmtimer_nsleep_wakeup);
 
@@ -846,7 +846,7 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
 
 	/* abs timers don't set remaining time or restart */
 	if (flags == TIMER_ABSTIME)
-		return -ERESTARTNOHAND;
+		return -ERR(ERESTARTNOHAND);
 
 	restart->fn = alarm_timer_nsleep_restart;
 	restart->nanosleep.clockid = type;

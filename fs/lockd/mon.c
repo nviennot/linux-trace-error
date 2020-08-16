@@ -164,7 +164,7 @@ int nsm_monitor(const struct nlm_host *host)
 
 	status = nsm_mon_unmon(nsm, NSMPROC_MON, &res, host);
 	if (unlikely(res.status != 0))
-		status = -EIO;
+		status = -ERR(EIO);
 	if (unlikely(status < 0)) {
 		pr_notice_ratelimited("lockd: cannot monitor %s\n", nsm->sm_name);
 		return status;
@@ -198,7 +198,7 @@ void nsm_unmonitor(const struct nlm_host *host)
 
 		status = nsm_mon_unmon(nsm, NSMPROC_UNMON, &res, host);
 		if (res.status != 0)
-			status = -EIO;
+			status = -ERR(EIO);
 		if (status < 0)
 			printk(KERN_NOTICE "lockd: cannot unmonitor %s\n",
 					nsm->sm_name);
@@ -500,7 +500,7 @@ static int nsm_xdr_dec_stat_res(struct rpc_rqst *rqstp,
 
 	p = xdr_inline_decode(xdr, 4 + 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 	resp->status = be32_to_cpup(p++);
 	resp->state = be32_to_cpup(p);
 
@@ -518,7 +518,7 @@ static int nsm_xdr_dec_stat(struct rpc_rqst *rqstp,
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 	resp->state = be32_to_cpup(p);
 
 	dprintk("lockd: %s state %d\n", __func__, resp->state);

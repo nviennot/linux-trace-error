@@ -77,7 +77,7 @@ static int rk3328_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		val = PIN_DIRECTION_OUT | DAC_I2S_MODE_MASTER;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(rk3328->regmap, DAC_INIT_CTRL1,
@@ -98,7 +98,7 @@ static int rk3328_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		val = DAC_MODE_LJM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(rk3328->regmap, DAC_INIT_CTRL2,
@@ -284,7 +284,7 @@ static int rk3328_hw_params(struct snd_pcm_substream *substream,
 		val = DAC_VDL_32BITS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(rk3328->regmap, DAC_INIT_CTRL2, DAC_VDL_MASK, val);
 

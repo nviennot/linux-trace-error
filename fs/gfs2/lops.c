@@ -783,7 +783,7 @@ static int buf_lo_scan_elements(struct gfs2_jdesc *jd, u32 start,
 		memcpy(bh_ip->b_data, bh_log->b_data, bh_log->b_size);
 
 		if (gfs2_meta_check(sdp, bh_ip))
-			error = -EIO;
+			error = -ERR(EIO);
 		else {
 			struct gfs2_meta_header *mh =
 				(struct gfs2_meta_header *)bh_ip->b_data;

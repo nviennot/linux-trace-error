@@ -81,7 +81,7 @@ static inline void tick_suspend_broadcast(void) { }
 static inline void tick_resume_broadcast(void) { }
 static inline bool tick_resume_check_broadcast(void) { return false; }
 static inline void tick_broadcast_init(void) { }
-static inline int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq) { return -ENODEV; }
+static inline int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq) { return -ERR(ENODEV); }
 
 /* Set the periodic handler in non broadcast mode */
 static inline void tick_set_periodic_handler(struct clock_event_device *dev, int broadcast)

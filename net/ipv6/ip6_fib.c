@@ -668,7 +668,7 @@ static int inet6_dump_fib(struct sk_buff *skb, struct netlink_callback *cb)
 				goto out;
 
 			NL_SET_ERR_MSG_MOD(cb->extack, "FIB table does not exist");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		if (!cb->args[0]) {
@@ -768,7 +768,7 @@ static struct fib6_node *fib6_add_1(struct net *net,
 					NL_SET_ERR_MSG(extack,
 						       "Can not replace route - no match found");
 					pr_warn("Can't replace route, no match found\n");
-					return ERR_PTR(-ENOENT);
+					return ERR_PTR(-ERR(ENOENT));
 				}
 				pr_warn("NLM_F_CREATE should be set when creating new route\n");
 			}
@@ -822,7 +822,7 @@ static struct fib6_node *fib6_add_1(struct net *net,
 			NL_SET_ERR_MSG(extack,
 				       "Can not replace route - no match found");
 			pr_warn("Can't replace route, no match found\n");
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 		}
 		pr_warn("NLM_F_CREATE should be set when creating new route\n");
 	}
@@ -1094,7 +1094,7 @@ static int fib6_add_rt2node(struct fib6_node *fn, struct fib6_info *rt,
 			 */
 			if (info->nlh &&
 			    (info->nlh->nlmsg_flags & NLM_F_EXCL))
-				return -EEXIST;
+				return -ERR(EEXIST);
 
 			nlflags &= ~NLM_F_EXCL;
 			if (replace) {
@@ -1110,7 +1110,7 @@ static int fib6_add_rt2node(struct fib6_node *fn, struct fib6_info *rt,
 				if (rt->fib6_nsiblings)
 					rt->fib6_nsiblings = 0;
 				if (!(iter->fib6_flags & RTF_EXPIRES))
-					return -EEXIST;
+					return -ERR(EEXIST);
 				if (!(rt->fib6_flags & RTF_EXPIRES))
 					fib6_clean_expires(iter);
 				else
@@ -1119,7 +1119,7 @@ static int fib6_add_rt2node(struct fib6_node *fn, struct fib6_info *rt,
 				if (rt->fib6_pmtu)
 					fib6_metric_set(iter, RTAX_MTU,
 							rt->fib6_pmtu);
-				return -EEXIST;
+				return -ERR(EEXIST);
 			}
 			/* If we have the same destination and the same metric,
 			 * but not the same gateway, then the route we try to
@@ -1257,7 +1257,7 @@ add:
 			if (add)
 				goto add;
 			pr_warn("NLM_F_REPLACE set, but no existing node found!\n");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		if (!info->skip_notify_kernel && ins == &fn->leaf) {
@@ -2000,7 +2000,7 @@ int fib6_del(struct fib6_info *rt, struct nl_info *info)
 	struct fib6_info __rcu **rtp_next;
 
 	if (!fn || rt == net->ipv6.fib6_null_entry)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	WARN_ON(!(fn->fn_flags & RTN_RTINFO));
 
@@ -2019,7 +2019,7 @@ int fib6_del(struct fib6_info *rt, struct nl_info *info)
 		}
 		rtp_next = &cur->fib6_next;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*

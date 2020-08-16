@@ -85,7 +85,7 @@ int hpfs_read_ea(struct super_block *s, struct fnode *fnode, char *key,
 			if (ea_indirect(ea))
 				goto indirect;
 			if (ea_valuelen(ea) >= size)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			memcpy(buf, ea_data(ea), ea_valuelen(ea));
 			buf[ea_valuelen(ea)] = 0;
 			return 0;
@@ -99,29 +99,29 @@ int hpfs_read_ea(struct super_block *s, struct fnode *fnode, char *key,
 		if (pos + 4 > len) {
 			hpfs_error(s, "EAs don't end correctly, %s %08x, len %08x",
 				ano ? "anode" : "sectors", a, len);
-			return -EIO;
+			return -ERR(EIO);
 		}
-		if (hpfs_ea_read(s, a, ano, pos, 4, ex)) return -EIO;
+		if (hpfs_ea_read(s, a, ano, pos, 4, ex)) return -ERR(EIO);
 		if (hpfs_ea_read(s, a, ano, pos + 4, ea->namelen + 1 + (ea_indirect(ea) ? 8 : 0), ex + 4))
-			return -EIO;
+			return -ERR(EIO);
 		if (!strcmp(ea->name, key)) {
 			if (ea_indirect(ea))
 				goto indirect;
 			if (ea_valuelen(ea) >= size)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (hpfs_ea_read(s, a, ano, pos + 4 + ea->namelen + 1, ea_valuelen(ea), buf))
-				return -EIO;
+				return -ERR(EIO);
 			buf[ea_valuelen(ea)] = 0;
 			return 0;
 		}
 		pos += ea->namelen + ea_valuelen(ea) + 5;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 indirect:
 	if (ea_len(ea) >= size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (hpfs_ea_read(s, ea_sec(ea), ea_in_anode(ea), 0, ea_len(ea), buf))
-		return -EIO;
+		return -ERR(EIO);
 	buf[ea_len(ea)] = 0;
 	return 0;
 }

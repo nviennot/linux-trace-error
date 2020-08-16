@@ -125,7 +125,7 @@ static int test_case_1(struct btrfs_fs_info *fs_info,
 "case1 [%llu %llu]: ret %d return a wrong em (start %llu len %llu block_start %llu block_len %llu",
 			 start, start + len, ret, em->start, em->len,
 			 em->block_start, em->block_len);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	free_extent_map(em);
 out:
@@ -213,7 +213,7 @@ static int test_case_2(struct btrfs_fs_info *fs_info,
 "case2 [0 1K]: ret %d return a wrong em (start %llu len %llu block_start %llu block_len %llu",
 			 ret, em->start, em->len, em->block_start,
 			 em->block_len);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	free_extent_map(em);
 out:
@@ -280,7 +280,7 @@ static int __test_case_3(struct btrfs_fs_info *fs_info,
 "case3 [0x%llx 0x%llx): ret %d em (start 0x%llx len 0x%llx block_start 0x%llx block_len 0x%llx)",
 			 start, start + len, ret, em->start, em->len,
 			 em->block_start, em->block_len);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	free_extent_map(em);
 out:
@@ -393,7 +393,7 @@ static int __test_case_4(struct btrfs_fs_info *fs_info,
 "case4 [0x%llx 0x%llx): ret %d, added wrong em (start 0x%llx len 0x%llx block_start 0x%llx block_len 0x%llx)",
 			 start, len, ret, em->start, em->len, em->block_start,
 			 em->block_len);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	free_extent_map(em);
 out:

@@ -245,7 +245,7 @@ static int s3c_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -270,7 +270,7 @@ static int s3c_pcm_hw_params(struct snd_pcm_substream *substream,
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irqsave(&pcm->lock, flags);
@@ -331,7 +331,7 @@ static int s3c_pcm_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(pcm->dev, "Unsupported clock inversion!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -341,7 +341,7 @@ static int s3c_pcm_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(pcm->dev, "Unsupported master/slave format!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -354,7 +354,7 @@ static int s3c_pcm_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(pcm->dev, "Invalid Clock gating request!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -369,7 +369,7 @@ static int s3c_pcm_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(pcm->dev, "Unsupported data format!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -392,7 +392,7 @@ static int s3c_pcm_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -419,7 +419,7 @@ static int s3c_pcm_set_sysclk(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(clkctl, regs + S3C_PCM_CLKCTL);
@@ -489,14 +489,14 @@ static int s3c_pcm_dev_probe(struct platform_device *pdev)
 	/* Check for valid device index */
 	if ((pdev->id < 0) || pdev->id >= ARRAY_SIZE(s3c_pcm)) {
 		dev_err(&pdev->dev, "id %d out of range\n", pdev->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pcm_pdata = pdev->dev.platform_data;
 
 	if (pcm_pdata && pcm_pdata->cfg_gpio && pcm_pdata->cfg_gpio(pdev)) {
 		dev_err(&pdev->dev, "Unable to configure gpio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pcm = &s3c_pcm[pdev->id];

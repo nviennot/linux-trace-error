@@ -1594,7 +1594,7 @@ static void __ceph_flush_snaps(struct ceph_inode_info *ci,
 			break;
 		}
 
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		list_for_each_entry(cf, &ci->i_cap_flush_list, i_list) {
 			if (cf->tid >= first_tid) {
 				ret = 0;
@@ -2290,14 +2290,14 @@ static int unsafe_request_wait(struct inode *inode)
 		ret = !wait_for_completion_timeout(&req1->r_safe_completion,
 					ceph_timeout_jiffies(req1->r_timeout));
 		if (ret)
-			err = -EIO;
+			err = -ERR(EIO);
 		ceph_mdsc_put_request(req1);
 	}
 	if (req2) {
 		ret = !wait_for_completion_timeout(&req2->r_safe_completion,
 					ceph_timeout_jiffies(req2->r_timeout));
 		if (ret)
-			err = -EIO;
+			err = -ERR(EIO);
 		ceph_mdsc_put_request(req2);
 	}
 	return err;
@@ -2638,7 +2638,7 @@ again:
 	if ((flags & CHECK_FILELOCK) &&
 	    (ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK)) {
 		dout("try_get_cap_refs %p error filelock\n", inode);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_unlock;
 	}
 
@@ -2660,7 +2660,7 @@ again:
 			dout("get_cap_refs %p endoff %llu > maxsize %llu\n",
 			     inode, endoff, ci->i_max_size);
 			if (endoff > ci->i_requested_max_size)
-				ret = ci->i_auth_cap ? -EFBIG : -ESTALE;
+				ret = ci->i_auth_cap ? -ERR(EFBIG) : -ERR(ESTALE);
 			goto out_unlock;
 		}
 		/*
@@ -2695,7 +2695,7 @@ again:
 					 * task isn't in TASK_RUNNING state
 					 */
 					if (flags & NON_BLOCKING) {
-						ret = -EAGAIN;
+						ret = -ERR(EAGAIN);
 						goto out_unlock;
 					}
 
@@ -2730,13 +2730,13 @@ again:
 		if (session_readonly) {
 			dout("get_cap_refs %p need %s but mds%d readonly\n",
 			     inode, ceph_cap_string(need), ci->i_auth_cap->mds);
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out_unlock;
 		}
 
 		if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN) {
 			dout("get_cap_refs %p forced umount\n", inode);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out_unlock;
 		}
 		mds_wanted = __ceph_caps_mds_wanted(ci, false);
@@ -2744,7 +2744,7 @@ again:
 			dout("get_cap_refs %p need %s > mds_wanted %s\n",
 			     inode, ceph_cap_string(need),
 			     ceph_cap_string(mds_wanted));
-			ret = -ESTALE;
+			ret = -ERR(ESTALE);
 			goto out_unlock;
 		}
 
@@ -2853,7 +2853,7 @@ int ceph_get_caps(struct file *filp, int need, int want,
 
 	if ((fi->fmode & CEPH_FILE_MODE_WR) &&
 	    fi->filp_gen != READ_ONCE(fsc->filp_gen))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	flags = get_used_fmode(need | want);
 
@@ -2887,7 +2887,7 @@ int ceph_get_caps(struct file *filp, int need, int want,
 			while (!(ret = try_get_cap_refs(inode, need, want,
 							endoff, flags, &_got))) {
 				if (signal_pending(current)) {
-					ret = -ERESTARTSYS;
+					ret = -ERR(ERESTARTSYS);
 					break;
 				}
 				wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
@@ -2908,7 +2908,7 @@ int ceph_get_caps(struct file *filp, int need, int want,
 		    fi->filp_gen != READ_ONCE(fsc->filp_gen)) {
 			if (ret >= 0 && _got)
 				ceph_put_cap_refs(ci, _got);
-			return -EBADF;
+			return -ERR(EBADF);
 		}
 
 		if (ret < 0) {

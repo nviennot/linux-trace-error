@@ -209,7 +209,7 @@ static int persistent_ram_init_ecc(struct persistent_ram_zone *prz,
 		pr_err("%s: invalid ecc_size %u (total %zu, buffer size %zu)\n",
 		       __func__, prz->ecc_info.ecc_size,
 		       ecc_total, prz->buffer_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prz->buffer_size -= ecc_total;
@@ -225,7 +225,7 @@ static int persistent_ram_init_ecc(struct persistent_ram_zone *prz,
 				  0, 1, prz->ecc_info.ecc_size);
 	if (prz->rs_decoder == NULL) {
 		pr_info("init_rs failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* allocate workspace instead of using stack VLA */

@@ -329,11 +329,11 @@ static int snd_ice1712_cs8427_set_input_clock(struct snd_ice1712 *ice, int spdif
 	snd_i2c_lock(ice->i2c);
 	if (snd_i2c_sendbytes(ice->cs8427, reg, 1) != 1) {
 		snd_i2c_unlock(ice->i2c);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (snd_i2c_readbytes(ice->cs8427, &val, 1) != 1) {
 		snd_i2c_unlock(ice->i2c);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	nval = val & 0xf0;
 	if (spdif_clock)
@@ -343,7 +343,7 @@ static int snd_ice1712_cs8427_set_input_clock(struct snd_ice1712 *ice, int spdif
 	if (val != nval) {
 		reg[1] = nval;
 		if (snd_i2c_sendbytes(ice->cs8427, reg, 2) != 2) {
-			res = -EIO;
+			res = -ERR(EIO);
 		} else {
 			res++;
 		}
@@ -501,7 +501,7 @@ static int snd_ice1712_playback_trigger(struct snd_pcm_substream *substream,
 	} else if (cmd == SNDRV_PCM_TRIGGER_PAUSE_RELEASE) {
 		tmp &= ~2;
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	snd_ice1712_write(ice, ICE1712_IREG_PBK_CTRL, tmp);
 	spin_unlock(&ice->reg_lock);
@@ -526,7 +526,7 @@ static int snd_ice1712_playback_ds_trigger(struct snd_pcm_substream *substream,
 	} else if (cmd == SNDRV_PCM_TRIGGER_PAUSE_RELEASE) {
 		tmp &= ~2;
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	snd_ice1712_ds_write(ice, substream->number * 2, ICE1712_DSC_CONTROL, tmp);
 	spin_unlock(&ice->reg_lock);
@@ -547,7 +547,7 @@ static int snd_ice1712_capture_trigger(struct snd_pcm_substream *substream,
 	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		tmp &= ~1;
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	snd_ice1712_write(ice, ICE1712_IREG_CAP_CTRL, tmp);
 	spin_unlock(&ice->reg_lock);
@@ -914,7 +914,7 @@ static int snd_ice1712_pro_trigger(struct snd_pcm_substream *substream,
 		unsigned int what;
 		unsigned int old;
 		if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		what = ICE1712_PLAYBACK_PAUSE;
 		snd_pcm_trigger_done(substream, substream);
 		spin_lock(&ice->reg_lock);
@@ -954,7 +954,7 @@ static int snd_ice1712_pro_trigger(struct snd_pcm_substream *substream,
 		break;
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1742,7 +1742,7 @@ int snd_ice1712_gpio_put(struct snd_kcontrol *kcontrol,
 	unsigned int val, nval;
 
 	if (kcontrol->private_value & (1 << 31))
-		return -EPERM;
+		return -ERR(EPERM);
 	nval = (ucontrol->value.integer.value[0] ? mask : 0) ^ invert;
 	snd_ice1712_save_gpio_status(ice);
 	val = snd_ice1712_gpio_read(ice);
@@ -2261,7 +2261,7 @@ static int snd_ice1712_read_eeprom(struct snd_ice1712 *ice,
 			if (ice->eeprom.subvendor == 0 || ice->eeprom.subvendor == (unsigned int)-1) {
 				dev_err(ice->card->dev,
 					"No valid ID is found\n");
-				return -ENXIO;
+				return -ERR(ENXIO);
 			}
 		}
 	}
@@ -2293,7 +2293,7 @@ static int snd_ice1712_read_eeprom(struct snd_ice1712 *ice,
 	else if (ice->eeprom.size > 32) {
 		dev_err(ice->card->dev,
 			"invalid EEPROM (size = %i)\n", ice->eeprom.size);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	ice->eeprom.version = snd_ice1712_read_i2c(ice, dev, 0x05);
 	if (ice->eeprom.version != 1) {
@@ -2376,7 +2376,7 @@ int snd_ice1712_spdif_build_controls(struct snd_ice1712 *ice)
 	struct snd_kcontrol *kctl;
 
 	if (snd_BUG_ON(!ice->pcm_pro))
-		return -EIO;
+		return -ERR(EIO);
 	err = snd_ctl_add(ice->card, kctl = snd_ctl_new1(&snd_ice1712_spdif_default, ice));
 	if (err < 0)
 		return err;
@@ -2491,7 +2491,7 @@ static int snd_ice1712_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 28bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	ice = kzalloc(sizeof(*ice), GFP_KERNEL);
@@ -2547,7 +2547,7 @@ static int snd_ice1712_create(struct snd_card *card,
 			KBUILD_MODNAME, ice)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_ice1712_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ice->irq = pci->irq;
@@ -2555,11 +2555,11 @@ static int snd_ice1712_create(struct snd_card *card,
 
 	if (snd_ice1712_read_eeprom(ice, modelname) < 0) {
 		snd_ice1712_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (snd_ice1712_chip_init(ice) < 0) {
 		snd_ice1712_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, ice, &ops);
@@ -2591,10 +2591,10 @@ static int snd_ice1712_probe(struct pci_dev *pci,
 	const struct snd_ice1712_card_info * const *tbl, *c;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
@@ -2777,7 +2777,7 @@ static int snd_ice1712_resume(struct device *dev)
 
 	if (snd_ice1712_chip_init(ice) < 0) {
 		snd_card_disconnect(card);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ice->cur_rate = rate;

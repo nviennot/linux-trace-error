@@ -493,7 +493,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
 
 	uprobe_start_dup_mmap();
 	if (mmap_write_lock_killable(oldmm)) {
-		retval = -EINTR;
+		retval = -ERR(EINTR);
 		goto fail_uprobe_end;
 	}
 	flush_cache_dup_mm(oldmm);
@@ -535,7 +535,7 @@ static __latent_entropy int dup_mmap(struct mm_struct *mm,
 		 * example)
 		 */
 		if (fatal_signal_pending(current)) {
-			retval = -EINTR;
+			retval = -ERR(EINTR);
 			goto out;
 		}
 		if (mpnt->vm_flags & VM_ACCOUNT) {
@@ -1248,7 +1248,7 @@ struct mm_struct *mm_access(struct task_struct *task, unsigned int mode)
 	if (mm && mm != current->mm &&
 			!ptrace_may_access(task, mode)) {
 		mmput(mm);
-		mm = ERR_PTR(-EACCES);
+		mm = ERR_PTR(-ERR(EACCES));
 	}
 	mutex_unlock(&task->signal->exec_update_mutex);
 
@@ -1450,7 +1450,7 @@ static int copy_fs(unsigned long clone_flags, struct task_struct *tsk)
 		spin_lock(&fs->lock);
 		if (fs->in_exec) {
 			spin_unlock(&fs->lock);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		fs->users++;
 		spin_unlock(&fs->lock);
@@ -1708,7 +1708,7 @@ struct pid *pidfd_pid(const struct file *file)
 	if (file->f_op == &pidfd_fops)
 		return file->private_data;
 
-	return ERR_PTR(-EBADF);
+	return ERR_PTR(-ERR(EBADF));
 }
 
 static int pidfd_release(struct inode *inode, struct file *file)
@@ -1861,17 +1861,17 @@ static __latent_entropy struct task_struct *copy_process(
 	 * namespace
 	 */
 	if ((clone_flags & (CLONE_NEWNS|CLONE_FS)) == (CLONE_NEWNS|CLONE_FS))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * Thread groups must share signals as well, and detached threads
 	 * can only be started up within the thread group.
 	 */
 	if ((clone_flags & CLONE_THREAD) && !(clone_flags & CLONE_SIGHAND))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * Shared signal handlers imply shared VM. By way of the above,
@@ -1879,7 +1879,7 @@ static __latent_entropy struct task_struct *copy_process(
 	 * for various simplifications in other code.
 	 */
 	if ((clone_flags & CLONE_SIGHAND) && !(clone_flags & CLONE_VM))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * Siblings of global init remain as zombies on exit since they are
@@ -1889,7 +1889,7 @@ static __latent_entropy struct task_struct *copy_process(
 	 */
 	if ((clone_flags & CLONE_PARENT) &&
 				current->signal->flags & SIGNAL_UNKILLABLE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/*
 	 * If the new process will be in a different pid or user namespace
@@ -1898,7 +1898,7 @@ static __latent_entropy struct task_struct *copy_process(
 	if (clone_flags & CLONE_THREAD) {
 		if ((clone_flags & (CLONE_NEWUSER | CLONE_NEWPID)) ||
 		    (task_active_pid_ns(current) != nsp->pid_ns_for_children))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/*
@@ -1907,7 +1907,7 @@ static __latent_entropy struct task_struct *copy_process(
 	 */
 	if (clone_flags & (CLONE_THREAD | CLONE_VM)) {
 		if (nsp->time_ns != nsp->time_ns_for_children)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (clone_flags & CLONE_PIDFD) {
@@ -1917,7 +1917,7 @@ static __latent_entropy struct task_struct *copy_process(
 		 * - CLONE_THREAD is blocked until someone really needs it.
 		 */
 		if (clone_flags & (CLONE_DETACHED | CLONE_THREAD))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/*
@@ -1934,7 +1934,7 @@ static __latent_entropy struct task_struct *copy_process(
 		hlist_add_head(&delayed.node, &current->signal->multiprocess);
 	recalc_sigpending();
 	spin_unlock_irq(&current->sighand->siglock);
-	retval = -ERESTARTNOINTR;
+	retval = -ERR(ERESTARTNOINTR);
 	if (signal_pending(current))
 		goto fork_out;
 
@@ -1963,7 +1963,7 @@ static __latent_entropy struct task_struct *copy_process(
 	DEBUG_LOCKS_WARN_ON(!p->hardirqs_enabled);
 	DEBUG_LOCKS_WARN_ON(!p->softirqs_enabled);
 #endif
-	retval = -EAGAIN;
+	retval = -ERR(EAGAIN);
 	if (atomic_read(&p->real_cred->user->processes) >=
 			task_rlimit(p, RLIMIT_NPROC)) {
 		if (p->real_cred->user != INIT_USER &&
@@ -1981,7 +1981,7 @@ static __latent_entropy struct task_struct *copy_process(
 	 * triggers too late. This doesn't hurt, the check is only there
 	 * to stop root fork bombs.
 	 */
-	retval = -EAGAIN;
+	retval = -ERR(EAGAIN);
 	if (data_race(nr_threads >= max_threads))
 		goto bad_fork_cleanup_count;
 
@@ -2252,7 +2252,7 @@ static __latent_entropy struct task_struct *copy_process(
 
 	/* Let kill terminate clone/fork in the middle */
 	if (fatal_signal_pending(current)) {
-		retval = -EINTR;
+		retval = -ERR(EINTR);
 		goto bad_fork_cancel_cgroup;
 	}
 
@@ -2514,7 +2514,7 @@ long do_fork(unsigned long clone_flags,
 	};
 
 	if (!legacy_clone_args_valid(&args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return _do_fork(&args);
 }
@@ -2547,7 +2547,7 @@ SYSCALL_DEFINE0(fork)
 	return _do_fork(&args);
 #else
 	/* can not support in nommu mode */
-	return -EINVAL;
+	return -ERR(EINVAL);
 #endif
 }
 #endif
@@ -2599,7 +2599,7 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
 	};
 
 	if (!legacy_clone_args_valid(&args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return _do_fork(&args);
 }
@@ -2633,22 +2633,22 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
 	BUILD_BUG_ON(sizeof(struct clone_args) != CLONE_ARGS_SIZE_VER2);
 
 	if (unlikely(usize > PAGE_SIZE))
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (unlikely(usize < CLONE_ARGS_SIZE_VER0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = copy_struct_from_user(&args, sizeof(args), uargs, usize);
 	if (err)
 		return err;
 
 	if (unlikely(args.set_tid_size > MAX_PID_NS_LEVEL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(!args.set_tid && args.set_tid_size > 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(args.set_tid && args.set_tid_size == 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Verify that higher 32bits of exit_signal are unset and that
@@ -2656,11 +2656,11 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
 	 */
 	if (unlikely((args.exit_signal & ~((u64)CSIGNAL)) ||
 		     !valid_signal(args.exit_signal)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((args.flags & CLONE_INTO_CGROUP) &&
 	    (args.cgroup > INT_MAX || usize < CLONE_ARGS_SIZE_VER2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*kargs = (struct kernel_clone_args){
 		.flags		= args.flags,
@@ -2766,7 +2766,7 @@ SYSCALL_DEFINE2(clone3, struct clone_args __user *, uargs, size_t, size)
 		return err;
 
 	if (!clone3_args_valid(&kargs))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return _do_fork(&kargs);
 }
@@ -2865,7 +2865,7 @@ static int check_unshare_flags(unsigned long unshare_flags)
 				CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET|
 				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWCGROUP|
 				CLONE_NEWTIME))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Not implemented, but pretend it works if there is nothing
 	 * to unshare.  Note that unsharing the address space or the
@@ -2874,15 +2874,15 @@ static int check_unshare_flags(unsigned long unshare_flags)
 	 */
 	if (unshare_flags & (CLONE_THREAD | CLONE_SIGHAND | CLONE_VM)) {
 		if (!thread_group_empty(current))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (unshare_flags & (CLONE_SIGHAND | CLONE_VM)) {
 		if (refcount_read(&current->sighand->count) > 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (unshare_flags & CLONE_VM) {
 		if (!current_is_single_threaded())
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -196,7 +196,7 @@ static int snd_ca0106_capture_source_put(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.enumerated.item[0] ;
 	if (val >= 6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->capture_source != val);
 	if (change) {
 		emu->capture_source = val;
@@ -236,7 +236,7 @@ static int snd_ca0106_i2c_capture_source_put(struct snd_kcontrol *kcontrol,
 	 */
 	source_id = ucontrol->value.enumerated.item[0] ;
 	if (source_id >= 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->i2c_capture_source != source_id);
 	if (change) {
 		ca0106_set_i2c_capture_source(emu, source_id, 0);
@@ -278,7 +278,7 @@ static int snd_ca0106_capture_mic_line_in_put(struct snd_kcontrol *kcontrol,
 
 	val = ucontrol->value.enumerated.item[0] ;
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = (emu->capture_mic_line_in != val);
 	if (change) {
 		emu->capture_mic_line_in = val;
@@ -481,7 +481,7 @@ static int snd_ca0106_i2c_volume_put(struct snd_kcontrol *kcontrol,
 	ogain = emu->i2c_capture_volume[source_id][0]; /* Left */
 	ngain = ucontrol->value.integer.value[0];
 	if (ngain > 0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ogain != ngain) {
 		if (emu->i2c_capture_source == source_id)
 			snd_ca0106_i2c_write(emu, ADC_ATTEN_ADCL, ((ngain) & 0xff) );
@@ -491,7 +491,7 @@ static int snd_ca0106_i2c_volume_put(struct snd_kcontrol *kcontrol,
 	ogain = emu->i2c_capture_volume[source_id][1]; /* Right */
 	ngain = ucontrol->value.integer.value[1];
 	if (ngain > 0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ogain != ngain) {
 		if (emu->i2c_capture_source == source_id)
 			snd_ca0106_i2c_write(emu, ADC_ATTEN_ADCR, ((ngain) & 0xff));
@@ -535,7 +535,7 @@ static int spi_mute_put(struct snd_kcontrol *kcontrol,
 	}
 
 	ret = snd_ca0106_spi_write(emu, emu->spi_dac_reg[reg]);
-	return ret ? -EINVAL : 1;
+	return ret ? -ERR(EINVAL) : 1;
 }
 
 #define CA_VOLUME(xname,chid,reg) \
@@ -723,7 +723,7 @@ static int rename_ctl(struct snd_card *card, const char *src, const char *dst)
 		strcpy(kctl->id.name, dst);
 		return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 #define ADD_CTLS(emu, ctls)						\

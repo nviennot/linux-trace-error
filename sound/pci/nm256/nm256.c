@@ -457,7 +457,7 @@ static int snd_nm256_acquire_irq(struct nm256 *chip)
 			dev_err(chip->card->dev,
 				"unable to grab IRQ %d\n", chip->pci->irq);
 			mutex_unlock(&chip->irq_mutex);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		chip->irq = chip->pci->irq;
 		chip->card->sync_irq = chip->irq;
@@ -554,7 +554,7 @@ snd_nm256_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 	int err = 0;
 
 	if (snd_BUG_ON(!s))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	spin_lock(&chip->reg_lock);
 	switch (cmd) {
@@ -577,7 +577,7 @@ snd_nm256_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		}
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->reg_lock);
@@ -592,7 +592,7 @@ snd_nm256_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 	int err = 0;
 
 	if (snd_BUG_ON(!s))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	spin_lock(&chip->reg_lock);
 	switch (cmd) {
@@ -611,7 +611,7 @@ snd_nm256_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		}
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->reg_lock);
@@ -629,7 +629,7 @@ static int snd_nm256_pcm_prepare(struct snd_pcm_substream *substream)
 	struct nm256_stream *s = runtime->private_data;
 
 	if (snd_BUG_ON(!s))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	s->dma_size = frames_to_bytes(runtime, substream->runtime->buffer_size);
 	s->period_size = frames_to_bytes(runtime, substream->runtime->period_size);
 	s->periods = substream->runtime->periods;
@@ -862,7 +862,7 @@ snd_nm256_playback_open(struct snd_pcm_substream *substream)
 	struct nm256 *chip = snd_pcm_substream_chip(substream);
 
 	if (snd_nm256_acquire_irq(chip) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	snd_nm256_setup_stream(chip, &chip->streams[SNDRV_PCM_STREAM_PLAYBACK],
 			       substream, &snd_nm256_playback);
 	return 0;
@@ -874,7 +874,7 @@ snd_nm256_capture_open(struct snd_pcm_substream *substream)
 	struct nm256 *chip = snd_pcm_substream_chip(substream);
 
 	if (snd_nm256_acquire_irq(chip) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	snd_nm256_setup_stream(chip, &chip->streams[SNDRV_PCM_STREAM_CAPTURE],
 			       substream, &snd_nm256_capture);
 	return 0;
@@ -1357,7 +1357,7 @@ snd_nm256_peek_for_sig(struct nm256 *chip)
 	if (temp == NULL) {
 		dev_err(chip->card->dev,
 			"Unable to scan for card signature in video RAM\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	sig = readl(temp);
@@ -1373,7 +1373,7 @@ snd_nm256_peek_for_sig(struct nm256 *chip)
 			dev_err(chip->card->dev,
 				"invalid signature found: 0x%x\n", pointer);
 			iounmap(temp);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		} else {
 			pointer_found = pointer;
 			dev_info(chip->card->dev,
@@ -1515,7 +1515,7 @@ snd_nm256_create(struct snd_card *card, struct pci_dev *pci,
 	if (chip->res_cport == NULL) {
 		dev_err(card->dev, "memory region 0x%lx (size 0x%x) busy\n",
 			   chip->cport_addr, NM_PORT2_SIZE);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto __error;
 	}
 	chip->cport = ioremap(chip->cport_addr, NM_PORT2_SIZE);
@@ -1539,7 +1539,7 @@ snd_nm256_create(struct snd_card *card, struct pci_dev *pci,
 					" force_ac97=1\n");
 				dev_err(card->dev,
 					"or try sb16, opl3sa2, or cs423x drivers instead.\n");
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 				goto __error;
 			}
 		}
@@ -1586,7 +1586,7 @@ snd_nm256_create(struct snd_card *card, struct pci_dev *pci,
 	if (chip->res_buffer == NULL) {
 		dev_err(card->dev, "buffer 0x%lx (size 0x%x) busy\n",
 			   chip->buffer_addr, chip->buffer_size);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto __error;
 	}
 	chip->buffer = ioremap(chip->buffer_addr, chip->buffer_size);
@@ -1661,7 +1661,7 @@ static int snd_nm256_probe(struct pci_dev *pci,
 		case NM_BLACKLISTED:
 			dev_info(&pci->dev,
 				 "The device is blacklisted. Loading stopped\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		case NM_RESET_WORKAROUND_2:
 			reset_workaround_2 = 1;
 			/* Fall-through */
@@ -1688,7 +1688,7 @@ static int snd_nm256_probe(struct pci_dev *pci,
 	default:
 		dev_err(&pci->dev, "invalid device id 0x%x\n", pci->device);
 		snd_card_free(card);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (vaio_hack)

@@ -105,7 +105,7 @@ static inline int mls_context_glblub(struct context *dst,
 	if (r1->level[1].sens < r2->level[0].sens ||
 	    r2->level[1].sens < r1->level[0].sens)
 		/* These ranges have no common sensitivities */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Take the greatest of the low */
 	dr->level[0].sens = max(r1->level[0].sens, r2->level[0].sens);

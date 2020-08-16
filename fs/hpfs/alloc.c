@@ -505,7 +505,7 @@ static int do_trim(struct super_block *s, secno start, unsigned len, secno limit
 	int err;
 	secno end;
 	if (fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 	end = start + len;
 	if (start < limit_start)
 		start = limit_start;
@@ -540,11 +540,11 @@ int hpfs_trim_fs(struct super_block *s, u64 start, u64 end, u64 minlen, unsigned
 	if (start < sbi->sb_dirband_start + sbi->sb_dirband_size && end > sbi->sb_dirband_start) {
 		hpfs_lock(s);
 		if (sb_rdonly(s)) {
-			err = -EROFS;
+			err = -ERR(EROFS);
 			goto unlock_1;
 		}
 		if (!(bmp = hpfs_map_dnode_bitmap(s, &qbh))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto unlock_1;
 		}
 		idx = 0;
@@ -561,11 +561,11 @@ unlock_1:
 	while (start_bmp < end_bmp && !err) {
 		hpfs_lock(s);
 		if (sb_rdonly(s)) {
-			err = -EROFS;
+			err = -ERR(EROFS);
 			goto unlock_2;
 		}
 		if (!(bmp = hpfs_map_bitmap(s, start_bmp, &qbh, "trim"))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto unlock_2;
 		}
 		idx = 0;

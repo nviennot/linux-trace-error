@@ -240,7 +240,7 @@ static int snd_aw2_create(struct snd_card *card,
 	    (dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(32)) < 0)) {
 		dev_err(card->dev, "Impossible to set 32bit mask DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL) {
@@ -284,7 +284,7 @@ static int snd_aw2_create(struct snd_card *card,
 		pci_release_regions(chip->pci);
 		pci_disable_device(chip->pci);
 		kfree(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -317,10 +317,10 @@ static int snd_aw2_probe(struct pci_dev *pci,
 
 	/* (1) Continue if device is not enabled, else inc dev */
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* (2) Create card instance */
@@ -481,7 +481,7 @@ static int snd_aw2_pcm_trigger_playback(struct snd_pcm_substream *substream,
 							  stream_number);
 		break;
 	default:
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->reg_lock);
 	return status;
@@ -507,7 +507,7 @@ static int snd_aw2_pcm_trigger_capture(struct snd_pcm_substream *substream,
 							 stream_number);
 		break;
 	default:
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 	spin_unlock(&chip->reg_lock);
 	return status;

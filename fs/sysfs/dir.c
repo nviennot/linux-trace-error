@@ -44,7 +44,7 @@ int sysfs_create_dir_ns(struct kobject *kobj, const void *ns)
 	kgid_t gid;
 
 	if (WARN_ON(!kobj))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (kobj->parent)
 		parent = kobj->parent->sd;
@@ -52,7 +52,7 @@ int sysfs_create_dir_ns(struct kobject *kobj, const void *ns)
 		parent = sysfs_root_kn;
 
 	if (!parent)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kobject_get_ownership(kobj, &uid, &gid);
 

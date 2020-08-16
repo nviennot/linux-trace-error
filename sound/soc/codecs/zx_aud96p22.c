@@ -59,7 +59,7 @@ static int aud96p22_adc_event(struct snd_soc_dapm_widget *w,
 	struct regmap *regmap = priv->regmap;
 
 	if (event != SND_SOC_DAPM_POST_PMU)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Assert/de-assert the bit to reset ADC data path  */
 	regmap_update_bits(regmap, AUD96P22_RESET, RST_ADC_DPZ, 0);
@@ -76,7 +76,7 @@ static int aud96p22_dac_event(struct snd_soc_dapm_widget *w,
 	struct regmap *regmap = priv->regmap;
 
 	if (event != SND_SOC_DAPM_POST_PMU)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Assert/de-assert the bit to reset DAC data path  */
 	regmap_update_bits(regmap, AUD96P22_RESET, RST_DAC_DPZ, 0);
@@ -286,7 +286,7 @@ static int aud96p22_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		val = I2S1_MS_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(regmap, AUD96P22_I2S1_CONFIG_0, I2S1_MS_MODE, val);
@@ -303,7 +303,7 @@ static int aud96p22_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		val = I2S1_MODE_LEFT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(regmap, AUD96P22_I2S1_CONFIG_0, I2S1_MODE_MASK, val);

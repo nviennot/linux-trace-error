@@ -14,7 +14,7 @@ security_get(const struct xattr_handler *handler, struct dentry *unused,
 	     struct inode *inode, const char *name, void *buffer, size_t size)
 {
 	if (IS_PRIVATE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return reiserfs_xattr_get(inode, xattr_full_name(handler, name),
 				  buffer, size);
@@ -26,7 +26,7 @@ security_set(const struct xattr_handler *handler, struct dentry *unused,
 	     size_t size, int flags)
 {
 	if (IS_PRIVATE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return reiserfs_xattr_set(inode,
 				  xattr_full_name(handler, name),
@@ -82,7 +82,7 @@ int reiserfs_security_write(struct reiserfs_transaction_handle *th,
 {
 	int error;
 	if (strlen(sec->name) < sizeof(XATTR_SECURITY_PREFIX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = reiserfs_xattr_set_handle(th, inode, sec->name, sec->value,
 					  sec->length, XATTR_CREATE);

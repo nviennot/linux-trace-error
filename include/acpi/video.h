@@ -66,12 +66,12 @@ extern int acpi_video_get_levels(struct acpi_device *device,
 				 struct acpi_video_device_brightness **dev_br,
 				 int *pmax_level);
 #else
-static inline int acpi_video_register(void) { return -ENODEV; }
+static inline int acpi_video_register(void) { return -ERR(ENODEV); }
 static inline void acpi_video_unregister(void) { return; }
 static inline int acpi_video_get_edid(struct acpi_device *device, int type,
 				      int device_id, void **edid)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline enum acpi_backlight_type acpi_video_get_backlight_type(void)
 {
@@ -88,7 +88,7 @@ static inline int acpi_video_get_levels(struct acpi_device *device,
 			struct acpi_video_device_brightness **dev_br,
 			int *pmax_level)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

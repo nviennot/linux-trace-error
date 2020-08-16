@@ -375,11 +375,11 @@ int rename2_file(char *from, char *to, unsigned int flags)
 		if (errno != ENOSYS)
 			return -errno;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 #else
-	return -EINVAL;
+	return -ERR(EINVAL);
 #endif
 }
 

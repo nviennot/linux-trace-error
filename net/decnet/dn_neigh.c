@@ -119,13 +119,13 @@ static int dn_neigh_construct(struct neighbour *neigh)
 	dn_db = rcu_dereference(dev->dn_ptr);
 	if (dn_db == NULL) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	parms = dn_db->neigh_parms;
 	if (!parms) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	__neigh_parms_put(neigh->parms);
@@ -143,7 +143,7 @@ static int dn_neigh_construct(struct neighbour *neigh)
 	else {
 		net_dbg_ratelimited("Trying to create neigh for hw %d\n",
 				    dev->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -190,7 +190,7 @@ static int dn_neigh_output(struct neighbour *neigh, struct sk_buff *skb)
 		err = dev_queue_xmit(skb);
 	else {
 		kfree_skb(skb);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	return err;
 }
@@ -222,7 +222,7 @@ static int dn_long_output(struct neighbour *neigh, struct sock *sk,
 		if (skb2 == NULL) {
 			net_crit_ratelimited("dn_long_output: no memory\n");
 			kfree_skb(skb);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		consume_skb(skb);
 		skb = skb2;
@@ -270,7 +270,7 @@ static int dn_short_output(struct neighbour *neigh, struct sock *sk,
 		if (skb2 == NULL) {
 			net_crit_ratelimited("dn_short_output: no memory\n");
 			kfree_skb(skb);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		consume_skb(skb);
 		skb = skb2;
@@ -312,7 +312,7 @@ static int dn_phase3_output(struct neighbour *neigh, struct sock *sk,
 		if (skb2 == NULL) {
 			net_crit_ratelimited("dn_phase3_output: no memory\n");
 			kfree_skb(skb);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		consume_skb(skb);
 		skb = skb2;
@@ -348,7 +348,7 @@ int dn_to_neigh_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	dn_db = rcu_dereference(neigh->dev->dn_ptr);
 	if (dn_db == NULL) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	use_long = dn_db->use_long;
 	rcu_read_unlock();

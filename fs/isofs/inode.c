@@ -114,7 +114,7 @@ static int isofs_remount(struct super_block *sb, int *flags, char *data)
 {
 	sync_filesystem(sb);
 	if (!(*flags & SB_RDONLY))
-		return -EROFS;
+		return -ERR(EROFS);
 	return 0;
 }
 
@@ -630,7 +630,7 @@ static int isofs_fill_super(struct super_block *s, void *data, int silent)
 	int joliet_level = 0;
 	int iso_blknum, block;
 	int orig_zonesize;
-	int table, error = -EINVAL;
+	int table, error = -ERR(EINVAL);
 	unsigned int vol_desc_start;
 
 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
@@ -746,7 +746,7 @@ static int isofs_fill_super(struct super_block *s, void *data, int silent)
 root_found:
 	/* We don't support read-write mounts */
 	if (!sb_rdonly(s)) {
-		error = -EACCES;
+		error = -ERR(EACCES);
 		goto out_freebh;
 	}
 
@@ -1062,7 +1062,7 @@ int isofs_get_blocks(struct inode *inode, sector_t iblock,
 	int section, rv, error;
 	struct iso_inode_info *ei = ISOFS_I(inode);
 
-	error = -EIO;
+	error = -ERR(EIO);
 	rv = 0;
 	if (iblock != b_off) {
 		printk(KERN_DEBUG "%s: block number too large\n", __func__);
@@ -1150,7 +1150,7 @@ static int isofs_get_block(struct inode *inode, sector_t iblock,
 
 	if (create) {
 		printk(KERN_DEBUG "%s: Kernel tries to allocate a block\n", __func__);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	ret = isofs_get_blocks(inode, iblock, &bh_result, 1);
@@ -1293,7 +1293,7 @@ out_nomem:
 out_noread:
 	printk(KERN_INFO "ISOFS: unable to read i-node block %lu\n", block);
 	kfree(tmpde);
-	return -EIO;
+	return -ERR(EIO);
 
 out_toomany:
 	printk(KERN_INFO "%s: More than 100 file sections ?!?, aborting...\n"
@@ -1315,7 +1315,7 @@ static int isofs_read_inode(struct inode *inode, int relocated)
 	unsigned int de_len;
 	unsigned long offset;
 	struct iso_inode_info *ei = ISOFS_I(inode);
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	block = ei->i_iget5_block;
 	bh = sb_bread(inode->i_sb, block);
@@ -1389,7 +1389,7 @@ static int isofs_read_inode(struct inode *inode, int relocated)
 		ret = isofs_read_level3_size(inode);
 		if (ret < 0)
 			goto fail;
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else {
 		ei->i_next_section_block = 0;
 		ei->i_next_section_offset = 0;
@@ -1537,7 +1537,7 @@ struct inode *__isofs_iget(struct super_block *sb,
 	long ret;
 
 	if (offset >= 1ul << sb->s_blocksize_bits)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	data.block = block;
 	data.offset = offset;

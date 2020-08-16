@@ -68,7 +68,7 @@ static int snd_pcm_add(struct snd_pcm *newpcm)
 
 	list_for_each_entry(pcm, &snd_pcm_devices, list) {
 		if (pcm->card == newpcm->card && pcm->device == newpcm->device)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (pcm->card->number > newpcm->card->number ||
 				(pcm->card == newpcm->card &&
 				pcm->device > newpcm->device)) {
@@ -114,23 +114,23 @@ static int snd_pcm_control_ioctl(struct snd_card *card,
 			if (get_user(stream, &info->stream))
 				return -EFAULT;
 			if (stream < 0 || stream > 1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			stream = array_index_nospec(stream, 2);
 			if (get_user(subdevice, &info->subdevice))
 				return -EFAULT;
 			mutex_lock(&register_mutex);
 			pcm = snd_pcm_get(card, device);
 			if (pcm == NULL) {
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 				goto _error;
 			}
 			pstr = &pcm->streams[stream];
 			if (pstr->substream_count == 0) {
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 				goto _error;
 			}
 			if (subdevice >= pstr->substream_count) {
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 				goto _error;
 			}
 			for (substream = pstr->substream; substream;
@@ -138,7 +138,7 @@ static int snd_pcm_control_ioctl(struct snd_card *card,
 				if (substream->number == (int)subdevice)
 					break;
 			if (substream == NULL) {
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 				goto _error;
 			}
 			mutex_lock(&pcm->open_mutex);
@@ -158,7 +158,7 @@ static int snd_pcm_control_ioctl(struct snd_card *card,
 			return 0;
 		}
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 #define FORMAT(v) [SNDRV_PCM_FORMAT_##v] = #v
@@ -716,7 +716,7 @@ static int _snd_pcm_new(struct snd_card *card, const char *id, int device,
 	};
 
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (rpcm)
 		*rpcm = NULL;
 	pcm = kzalloc(sizeof(*pcm), GFP_KERNEL);
@@ -888,14 +888,14 @@ int snd_pcm_attach_substream(struct snd_pcm *pcm, int stream,
 	size_t size;
 
 	if (snd_BUG_ON(!pcm || !rsubstream))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(stream != SNDRV_PCM_STREAM_PLAYBACK &&
 		       stream != SNDRV_PCM_STREAM_CAPTURE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*rsubstream = NULL;
 	pstr = &pcm->streams[stream];
 	if (pstr->substream == NULL || pstr->substream_count == 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	card = pcm->card;
 	prefer_subdevice = snd_ctl_get_preferred_subdevice(card, SND_CTL_SUBDEV_PCM);
@@ -906,14 +906,14 @@ int snd_pcm_attach_substream(struct snd_pcm *pcm, int stream,
 		for (substream = pcm->streams[opposite].substream; substream;
 		     substream = substream->next) {
 			if (SUBSTREAM_BUSY(substream))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		}
 	}
 
 	if (file->f_flags & O_APPEND) {
 		if (prefer_subdevice < 0) {
 			if (pstr->substream_count > 1)
-				return -EINVAL; /* must be unique */
+				return -ERR(EINVAL); /* must be unique */
 			substream = pstr->substream;
 		} else {
 			for (substream = pstr->substream; substream;
@@ -922,9 +922,9 @@ int snd_pcm_attach_substream(struct snd_pcm *pcm, int stream,
 					break;
 		}
 		if (! substream)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		if (! SUBSTREAM_BUSY(substream))
-			return -EBADFD;
+			return -ERR(EBADFD);
 		substream->ref_count++;
 		*rsubstream = substream;
 		return 0;
@@ -937,7 +937,7 @@ int snd_pcm_attach_substream(struct snd_pcm *pcm, int stream,
 			break;
 	}
 	if (substream == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	runtime = kzalloc(sizeof(*runtime), GFP_KERNEL);
 	if (runtime == NULL)
@@ -1044,7 +1044,7 @@ static int snd_pcm_dev_register(struct snd_device *device)
 	struct snd_pcm *pcm;
 
 	if (snd_BUG_ON(!device || !device->device_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	pcm = device->device_data;
 
 	mutex_lock(&register_mutex);
@@ -1137,7 +1137,7 @@ int snd_pcm_notify(struct snd_pcm_notify *notify, int nfree)
 		       !notify->n_register ||
 		       !notify->n_unregister ||
 		       !notify->n_disconnect))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&register_mutex);
 	if (nfree) {
 		list_del(&notify->list);

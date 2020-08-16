@@ -680,12 +680,12 @@ int ubifs_garbage_collect(struct ubifs_info *c, int anyway)
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 
 	if (ubifs_gc_should_commit(c))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	mutex_lock_nested(&wbuf->io_mutex, wbuf->jhead);
 
 	if (c->ro_error) {
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out_unlock;
 	}
 
@@ -699,7 +699,7 @@ int ubifs_garbage_collect(struct ubifs_info *c, int anyway)
 
 		/* Give the commit an opportunity to run */
 		if (ubifs_gc_should_commit(c)) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 
@@ -710,7 +710,7 @@ int ubifs_garbage_collect(struct ubifs_info *c, int anyway)
 			 */
 			dbg_gc("soft limit, some index LEBs GC'ed, -EAGAIN");
 			ubifs_commit_required(c);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 
@@ -720,7 +720,7 @@ int ubifs_garbage_collect(struct ubifs_info *c, int anyway)
 			 * progress, give up.
 			 */
 			dbg_gc("hard limit, -ENOSPC");
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			break;
 		}
 
@@ -826,7 +826,7 @@ int ubifs_garbage_collect(struct ubifs_info *c, int anyway)
 	if (ret == -ENOSPC && !list_empty(&c->idx_gc)) {
 		dbg_gc("no space, some index LEBs GC'ed, -EAGAIN");
 		ubifs_commit_required(c);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 
 	err = ubifs_wbuf_sync_nolock(wbuf);
@@ -995,7 +995,7 @@ int ubifs_get_idx_gc_leb(struct ubifs_info *c)
 	int lnum;
 
 	if (list_empty(&c->idx_gc))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	idx_gc = list_entry(c->idx_gc.next, struct ubifs_gced_idx_leb, list);
 	lnum = idx_gc->lnum;
 	/* c->idx_gc_cnt is updated by the caller when lprops are updated */

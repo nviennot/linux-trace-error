@@ -113,7 +113,7 @@ static unsigned int daio_device_index(enum DAIOTYP type, struct hw *hw)
 		case LINEO3:	return 5;
 		case LINEO4:	return 6;
 		case LINEIM:	return 7;
-		default:	return -EINVAL;
+		default:	return -ERR(EINVAL);
 		}
 	case ATC20K2:
 		switch (type) {
@@ -125,10 +125,10 @@ static unsigned int daio_device_index(enum DAIOTYP type, struct hw *hw)
 		case LINEO4:	return 6;
 		case LINEIM:	return 4;
 		case MIC:	return 5;
-		default:	return -EINVAL;
+		default:	return -ERR(EINVAL);
 		}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -340,7 +340,7 @@ static int daio_rsc_init(struct daio *daio,
 		idx_r = idx_20k2[desc->type].right;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	err = rsc_init(&daio->rscl, idx_l, DAIO, desc->msr, hw);
 	if (err)
@@ -506,7 +506,7 @@ static int dai_rsc_uninit(struct dai *dai)
 static int daio_mgr_get_rsc(struct rsc_mgr *mgr, enum DAIOTYP type)
 {
 	if (((struct daio_usage *)mgr->rscs)->data & (0x1 << type))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	((struct daio_usage *)mgr->rscs)->data |= (0x1 << type);
 

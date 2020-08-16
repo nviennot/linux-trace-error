@@ -360,11 +360,11 @@ static const struct snd_soc_dapm_route nau8540_dapm_routes[] = {
 static int nau8540_clock_check(struct nau8540 *nau8540, int rate, int osr)
 {
 	if (osr >= ARRAY_SIZE(osr_adc_sel))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rate * osr > CLK_ADC_MAX) {
 		dev_err(nau8540->dev, "exceed the maximum frequency of CLK_ADC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -386,7 +386,7 @@ static int nau8540_hw_params(struct snd_pcm_substream *substream,
 	regmap_read(nau8540->regmap, NAU8540_REG_ADC_SAMPLE_RATE, &osr);
 	osr &= NAU8540_ADC_OSR_MASK;
 	if (nau8540_clock_check(nau8540, params_rate(params), osr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	regmap_update_bits(nau8540->regmap, NAU8540_REG_CLOCK_SRC,
 		NAU8540_CLK_ADC_SRC_MASK,
 		osr_adc_sel[osr].clk_src << NAU8540_CLK_ADC_SRC_SFT);
@@ -405,7 +405,7 @@ static int nau8540_hw_params(struct snd_pcm_substream *substream,
 		val_len |= NAU8540_I2S_DL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8540->regmap, NAU8540_REG_PCM_CTRL0,
@@ -427,7 +427,7 @@ static int nau8540_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -437,7 +437,7 @@ static int nau8540_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= NAU8540_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -458,7 +458,7 @@ static int nau8540_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= NAU8540_I2S_PCMB_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8540->regmap, NAU8540_REG_PCM_CTRL0,
@@ -492,7 +492,7 @@ static int nau8540_set_tdm_slot(struct snd_soc_dai *dai,
 	unsigned int ctrl2_val = 0, ctrl4_val = 0;
 
 	if (slots > 4 || ((tx_mask & 0xf0) && (tx_mask & 0xf)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctrl4_val |= (NAU8540_TDM_MODE | NAU8540_TDM_OFFSET_EN);
 	if (tx_mask & 0xf0) {
@@ -562,7 +562,7 @@ static int nau8540_calc_fll_param(unsigned int fll_in,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_pre_scalar))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->clk_ref_div = fll_pre_scalar[i].val;
 
 	/* Choose the FLL ratio based on FREF */
@@ -571,7 +571,7 @@ static int nau8540_calc_fll_param(unsigned int fll_in,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_ratio))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->ratio = fll_ratio[i].val;
 
 	/* Calculate the frequency of DCO (FDCO) given freq_out = 256 * Fs.
@@ -590,7 +590,7 @@ static int nau8540_calc_fll_param(unsigned int fll_in,
 		}
 	}
 	if (ARRAY_SIZE(mclk_src_scaling) == fvco_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->mclk_src = mclk_src_scaling[fvco_sel].val;
 
 	/* Calculate the FLL 10-bit integer input and the FLL 16-bit fractional
@@ -673,7 +673,7 @@ static int nau8540_set_pll(struct snd_soc_component *component, int pll_id, int 
 
 	default:
 		dev_err(nau8540->dev, "Invalid clock id (%d)\n", pll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(nau8540->dev, "Sysclk is %dHz and clock id is %d\n",
 		freq_out, pll_id);
@@ -719,7 +719,7 @@ static int nau8540_set_sysclk(struct snd_soc_component *component,
 
 	default:
 		dev_err(nau8540->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(nau8540->dev, "Sysclk is %dHz and clock id is %d\n",

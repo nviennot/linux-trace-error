@@ -55,7 +55,7 @@ static int mxs_saif_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		saif->mclk = freq;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -87,7 +87,7 @@ static int mxs_saif_set_clk(struct mxs_saif *saif,
 	/* Set master saif to generate proper clock */
 	master_saif = mxs_saif_get_master(saif);
 	if (!master_saif)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(saif->dev, "master saif%d\n", master_saif->id);
 
@@ -96,7 +96,7 @@ static int mxs_saif_set_clk(struct mxs_saif *saif,
 		dev_err(saif->dev,
 			"can not change clock, master saif%d(rate %d) is ongoing\n",
 			master_saif->id, master_saif->cur_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	scr = __raw_readl(master_saif->base + SAIF_CTRL);
@@ -137,7 +137,7 @@ static int mxs_saif_set_clk(struct mxs_saif *saif,
 		default:
 			/* SAIF MCLK should be a sub-rate of 512x or 384x */
 			clk_disable_unprepare(master_saif->clk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		ret = clk_set_rate(master_saif->clk, 512 * rate);
@@ -191,7 +191,7 @@ static int mxs_saif_set_clk(struct mxs_saif *saif,
 		scr |= BF_SAIF_CTRL_BITCLK_MULT_RATE(0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	__raw_writel(scr, master_saif->base + SAIF_CTRL);
@@ -208,12 +208,12 @@ int mxs_saif_put_mclk(unsigned int saif_id)
 	u32 stat;
 
 	if (!saif)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stat = __raw_readl(saif->base + SAIF_STAT);
 	if (stat & BM_SAIF_STAT_BUSY) {
 		dev_err(saif->dev, "error: busy\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	clk_disable_unprepare(saif->clk);
@@ -244,7 +244,7 @@ int mxs_saif_get_mclk(unsigned int saif_id, unsigned int mclk,
 	struct mxs_saif *master_saif;
 
 	if (!saif)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Clear Reset */
 	__raw_writel(BM_SAIF_CTRL_SFTRST,
@@ -257,13 +257,13 @@ int mxs_saif_get_mclk(unsigned int saif_id, unsigned int mclk,
 	master_saif = mxs_saif_get_master(saif);
 	if (saif != master_saif) {
 		dev_err(saif->dev, "can not get mclk from a non-master saif\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stat = __raw_readl(saif->base + SAIF_STAT);
 	if (stat & BM_SAIF_STAT_BUSY) {
 		dev_err(saif->dev, "error: busy\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	saif->mclk_in_use = 1;
@@ -296,7 +296,7 @@ static int mxs_saif_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	stat = __raw_readl(saif->base + SAIF_STAT);
 	if (stat & BM_SAIF_STAT_BUSY) {
 		dev_err(cpu_dai->dev, "error: busy\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* If SAIF1 is configured as slave, the clk gate needs to be cleared
@@ -328,7 +328,7 @@ static int mxs_saif_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		scr &= ~BM_SAIF_CTRL_JUSTIFY;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock inversion */
@@ -368,7 +368,7 @@ static int mxs_saif_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		__raw_writel(scr | scr0, saif->base + SAIF_CTRL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -422,18 +422,18 @@ static int mxs_saif_hw_params(struct snd_pcm_substream *substream,
 
 	master_saif = mxs_saif_get_master(saif);
 	if (!master_saif)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* mclk should already be set */
 	if (!saif->mclk && saif->mclk_in_use) {
 		dev_err(cpu_dai->dev, "set mclk first\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stat = __raw_readl(saif->base + SAIF_STAT);
 	if (!saif->mclk_in_use && (stat & BM_SAIF_STAT_BUSY)) {
 		dev_err(cpu_dai->dev, "error: busy\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/*
@@ -483,7 +483,7 @@ static int mxs_saif_hw_params(struct snd_pcm_substream *substream,
 		scr |= BM_SAIF_CTRL_BITCLK_48XFS_ENABLE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Tx/Rx config */
@@ -521,7 +521,7 @@ static int mxs_saif_trigger(struct snd_pcm_substream *substream, int cmd,
 
 	master_saif = mxs_saif_get_master(saif);
 	if (!master_saif)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -621,7 +621,7 @@ static int mxs_saif_trigger(struct snd_pcm_substream *substream, int cmd,
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -748,7 +748,7 @@ static int mxs_saif_probe(struct platform_device *pdev)
 
 	if (saif->id >= ARRAY_SIZE(mxs_saif)) {
 		dev_err(&pdev->dev, "get wrong saif id\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -768,7 +768,7 @@ static int mxs_saif_probe(struct platform_device *pdev)
 
 		if (saif->master_id >= ARRAY_SIZE(mxs_saif)) {
 			dev_err(&pdev->dev, "get wrong master id\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

@@ -232,7 +232,7 @@ static int bpf_struct_ops_map_get_next_key(struct bpf_map *map, void *key,
 					   void *next_key)
 {
 	if (key && *(u32 *)key == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*(u32 *)next_key = 0;
 	return 0;
@@ -246,7 +246,7 @@ int bpf_struct_ops_map_sys_lookup_elem(struct bpf_map *map, void *key,
 	enum bpf_struct_ops_state state;
 
 	if (unlikely(*(u32 *)key != 0))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kvalue = &st_map->kvalue;
 	/* Pair with smp_store_release() during map_update */
@@ -269,7 +269,7 @@ int bpf_struct_ops_map_sys_lookup_elem(struct bpf_map *map, void *key,
 
 static void *bpf_struct_ops_map_lookup_elem(struct bpf_map *map, void *key)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static void bpf_struct_ops_map_put_progs(struct bpf_struct_ops_map *st_map)
@@ -295,7 +295,7 @@ static int check_zero_holes(const struct btf_type *t, void *data)
 		moff = btf_member_bit_offset(t, member) / 8;
 		if (moff > prev_mend &&
 		    memchr_inv(data + prev_mend, 0, moff - prev_mend))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		mtype = btf_type_by_id(btf_vmlinux, member->type);
 		mtype = btf_resolve_size(btf_vmlinux, mtype, &msize,
@@ -307,7 +307,7 @@ static int check_zero_holes(const struct btf_type *t, void *data)
 
 	if (t->size > prev_mend &&
 	    memchr_inv(data + prev_mend, 0, t->size - prev_mend))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -327,10 +327,10 @@ static int bpf_struct_ops_map_update_elem(struct bpf_map *map, void *key,
 	u32 i;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (*(u32 *)key != 0)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	err = check_zero_holes(st_ops->value_type, value);
 	if (err)
@@ -342,7 +342,7 @@ static int bpf_struct_ops_map_update_elem(struct bpf_map *map, void *key,
 		return err;
 
 	if (uvalue->state || refcount_read(&uvalue->refcnt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tprogs = kcalloc(BPF_TRAMP_MAX, sizeof(*tprogs), GFP_KERNEL);
 	if (!tprogs)
@@ -354,7 +354,7 @@ static int bpf_struct_ops_map_update_elem(struct bpf_map *map, void *key,
 	mutex_lock(&st_map->lock);
 
 	if (kvalue->state != BPF_STRUCT_OPS_STATE_INIT) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto unlock;
 	}
 
@@ -404,7 +404,7 @@ static int bpf_struct_ops_map_update_elem(struct bpf_map *map, void *key,
 			}
 
 			if (memchr_inv(udata + moff, 0, msize)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto reset_unlock;
 			}
 
@@ -426,7 +426,7 @@ static int bpf_struct_ops_map_update_elem(struct bpf_map *map, void *key,
 		if (prog->type != BPF_PROG_TYPE_STRUCT_OPS ||
 		    prog->aux->attach_btf_id != st_ops->type_id ||
 		    prog->expected_attach_type != i) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto reset_unlock;
 		}
 
@@ -497,13 +497,13 @@ static int bpf_struct_ops_map_delete_elem(struct bpf_map *map, void *key)
 			bpf_map_put(map);
 		return 0;
 	case BPF_STRUCT_OPS_STATE_TOBEFREE:
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 	case BPF_STRUCT_OPS_STATE_INIT:
-		return -ENOENT;
+		return -ERR(ENOENT);
 	default:
 		WARN_ON_ONCE(1);
 		/* Should never happen.  Treat it as not found. */
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 }
 
@@ -543,7 +543,7 @@ static int bpf_struct_ops_map_alloc_check(union bpf_attr *attr)
 {
 	if (attr->key_size != sizeof(unsigned int) || attr->max_entries != 1 ||
 	    attr->map_flags || !attr->btf_vmlinux_value_type_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -558,15 +558,15 @@ static struct bpf_map *bpf_struct_ops_map_alloc(union bpf_attr *attr)
 	int err;
 
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	st_ops = bpf_struct_ops_find_value(attr->btf_vmlinux_value_type_id);
 	if (!st_ops)
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 
 	vt = st_ops->value_type;
 	if (attr->value_size != vt->size)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	t = st_ops->type;
 

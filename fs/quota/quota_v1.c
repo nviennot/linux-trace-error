@@ -60,7 +60,7 @@ static int v1_read_dqblk(struct dquot *dquot)
 	struct quota_info *dqopt = sb_dqopt(dquot->dq_sb);
 
 	if (!dqopt->files[type])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set structure to 0s in case read fails/is after end of file */
 	memset(&dqblk, 0, sizeof(struct v1_disk_dqblk));
@@ -101,7 +101,7 @@ static int v1_commit_dqblk(struct dquot *dquot)
 	if (ret != sizeof(struct v1_disk_dqblk)) {
 		quota_error(dquot->dq_sb, "dquota write failed");
 		if (ret >= 0)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto out;
 	}
 	ret = 0;
@@ -167,7 +167,7 @@ static int v1_read_file_info(struct super_block *sb, int type)
 				sizeof(struct v1_disk_dqblk), v1_dqoff(0));
 	if (ret != sizeof(struct v1_disk_dqblk)) {
 		if (ret >= 0)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto out;
 	}
 	ret = 0;
@@ -194,7 +194,7 @@ static int v1_write_file_info(struct super_block *sb, int type)
 				sizeof(struct v1_disk_dqblk), v1_dqoff(0));
 	if (ret != sizeof(struct v1_disk_dqblk)) {
 		if (ret >= 0)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto out;
 	}
 	spin_lock(&dq_data_lock);
@@ -207,7 +207,7 @@ static int v1_write_file_info(struct super_block *sb, int type)
 	if (ret == sizeof(struct v1_disk_dqblk))
 		ret = 0;
 	else if (ret > 0)
-		ret = -EIO;
+		ret = -ERR(EIO);
 out:
 	up_write(&dqopt->dqio_sem);
 	return ret;

@@ -75,7 +75,7 @@ static ssize_t write_blk(struct qtree_mem_dqinfo *info, uint blk, char *buf)
 	if (ret != info->dqi_usable_bs) {
 		quota_error(sb, "dquota write failed");
 		if (ret >= 0)
-			ret = -EIO;
+			ret = -ERR(EIO);
 	}
 	return ret;
 }
@@ -274,7 +274,7 @@ static uint find_free_dqentry(struct qtree_mem_dqinfo *info,
 #ifdef __QUOTA_QT_PARANOIA
 	if (i == qtree_dqstr_in_blk(info)) {
 		quota_error(dquot->dq_sb, "Data block full but it shouldn't");
-		*err = -EIO;
+		*err = -ERR(EIO);
 		goto out_buf;
 	}
 #endif
@@ -331,7 +331,7 @@ static int do_insert_tree(struct qtree_mem_dqinfo *info, struct dquot *dquot,
 				    "quota entry (block %u)",
 				    le32_to_cpu(ref[get_index(info,
 						dquot->dq_id, depth)]));
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out_buf;
 		}
 #endif
@@ -360,7 +360,7 @@ static inline int dq_insert_tree(struct qtree_mem_dqinfo *info,
 #ifdef __QUOTA_QT_PARANOIA
 	if (info->dqi_blocks <= QT_TREEOFF) {
 		quota_error(dquot->dq_sb, "Quota tree root isn't allocated!");
-		return -EIO;
+		return -ERR(EIO);
 	}
 #endif
 	return do_insert_tree(info, dquot, &tmp, 0);
@@ -398,7 +398,7 @@ int qtree_write_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
 	if (ret != info->dqi_entry_size) {
 		quota_error(sb, "dquota write failed");
 		if (ret >= 0)
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 	} else {
 		ret = 0;
 	}
@@ -556,7 +556,7 @@ static loff_t find_block_dqentry(struct qtree_mem_dqinfo *info,
 		quota_error(dquot->dq_sb,
 			    "Quota for id %u referenced but not present",
 			    from_kqid(&init_user_ns, dquot->dq_id));
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_buf;
 	} else {
 		ret = (blk << info->dqi_blocksize_bits) + sizeof(struct
@@ -615,7 +615,7 @@ int qtree_read_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
 	/* Invalidated quota? */
 	if (!sb_dqopt(dquot->dq_sb)->files[type]) {
 		quota_error(sb, "Quota invalidated while reading!");
-		return -EIO;
+		return -ERR(EIO);
 	}
 #endif
 	/* Do we know offset of the dquot entry in the quota file? */
@@ -642,7 +642,7 @@ int qtree_read_dquot(struct qtree_mem_dqinfo *info, struct dquot *dquot)
 				   dquot->dq_off);
 	if (ret != info->dqi_entry_size) {
 		if (ret >= 0)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		quota_error(sb, "Error while reading quota structure for id %u",
 			    from_kqid(&init_user_ns, dquot->dq_id));
 		set_bit(DQ_FAKE_B, &dquot->dq_flags);
@@ -712,7 +712,7 @@ static int find_next_id(struct qtree_mem_dqinfo *info, qid_t *id,
 			break;
 	}
 	if (i == epb) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_buf;
 	}
 out_buf:

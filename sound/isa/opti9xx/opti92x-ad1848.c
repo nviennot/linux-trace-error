@@ -225,7 +225,7 @@ static int snd_opti9xx_init(struct snd_opti9xx *chip,
 
 	default:
 		snd_printk(KERN_ERR "chip %d not supported\n", hardware);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -405,7 +405,7 @@ static int snd_opti9xx_configure(struct snd_opti9xx *chip,
 
 	default:
 		snd_printk(KERN_ERR "chip %d not supported\n", chip->hardware);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* PnP resource says it decodes only 10 bits of address */
@@ -474,7 +474,7 @@ __skip_base:
 #if defined(CS4231) || defined(OPTi93X)
 	if (dma1 == dma2) {
 		snd_printk(KERN_ERR "don't want to share dmas\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	switch (dma2) {
@@ -593,7 +593,7 @@ static int snd_opti93x_mixer(struct snd_wss *chip)
 	int err;
 
 	if (snd_BUG_ON(!chip || !chip->pcm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 
@@ -668,7 +668,7 @@ static int snd_opti9xx_read_check(struct snd_opti9xx *chip)
 	chip->res_mc_base = request_region(chip->mc_base, chip->mc_base_size,
 					   "OPTi9xx MC");
 	if (chip->res_mc_base == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 #ifndef OPTi93X
 	value = snd_opti9xx_read(chip, OPTi9XX_MC_REG(1));
 	if (value != 0xff && value != inb(chip->mc_base + OPTi9XX_MC_REG(1)))
@@ -678,7 +678,7 @@ static int snd_opti9xx_read_check(struct snd_opti9xx *chip)
 	chip->res_mc_indir = request_region(chip->mc_indir_index, 2,
 					    "OPTi93x MC");
 	if (chip->res_mc_indir == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	spin_lock_irqsave(&chip->lock, flags);
 	outb(chip->password, chip->mc_base + chip->pwd_reg);
@@ -696,7 +696,7 @@ static int snd_opti9xx_read_check(struct snd_opti9xx *chip)
 	release_and_free_resource(chip->res_mc_base);
 	chip->res_mc_base = NULL;
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_card_opti9xx_detect(struct snd_card *card,
@@ -720,7 +720,7 @@ static int snd_card_opti9xx_detect(struct snd_card *card,
 		chip->mc_indir_index = 0;
 #endif
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #ifdef CONFIG_PNP
@@ -737,7 +737,7 @@ static int snd_card_opti9xx_pnp(struct snd_opti9xx *chip,
 
 	pdev = pnp_request_card_device(card, pid->devs[0].id, NULL);
 	if (pdev == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = pnp_activate_dev(pdev);
 	if (err < 0) {
@@ -754,7 +754,7 @@ static int snd_card_opti9xx_pnp(struct snd_opti9xx *chip,
 #else
 	devmc = pnp_request_card_device(card, pid->devs[2].id, NULL);
 	if (devmc == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = pnp_activate_dev(devmc);
 	if (err < 0) {
@@ -829,7 +829,7 @@ static int snd_opti9xx_probe(struct snd_card *card)
 		port = snd_legacy_find_free_ioport(possible_ports, 4);
 		if (port < 0) {
 			snd_printk(KERN_ERR "unable to find a free WSS port\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	error = snd_opti9xx_configure(chip, port, irq, dma1, xdma2,
@@ -976,32 +976,32 @@ static int snd_opti9xx_isa_probe(struct device *devptr,
 	if (mpu_port == SNDRV_AUTO_PORT) {
 		if ((mpu_port = snd_legacy_find_free_ioport(possible_mpu_ports, 2)) < 0) {
 			snd_printk(KERN_ERR "unable to find a free MPU401 port\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (irq == SNDRV_AUTO_IRQ) {
 		if ((irq = snd_legacy_find_free_irq(possible_irqs)) < 0) {
 			snd_printk(KERN_ERR "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (mpu_irq == SNDRV_AUTO_IRQ) {
 		if ((mpu_irq = snd_legacy_find_free_irq(possible_mpu_irqs)) < 0) {
 			snd_printk(KERN_ERR "unable to find a free MPU401 IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1 == SNDRV_AUTO_DMA) {
 		if ((dma1 = snd_legacy_find_free_dma(possible_dma1s)) < 0) {
 			snd_printk(KERN_ERR "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 #if defined(CS4231) || defined(OPTi93X)
 	if (dma2 == SNDRV_AUTO_DMA) {
 		if ((dma2 = snd_legacy_find_free_dma(possible_dma2s[dma1 % 4])) < 0) {
 			snd_printk(KERN_ERR "unable to find a free DMA2\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 #endif
@@ -1092,9 +1092,9 @@ static int snd_opti9xx_pnp_probe(struct pnp_card_link *pcard,
 	struct snd_opti9xx *chip;
 
 	if (snd_opti9xx_pnp_is_probed)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (! isapnp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	error = snd_opti9xx_card_new(&pcard->card->dev, &card);
 	if (error < 0)
 		return error;
@@ -1113,7 +1113,7 @@ static int snd_opti9xx_pnp_probe(struct pnp_card_link *pcard,
 		break;
 	default:
 		snd_card_free(card);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if ((error = snd_opti9xx_init(chip, hw))) {

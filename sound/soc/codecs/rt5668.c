@@ -824,7 +824,7 @@ int rt5668_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (filter_mask & RT5668_DA_STEREO1_FILTER) {
@@ -1171,7 +1171,7 @@ static int set_dmic_clk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 	struct rt5668_priv *rt5668 = snd_soc_component_get_drvdata(component);
-	int idx = -EINVAL;
+	int idx = -ERR(EINVAL);
 	static const int div[] = {2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128};
 
 	idx = rt5668_div_sel(rt5668, 1500000, div, ARRAY_SIZE(div));
@@ -1188,7 +1188,7 @@ static int set_filter_clk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 	struct rt5668_priv *rt5668 = snd_soc_component_get_drvdata(component);
-	int ref, val, reg, idx = -EINVAL;
+	int ref, val, reg, idx = -ERR(EINVAL);
 	static const int div[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48};
 
 	val = snd_soc_component_read32(component, RT5668_GPIO_CTRL_1) &
@@ -1884,7 +1884,7 @@ static int rt5668_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5668_TDM_CTRL,
@@ -1904,7 +1904,7 @@ static int rt5668_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		val = RT5668_TDM_CL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5668_TDM_TCON_CTRL,
@@ -1929,7 +1929,7 @@ static int rt5668_hw_params(struct snd_pcm_substream *substream,
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "lrck is %dHz and pre_div is %d for iis %d\n",
@@ -1955,7 +1955,7 @@ static int rt5668_hw_params(struct snd_pcm_substream *substream,
 		len_2 |= RT5668_I2S2_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -1995,7 +1995,7 @@ static int rt5668_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2015,7 +2015,7 @@ static int rt5668_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5668->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2029,17 +2029,17 @@ static int rt5668_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		if (dai->id == RT5668_AIF1)
 			tdm_ctrl |= RT5668_TDM_S_LP_INV | RT5668_TDM_M_BP_INV;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case SND_SOC_DAIFMT_IB_IF:
 		if (dai->id == RT5668_AIF1)
 			tdm_ctrl |= RT5668_TDM_S_BP_INV | RT5668_TDM_S_LP_INV |
 				    RT5668_TDM_M_BP_INV | RT5668_TDM_M_LP_INV;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2058,7 +2058,7 @@ static int rt5668_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		tdm_ctrl |= RT5668_TDM_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2080,7 +2080,7 @@ static int rt5668_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2113,7 +2113,7 @@ static int rt5668_set_component_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5668_GLB_CLK,
 		RT5668_SCLK_SRC_MASK, reg_val);
@@ -2166,7 +2166,7 @@ static int rt5668_set_component_pll(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL Source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -2212,7 +2212,7 @@ static int rt5668_set_bclk_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 		break;
 	default:
 		dev_err(dai->dev, "Invalid bclk ratio %d\n", ratio);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2512,7 +2512,7 @@ static int rt5668_i2c_probe(struct i2c_client *i2c,
 	regmap_read(rt5668->regmap, RT5668_DEVICE_ID, &val);
 	if (val != DEVICE_ID) {
 		pr_err("Device with ID register %x is not rt5668\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	rt5668_reset(rt5668->regmap);

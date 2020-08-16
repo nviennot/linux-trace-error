@@ -856,7 +856,7 @@ static int gfs2_iomap_get(struct inode *inode, loff_t pos, loff_t length,
 	u8 height;
 
 	if (!length)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_read(&ip->i_rw_mutex);
 
@@ -875,7 +875,7 @@ static int gfs2_iomap_get(struct inode *inode, loff_t pos, loff_t length,
 		} else {
 			if (pos >= size) {
 				if (flags & IOMAP_REPORT) {
-					ret = -ENOENT;
+					ret = -ERR(ENOENT);
 					goto unlock;
 				} else {
 					iomap->offset = pos;
@@ -936,7 +936,7 @@ unlock:
 do_alloc:
 	if (flags & IOMAP_REPORT) {
 		if (pos >= size)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		else if (height == ip->i_height)
 			ret = gfs2_hole_size(inode, lblock, len, mp, iomap);
 		else
@@ -1179,7 +1179,7 @@ static int gfs2_iomap_begin(struct inode *inode, loff_t pos, loff_t length,
 			 * or if we've got a hole (see gfs2_file_direct_write).
 			 */
 			if (iomap->type != IOMAP_MAPPED)
-				ret = -ENOTBLK;
+				ret = -ERR(ENOTBLK);
 			goto out_unlock;
 		}
 		break;
@@ -1530,7 +1530,7 @@ more_rgrps:
 		} else {
 			rgd = gfs2_blk2rgrpd(sdp, bn, true);
 			if (unlikely(!rgd)) {
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto out;
 			}
 			ret = gfs2_glock_nq_init(rgd->rd_gl, LM_ST_EXCLUSIVE,
@@ -1876,7 +1876,7 @@ static int punch_hole(struct gfs2_inode *ip, u64 offset, u64 length)
 			if (gfs2_metatype_check(sdp, bh,
 						(mp_h ? GFS2_METATYPE_IN :
 							GFS2_METATYPE_DI))) {
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto out;
 			}
 

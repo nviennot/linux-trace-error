@@ -168,7 +168,7 @@ static int insert_entry(struct ctl_table_header *head, struct ctl_table *entry)
 			pr_err("sysctl duplicate entry: ");
 			sysctl_print_dir(head->parent);
 			pr_cont("/%s\n", entry->procname);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -220,12 +220,12 @@ static int insert_header(struct ctl_dir *dir, struct ctl_table_header *header)
 
 	/* Is this a permanently empty directory? */
 	if (is_empty_dir(&dir->header))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* Am I creating a permanently empty directory? */
 	if (header->ctl_table == sysctl_mount_point) {
 		if (!RB_EMPTY_ROOT(&dir->root))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		set_empty_dir(dir);
 	}
 
@@ -288,7 +288,7 @@ static void start_unregistering(struct ctl_table_header *p)
 		wait_for_completion(&wait);
 	} else {
 		/* anything non-NULL; we'll never dereference it */
-		p->unregistering = ERR_PTR(-EINVAL);
+		p->unregistering = ERR_PTR(-ERR(EINVAL));
 		spin_unlock(&sysctl_lock);
 	}
 	/*
@@ -309,7 +309,7 @@ static struct ctl_table_header *sysctl_head_grab(struct ctl_table_header *head)
 	BUG_ON(!head);
 	spin_lock(&sysctl_lock);
 	if (!use_table(head))
-		head = ERR_PTR(-ENOENT);
+		head = ERR_PTR(-ERR(ENOENT));
 	spin_unlock(&sysctl_lock);
 	return head;
 }
@@ -412,7 +412,7 @@ static int test_perm(int mode, int op)
 		mode >>= 3;
 	if ((op & ~mode & (MAY_READ|MAY_WRITE|MAY_EXEC)) == 0)
 		return 0;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 static int sysctl_perm(struct ctl_table_header *head, struct ctl_table *table, int op)
@@ -447,7 +447,7 @@ static struct inode *proc_sys_make_inode(struct super_block *sb,
 	if (unlikely(head->unregistering)) {
 		spin_unlock(&sysctl_lock);
 		iput(inode);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 	ei->sysctl = head;
 	ei->sysctl_entry = table;
@@ -504,7 +504,7 @@ static struct dentry *proc_sys_lookup(struct inode *dir, struct dentry *dentry,
 	const struct qstr *name = &dentry->d_name;
 	struct ctl_table *p;
 	struct inode *inode;
-	struct dentry *err = ERR_PTR(-ENOENT);
+	struct dentry *err = ERR_PTR(-ERR(ENOENT));
 	struct ctl_dir *ctl_dir;
 	int ret;
 
@@ -556,12 +556,12 @@ static ssize_t proc_sys_call_handler(struct file *filp, void __user *ubuf,
 	 * At this point we know that the sysctl was not unregistered
 	 * and won't be until we finish.
 	 */
-	error = -EPERM;
+	error = -ERR(EPERM);
 	if (sysctl_perm(head, table, write ? MAY_WRITE : MAY_READ))
 		goto out;
 
 	/* if that can happen at all, it should be -EINVAL, not -EISDIR */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!table->proc_handler)
 		goto out;
 
@@ -799,7 +799,7 @@ static int proc_sys_permission(struct inode *inode, int mask)
 
 	/* Executable files are not allowed under /proc/sys/ */
 	if ((mask & MAY_EXEC) && S_ISREG(inode->i_mode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	head = grab_header(inode);
 	if (IS_ERR(head))
@@ -807,7 +807,7 @@ static int proc_sys_permission(struct inode *inode, int mask)
 
 	table = PROC_I(inode)->sysctl_entry;
 	if (!table) /* global root - r-xr-xr-x */
-		error = mask & MAY_WRITE ? -EACCES : 0;
+		error = mask & MAY_WRITE ? -ERR(EACCES) : 0;
 	else /* Use the permissions on the sysctl table entry */
 		error = sysctl_perm(head, table, mask & ~MAY_NOT_BLOCK);
 
@@ -821,7 +821,7 @@ static int proc_sys_setattr(struct dentry *dentry, struct iattr *attr)
 	int error;
 
 	if (attr->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = setattr_prepare(dentry, attr);
 	if (error)
@@ -880,7 +880,7 @@ static const struct inode_operations proc_sys_dir_operations = {
 static int proc_sys_revalidate(struct dentry *dentry, unsigned int flags)
 {
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 	return !PROC_I(d_inode(dentry))->sysctl->unregistering;
 }
 
@@ -938,9 +938,9 @@ static struct ctl_dir *find_subdir(struct ctl_dir *dir,
 
 	entry = find_entry(&head, dir, name, namelen);
 	if (!entry)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	if (!S_ISDIR(entry->mode))
-		return ERR_PTR(-ENOTDIR);
+		return ERR_PTR(-ERR(ENOTDIR));
 	return container_of(head, struct ctl_dir, header);
 }
 
@@ -1066,7 +1066,7 @@ static int sysctl_follow_link(struct ctl_table_header **phead,
 		const char *procname = (*pentry)->procname;
 		head = NULL;
 		entry = find_entry(&head, dir, procname, strlen(procname));
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		if (entry && use_table(head)) {
 			unuse_table(*phead);
 			*phead = head;
@@ -1092,7 +1092,7 @@ static int sysctl_err(const char *path, struct ctl_table *table, char *fmt, ...)
 	       path, table->procname, &vaf);
 
 	va_end(args);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int sysctl_check_table_array(const char *path, struct ctl_table *table)
@@ -1469,7 +1469,7 @@ static int register_leaf_sysctl_tables(const char *path, char *pos,
 		if (!entry->child)
 			continue;
 
-		err = -ENAMETOOLONG;
+		err = -ERR(ENAMETOOLONG);
 		child_pos = append_path(path, pos, entry->procname);
 		if (!child_pos)
 			goto out;

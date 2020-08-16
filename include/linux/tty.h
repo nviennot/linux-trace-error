@@ -439,11 +439,11 @@ static inline int __init tty_init(void)
 static inline const char *tty_name(const struct tty_struct *tty)
 { return "(none)"; }
 static inline struct tty_struct *tty_kopen(dev_t device)
-{ return ERR_PTR(-ENODEV); }
+{ return ERR_PTR(-ERR(ENODEV)); }
 static inline void tty_kclose(struct tty_struct *tty)
 { }
 static inline int tty_dev_name_to_number(const char *name, dev_t *number)
-{ return -ENOTSUPP; }
+{ return -ERR(ENOTSUPP); }
 #endif
 
 extern struct ktermios tty_std_termios;

@@ -45,7 +45,7 @@ ssize_t v9fs_fid_xattr_get(struct p9_fid *fid, const char *name,
 		if (!buffer_size) /* request to get the attr_size */
 			retval = attr_size;
 		else
-			retval = -ERANGE;
+			retval = -ERR(ERANGE);
 	} else {
 		iov_iter_truncate(&to, attr_size);
 		retval = p9_client_read(attr_fid, 0, &to, &err);

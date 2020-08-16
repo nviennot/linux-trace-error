@@ -185,14 +185,14 @@ static int digital_skb_pull_dep_sod(struct nfc_digital_dev *ddev,
 	u8 size;
 
 	if (skb->len < 2)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (ddev->curr_rf_tech == NFC_DIGITAL_RF_TECH_106A)
 		skb_pull(skb, sizeof(u8));
 
 	size = skb->data[0];
 	if (size != skb->len)
-		return -EIO;
+		return -ERR(EIO);
 
 	skb_pull(skb, sizeof(u8));
 
@@ -325,7 +325,7 @@ static void digital_in_recv_psl_res(struct nfc_digital_dev *ddev, void *arg,
 	if ((resp->len != sizeof(*psl_res)) ||
 	    (psl_res->dir != DIGITAL_NFC_DEP_FRAME_DIR_IN) ||
 	    (psl_res->cmd != DIGITAL_CMD_PSL_RES)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -427,7 +427,7 @@ static void digital_in_recv_atr_res(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len < sizeof(struct digital_atr_res)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -444,7 +444,7 @@ static void digital_in_recv_atr_res(struct nfc_digital_dev *ddev, void *arg,
 	ddev->remote_payload_max = digital_payload_bits_to_size(payload_bits);
 
 	if (!ddev->remote_payload_max) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -485,7 +485,7 @@ int digital_in_send_atr_req(struct nfc_digital_dev *ddev,
 
 	if (size > DIGITAL_ATR_REQ_MAX_SIZE) {
 		PROTOCOL_ERR("14.6.1.1");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	skb = digital_skb_alloc(ddev, size);
@@ -674,7 +674,7 @@ static int digital_in_send_saved_skb(struct nfc_digital_dev *ddev,
 	int rc;
 
 	if (!ddev->saved_skb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_get(ddev->saved_skb);
 
@@ -752,7 +752,7 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 	ddev->nack_count = 0;
 
 	if (resp->len > ddev->local_payload_max) {
-		rc = -EMSGSIZE;
+		rc = -ERR(EMSGSIZE);
 		goto exit;
 	}
 
@@ -761,7 +761,7 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len < size || dep_res->dir != DIGITAL_NFC_DEP_FRAME_DIR_IN ||
 	    dep_res->cmd != DIGITAL_CMD_DEP_RES) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto error;
 	}
 
@@ -769,17 +769,17 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 
 	if (DIGITAL_NFC_DEP_DID_BIT_SET(pfb)) {
 		PROTOCOL_ERR("14.8.2.1");
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto error;
 	}
 
 	if (DIGITAL_NFC_DEP_NAD_BIT_SET(pfb)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
 	if (size > resp->len) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto error;
 	}
 
@@ -789,7 +789,7 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 	case DIGITAL_NFC_DEP_PFB_I_PDU:
 		if (DIGITAL_NFC_DEP_PFB_PNI(pfb) != ddev->curr_nfc_dep_pni) {
 			PROTOCOL_ERR("14.12.3.3");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto error;
 		}
 
@@ -821,13 +821,13 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 	case DIGITAL_NFC_DEP_PFB_ACK_NACK_PDU:
 		if (DIGITAL_NFC_DEP_NACK_BIT_SET(pfb)) {
 			PROTOCOL_ERR("14.12.4.5");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 
 		if (DIGITAL_NFC_DEP_PFB_PNI(pfb) != ddev->curr_nfc_dep_pni) {
 			PROTOCOL_ERR("14.12.3.3");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 
@@ -836,7 +836,7 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 
 		if (!ddev->chaining_skb) {
 			PROTOCOL_ERR("14.12.4.3");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 
@@ -865,14 +865,14 @@ static void digital_in_recv_dep_res(struct nfc_digital_dev *ddev, void *arg,
 
 		if (ddev->atn_count || ddev->nack_count) {
 			PROTOCOL_ERR("14.12.4.4");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto error;
 		}
 
 		rtox = DIGITAL_NFC_DEP_RTOX_VALUE(resp->data[0]);
 		if (!rtox || rtox > DIGITAL_NFC_DEP_RTOX_MAX) {
 			PROTOCOL_ERR("14.8.4.1");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto error;
 		}
 
@@ -1065,7 +1065,7 @@ static int digital_tg_send_saved_skb(struct nfc_digital_dev *ddev)
 	int rc;
 
 	if (!ddev->saved_skb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_get(ddev->saved_skb);
 
@@ -1104,7 +1104,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len > ddev->local_payload_max) {
-		rc = -EMSGSIZE;
+		rc = -ERR(EMSGSIZE);
 		goto exit;
 	}
 
@@ -1113,7 +1113,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 
 	if (resp->len < size || dep_req->dir != DIGITAL_NFC_DEP_FRAME_DIR_OUT ||
 	    dep_req->cmd != DIGITAL_CMD_DEP_REQ) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -1123,21 +1123,21 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 		if (ddev->did && (ddev->did == resp->data[3])) {
 			size++;
 		} else {
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 	} else if (ddev->did) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
 	if (DIGITAL_NFC_DEP_NAD_BIT_SET(pfb)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
 	if (size > resp->len) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -1177,7 +1177,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 
 		if (DIGITAL_NFC_DEP_PFB_PNI(pfb) != ddev->curr_nfc_dep_pni) {
 			PROTOCOL_ERR("14.12.3.4");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 
@@ -1205,7 +1205,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 		if (DIGITAL_NFC_DEP_NACK_BIT_SET(pfb)) { /* NACK */
 			if (DIGITAL_NFC_DEP_PFB_PNI(pfb + 1) !=
 						ddev->curr_nfc_dep_pni) {
-				rc = -EIO;
+				rc = -ERR(EIO);
 				goto exit;
 			}
 
@@ -1248,7 +1248,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 		if (!ddev->chaining_skb ||
 		    DIGITAL_NFC_DEP_PFB_PNI(pfb) !=
 					ddev->curr_nfc_dep_pni) {
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto exit;
 		}
 
@@ -1262,7 +1262,7 @@ static void digital_tg_recv_dep_req(struct nfc_digital_dev *ddev, void *arg,
 		goto free_resp;
 	case DIGITAL_NFC_DEP_PFB_SUPERVISOR_PDU:
 		if (DIGITAL_NFC_DEP_PFB_IS_TIMEOUT(pfb)) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto exit;
 		}
 
@@ -1427,7 +1427,7 @@ static void digital_tg_recv_psl_req(struct nfc_digital_dev *ddev, void *arg,
 	if (resp->len != sizeof(struct digital_psl_req) ||
 	    psl_req->dir != DIGITAL_NFC_DEP_FRAME_DIR_OUT ||
 	    psl_req->cmd != DIGITAL_CMD_PSL_REQ) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -1452,7 +1452,7 @@ static void digital_tg_recv_psl_req(struct nfc_digital_dev *ddev, void *arg,
 
 	if (!payload_size || (payload_size > min(ddev->local_payload_max,
 						 ddev->remote_payload_max))) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -1554,7 +1554,7 @@ void digital_tg_recv_atr_req(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (!resp->len) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -1567,7 +1567,7 @@ void digital_tg_recv_atr_req(struct nfc_digital_dev *ddev, void *arg,
 	}
 
 	if (resp->len < min_size) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto exit;
 	}
 
@@ -1590,7 +1590,7 @@ void digital_tg_recv_atr_req(struct nfc_digital_dev *ddev, void *arg,
 	if (atr_req->dir != DIGITAL_NFC_DEP_FRAME_DIR_OUT ||
 	    atr_req->cmd != DIGITAL_CMD_ATR_REQ ||
 	    atr_req->did > DIGITAL_DID_MAX) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -1598,7 +1598,7 @@ void digital_tg_recv_atr_req(struct nfc_digital_dev *ddev, void *arg,
 	ddev->remote_payload_max = digital_payload_bits_to_size(payload_bits);
 
 	if (!ddev->remote_payload_max) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto exit;
 	}
 

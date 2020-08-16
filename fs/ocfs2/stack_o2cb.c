@@ -262,7 +262,7 @@ static int o2cb_cluster_check(void)
 	node_num = o2nm_this_node();
 	if (node_num == O2NM_MAX_NODES) {
 		printk(KERN_ERR "o2cb: This node has not been configured.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -280,7 +280,7 @@ static int o2cb_cluster_check(void)
 			printk(KERN_ERR "o2cb: %s heartbeat has not been "
 			       "started.\n", (o2hb_global_heartbeat_active() ?
 					      "Global" : "Local"));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		o2net_fill_node_map(netmap, sizeof(netmap));
 		/* Force set the current node to allow easy compare */
@@ -300,7 +300,7 @@ static int o2cb_cluster_check(void)
 	}
 	printk(".\n");
 
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 /*
@@ -397,10 +397,10 @@ static int o2cb_cluster_this_node(struct ocfs2_cluster_connection *conn,
 
 	node_num = o2nm_this_node();
 	if (node_num == O2NM_INVALID_NODE_NUM)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (node_num >= O2NM_MAX_NODES)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	*node = node_num;
 	return 0;

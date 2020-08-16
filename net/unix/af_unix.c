@@ -231,9 +231,9 @@ static int unix_mkname(struct sockaddr_un *sunaddr, int len, unsigned int *hashp
 	*hashp = 0;
 
 	if (len <= sizeof(short) || len > sizeof(*sunaddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!sunaddr || sunaddr->sun_family != AF_UNIX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sunaddr->sun_path[0]) {
 		/*
 		 * This may look like an off by one error but it is a bit more
@@ -483,7 +483,7 @@ static void unix_dgram_disconnected(struct sock *sk, struct sock *other)
 		 * when peer was not connected to us.
 		 */
 		if (!sock_flag(other, SOCK_DEAD) && unix_peer(other) == sk) {
-			other->sk_err = ECONNRESET;
+			other->sk_err = ERR(ECONNRESET);
 			other->sk_error_report(other);
 		}
 	}
@@ -547,7 +547,7 @@ static void unix_release_sock(struct sock *sk, int embrion)
 			/* No more writes */
 			skpair->sk_shutdown = SHUTDOWN_MASK;
 			if (!skb_queue_empty(&sk->sk_receive_queue) || embrion)
-				skpair->sk_err = ECONNRESET;
+				skpair->sk_err = ERR(ECONNRESET);
 			unix_state_unlock(skpair);
 			skpair->sk_state_change(skpair);
 			sk_wake_async(skpair, SOCK_WAKE_WAITD, POLL_HUP);
@@ -615,10 +615,10 @@ static int unix_listen(struct socket *sock, int backlog)
 	struct unix_sock *u = unix_sk(sk);
 	struct pid *old_pid = NULL;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
 		goto out;	/* Only stream/seqpacket sockets accept */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!u->addr)
 		goto out;	/* No listens on an unbound socket */
 	unix_state_lock(sk);
@@ -674,7 +674,7 @@ static int unix_set_peek_off(struct sock *sk, int val)
 	struct unix_sock *u = unix_sk(sk);
 
 	if (mutex_lock_interruptible(&u->iolock))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	sk->sk_peek_off = val;
 	mutex_unlock(&u->iolock);
@@ -829,7 +829,7 @@ static int unix_create(struct net *net, struct socket *sock, int protocol,
 		       int kern)
 {
 	if (protocol && protocol != PF_UNIX)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	sock->state = SS_UNCONNECTED;
 
@@ -851,7 +851,7 @@ static int unix_create(struct net *net, struct socket *sock, int protocol,
 		sock->ops = &unix_seqpacket_ops;
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	return unix_create1(net, sock, kern) ? 0 : -ENOMEM;
@@ -913,7 +913,7 @@ retry:
 		cond_resched();
 		/* Give up if all names seems to be in use. */
 		if (retries++ == 0xFFFFF) {
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			kfree(addr);
 			goto out;
 		}
@@ -949,7 +949,7 @@ static struct sock *unix_find_other(struct net *net,
 		if (err)
 			goto put_fail;
 
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 		if (!S_ISSOCK(inode->i_mode))
 			goto put_fail;
 		u = unix_find_socket_byinode(inode);
@@ -961,13 +961,13 @@ static struct sock *unix_find_other(struct net *net,
 
 		path_put(&path);
 
-		err = -EPROTOTYPE;
+		err = -ERR(EPROTOTYPE);
 		if (u->sk_type != type) {
 			sock_put(u);
 			goto fail;
 		}
 	} else {
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 		u = unix_find_socket_byname(net, sunname, len, type, hash);
 		if (u) {
 			struct dentry *dentry;
@@ -1028,7 +1028,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	struct hlist_head *list;
 	struct path path = { };
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (addr_len < offsetofend(struct sockaddr_un, sun_family) ||
 	    sunaddr->sun_family != AF_UNIX)
 		goto out;
@@ -1049,7 +1049,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		err = unix_mknod(sun_path, mode, &path);
 		if (err) {
 			if (err == -EEXIST)
-				err = -EADDRINUSE;
+				err = -ERR(EADDRINUSE);
 			goto out;
 		}
 	}
@@ -1058,7 +1058,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	if (err)
 		goto out_put;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (u->addr)
 		goto out_up;
 
@@ -1080,7 +1080,7 @@ static int unix_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		list = &unix_socket_table[hash];
 	} else {
 		spin_lock(&unix_table_lock);
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		if (__unix_find_socket_byname(net, sunaddr, addr_len,
 					      sk->sk_type, hash)) {
 			unix_release_addr(addr);
@@ -1141,7 +1141,7 @@ static int unix_dgram_connect(struct socket *sock, struct sockaddr *addr,
 	unsigned int hash;
 	int err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (alen < offsetofend(struct sockaddr, sa_family))
 		goto out;
 
@@ -1169,7 +1169,7 @@ restart:
 			goto restart;
 		}
 
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!unix_may_send(sk, other))
 			goto out_unlock;
 
@@ -1292,14 +1292,14 @@ restart:
 		goto restart;
 	}
 
-	err = -ECONNREFUSED;
+	err = -ERR(ECONNREFUSED);
 	if (other->sk_state != TCP_LISTEN)
 		goto out_unlock;
 	if (other->sk_shutdown & RCV_SHUTDOWN)
 		goto out_unlock;
 
 	if (unix_recvq_full(other)) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		if (!timeo)
 			goto out_unlock;
 
@@ -1331,10 +1331,10 @@ restart:
 		break;
 	case TCP_ESTABLISHED:
 		/* Socket is already connected */
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out_unlock;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -1460,11 +1460,11 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags,
 	struct sk_buff *skb;
 	int err;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (sock->type != SOCK_STREAM && sock->type != SOCK_SEQPACKET)
 		goto out;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sk->sk_state != TCP_LISTEN)
 		goto out;
 
@@ -1476,7 +1476,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock, int flags,
 	if (!skb) {
 		/* This means receive shutdown. */
 		if (err == 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1507,7 +1507,7 @@ static int unix_getname(struct socket *sock, struct sockaddr *uaddr, int peer)
 	if (peer) {
 		sk = unix_peer_get(sk);
 
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		if (!sk)
 			goto out;
 		err = 0;
@@ -1642,7 +1642,7 @@ static int unix_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 	if (err < 0)
 		return err;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (msg->msg_flags&MSG_OOB)
 		goto out;
 
@@ -1653,7 +1653,7 @@ static int unix_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 		namelen = err;
 	} else {
 		sunaddr = NULL;
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		other = unix_peer_get(sk);
 		if (!other)
 			goto out;
@@ -1663,7 +1663,7 @@ static int unix_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 	    && (err = unix_autobind(sock)) != 0)
 		goto out;
 
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 	if (len > sk->sk_sndbuf - 32)
 		goto out;
 
@@ -1697,7 +1697,7 @@ static int unix_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 
 restart:
 	if (!other) {
-		err = -ECONNRESET;
+		err = -ERR(ECONNRESET);
 		if (sunaddr == NULL)
 			goto out_free;
 
@@ -1716,7 +1716,7 @@ restart:
 	sk_locked = 0;
 	unix_state_lock(other);
 restart_locked:
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (!unix_may_send(sk, other))
 		goto out_unlock;
 
@@ -1740,7 +1740,7 @@ restart_locked:
 
 			unix_dgram_disconnected(sk, other);
 			sock_put(other);
-			err = -ECONNREFUSED;
+			err = -ERR(ECONNREFUSED);
 		} else {
 			unix_state_unlock(sk);
 		}
@@ -1751,7 +1751,7 @@ restart_locked:
 		goto restart;
 	}
 
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 	if (other->sk_shutdown & RCV_SHUTDOWN)
 		goto out_unlock;
 
@@ -1785,7 +1785,7 @@ restart_locked:
 
 		if (unix_peer(sk) != other ||
 		    unix_dgram_peer_wake_me(sk, other)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			sk_locked = 1;
 			goto out_unlock;
 		}
@@ -1845,15 +1845,15 @@ static int unix_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 	if (err < 0)
 		return err;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (msg->msg_flags&MSG_OOB)
 		goto out_err;
 
 	if (msg->msg_namelen) {
-		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
+		err = sk->sk_state == TCP_ESTABLISHED ? -ERR(EISCONN) : -ERR(EOPNOTSUPP);
 		goto out_err;
 	} else {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		other = unix_peer(sk);
 		if (!other)
 			goto out_err;
@@ -1922,7 +1922,7 @@ pipe_err_free:
 pipe_err:
 	if (sent == 0 && !(msg->msg_flags&MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 out_err:
 	scm_destroy(&scm);
 	return sent ? : err;
@@ -1939,11 +1939,11 @@ static ssize_t unix_stream_sendpage(struct socket *socket, struct page *page,
 	struct sk_buff *skb, *newskb = NULL, *tail = NULL;
 
 	if (flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	other = unix_peer(sk);
 	if (!other || sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (false) {
 alloc_skb:
@@ -1960,12 +1960,12 @@ alloc_skb:
 	 */
 	err = mutex_lock_interruptible(&unix_sk(other)->iolock);
 	if (err) {
-		err = flags & MSG_DONTWAIT ? -EAGAIN : -ERESTARTSYS;
+		err = flags & MSG_DONTWAIT ? -ERR(EAGAIN) : -ERR(ERESTARTSYS);
 		goto err;
 	}
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN) {
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		send_sigpipe = true;
 		goto err_unlock;
 	}
@@ -1974,7 +1974,7 @@ alloc_skb:
 
 	if (sock_flag(other, SOCK_DEAD) ||
 	    other->sk_shutdown & RCV_SHUTDOWN) {
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		send_sigpipe = true;
 		goto err_state_unlock;
 	}
@@ -2055,7 +2055,7 @@ static int unix_seqpacket_sendmsg(struct socket *sock, struct msghdr *msg,
 		return err;
 
 	if (sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (msg->msg_namelen)
 		msg->msg_namelen = 0;
@@ -2069,7 +2069,7 @@ static int unix_seqpacket_recvmsg(struct socket *sock, struct msghdr *msg,
 	struct sock *sk = sock->sk;
 
 	if (sk->sk_state != TCP_ESTABLISHED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	return unix_dgram_recvmsg(sock, msg, size, flags);
 }
@@ -2095,7 +2095,7 @@ static int unix_dgram_recvmsg(struct socket *sock, struct msghdr *msg,
 	int skip;
 	int err;
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (flags&MSG_OOB)
 		goto out;
 
@@ -2269,12 +2269,12 @@ static int unix_stream_read_generic(struct unix_stream_read_state *state,
 	unsigned int last_len;
 
 	if (unlikely(sk->sk_state != TCP_ESTABLISHED)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (unlikely(flags & MSG_OOB)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -2298,7 +2298,7 @@ static int unix_stream_read_generic(struct unix_stream_read_state *state,
 redo:
 		unix_state_lock(sk);
 		if (sock_flag(sk, SOCK_DEAD)) {
-			err = -ECONNRESET;
+			err = -ERR(ECONNRESET);
 			goto unlock;
 		}
 		last = skb = skb_peek(&sk->sk_receive_queue);
@@ -2320,7 +2320,7 @@ again:
 
 			unix_state_unlock(sk);
 			if (!timeo) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				break;
 			}
 
@@ -2496,7 +2496,7 @@ static ssize_t unix_stream_splice_read(struct socket *sock,  loff_t *ppos,
 	};
 
 	if (unlikely(*ppos))
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	if (sock->file->f_flags & O_NONBLOCK ||
 	    flags & SPLICE_F_NONBLOCK)
@@ -2511,7 +2511,7 @@ static int unix_shutdown(struct socket *sock, int mode)
 	struct sock *other;
 
 	if (mode < SHUT_RD || mode > SHUT_RDWR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* This maps:
 	 * SHUT_RD   (0) -> RCV_SHUTDOWN  (1)
 	 * SHUT_WR   (1) -> SEND_SHUTDOWN (2)
@@ -2557,7 +2557,7 @@ long unix_inq_len(struct sock *sk)
 	long amount = 0;
 
 	if (sk->sk_state == TCP_LISTEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&sk->sk_receive_queue.lock);
 	if (sk->sk_type == SOCK_STREAM ||
@@ -2588,14 +2588,14 @@ static int unix_open_file(struct sock *sk)
 	int fd;
 
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!smp_load_acquire(&unix_sk(sk)->addr))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	path = unix_sk(sk)->path;
 	if (!path.dentry)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	path_get(&path);
 
@@ -2639,7 +2639,7 @@ static int unix_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		err = unix_open_file(sk);
 		break;
 	default:
-		err = -ENOIOCTLCMD;
+		err = -ERR(ENOIOCTLCMD);
 		break;
 	}
 	return err;

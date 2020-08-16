@@ -402,7 +402,7 @@ static int __init test_meminit_init(void)
 	else
 		pr_info("failures: %d out of %d\n", failures, num_tests);
 
-	return failures ? -EINVAL : 0;
+	return failures ? -ERR(EINVAL) : 0;
 }
 module_init(test_meminit_init);
 

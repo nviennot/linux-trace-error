@@ -88,7 +88,7 @@ static void *bpf_fd_probe_obj(u32 ufd, enum bpf_type *type)
 		return raw;
 	}
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static const struct inode_operations bpf_dir_iops;
@@ -109,12 +109,12 @@ static struct inode *bpf_get_inode(struct super_block *sb,
 	case S_IFLNK:
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	inode = new_inode(sb);
 	if (!inode)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	inode->i_ino = get_next_ino();
 	inode->i_atime = current_time(inode);
@@ -136,7 +136,7 @@ static int bpf_inode_type(const struct inode *inode, enum bpf_type *type)
 	else if (inode->i_op == &bpf_link_iops)
 		*type = BPF_TYPE_LINK;
 	else
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 }
@@ -317,7 +317,7 @@ static const struct file_operations bpffs_map_fops = {
 
 static int bpffs_obj_open(struct inode *inode, struct file *file)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static const struct file_operations bpffs_obj_fops = {
@@ -372,7 +372,7 @@ bpf_lookup(struct inode *dir, struct dentry *dentry, unsigned flags)
 	 * extensions.
 	 */
 	if (strchr(dentry->d_name.name, '.'))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	return simple_lookup(dir, dentry, flags);
 }
@@ -430,7 +430,7 @@ static int bpf_obj_do_pin(const char __user *pathname, void *raw,
 
 	dir = d_inode(path.dentry);
 	if (dir->i_op != &bpf_dir_iops) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -445,7 +445,7 @@ static int bpf_obj_do_pin(const char __user *pathname, void *raw,
 		ret = vfs_mkobj(dentry, mode, bpf_mklink, raw);
 		break;
 	default:
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	}
 out:
 	done_path_create(&path, dentry);
@@ -523,7 +523,7 @@ int bpf_obj_get_user(const char __user *pathname, int flags)
 	else if (type == BPF_TYPE_LINK)
 		ret = bpf_link_new_fd(raw);
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (ret < 0)
 		bpf_any_put(raw, type);
@@ -538,11 +538,11 @@ static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type
 		return ERR_PTR(ret);
 
 	if (inode->i_op == &bpf_map_iops)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (inode->i_op == &bpf_link_iops)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (inode->i_op != &bpf_prog_iops)
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	prog = inode->i_private;
 
@@ -551,7 +551,7 @@ static struct bpf_prog *__get_prog_inode(struct inode *inode, enum bpf_prog_type
 		return ERR_PTR(ret);
 
 	if (!bpf_prog_get_ok(prog, &type, false))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	bpf_prog_inc(prog);
 	return prog;
@@ -627,7 +627,7 @@ static int bpf_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		 * traditionally we've ignored all mount options, so we'd
 		 * better continue to ignore non-existing options for bpf.
 		 */
-		return opt == -ENOPARAM ? 0 : opt;
+		return opt == -ERR(ENOPARAM) ? 0 : opt;
 
 	switch (opt) {
 	case OPT_MODE:

@@ -66,7 +66,7 @@ struct dentry *btrfs_get_dentry(struct super_block *sb, u64 objectid,
 	struct inode *inode;
 
 	if (objectid < BTRFS_FIRST_FREE_OBJECTID)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	root = btrfs_get_fs_root(fs_info, root_objectid, true);
 	if (IS_ERR(root))
@@ -79,7 +79,7 @@ struct dentry *btrfs_get_dentry(struct super_block *sb, u64 objectid,
 
 	if (check_generation && generation != inode->i_generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return d_obtain_alias(inode);
@@ -164,7 +164,7 @@ struct dentry *btrfs_get_parent(struct dentry *child)
 
 	BUG_ON(ret == 0); /* Key with offset of -1 found */
 	if (path->slots[0] == 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto fail;
 	}
 
@@ -173,7 +173,7 @@ struct dentry *btrfs_get_parent(struct dentry *child)
 
 	btrfs_item_key_to_cpu(leaf, &found_key, path->slots[0]);
 	if (found_key.objectid != key.objectid || found_key.type != key.type) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto fail;
 	}
 
@@ -215,7 +215,7 @@ static int btrfs_get_name(struct dentry *parent, char *name,
 	u64 ino;
 
 	if (!S_ISDIR(dir->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ino = btrfs_ino(BTRFS_I(inode));
 
@@ -244,7 +244,7 @@ static int btrfs_get_name(struct dentry *parent, char *name,
 			path->slots[0]--;
 		} else {
 			btrfs_free_path(path);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	leaf = path->nodes[0];

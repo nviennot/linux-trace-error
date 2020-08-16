@@ -217,7 +217,7 @@ static int conn_info_min_age_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val == 0 || val > hdev->conn_info_max_age)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->conn_info_min_age = val;
@@ -245,7 +245,7 @@ static int conn_info_max_age_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val == 0 || val < hdev->conn_info_min_age)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->conn_info_max_age = val;
@@ -456,7 +456,7 @@ static int min_encrypt_key_size_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 1 || val > 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->min_enc_key_size = val;
@@ -499,7 +499,7 @@ static int idle_timeout_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val != 0 && (val < 500 || val > 3600000))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->idle_timeout = val;
@@ -527,7 +527,7 @@ static int sniff_min_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val == 0 || val % 2 || val > hdev->sniff_max_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->sniff_min_interval = val;
@@ -555,7 +555,7 @@ static int sniff_max_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val == 0 || val % 2 || val < hdev->sniff_min_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->sniff_max_interval = val;
@@ -636,7 +636,7 @@ static int rpa_timeout_set(void *data, u64 val)
 	 * 24 hours.
 	 */
 	if (val < 30 || val > (60 * 60 * 24))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->rpa_timeout = val;
@@ -707,14 +707,14 @@ static ssize_t force_static_address_write(struct file *file,
 	int err;
 
 	if (test_bit(HCI_UP, &hdev->flags))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = kstrtobool_from_user(user_buf, count, &enable);
 	if (err)
 		return err;
 
 	if (enable == hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	hci_dev_change_flag(hdev, HCI_FORCE_STATIC_ADDR);
 
@@ -799,7 +799,7 @@ static int conn_min_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x0006 || val > 0x0c80 || val > hdev->le_conn_max_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_conn_min_interval = val;
@@ -827,7 +827,7 @@ static int conn_max_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x0006 || val > 0x0c80 || val < hdev->le_conn_min_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_conn_max_interval = val;
@@ -855,7 +855,7 @@ static int conn_latency_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val > 0x01f3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_conn_latency = val;
@@ -883,7 +883,7 @@ static int supervision_timeout_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x000a || val > 0x0c80)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_supv_timeout = val;
@@ -911,7 +911,7 @@ static int adv_channel_map_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x01 || val > 0x07)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_adv_channel_map = val;
@@ -939,7 +939,7 @@ static int adv_min_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x0020 || val > 0x4000 || val > hdev->le_adv_max_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_adv_min_interval = val;
@@ -967,7 +967,7 @@ static int adv_max_interval_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x0020 || val > 0x4000 || val < hdev->le_adv_min_interval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_adv_max_interval = val;
@@ -995,7 +995,7 @@ static int min_key_size_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val > hdev->le_max_key_size || val < SMP_MIN_ENC_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_min_key_size = val;
@@ -1023,7 +1023,7 @@ static int max_key_size_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val > SMP_MAX_ENC_KEY_SIZE || val < hdev->le_min_key_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->le_max_key_size = val;
@@ -1051,7 +1051,7 @@ static int auth_payload_timeout_set(void *data, u64 val)
 	struct hci_dev *hdev = data;
 
 	if (val < 0x0001 || val > 0xffff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hci_dev_lock(hdev);
 	hdev->auth_payload_timeout = val;
@@ -1102,10 +1102,10 @@ static ssize_t force_no_mitm_write(struct file *file,
 
 	buf[buf_size] = '\0';
 	if (strtobool(buf, &enable))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (enable == hci_dev_test_flag(hdev, HCI_FORCE_NO_MITM))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	hci_dev_change_flag(hdev, HCI_FORCE_NO_MITM);
 

@@ -83,7 +83,7 @@ vxfs_get_page(struct address_space *mapping, u_long n)
 		 
 fail:
 	vxfs_put_page(pp);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /**
@@ -137,7 +137,7 @@ vxfs_getblk(struct inode *ip, sector_t iblock,
 		return 0;
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**

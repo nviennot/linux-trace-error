@@ -968,12 +968,12 @@ static int rt5616_hw_params(struct snd_pcm_substream *substream,
 
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	bclk_ms = frame_size > 32 ? 1 : 0;
 	rt5616->bclk[dai->id] = rt5616->lrck[dai->id] * (32 << bclk_ms);
@@ -996,7 +996,7 @@ static int rt5616_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5616_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask_clk = RT5616_I2S_PD1_MASK;
@@ -1023,7 +1023,7 @@ static int rt5616_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5616->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1033,7 +1033,7 @@ static int rt5616_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5616_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1049,7 +1049,7 @@ static int rt5616_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5616_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5616_I2S1_SDP,
@@ -1078,7 +1078,7 @@ static int rt5616_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5616_GLB_CLK,
@@ -1128,7 +1128,7 @@ static int rt5616_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -1364,7 +1364,7 @@ static int rt5616_i2c_probe(struct i2c_client *i2c,
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5616\n",
 			val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	regmap_write(rt5616->regmap, RT5616_RESET, 0);
 	regmap_update_bits(rt5616->regmap, RT5616_PWR_ANLG1,

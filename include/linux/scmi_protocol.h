@@ -298,7 +298,7 @@ static inline int
 scmi_driver_register(struct scmi_driver *driver, struct module *owner,
 		     const char *mod_name)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void scmi_driver_unregister(struct scmi_driver *driver) {}

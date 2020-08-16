@@ -489,7 +489,7 @@ int snd_ak4113_build(struct ak4113 *ak4113,
 	int err;
 
 	if (snd_BUG_ON(!cap_substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ak4113->substream = cap_substream;
 	for (idx = 0; idx < AK4113_CONTROLS; idx++) {
 		kctl = snd_ctl_new1(&snd_ak4113_iec958_controls[idx], ak4113);

@@ -157,7 +157,7 @@ static int max98927_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "DAI clock mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98927->regmap,
@@ -173,7 +173,7 @@ static int max98927_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "DAI invert mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98927->regmap,
@@ -199,7 +199,7 @@ static int max98927_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		use_pdm = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	max98927->iface = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
 
@@ -278,7 +278,7 @@ static int max98927_set_clock(struct max98927_priv *max98927,
 		}
 		if (i == ARRAY_SIZE(rate_table)) {
 			dev_err(component->dev, "failed to find proper clock rate.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		regmap_update_bits(max98927->regmap,
 			MAX98927_R0021_PCM_MASTER_MODE,
@@ -292,7 +292,7 @@ static int max98927_set_clock(struct max98927_priv *max98927,
 		if (!value) {
 			dev_err(component->dev, "format unsupported %d\n",
 				params_format(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(max98927->regmap,
@@ -396,7 +396,7 @@ static int max98927_dai_hw_params(struct snd_pcm_substream *substream,
 			sampling_rate);
 	return max98927_set_clock(max98927, params);
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98927_dai_tdm_slot(struct snd_soc_dai *dai,
@@ -415,7 +415,7 @@ static int max98927_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (bsel == 0) {
 		dev_err(component->dev, "BCLK %d not supported\n",
 			slots * slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98927->regmap,
@@ -437,7 +437,7 @@ static int max98927_dai_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(component->dev, "format unsupported %d\n",
 			slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98927->regmap,

@@ -41,7 +41,7 @@ static int nfs_symlink_filler(void *data, struct page *page)
 error:
 	SetPageError(page);
 	unlock_page(page);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static const char *nfs_get_link(struct dentry *dentry,
@@ -57,10 +57,10 @@ static const char *nfs_get_link(struct dentry *dentry,
 			return err;
 		page = find_get_page(inode->i_mapping, 0);
 		if (!page)
-			return ERR_PTR(-ECHILD);
+			return ERR_PTR(-ERR(ECHILD));
 		if (!PageUptodate(page)) {
 			put_page(page);
-			return ERR_PTR(-ECHILD);
+			return ERR_PTR(-ERR(ECHILD));
 		}
 	} else {
 		err = ERR_PTR(nfs_revalidate_mapping(inode, inode->i_mapping));

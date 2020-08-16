@@ -119,7 +119,7 @@ static int audit_tg_check(const struct xt_tgchk_param *par)
 	if (info->type > XT_AUDIT_TYPE_MAX) {
 		pr_info_ratelimited("Audit type out of range (valid range: 0..%hhu)\n",
 				    XT_AUDIT_TYPE_MAX);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	return 0;

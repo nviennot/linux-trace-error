@@ -649,7 +649,7 @@ static int rxrpc_wait_for_channel(struct rxrpc_call *call, gfp_t gfp)
 		DECLARE_WAITQUEUE(myself, current);
 
 		if (!gfpflags_allow_blocking(gfp)) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 
@@ -670,7 +670,7 @@ static int rxrpc_wait_for_channel(struct rxrpc_call *call, gfp_t gfp)
 			if ((call->interruptibility == RXRPC_INTERRUPTIBLE ||
 			     call->interruptibility == RXRPC_PREINTERRUPTIBLE) &&
 			    signal_pending(current)) {
-				ret = -ERESTARTSYS;
+				ret = -ERR(ERESTARTSYS);
 				break;
 			}
 			schedule();

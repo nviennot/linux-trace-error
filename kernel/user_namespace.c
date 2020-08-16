@@ -74,7 +74,7 @@ int create_user_ns(struct cred *new)
 	struct ucounts *ucounts;
 	int ret, i;
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	if (parent_ns->level > 32)
 		goto fail;
 
@@ -88,7 +88,7 @@ int create_user_ns(struct cred *new)
 	 * by verifing that the root directory is at the root of the
 	 * mount namespace which allows all files to be accessed.
 	 */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if (current_chrooted())
 		goto fail_dec;
 
@@ -96,7 +96,7 @@ int create_user_ns(struct cred *new)
 	 * or else we won't be able to reasonably tell userspace who
 	 * created a user_namespace.
 	 */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if (!kuid_has_mapping(parent_ns, owner) ||
 	    !kgid_has_mapping(parent_ns, group))
 		goto fail_dec;
@@ -857,7 +857,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 
 	/* Only allow < page size writes at the beginning of the file */
 	if ((*ppos != 0) || (count >= PAGE_SIZE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Slurp in the user data */
 	kbuf = memdup_user_nul(buf, count);
@@ -887,7 +887,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 
 	memset(&new_map, 0, sizeof(struct uid_gid_map));
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	/* Only allow one successful write to the map */
 	if (map->nr_extents != 0)
 		goto out;
@@ -899,7 +899,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 		goto out;
 
 	/* Parse the user data */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	pos = kbuf;
 	for (; pos; pos = next_line) {
 
@@ -957,18 +957,18 @@ static ssize_t map_write(struct file *file, const char __user *buf,
 		ret = insert_extent(&new_map, &extent);
 		if (ret < 0)
 			goto out;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	/* Be very certaint the new map actually exists */
 	if (new_map.nr_extents == 0)
 		goto out;
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	/* Validate the user is allowed to use user id's mapped to. */
 	if (!new_idmap_permitted(file, ns, cap_setid, &new_map))
 		goto out;
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	/* Map the lower ids from the parent user namespace to the
 	 * kernel global id space.
 	 */
@@ -1037,10 +1037,10 @@ ssize_t proc_uid_map_write(struct file *file, const char __user *buf,
 	struct user_namespace *seq_ns = seq_user_ns(seq);
 
 	if (!ns->parent)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((seq_ns != ns) && (seq_ns != ns->parent))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return map_write(file, buf, size, ppos, CAP_SETUID,
 			 &ns->uid_map, &ns->parent->uid_map);
@@ -1054,10 +1054,10 @@ ssize_t proc_gid_map_write(struct file *file, const char __user *buf,
 	struct user_namespace *seq_ns = seq_user_ns(seq);
 
 	if (!ns->parent)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((seq_ns != ns) && (seq_ns != ns->parent))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return map_write(file, buf, size, ppos, CAP_SETGID,
 			 &ns->gid_map, &ns->parent->gid_map);
@@ -1071,10 +1071,10 @@ ssize_t proc_projid_map_write(struct file *file, const char __user *buf,
 	struct user_namespace *seq_ns = seq_user_ns(seq);
 
 	if (!ns->parent)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((seq_ns != ns) && (seq_ns != ns->parent))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Anyone can set any valid project id no capability needed */
 	return map_write(file, buf, size, ppos, -1,
@@ -1140,7 +1140,7 @@ ssize_t proc_setgroups_write(struct file *file, const char __user *buf,
 	ssize_t ret;
 
 	/* Only allow a very narrow range of strings to be written */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if ((*ppos != 0) || (count >= sizeof(kbuf)))
 		goto out;
 
@@ -1152,7 +1152,7 @@ ssize_t proc_setgroups_write(struct file *file, const char __user *buf,
 	pos = kbuf;
 
 	/* What is being requested? */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (strncmp(pos, "allow", 5) == 0) {
 		pos += 5;
 		setgroups_allowed = true;
@@ -1169,7 +1169,7 @@ ssize_t proc_setgroups_write(struct file *file, const char __user *buf,
 	if (*pos != '\0')
 		goto out;
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	mutex_lock(&userns_state_mutex);
 	if (setgroups_allowed) {
 		/* Enabling setgroups after setgroups has been disabled
@@ -1262,21 +1262,21 @@ static int userns_install(struct nsset *nsset, struct ns_common *ns)
 	 * the same user namespace.
 	 */
 	if (user_ns == current_user_ns())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Tasks that share a thread group must share a user namespace */
 	if (!thread_group_empty(current))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (current->fs->users != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	cred = nsset_cred(nsset);
 	if (!cred)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	put_user_ns(cred->user_ns);
 	set_cred_user_ns(cred, get_user_ns(user_ns));
@@ -1293,7 +1293,7 @@ struct ns_common *ns_get_owner(struct ns_common *ns)
 	owner = p = ns->ops->owner(ns);
 	for (;;) {
 		if (!p)
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 		if (p == my_user_ns)
 			break;
 		p = p->parent;

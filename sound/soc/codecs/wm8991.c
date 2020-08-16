@@ -965,7 +965,7 @@ static int wm8991_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio3 |= WM8991_AIF_MSTR1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	audio1 &= ~WM8991_AIF_FMT_MASK;
@@ -992,7 +992,7 @@ static int wm8991_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio1 |= WM8991_AIF_TMF_DSP | WM8991_AIF_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8991_AUDIO_INTERFACE_1, audio1);
@@ -1028,7 +1028,7 @@ static int wm8991_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8991_CLOCKING_1, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1280,7 +1280,7 @@ static int wm8991_i2c_probe(struct i2c_client *i2c,
 	}
 	if (val != 0x8991) {
 		dev_err(&i2c->dev, "Device with ID %x is not a WM8991\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_write(wm8991->regmap, WM8991_RESET, 0);

@@ -257,13 +257,13 @@ getorigdst(struct sock *sk, int optval, void __user *user, int *len)
 	if (tuple.dst.protonum != IPPROTO_TCP &&
 	    tuple.dst.protonum != IPPROTO_SCTP) {
 		pr_debug("SO_ORIGINAL_DST: Not a TCP/SCTP socket\n");
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if ((unsigned int)*len < sizeof(struct sockaddr_in)) {
 		pr_debug("SO_ORIGINAL_DST: len %d not %zu\n",
 			 *len, sizeof(struct sockaddr_in));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	h = nf_conntrack_find_get(sock_net(sk), &nf_ct_zone_dflt, &tuple);
@@ -289,7 +289,7 @@ getorigdst(struct sock *sk, int optval, void __user *user, int *len)
 	pr_debug("SO_ORIGINAL_DST: Can't find %pI4/%u-%pI4/%u.\n",
 		 &tuple.src.u3.ip, ntohs(tuple.src.u.tcp.port),
 		 &tuple.dst.u3.ip, ntohs(tuple.dst.u.tcp.port));
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static struct nf_sockopt_ops so_getorigdst = {
@@ -325,17 +325,17 @@ ipv6_getorigdst(struct sock *sk, int optval, void __user *user, int *len)
 
 	if (tuple.dst.protonum != IPPROTO_TCP &&
 	    tuple.dst.protonum != IPPROTO_SCTP)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (*len < 0 || (unsigned int)*len < sizeof(sin6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	h = nf_conntrack_find_get(sock_net(sk), &nf_ct_zone_dflt, &tuple);
 	if (!h) {
 		pr_debug("IP6T_SO_ORIGINAL_DST: Can't find %pI6c/%u-%pI6c/%u.\n",
 			 &tuple.src.u3.ip6, ntohs(tuple.src.u.tcp.port),
 			 &tuple.dst.u3.ip6, ntohs(tuple.dst.u.tcp.port));
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	ct = nf_ct_tuplehash_to_ctrack(h);
@@ -492,7 +492,7 @@ retry:
 	case NFPROTO_BRIDGE:
 		if (!nf_ct_bridge_info) {
 			if (!retry) {
-				err = -EPROTO;
+				err = -ERR(EPROTO);
 				goto out_unlock;
 			}
 			mutex_unlock(&nf_ct_proto_mutex);
@@ -501,7 +501,7 @@ retry:
 			goto retry;
 		}
 		if (!try_module_get(nf_ct_bridge_info->me)) {
-			err = -EPROTO;
+			err = -ERR(EPROTO);
 			goto out_unlock;
 		}
 		cnet->users_bridge++;
@@ -516,7 +516,7 @@ retry:
 			fixup_needed = true;
 		break;
 	default:
-		err = -EPROTO;
+		err = -ERR(EPROTO);
 		break;
 	}
  out_unlock:

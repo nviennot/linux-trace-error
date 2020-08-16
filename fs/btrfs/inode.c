@@ -996,7 +996,7 @@ static noinline int cow_file_range(struct inode *inode,
 
 	if (btrfs_is_free_space_inode(BTRFS_I(inode))) {
 		WARN_ON_ONCE(1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -2442,11 +2442,11 @@ int btrfs_writepage_cow_fixup(struct page *page, u64 start, u64 end)
 	 * EAGAIN.
 	 */
 	if (PageChecked(page))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	fixup = kzalloc(sizeof(*fixup), GFP_NOFS);
 	if (!fixup)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/*
 	 * We are already holding a reference to this inode from
@@ -2462,7 +2462,7 @@ int btrfs_writepage_cow_fixup(struct page *page, u64 start, u64 end)
 	fixup->inode = inode;
 	btrfs_queue_work(fs_info->fixup_workers, &fixup->work);
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int insert_reserved_file_extent(struct btrfs_trans_handle *trans,
@@ -2605,7 +2605,7 @@ static int btrfs_finish_ordered_io(struct btrfs_ordered_extent *ordered_extent)
 	freespace_inode = btrfs_is_free_space_inode(BTRFS_I(inode));
 
 	if (test_bit(BTRFS_ORDERED_IOERR, &ordered_extent->flags)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -2833,7 +2833,7 @@ zeroit:
 	memset(kaddr + pgoff, 1, len);
 	flush_dcache_page(page);
 	kunmap_atomic(kaddr);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -2947,7 +2947,7 @@ int btrfs_wait_on_delayed_iputs(struct btrfs_fs_info *fs_info)
 	int ret = wait_event_killable(fs_info->delayed_iputs_wait,
 			atomic_read(&fs_info->nr_delayed_iputs) == 0);
 	if (ret)
-		return -EINTR;
+		return -ERR(EINTR);
 	return 0;
 }
 
@@ -3047,7 +3047,7 @@ int btrfs_orphan_cleanup(struct btrfs_root *root)
 		if (found_key.offset == last_objectid) {
 			btrfs_err(fs_info,
 				  "Error removing orphan entry, stopping orphan cleanup");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -3486,7 +3486,7 @@ static noinline int btrfs_update_inode_item(struct btrfs_trans_handle *trans,
 				 1);
 	if (ret) {
 		if (ret > 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		goto failed;
 	}
 
@@ -3574,7 +3574,7 @@ static int __btrfs_unlink_inode(struct btrfs_trans_handle *trans,
 	di = btrfs_lookup_dir_item(trans, root, path, dir_ino,
 				    name, name_len, -1);
 	if (IS_ERR_OR_NULL(di)) {
-		ret = di ? PTR_ERR(di) : -ENOENT;
+		ret = di ? PTR_ERR(di) : -ERR(ENOENT);
 		goto err;
 	}
 	ret = btrfs_delete_one_dir_name(trans, root, path, di);
@@ -3745,7 +3745,7 @@ static int btrfs_unlink_subvol(struct btrfs_trans_handle *trans,
 		objectid = inode->location.objectid;
 	} else {
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	path = btrfs_alloc_path();
@@ -3755,7 +3755,7 @@ static int btrfs_unlink_subvol(struct btrfs_trans_handle *trans,
 	di = btrfs_lookup_dir_item(trans, root, path, dir_ino,
 				   name, name_len, -1);
 	if (IS_ERR_OR_NULL(di)) {
-		ret = di ? PTR_ERR(di) : -ENOENT;
+		ret = di ? PTR_ERR(di) : -ERR(ENOENT);
 		goto out;
 	}
 
@@ -3783,7 +3783,7 @@ static int btrfs_unlink_subvol(struct btrfs_trans_handle *trans,
 						 name, name_len);
 		if (IS_ERR_OR_NULL(di)) {
 			if (!di)
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 			else
 				ret = PTR_ERR(di);
 			btrfs_abort_transaction(trans, ret);
@@ -3845,7 +3845,7 @@ static noinline int may_destroy_subvol(struct btrfs_root *root)
 	if (di && !IS_ERR(di)) {
 		btrfs_dir_item_key_to_cpu(path->nodes[0], di, &key);
 		if (key.objectid == root->root_key.objectid) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			btrfs_err(fs_info,
 				  "deleting default subvolume %llu is not allowed",
 				  key.objectid);
@@ -3869,7 +3869,7 @@ static noinline int may_destroy_subvol(struct btrfs_root *root)
 		btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 		if (key.objectid == root->root_key.objectid &&
 		    key.type == BTRFS_ROOT_REF_KEY)
-			ret = -ENOTEMPTY;
+			ret = -ERR(ENOTEMPTY);
 	}
 out:
 	btrfs_free_path(path);
@@ -3963,7 +3963,7 @@ int btrfs_delete_subvolume(struct inode *dir, struct dentry *dentry)
 		btrfs_warn(fs_info,
 			   "attempt to delete subvolume %llu during send",
 			   dest->root_key.objectid);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	root_flags = btrfs_root_flags(&dest->root_item);
 	btrfs_set_root_flags(&dest->root_item,
@@ -4082,7 +4082,7 @@ static int btrfs_rmdir(struct inode *dir, struct dentry *dentry)
 	u64 last_unlink_trans;
 
 	if (inode->i_size > BTRFS_EMPTY_DIR_SIZE)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 	if (btrfs_ino(BTRFS_I(inode)) == BTRFS_FIRST_FREE_OBJECTID)
 		return btrfs_delete_subvolume(dir, dentry);
 
@@ -4226,7 +4226,7 @@ search_again:
 	 */
 	if (be_nice && bytes_deleted > SZ_32M &&
 	    btrfs_should_end_transaction(trans)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -4457,7 +4457,7 @@ delete:
 				ret = btrfs_delayed_refs_rsv_refill(fs_info,
 							BTRFS_RESERVE_NO_FLUSH);
 				if (ret) {
-					ret = -EAGAIN;
+					ret = -ERR(EAGAIN);
 					break;
 				}
 			}
@@ -4551,7 +4551,7 @@ again:
 			goto again;
 		}
 		if (!PageUptodate(page)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out_unlock;
 		}
 	}
@@ -4860,7 +4860,7 @@ static int btrfs_setattr(struct dentry *dentry, struct iattr *attr)
 	int err;
 
 	if (btrfs_root_readonly(root))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	err = setattr_prepare(dentry, attr);
 	if (err)
@@ -5011,7 +5011,7 @@ static struct btrfs_trans_handle *evict_refill_and_join(struct btrfs_root *root,
 		    btrfs_block_rsv_migrate(global_rsv, rsv, rsv->size, 0)) {
 			btrfs_warn(fs_info,
 				   "could not allocate space for delete; will truncate on mount");
-			return ERR_PTR(-ENOSPC);
+			return ERR_PTR(-ERR(ENOSPC));
 		}
 		delayed_refs_extra = 0;
 	}
@@ -5152,14 +5152,14 @@ static int btrfs_inode_by_name(struct inode *dir, struct dentry *dentry,
 	di = btrfs_lookup_dir_item(NULL, root, path, btrfs_ino(BTRFS_I(dir)),
 			name, namelen, 0);
 	if (IS_ERR_OR_NULL(di)) {
-		ret = di ? PTR_ERR(di) : -ENOENT;
+		ret = di ? PTR_ERR(di) : -ERR(ENOENT);
 		goto out;
 	}
 
 	btrfs_dir_item_key_to_cpu(path->nodes[0], di, location);
 	if (location->type != BTRFS_INODE_ITEM_KEY &&
 	    location->type != BTRFS_ROOT_ITEM_KEY) {
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		btrfs_warn(root->fs_info,
 "%s gets something invalid in DIR_ITEM (name %s, directory ino %llu, location(%llu %u %llu))",
 			   __func__, name, btrfs_ino(BTRFS_I(dir)),
@@ -5197,7 +5197,7 @@ static int fixup_tree_root_location(struct btrfs_fs_info *fs_info,
 		goto out;
 	}
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	key.objectid = BTRFS_I(dir)->root->root_key.objectid;
 	key.type = BTRFS_ROOT_REF_KEY;
 	key.offset = location->objectid;
@@ -5365,7 +5365,7 @@ struct inode *btrfs_iget_path(struct super_block *s, u64 ino,
 			 * was not found.
 			 */
 			if (ret > 0)
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 			inode = ERR_PTR(ret);
 		}
 	}
@@ -5437,7 +5437,7 @@ struct inode *btrfs_lookup_dentry(struct inode *dir, struct dentry *dentry)
 	int ret = 0;
 
 	if (dentry->d_name.len > BTRFS_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	ret = btrfs_inode_by_name(dir, dentry, &location, &di_type);
 	if (ret < 0)
@@ -5455,7 +5455,7 @@ struct inode *btrfs_lookup_dentry(struct inode *dir, struct dentry *dentry)
 				  inode->i_mode, btrfs_inode_type(inode),
 				  di_type);
 			iput(inode);
-			return ERR_PTR(-EUCLEAN);
+			return ERR_PTR(-ERR(EUCLEAN));
 		}
 		return inode;
 	}
@@ -5753,7 +5753,7 @@ static int btrfs_update_time(struct inode *inode, struct timespec64 *now,
 	bool dirty = flags & ~S_VERSION;
 
 	if (btrfs_root_readonly(root))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (flags & S_VERSION)
 		dirty |= inode_maybe_inc_iversion(inode, dirty);
@@ -6158,7 +6158,7 @@ static int btrfs_add_nondir(struct btrfs_trans_handle *trans,
 				 dentry->d_name.name, dentry->d_name.len,
 				 backref, index);
 	if (err > 0)
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	return err;
 }
 
@@ -6307,10 +6307,10 @@ static int btrfs_link(struct dentry *old_dentry, struct inode *dir,
 
 	/* do not allow sys_link's with other subvols of the same device */
 	if (root->root_key.objectid != BTRFS_I(inode)->root->root_key.objectid)
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	if (inode->i_nlink >= BTRFS_LINK_MAX)
-		return -EMLINK;
+		return -ERR(EMLINK);
 
 	err = btrfs_set_inode_index(BTRFS_I(dir), &index);
 	if (err)
@@ -6595,7 +6595,7 @@ struct extent_map *btrfs_get_extent(struct btrfs_inode *inode,
 	    extent_type == BTRFS_FILE_EXTENT_PREALLOC) {
 		/* Only regular file could have regular/prealloc extent */
 		if (!S_ISREG(inode->vfs_inode.i_mode)) {
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			btrfs_crit(fs_info,
 		"regular/prealloc extent found for non-regular inode %llu",
 				   btrfs_ino(inode));
@@ -6701,7 +6701,7 @@ insert:
 		btrfs_err(fs_info,
 			  "bad extent! em: [%llu %llu] passed [%llu %llu]",
 			  em->start, em->len, start, len);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -7021,7 +7021,7 @@ noinline int can_nocow_extent(struct inode *inode, u64 offset, u64 *len,
 		ret = test_range_bit(io_tree, offset, range_end,
 				     EXTENT_DELALLOC, 0, NULL);
 		if (ret) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 	}
@@ -7113,7 +7113,7 @@ static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
 			    test_bit(BTRFS_ORDERED_DIRECT, &ordered->flags))
 				btrfs_start_ordered_extent(inode, ordered, 1);
 			else
-				ret = -ENOTBLK;
+				ret = -ERR(ENOTBLK);
 			btrfs_put_ordered_extent(ordered);
 		} else {
 			/*
@@ -7129,7 +7129,7 @@ static int lock_extent_direct(struct inode *inode, u64 lockstart, u64 lockend,
 			 * ordered extent to complete while holding a lock on
 			 * that page.
 			 */
-			ret = -ENOTBLK;
+			ret = -ERR(ENOTBLK);
 		}
 
 		if (ret)
@@ -7209,7 +7209,7 @@ static int btrfs_get_blocks_direct_read(struct extent_map *em,
 
 	if (em->block_start == EXTENT_MAP_HOLE ||
 			test_bit(EXTENT_FLAG_PREALLOC, &em->flags))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	len = min(len, em->len - (start - em->start));
 
@@ -7354,7 +7354,7 @@ static int btrfs_get_blocks_direct(struct inode *inode, sector_t iblock,
 	 */
 	if (lock_extent_direct(inode, lockstart, lockend, &cached_state,
 			       create)) {
-		ret = -ENOTBLK;
+		ret = -ERR(ENOTBLK);
 		goto err;
 	}
 
@@ -7381,7 +7381,7 @@ static int btrfs_get_blocks_direct(struct inode *inode, sector_t iblock,
 	if (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags) ||
 	    em->block_start == EXTENT_MAP_INLINE) {
 		free_extent_map(em);
-		ret = -ENOTBLK;
+		ret = -ERR(ENOTBLK);
 		goto unlock_err;
 	}
 
@@ -7814,7 +7814,7 @@ static ssize_t check_direct_IO(struct btrfs_fs_info *fs_info,
 	int seg;
 	int i;
 	unsigned int blocksize_mask = fs_info->sectorsize - 1;
-	ssize_t retval = -EINVAL;
+	ssize_t retval = -ERR(EINVAL);
 
 	if (offset & blocksize_mask)
 		goto out;
@@ -8747,7 +8747,7 @@ static int btrfs_rename_exchange(struct inode *old_dir,
 
 	/* we only allow rename subvolume link between subvolumes */
 	if (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	btrfs_init_log_ctx(&ctx_root, old_inode);
 	btrfs_init_log_ctx(&ctx_dest, new_inode);
@@ -9063,19 +9063,19 @@ static int btrfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	bool commit_transaction = false;
 
 	if (btrfs_ino(BTRFS_I(new_dir)) == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* we only allow rename subvolume link between subvolumes */
 	if (old_ino != BTRFS_FIRST_FREE_OBJECTID && root != dest)
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	if (old_ino == BTRFS_EMPTY_SUBVOL_DIR_OBJECTID ||
 	    (new_inode && btrfs_ino(BTRFS_I(new_inode)) == BTRFS_FIRST_FREE_OBJECTID))
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	if (S_ISDIR(old_inode->i_mode) && new_inode &&
 	    new_inode->i_size > BTRFS_EMPTY_DIR_SIZE)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 
 	/* check for collisions, even if the  name isn't there */
@@ -9286,7 +9286,7 @@ static int btrfs_rename2(struct inode *old_dir, struct dentry *old_dentry,
 			 unsigned int flags)
 {
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & RENAME_EXCHANGE)
 		return btrfs_rename_exchange(old_dir, old_dentry, new_dir,
@@ -9409,7 +9409,7 @@ int btrfs_start_delalloc_snapshot(struct btrfs_root *root)
 	int ret;
 
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	ret = start_delalloc_inodes(root, -1, true);
 	if (ret > 0)
@@ -9424,7 +9424,7 @@ int btrfs_start_delalloc_roots(struct btrfs_fs_info *fs_info, int nr)
 	int ret;
 
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	INIT_LIST_HEAD(&splice);
 
@@ -9484,7 +9484,7 @@ static int btrfs_symlink(struct inode *dir, struct dentry *dentry,
 
 	name_len = strlen(symname);
 	if (name_len > BTRFS_MAX_INLINE_DATA_SIZE(fs_info))
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	/*
 	 * 2 items for inode item and ref
@@ -9755,9 +9755,9 @@ static int btrfs_permission(struct inode *inode, int mask)
 	if (mask & MAY_WRITE &&
 	    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode))) {
 		if (btrfs_root_readonly(root))
-			return -EROFS;
+			return -ERR(EROFS);
 		if (BTRFS_I(inode)->flags & BTRFS_INODE_READONLY)
-			return -EACCES;
+			return -ERR(EACCES);
 	}
 	return generic_permission(inode, mask);
 }
@@ -9989,15 +9989,15 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	 */
 	if (BTRFS_I(inode)->flags & BTRFS_INODE_COMPRESS) {
 		btrfs_warn(fs_info, "swapfile must not be compressed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATACOW)) {
 		btrfs_warn(fs_info, "swapfile must not be copy-on-write");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!(BTRFS_I(inode)->flags & BTRFS_INODE_NODATASUM)) {
 		btrfs_warn(fs_info, "swapfile must not be checksummed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -10012,7 +10012,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	if (test_and_set_bit(BTRFS_FS_EXCL_OP, &fs_info->flags)) {
 		btrfs_warn(fs_info,
 	   "cannot activate swapfile while exclusive operation is running");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	/*
 	 * Snapshots can create extents which require COW even if NODATACOW is
@@ -10039,7 +10039,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 
 		if (em->block_start == EXTENT_MAP_HOLE) {
 			btrfs_warn(fs_info, "swapfile must not have holes");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		if (em->block_start == EXTENT_MAP_INLINE) {
@@ -10051,12 +10051,12 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 			 * here rather than later.
 			 */
 			btrfs_warn(fs_info, "swapfile must not be inline");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		if (test_bit(EXTENT_FLAG_COMPRESSED, &em->flags)) {
 			btrfs_warn(fs_info, "swapfile must not be compressed");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -10073,7 +10073,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 		} else {
 			btrfs_warn(fs_info,
 				   "swapfile must not be copy-on-write");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -10086,7 +10086,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 		if (em->map_lookup->type & BTRFS_BLOCK_GROUP_PROFILE_MASK) {
 			btrfs_warn(fs_info,
 				   "swapfile must have single data profile");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -10099,7 +10099,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 				goto out;
 		} else if (device != em->map_lookup->stripes[0].dev) {
 			btrfs_warn(fs_info, "swapfile must be on one device");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -10113,7 +10113,7 @@ static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 		if (!bg) {
 			btrfs_warn(fs_info,
 			   "could not find block group containing swapfile");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -10176,7 +10176,7 @@ static void btrfs_swap_deactivate(struct file *file)
 static int btrfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 			       sector_t *span)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 

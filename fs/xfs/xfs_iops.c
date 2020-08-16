@@ -146,7 +146,7 @@ xfs_generic_create(
 	 */
 	if (S_ISCHR(mode) || S_ISBLK(mode)) {
 		if (unlikely(!sysv_valid_dev(rdev) || MAJOR(rdev) & ~0x1ff))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		rdev = 0;
 	}
@@ -261,7 +261,7 @@ xfs_vn_lookup(
 	int		error;
 
 	if (dentry->d_name.len >= MAXNAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	xfs_dentry_to_name(&name, dentry);
 	error = xfs_lookup(XFS_I(dir), &name, &cip, NULL);
@@ -287,7 +287,7 @@ xfs_vn_ci_lookup(
 	int		error;
 
 	if (dentry->d_name.len >= MAXNAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	xfs_dentry_to_name(&xname, dentry);
 	error = xfs_lookup(XFS_I(dir), &xname, &ip, &ci_name);
@@ -418,7 +418,7 @@ xfs_vn_rename(
 	struct xfs_name	nname;
 
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* if we are exchanging files, we need to set i_mode of both files */
 	if (flags & RENAME_EXCHANGE)
@@ -453,7 +453,7 @@ xfs_vn_get_link(
 	int			error = -ENOMEM;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	link = kmalloc(XFS_SYMLINK_MAXLEN+1, GFP_KERNEL);
 	if (!link)
@@ -543,7 +543,7 @@ xfs_vn_getattr(
 	trace_xfs_getattr(ip);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	stat->size = XFS_ISIZE(ip);
 	stat->dev = inode->i_sb->s_dev;
@@ -634,10 +634,10 @@ xfs_vn_change_ok(
 	struct xfs_mount	*mp = XFS_I(d_inode(dentry))->i_mount;
 
 	if (mp->m_flags & XFS_MOUNT_RDONLY)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	return setattr_prepare(dentry, iattr);
 }

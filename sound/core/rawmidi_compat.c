@@ -31,14 +31,14 @@ static int snd_rawmidi_ioctl_params_compat(struct snd_rawmidi_file *rfile,
 	switch (params.stream) {
 	case SNDRV_RAWMIDI_STREAM_OUTPUT:
 		if (!rfile->output)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return snd_rawmidi_output_params(rfile->output, &params);
 	case SNDRV_RAWMIDI_STREAM_INPUT:
 		if (!rfile->input)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return snd_rawmidi_input_params(rfile->input, &params);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct compat_snd_rawmidi_status64 {
@@ -64,16 +64,16 @@ static int snd_rawmidi_ioctl_status_compat64(struct snd_rawmidi_file *rfile,
 	switch (status.stream) {
 	case SNDRV_RAWMIDI_STREAM_OUTPUT:
 		if (!rfile->output)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = snd_rawmidi_output_status(rfile->output, &status);
 		break;
 	case SNDRV_RAWMIDI_STREAM_INPUT:
 		if (!rfile->input)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = snd_rawmidi_input_status(rfile->input, &status);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (err < 0)
 		return err;
@@ -117,5 +117,5 @@ static long snd_rawmidi_ioctl_compat(struct file *file, unsigned int cmd, unsign
 	case SNDRV_RAWMIDI_IOCTL_STATUS_COMPAT64:
 		return snd_rawmidi_ioctl_status_compat64(rfile, argp);
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }

@@ -34,7 +34,7 @@ snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 
 	emu = rec->hw;
 	if (snd_BUG_ON(!sp || !hdr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sp->v.size == 0) {
 		dev_dbg(emu->card->dev,
@@ -80,7 +80,7 @@ snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 		dev_dbg(emu->card->dev,
 			"synth malloc failed (size=%d)\n", blocksize);
 		/* not ENOMEM (for compatibility with OSS) */
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	/* set the total size */
 	sp->v.truesize = blocksize;
@@ -91,7 +91,7 @@ snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
 	if (offset + size > blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_emu10k1_synth_bzero(emu, sp->block, offset, size);
 	offset += size;
 
@@ -100,7 +100,7 @@ snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
 	if (offset + size > blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) {
 		snd_emu10k1_synth_free(emu, sp->block);
 		sp->block = NULL;
@@ -145,7 +145,7 @@ snd_emu10k1_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 	/* loopend -> sample end */
 	size = sp->v.size - loopend;
 	if (size < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (! (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS))
 		size *= 2;
 	if (snd_emu10k1_synth_copy_from_user(emu, sp->block, offset, data, size)) {
@@ -204,7 +204,7 @@ snd_emu10k1_sample_free(struct snd_emux *rec, struct snd_sf_sample *sp,
 
 	emu = rec->hw;
 	if (snd_BUG_ON(!sp || !hdr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sp->block) {
 		snd_emu10k1_synth_free(emu, sp->block);

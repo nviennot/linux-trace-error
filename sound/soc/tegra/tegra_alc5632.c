@@ -182,7 +182,7 @@ static int tegra_alc5632_probe(struct platform_device *pdev)
 	if (!tegra_alc5632_dai.codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,audio-codec' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -191,7 +191,7 @@ static int tegra_alc5632_probe(struct platform_device *pdev)
 	if (!tegra_alc5632_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,i2s-controller' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_put_codec_of_node;
 	}
 

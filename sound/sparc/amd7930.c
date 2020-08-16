@@ -558,7 +558,7 @@ static int snd_amd7930_trigger(struct snd_amd7930 *amd, unsigned int flag, int c
 			sbus_writeb(0, amd->regs + AMD7930_DR);
 		}
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	spin_unlock_irqrestore(&amd->lock, flags);
 
@@ -873,7 +873,7 @@ static int snd_amd7930_mixer(struct snd_amd7930 *amd)
 	int idx, err;
 
 	if (snd_BUG_ON(!amd || !amd->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = amd->card;
 	strcpy(card->mixername, card->shortname);
@@ -940,7 +940,7 @@ static int snd_amd7930_create(struct snd_card *card,
 		snd_printk(KERN_ERR
 			   "amd7930-%d: Unable to map chip registers.\n", dev);
 		kfree(amd);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	amd7930_idle(amd);
@@ -950,7 +950,7 @@ static int snd_amd7930_create(struct snd_card *card,
 		snd_printk(KERN_ERR "amd7930-%d: Unable to grab IRQ %d\n",
 			   dev, irq);
 		snd_amd7930_free(amd);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	amd->irq = irq;
 
@@ -997,10 +997,10 @@ static int amd7930_sbus_probe(struct platform_device *op)
 	irq = op->archdata.irqs[0];
 
 	if (dev_num >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev_num]) {
 		dev_num++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&op->dev, index[dev_num], id[dev_num],

@@ -94,7 +94,7 @@ static ssize_t inode_readahead_blks_store(struct ext4_sb_info *sbi,
 		return ret;
 
 	if (t && (!is_power_of_2(t) || t > 0x40000000))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sbi->s_inode_readahead_blks = t;
 	return count;
@@ -110,7 +110,7 @@ static ssize_t reserved_clusters_store(struct ext4_sb_info *sbi,
 
 	ret = kstrtoull(skip_spaces(buf), 0, &val);
 	if (ret || val >= clusters)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	atomic64_set(&sbi->s_resv_clusters, val);
 	return count;
@@ -122,7 +122,7 @@ static ssize_t trigger_test_error(struct ext4_sb_info *sbi,
 	int len = count;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (len && buf[len-1] == '\n')
 		len--;

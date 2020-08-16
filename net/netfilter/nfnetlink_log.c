@@ -160,7 +160,7 @@ instance_create(struct net *net, u_int16_t group_num,
 
 	spin_lock_bh(&log->instances_lock);
 	if (__instance_lookup(log, group_num)) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out_unlock;
 	}
 
@@ -172,7 +172,7 @@ instance_create(struct net *net, u_int16_t group_num,
 
 	if (!try_module_get(THIS_MODULE)) {
 		kfree(inst);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out_unlock;
 	}
 
@@ -264,7 +264,7 @@ nfulnl_set_mode(struct nfulnl_instance *inst, u_int8_t mode,
 		break;
 
 	default:
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		break;
 	}
 
@@ -280,9 +280,9 @@ nfulnl_set_nlbufsiz(struct nfulnl_instance *inst, u_int32_t nlbufsiz)
 
 	spin_lock_bh(&inst->lock);
 	if (nlbufsiz < NFULNL_NLBUFSIZ_DEFAULT)
-		status = -ERANGE;
+		status = -ERR(ERANGE);
 	else if (nlbufsiz > 131072)
-		status = -ERANGE;
+		status = -ERR(ERANGE);
 	else {
 		inst->nlbufsiz = nlbufsiz;
 		status = 0;
@@ -850,7 +850,7 @@ static int nfulnl_recv_unsupp(struct net *net, struct sock *ctnl,
 			      const struct nlattr * const nfqa[],
 			      struct netlink_ext_ack *extack)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static struct nf_logger nfulnl_logger __read_mostly = {
@@ -898,7 +898,7 @@ static int nfulnl_recv_config(struct net *net, struct sock *ctnl,
 
 	inst = instance_lookup_get(log, group_num);
 	if (inst && inst->peer_portid != NETLINK_CB(skb).portid) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_put;
 	}
 
@@ -915,11 +915,11 @@ static int nfulnl_recv_config(struct net *net, struct sock *ctnl,
 			request_module("ip_conntrack_netlink");
 			nfnl_lock(NFNL_SUBSYS_ULOG);
 			if (rcu_access_pointer(nfnl_ct_hook)) {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				goto out_put;
 			}
 #endif
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out_put;
 		}
 	}
@@ -928,7 +928,7 @@ static int nfulnl_recv_config(struct net *net, struct sock *ctnl,
 		switch (cmd->command) {
 		case NFULNL_CFG_CMD_BIND:
 			if (inst) {
-				ret = -EBUSY;
+				ret = -ERR(EBUSY);
 				goto out_put;
 			}
 
@@ -942,18 +942,18 @@ static int nfulnl_recv_config(struct net *net, struct sock *ctnl,
 			break;
 		case NFULNL_CFG_CMD_UNBIND:
 			if (!inst) {
-				ret = -ENODEV;
+				ret = -ERR(ENODEV);
 				goto out;
 			}
 
 			instance_destroy(log, inst);
 			goto out_put;
 		default:
-			ret = -ENOTSUPP;
+			ret = -ERR(ENOTSUPP);
 			goto out_put;
 		}
 	} else if (!inst) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 

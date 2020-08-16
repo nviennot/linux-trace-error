@@ -39,7 +39,7 @@ static int param_set_bufsize(const char *val, const struct kernel_param *kp)
 	size = memparse(val, NULL);
 	order = get_order(size);
 	if (order >= MAX_ORDER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ima_maxorder = order;
 	ima_bufsize = PAGE_SIZE << order;
 	return 0;
@@ -394,7 +394,7 @@ static int ima_calc_file_hash_atfm(struct file *file,
 					   rbuf_len);
 		if (rc != rbuf_len) {
 			if (rc >= 0)
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 			/*
 			 * Forward current rc, do not overwrite with return value
 			 * from ahash_wait()
@@ -487,7 +487,7 @@ static int ima_calc_file_hash_tfm(struct file *file,
 			break;
 		}
 		if (rbuf_len == 0) {	/* unexpected EOF */
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			break;
 		}
 		offset += rbuf_len;
@@ -546,7 +546,7 @@ int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash)
 	if (file->f_flags & O_DIRECT) {
 		hash->length = hash_digest_size[ima_hash_algo];
 		hash->algo = ima_hash_algo;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Open a new file instance in O_RDONLY if we cannot read */

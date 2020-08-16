@@ -100,49 +100,49 @@ extern int qcom_scm_qsmmu500_wait_safe_toggle(bool en);
 static inline bool qcom_scm_is_available(void) { return false; }
 
 static inline int qcom_scm_set_cold_boot_addr(void *entry,
-		const cpumask_t *cpus) { return -ENODEV; }
+		const cpumask_t *cpus) { return -ERR(ENODEV); }
 static inline int qcom_scm_set_warm_boot_addr(void *entry,
-		const cpumask_t *cpus) { return -ENODEV; }
+		const cpumask_t *cpus) { return -ERR(ENODEV); }
 static inline void qcom_scm_cpu_power_down(u32 flags) {}
 static inline u32 qcom_scm_set_remote_state(u32 state,u32 id)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 
 static inline int qcom_scm_pas_init_image(u32 peripheral, const void *metadata,
-		size_t size) { return -ENODEV; }
+		size_t size) { return -ERR(ENODEV); }
 static inline int qcom_scm_pas_mem_setup(u32 peripheral, phys_addr_t addr,
-		phys_addr_t size) { return -ENODEV; }
+		phys_addr_t size) { return -ERR(ENODEV); }
 static inline int qcom_scm_pas_auth_and_reset(u32 peripheral)
-		{ return -ENODEV; }
-static inline int qcom_scm_pas_shutdown(u32 peripheral) { return -ENODEV; }
+		{ return -ERR(ENODEV); }
+static inline int qcom_scm_pas_shutdown(u32 peripheral) { return -ERR(ENODEV); }
 static inline bool qcom_scm_pas_supported(u32 peripheral) { return false; }
 
 static inline int qcom_scm_io_readl(phys_addr_t addr, unsigned int *val)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 static inline int qcom_scm_io_writel(phys_addr_t addr, unsigned int val)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 
 static inline bool qcom_scm_restore_sec_cfg_available(void) { return false; }
 static inline int qcom_scm_restore_sec_cfg(u32 device_id, u32 spare)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 static inline int qcom_scm_iommu_secure_ptbl_size(u32 spare, size_t *size)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 static inline int qcom_scm_iommu_secure_ptbl_init(u64 addr, u32 size, u32 spare)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 static inline int qcom_scm_assign_mem(phys_addr_t mem_addr, size_t mem_sz,
 		unsigned int *src, const struct qcom_scm_vmperm *newvm,
-		unsigned int dest_cnt) { return -ENODEV; }
+		unsigned int dest_cnt) { return -ERR(ENODEV); }
 
 static inline bool qcom_scm_ocmem_lock_available(void) { return false; }
 static inline int qcom_scm_ocmem_lock(enum qcom_scm_ocmem_client id, u32 offset,
-		u32 size, u32 mode) { return -ENODEV; }
+		u32 size, u32 mode) { return -ERR(ENODEV); }
 static inline int qcom_scm_ocmem_unlock(enum qcom_scm_ocmem_client id,
-		u32 offset, u32 size) { return -ENODEV; }
+		u32 offset, u32 size) { return -ERR(ENODEV); }
 
 static inline bool qcom_scm_hdcp_available(void) { return false; }
 static inline int qcom_scm_hdcp_req(struct qcom_scm_hdcp_req *req, u32 req_cnt,
-		u32 *resp) { return -ENODEV; }
+		u32 *resp) { return -ERR(ENODEV); }
 
 static inline int qcom_scm_qsmmu500_wait_safe_toggle(bool en)
-		{ return -ENODEV; }
+		{ return -ERR(ENODEV); }
 #endif
 #endif

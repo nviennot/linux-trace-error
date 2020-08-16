@@ -313,7 +313,7 @@ static int cs4265_get_clk_index(int mclk, int rate)
 				clk_map_table[i].mclk == mclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs4265_set_sysclk(struct snd_soc_dai *codec_dai, int clk_id,
@@ -325,7 +325,7 @@ static int cs4265_set_sysclk(struct snd_soc_dai *codec_dai, int clk_id,
 
 	if (clk_id != 0) {
 		dev_err(component->dev, "Invalid clk_id %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < ARRAY_SIZE(clk_map_table); i++) {
 		if (clk_map_table[i].mclk == freq) {
@@ -335,7 +335,7 @@ static int cs4265_set_sysclk(struct snd_soc_dai *codec_dai, int clk_id,
 	}
 	cs4265->sysclk = 0;
 	dev_err(component->dev, "Invalid freq parameter %d\n", freq);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs4265_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
@@ -356,7 +356,7 @@ static int cs4265_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 				0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	 /* interface format */
@@ -371,7 +371,7 @@ static int cs4265_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface |= SND_SOC_DAIFMT_LEFT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cs4265->format = iface;
@@ -411,7 +411,7 @@ static int cs4265_pcm_hw_params(struct snd_pcm_substream *substream,
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
 		((cs4265->format & SND_SOC_DAIFMT_FORMAT_MASK)
 		== SND_SOC_DAIFMT_RIGHT_J))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	index = cs4265_get_clk_index(cs4265->sysclk, params_rate(params));
 	if (index >= 0) {
@@ -423,7 +423,7 @@ static int cs4265_pcm_hw_params(struct snd_pcm_substream *substream,
 
 	} else {
 		dev_err(component->dev, "can't get correct mclk\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cs4265->format & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -458,7 +458,7 @@ static int cs4265_pcm_hw_params(struct snd_pcm_substream *substream,
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -603,7 +603,7 @@ static int cs4265_i2c_probe(struct i2c_client *i2c_client,
 	ret = regmap_read(cs4265->regmap, CS4265_CHIP_ID, &reg);
 	devid = reg & CS4265_CHIP_ID_MASK;
 	if (devid != CS4265_CHIP_ID_VAL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c_client->dev,
 			"CS4265 Device ID (%X). Expected %X\n",
 			devid, CS4265_CHIP_ID);

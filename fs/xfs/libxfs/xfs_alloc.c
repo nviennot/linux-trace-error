@@ -792,7 +792,7 @@ xfs_alloc_cur_setup(
 	if (!acur->bnogt)
 		acur->bnogt = xfs_allocbt_init_cursor(args->mp, args->tp,
 					args->agbp, args->agno, XFS_BTNUM_BNO);
-	return i == 1 ? 0 : -ENOSPC;
+	return i == 1 ? 0 : -ERR(ENOSPC);
 }
 
 static void
@@ -3295,7 +3295,7 @@ __xfs_free_extent(
 
 	if (XFS_TEST_ERROR(false, mp,
 			XFS_ERRTAG_FREE_EXTENT))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_free_extent_fix_freelist(tp, agno, &agbp);
 	if (error)

@@ -187,7 +187,7 @@ static int upmix_put(struct snd_kcontrol *ctl, struct snd_ctl_elem_value *value)
 	int changed;
 
 	if (value->value.enumerated.item[0] >= count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mutex);
 	changed = value->value.enumerated.item[0] != chip->dac_routing;
 	if (changed) {

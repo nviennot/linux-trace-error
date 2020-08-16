@@ -49,7 +49,7 @@ static int rxrpc_service_prealloc_one(struct rxrpc_sock *rx,
 	tmp = rx->sk.sk_ack_backlog;
 	if (tmp >= max) {
 		_leave(" = -ENOBUFS [full %u]", max);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	max -= tmp;
 
@@ -62,7 +62,7 @@ static int rxrpc_service_prealloc_one(struct rxrpc_sock *rx,
 	tmp = CIRC_CNT(call_head, call_tail, size);
 	if (tmp >= max) {
 		_leave(" = -ENOBUFS [enough %u]", tmp);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	max = tmp + 1;
 
@@ -153,7 +153,7 @@ id_in_use:
 	write_unlock(&rx->call_lock);
 	rxrpc_cleanup_call(call);
 	_leave(" = -EBADSLT");
-	return -EBADSLT;
+	return -ERR(EBADSLT);
 }
 
 /*
@@ -484,7 +484,7 @@ struct rxrpc_call *rxrpc_accept_call(struct rxrpc_sock *rx,
 		write_unlock(&rx->call_lock);
 		release_sock(&rx->sk);
 		kleave(" = -ENODATA [empty]");
-		return ERR_PTR(-ENODATA);
+		return ERR_PTR(-ERR(ENODATA));
 	}
 
 	/* check the user ID isn't already in use */
@@ -517,7 +517,7 @@ struct rxrpc_call *rxrpc_accept_call(struct rxrpc_sock *rx,
 	if (mutex_lock_interruptible(&call->user_mutex) < 0) {
 		release_sock(&rx->sk);
 		kleave(" = -ERESTARTSYS");
-		return ERR_PTR(-ERESTARTSYS);
+		return ERR_PTR(-ERR(ERESTARTSYS));
 	}
 
 	write_lock(&rx->call_lock);
@@ -578,7 +578,7 @@ out_release:
 	goto out;
 
 id_in_use:
-	ret = -EBADSLT;
+	ret = -ERR(EBADSLT);
 	write_unlock(&rx->call_lock);
 out:
 	rxrpc_service_prealloc(rx, GFP_KERNEL);
@@ -605,7 +605,7 @@ int rxrpc_reject_call(struct rxrpc_sock *rx)
 
 	if (list_empty(&rx->to_be_accepted)) {
 		write_unlock(&rx->call_lock);
-		return -ENODATA;
+		return -ERR(ENODATA);
 	}
 
 	/* Dequeue the first call and check it's still valid.  We gain
@@ -668,7 +668,7 @@ int rxrpc_kernel_charge_accept(struct socket *sock,
 	struct rxrpc_backlog *b = rx->backlog;
 
 	if (sock->sk->sk_state == RXRPC_CLOSE)
-		return -ESHUTDOWN;
+		return -ERR(ESHUTDOWN);
 
 	return rxrpc_service_prealloc_one(rx, b, notify_rx,
 					  user_attach_call, user_call_ID,

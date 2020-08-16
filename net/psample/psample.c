@@ -45,7 +45,7 @@ static int psample_group_nl_fill(struct sk_buff *msg,
 
 	hdr = genlmsg_put(msg, portid, seq, &psample_nl_family, flags, cmd);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ret = nla_put_u32(msg, PSAMPLE_ATTR_SAMPLE_GROUP, group->group_num);
 	if (ret < 0)
@@ -64,7 +64,7 @@ static int psample_group_nl_fill(struct sk_buff *msg,
 
 error:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int psample_nl_cmd_get_group_dumpit(struct sk_buff *msg,
@@ -221,63 +221,63 @@ static int __psample_ip_tun_to_nlattr(struct sk_buff *skb,
 	if (tun_key->tun_flags & TUNNEL_KEY &&
 	    nla_put_be64(skb, PSAMPLE_TUNNEL_KEY_ATTR_ID, tun_key->tun_id,
 			 PSAMPLE_TUNNEL_KEY_ATTR_PAD))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (tun_info->mode & IP_TUNNEL_INFO_BRIDGE &&
 	    nla_put_flag(skb, PSAMPLE_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	switch (tun_proto) {
 	case AF_INET:
 		if (tun_key->u.ipv4.src &&
 		    nla_put_in_addr(skb, PSAMPLE_TUNNEL_KEY_ATTR_IPV4_SRC,
 				    tun_key->u.ipv4.src))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		if (tun_key->u.ipv4.dst &&
 		    nla_put_in_addr(skb, PSAMPLE_TUNNEL_KEY_ATTR_IPV4_DST,
 				    tun_key->u.ipv4.dst))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		break;
 	case AF_INET6:
 		if (!ipv6_addr_any(&tun_key->u.ipv6.src) &&
 		    nla_put_in6_addr(skb, PSAMPLE_TUNNEL_KEY_ATTR_IPV6_SRC,
 				     &tun_key->u.ipv6.src))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		if (!ipv6_addr_any(&tun_key->u.ipv6.dst) &&
 		    nla_put_in6_addr(skb, PSAMPLE_TUNNEL_KEY_ATTR_IPV6_DST,
 				     &tun_key->u.ipv6.dst))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		break;
 	}
 	if (tun_key->tos &&
 	    nla_put_u8(skb, PSAMPLE_TUNNEL_KEY_ATTR_TOS, tun_key->tos))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u8(skb, PSAMPLE_TUNNEL_KEY_ATTR_TTL, tun_key->ttl))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if ((tun_key->tun_flags & TUNNEL_DONT_FRAGMENT) &&
 	    nla_put_flag(skb, PSAMPLE_TUNNEL_KEY_ATTR_DONT_FRAGMENT))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if ((tun_key->tun_flags & TUNNEL_CSUM) &&
 	    nla_put_flag(skb, PSAMPLE_TUNNEL_KEY_ATTR_CSUM))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (tun_key->tp_src &&
 	    nla_put_be16(skb, PSAMPLE_TUNNEL_KEY_ATTR_TP_SRC, tun_key->tp_src))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (tun_key->tp_dst &&
 	    nla_put_be16(skb, PSAMPLE_TUNNEL_KEY_ATTR_TP_DST, tun_key->tp_dst))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if ((tun_key->tun_flags & TUNNEL_OAM) &&
 	    nla_put_flag(skb, PSAMPLE_TUNNEL_KEY_ATTR_OAM))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (tun_opts_len) {
 		if (tun_key->tun_flags & TUNNEL_GENEVE_OPT &&
 		    nla_put(skb, PSAMPLE_TUNNEL_KEY_ATTR_GENEVE_OPTS,
 			    tun_opts_len, tun_opts))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		else if (tun_key->tun_flags & TUNNEL_ERSPAN_OPT &&
 			 nla_put(skb, PSAMPLE_TUNNEL_KEY_ATTR_ERSPAN_OPTS,
 				 tun_opts_len, tun_opts))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 
 	return 0;
@@ -291,7 +291,7 @@ static int psample_ip_tun_to_nlattr(struct sk_buff *skb,
 
 	nla = nla_nest_start_noflag(skb, PSAMPLE_ATTR_TUNNEL);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	err = __psample_ip_tun_to_nlattr(skb, tun_info);
 	if (err) {

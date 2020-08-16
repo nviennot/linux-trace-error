@@ -109,13 +109,13 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 	int offset, end, fragsize;
 	struct sk_buff *prev_tail;
 	struct net_device *dev;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	u8 ecn;
 
 	if (fq->q.flags & INET_FRAG_COMPLETE)
 		goto err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	offset = ntohs(fhdr->frag_off) & ~0x7;
 	end = offset + (ntohs(ipv6_hdr(skb)->payload_len) -
 			((u8 *)(fhdr + 1) - (u8 *)(ipv6_hdr(skb) + 1)));
@@ -219,14 +219,14 @@ static int ip6_frag_queue(struct frag_queue *fq, struct sk_buff *skb,
 	}
 
 	skb_dst_drop(skb);
-	return -EINPROGRESS;
+	return -ERR(EINPROGRESS);
 
 insert_error:
 	if (err == IPFRAG_DUP) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	__IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 			IPSTATS_MIB_REASM_OVERLAPS);
 discard_fq:

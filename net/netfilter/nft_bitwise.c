@@ -97,18 +97,18 @@ static int nft_bitwise_init_bool(struct nft_bitwise *priv,
 	int err;
 
 	if (tb[NFTA_BITWISE_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!tb[NFTA_BITWISE_MASK] ||
 	    !tb[NFTA_BITWISE_XOR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_data_init(NULL, &priv->mask, sizeof(priv->mask), &mask,
 			    tb[NFTA_BITWISE_MASK]);
 	if (err < 0)
 		return err;
 	if (mask.type != NFT_DATA_VALUE || mask.len != priv->len) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err1;
 	}
 
@@ -117,7 +117,7 @@ static int nft_bitwise_init_bool(struct nft_bitwise *priv,
 	if (err < 0)
 		goto err1;
 	if (xor.type != NFT_DATA_VALUE || xor.len != priv->len) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err2;
 	}
 
@@ -137,10 +137,10 @@ static int nft_bitwise_init_shift(struct nft_bitwise *priv,
 
 	if (tb[NFTA_BITWISE_MASK] ||
 	    tb[NFTA_BITWISE_XOR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!tb[NFTA_BITWISE_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_data_init(NULL, &priv->data, sizeof(priv->data), &d,
 			    tb[NFTA_BITWISE_DATA]);
@@ -149,7 +149,7 @@ static int nft_bitwise_init_shift(struct nft_bitwise *priv,
 	if (d.type != NFT_DATA_VALUE || d.len != sizeof(u32) ||
 	    priv->data.data[0] >= BITS_PER_TYPE(u32)) {
 		nft_data_release(&priv->data, d.type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -166,7 +166,7 @@ static int nft_bitwise_init(const struct nft_ctx *ctx,
 	if (!tb[NFTA_BITWISE_SREG] ||
 	    !tb[NFTA_BITWISE_DREG] ||
 	    !tb[NFTA_BITWISE_LEN])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_parse_u32_check(tb[NFTA_BITWISE_LEN], U8_MAX, &len);
 	if (err < 0)
@@ -193,7 +193,7 @@ static int nft_bitwise_init(const struct nft_ctx *ctx,
 		case NFT_BITWISE_RSHIFT:
 			break;
 		default:
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	} else {
 		priv->op = NFT_BITWISE_BOOL;
@@ -272,11 +272,11 @@ static int nft_bitwise_offload(struct nft_offload_ctx *ctx,
 	struct nft_offload_reg *reg = &ctx->regs[priv->dreg];
 
 	if (priv->op != NFT_BITWISE_BOOL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (memcmp(&priv->xor, &zero, sizeof(priv->xor)) ||
 	    priv->sreg != priv->dreg || priv->len != reg->len)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memcpy(&reg->mask, &priv->mask, sizeof(priv->mask));
 

@@ -501,7 +501,7 @@ static int lx_pcm_trigger_dispatch(struct lx6464es *chip,
 		break;
 
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -614,7 +614,7 @@ static int lx_init_xilinx_test(struct lx6464es *chip)
 		reg = lx_dsp_reg_read(chip, eReg_CSM);
 		if (reg) {
 			dev_err(chip->card->dev, "Error: Reg_CSM %x.\n", reg);
-			return -EAGAIN; /* seems to be appropriate */
+			return -ERR(EAGAIN); /* seems to be appropriate */
 		}
 	}
 
@@ -657,7 +657,7 @@ static int lx_init_ethersound_config(struct lx6464es *chip)
 	}
 	dev_warn(chip->card->dev,
 		   "ethersound could not be initialized after %dms\n", i);
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 
  ethersound_initialized:
 	dev_dbg(chip->card->dev, "ethersound initialized\n");
@@ -695,7 +695,7 @@ static int lx_init_get_version_features(struct lx6464es *chip)
 		dev_dbg(chip->card->dev, "actual clock frequency %d\n", freq);
 	} else {
 		dev_err(chip->card->dev, "DSP corrupted \n");
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	}
 
 	return err;
@@ -720,7 +720,7 @@ static int lx_set_granularity(struct lx6464es *chip, u32 gran)
 	err = lx_dsp_set_granularity(chip, snapped_gran);
 	if (err < 0) {
 		dev_warn(chip->card->dev, "could not set granularity\n");
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	}
 
 	if (snapped_gran != gran)
@@ -768,7 +768,7 @@ static int lx_init_dsp(struct lx6464es *chip)
 			goto mac_ready;
 		msleep(1);
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 
 mac_ready:
 	dev_dbg(chip->card->dev, "mac address ready read after: %dms\n", i);
@@ -959,7 +959,7 @@ static int snd_lx6464es_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 32bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -1059,10 +1059,10 @@ static int snd_lx6464es_probe(struct pci_dev *pci,
 	dev_dbg(&pci->dev, "->snd_lx6464es_probe\n");
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

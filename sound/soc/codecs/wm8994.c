@@ -186,7 +186,7 @@ static int configure_aif_clock(struct snd_soc_component *component, int aif)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rate >= 13500000) {
@@ -309,7 +309,7 @@ static int wm8994_put_drc_sw(struct snd_kcontrol *kcontrol,
 	if (ret < 0)
 		return ret;
 	if (ret & mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return snd_soc_put_volsw(kcontrol, ucontrol);
 }
@@ -346,7 +346,7 @@ static int wm8994_get_drc(const char *name)
 		return 1;
 	if (strcmp(name, "AIF2DRC Mode") == 0)
 		return 2;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8994_put_drc_enum(struct snd_kcontrol *kcontrol,
@@ -363,7 +363,7 @@ static int wm8994_put_drc_enum(struct snd_kcontrol *kcontrol,
 		return drc;
 
 	if (value >= pdata->num_drc_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->drc_cfg[drc] = value;
 
@@ -453,7 +453,7 @@ static int wm8994_get_retune_mobile_block(const char *name)
 		return 1;
 	if (strcmp(name, "AIF2 EQ Mode") == 0)
 		return 2;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8994_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
@@ -470,7 +470,7 @@ static int wm8994_put_retune_mobile_enum(struct snd_kcontrol *kcontrol,
 		return block;
 
 	if (value >= pdata->num_retune_mobile_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->retune_mobile_cfg[block] = value;
 
@@ -2114,7 +2114,7 @@ static int wm8994_get_fll_config(struct wm8994 *control, struct fll_div *fll,
 		freq_in /= 2;
 
 		if (fll->clk_ref_div > 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	pr_debug("CLK_REF_DIV=%d, Fref=%dHz\n", fll->clk_ref_div, freq_in);
 
@@ -2123,7 +2123,7 @@ static int wm8994_get_fll_config(struct wm8994 *control, struct fll_div *fll,
 	while (freq_out * (fll->outdiv + 1) < 90000000) {
 		fll->outdiv++;
 		if (fll->outdiv > 63)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	freq_out *= fll->outdiv + 1;
 	pr_debug("OUTDIV=%d, Fvco=%dHz\n", fll->outdiv, freq_out);
@@ -2206,7 +2206,7 @@ static int _wm8994_set_fll(struct snd_soc_component *component, int id, int src,
 		aif_src = 0x18;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg = snd_soc_component_read32(component, WM8994_FLL1_CONTROL_1 + reg_offset);
@@ -2216,7 +2216,7 @@ static int _wm8994_set_fll(struct snd_soc_component *component, int id, int src,
 	case 0:
 		/* Allow no source specification when stopping */
 		if (freq_out)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		src = wm8994->fll[id].src;
 		break;
 	case WM8994_FLL_SRC_MCLK1:
@@ -2229,7 +2229,7 @@ static int _wm8994_set_fll(struct snd_soc_component *component, int id, int src,
 		freq_out = 12000000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Are we changing anything? */
@@ -2261,7 +2261,7 @@ static int _wm8994_set_fll(struct snd_soc_component *component, int id, int src,
 	    (reg & WM8994_AIF1CLK_SRC_MASK) == aif_src) {
 		dev_err(component->dev, "FLL%d is currently providing SYSCLK\n",
 			id + 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* We always need to disable the FLL while reconfiguring */
@@ -2495,7 +2495,7 @@ static int wm8994_set_dai_sysclk(struct snd_soc_dai *dai,
 
 	default:
 		/* AIF3 shares clocking with AIF1/2 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
@@ -2543,7 +2543,7 @@ static int wm8994_set_dai_sysclk(struct snd_soc_dai *dai,
 				if (opclk_divs[i] == freq)
 					break;
 			if (i == ARRAY_SIZE(opclk_divs))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			snd_soc_component_update_bits(component, WM8994_CLOCKING_2,
 					    WM8994_OPCLK_DIV_MASK, i);
 			snd_soc_component_update_bits(component, WM8994_POWER_MANAGEMENT_2,
@@ -2555,7 +2555,7 @@ static int wm8994_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	configure_clock(component);
@@ -2726,7 +2726,7 @@ int wm8994_vmid_mode(struct snd_soc_component *component, enum wm8994_vmid_mode 
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2759,7 +2759,7 @@ static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		adc_reg = WM8994_AIF1ADC_LRCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -2769,7 +2769,7 @@ static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ms = WM8994_AIF1_MSTR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2789,7 +2789,7 @@ static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif1 |= 0x8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2803,7 +2803,7 @@ static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif1 |= WM8994_AIF1_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -2825,11 +2825,11 @@ static int wm8994_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			lrclk |= WM8958_AIF1_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The AIF2 format configuration needs to be mirrored to AIF3
@@ -2936,7 +2936,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_rate = params_rate(params);
@@ -2957,7 +2957,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 		aif1 |= 0x60;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8994->channels[id] = params_channels(params);
@@ -2983,7 +2983,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 		if (srs[i].rate == params_rate(params))
 			break;
 	if (i == ARRAY_SIZE(srs))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rate_val |= srs[i].val << WM8994_AIF1_SR_SHIFT;
 
 	dev_dbg(dai->dev, "Sample rate is %dHz\n", srs[i].rate);
@@ -2996,7 +2996,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 
 	if (wm8994->aifclk[id] == 0) {
 		dev_err(dai->dev, "AIF%dCLK not configured\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* AIFCLK/fs ratio; look for a close match in either direction */
@@ -3036,7 +3036,7 @@ static int wm8994_hw_params(struct snd_pcm_substream *substream,
 	if (!lrclk) {
 		dev_err(dai->dev, "Unable to generate LRCLK from %dHz BCLK\n",
 			bclk_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(dai->dev, "Using LRCLK rate %d for actual LRCLK %dHz\n",
 		lrclk, bclk_rate / lrclk);
@@ -3104,7 +3104,7 @@ static int wm8994_aif3_hw_params(struct snd_pcm_substream *substream,
 		aif1 |= 0x60;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_update_bits(component, aif1_reg, WM8994_AIF1_WL_MASK, aif1);
@@ -3124,7 +3124,7 @@ static int wm8994_aif_mute(struct snd_soc_dai *codec_dai, int mute)
 		mute_reg = WM8994_AIF2_DAC_FILTERS_1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mute)
@@ -3152,7 +3152,7 @@ static int wm8994_set_tristate(struct snd_soc_dai *codec_dai, int tristate)
 		mask = WM8994_AIF2_TRI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tristate)
@@ -3488,7 +3488,7 @@ int wm8994_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *
 
 	if (control->type != WM8994) {
 		dev_warn(component->dev, "Not a WM8994\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (micbias) {
@@ -3508,7 +3508,7 @@ int wm8994_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *
 		break;
 	default:
 		dev_warn(component->dev, "Invalid MICBIAS %d\n", micbias);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret != 0)
@@ -3902,7 +3902,7 @@ int wm8958_mic_detect(struct snd_soc_component *component, struct snd_soc_jack *
 	case WM8958:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (jack) {

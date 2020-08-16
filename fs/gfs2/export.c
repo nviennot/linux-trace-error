@@ -97,10 +97,10 @@ static int gfs2_get_name(struct dentry *parent, char *name,
 	struct file_ra_state f_ra = { .start = 0 };
 
 	if (!dir)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!S_ISDIR(dir->i_mode) || !inode)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dip = GFS2_I(dir);
 	ip = GFS2_I(inode);
@@ -118,7 +118,7 @@ static int gfs2_get_name(struct dentry *parent, char *name,
 	gfs2_glock_dq_uninit(&gh);
 
 	if (!error && !*name)
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 
 	return error;
 }
@@ -135,7 +135,7 @@ static struct dentry *gfs2_get_dentry(struct super_block *sb,
 	struct inode *inode;
 
 	if (!inum->no_formal_ino)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	inode = gfs2_lookup_by_inum(sdp, inum->no_addr, inum->no_formal_ino,
 				    GFS2_BLKST_DINODE);
 	if (IS_ERR(inode))

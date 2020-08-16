@@ -164,14 +164,14 @@ static void snd_pcm_lib_preallocate_proc_write(struct snd_info_entry *entry,
 	struct snd_dma_buffer new_dmab;
 
 	if (substream->runtime) {
-		buffer->error = -EBUSY;
+		buffer->error = -ERR(EBUSY);
 		return;
 	}
 	if (!snd_info_get_line(buffer, line, sizeof(line))) {
 		snd_info_get_str(str, line, sizeof(str));
 		size = simple_strtoul(str, NULL, 10) * 1024;
 		if ((size != 0 && size < 8192) || size > substream->dma_max) {
-			buffer->error = -EINVAL;
+			buffer->error = -ERR(EINVAL);
 			return;
 		}
 		if (substream->dma_buffer.bytes == size)
@@ -194,7 +194,7 @@ static void snd_pcm_lib_preallocate_proc_write(struct snd_info_entry *entry,
 			do_free_pages(card, &substream->dma_buffer);
 		substream->dma_buffer = new_dmab;
 	} else {
-		buffer->error = -EINVAL;
+		buffer->error = -ERR(EINVAL);
 	}
 }
 
@@ -381,10 +381,10 @@ int snd_pcm_lib_malloc_pages(struct snd_pcm_substream *substream, size_t size)
 	struct snd_dma_buffer *dmab = NULL;
 
 	if (PCM_RUNTIME_CHECK(substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(substream->dma_buffer.dev.type ==
 		       SNDRV_DMA_TYPE_UNKNOWN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 
 	if (runtime->dma_buffer_p) {
@@ -433,7 +433,7 @@ int snd_pcm_lib_free_pages(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime;
 
 	if (PCM_RUNTIME_CHECK(substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 	if (runtime->dma_area == NULL)
 		return 0;
@@ -453,7 +453,7 @@ int _snd_pcm_lib_alloc_vmalloc_buffer(struct snd_pcm_substream *substream,
 	struct snd_pcm_runtime *runtime;
 
 	if (PCM_RUNTIME_CHECK(substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 	if (runtime->dma_area) {
 		if (runtime->dma_bytes >= size)
@@ -480,7 +480,7 @@ int snd_pcm_lib_free_vmalloc_buffer(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime;
 
 	if (PCM_RUNTIME_CHECK(substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	runtime = substream->runtime;
 	vfree(runtime->dma_area);
 	runtime->dma_area = NULL;

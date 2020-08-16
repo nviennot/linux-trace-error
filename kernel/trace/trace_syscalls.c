@@ -395,7 +395,7 @@ static int reg_event_syscall_enter(struct trace_event_file *file,
 
 	num = ((struct syscall_metadata *)call->data)->syscall_nr;
 	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	mutex_lock(&syscall_trace_lock);
 	if (!tr->sys_refcount_enter)
 		ret = register_trace_sys_enter(ftrace_syscall_enter, tr);
@@ -433,7 +433,7 @@ static int reg_event_syscall_exit(struct trace_event_file *file,
 
 	num = ((struct syscall_metadata *)call->data)->syscall_nr;
 	if (WARN_ON_ONCE(num < 0 || num >= NR_syscalls))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	mutex_lock(&syscall_trace_lock);
 	if (!tr->sys_refcount_exit)
 		ret = register_trace_sys_exit(ftrace_syscall_exit, tr);
@@ -471,7 +471,7 @@ static int __init init_syscall_trace(struct trace_event_call *call)
 	if (num < 0 || num >= NR_syscalls) {
 		pr_debug("syscall %s metadata not mapped, disabling ftrace event\n",
 				((struct syscall_metadata *)call->data)->name);
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	if (set_syscall_print_fmt(call) < 0)

@@ -554,7 +554,7 @@ static int tipc_topsrv_create_listener(struct tipc_topsrv *srv)
 	return 0;
 err:
 	sock_release(lsock);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 bool tipc_topsrv_kern_subscr(struct net *net, u32 port, u32 type, u32 lower,

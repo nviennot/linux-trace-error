@@ -188,7 +188,7 @@ static inline long vfio_spapr_iommu_eeh_ioctl(struct iommu_group *group,
 					      unsigned int cmd,
 					      unsigned long arg)
 {
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 #endif /* CONFIG_VFIO_SPAPR_EEH */
 

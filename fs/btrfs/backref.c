@@ -552,12 +552,12 @@ static int resolve_indirect_ref(struct btrfs_fs_info *fs_info,
 
 	if (!path->search_commit_root &&
 	    test_bit(BTRFS_ROOT_DELETING, &root->state)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (btrfs_is_testing(fs_info)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -680,7 +680,7 @@ static int resolve_indirect_refs(struct btrfs_fs_info *fs_info,
 		ref = rb_entry(rnode, struct prelim_ref, rbnode);
 		if (WARN(ref->parent,
 			 "BUG: direct ref found in indirect tree")) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -780,7 +780,7 @@ static int add_missing_keys(struct btrfs_fs_info *fs_info,
 		} else if (!extent_buffer_uptodate(eb)) {
 			free_pref(ref);
 			free_extent_buffer(eb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (lock)
 			btrfs_tree_read_lock(eb);
@@ -971,7 +971,7 @@ static int add_inline_refs(const struct btrfs_fs_info *fs_info,
 		type = btrfs_get_extent_inline_ref_type(leaf, iref,
 							BTRFS_REF_TYPE_ANY);
 		if (type == BTRFS_REF_TYPE_INVALID)
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 
 		offset = btrfs_extent_inline_ref_offset(leaf, iref);
 
@@ -1326,7 +1326,7 @@ again:
 					goto out;
 				} else if (!extent_buffer_uptodate(eb)) {
 					free_extent_buffer(eb);
-					ret = -EIO;
+					ret = -ERR(EIO);
 					goto out;
 				}
 
@@ -1603,7 +1603,7 @@ int btrfs_find_one_extref(struct btrfs_root *root, u64 inode_objectid,
 			ret = btrfs_next_leaf(root, path);
 			if (ret) {
 				if (ret >= 1)
-					ret = -ENOENT;
+					ret = -ERR(ENOENT);
 				break;
 			}
 			continue;
@@ -1617,7 +1617,7 @@ int btrfs_find_one_extref(struct btrfs_root *root, u64 inode_objectid,
 		 * objectid or type then there are no more to be found
 		 * in the tree and we can exit.
 		 */
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		if (found_key.objectid != inode_objectid)
 			break;
 		if (found_key.type != BTRFS_INODE_EXTREF_KEY)
@@ -1680,7 +1680,7 @@ char *btrfs_ref_to_path(struct btrfs_root *fs_root, struct btrfs_path *path,
 		ret = btrfs_find_item(fs_root, path, parent, 0,
 				BTRFS_INODE_REF_KEY, &found_key);
 		if (ret > 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		if (ret)
 			break;
 
@@ -1751,7 +1751,7 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 	ret = btrfs_previous_extent_item(fs_info->extent_root, path, 0);
 	if (ret) {
 		if (ret > 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		return ret;
 	}
 	btrfs_item_key_to_cpu(path->nodes[0], found_key, path->slots[0]);
@@ -1764,7 +1764,7 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 	    found_key->objectid + size <= logical) {
 		btrfs_debug(fs_info,
 			"logical %llu is not within any extent", logical);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	eb = path->nodes[0];
@@ -1790,7 +1790,7 @@ int extent_from_logical(struct btrfs_fs_info *fs_info, u64 logical,
 		return 0;
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -1832,7 +1832,7 @@ static int get_extent_inline_ref(unsigned long *ptr,
 		}
 		*ptr = (unsigned long)*out_eiref;
 		if ((unsigned long)(*ptr) >= (unsigned long)ei + item_size)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	end = (unsigned long)ei + item_size;
@@ -1840,7 +1840,7 @@ static int get_extent_inline_ref(unsigned long *ptr,
 	*out_type = btrfs_get_extent_inline_ref_type(eb, *out_eiref,
 						     BTRFS_REF_TYPE_ANY);
 	if (*out_type == BTRFS_REF_TYPE_INVALID)
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	*ptr += btrfs_extent_inline_ref_size(*out_type);
 	WARN_ON(*ptr > end);
@@ -2022,7 +2022,7 @@ int iterate_inodes_from_logical(u64 logical, struct btrfs_fs_info *fs_info,
 	if (ret < 0)
 		return ret;
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	extent_item_pos = logical - found_key.objectid;
 	ret = iterate_extent_inodes(fs_info, found_key.objectid,
@@ -2059,7 +2059,7 @@ static int iterate_inode_refs(u64 inum, struct btrfs_root *fs_root,
 		if (ret < 0)
 			break;
 		if (ret) {
-			ret = found ? 0 : -ENOENT;
+			ret = found ? 0 : -ERR(ENOENT);
 			break;
 		}
 		++found;
@@ -2119,7 +2119,7 @@ static int iterate_inode_extrefs(u64 inum, struct btrfs_root *fs_root,
 		if (ret < 0)
 			break;
 		if (ret) {
-			ret = found ? 0 : -ENOENT;
+			ret = found ? 0 : -ERR(ENOENT);
 			break;
 		}
 		++found;
@@ -2333,12 +2333,12 @@ int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr)
 	if (ret < 0)
 		return ret;
 	if (ret == 0) {
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		goto release;
 	}
 	if (path->slots[0] == 0) {
 		WARN_ON(IS_ENABLED(CONFIG_BTRFS_DEBUG));
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		goto release;
 	}
 	path->slots[0]--;
@@ -2346,7 +2346,7 @@ int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr)
 	btrfs_item_key_to_cpu(path->nodes[0], &key, path->slots[0]);
 	if ((key.type != BTRFS_EXTENT_ITEM_KEY &&
 	     key.type != BTRFS_METADATA_ITEM_KEY) || key.objectid != bytenr) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto release;
 	}
 	memcpy(&iter->cur_key, &key, sizeof(key));
@@ -2365,7 +2365,7 @@ int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr)
 	 * extent flags to determine if it's a tree block.
 	 */
 	if (btrfs_extent_flags(path->nodes[0], ei) & BTRFS_EXTENT_FLAG_DATA) {
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		goto release;
 	}
 	iter->cur_ptr = (u32)(iter->item_ptr + sizeof(*ei));
@@ -2376,7 +2376,7 @@ int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr)
 
 		/* No inline nor keyed ref */
 		if (ret > 0) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto release;
 		}
 		if (ret < 0)
@@ -2387,7 +2387,7 @@ int btrfs_backref_iter_start(struct btrfs_backref_iter *iter, u64 bytenr)
 		if (iter->cur_key.objectid != bytenr ||
 		    (iter->cur_key.type != BTRFS_SHARED_BLOCK_REF_KEY &&
 		     iter->cur_key.type != BTRFS_TREE_BLOCK_REF_KEY)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto release;
 		}
 		iter->cur_ptr = (u32)btrfs_item_ptr_offset(path->nodes[0],
@@ -2621,7 +2621,7 @@ static int handle_direct_tree_backref(struct btrfs_backref_cache *cache,
 		if (cache->is_reloc) {
 			root = find_reloc_root(cache->fs_info, cur->bytenr);
 			if (WARN_ON(!root))
-				return -ENOENT;
+				return -ERR(ENOENT);
 			cur->root = root;
 		} else {
 			/*
@@ -2741,7 +2741,7 @@ static int handle_indirect_tree_backref(struct btrfs_backref_cache *cache,
 			  cur->bytenr, level - 1, root->root_key.objectid,
 			  tree_key->objectid, tree_key->type, tree_key->offset);
 		btrfs_put_root(root);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	lower = cur;
@@ -2864,7 +2864,7 @@ int btrfs_backref_add_tree_node(struct btrfs_backref_cache *cache,
 			goto out;
 		/* No extra backref? This means the tree block is corrupted */
 		if (ret > 0) {
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			goto out;
 		}
 	}
@@ -2907,7 +2907,7 @@ int btrfs_backref_add_tree_node(struct btrfs_backref_cache *cache,
 			type = btrfs_get_extent_inline_ref_type(eb, iref,
 							BTRFS_REF_TYPE_BLOCK);
 			if (type == BTRFS_REF_TYPE_INVALID) {
-				ret = -EUCLEAN;
+				ret = -ERR(EUCLEAN);
 				goto out;
 			}
 			key.type = type;
@@ -2937,7 +2937,7 @@ int btrfs_backref_add_tree_node(struct btrfs_backref_cache *cache,
 				goto out;
 			continue;
 		} else if (unlikely(key.type == BTRFS_EXTENT_REF_V0_KEY)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			btrfs_print_v0_err(fs_info);
 			btrfs_handle_fs_error(fs_info, ret, NULL);
 			goto out;
@@ -3036,13 +3036,13 @@ int btrfs_backref_finish_upper_links(struct btrfs_backref_cache *cache,
 		/* Sanity check, we shouldn't have any unchecked nodes */
 		if (!upper->checked) {
 			ASSERT(0);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* Sanity check, COW-only node has non-COW-only parent */
 		if (start->cowonly != upper->cowonly) {
 			ASSERT(0);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* Only cache non-COW-only (subvolume trees) tree blocks */
@@ -3052,7 +3052,7 @@ int btrfs_backref_finish_upper_links(struct btrfs_backref_cache *cache,
 			if (rb_node) {
 				btrfs_backref_panic(cache->fs_info,
 						upper->bytenr, -EEXIST);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 		}
 

@@ -51,12 +51,12 @@ static inline void iommu_setup_dma_ops(struct device *dev, u64 dma_base,
 
 static inline int iommu_get_dma_cookie(struct iommu_domain *domain)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int iommu_get_msi_cookie(struct iommu_domain *domain, dma_addr_t base)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void iommu_put_dma_cookie(struct iommu_domain *domain)

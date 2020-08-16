@@ -201,7 +201,7 @@ ext4_read_inode_bitmap(struct super_block *sb, ext4_group_t block_group)
 			       block_group, bitmap_blk);
 		ext4_mark_group_bitmap_corrupted(sb, block_group,
 				EXT4_GROUP_INFO_IBITMAP_CORRUPT);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 verify:
@@ -300,7 +300,7 @@ void ext4_free_inode(handle_t *handle, struct inode *inode)
 	if (fatal)
 		goto error_return;
 
-	fatal = -ESRCH;
+	fatal = -ERR(ESRCH);
 	gdp = ext4_get_group_desc(sb, block_group, &bh2);
 	if (gdp) {
 		BUFFER_TRACE(bh2, "get_write_access");
@@ -776,13 +776,13 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
 
 	/* Cannot create files in a deleted directory */
 	if (!dir || !dir->i_nlink)
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	sb = dir->i_sb;
 	sbi = EXT4_SB(sb);
 
 	if (unlikely(ext4_forced_shutdown(sbi)))
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	if ((IS_ENCRYPTED(dir) || DUMMY_ENCRYPTION_ENABLED(sbi)) &&
 	    (S_ISREG(mode) || S_ISDIR(mode) || S_ISLNK(mode)) &&
@@ -791,7 +791,7 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
 		if (err)
 			return ERR_PTR(err);
 		if (!fscrypt_has_encryption_key(dir))
-			return ERR_PTR(-ENOKEY);
+			return ERR_PTR(-ERR(ENOKEY));
 		encrypt = 1;
 	}
 
@@ -887,7 +887,7 @@ struct inode *__ext4_new_inode(handle_t *handle, struct inode *dir,
 
 got_group:
 	EXT4_I(dir)->i_last_alloc_group = group;
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	if (ret2 == -1)
 		goto out;
 
@@ -897,7 +897,7 @@ got_group:
 	 * had its last inode grabbed by someone else.
 	 */
 	for (i = 0; i < ngroups; i++, ino = 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 
 		gdp = ext4_get_group_desc(sb, group, &group_desc_bh);
 		if (!gdp)
@@ -978,7 +978,7 @@ next_group:
 		if (++group == ngroups)
 			group = 0;
 	}
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	goto out;
 
 got:
@@ -1124,7 +1124,7 @@ got:
 		 * Likely a bitmap corruption causing inode to be allocated
 		 * twice.
 		 */
-		err = -EIO;
+		err = -ERR(EIO);
 		ext4_error(sb, "failed to insert inode %lu: doubly allocated?",
 			   inode->i_ino);
 		ext4_mark_group_bitmap_corrupted(sb, group,

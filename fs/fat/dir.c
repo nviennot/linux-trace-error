@@ -473,7 +473,7 @@ int fat_search_long(struct inode *inode, const unsigned char *name,
 	loff_t cpos = 0;
 	int err, len;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	while (1) {
 		if (fat_get_entry(inode, &cpos, &bh, &de) == -1)
 			goto end_of_dir;
@@ -581,7 +581,7 @@ static int __fat_readdir(struct inode *inode, struct file *file,
 		}
 	}
 	if (cpos & (sizeof(struct msdos_dir_entry) - 1)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -714,7 +714,7 @@ static int func(struct dir_context *ctx, const char *name, int name_len,   \
 	struct dirent_type __user *d2 = d1 + 1;				   \
 									   \
 	if (buf->result)						   \
-		return -EINVAL;						   \
+		return -ERR(EINVAL);						   \
 	buf->result++;							   \
 									   \
 	if (name != NULL) {						   \
@@ -772,7 +772,7 @@ static int fat_ioctl_readdir(struct inode *inode, struct file *file,
 	buf.result = 0;
 	inode_lock_shared(inode);
 	buf.ctx.pos = file->f_pos;
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (!IS_DEADDIR(inode)) {
 		ret = __fat_readdir(inode, file, &buf.ctx,
 				    short_only, both ? &buf : NULL);
@@ -875,7 +875,7 @@ static int fat_get_short_entry(struct inode *dir, loff_t *pos,
 		if (!IS_FREE((*de)->name) && !((*de)->attr & ATTR_VOLUME))
 			return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*
@@ -897,7 +897,7 @@ int fat_get_dotdot_entry(struct inode *dir, struct buffer_head **bh,
 		if (!strncmp((*de)->name, MSDOS_DOTDOT, MSDOS_NAME))
 			return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL_GPL(fat_get_dotdot_entry);
 
@@ -914,7 +914,7 @@ int fat_dir_empty(struct inode *dir)
 	while (fat_get_short_entry(dir, &cpos, &bh, &de) >= 0) {
 		if (strncmp(de->name, MSDOS_DOT   , MSDOS_NAME) &&
 		    strncmp(de->name, MSDOS_DOTDOT, MSDOS_NAME)) {
-			result = -ENOTEMPTY;
+			result = -ERR(ENOTEMPTY);
 			break;
 		}
 	}
@@ -964,7 +964,7 @@ int fat_scan(struct inode *dir, const unsigned char *name,
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL_GPL(fat_scan);
 
@@ -988,7 +988,7 @@ int fat_scan_logstart(struct inode *dir, int i_logstart,
 			return 0;
 		}
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int __fat_remove_entries(struct inode *dir, loff_t pos, int nr_slots)
@@ -1001,7 +1001,7 @@ static int __fat_remove_entries(struct inode *dir, loff_t pos, int nr_slots)
 	while (nr_slots) {
 		bh = NULL;
 		if (fat_get_entry(dir, &pos, &bh, &de) < 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			break;
 		}
 
@@ -1294,7 +1294,7 @@ int fat_add_entries(struct inode *dir, void *slots, int nr_slots,
 	free_slots = nr_bhs = 0;
 	bh = prev = NULL;
 	pos = 0;
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	while (fat_get_entry(dir, &pos, &bh, &de) > -1) {
 		/* check the maximum size of directory */
 		if (pos >= FAT_MAX_DIR_SIZE)
@@ -1322,7 +1322,7 @@ int fat_add_entries(struct inode *dir, void *slots, int nr_slots,
 	} else if (MSDOS_I(dir)->i_start == 0) {
 		fat_msg(sb, KERN_ERR, "Corrupted directory (i_pos %lld)",
 		       MSDOS_I(dir)->i_pos);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 

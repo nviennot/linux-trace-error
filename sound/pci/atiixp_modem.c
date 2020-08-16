@@ -387,7 +387,7 @@ static int snd_atiixp_acquire_codec(struct atiixp_modem *chip)
 	while (atiixp_read(chip, PHYS_OUT_ADDR) & ATI_REG_PHYS_OUT_ADDR_EN) {
 		if (! timeout--) {
 			dev_warn(chip->card->dev, "codec acquire timeout\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		udelay(1);
 	}
@@ -540,7 +540,7 @@ static int snd_atiixp_codec_detect(struct atiixp_modem *chip)
 
 	if ((chip->codec_not_ready_bits & ALL_CODEC_NOT_READY) == ALL_CODEC_NOT_READY) {
 		dev_err(chip->card->dev, "no codec detected!\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	return 0;
 }
@@ -662,7 +662,7 @@ static int snd_atiixp_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 
 	if (snd_BUG_ON(!dma->ops->enable_transfer ||
 		       !dma->ops->flush_dma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&chip->reg_lock);
 	switch(cmd) {
@@ -675,7 +675,7 @@ static int snd_atiixp_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		dma->running = 0;
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	if (! err) {
@@ -850,10 +850,10 @@ static int snd_atiixp_pcm_open(struct snd_pcm_substream *substream,
 	};
 
 	if (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dma->opened)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	dma->substream = substream;
 	runtime->hw = snd_atiixp_pcm_hw;
 	dma->ac97_pcm_type = pcm_type;
@@ -881,7 +881,7 @@ static int snd_atiixp_pcm_close(struct snd_pcm_substream *substream,
 	struct atiixp_modem *chip = snd_pcm_substream_chip(substream);
 	/* disable DMA bits */
 	if (snd_BUG_ON(!dma->ops || !dma->ops->enable_dma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&chip->reg_lock);
 	dma->ops->enable_dma(chip, 0);
 	spin_unlock_irq(&chip->reg_lock);
@@ -1057,7 +1057,7 @@ static int snd_atiixp_mixer_new(struct atiixp_modem *chip, int clock)
 	};
 
 	if (snd_atiixp_codec_detect(chip) < 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if ((err = snd_ac97_bus(chip->card, 0, &ops, chip, &pbus)) < 0)
 		return err;
@@ -1084,7 +1084,7 @@ static int snd_atiixp_mixer_new(struct atiixp_modem *chip, int clock)
 
 	if (! codec_count) {
 		dev_err(chip->card->dev, "no codec available\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* snd_ac97_tune_hardware(chip->ac97, ac97_quirks); */
@@ -1217,14 +1217,14 @@ static int snd_atiixp_create(struct snd_card *card,
 	if (chip->remap_addr == NULL) {
 		dev_err(card->dev, "AC'97 space ioremap problem\n");
 		snd_atiixp_free(chip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (request_irq(pci->irq, snd_atiixp_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_atiixp_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;

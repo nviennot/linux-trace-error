@@ -281,7 +281,7 @@ void ___ieee80211_start_rx_ba_session(struct sta_info *sta,
 		.timeout = timeout,
 		.ssn = start_seq_num,
 	};
-	int i, ret = -EOPNOTSUPP;
+	int i, ret = -ERR(EOPNOTSUPP);
 	u16 status = WLAN_STATUS_REQUEST_DECLINED;
 	u16 max_buf_size;
 

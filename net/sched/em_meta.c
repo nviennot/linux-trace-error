@@ -751,7 +751,7 @@ static int meta_int_change(struct meta_value *dst, struct nlattr *nla)
 		dst->val = nla_get_u32(nla);
 		dst->len = sizeof(u32);
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -883,7 +883,7 @@ static inline int meta_change_data(struct meta_value *dst, struct nlattr *nla)
 {
 	if (nla) {
 		if (nla_len(nla) == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return meta_type_ops(dst)->change(dst, nla);
 	}
@@ -913,7 +913,7 @@ static int em_meta_change(struct net *net, void *data, int len,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[TCA_EM_META_HDR] == NULL)
 		goto errout;
 	hdr = nla_data(tb[TCA_EM_META_HDR]);
@@ -935,7 +935,7 @@ static int em_meta_change(struct net *net, void *data, int len,
 
 	if (!meta_is_supported(&meta->lvalue) ||
 	    !meta_is_supported(&meta->rvalue)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto errout;
 	}
 

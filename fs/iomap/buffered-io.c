@@ -592,7 +592,7 @@ __iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, int flags,
 
 		if (iomap_block_needs_zeroing(inode, srcmap, block_start)) {
 			if (WARN_ON_ONCE(flags & IOMAP_WRITE_F_UNSHARE))
-				return -EIO;
+				return -ERR(EIO);
 			zero_user_segments(page, poff, from, to, poff + plen);
 			iomap_set_range_uptodate(page, poff, plen);
 			continue;
@@ -620,7 +620,7 @@ iomap_write_begin(struct inode *inode, loff_t pos, unsigned len, unsigned flags,
 		BUG_ON(pos + len > srcmap->offset + srcmap->length);
 
 	if (fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	if (page_ops && page_ops->page_prepare) {
 		status = page_ops->page_prepare(inode, pos, len, iomap);
@@ -893,7 +893,7 @@ iomap_unshare_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 				srcmap);
 		if (unlikely(status <= 0)) {
 			if (WARN_ON_ONCE(status == 0))
-				return -EIO;
+				return -ERR(EIO);
 			return status;
 		}
 

@@ -105,7 +105,7 @@ static int limit_mt_check(const struct xt_mtchk_param *par)
 	    || user2credits(r->avg * r->burst) < user2credits(r->avg)) {
 		pr_info_ratelimited("Overflow, try lower: %u/%u\n",
 				    r->avg, r->burst);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	priv = kmalloc(sizeof(*priv), GFP_KERNEL);

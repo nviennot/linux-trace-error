@@ -271,20 +271,20 @@ static inline void switchdev_deferred_process(void)
 static inline int switchdev_port_attr_set(struct net_device *dev,
 					  const struct switchdev_attr *attr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int switchdev_port_obj_add(struct net_device *dev,
 					 const struct switchdev_obj *obj,
 					 struct netlink_ext_ack *extack)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int switchdev_port_obj_del(struct net_device *dev,
 					 const struct switchdev_obj *obj)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int register_switchdev_notifier(struct notifier_block *nb)

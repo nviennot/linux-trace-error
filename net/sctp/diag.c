@@ -82,7 +82,7 @@ static int inet_diag_msg_sctpladdrs_fill(struct sk_buff *skb,
 
 	attr = nla_reserve(skb, INET_DIAG_LOCALS, addrlen * addrcnt);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	info = nla_data(attr);
 	list_for_each_entry_rcu(laddr, address_list, list) {
@@ -105,7 +105,7 @@ static int inet_diag_msg_sctpaddrs_fill(struct sk_buff *skb,
 	attr = nla_reserve(skb, INET_DIAG_PEERS,
 			   addrlen * asoc->peer.transport_count);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	info = nla_data(attr);
 	list_for_each_entry(from, &asoc->peer.transport_addr_list,
@@ -139,7 +139,7 @@ static int inet_sctp_diag_fill(struct sock *sk, struct sctp_association *asoc,
 	nlh = nlmsg_put(skb, portid, seq, unlh->nlmsg_type, sizeof(*r),
 			nlmsg_flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	r = nlmsg_data(nlh);
 	BUG_ON(!sk_fullsock(sk));
@@ -214,7 +214,7 @@ static int inet_sctp_diag_fill(struct sock *sk, struct sctp_association *asoc,
 
 errout:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* callback and param */

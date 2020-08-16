@@ -1023,7 +1023,7 @@ xfs_rtalloc_query_range(
 	int				error = 0;
 
 	if (low_rec->ar_startext > high_rec->ar_startext)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (low_rec->ar_startext >= mp->m_sb.sb_rextents ||
 	    low_rec->ar_startext == high_rec->ar_startext)
 		return 0;

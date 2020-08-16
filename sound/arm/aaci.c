@@ -511,7 +511,7 @@ static int aaci_pcm_hw_params(struct snd_pcm_substream *substream,
 
 	/* channels is already limited to 2, 4, or 6 by aaci_rule_channels */
 	if (dbl && channels != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = snd_ac97_pcm_open(aacirun->pcm, rate, channels,
 				aacirun->pcm->r[dbl].slots);
@@ -614,7 +614,7 @@ static int aaci_pcm_playback_trigger(struct snd_pcm_substream *substream, int cm
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	spin_unlock_irqrestore(&aacirun->lock, flags);
@@ -698,7 +698,7 @@ static int aaci_pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	spin_unlock_irqrestore(&aacirun->lock, flags);
@@ -1032,7 +1032,7 @@ static int aaci_probe(struct amba_device *dev,
 	if (aaci->fifo_depth & 15) {
 		printk(KERN_WARNING "AACI: FIFO depth %d not supported\n",
 		       aaci->fifo_depth);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 

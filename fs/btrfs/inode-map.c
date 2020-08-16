@@ -206,7 +206,7 @@ again:
 
 	if (root->ino_cache_state == BTRFS_CACHE_FINISHED &&
 	    root->free_ino_ctl->free_space == 0)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	else if (root->ino_cache_state == BTRFS_CACHE_ERROR)
 		return btrfs_find_free_objectid(root, objectid);
 	else
@@ -569,7 +569,7 @@ int btrfs_find_free_objectid(struct btrfs_root *root, u64 *objectid)
 		btrfs_warn(root->fs_info,
 			   "the objectid of root %llu reaches its highest value",
 			   root->root_key.objectid);
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out;
 	}
 

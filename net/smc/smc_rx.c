@@ -225,7 +225,7 @@ static int smc_rx_recv_urg(struct smc_sock *smc, struct msghdr *msg, int len,
 	if (sock_flag(sk, SOCK_URGINLINE) ||
 	    !(conn->urg_state == SMC_URG_VALID) ||
 	    conn->urg_state == SMC_URG_READ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (conn->urg_state == SMC_URG_VALID) {
 		if (!(flags & MSG_PEEK))
@@ -254,7 +254,7 @@ static int smc_rx_recv_urg(struct smc_sock *smc, struct msghdr *msg, int len,
 	if (sk->sk_state == SMC_CLOSED || sk->sk_shutdown & RCV_SHUTDOWN)
 		return 0;
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static bool smc_rx_recvmsg_data_available(struct smc_sock *smc)
@@ -293,11 +293,11 @@ int smc_rx_recvmsg(struct smc_sock *smc, struct msghdr *msg,
 	int rc;
 
 	if (unlikely(flags & MSG_ERRQUEUE))
-		return -EINVAL; /* future work for sk.sk_family == AF_SMC */
+		return -ERR(EINVAL); /* future work for sk.sk_family == AF_SMC */
 
 	sk = &smc->sk;
 	if (sk->sk_state == SMC_LISTEN)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	if (flags & MSG_OOB)
 		return smc_rx_recv_urg(smc, msg, len, flags);
 	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
@@ -341,7 +341,7 @@ int smc_rx_recvmsg(struct smc_sock *smc, struct msghdr *msg,
 					/* This occurs when user tries to read
 					 * from never connected socket.
 					 */
-					read_done = -ENOTCONN;
+					read_done = -ERR(ENOTCONN);
 					break;
 				}
 				break;
@@ -351,7 +351,7 @@ int smc_rx_recvmsg(struct smc_sock *smc, struct msghdr *msg,
 				break;
 			}
 			if (!timeo)
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		}
 
 		if (!smc_rx_data_available(conn)) {

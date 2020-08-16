@@ -121,11 +121,11 @@ int set_blocksize(struct block_device *bdev, int size)
 {
 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
 	if (size > PAGE_SIZE || size < 512 || !is_power_of_2(size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Size cannot be smaller than the size supported by the device */
 	if (size < bdev_logical_block_size(bdev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Don't change the size if it is same as current */
 	if (bdev->bd_block_size != size) {
@@ -212,7 +212,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
 
 	if ((pos | iov_iter_alignment(iter)) &
 	    (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nr_pages <= DIO_INLINE_BIO_VECS)
 		vecs = inline_vecs;
@@ -350,7 +350,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 
 	if ((pos | iov_iter_alignment(iter)) &
 	    (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bio = bio_alloc_bioset(GFP_KERNEL, nr_pages, &blkdev_dio_pool);
 
@@ -439,7 +439,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
 		blk_finish_plug(&plug);
 
 	if (!is_sync)
-		return -EIOCBQUEUED;
+		return -ERR(EIOCBQUEUED);
 
 	for (;;) {
 		set_current_state(TASK_UNINTERRUPTIBLE);
@@ -578,7 +578,7 @@ EXPORT_SYMBOL(freeze_bdev);
  */
 int thaw_bdev(struct block_device *bdev, struct super_block *sb)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	mutex_lock(&bdev->bd_fsfreeze_mutex);
 	if (!bdev->bd_fsfreeze_count)
@@ -698,7 +698,7 @@ int bdev_read_page(struct block_device *bdev, sector_t sector,
 			struct page *page)
 {
 	const struct block_device_operations *ops = bdev->bd_disk->fops;
-	int result = -EOPNOTSUPP;
+	int result = -ERR(EOPNOTSUPP);
 
 	if (!ops->rw_page || bdev_get_integrity(bdev))
 		return result;
@@ -738,7 +738,7 @@ int bdev_write_page(struct block_device *bdev, sector_t sector,
 	const struct block_device_operations *ops = bdev->bd_disk->fops;
 
 	if (!ops->rw_page || bdev_get_integrity(bdev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	result = blk_queue_enter(bdev->bd_queue, 0);
 	if (result)
 		return result;
@@ -1057,7 +1057,7 @@ static int bd_prepare_to_claim(struct block_device *bdev,
 retry:
 	/* if someone else claimed, fail */
 	if (!bd_may_claim(bdev, whole, holder))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* if claiming is already in progress, wait for it to finish */
 	if (whole->bd_claiming) {
@@ -1134,7 +1134,7 @@ struct block_device *bd_start_claiming(struct block_device *bdev, void *holder)
 	 */
 	disk = bdev_get_gendisk(bdev, &partno);
 	if (!disk)
-		return ERR_PTR(-ENXIO);
+		return ERR_PTR(-ERR(ENXIO));
 
 	/*
 	 * Normally, @bdev should equal what's returned from bdget_disk()
@@ -1570,7 +1570,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, int for_part)
 
  restart:
 
-	ret = -ENXIO;
+	ret = -ERR(ENXIO);
 	disk = bdev_get_gendisk(bdev, &partno);
 	if (!disk)
 		goto out;
@@ -1585,7 +1585,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, int for_part)
 		bdev->bd_partno = partno;
 
 		if (!partno) {
-			ret = -ENXIO;
+			ret = -ERR(ENXIO);
 			bdev->bd_part = disk_get_part(disk, partno);
 			if (!bdev->bd_part)
 				goto out_clear;
@@ -1642,7 +1642,7 @@ static int __blkdev_get(struct block_device *bdev, fmode_t mode, int for_part)
 			bdev->bd_part = disk_get_part(disk, partno);
 			if (!(disk->flags & GENHD_FL_UP) ||
 			    !bdev->bd_part || !bdev->bd_part->nr_sects) {
-				ret = -ENXIO;
+				ret = -ERR(ENXIO);
 				goto out_clear;
 			}
 			bd_set_size(bdev, (loff_t)bdev->bd_part->nr_sects << 9);
@@ -1793,7 +1793,7 @@ struct block_device *blkdev_get_by_path(const char *path, fmode_t mode,
 
 	if ((mode & FMODE_WRITE) && bdev_read_only(bdev)) {
 		blkdev_put(bdev, mode);
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 	}
 
 	return bdev;
@@ -2004,19 +2004,19 @@ ssize_t blkdev_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	ssize_t ret;
 
 	if (bdev_read_only(I_BDEV(bd_inode)))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (IS_SWAPFILE(bd_inode) && !is_hibernate_resume_dev(bd_inode))
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 
 	if (!iov_iter_count(from))
 		return 0;
 
 	if (iocb->ki_pos >= size)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if ((iocb->ki_flags & (IOCB_NOWAIT | IOCB_DIRECT)) == IOCB_NOWAIT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	iov_iter_truncate(from, size - iocb->ki_pos);
 
@@ -2093,25 +2093,25 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
 
 	/* Fail if we don't recognize the flags. */
 	if (mode & ~BLKDEV_FALLOC_FL_SUPPORTED)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Don't go off the end of the device. */
 	isize = i_size_read(bdev->bd_inode);
 	if (start >= isize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (end >= isize) {
 		if (mode & FALLOC_FL_KEEP_SIZE) {
 			len = isize - start;
 			end = start + len - 1;
 		} else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/*
 	 * Don't allow IO that isn't aligned to logical block size.
 	 */
 	if ((start | len) & (bdev_logical_block_size(bdev) - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Invalidate the page cache, including dirty pages. */
 	mapping = bdev->bd_inode->i_mapping;
@@ -2132,7 +2132,7 @@ static long blkdev_fallocate(struct file *file, int mode, loff_t start,
 					     GFP_KERNEL, 0);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	if (error)
 		return error;
@@ -2181,17 +2181,17 @@ struct block_device *lookup_bdev(const char *pathname)
 	int error;
 
 	if (!pathname || !*pathname)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	error = kern_path(pathname, LOOKUP_FOLLOW, &path);
 	if (error)
 		return ERR_PTR(error);
 
 	inode = d_backing_inode(path.dentry);
-	error = -ENOTBLK;
+	error = -ERR(ENOTBLK);
 	if (!S_ISBLK(inode->i_mode))
 		goto fail;
-	error = -EACCES;
+	error = -ERR(EACCES);
 	if (!may_open_dev(&path))
 		goto fail;
 	error = -ENOMEM;

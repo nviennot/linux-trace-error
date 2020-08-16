@@ -154,7 +154,7 @@ static int ipgre_err(struct sk_buff *skb, u32 info,
 			     iph->daddr, iph->saddr, tpi->key);
 
 	if (!t)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (type) {
 	default:
@@ -595,7 +595,7 @@ static int gre_fill_metadata_dst(struct net_device *dev, struct sk_buff *skb)
 	struct flowi4 fl4;
 
 	if (ip_tunnel_info_af(info) != AF_INET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	key = &info->key;
 	ip_tunnel_init_flow(&fl4, IPPROTO_GRE, key->u.ipv4.dst, key->u.ipv4.src,
@@ -777,7 +777,7 @@ static int ipgre_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p,
 		if (p->iph.version != 4 || p->iph.protocol != IPPROTO_GRE ||
 		    p->iph.ihl != 5 || (p->iph.frag_off & htons(~IP_DF)) ||
 		    ((p->i_flags | p->o_flags) & (GRE_VERSION | GRE_ROUTING)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	p->i_flags = gre_flags_to_tnl_flags(p->i_flags);
@@ -883,11 +883,11 @@ static int ipgre_open(struct net_device *dev)
 					 RT_TOS(t->parms.iph.tos),
 					 t->parms.link);
 		if (IS_ERR(rt))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		dev = rt->dst.dev;
 		ip_rt_put(rt);
 		if (!__in_dev_get_rtnl(dev))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		t->mlink = dev->ifindex;
 		ip_mc_inc_group(__in_dev_get_rtnl(dev), t->parms.iph.daddr);
 	}
@@ -984,7 +984,7 @@ static int ipgre_tunnel_init(struct net_device *dev)
 #ifdef CONFIG_NET_IPGRE_BROADCAST
 		if (ipv4_is_multicast(iph->daddr)) {
 			if (!iph->saddr)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			dev->flags = IFF_BROADCAST;
 			dev->header_ops = &ipgre_header_ops;
 		}
@@ -1032,12 +1032,12 @@ static int ipgre_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (data[IFLA_GRE_OFLAGS])
 		flags |= nla_get_be16(data[IFLA_GRE_OFLAGS]);
 	if (flags & (GRE_VERSION|GRE_ROUTING))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (data[IFLA_GRE_COLLECT_METADATA] &&
 	    data[IFLA_GRE_ENCAP_TYPE] &&
 	    nla_get_u16(data[IFLA_GRE_ENCAP_TYPE]) != TUNNEL_ENCAP_NONE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1049,9 +1049,9 @@ static int ipgre_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 
 	if (tb[IFLA_ADDRESS]) {
 		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 	}
 
 	if (!data)
@@ -1060,7 +1060,7 @@ static int ipgre_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (data[IFLA_GRE_REMOTE]) {
 		memcpy(&daddr, nla_data(data[IFLA_GRE_REMOTE]), 4);
 		if (!daddr)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 out:
@@ -1091,18 +1091,18 @@ static int erspan_validate(struct nlattr *tb[], struct nlattr *data[],
 		flags |= nla_get_be16(data[IFLA_GRE_IFLAGS]);
 	if (!data[IFLA_GRE_COLLECT_METADATA] &&
 	    flags != (GRE_SEQ | GRE_KEY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ERSPAN Session ID only has 10-bit. Since we reuse
 	 * 32-bit key field as ID, check it's range.
 	 */
 	if (data[IFLA_GRE_IKEY] &&
 	    (ntohl(nla_get_be32(data[IFLA_GRE_IKEY])) & ~ID_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (data[IFLA_GRE_OKEY] &&
 	    (ntohl(nla_get_be32(data[IFLA_GRE_OKEY])) & ~ID_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1151,7 +1151,7 @@ static int ipgre_netlink_parms(struct net_device *dev,
 
 	if (!data[IFLA_GRE_PMTUDISC] || nla_get_u8(data[IFLA_GRE_PMTUDISC])) {
 		if (t->ignore_df)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		parms->iph.frag_off = htons(IP_DF);
 	}
 
@@ -1164,7 +1164,7 @@ static int ipgre_netlink_parms(struct net_device *dev,
 	if (data[IFLA_GRE_IGNORE_DF]) {
 		if (nla_get_u8(data[IFLA_GRE_IGNORE_DF])
 		  && (parms->iph.frag_off & htons(IP_DF)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		t->ignore_df = !!nla_get_u8(data[IFLA_GRE_IGNORE_DF]);
 	}
 
@@ -1193,25 +1193,25 @@ static int erspan_netlink_parms(struct net_device *dev,
 		t->erspan_ver = nla_get_u8(data[IFLA_GRE_ERSPAN_VER]);
 
 		if (t->erspan_ver > 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (t->erspan_ver == 1) {
 		if (data[IFLA_GRE_ERSPAN_INDEX]) {
 			t->index = nla_get_u32(data[IFLA_GRE_ERSPAN_INDEX]);
 			if (t->index & ~INDEX_MASK)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	} else if (t->erspan_ver == 2) {
 		if (data[IFLA_GRE_ERSPAN_DIR]) {
 			t->dir = nla_get_u8(data[IFLA_GRE_ERSPAN_DIR]);
 			if (t->dir & ~(DIR_MASK >> DIR_OFFSET))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		if (data[IFLA_GRE_ERSPAN_HWID]) {
 			t->hwid = nla_get_u16(data[IFLA_GRE_ERSPAN_HWID]);
 			if (t->hwid & ~(HWID_MASK >> HWID_OFFSET))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -1533,7 +1533,7 @@ static int ipgre_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void erspan_setup(struct net_device *dev)

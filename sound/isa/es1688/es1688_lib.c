@@ -44,7 +44,7 @@ static int snd_es1688_dsp_get_byte(struct snd_es1688 *chip)
 		if (inb(ES1688P(chip, DATA_AVAIL)) & 0x80)
 			return inb(ES1688P(chip, READ));
 	snd_printd("es1688 get byte failed: 0x%lx = 0x%x!!!\n", ES1688P(chip, DATA_AVAIL), inb(ES1688P(chip, DATA_AVAIL)));
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_es1688_write(struct snd_es1688 *chip,
@@ -96,7 +96,7 @@ int snd_es1688_reset(struct snd_es1688 *chip)
 	for (i = 0; i < 1000 && !(inb(ES1688P(chip, DATA_AVAIL)) & 0x80); i++);
 	if (inb(ES1688P(chip, READ)) != 0xaa) {
 		snd_printd("ess_reset at 0x%lx: failed!!!\n", chip->port);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_es1688_dsp_command(chip, 0xc6);	/* enable extended mode */
 	return 0;
@@ -129,7 +129,7 @@ static int snd_es1688_probe(struct snd_es1688 *chip)
 	if (snd_es1688_reset(chip) < 0) {
 		snd_printdd("ESS: [0x%lx] reset failed... 0x%x\n", chip->port, inb(ES1688P(chip, READ)));
 		spin_unlock_irqrestore(&chip->reg_lock, flags);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_es1688_dsp_command(chip, 0xe7);	/* return identification */
 
@@ -149,20 +149,20 @@ static int snd_es1688_probe(struct snd_es1688 *chip)
 
 	chip->version = (major << 8) | minor;
 	if (!chip->version)
-		return -ENODEV;	/* probably SB */
+		return -ERR(ENODEV);	/* probably SB */
 
 	switch (chip->version & 0xfff0) {
 	case 0x4880:
 		snd_printk(KERN_ERR "[0x%lx] ESS: AudioDrive ES488 detected, "
 			   "but driver is in another place\n", chip->port);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	case 0x6880:
 		break;
 	default:
 		snd_printk(KERN_ERR "[0x%lx] ESS: unknown AudioDrive chip "
 			   "with version 0x%x (Jazz16 soundcard?)\n",
 			   chip->port, chip->version);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	spin_lock_irqsave(&chip->reg_lock, flags);
@@ -232,7 +232,7 @@ static int snd_es1688_init(struct snd_es1688 * chip, int enable)
 			irq_bits = 0;
 			cfg = 0x10;
 #endif
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		spin_lock_irqsave(&chip->reg_lock, flags);
 		snd_es1688_write(chip, 0xb1, cfg | (irq_bits << 2));
@@ -246,7 +246,7 @@ static int snd_es1688_init(struct snd_es1688 * chip, int enable)
 			dma_bits = 0;
 			cfg = 0x00;	/* disable all DMA */
 #endif
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else {
 			dma_bits = dma;
 			if (dma != 3)
@@ -316,14 +316,14 @@ static int snd_es1688_trigger(struct snd_es1688 *chip, int cmd, unsigned char va
 	if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		value = 0x00;
 	} else if (cmd != SNDRV_PCM_TRIGGER_START) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	spin_lock(&chip->reg_lock);
 	chip->trigger_value = value;
 	val = snd_es1688_read(chip, 0xb8);
 	if ((val < 0) || (val & 0x0f) == value) {
 		spin_unlock(&chip->reg_lock);
-		return -EINVAL;	/* something is wrong */
+		return -ERR(EINVAL);	/* something is wrong */
 	}
 #if 0
 	printk(KERN_DEBUG "trigger: val = 0x%x, value = 0x%x\n", val, value);
@@ -538,7 +538,7 @@ static int snd_es1688_playback_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	if (chip->capture_substream != NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	chip->playback_substream = substream;
 	runtime->hw = snd_es1688_playback;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -552,7 +552,7 @@ static int snd_es1688_capture_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	if (chip->playback_substream != NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	chip->capture_substream = substream;
 	runtime->hw = snd_es1688_capture;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -627,7 +627,7 @@ int snd_es1688_create(struct snd_card *card,
 	chip->res_port = request_region(port + 4, 12, "ES1688");
 	if (chip->res_port == NULL) {
 		snd_printk(KERN_ERR "es1688: can't grab port 0x%lx\n", port + 4);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto exit;
 	}
 
@@ -740,7 +740,7 @@ static int snd_es1688_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_elem
 	int change;
 	
 	if (ucontrol->value.enumerated.item[0] > 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	oval = snd_es1688_mixer_read(chip, ES1688_REC_DEV);
 	nval = (ucontrol->value.enumerated.item[0] & 7) | (oval & ~15);
@@ -966,7 +966,7 @@ int snd_es1688_mixer(struct snd_card *card, struct snd_es1688 *chip)
 	unsigned char reg, val;
 
 	if (snd_BUG_ON(!chip || !card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	strcpy(card->mixername, snd_es1688_chip_id(chip));
 

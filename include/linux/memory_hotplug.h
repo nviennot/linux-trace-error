@@ -260,7 +260,7 @@ static inline int mhp_notimplemented(const char *func)
 {
 	printk(KERN_WARNING "%s() called, with CONFIG_MEMORY_HOTPLUG disabled\n", func);
 	dump_stack();
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void register_page_bootmem_info_node(struct pglist_data *pgdat)
@@ -325,12 +325,12 @@ static inline void try_offline_node(int nid) {}
 
 static inline int offline_pages(unsigned long start_pfn, unsigned long nr_pages)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int remove_memory(int nid, u64 start, u64 size)
 {
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static inline void __remove_memory(int nid, u64 start, u64 size) {}

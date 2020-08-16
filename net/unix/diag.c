@@ -95,7 +95,7 @@ static int sk_diag_dump_icons(struct sock *sk, struct sk_buff *nlskb)
 
 errout:
 	spin_unlock(&sk->sk_receive_queue.lock);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int sk_diag_show_rqlen(struct sock *sk, struct sk_buff *nlskb)
@@ -128,7 +128,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_r
 	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*rep),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rep = nlmsg_data(nlh);
 	rep->udiag_family = AF_UNIX;
@@ -174,7 +174,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_r
 
 out_nlmsg_trim:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int sk_diag_dump(struct sock *sk, struct sk_buff *skb, struct unix_diag_req *req,
@@ -258,7 +258,7 @@ static int unix_diag_get_exact(struct sk_buff *in_skb,
 			       const struct nlmsghdr *nlh,
 			       struct unix_diag_req *req)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct sock *sk;
 	struct sk_buff *rep;
 	unsigned int extra_len;
@@ -268,7 +268,7 @@ static int unix_diag_get_exact(struct sk_buff *in_skb,
 		goto out_nosk;
 
 	sk = unix_lookup_by_ino(req->udiag_ino);
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (sk == NULL)
 		goto out_nosk;
 	if (!net_eq(sock_net(sk), net))
@@ -312,7 +312,7 @@ static int unix_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
 	struct net *net = sock_net(skb->sk);
 
 	if (nlmsg_len(h) < hdrlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (h->nlmsg_flags & NLM_F_DUMP) {
 		struct netlink_dump_control c = {

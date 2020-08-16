@@ -178,11 +178,11 @@ static struct inode *nfs_layout_find_inode_by_fh(struct nfs_client *clp,
 			if (inode)
 				return inode;
 			nfs_sb_deactive(server->super);
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 		}
 	}
 	rcu_read_unlock();
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static struct inode *nfs_layout_find_inode(struct nfs_client *clp,

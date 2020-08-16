@@ -25,18 +25,18 @@ static int vxlan_get_options(const struct vport *vport, struct sk_buff *skb)
 	__be16 dst_port = vxlan->cfg.dst_port;
 
 	if (nla_put_u16(skb, OVS_TUNNEL_ATTR_DST_PORT, ntohs(dst_port)))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (vxlan->cfg.flags & VXLAN_F_GBP) {
 		struct nlattr *exts;
 
 		exts = nla_nest_start_noflag(skb, OVS_TUNNEL_ATTR_EXTENSION);
 		if (!exts)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		if (vxlan->cfg.flags & VXLAN_F_GBP &&
 		    nla_put_flag(skb, OVS_VXLAN_EXT_GBP))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		nla_nest_end(skb, exts);
 	}
@@ -55,7 +55,7 @@ static int vxlan_configure_exts(struct vport *vport, struct nlattr *attr,
 	int err;
 
 	if (nla_len(attr) < sizeof(struct nlattr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(exts, OVS_VXLAN_EXT_MAX, attr,
 					  exts_policy, NULL);
@@ -84,7 +84,7 @@ static struct vport *vxlan_tnl_create(const struct vport_parms *parms)
 	};
 
 	if (!options) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -93,7 +93,7 @@ static struct vport *vxlan_tnl_create(const struct vport_parms *parms)
 		conf.dst_port = htons(nla_get_u16(a));
 	} else {
 		/* Require destination port from userspace. */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 

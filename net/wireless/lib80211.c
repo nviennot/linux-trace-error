@@ -196,7 +196,7 @@ int lib80211_unregister_crypto_ops(struct lib80211_crypto_ops *ops)
 			goto found;
 	}
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
-	return -EINVAL;
+	return -ERR(EINVAL);
 
       found:
 	printk(KERN_DEBUG "lib80211_crypt: unregistered algorithm '%s'\n",

@@ -128,7 +128,7 @@ static int skl_hda_fill_card_info(struct snd_soc_acpi_mach_params *mach_params)
 
 	if (!codec_count || codec_count > 2 ||
 	    (codec_count == 2 && !idisp_mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (codec_mask == idisp_mask) {
 		/* topology with iDisp as the only HDA codec */
@@ -209,7 +209,7 @@ static int skl_hda_audio_probe(struct platform_device *pdev)
 
 	mach = pdev->dev.platform_data;
 	if (!mach)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = skl_hda_fill_card_info(&mach->mach_params);
 	if (ret < 0) {

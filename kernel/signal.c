@@ -831,7 +831,7 @@ static int check_kill_permission(int sig, struct kernel_siginfo *info,
 	int error;
 
 	if (!valid_signal(sig))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!si_fromuser(info))
 		return 0;
@@ -853,7 +853,7 @@ static int check_kill_permission(int sig, struct kernel_siginfo *info,
 				break;
 			/* fall through */
 		default:
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 	}
 
@@ -1149,7 +1149,7 @@ static int __send_signal(int sig, struct kernel_siginfo *info, struct task_struc
 		 * other than kill().
 		 */
 		result = TRACE_SIGNAL_OVERFLOW_FAIL;
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto ret;
 	} else {
 		/*
@@ -1284,7 +1284,7 @@ int do_send_sig_info(int sig, struct kernel_siginfo *info, struct task_struct *p
 			enum pid_type type)
 {
 	unsigned long flags;
-	int ret = -ESRCH;
+	int ret = -ERR(ESRCH);
 
 	if (lock_task_sighand(p, &flags)) {
 		ret = send_signal(sig, info, p, type);
@@ -1426,7 +1426,7 @@ int __kill_pgrp_info(int sig, struct kernel_siginfo *info, struct pid *pgrp)
 	int retval, success;
 
 	success = 0;
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
 		int err = group_send_sig_info(sig, info, p, PIDTYPE_PGID);
 		success |= !err;
@@ -1437,7 +1437,7 @@ int __kill_pgrp_info(int sig, struct kernel_siginfo *info, struct pid *pgrp)
 
 int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid)
 {
-	int error = -ESRCH;
+	int error = -ERR(ESRCH);
 	struct task_struct *p;
 
 	for (;;) {
@@ -1508,7 +1508,7 @@ int kill_pid_usb_asyncio(int sig, int errno, sigval_t addr,
 	struct kernel_siginfo info;
 	struct task_struct *p;
 	unsigned long flags;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!valid_signal(sig))
 		return ret;
@@ -1522,11 +1522,11 @@ int kill_pid_usb_asyncio(int sig, int errno, sigval_t addr,
 	rcu_read_lock();
 	p = pid_task(pid, PIDTYPE_PID);
 	if (!p) {
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 		goto out_unlock;
 	}
 	if (!kill_as_cred_perm(cred, p)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_unlock;
 	}
 	ret = security_task_kill(p, &info, sig, cred);
@@ -1538,7 +1538,7 @@ int kill_pid_usb_asyncio(int sig, int errno, sigval_t addr,
 			ret = __send_signal(sig, &info, p, PIDTYPE_TGID, false);
 			unlock_task_sighand(p, &flags);
 		} else
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 	}
 out_unlock:
 	rcu_read_unlock();
@@ -1562,7 +1562,7 @@ static int kill_something_info(int sig, struct kernel_siginfo *info, pid_t pid)
 
 	/* -INT_MIN is undefined.  Exclude this case to avoid a UBSAN warning */
 	if (pid == INT_MIN)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	read_lock(&tasklist_lock);
 	if (pid != -1) {
@@ -1582,7 +1582,7 @@ static int kill_something_info(int sig, struct kernel_siginfo *info, pid_t pid)
 					retval = err;
 			}
 		}
-		ret = count ? retval : -ESRCH;
+		ret = count ? retval : -ERR(ESRCH);
 	}
 	read_unlock(&tasklist_lock);
 
@@ -1600,7 +1600,7 @@ int send_sig_info(int sig, struct kernel_siginfo *info, struct task_struct *p)
 	 * (normal paths check this in check_kill_permission).
 	 */
 	if (!valid_signal(sig))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return do_send_sig_info(sig, info, p, PIDTYPE_PID);
 }
@@ -2881,7 +2881,7 @@ SYSCALL_DEFINE0(restart_syscall)
 
 long do_no_restart_syscall(struct restart_block *param)
 {
-	return -EINTR;
+	return -ERR(EINTR);
 }
 
 static void __set_task_blocked(struct task_struct *tsk, const sigset_t *newset)
@@ -2953,7 +2953,7 @@ int sigprocmask(int how, sigset_t *set, sigset_t *oldset)
 		newset = *set;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	__set_current_blocked(&newset);
@@ -2977,7 +2977,7 @@ int set_user_sigmask(const sigset_t __user *umask, size_t sigsetsize)
 	if (!umask)
 		return 0;
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&kmask, umask, sizeof(sigset_t)))
 		return -EFAULT;
 
@@ -2997,7 +2997,7 @@ int set_compat_user_sigmask(const compat_sigset_t __user *umask,
 	if (!umask)
 		return 0;
 	if (sigsetsize != sizeof(compat_sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_compat_sigset(&kmask, umask))
 		return -EFAULT;
 
@@ -3024,7 +3024,7 @@ SYSCALL_DEFINE4(rt_sigprocmask, int, how, sigset_t __user *, nset,
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_set = current->blocked;
 
@@ -3093,7 +3093,7 @@ SYSCALL_DEFINE2(rt_sigpending, sigset_t __user *, uset, size_t, sigsetsize)
 	sigset_t set;
 
 	if (sigsetsize > sizeof(*uset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	do_sigpending(&set);
 
@@ -3216,7 +3216,7 @@ static int post_copy_siginfo_from_user(kernel_siginfo_t *info,
 			return -EFAULT;
 		for (i = 0; i < SI_EXPANSION_SIZE; i++) {
 			if (buf[i] != 0)
-				return -E2BIG;
+				return -ERR(E2BIG);
 		}
 	}
 	return 0;
@@ -3448,7 +3448,7 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
 
 	if (ts) {
 		if (!timespec64_valid(ts))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		timeout = timespec64_to_ktime(*ts);
 		to = &timeout;
 	}
@@ -3485,7 +3485,7 @@ static int do_sigtimedwait(const sigset_t *which, kernel_siginfo_t *info,
 
 	if (sig)
 		return sig;
-	return ret ? -EINTR : -EAGAIN;
+	return ret ? -ERR(EINTR) : -ERR(EAGAIN);
 }
 
 /**
@@ -3508,7 +3508,7 @@ SYSCALL_DEFINE4(rt_sigtimedwait, const sigset_t __user *, uthese,
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&these, uthese, sizeof(these)))
 		return -EFAULT;
@@ -3540,7 +3540,7 @@ SYSCALL_DEFINE4(rt_sigtimedwait_time32, const sigset_t __user *, uthese,
 	int ret;
 
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&these, uthese, sizeof(these)))
 		return -EFAULT;
@@ -3724,11 +3724,11 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
 
 	/* Enforce flags be set to 0 until we add an extension. */
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = fdget(pidfd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	/* Is this a pidfd? */
 	pid = pidfd_to_pid(f.file);
@@ -3737,7 +3737,7 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
 		goto err;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!access_pidfd_pidns(pid))
 		goto err;
 
@@ -3746,12 +3746,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
 		if (unlikely(ret))
 			goto err;
 
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (unlikely(sig != kinfo.si_signo))
 			goto err;
 
 		/* Only allow sending arbitrary signals to yourself. */
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		if ((task_pid(current) != pid) &&
 		    (kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL))
 			goto err;
@@ -3770,7 +3770,7 @@ static int
 do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
 {
 	struct task_struct *p;
-	int error = -ESRCH;
+	int error = -ERR(ESRCH);
 
 	rcu_read_lock();
 	p = find_task_by_vpid(pid);
@@ -3824,7 +3824,7 @@ SYSCALL_DEFINE3(tgkill, pid_t, tgid, pid_t, pid, int, sig)
 {
 	/* This is only valid for single tasks */
 	if (pid <= 0 || tgid <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return do_tkill(tgid, pid, sig);
 }
@@ -3840,7 +3840,7 @@ SYSCALL_DEFINE2(tkill, pid_t, pid, int, sig)
 {
 	/* This is only valid for single tasks */
 	if (pid <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return do_tkill(0, pid, sig);
 }
@@ -3852,7 +3852,7 @@ static int do_rt_sigqueueinfo(pid_t pid, int sig, kernel_siginfo_t *info)
 	 */
 	if ((info->si_code >= 0 || info->si_code == SI_TKILL) &&
 	    (task_pid_vnr(current) != pid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* POSIX.1b doesn't mention process groups.  */
 	return kill_proc_info(sig, info, pid);
@@ -3892,14 +3892,14 @@ static int do_rt_tgsigqueueinfo(pid_t tgid, pid_t pid, int sig, kernel_siginfo_t
 {
 	/* This is only valid for single tasks */
 	if (pid <= 0 || tgid <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Not even root can pretend to send signals from the kernel.
 	 * Nor can they impersonate a kill()/tgkill(), which adds source info.
 	 */
 	if ((info->si_code >= 0 || info->si_code == SI_TKILL) &&
 	    (task_pid_vnr(current) != pid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return do_send_specific(tgid, pid, sig, info);
 }
@@ -3962,7 +3962,7 @@ int do_sigaction(int sig, struct k_sigaction *act, struct k_sigaction *oact)
 	sigset_t mask;
 
 	if (!valid_signal(sig) || sig < 1 || (act && sig_kernel_only(sig)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	k = &p->sighand->action[sig-1];
 
@@ -4021,12 +4021,12 @@ do_sigaltstack (const stack_t *ss, stack_t *oss, unsigned long sp,
 		int ss_mode;
 
 		if (unlikely(on_sig_stack(sp)))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ss_mode = ss_flags & ~SS_FLAG_BITS;
 		if (unlikely(ss_mode != SS_DISABLE && ss_mode != SS_ONSTACK &&
 				ss_mode != 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (ss_mode == SS_DISABLE) {
 			ss_size = 0;
@@ -4152,7 +4152,7 @@ SYSCALL_DEFINE1(sigpending, old_sigset_t __user *, uset)
 	sigset_t set;
 
 	if (sizeof(old_sigset_t) > sizeof(*uset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	do_sigpending(&set);
 
@@ -4211,7 +4211,7 @@ SYSCALL_DEFINE3(sigprocmask, int, how, old_sigset_t __user *, nset,
 			new_blocked.sig[0] = new_set;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		set_current_blocked(&new_blocked);
@@ -4244,7 +4244,7 @@ SYSCALL_DEFINE4(rt_sigaction, int, sig,
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (act && copy_from_user(&new_sa.sa, act, sizeof(new_sa.sa)))
 		return -EFAULT;
@@ -4433,7 +4433,7 @@ SYSCALL_DEFINE0(pause)
 		__set_current_state(TASK_INTERRUPTIBLE);
 		schedule();
 	}
-	return -ERESTARTNOHAND;
+	return -ERR(ERESTARTNOHAND);
 }
 
 #endif
@@ -4448,7 +4448,7 @@ static int sigsuspend(sigset_t *set)
 		schedule();
 	}
 	set_restore_sigmask();
-	return -ERESTARTNOHAND;
+	return -ERR(ERESTARTNOHAND);
 }
 
 /**
@@ -4463,7 +4463,7 @@ SYSCALL_DEFINE2(rt_sigsuspend, sigset_t __user *, unewset, size_t, sigsetsize)
 
 	/* XXX: Don't preclude handling different sized sigset_t's.  */
 	if (sigsetsize != sizeof(sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&newset, unewset, sizeof(newset)))
 		return -EFAULT;

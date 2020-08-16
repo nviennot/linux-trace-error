@@ -152,7 +152,7 @@ static char *follow_link(char *link)
 	if (n < 0)
 		goto out_free;
 	else if (n == PATH_MAX) {
-		n = -E2BIG;
+		n = -ERR(E2BIG);
 		goto out_free;
 	}
 
@@ -539,7 +539,7 @@ static int read_name(struct inode *ino, char *name)
 		ino->i_mapping->a_ops = &hostfs_aops;
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ino->i_ino = st.ino;
@@ -613,7 +613,7 @@ static struct dentry *hostfs_lookup(struct inode *ino, struct dentry *dentry,
 	}
 	if (err) {
 		iput(inode);
-		inode = (err == -ENOENT) ? NULL : ERR_PTR(err);
+		inode = (err == -ERR(ENOENT)) ? NULL : ERR_PTR(err);
 	}
  out:
 	return d_splice_alias(inode, dentry);
@@ -644,7 +644,7 @@ static int hostfs_unlink(struct inode *ino, struct dentry *dentry)
 	int err;
 
 	if (append)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((file = dentry_name(dentry)) == NULL)
 		return -ENOMEM;
@@ -737,7 +737,7 @@ static int hostfs_rename2(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_name = dentry_name(old_dentry);
 	if (old_name == NULL)
@@ -763,7 +763,7 @@ static int hostfs_permission(struct inode *ino, int desired)
 	int r = 0, w = 0, x = 0, err;
 
 	if (desired & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (desired & MAY_READ) r = 1;
 	if (desired & MAY_WRITE) w = 1;
@@ -879,7 +879,7 @@ static const char *hostfs_get_link(struct dentry *dentry,
 {
 	char *link;
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 	link = kmalloc(PATH_MAX, GFP_KERNEL);
 	if (link) {
 		char *path = dentry_name(dentry);
@@ -887,7 +887,7 @@ static const char *hostfs_get_link(struct dentry *dentry,
 		if (path) {
 			err = hostfs_do_readlink(path, link, PATH_MAX);
 			if (err == PATH_MAX)
-				err = -E2BIG;
+				err = -ERR(E2BIG);
 			__putname(path);
 		}
 		if (err < 0) {

@@ -155,7 +155,7 @@ static int elf_fdpic_fetch_phdrs(struct elf_fdpic_params *params,
 
 	retval = kernel_read(file, params->phdrs, size, &pos);
 	if (unlikely(retval != size))
-		return retval < 0 ? retval : -ENOEXEC;
+		return retval < 0 ? retval : -ERR(ENOEXEC);
 
 	/* determine stack size for this binary */
 	phdr = params->phdrs;
@@ -206,7 +206,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 	exec_params.flags = ELF_FDPIC_FLAG_PRESENT | ELF_FDPIC_FLAG_EXECUTABLE;
 
 	/* check that this is a binary we know how to deal with */
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 	if (!is_elf(&exec_params.hdr, bprm->file))
 		goto error;
 	if (!elf_check_fdpic(&exec_params.hdr)) {
@@ -234,7 +234,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 			retval = -ENOMEM;
 			if (phdr->p_filesz > PATH_MAX)
 				goto error;
-			retval = -ENOENT;
+			retval = -ERR(ENOENT);
 			if (phdr->p_filesz < 2)
 				goto error;
 
@@ -248,11 +248,11 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 					     phdr->p_filesz, &pos);
 			if (unlikely(retval != phdr->p_filesz)) {
 				if (retval >= 0)
-					retval = -ENOEXEC;
+					retval = -ERR(ENOEXEC);
 				goto error;
 			}
 
-			retval = -ENOENT;
+			retval = -ERR(ENOENT);
 			if (interpreter_name[phdr->p_filesz - 1] != '\0')
 				goto error;
 
@@ -278,7 +278,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 					BINPRM_BUF_SIZE, &pos);
 			if (unlikely(retval != BINPRM_BUF_SIZE)) {
 				if (retval >= 0)
-					retval = -ENOEXEC;
+					retval = -ERR(ENOEXEC);
 				goto error;
 			}
 
@@ -300,7 +300,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 
 	/* perform insanity checks on the interpreter */
 	if (interpreter_name) {
-		retval = -ELIBBAD;
+		retval = -ERR(ELIBBAD);
 		if (!is_elf(&interp_params.hdr, interpreter))
 			goto error;
 
@@ -330,7 +330,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
 			executable_stack = EXSTACK_DEFAULT;
 	}
 
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 	if (stack_size == 0)
 		stack_size = 131072UL; /* same as exec.c's default commit */
 
@@ -754,7 +754,7 @@ static int elf_fdpic_map_file(struct elf_fdpic_params *params,
 			nloads++;
 
 	if (nloads == 0)
-		return -ELIBBAD;
+		return -ERR(ELIBBAD);
 
 	size = sizeof(*loadmap) + nloads * sizeof(*seg);
 	loadmap = kzalloc(size, GFP_KERNEL);
@@ -910,7 +910,7 @@ static int elf_fdpic_map_file(struct elf_fdpic_params *params,
 dynamic_error:
 	printk("ELF FDPIC %s with invalid DYNAMIC section (inode=%lu)\n",
 	       what, file_inode(file)->i_ino);
-	return -ELIBBAD;
+	return -ERR(ELIBBAD);
 }
 
 /*****************************************************************************/

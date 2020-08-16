@@ -63,7 +63,7 @@ static int pcxhr_update_analog_audio_level(struct snd_pcxhr *chip,
 			"error update_analog_audio_level card(%d)"
 			   " is_capture(%d) err(%x)\n",
 			   chip->chip_idx, is_capture, err);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -274,7 +274,7 @@ static int pcxhr_update_playback_stream_level(struct snd_pcxhr* chip, int idx)
 	if (err < 0) {
 		dev_dbg(chip->card->dev, "error update_playback_stream_level "
 			   "card(%d) err(%x)\n", chip->chip_idx, err);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -326,7 +326,7 @@ static int pcxhr_update_audio_pipe_level(struct snd_pcxhr *chip,
 		dev_dbg(chip->card->dev,
 			"error update_audio_level(%d) err=%x\n",
 			   chip->chip_idx, err);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -580,7 +580,7 @@ static int pcxhr_set_audio_source(struct snd_pcxhr* chip)
 	case 1 : mask = PCXHR_SOURCE_AUDIO23_UER; codec = CS8420_23_CS; break;
 	case 2 : mask = PCXHR_SOURCE_AUDIO45_UER; codec = CS8420_45_CS; break;
 	case 3 : mask = PCXHR_SOURCE_AUDIO67_UER; codec = CS8420_67_CS; break;
-	default: return -EINVAL;
+	default: return -ERR(EINVAL);
 	}
 	if (chip->audio_capture_source != 0) {
 		reg = mask;	/* audio source from digital plug */
@@ -670,7 +670,7 @@ static int pcxhr_audio_src_put(struct snd_kcontrol *kcontrol,
 			i = 5;	/* Mic and MicroMix available */
 	}
 	if (ucontrol->value.enumerated.item[0] >= i)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mgr->mixer_mutex);
 	if (chip->audio_capture_source != ucontrol->value.enumerated.item[0]) {
 		chip->audio_capture_source = ucontrol->value.enumerated.item[0];
@@ -759,7 +759,7 @@ static int pcxhr_clock_type_put(struct snd_kcontrol *kcontrol,
 			clock_items += 1;		/* add word clock */
 	}
 	if (ucontrol->value.enumerated.item[0] >= clock_items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&mgr->mixer_mutex);
 	if (mgr->use_clock_type != ucontrol->value.enumerated.item[0]) {
 		mutex_lock(&mgr->setup_mutex);
@@ -863,7 +863,7 @@ static int pcxhr_iec958_capture_byte(struct snd_pcxhr *chip,
 	case 1:	rmh.cmd[1] = CS8420_23_CS; break;
 	case 2:	rmh.cmd[1] = CS8420_45_CS; break;
 	case 3:	rmh.cmd[1] = CS8420_67_CS; break;
-	default: return -EINVAL;
+	default: return -ERR(EINVAL);
 	}
 	if (chip->mgr->board_aes_in_192k) {
 		switch (aes_idx) {
@@ -872,7 +872,7 @@ static int pcxhr_iec958_capture_byte(struct snd_pcxhr *chip,
 		case 2:	rmh.cmd[2] = CS8416_CSB2; break;
 		case 3:	rmh.cmd[2] = CS8416_CSB3; break;
 		case 4:	rmh.cmd[2] = CS8416_CSB4; break;
-		default: return -EINVAL;
+		default: return -ERR(EINVAL);
 		}
 	} else {
 		switch (aes_idx) {
@@ -882,7 +882,7 @@ static int pcxhr_iec958_capture_byte(struct snd_pcxhr *chip,
 		case 2:	rmh.cmd[2] = CS8420_CSB2; break;
 		case 3:	rmh.cmd[2] = CS8420_CSB3; break;
 		case 4:	rmh.cmd[2] = CS8420_CSB4; break;
-		default: return -EINVAL;
+		default: return -ERR(EINVAL);
 		}
 	}
 	/* size and code the chip id for the fpga */

@@ -510,7 +510,7 @@ unable_to_proceed:
 	 * dccp_sendmsg() terminates and the application gets notified.
 	 */
 	dccp_set_state(sk, DCCP_CLOSED);
-	sk->sk_err = ECOMM;
+	sk->sk_err = ERR(ECOMM);
 	return 1;
 }
 

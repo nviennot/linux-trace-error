@@ -264,7 +264,7 @@ static int efs_fill_super(struct super_block *s, void *d, int silent)
 	if (!sb_set_blocksize(s, EFS_BLOCKSIZE)) {
 		pr_err("device does not support %d byte blocks\n",
 			EFS_BLOCKSIZE);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
   
 	/* read the vh (volume header) block */
@@ -272,7 +272,7 @@ static int efs_fill_super(struct super_block *s, void *d, int silent)
 
 	if (!bh) {
 		pr_err("cannot read volume header\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -284,13 +284,13 @@ static int efs_fill_super(struct super_block *s, void *d, int silent)
 	brelse(bh);
 
 	if (sb->fs_start == -1) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bh = sb_bread(s, sb->fs_start + EFS_SUPER);
 	if (!bh) {
 		pr_err("cannot read superblock\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 		
 	if (efs_validate_super(sb, (struct efs_super *) bh->b_data)) {
@@ -299,7 +299,7 @@ static int efs_fill_super(struct super_block *s, void *d, int silent)
 			sb->fs_start + EFS_SUPER);
 #endif
 		brelse(bh);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	brelse(bh);
 

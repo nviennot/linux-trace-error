@@ -2516,14 +2516,14 @@ static int tg_rt_schedulable(struct task_group *tg, void *data)
 	 * Cannot have more runtime than the period.
 	 */
 	if (runtime > period && runtime != RUNTIME_INF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Ensure we don't starve existing RT tasks if runtime turns zero.
 	 */
 	if (rt_bandwidth_enabled() && !runtime &&
 	    tg->rt_bandwidth.rt_runtime && tg_has_rt_tasks(tg))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	total = to_ratio(period, runtime);
 
@@ -2531,7 +2531,7 @@ static int tg_rt_schedulable(struct task_group *tg, void *data)
 	 * Nobody can have more than the global setting allows.
 	 */
 	if (total > to_ratio(global_rt_period(), global_rt_runtime()))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The sum of our children's runtime should not exceed our own.
@@ -2549,7 +2549,7 @@ static int tg_rt_schedulable(struct task_group *tg, void *data)
 	}
 
 	if (sum > total)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -2581,17 +2581,17 @@ static int tg_set_rt_bandwidth(struct task_group *tg,
 	 * kernel creating (and or operating) RT threads.
 	 */
 	if (tg == &root_task_group && rt_runtime == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* No period doesn't make any sense. */
 	if (rt_period == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Bound quota to defend quota against overflow during bandwidth shift.
 	 */
 	if (rt_runtime != RUNTIME_INF && rt_runtime > max_rt_runtime)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&rt_constraints_mutex);
 	err = __rt_schedulable(tg, rt_period, rt_runtime);
@@ -2625,7 +2625,7 @@ int sched_group_set_rt_runtime(struct task_group *tg, long rt_runtime_us)
 	if (rt_runtime_us < 0)
 		rt_runtime = RUNTIME_INF;
 	else if ((u64)rt_runtime_us > U64_MAX / NSEC_PER_USEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return tg_set_rt_bandwidth(tg, rt_period, rt_runtime);
 }
@@ -2647,7 +2647,7 @@ int sched_group_set_rt_period(struct task_group *tg, u64 rt_period_us)
 	u64 rt_runtime, rt_period;
 
 	if (rt_period_us > U64_MAX / NSEC_PER_USEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rt_period = rt_period_us * NSEC_PER_USEC;
 	rt_runtime = tg->rt_bandwidth.rt_runtime;
@@ -2707,13 +2707,13 @@ static int sched_rt_global_constraints(void)
 static int sched_rt_global_validate(void)
 {
 	if (sysctl_sched_rt_period <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((sysctl_sched_rt_runtime != RUNTIME_INF) &&
 		((sysctl_sched_rt_runtime > sysctl_sched_rt_period) ||
 		 ((u64)sysctl_sched_rt_runtime *
 			NSEC_PER_USEC > max_rt_runtime)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

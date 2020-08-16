@@ -90,7 +90,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
 	if (VolumeSize) {
 		if (newLVSize > VolumeSize) {
 			printk(KERN_WARNING "jfs_extendfs: invalid size\n");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
@@ -98,7 +98,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
 		bh = sb_bread(sb, newLVSize - 1);
 		if (!bh) {
 			printk(KERN_WARNING "jfs_extendfs: invalid size\n");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 		bforget(bh);
@@ -108,7 +108,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
 
 	if (isReadOnly(ipbmap)) {
 		printk(KERN_WARNING "jfs_extendfs: read-only file system\n");
-		rc = -EROFS;
+		rc = -ERR(EROFS);
 		goto out;
 	}
 
@@ -171,7 +171,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
 
 	/* file system cannot be shrunk */
 	if (newFSSize < bmp->db_mapsize) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -307,7 +307,7 @@ int jfs_extendfs(struct super_block *sb, s64 newLVSize, int newLogSize)
 	if (mapSize > t64) {
 		printk(KERN_ERR "jfs_extendfs: mapSize (0x%Lx) > t64 (0x%Lx)\n",
 		       (long long) mapSize, (long long) t64);
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto error_out;
 	}
 	nblocks = min(t64 - mapSize, XSize);

@@ -122,7 +122,7 @@ Elong_unlock:
 	if (read_seqretry(&rename_lock, seq))
 		goto rename_retry;
 Elong:
-	return ERR_PTR(-ENAMETOOLONG);
+	return ERR_PTR(-ERR(ENAMETOOLONG));
 }
 EXPORT_SYMBOL_GPL(nfs_path);
 
@@ -149,7 +149,7 @@ struct vfsmount *nfs_d_automount(struct path *path)
 	int ret;
 
 	if (IS_ROOT(path->dentry))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	/* Open a new filesystem context, transferring parameters from the
 	 * parent superblock, including the network namespace.
@@ -218,7 +218,7 @@ nfs_namespace_setattr(struct dentry *dentry, struct iattr *attr)
 {
 	if (NFS_FH(d_inode(dentry))->size != 0)
 		return nfs_setattr(dentry, attr);
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 const struct inode_operations nfs_mountpoint_inode_operations = {
@@ -318,10 +318,10 @@ static int param_set_nfs_timeout(const char *val, const struct kernel_param *kp)
 	int ret;
 
 	if (!val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = kstrtol(val, 0, &num);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (num > 0) {
 		if (num >= INT_MAX / HZ)
 			num = INT_MAX;

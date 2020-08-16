@@ -52,7 +52,7 @@ int digsig_verify(struct key *keyring, const char *sig, int siglen,
 static inline int digsig_verify(struct key *keyring, const char *sig,
 				int siglen, const char *digest, int digestlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #endif /* CONFIG_SIGNATURE */

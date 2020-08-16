@@ -230,7 +230,7 @@ static int hi6210_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -239,7 +239,7 @@ static int hi6210_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_RIGHT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i2s->format = fmt;
@@ -273,7 +273,7 @@ static int hi6210_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Bad format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -298,12 +298,12 @@ static int hi6210_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Bad rate: %d\n", params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!(params_channels(params))) {
 		dev_err(cpu_dai->dev, "Bad channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma_data = snd_soc_dai_get_dma_data(cpu_dai, substream);
@@ -388,7 +388,7 @@ static int hi6210_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		WARN_ONCE(1, "Invalid i2s->fmt MASTER_MASK. This shouldn't happen\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (i2s->format & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -403,7 +403,7 @@ static int hi6210_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		WARN_ONCE(1, "Invalid i2s->fmt FORMAT_MASK. This shouldn't happen\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = hi6210_read_reg(i2s, HII2S_I2S_CFG);
@@ -491,7 +491,7 @@ static int hi6210_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 	default:
 		dev_err(cpu_dai->dev, "unknown cmd\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

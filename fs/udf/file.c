@@ -94,7 +94,7 @@ static int udf_adinicb_write_begin(struct file *file,
 	struct page *page;
 
 	if (WARN_ON_ONCE(pos >= PAGE_SIZE))
-		return -EIO;
+		return -ERR(EIO);
 	page = grab_cache_page_write_begin(mapping, 0, flags);
 	if (!page)
 		return -ENOMEM;
@@ -186,13 +186,13 @@ long udf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 	if (inode_permission(inode, MAY_READ) != 0) {
 		udf_debug("no permission to access inode %lu\n", inode->i_ino);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	if (!arg && ((cmd == UDF_GETVOLIDENT) || (cmd == UDF_GETEASIZE) ||
 		     (cmd == UDF_RELOCATE_BLOCKS) || (cmd == UDF_GETEABLOCK))) {
 		udf_debug("invalid argument to udf_ioctl\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cmd) {
@@ -203,7 +203,7 @@ long udf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return 0;
 	case UDF_RELOCATE_BLOCKS:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (get_user(old_block, (long __user *)arg))
 			return -EFAULT;
 		result = udf_relocate_blocks(inode->i_sb,
@@ -218,7 +218,7 @@ long udf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				    UDF_I(inode)->i_ext.i_data,
 				    UDF_I(inode)->i_lenEAttr) ? -EFAULT : 0;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -267,11 +267,11 @@ static int udf_setattr(struct dentry *dentry, struct iattr *attr)
 	if ((attr->ia_valid & ATTR_UID) &&
 	    UDF_QUERY_FLAG(sb, UDF_FLAG_UID_SET) &&
 	    !uid_eq(attr->ia_uid, UDF_SB(sb)->s_uid))
-		return -EPERM;
+		return -ERR(EPERM);
 	if ((attr->ia_valid & ATTR_GID) &&
 	    UDF_QUERY_FLAG(sb, UDF_FLAG_GID_SET) &&
 	    !gid_eq(attr->ia_gid, UDF_SB(sb)->s_gid))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((attr->ia_valid & ATTR_SIZE) &&
 	    attr->ia_size != i_size_read(inode)) {

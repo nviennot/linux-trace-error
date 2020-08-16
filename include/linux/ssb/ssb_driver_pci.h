@@ -119,12 +119,12 @@ int ssb_pcicore_dev_irqvecs_enable(struct ssb_pcicore *pc,
 static inline
 int ssb_pcicore_plat_dev_init(struct pci_dev *d)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline
 int ssb_pcicore_pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #endif /* CONFIG_SSB_DRIVER_PCICORE */

@@ -862,13 +862,13 @@ int dbg_check_cats(struct ubifs_info *c)
 			ubifs_err(c, "non-empty LEB %d on empty list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (lprops->flags & LPROPS_TAKEN) {
 			ubifs_err(c, "taken LEB %d on empty list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -878,20 +878,20 @@ int dbg_check_cats(struct ubifs_info *c)
 			ubifs_err(c, "non-freeable LEB %d on freeable list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (lprops->flags & LPROPS_TAKEN) {
 			ubifs_err(c, "taken LEB %d on freeable list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		i += 1;
 	}
 	if (i != c->freeable_cnt) {
 		ubifs_err(c, "freeable list count %d expected %d", i,
 			  c->freeable_cnt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i = 0;
@@ -900,7 +900,7 @@ int dbg_check_cats(struct ubifs_info *c)
 	if (i != c->idx_gc_cnt) {
 		ubifs_err(c, "idx_gc list count %d expected %d", i,
 			  c->idx_gc_cnt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	list_for_each_entry(lprops, &c->frdi_idx_list, list) {
@@ -908,19 +908,19 @@ int dbg_check_cats(struct ubifs_info *c)
 			ubifs_err(c, "non-freeable LEB %d on frdi_idx list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (lprops->flags & LPROPS_TAKEN) {
 			ubifs_err(c, "taken LEB %d on frdi_idx list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!(lprops->flags & LPROPS_INDEX)) {
 			ubifs_err(c, "non-index LEB %d on frdi_idx list (free %d dirty %d flags %d)",
 				  lprops->lnum, lprops->free, lprops->dirty,
 				  lprops->flags);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -931,15 +931,15 @@ int dbg_check_cats(struct ubifs_info *c)
 			lprops = heap->arr[i];
 			if (!lprops) {
 				ubifs_err(c, "null ptr in LPT heap cat %d", cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (lprops->hpos != i) {
 				ubifs_err(c, "bad ptr in LPT heap cat %d", cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (lprops->flags & LPROPS_TAKEN) {
 				ubifs_err(c, "taken LEB in LPT heap cat %d", cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -1027,7 +1027,7 @@ static int scan_check_cb(struct ubifs_info *c,
 		if (cat != (lp->flags & LPROPS_CAT_MASK)) {
 			ubifs_err(c, "bad LEB category %d expected %d",
 				  (lp->flags & LPROPS_CAT_MASK), cat);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1061,7 +1061,7 @@ static int scan_check_cb(struct ubifs_info *c,
 			}
 			if (!found) {
 				ubifs_err(c, "bad LPT list (category %d)", cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -1073,7 +1073,7 @@ static int scan_check_cb(struct ubifs_info *c,
 		if ((lp->hpos != -1 && heap->arr[lp->hpos]->lnum != lnum) ||
 		    lp != heap->arr[lp->hpos]) {
 			ubifs_err(c, "bad LPT heap (category %d)", cat);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1232,7 +1232,7 @@ out_print:
 	ubifs_dump_leb(c, lnum);
 out_destroy:
 	ubifs_scan_destroy(sleb);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 out:
 	vfree(buf);
 	return ret;
@@ -1286,7 +1286,7 @@ int dbg_check_lprops(struct ubifs_info *c)
 		ubifs_err(c, "read from lprops: empty_lebs %d, idx_lebs %d, total_free %lld, total_dirty %lld, total_used %lld",
 			  c->lst.empty_lebs, c->lst.idx_lebs, c->lst.total_free,
 			  c->lst.total_dirty, c->lst.total_used);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1297,7 +1297,7 @@ int dbg_check_lprops(struct ubifs_info *c)
 			  lst.total_dead, lst.total_dark);
 		ubifs_err(c, "read from lprops: total_dead %lld, total_dark %lld",
 			  c->lst.total_dead, c->lst.total_dark);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

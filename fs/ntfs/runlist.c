@@ -537,7 +537,7 @@ runlist_element *ntfs_runlists_merge(runlist_element *drl,
 	if (unlikely(!srl))
 		return drl;
 	if (IS_ERR(srl) || IS_ERR(drl))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* Check for the case where the first mapping is being done now. */
 	if (unlikely(!drl)) {
@@ -587,7 +587,7 @@ runlist_element *ntfs_runlists_merge(runlist_element *drl,
 	if ((drl[di].vcn == srl[si].vcn) && (drl[di].lcn >= 0) &&
 			(srl[si].lcn >= 0)) {
 		ntfs_error(NULL, "Run lists overlap. Cannot merge!");
-		return ERR_PTR(-ERANGE);
+		return ERR_PTR(-ERR(ERANGE));
 	}
 
 	/* Scan to the end of both runlists in order to know their sizes. */
@@ -751,7 +751,7 @@ runlist_element *ntfs_mapping_pairs_decompress(const ntfs_volume *vol,
 	if (!attr || !attr->non_resident || sle64_to_cpu(
 			attr->data.non_resident.lowest_vcn) < (VCN)0) {
 		ntfs_error(vol->sb, "Invalid arguments.");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 #endif
 	/* Start at vcn = lowest_vcn and lcn 0. */
@@ -763,7 +763,7 @@ runlist_element *ntfs_mapping_pairs_decompress(const ntfs_volume *vol,
 	attr_end = (u8*)attr + le32_to_cpu(attr->length);
 	if (unlikely(buf < (u8*)attr || buf > attr_end)) {
 		ntfs_error(vol->sb, "Corrupt attribute.");
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	/* If the mapping pairs array is valid but empty, nothing to do. */
 	if (!vcn && !*buf)
@@ -960,7 +960,7 @@ io_error:
 	ntfs_error(vol->sb, "Corrupt attribute.");
 err_out:
 	ntfs_free(rl);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /**
@@ -1135,7 +1135,7 @@ int ntfs_get_size_for_mapping_pairs(const ntfs_volume *vol,
 		rl++;
 	if (unlikely((!rl->length && first_vcn > rl->vcn) ||
 			first_vcn < rl->vcn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	prev_lcn = 0;
 	/* Always need the termining zero byte. */
 	rls = 1;
@@ -1211,9 +1211,9 @@ int ntfs_get_size_for_mapping_pairs(const ntfs_volume *vol,
 	return rls;
 err_out:
 	if (rl->lcn == LCN_RL_NOT_MAPPED)
-		rls = -EINVAL;
+		rls = -ERR(EINVAL);
 	else
-		rls = -EIO;
+		rls = -ERR(EIO);
 	return rls;
 }
 
@@ -1265,7 +1265,7 @@ static inline int ntfs_write_significant_bytes(s8 *dst, const s8 *dst_max,
 	}
 	return i;
 err_out:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -1312,7 +1312,7 @@ int ntfs_mapping_pairs_build(const ntfs_volume *vol, s8 *dst,
 {
 	LCN prev_lcn;
 	s8 *dst_max, *dst_next;
-	int err = -ENOSPC;
+	int err = -ERR(ENOSPC);
 	bool the_end = false;
 	s8 len_len, lcn_len;
 
@@ -1334,7 +1334,7 @@ int ntfs_mapping_pairs_build(const ntfs_volume *vol, s8 *dst,
 		rl++;
 	if (unlikely((!rl->length && first_vcn > rl->vcn) ||
 			first_vcn < rl->vcn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * @dst_max is used for bounds checking in
 	 * ntfs_write_significant_bytes().
@@ -1452,9 +1452,9 @@ size_err:
 	return err;
 err_out:
 	if (rl->lcn == LCN_RL_NOT_MAPPED)
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else
-		err = -EIO;
+		err = -ERR(EIO);
 	return err;
 }
 

@@ -73,7 +73,7 @@ static int mst_node_check_hash(const struct ubifs_info *c,
 				calc);
 
 	if (ubifs_check_hash(c, expected, calc))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -146,19 +146,19 @@ static int scan_for_master(struct ubifs_info *c)
 	}
 
 	if (err)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 
 out:
 	ubifs_scan_destroy(sleb);
-	return -EUCLEAN;
+	return -ERR(EUCLEAN);
 
 out_dump:
 	ubifs_err(c, "unexpected node type %d master LEB %d:%d",
 		  snod->type, lnum, snod->offs);
 	ubifs_scan_destroy(sleb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -315,7 +315,7 @@ static int validate_master(const struct ubifs_info *c)
 out:
 	ubifs_err(c, "bad master node at offset %d error %d", c->mst_offs, err);
 	ubifs_dump_node(c, c->mst_node);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -393,7 +393,7 @@ int ubifs_read_master(struct ubifs_info *c)
 		    c->leb_cnt < UBIFS_MIN_LEB_CNT) {
 			ubifs_err(c, "bad leb_cnt on master node");
 			ubifs_dump_node(c, c->mst_node);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dbg_mnt("Auto resizing (master) from %d LEBs to %d LEBs",
@@ -437,7 +437,7 @@ int ubifs_write_master(struct ubifs_info *c)
 
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	lnum = UBIFS_MST_LNUM;
 	offs = c->mst_offs + c->mst_node_alsz;

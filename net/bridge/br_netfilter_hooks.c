@@ -712,7 +712,7 @@ br_nf_ip_fragment(struct net *net, struct sock *sk, struct sk_buff *skb,
 		      IPCB(skb)->frag_max_size > mtu))) {
 		IP_INC_STATS(net, IPSTATS_MIB_FRAGFAILS);
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	return ip_do_fragment(net, sk, skb, output);
@@ -797,7 +797,7 @@ static int br_nf_dev_queue_xmit(struct net *net, struct sock *sk, struct sk_buff
 			return v6ops->fragment(net, sk, skb, br_nf_push_frag_xmit);
 
 		kfree_skb(skb);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	nf_bridge_info_free(skb);
 	return br_dev_queue_push_xmit(net, sk, skb);

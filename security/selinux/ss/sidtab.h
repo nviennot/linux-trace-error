@@ -144,7 +144,7 @@ static inline int sidtab_sid2str_get(struct sidtab *s,
 				     struct sidtab_entry *entry,
 				     char **out, u32 *out_len)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif /* CONFIG_SECURITY_SELINUX_SID2STR_CACHE_SIZE > 0 */
 

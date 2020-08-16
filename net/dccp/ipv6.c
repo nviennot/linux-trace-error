@@ -92,7 +92,7 @@ static int dccp_v6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 	if (!sk) {
 		__ICMP6_INC_STATS(net, __in6_dev_get(skb->dev),
 				  ICMP6_MIB_INERRORS);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (sk->sk_state == DCCP_TIME_WAIT) {
@@ -818,10 +818,10 @@ static int dccp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 	dp->dccps_role = DCCP_ROLE_CLIENT;
 
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin6_family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	memset(&fl6, 0, sizeof(fl6));
 
@@ -832,7 +832,7 @@ static int dccp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 			struct ip6_flowlabel *flowlabel;
 			flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 			if (IS_ERR(flowlabel))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			fl6_sock_release(flowlabel);
 		}
 	}
@@ -845,7 +845,7 @@ static int dccp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 	addr_type = ipv6_addr_type(&usin->sin6_addr);
 
 	if (addr_type & IPV6_ADDR_MULTICAST)
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 
 	if (addr_type & IPV6_ADDR_LINKLOCAL) {
 		if (addr_len >= sizeof(struct sockaddr_in6) &&
@@ -855,14 +855,14 @@ static int dccp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 			 */
 			if (sk->sk_bound_dev_if &&
 			    sk->sk_bound_dev_if != usin->sin6_scope_id)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			sk->sk_bound_dev_if = usin->sin6_scope_id;
 		}
 
 		/* Connect to link-local address requires an interface */
 		if (!sk->sk_bound_dev_if)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	sk->sk_v6_daddr = usin->sin6_addr;
@@ -878,7 +878,7 @@ static int dccp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 		SOCK_DEBUG(sk, "connect: ipv4 mapped\n");
 
 		if (__ipv6_only_sock(sk))
-			return -ENETUNREACH;
+			return -ERR(ENETUNREACH);
 
 		sin.sin_family = AF_INET;
 		sin.sin_port = usin->sin6_port;
@@ -1099,7 +1099,7 @@ static struct inet_protosw dccp_v6_protosw = {
 static int __net_init dccp_v6_init_net(struct net *net)
 {
 	if (dccp_hashinfo.bhash == NULL)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	return inet_ctl_sock_create(&net->dccp.v6_ctl_sk, PF_INET6,
 				    SOCK_DCCP, IPPROTO_DCCP, net);

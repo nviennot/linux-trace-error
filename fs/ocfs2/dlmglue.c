@@ -1427,7 +1427,7 @@ static int __lockres_remove_mask_waiter(struct ocfs2_lock_res *lockres,
 	assert_spin_locked(&lockres->l_lock);
 	if (!list_empty(&mw->mw_item)) {
 		if ((lockres->l_flags & mw->mw_mask) != mw->mw_goal)
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 
 		list_del_init(&mw->mw_item);
 		init_completion(&mw->mw_complete);
@@ -1485,7 +1485,7 @@ static int __ocfs2_cluster_lock(struct ocfs2_super *osb,
 
 	if (!(lockres->l_flags & OCFS2_LOCK_INITIALIZED)) {
 		mlog_errno(-EINVAL);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ocfs2_init_mask_waiter(&mw);
@@ -1499,7 +1499,7 @@ again:
 	spin_lock_irqsave(&lockres->l_lock, flags);
 
 	if (catch_signals && signal_pending(current)) {
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 		goto unlock;
 	}
 
@@ -1549,7 +1549,7 @@ again:
 
 	if (level > lockres->l_level) {
 		if (noqueue_attempted > 0) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto unlock;
 		}
 		if (lkm_flags & DLM_LKF_NOQUEUE)
@@ -1640,7 +1640,7 @@ out:
 				lockres_or_flags(lockres,
 					OCFS2_LOCK_NONBLOCK_FINISHED);
 			spin_unlock_irqrestore(&lockres->l_lock, flags);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		} else {
 			spin_unlock_irqrestore(&lockres->l_lock, flags);
 			goto again;
@@ -1857,7 +1857,7 @@ int ocfs2_try_open_lock(struct inode *inode, int write)
 
 	if (ocfs2_is_hard_readonly(osb)) {
 		if (write)
-			status = -EROFS;
+			status = -ERR(EROFS);
 		goto out;
 	}
 
@@ -1933,7 +1933,7 @@ retry_cancel:
 		goto retry_cancel;
 	}
 
-	ret = -ERESTARTSYS;
+	ret = -ERR(ERESTARTSYS);
 	/*
 	 * We may still have gotten the lock, in which case there's no
 	 * point to restarting the syscall.
@@ -1989,7 +1989,7 @@ int ocfs2_file_lock(struct file *file, int ex, int trylock)
 		     "File lock \"%s\" has busy or locked state: flags: 0x%lx, "
 		     "level: %u\n", lockres->l_name, lockres->l_flags,
 		     lockres->l_level);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irqsave(&lockres->l_lock, flags);
@@ -2028,7 +2028,7 @@ int ocfs2_file_lock(struct file *file, int ex, int trylock)
 	if (ret) {
 		if (!trylock || (ret != -EAGAIN)) {
 			ocfs2_log_dlm_error("ocfs2_dlm_lock", ret, lockres);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		ocfs2_recover_from_dlm_error(lockres, 1);
@@ -2057,7 +2057,7 @@ int ocfs2_file_lock(struct file *file, int ex, int trylock)
 	} else if (!ret && (level > lockres->l_level)) {
 		/* Trylock failed asynchronously */
 		BUG_ON(!trylock);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 
 out:
@@ -2325,7 +2325,7 @@ static int ocfs2_inode_lock_update(struct inode *inode,
 		     "were waiting on a lock. ip_flags = 0x%x\n",
 		     (unsigned long long)oi->ip_blkno, oi->ip_flags);
 		spin_unlock(&oi->ip_lock);
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		goto bail;
 	}
 	spin_unlock(&oi->ip_lock);
@@ -2435,7 +2435,7 @@ int ocfs2_inode_lock_full_nested(struct inode *inode,
 	 * rodevices. */
 	if (ocfs2_is_hard_readonly(osb)) {
 		if (ex)
-			status = -EROFS;
+			status = -ERR(EROFS);
 		goto getbh;
 	}
 
@@ -2699,7 +2699,7 @@ int ocfs2_inode_lock_tracker(struct inode *inode,
 		mlog(ML_ERROR, "Recursive locking is not permitted to "
 		     "upgrade to EX level from PR level.\n");
 		dump_stack();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -2744,7 +2744,7 @@ int ocfs2_orphan_scan_lock(struct ocfs2_super *osb, u32 *seqno)
 	int status = 0;
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ocfs2_mount_local(osb))
 		return 0;
@@ -2786,7 +2786,7 @@ int ocfs2_super_lock(struct ocfs2_super *osb,
 	struct ocfs2_lock_res *lockres = &osb->osb_super_lockres;
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ocfs2_mount_local(osb))
 		goto bail;
@@ -2833,7 +2833,7 @@ int ocfs2_rename_lock(struct ocfs2_super *osb)
 	struct ocfs2_lock_res *lockres = &osb->osb_rename_lockres;
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ocfs2_mount_local(osb))
 		return 0;
@@ -2859,7 +2859,7 @@ int ocfs2_nfs_sync_lock(struct ocfs2_super *osb, int ex)
 	struct ocfs2_lock_res *lockres = &osb->osb_nfs_sync_lockres;
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ex)
 		down_write(&osb->nfs_sync_rwlock);
@@ -2901,7 +2901,7 @@ int ocfs2_trim_fs_lock(struct ocfs2_super *osb,
 		info->tf_valid = 0;
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ocfs2_mount_local(osb))
 		return 0;
@@ -2965,7 +2965,7 @@ int ocfs2_dentry_lock(struct dentry *dentry, int ex)
 
 	if (ocfs2_is_hard_readonly(osb)) {
 		if (ex)
-			return -EROFS;
+			return -ERR(EROFS);
 		return 0;
 	}
 
@@ -3131,7 +3131,7 @@ static int ocfs2_dlm_seq_show(struct seq_file *m, void *v)
 #endif
 
 	if (!lockres)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_OCFS2_FS_STATS
 	if (!lockres->l_lock_wait && dlm_debug->d_filter_secs) {
@@ -4221,7 +4221,7 @@ int ocfs2_qinfo_lock(struct ocfs2_mem_dqinfo *oinfo, int ex)
 	/* On RO devices, locking really isn't needed... */
 	if (ocfs2_is_hard_readonly(osb)) {
 		if (ex)
-			status = -EROFS;
+			status = -ERR(EROFS);
 		goto bail;
 	}
 	if (ocfs2_mount_local(osb))
@@ -4252,7 +4252,7 @@ int ocfs2_refcount_lock(struct ocfs2_refcount_tree *ref_tree, int ex)
 
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ocfs2_mount_local(osb))
 		return 0;

@@ -1264,7 +1264,7 @@ int ksys_fadvise64_64(int fd, loff_t offset, loff_t len, int advice);
 static inline int ksys_fadvise64_64(int fd, loff_t offset, loff_t len,
 				    int advice)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,

@@ -61,7 +61,7 @@ static int xfrm4_get_saddr(struct net *net, int oif,
 
 	dst = __xfrm4_dst_lookup(net, &fl4, 0, oif, NULL, daddr, mark);
 	if (IS_ERR(dst))
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	saddr->a4 = fl4.saddr;
 	dst_release(dst);

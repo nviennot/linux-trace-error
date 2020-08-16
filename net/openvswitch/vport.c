@@ -60,7 +60,7 @@ static struct hlist_head *hash_bucket(const struct net *net, const char *name)
 
 int __ovs_vport_ops_register(struct vport_ops *ops)
 {
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 	struct vport_ops *o;
 
 	ovs_lock();
@@ -139,7 +139,7 @@ struct vport *ovs_vport_alloc(int priv_size, const struct vport_ops *ops,
 
 	if (ovs_vport_set_upcall_portids(vport, parms->upcall_portids)) {
 		kfree(vport);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return vport;
@@ -195,7 +195,7 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 		struct hlist_head *bucket;
 
 		if (!try_module_get(ops->owner))
-			return ERR_PTR(-EAFNOSUPPORT);
+			return ERR_PTR(-ERR(EAFNOSUPPORT));
 
 		vport = ops->create(parms);
 		if (IS_ERR(vport)) {
@@ -218,9 +218,9 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 	ovs_lock();
 
 	if (!ovs_vport_lookup(parms))
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 	else
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 }
 
 /**
@@ -235,7 +235,7 @@ struct vport *ovs_vport_add(const struct vport_parms *parms)
 int ovs_vport_set_options(struct vport *vport, struct nlattr *options)
 {
 	if (!vport->ops->set_options)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return vport->ops->set_options(vport, options);
 }
 
@@ -307,7 +307,7 @@ int ovs_vport_get_options(const struct vport *vport, struct sk_buff *skb)
 
 	nla = nla_nest_start_noflag(skb, OVS_VPORT_ATTR_OPTIONS);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	err = vport->ops->get_options(vport, skb);
 	if (err) {
@@ -337,7 +337,7 @@ int ovs_vport_set_upcall_portids(struct vport *vport, const struct nlattr *ids)
 	struct vport_portids *old, *vport_portids;
 
 	if (!nla_len(ids) || nla_len(ids) % sizeof(u32))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old = ovsl_dereference(vport->upcall_portids);
 

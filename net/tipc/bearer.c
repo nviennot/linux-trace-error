@@ -195,11 +195,11 @@ int tipc_bearer_get_name(struct net *net, char *name, u32 bearer_id)
 	struct tipc_bearer *b;
 
 	if (bearer_id >= MAX_BEARERS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	b = rtnl_dereference(tn->bearer_list[bearer_id]);
 	if (!b)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	strcpy(name, b->name);
 	return 0;
@@ -243,7 +243,7 @@ static int tipc_enable_bearer(struct net *net, const char *name,
 	struct tipc_media *m;
 	struct sk_buff *skb;
 	int bearer_id = 0;
-	int res = -EINVAL;
+	int res = -ERR(EINVAL);
 	char *errstr = "";
 
 	if (!bearer_name_validate(name, &b_names)) {
@@ -398,15 +398,15 @@ int tipc_enable_l2_media(struct net *net, struct tipc_bearer *b,
 	/* Find device with specified name */
 	dev = dev_get_by_name(net, dev_name);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (tipc_mtu_bad(dev, 0)) {
 		dev_put(dev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (dev == net->loopback_dev) {
 		dev_put(dev);
 		pr_info("Enabling <%s> not permitted\n", b->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Autoconfigure own node identity if needed */
@@ -417,7 +417,7 @@ int tipc_enable_l2_media(struct net *net, struct tipc_bearer *b,
 	if (!tipc_own_id(net)) {
 		dev_put(dev);
 		pr_warn("Failed to obtain node identity\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Associate TIPC bearer with L2 bearer */
@@ -752,7 +752,7 @@ int tipc_attach_loopback(struct net *net)
 	struct tipc_net *tn = tipc_net(net);
 
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev_hold(dev);
 	tn->loopback_pt.dev = dev;
@@ -781,7 +781,7 @@ static int __tipc_nl_add_bearer(struct tipc_nl_msg *msg,
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  nlflags, TIPC_NL_BEARER_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_BEARER);
 	if (!attrs)
@@ -824,7 +824,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_bearer_dump(struct sk_buff *skb, struct netlink_callback *cb)
@@ -870,7 +870,7 @@ int tipc_nl_bearer_get(struct sk_buff *skb, struct genl_info *info)
 	struct net *net = genl_info_net(info);
 
 	if (!info->attrs[TIPC_NLA_BEARER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_BEARER_MAX,
 					  info->attrs[TIPC_NLA_BEARER],
@@ -879,7 +879,7 @@ int tipc_nl_bearer_get(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_BEARER_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(attrs[TIPC_NLA_BEARER_NAME]);
 
 	rep = nlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
@@ -893,7 +893,7 @@ int tipc_nl_bearer_get(struct sk_buff *skb, struct genl_info *info)
 	rtnl_lock();
 	bearer = tipc_bearer_find(net, name);
 	if (!bearer) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_out;
 	}
 
@@ -919,7 +919,7 @@ int __tipc_nl_bearer_disable(struct sk_buff *skb, struct genl_info *info)
 	struct net *net = sock_net(skb->sk);
 
 	if (!info->attrs[TIPC_NLA_BEARER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_BEARER_MAX,
 					  info->attrs[TIPC_NLA_BEARER],
@@ -928,13 +928,13 @@ int __tipc_nl_bearer_disable(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_BEARER_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(attrs[TIPC_NLA_BEARER_NAME]);
 
 	bearer = tipc_bearer_find(net, name);
 	if (!bearer)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bearer_disable(net, bearer);
 
@@ -964,7 +964,7 @@ int __tipc_nl_bearer_enable(struct sk_buff *skb, struct genl_info *info)
 	prio = TIPC_MEDIA_LINK_PRI;
 
 	if (!info->attrs[TIPC_NLA_BEARER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_BEARER_MAX,
 					  info->attrs[TIPC_NLA_BEARER],
@@ -973,7 +973,7 @@ int __tipc_nl_bearer_enable(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_BEARER_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bearer = nla_data(attrs[TIPC_NLA_BEARER_NAME]);
 
@@ -1015,7 +1015,7 @@ int tipc_nl_bearer_add(struct sk_buff *skb, struct genl_info *info)
 	struct net *net = sock_net(skb->sk);
 
 	if (!info->attrs[TIPC_NLA_BEARER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_BEARER_MAX,
 					  info->attrs[TIPC_NLA_BEARER],
@@ -1024,14 +1024,14 @@ int tipc_nl_bearer_add(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_BEARER_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(attrs[TIPC_NLA_BEARER_NAME]);
 
 	rtnl_lock();
 	b = tipc_bearer_find(net, name);
 	if (!b) {
 		rtnl_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 #ifdef CONFIG_TIPC_MEDIA_UDP
@@ -1058,7 +1058,7 @@ int __tipc_nl_bearer_set(struct sk_buff *skb, struct genl_info *info)
 	int err;
 
 	if (!info->attrs[TIPC_NLA_BEARER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_BEARER_MAX,
 					  info->attrs[TIPC_NLA_BEARER],
@@ -1067,12 +1067,12 @@ int __tipc_nl_bearer_set(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_BEARER_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(attrs[TIPC_NLA_BEARER_NAME]);
 
 	b = tipc_bearer_find(net, name);
 	if (!b)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (attrs[TIPC_NLA_BEARER_PROP]) {
 		struct nlattr *props[TIPC_NLA_PROP_MAX + 1];
@@ -1092,11 +1092,11 @@ int __tipc_nl_bearer_set(struct sk_buff *skb, struct genl_info *info)
 			b->max_win = nla_get_u32(props[TIPC_NLA_PROP_WIN]);
 		if (props[TIPC_NLA_PROP_MTU]) {
 			if (b->media->type_id != TIPC_MEDIA_TYPE_UDP)
-				return -EINVAL;
+				return -ERR(EINVAL);
 #ifdef CONFIG_TIPC_MEDIA_UDP
 			if (tipc_udp_mtu_bad(nla_get_u32
 					     (props[TIPC_NLA_PROP_MTU])))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			b->mtu = nla_get_u32(props[TIPC_NLA_PROP_MTU]);
 			tipc_node_apply_property(net, b, TIPC_NLA_PROP_MTU);
 #endif
@@ -1127,7 +1127,7 @@ static int __tipc_nl_add_media(struct tipc_nl_msg *msg,
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  nlflags, TIPC_NL_MEDIA_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MEDIA);
 	if (!attrs)
@@ -1162,7 +1162,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_media_dump(struct sk_buff *skb, struct netlink_callback *cb)
@@ -1201,7 +1201,7 @@ int tipc_nl_media_get(struct sk_buff *skb, struct genl_info *info)
 	struct nlattr *attrs[TIPC_NLA_BEARER_MAX + 1];
 
 	if (!info->attrs[TIPC_NLA_MEDIA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_MEDIA_MAX,
 					  info->attrs[TIPC_NLA_MEDIA],
@@ -1210,7 +1210,7 @@ int tipc_nl_media_get(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_MEDIA_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(attrs[TIPC_NLA_MEDIA_NAME]);
 
 	rep = nlmsg_new(NLMSG_GOODSIZE, GFP_KERNEL);
@@ -1224,7 +1224,7 @@ int tipc_nl_media_get(struct sk_buff *skb, struct genl_info *info)
 	rtnl_lock();
 	media = tipc_media_find(name);
 	if (!media) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_out;
 	}
 
@@ -1249,19 +1249,19 @@ int __tipc_nl_media_set(struct sk_buff *skb, struct genl_info *info)
 	struct nlattr *attrs[TIPC_NLA_BEARER_MAX + 1];
 
 	if (!info->attrs[TIPC_NLA_MEDIA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_MEDIA_MAX,
 					  info->attrs[TIPC_NLA_MEDIA],
 					  tipc_nl_media_policy, info->extack);
 
 	if (!attrs[TIPC_NLA_MEDIA_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(attrs[TIPC_NLA_MEDIA_NAME]);
 
 	m = tipc_media_find(name);
 	if (!m)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (attrs[TIPC_NLA_MEDIA_PROP]) {
 		struct nlattr *props[TIPC_NLA_PROP_MAX + 1];
@@ -1279,11 +1279,11 @@ int __tipc_nl_media_set(struct sk_buff *skb, struct genl_info *info)
 			m->max_win = nla_get_u32(props[TIPC_NLA_PROP_WIN]);
 		if (props[TIPC_NLA_PROP_MTU]) {
 			if (m->type_id != TIPC_MEDIA_TYPE_UDP)
-				return -EINVAL;
+				return -ERR(EINVAL);
 #ifdef CONFIG_TIPC_MEDIA_UDP
 			if (tipc_udp_mtu_bad(nla_get_u32
 					     (props[TIPC_NLA_PROP_MTU])))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			m->mtu = nla_get_u32(props[TIPC_NLA_PROP_MTU]);
 #endif
 		}

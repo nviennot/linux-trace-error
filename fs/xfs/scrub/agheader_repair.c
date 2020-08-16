@@ -41,7 +41,7 @@ xrep_superblock(
 	/* Don't try to repair AG 0's sb; let xfs_repair deal with it. */
 	agno = sc->sm->sm_agno;
 	if (agno == 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	error = xfs_sb_get_secondary(mp, sc->tp, agno, &bp);
 	if (error)
@@ -363,7 +363,7 @@ xrep_agf(
 
 	/* We require the rmapbt to rebuild anything. */
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	xchk_perag_get(sc->mp, &sc->sa);
 	/*
@@ -638,7 +638,7 @@ xrep_agfl(
 
 	/* We require the rmapbt to rebuild anything. */
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	xchk_perag_get(sc->mp, &sc->sa);
 	xbitmap_init(&agfl_extents);
@@ -871,7 +871,7 @@ xrep_agi(
 
 	/* We require the rmapbt to rebuild anything. */
 	if (!xfs_sb_version_hasrmapbt(&mp->m_sb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	xchk_perag_get(sc->mp, &sc->sa);
 	/*

@@ -1135,7 +1135,7 @@ static int cbq_opt_parse(struct nlattr *tb[TCA_CBQ_MAX + 1],
 
 	if (!opt) {
 		NL_SET_ERR_MSG(extack, "CBQ options are required for this operation");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_CBQ_MAX, opt,
@@ -1148,7 +1148,7 @@ static int cbq_opt_parse(struct nlattr *tb[TCA_CBQ_MAX + 1],
 
 		if (wrr->priority > TC_CBQ_MAXPRIO) {
 			NL_SET_ERR_MSG(extack, "priority is bigger than TC_CBQ_MAXPRIO");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 	return err;
@@ -1172,14 +1172,14 @@ static int cbq_init(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!tb[TCA_CBQ_RTAB] || !tb[TCA_CBQ_RATE]) {
 		NL_SET_ERR_MSG(extack, "Rate specification missing or incomplete");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	r = nla_data(tb[TCA_CBQ_RATE]);
 
 	q->link.R_tab = qdisc_get_rtab(r, tb[TCA_CBQ_RTAB], extack);
 	if (!q->link.R_tab)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tcf_block_get(&q->link.block, &q->link.filter_list, sch, extack);
 	if (err)
@@ -1402,7 +1402,7 @@ static int cbq_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
 					cl->common.classid, extack);
 		if (new == NULL)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 	}
 
 	*old = qdisc_replace(sch, new, &cl->q);
@@ -1491,7 +1491,7 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 
 	if (tb[TCA_CBQ_OVL_STRATEGY] || tb[TCA_CBQ_POLICE]) {
 		NL_SET_ERR_MSG(extack, "Neither overlimit strategy nor policing attributes can be used for changing class params");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (cl) {
@@ -1500,11 +1500,11 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 			if (cl->tparent &&
 			    cl->tparent->common.classid != parentid) {
 				NL_SET_ERR_MSG(extack, "Invalid parent id");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (!cl->tparent && parentid != TC_H_ROOT) {
 				NL_SET_ERR_MSG(extack, "Parent must be root");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -1512,7 +1512,7 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 			rtab = qdisc_get_rtab(nla_data(tb[TCA_CBQ_RATE]),
 					      tb[TCA_CBQ_RTAB], extack);
 			if (rtab == NULL)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 		if (tca[TCA_RATE]) {
@@ -1559,20 +1559,20 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 	}
 
 	if (parentid == TC_H_ROOT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!tb[TCA_CBQ_WRROPT] || !tb[TCA_CBQ_RATE] || !tb[TCA_CBQ_LSSOPT]) {
 		NL_SET_ERR_MSG(extack, "One of the following attributes MUST be specified: WRR, rate or link sharing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rtab = qdisc_get_rtab(nla_data(tb[TCA_CBQ_RATE]), tb[TCA_CBQ_RTAB],
 			      extack);
 	if (rtab == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (classid) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (TC_H_MAJ(classid ^ sch->handle) ||
 		    cbq_class_lookup(q, classid)) {
 			NL_SET_ERR_MSG(extack, "Specified class not found");
@@ -1588,7 +1588,7 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 			if (cbq_class_lookup(q, classid|q->hgenerator) == NULL)
 				break;
 		}
-		err = -ENOSR;
+		err = -ERR(ENOSR);
 		if (i >= 0x8000) {
 			NL_SET_ERR_MSG(extack, "Unable to generate classid");
 			goto failure;
@@ -1599,14 +1599,14 @@ cbq_change_class(struct Qdisc *sch, u32 classid, u32 parentid, struct nlattr **t
 	parent = &q->link;
 	if (parentid) {
 		parent = cbq_class_lookup(q, parentid);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!parent) {
 			NL_SET_ERR_MSG(extack, "Failed to find parentid");
 			goto failure;
 		}
 	}
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	cl = kzalloc(sizeof(*cl), GFP_KERNEL);
 	if (cl == NULL)
 		goto failure;
@@ -1681,7 +1681,7 @@ static int cbq_delete(struct Qdisc *sch, unsigned long arg)
 	struct cbq_class *cl = (struct cbq_class *)arg;
 
 	if (cl->filters || cl->children || cl == &q->link)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sch_tree_lock(sch);
 

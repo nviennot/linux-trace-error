@@ -52,7 +52,7 @@ static int init_inode_xattrs(struct inode *inode)
 		return 0;
 
 	if (wait_on_bit_lock(&vi->flags, EROFS_I_BL_XATTR_BIT, TASK_KILLABLE))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	/* someone has initialized xattrs for us? */
 	if (test_bit(EROFS_I_EA_INITED_BIT, &vi->flags))
@@ -70,7 +70,7 @@ static int init_inode_xattrs(struct inode *inode)
 		erofs_err(inode->i_sb,
 			  "xattr_isize %d of nid %llu is not supported yet",
 			  vi->xattr_isize, vi->nid);
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_unlock;
 	} else if (vi->xattr_isize < sizeof(struct erofs_xattr_ibody_header)) {
 		if (vi->xattr_isize) {
@@ -342,7 +342,7 @@ static int xattr_checkbuffer(struct xattr_iter *_it,
 			     unsigned int value_sz)
 {
 	struct getxattr_iter *it = container_of(_it, struct getxattr_iter, it);
-	int err = it->buffer_size < value_sz ? -ERANGE : 0;
+	int err = it->buffer_size < value_sz ? -ERR(ERANGE) : 0;
 
 	it->buffer_size = value_sz;
 	return !it->buffer ? 1 : err;
@@ -438,7 +438,7 @@ int erofs_getxattr(struct inode *inode, int index,
 	struct getxattr_iter it;
 
 	if (!name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = init_inode_xattrs(inode);
 	if (ret)
@@ -448,7 +448,7 @@ int erofs_getxattr(struct inode *inode, int index,
 
 	it.name.len = strlen(name);
 	if (it.name.len > EROFS_NAME_LEN)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	it.name.name = name;
 
 	it.buffer = buffer;
@@ -470,16 +470,16 @@ static int erofs_xattr_generic_get(const struct xattr_handler *handler,
 	switch (handler->flags) {
 	case EROFS_XATTR_INDEX_USER:
 		if (!test_opt(&sbi->ctx, XATTR_USER))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		break;
 	case EROFS_XATTR_INDEX_TRUSTED:
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		break;
 	case EROFS_XATTR_INDEX_SECURITY:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return erofs_getxattr(inode, handler->flags, name, buffer, size);
@@ -552,7 +552,7 @@ static int xattr_entrylist(struct xattr_iter *_it,
 
 	if (it->buffer_ofs + prefix_len
 		+ entry->e_name_len + 1 > it->buffer_size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	memcpy(it->buffer + it->buffer_ofs, prefix, prefix_len);
 	it->buffer_ofs += prefix_len;
@@ -682,7 +682,7 @@ struct posix_acl *erofs_get_acl(struct inode *inode, int type)
 		prefix = EROFS_XATTR_INDEX_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	rc = erofs_getxattr(inode, prefix, "", NULL, 0);

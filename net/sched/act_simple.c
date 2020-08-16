@@ -99,7 +99,7 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_DEF_MAX, nla, simple_policy,
 					  NULL);
@@ -107,7 +107,7 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (tb[TCA_DEF_PARMS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_DEF_PARMS]);
 	index = parm->index;
@@ -123,7 +123,7 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!exists) {
@@ -148,7 +148,7 @@ static int tcf_simp_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else {
 		if (!ovr) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto release_idr;
 		}
 

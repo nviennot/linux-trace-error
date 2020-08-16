@@ -299,7 +299,7 @@ static int ak4535_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		mode1 = 0x0001;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* use 32 fs for BCLK to save power */

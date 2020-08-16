@@ -458,7 +458,7 @@ static inline int snd_soc_dai_set_sdw_stream(struct snd_soc_dai *dai,
 	if (dai->driver->ops->set_sdw_stream)
 		return dai->driver->ops->set_sdw_stream(dai, stream, direction);
 	else
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 }
 
 /**
@@ -477,7 +477,7 @@ static inline void *snd_soc_dai_get_sdw_stream(struct snd_soc_dai *dai,
 	if (dai->driver->ops->get_sdw_stream)
 		return dai->driver->ops->get_sdw_stream(dai, direction);
 	else
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline unsigned int

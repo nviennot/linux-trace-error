@@ -1627,7 +1627,7 @@ static inline void do_set_cpus_allowed(struct task_struct *p, const struct cpuma
 static inline int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask)
 {
 	if (!cpumask_test_cpu(0, new_mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 #endif

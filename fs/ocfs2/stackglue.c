@@ -67,7 +67,7 @@ static int ocfs2_stack_driver_request(const char *stack_name,
 	 * we can't continue.
 	 */
 	if (strcmp(stack_name, cluster_stack_name)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -79,13 +79,13 @@ static int ocfs2_stack_driver_request(const char *stack_name,
 		if (!strcmp(active_stack->sp_name, plugin_name))
 			rc = 0;
 		else
-			rc = -EBUSY;
+			rc = -ERR(EBUSY);
 		goto out;
 	}
 
 	p = ocfs2_stack_lookup(plugin_name);
 	if (!p || !try_module_get(p->sp_owner)) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -122,7 +122,7 @@ static int ocfs2_stack_driver_get(const char *stack_name)
 		printk(KERN_ERR
 		       "ocfs2 passed an invalid cluster stack label: \"%s\"\n",
 		       stack_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Anything that isn't the classic stack is a user stack */
@@ -176,7 +176,7 @@ int ocfs2_stack_glue_register(struct ocfs2_stack_plugin *plugin)
 	} else {
 		printk(KERN_ERR "ocfs2: Stack \"%s\" already registered\n",
 		       plugin->sp_name);
-		rc = -EEXIST;
+		rc = -ERR(EEXIST);
 	}
 	spin_unlock(&ocfs2_stack_lock);
 
@@ -296,7 +296,7 @@ int ocfs2_plock(struct ocfs2_cluster_connection *conn, u64 ino,
 	WARN_ON_ONCE(active_stack->sp_ops->plock == NULL);
 	if (active_stack->sp_ops->plock)
 		return active_stack->sp_ops->plock(conn, ino, file, cmd, fl);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL_GPL(ocfs2_plock);
 
@@ -319,13 +319,13 @@ int ocfs2_cluster_connect(const char *stack_name,
 	BUG_ON(recovery_handler == NULL);
 
 	if (grouplen > GROUP_NAME_MAX) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (memcmp(&lproto->lp_max_version, &locking_max_version,
 		   sizeof(struct ocfs2_protocol_version))) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -508,7 +508,7 @@ static ssize_t ocfs2_loaded_cluster_plugins_show(struct kobject *kobj,
 		}
 		if (ret == remain) {
 			/* snprintf() didn't fit */
-			total = -E2BIG;
+			total = -ERR(E2BIG);
 			break;
 		}
 		total += ret;
@@ -534,7 +534,7 @@ static ssize_t ocfs2_active_cluster_plugin_show(struct kobject *kobj,
 		ret = snprintf(buf, PAGE_SIZE, "%s\n",
 			       active_stack->sp_name);
 		if (ret == PAGE_SIZE)
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 	}
 	spin_unlock(&ocfs2_stack_lock);
 
@@ -572,14 +572,14 @@ static ssize_t ocfs2_cluster_stack_store(struct kobject *kobj,
 
 	if ((len != OCFS2_STACK_LABEL_LEN) ||
 	    (strnlen(buf, len) != len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&ocfs2_stack_lock);
 	if (active_stack) {
 		if (!strncmp(buf, cluster_stack_name, len))
 			ret = count;
 		else
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 	} else {
 		memcpy(cluster_stack_name, buf, len);
 		ret = count;

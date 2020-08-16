@@ -1258,7 +1258,7 @@ int ide_hwif_setup_dma(ide_hwif_t *, const struct ide_port_info *);
 static inline int ide_hwif_setup_dma(ide_hwif_t *hwif,
 				     const struct ide_port_info *d)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

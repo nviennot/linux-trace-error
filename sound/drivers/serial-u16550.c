@@ -321,13 +321,13 @@ static int snd_uart16550_detect(struct snd_uart16550 *uart)
 
 	/* Do some vague tests for the presence of the uart */
 	if (io_base == 0 || io_base == SNDRV_AUTO_PORT) {
-		return -ENODEV;	/* Not configured */
+		return -ERR(ENODEV);	/* Not configured */
 	}
 
 	uart->res_base = request_region(io_base, 8, "Serial MIDI");
 	if (uart->res_base == NULL) {
 		snd_printk(KERN_ERR "u16550: can't grab port 0x%lx\n", io_base);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* uart detected unless one of the following tests should fail */
@@ -796,7 +796,7 @@ static int snd_uart16550_create(struct snd_card *card,
 	if ((err = snd_uart16550_detect(uart)) <= 0) {
 		printk(KERN_ERR "no UART detected at 0x%lx\n", iobase);
 		snd_uart16550_free(uart);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (irq >= 0 && irq != SNDRV_AUTO_IRQ) {
@@ -908,21 +908,21 @@ static int snd_serial_probe(struct platform_device *devptr)
 		snd_printk(KERN_ERR
 			   "Adaptor type is out of range 0-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_ADAPTOR, adaptor[dev]);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (outs[dev] < 1 || outs[dev] > SNDRV_SERIAL_MAX_OUTS) {
 		snd_printk(KERN_ERR
 			   "Count of outputs is out of range 1-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_OUTS, outs[dev]);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (ins[dev] < 1 || ins[dev] > SNDRV_SERIAL_MAX_INS) {
 		snd_printk(KERN_ERR
 			   "Count of inputs is out of range 1-%d (%d)\n",
 			   SNDRV_SERIAL_MAX_INS, ins[dev]);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	err  = snd_card_new(&devptr->dev, index[dev], id[dev], THIS_MODULE,
@@ -1017,7 +1017,7 @@ static int __init alsa_card_serial_init(void)
 		printk(KERN_ERR "serial midi soundcard not found or device busy\n");
 #endif
 		snd_serial_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

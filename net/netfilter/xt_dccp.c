@@ -126,11 +126,11 @@ static int dccp_mt_check(const struct xt_mtchk_param *par)
 	const struct xt_dccp_info *info = par->matchinfo;
 
 	if (info->flags & ~XT_DCCP_VALID_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->invflags & ~XT_DCCP_VALID_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->invflags & ~info->flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

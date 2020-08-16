@@ -261,7 +261,7 @@ static int au1xpsc_pcm_trigger(struct snd_soc_component *component,
 		au1xxx_dbdma_stop(c);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -283,7 +283,7 @@ static int au1xpsc_pcm_open(struct snd_soc_component *component,
 
 	dmaids = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
 	if (!dmaids)
-		return -ENODEV;	/* whoa, has ordering changed? */
+		return -ERR(ENODEV);	/* whoa, has ordering changed? */
 
 	pcd->ddma_id = dmaids[stype];
 

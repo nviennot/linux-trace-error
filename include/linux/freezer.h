@@ -263,8 +263,8 @@ static inline bool freezing(struct task_struct *p) { return false; }
 static inline void __thaw_task(struct task_struct *t) {}
 
 static inline bool __refrigerator(bool check_kthr_stop) { return false; }
-static inline int freeze_processes(void) { return -ENOSYS; }
-static inline int freeze_kernel_threads(void) { return -ENOSYS; }
+static inline int freeze_processes(void) { return -ERR(ENOSYS); }
+static inline int freeze_kernel_threads(void) { return -ERR(ENOSYS); }
 static inline void thaw_processes(void) {}
 static inline void thaw_kernel_threads(void) {}
 

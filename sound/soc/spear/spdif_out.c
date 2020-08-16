@@ -64,7 +64,7 @@ static int spdif_out_startup(struct snd_pcm_substream *substream,
 	int ret;
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_enable(host->clk);
 	if (ret)
@@ -110,7 +110,7 @@ static int spdif_out_hw_params(struct snd_pcm_substream *substream,
 	u32 rate, core_freq;
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rate = params_rate(params);
 
@@ -156,7 +156,7 @@ static int spdif_out_trigger(struct snd_pcm_substream *substream, int cmd,
 	int ret = 0;
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -182,7 +182,7 @@ static int spdif_out_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;

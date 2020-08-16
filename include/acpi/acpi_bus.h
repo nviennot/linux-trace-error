@@ -644,11 +644,11 @@ static inline int acpi_pm_device_sleep_state(struct device *d, int *p, int m)
 }
 static inline int acpi_pm_set_device_wakeup(struct device *dev, bool enable)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int acpi_pm_set_bridge_wakeup(struct device *dev, bool enable)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

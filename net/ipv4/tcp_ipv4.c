@@ -186,7 +186,7 @@ static int tcp_v4_pre_connect(struct sock *sk, struct sockaddr *uaddr,
 	 * of the bound specified by user in addr_len.
 	 */
 	if (addr_len < sizeof(struct sockaddr_in))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock_owned_by_me(sk);
 
@@ -208,17 +208,17 @@ int tcp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	struct inet_timewait_death_row *tcp_death_row = &sock_net(sk)->ipv4.tcp_death_row;
 
 	if (addr_len < sizeof(struct sockaddr_in))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin_family != AF_INET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	nexthop = daddr = usin->sin_addr.s_addr;
 	inet_opt = rcu_dereference_protected(inet->inet_opt,
 					     lockdep_sock_is_held(sk));
 	if (inet_opt && inet_opt->opt.srr) {
 		if (!daddr)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nexthop = inet_opt->opt.faddr;
 	}
 
@@ -238,7 +238,7 @@ int tcp_v4_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 
 	if (rt->rt_flags & (RTCF_MULTICAST | RTCF_BROADCAST)) {
 		ip_rt_put(rt);
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 	}
 
 	if (!inet_opt || !inet_opt->opt.srr)
@@ -350,7 +350,7 @@ void tcp_v4_mtu_reduced(struct sock *sk)
 	 * for the case, if this connection will not able to recover.
 	 */
 	if (mtu < dst_mtu(dst) && ip_dont_fragment(sk, dst))
-		sk->sk_err_soft = EMSGSIZE;
+		sk->sk_err_soft = ERR(EMSGSIZE);
 
 	mtu = dst_mtu(dst);
 
@@ -478,7 +478,7 @@ int tcp_v4_err(struct sk_buff *skb, u32 info)
 				       inet_iif(skb), 0);
 	if (!sk) {
 		__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (sk->sk_state == TCP_TIME_WAIT) {
 		inet_twsk_put(inet_twsk(sk));
@@ -531,7 +531,7 @@ int tcp_v4_err(struct sk_buff *skb, u32 info)
 		/* Just silently ignore these. */
 		goto out;
 	case ICMP_PARAMETERPROB:
-		err = EPROTO;
+		err = ERR(EPROTO);
 		break;
 	case ICMP_DEST_UNREACH:
 		if (code > NR_ICMP_UNREACH)
@@ -564,7 +564,7 @@ int tcp_v4_err(struct sk_buff *skb, u32 info)
 			tcp_ld_RTO_revert(sk, seq);
 		break;
 	case ICMP_TIME_EXCEEDED:
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		break;
 	default:
 		goto out;
@@ -1169,7 +1169,7 @@ int tcp_md5_do_del(struct sock *sk, const union tcp_md5_addr *addr, int family,
 
 	key = tcp_md5_do_lookup_exact(sk, addr, family, prefixlen, l3index);
 	if (!key)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hlist_del_rcu(&key->node);
 	atomic_sub(sizeof(*key), &sk->sk_omem_alloc);
 	kfree_rcu(key, rcu);
@@ -1203,19 +1203,19 @@ static int tcp_v4_parse_md5_keys(struct sock *sk, int optname,
 	int l3index = 0;
 
 	if (optlen < sizeof(cmd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&cmd, optval, sizeof(cmd)))
 		return -EFAULT;
 
 	if (sin->sin_family != AF_INET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (optname == TCP_MD5SIG_EXT &&
 	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_PREFIX) {
 		prefixlen = cmd.tcpm_prefixlen;
 		if (prefixlen > 32)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (optname == TCP_MD5SIG_EXT &&
@@ -1233,7 +1233,7 @@ static int tcp_v4_parse_md5_keys(struct sock *sk, int optname,
 		 * right now device MUST be an L3 master
 		 */
 		if (!dev || !l3index)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	addr = (union tcp_md5_addr *)&sin->sin_addr.s_addr;
@@ -1242,7 +1242,7 @@ static int tcp_v4_parse_md5_keys(struct sock *sk, int optname,
 		return tcp_md5_do_del(sk, addr, AF_INET, prefixlen, l3index);
 
 	if (cmd.tcpm_keylen > TCP_MD5SIG_MAXKEYLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return tcp_md5_do_add(sk, addr, AF_INET, prefixlen, l3index,
 			      cmd.tcpm_key, cmd.tcpm_keylen, GFP_KERNEL);

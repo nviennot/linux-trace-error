@@ -2557,7 +2557,7 @@ nfsd4_encode_fattr(struct xdr_stream *xdr, struct svc_fh *fhp,
 			err = security_inode_getsecctx(d_inode(dentry),
 						&context, &contextlen);
 		else
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 		contextsupport = (err == 0);
 		if (bmval2 & FATTR4_WORD2_SECURITY_LABEL) {
 			if (err == -EOPNOTSUPP)
@@ -3214,7 +3214,7 @@ skip_entry:
 fail:
 	xdr_truncate_encode(xdr, start_offset);
 	cd->common.err = nfserr;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static __be32

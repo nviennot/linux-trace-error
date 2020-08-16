@@ -232,7 +232,7 @@ xfs_bmbt_alloc_block(
 	args.minlen = args.maxlen = args.prod = 1;
 	args.wasdel = cur->bc_ino.flags & XFS_BTCUR_BMBT_WASDEL;
 	if (!args.wasdel && args.tp->t_blk_res == 0) {
-		error = -ENOSPC;
+		error = -ERR(ENOSPC);
 		goto error0;
 	}
 	error = xfs_alloc_vextent(&args);

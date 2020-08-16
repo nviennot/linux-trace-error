@@ -169,7 +169,7 @@ static int fsl_sai_set_dai_sysclk_tr(struct snd_soc_dai *cpu_dai,
 		val_cr2 |= FSL_SAI_CR2_MSEL_MCLK3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(sai->regmap, FSL_SAI_xCR2(tx, ofs),
@@ -253,7 +253,7 @@ static int fsl_sai_set_dai_fmt_tr(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_RIGHT_J:
 		/* To be done */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock inversion */
@@ -275,7 +275,7 @@ static int fsl_sai_set_dai_fmt_tr(struct snd_soc_dai *cpu_dai,
 		/* Nothing to do for both normal cases */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock master masks */
@@ -297,7 +297,7 @@ static int fsl_sai_set_dai_fmt_tr(struct snd_soc_dai *cpu_dai,
 		sai->is_slave_mode = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(sai->regmap, FSL_SAI_xCR2(tx, ofs),
@@ -377,7 +377,7 @@ static int fsl_sai_set_bclk(struct snd_soc_dai *dai, bool tx, u32 freq)
 	if (savediv == 0) {
 		dev_err(dai->dev, "failed to derive required %cx rate: %d\n",
 				tx ? 'T' : 'R', freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -610,7 +610,7 @@ static int fsl_sai_trigger(struct snd_pcm_substream *substream, int cmd,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -976,7 +976,7 @@ static int fsl_sai_probe(struct platform_device *pdev)
 	    of_find_property(np, "fsl,sai-asynchronous", NULL)) {
 		/* error out if both synchronous and asynchronous are present */
 		dev_err(&pdev->dev, "invalid binding for synchronous mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_find_property(np, "fsl,sai-synchronous-rx", NULL)) {

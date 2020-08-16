@@ -122,7 +122,7 @@ static int rds_getname(struct socket *sock, struct sockaddr *uaddr,
 	/* racey, don't care */
 	if (peer) {
 		if (ipv6_addr_any(&rs->rs_conn_addr))
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 
 		if (ipv6_addr_v4mapped(&rs->rs_conn_addr)) {
 			sin = (struct sockaddr_in *)uaddr;
@@ -266,12 +266,12 @@ static int rds_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 		    rs->rs_transport->get_tos_map)
 			tos = rs->rs_transport->get_tos_map(utos);
 		else
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 
 		spin_lock_bh(&rds_sock_lock);
 		if (rs->rs_tos || rs->rs_conn) {
 			spin_unlock_bh(&rds_sock_lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		rs->rs_tos = tos;
 		spin_unlock_bh(&rds_sock_lock);
@@ -284,7 +284,7 @@ static int rds_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 			return -EFAULT;
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -299,12 +299,12 @@ static int rds_cancel_sent_to(struct rds_sock *rs, char __user *optval,
 
 	/* racing with another thread binding seems ok here */
 	if (ipv6_addr_any(&rs->rs_bound_addr)) {
-		ret = -ENOTCONN; /* XXX not a great errno */
+		ret = -ERR(ENOTCONN); /* XXX not a great errno */
 		goto out;
 	}
 
 	if (len < sizeof(struct sockaddr_in)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	} else if (len < sizeof(struct sockaddr_in6)) {
 		/* Assume IPv4 */
@@ -333,7 +333,7 @@ static int rds_set_bool_option(unsigned char *optvar, char __user *optval,
 	int value;
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_user(value, (int __user *) optval))
 		return -EFAULT;
 	*optvar = !!value;
@@ -364,20 +364,20 @@ static int rds_set_transport(struct rds_sock *rs, char __user *optval,
 	int t_type;
 
 	if (rs->rs_transport)
-		return -EOPNOTSUPP; /* previously attached to transport */
+		return -ERR(EOPNOTSUPP); /* previously attached to transport */
 
 	if (optlen != sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&t_type, (int __user *)optval, sizeof(t_type)))
 		return -EFAULT;
 
 	if (t_type < 0 || t_type >= RDS_TRANS_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rs->rs_transport = rds_trans_get(t_type);
 
-	return rs->rs_transport ? 0 : -ENOPROTOOPT;
+	return rs->rs_transport ? 0 : -ERR(ENOPROTOOPT);
 }
 
 static int rds_enable_recvtstamp(struct sock *sk, char __user *optval,
@@ -438,7 +438,7 @@ static int rds_setsockopt(struct socket *sock, int level, int optname,
 	int ret;
 
 	if (level != SOL_RDS) {
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 		goto out;
 	}
 
@@ -476,7 +476,7 @@ static int rds_setsockopt(struct socket *sock, int level, int optname,
 		ret = rds_recv_track_latency(rs, optval, optlen);
 		break;
 	default:
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 	}
 out:
 	return ret;
@@ -486,7 +486,7 @@ static int rds_getsockopt(struct socket *sock, int level, int optname,
 			  char __user *optval, int __user *optlen)
 {
 	struct rds_sock *rs = rds_sk_to_rs(sock->sk);
-	int ret = -ENOPROTOOPT, len;
+	int ret = -ERR(ENOPROTOOPT), len;
 	int trans;
 
 	if (level != SOL_RDS)
@@ -505,7 +505,7 @@ static int rds_getsockopt(struct socket *sock, int level, int optname,
 
 	case RDS_RECVERR:
 		if (len < sizeof(int))
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 		if (put_user(rs->rs_recverr, (int __user *) optval) ||
 		    put_user(sizeof(int), optlen))
@@ -515,7 +515,7 @@ static int rds_getsockopt(struct socket *sock, int level, int optname,
 		break;
 	case SO_RDS_TRANSPORT:
 		if (len < sizeof(int)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		trans = (rs->rs_transport ? rs->rs_transport->t_type :
@@ -544,7 +544,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 	int ret = 0;
 
 	if (addr_len < offsetofend(struct sockaddr, sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -552,16 +552,16 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 	case AF_INET:
 		sin = (struct sockaddr_in *)uaddr;
 		if (addr_len < sizeof(struct sockaddr_in)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (sin->sin_addr.s_addr == htonl(INADDR_ANY)) {
-			ret = -EDESTADDRREQ;
+			ret = -ERR(EDESTADDRREQ);
 			break;
 		}
 		if (ipv4_is_multicast(sin->sin_addr.s_addr) ||
 		    sin->sin_addr.s_addr == htonl(INADDR_BROADCAST)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		ipv6_addr_set_v4mapped(sin->sin_addr.s_addr, &rs->rs_conn_addr);
@@ -575,7 +575,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 
 		sin6 = (struct sockaddr_in6 *)uaddr;
 		if (addr_len < sizeof(struct sockaddr_in6)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		addr_type = ipv6_addr_type(&sin6->sin6_addr);
@@ -583,7 +583,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 			__be32 addr4;
 
 			if (!(addr_type & IPV6_ADDR_MAPPED)) {
-				ret = -EPROTOTYPE;
+				ret = -ERR(EPROTOTYPE);
 				break;
 			}
 
@@ -594,7 +594,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 			if (addr4 == htonl(INADDR_ANY) ||
 			    addr4 == htonl(INADDR_BROADCAST) ||
 			    ipv4_is_multicast(addr4)) {
-				ret = -EPROTOTYPE;
+				ret = -ERR(EPROTOTYPE);
 				break;
 			}
 		}
@@ -607,7 +607,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 			    (!ipv6_addr_any(&rs->rs_bound_addr) &&
 			     rs->rs_bound_scope_id &&
 			     sin6->sin6_scope_id != rs->rs_bound_scope_id)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				break;
 			}
 			/* Remember the connected address scope ID.  It will
@@ -623,7 +623,7 @@ static int rds_connect(struct socket *sock, struct sockaddr *uaddr,
 #endif
 
 	default:
-		ret = -EAFNOSUPPORT;
+		ret = -ERR(EAFNOSUPPORT);
 		break;
 	}
 
@@ -703,7 +703,7 @@ static int rds_create(struct net *net, struct socket *sock, int protocol,
 	struct sock *sk;
 
 	if (sock->type != SOCK_SEQPACKET || protocol)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sk = sk_alloc(net, AF_RDS, GFP_KERNEL, &rds_proto, kern);
 	if (!sk)

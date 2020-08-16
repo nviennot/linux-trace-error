@@ -37,7 +37,7 @@ int __kfifo_alloc(struct __kfifo *fifo, unsigned int size,
 	if (size < 2) {
 		fifo->data = NULL;
 		fifo->mask = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fifo->data = kmalloc_array(esize, size, gfp_mask);
@@ -78,7 +78,7 @@ int __kfifo_init(struct __kfifo *fifo, void *buffer,
 
 	if (size < 2) {
 		fifo->mask = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	fifo->mask = size - 1;
 

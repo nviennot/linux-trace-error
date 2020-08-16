@@ -639,7 +639,7 @@ static int AmiMixerIoctl(u_int cmd, u_long arg)
 		    IOCTL_IN(arg, data);
 		    return IOCTL_OUT(arg, dmasound_set_treble(data));
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 

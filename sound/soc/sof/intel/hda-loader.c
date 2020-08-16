@@ -34,14 +34,14 @@ static int cl_stream_prepare(struct snd_sof_dev *sdev, unsigned int format,
 
 	if (direction != SNDRV_PCM_STREAM_PLAYBACK) {
 		dev_err(sdev->dev, "error: code loading DMA is playback only\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dsp_stream = hda_dsp_stream_get(sdev, direction);
 
 	if (!dsp_stream) {
 		dev_err(sdev->dev, "error: no stream available\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	hstream = &dsp_stream->hstream;
 	hstream->substream = NULL;
@@ -113,7 +113,7 @@ static int cl_dsp_init(struct snd_sof_dev *sdev, const void *fwdata,
 	ret = hda_dsp_core_run(sdev, HDA_DSP_CORE_MASK(0));
 	if (ret < 0) {
 		dev_err(sdev->dev, "error: dsp core start failed %d\n", ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -295,7 +295,7 @@ int hda_dsp_cl_boot_firmware(struct snd_sof_dev *sdev)
 
 	if (plat_data->fw->size <= plat_data->fw_offset) {
 		dev_err(sdev->dev, "error: firmware size must be greater than firmware offset\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stripped_firmware.data = plat_data->fw->data + plat_data->fw_offset;
@@ -320,7 +320,7 @@ int hda_dsp_cl_boot_firmware(struct snd_sof_dev *sdev)
 		dev_err(sdev->dev,
 			"error: could not get stream with stream tag %d\n",
 			tag);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 

@@ -86,7 +86,7 @@ static loff_t gfs2_llseek(struct file *file, loff_t offset, int whence)
 		error = generic_file_llseek(file, offset, whence);
 		break;
 	default:
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	}
 
 	return error;
@@ -237,7 +237,7 @@ static int do_gfs2_set_flags(struct file *filp, u32 reqflags, u32 mask,
 	if (error)
 		goto out;
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	if (!inode_owner_or_capable(inode))
 		goto out;
 
@@ -247,7 +247,7 @@ static int do_gfs2_set_flags(struct file *filp, u32 reqflags, u32 mask,
 	if ((new_flags ^ flags) == 0)
 		goto out;
 
-	error = -EPERM;
+	error = -ERR(EPERM);
 	if (IS_IMMUTABLE(inode) && (new_flags & GFS2_DIF_IMMUTABLE))
 		goto out;
 	if (IS_APPEND(inode) && (new_flags & GFS2_DIF_APPENDONLY))
@@ -313,7 +313,7 @@ static int gfs2_set_flags(struct file *filp, u32 __user *ptr)
 		}
 	}
 	if (fsflags || gfsflags & ~GFS2_FLAGS_USER_SET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mask = GFS2_FLAGS_USER_SET;
 	if (S_ISDIR(inode->i_mode)) {
@@ -321,7 +321,7 @@ static int gfs2_set_flags(struct file *filp, u32 __user *ptr)
 	} else {
 		/* The GFS2_DIF_TOPDIR flag is only valid for directories. */
 		if (gfsflags & GFS2_DIF_TOPDIR)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mask &= ~(GFS2_DIF_TOPDIR | GFS2_DIF_INHERIT_JDATA);
 	}
 
@@ -352,7 +352,7 @@ static long gfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return gfs2_getlabel(filp, (char __user *)arg);
 	}
 
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 #ifdef CONFIG_COMPAT
@@ -371,7 +371,7 @@ static long gfs2_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long
 	case FS_IOC_GETFSLABEL:
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return gfs2_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
@@ -422,7 +422,7 @@ static int gfs2_allocate_page_backing(struct page *page, unsigned int length)
 		struct iomap iomap = { };
 
 		if (gfs2_iomap_get_alloc(page->mapping->host, pos, length, &iomap))
-			return -EIO;
+			return -ERR(EIO);
 
 		if (length < iomap.length)
 			iomap.length = length;
@@ -466,7 +466,7 @@ static vm_fault_t gfs2_page_mkwrite(struct vm_fault *vmf)
 	/* Check page index against inode size */
 	size = i_size_read(inode);
 	if (offset >= size) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -493,7 +493,7 @@ static vm_fault_t gfs2_page_mkwrite(struct vm_fault *vmf)
 	    !gfs2_write_alloc_required(ip, offset, length)) {
 		lock_page(page);
 		if (!PageUptodate(page) || page->mapping != inode->i_mapping) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			unlock_page(page);
 		}
 		goto out_unlock;
@@ -524,7 +524,7 @@ static vm_fault_t gfs2_page_mkwrite(struct vm_fault *vmf)
 		goto out_trans_fail;
 
 	lock_page(page);
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	/* If truncated, we must retry the operation, we may have raced
 	 * with the glock demotion code.
 	 */
@@ -1172,10 +1172,10 @@ static long gfs2_fallocate(struct file *file, int mode, loff_t offset, loff_t le
 	int ret;
 
 	if (mode & ~(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	/* fallocate is needed by gfs2_grow to reserve space in the rindex */
 	if (gfs2_is_jdata(ip) && inode != sdp->sd_rindex)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode_lock(inode);
 
@@ -1242,9 +1242,9 @@ static int gfs2_lock(struct file *file, int cmd, struct file_lock *fl)
 	struct lm_lockstruct *ls = &sdp->sd_lockstruct;
 
 	if (!(fl->fl_flags & FL_POSIX))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 	if (__mandatory_lock(&ip->i_inode) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	if (cmd == F_CANCELLK) {
 		/* Hack: */
@@ -1254,7 +1254,7 @@ static int gfs2_lock(struct file *file, int cmd, struct file_lock *fl)
 	if (unlikely(gfs2_withdrawn(sdp))) {
 		if (fl->fl_type == F_UNLCK)
 			locks_lock_file_wait(file, fl);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (IS_GETLK(cmd))
 		return dlm_posix_get(ls->ls_dlm, ip->i_no_addr, file, fl);
@@ -1309,7 +1309,7 @@ static int do_flock(struct file *file, int cmd, struct file_lock *fl)
 	if (error) {
 		gfs2_holder_uninit(fl_gh);
 		if (error == GLR_TRYFAILED)
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 	} else {
 		error = locks_lock_file_wait(file, fl);
 		gfs2_assert_warn(GFS2_SB(&ip->i_inode), !error);
@@ -1346,9 +1346,9 @@ static void do_unflock(struct file *file, struct file_lock *fl)
 static int gfs2_flock(struct file *file, int cmd, struct file_lock *fl)
 {
 	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 	if (fl->fl_type & LOCK_MAND)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (fl->fl_type == F_UNLCK) {
 		do_unflock(file, fl);

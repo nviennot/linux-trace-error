@@ -191,7 +191,7 @@ static inline int red_get_flags(unsigned char qopt_flags,
 
 	if (qopt_flags && flags_attr) {
 		NL_SET_ERR_MSG_MOD(extack, "flags should be passed either through qopt, or through a dedicated attribute");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (flags_attr) {
@@ -211,7 +211,7 @@ static inline int red_validate_flags(unsigned char flags,
 {
 	if ((flags & TC_RED_NODROP) && !(flags & TC_RED_ECN)) {
 		NL_SET_ERR_MSG_MOD(extack, "nodrop mode is only meaningful with ECN");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

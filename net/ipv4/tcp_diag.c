@@ -68,7 +68,7 @@ static int tcp_diag_put_md5sig(struct sk_buff *skb,
 	attr = nla_reserve(skb, INET_DIAG_MD5SIG,
 			   md5sig_count * sizeof(struct tcp_diag_md5sig));
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	info = nla_data(attr);
 	memset(info, 0, md5sig_count * sizeof(struct tcp_diag_md5sig));
@@ -90,7 +90,7 @@ static int tcp_diag_put_ulp(struct sk_buff *skb, struct sock *sk,
 
 	nest = nla_nest_start_noflag(skb, INET_DIAG_ULP_INFO);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	err = nla_put_string(skb, INET_ULP_INFO_NAME, ulp_ops->name);
 	if (err)
@@ -201,7 +201,7 @@ static int tcp_diag_destroy(struct sk_buff *in_skb,
 	if (IS_ERR(sk))
 		return PTR_ERR(sk);
 
-	err = sock_diag_destroy(sk, ECONNABORTED);
+	err = sock_diag_destroy(sk, ERR(ECONNABORTED));
 
 	sock_gen_put(sk);
 

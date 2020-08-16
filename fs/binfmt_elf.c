@@ -325,7 +325,7 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
 			return -EFAULT;
 		len = strnlen_user((void __user *)p, MAX_ARG_STRLEN);
 		if (!len || len > MAX_ARG_STRLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p += len;
 	}
 	if (put_user(0, sp++))
@@ -340,7 +340,7 @@ create_elf_tables(struct linux_binprm *bprm, const struct elfhdr *exec,
 			return -EFAULT;
 		len = strnlen_user((void __user *)p, MAX_ARG_STRLEN);
 		if (!len || len > MAX_ARG_STRLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p += len;
 	}
 	if (put_user(0, sp++))
@@ -416,7 +416,7 @@ static int elf_read(struct file *file, void *buf, size_t len, loff_t pos)
 
 	rv = kernel_read(file, buf, len, &pos);
 	if (unlikely(rv != len)) {
-		return (rv < 0) ? rv : -EIO;
+		return (rv < 0) ? rv : -ERR(EIO);
 	}
 	return 0;
 }
@@ -588,7 +588,7 @@ static unsigned long load_elf_interp(struct elfhdr *interp_elf_ex,
 	total_size = total_mapping_size(interp_elf_phdata,
 					interp_elf_ex->e_phnum);
 	if (!total_size) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -697,30 +697,30 @@ static int parse_elf_property(const char *data, size_t *off, size_t datasz,
 	int ret;
 
 	if (*off == datasz)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (WARN_ON_ONCE(*off > datasz || *off % ELF_GNU_PROPERTY_ALIGN))
-		return -EIO;
+		return -ERR(EIO);
 	o = *off;
 	datasz -= *off;
 
 	if (datasz < sizeof(*pr))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	pr = (const struct gnu_property *)(data + o);
 	o += sizeof(*pr);
 	datasz -= sizeof(*pr);
 
 	if (pr->pr_datasz > datasz)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	WARN_ON_ONCE(o % ELF_GNU_PROPERTY_ALIGN);
 	step = round_up(pr->pr_datasz, ELF_GNU_PROPERTY_ALIGN);
 	if (step > datasz)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	/* Properties are supposed to be unique and sorted on pr_type: */
 	if (have_prev_type && pr->pr_type <= *prev_type)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	*prev_type = pr->pr_type;
 
 	ret = arch_parse_elf_property(pr->pr_type, data + o,
@@ -755,32 +755,32 @@ static int parse_elf_properties(struct file *f, const struct elf_phdr *phdr,
 
 	/* load_elf_binary() shouldn't call us unless this is true... */
 	if (WARN_ON_ONCE(phdr->p_type != PT_GNU_PROPERTY))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	/* If the properties are crazy large, that's too bad (for now): */
 	if (phdr->p_filesz > sizeof(note))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	pos = phdr->p_offset;
 	n = kernel_read(f, &note, phdr->p_filesz, &pos);
 
 	BUILD_BUG_ON(sizeof(note) < sizeof(note.nhdr) + NOTE_NAME_SZ);
 	if (n < 0 || n < sizeof(note.nhdr) + NOTE_NAME_SZ)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (note.nhdr.n_type != NT_GNU_PROPERTY_TYPE_0 ||
 	    note.nhdr.n_namesz != NOTE_NAME_SZ ||
 	    strncmp(note.data + sizeof(note.nhdr),
 		    GNU_PROPERTY_TYPE_0_NAME, n - sizeof(note.nhdr)))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	off = round_up(sizeof(note.nhdr) + NOTE_NAME_SZ,
 		       ELF_GNU_PROPERTY_ALIGN);
 	if (off > n)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	if (note.nhdr.n_descsz > n - off)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	datasz = off + note.nhdr.n_descsz;
 
 	have_prev_type = false;
@@ -790,7 +790,7 @@ static int parse_elf_properties(struct file *f, const struct elf_phdr *phdr,
 		have_prev_type = true;
 	} while (!ret);
 
-	return ret == -ENOENT ? 0 : ret;
+	return ret == -ERR(ENOENT) ? 0 : ret;
 }
 
 static int load_elf_binary(struct linux_binprm *bprm)
@@ -816,7 +816,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 	struct mm_struct *mm;
 	struct pt_regs *regs;
 
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 	/* First of all, some simple consistency checks */
 	if (memcmp(elf_ex->e_ident, ELFMAG, SELFMAG) != 0)
 		goto out;
@@ -850,7 +850,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		 * This is the program interpreter used for shared libraries -
 		 * for now assume that this is an a.out format binary.
 		 */
-		retval = -ENOEXEC;
+		retval = -ERR(ENOEXEC);
 		if (elf_ppnt->p_filesz > PATH_MAX || elf_ppnt->p_filesz < 2)
 			goto out_free_ph;
 
@@ -864,7 +864,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
 		if (retval < 0)
 			goto out_free_interp;
 		/* make sure path is NULL terminated */
-		retval = -ENOEXEC;
+		retval = -ERR(ENOEXEC);
 		if (elf_interpreter[elf_ppnt->p_filesz - 1] != '\0')
 			goto out_free_interp;
 
@@ -920,7 +920,7 @@ out_free_interp:
 
 	/* Some simple consistency checks for the interpreter */
 	if (interpreter) {
-		retval = -ELIBBAD;
+		retval = -ERR(ELIBBAD);
 		/* Not an ELF interpreter */
 		if (memcmp(interp_elf_ex->e_ident, ELFMAG, SELFMAG) != 0)
 			goto out_free_dentry;
@@ -1102,7 +1102,7 @@ out_free_interp:
 			total_size = total_mapping_size(elf_phdata,
 							elf_ex->e_phnum);
 			if (!total_size) {
-				retval = -EINVAL;
+				retval = -ERR(EINVAL);
 				goto out_free_dentry;
 			}
 		}
@@ -1111,7 +1111,7 @@ out_free_interp:
 				elf_prot, elf_flags, total_size);
 		if (BAD_ADDR(error)) {
 			retval = IS_ERR((void *)error) ?
-				PTR_ERR((void*)error) : -EINVAL;
+				PTR_ERR((void*)error) : -ERR(EINVAL);
 			goto out_free_dentry;
 		}
 
@@ -1140,7 +1140,7 @@ out_free_interp:
 		    elf_ppnt->p_memsz > TASK_SIZE ||
 		    TASK_SIZE - elf_ppnt->p_memsz < k) {
 			/* set_brk can never work. Avoid overflows. */
-			retval = -EINVAL;
+			retval = -ERR(EINVAL);
 			goto out_free_dentry;
 		}
 
@@ -1195,7 +1195,7 @@ out_free_interp:
 		}
 		if (BAD_ADDR(elf_entry)) {
 			retval = IS_ERR((void *)elf_entry) ?
-					(int)elf_entry : -EINVAL;
+					(int)elf_entry : -ERR(EINVAL);
 			goto out_free_dentry;
 		}
 		reloc_func_desc = interp_load_addr;
@@ -1208,7 +1208,7 @@ out_free_interp:
 	} else {
 		elf_entry = e_entry;
 		if (BAD_ADDR(elf_entry)) {
-			retval = -EINVAL;
+			retval = -ERR(EINVAL);
 			goto out_free_dentry;
 		}
 	}
@@ -1307,7 +1307,7 @@ static int load_elf_library(struct file *file)
 	int retval, error, i, j;
 	struct elfhdr elf_ex;
 
-	error = -ENOEXEC;
+	error = -ERR(ENOEXEC);
 	retval = elf_read(file, &elf_ex, sizeof(elf_ex), 0);
 	if (retval < 0)
 		goto out;
@@ -1333,7 +1333,7 @@ static int load_elf_library(struct file *file)
 		goto out;
 
 	eppnt = elf_phdata;
-	error = -ENOEXEC;
+	error = -ERR(ENOEXEC);
 	retval = elf_read(file, eppnt, j, elf_ex.e_phoff);
 	if (retval < 0)
 		goto out_free_ph;
@@ -1705,13 +1705,13 @@ static int fill_files_note(struct memelfnote *note)
 	/* *Estimated* file count and total data size needed */
 	count = mm->map_count;
 	if (count > UINT_MAX / 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	size = count * 64;
 
 	names_ofs = (2 + 3 * count) * sizeof(data[0]);
  alloc:
 	if (size >= MAX_FILE_NOTE_SIZE) /* paranoia check */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	size = round_up(size, PAGE_SIZE);
 	/*
 	 * "size" can be 0 here legitimately.

@@ -202,7 +202,7 @@ static inline struct gpio_desc *__must_check gpiod_get(struct device *dev,
 						       const char *con_id,
 						       enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 static inline struct gpio_desc *__must_check
 gpiod_get_index(struct device *dev,
@@ -210,7 +210,7 @@ gpiod_get_index(struct device *dev,
 		unsigned int idx,
 		enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline struct gpio_desc *__must_check
@@ -231,7 +231,7 @@ static inline struct gpio_descs *__must_check
 gpiod_get_array(struct device *dev, const char *con_id,
 		enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline struct gpio_descs *__must_check
@@ -271,7 +271,7 @@ devm_gpiod_get(struct device *dev,
 		 const char *con_id,
 		 enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 static inline
 struct gpio_desc *__must_check
@@ -280,7 +280,7 @@ devm_gpiod_get_index(struct device *dev,
 		       unsigned int idx,
 		       enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline struct gpio_desc *__must_check
@@ -301,7 +301,7 @@ static inline struct gpio_descs *__must_check
 devm_gpiod_get_array(struct device *dev, const char *con_id,
 		     enum gpiod_flags flags)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline struct gpio_descs *__must_check
@@ -333,25 +333,25 @@ static inline int gpiod_get_direction(const struct gpio_desc *desc)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int gpiod_direction_input(struct gpio_desc *desc)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int gpiod_direction_output(struct gpio_desc *desc, int value)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int gpiod_direction_output_raw(struct gpio_desc *desc, int value)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 
@@ -478,21 +478,21 @@ static inline int gpiod_set_config(struct gpio_desc *desc, unsigned long config)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpiod_set_debounce(struct gpio_desc *desc, unsigned debounce)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpiod_set_transitory(struct gpio_desc *desc, bool transitory)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void gpiod_toggle_active_low(struct gpio_desc *desc)
@@ -518,7 +518,7 @@ static inline int gpiod_to_irq(const struct gpio_desc *desc)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int gpiod_set_consumer_name(struct gpio_desc *desc,
@@ -526,7 +526,7 @@ static inline int gpiod_set_consumer_name(struct gpio_desc *desc,
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct gpio_desc *gpio_to_desc(unsigned gpio)
@@ -538,7 +538,7 @@ static inline int desc_to_gpio(const struct gpio_desc *desc)
 {
 	/* GPIO can never have been requested */
 	WARN_ON(desc);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Child properties interface */
@@ -550,7 +550,7 @@ struct gpio_desc *fwnode_get_named_gpiod(struct fwnode_handle *fwnode,
 					 enum gpiod_flags dflags,
 					 const char *label)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline
@@ -559,7 +559,7 @@ struct gpio_desc *fwnode_gpiod_get_index(struct fwnode_handle *fwnode,
 					 enum gpiod_flags flags,
 					 const char *label)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline
@@ -569,7 +569,7 @@ struct gpio_desc *devm_fwnode_gpiod_get_index(struct device *dev,
 					      enum gpiod_flags flags,
 					      const char *label)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 #endif /* CONFIG_GPIOLIB */
@@ -624,7 +624,7 @@ struct gpio_desc *gpiod_get_from_of_node(struct device_node *node,
 					 enum gpiod_flags dflags,
 					 const char *label)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 #endif /* CONFIG_GPIOLIB && CONFIG_OF_GPIO */
@@ -649,7 +649,7 @@ struct gpio_desc *devm_gpiod_get_from_of_node(struct device *dev,
 					      enum gpiod_flags dflags,
 					      const char *label)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 #endif /* CONFIG_GPIOLIB */
@@ -697,14 +697,14 @@ struct acpi_device;
 static inline int acpi_dev_add_driver_gpios(struct acpi_device *adev,
 			      const struct acpi_gpio_mapping *gpios)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline void acpi_dev_remove_driver_gpios(struct acpi_device *adev) {}
 
 static inline int devm_acpi_dev_add_driver_gpios(struct device *dev,
 			      const struct acpi_gpio_mapping *gpios)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline void devm_acpi_dev_remove_driver_gpios(struct device *dev) {}
 
@@ -723,13 +723,13 @@ void gpiod_unexport(struct gpio_desc *desc);
 static inline int gpiod_export(struct gpio_desc *desc,
 			       bool direction_may_change)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpiod_export_link(struct device *dev, const char *name,
 				    struct gpio_desc *desc)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void gpiod_unexport(struct gpio_desc *desc)

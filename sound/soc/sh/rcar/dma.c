@@ -149,7 +149,7 @@ static int rsnd_dmaen_prepare(struct rsnd_mod *mod,
 	if (IS_ERR_OR_NULL(dmaen->chan)) {
 		dmaen->chan = NULL;
 		dev_err(dev, "can't get dma channel\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -190,7 +190,7 @@ static int rsnd_dmaen_start(struct rsnd_mod *mod,
 			break;
 		default:
 			dev_err(dev, "invalid format width %d\n", bits);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -217,7 +217,7 @@ static int rsnd_dmaen_start(struct rsnd_mod *mod,
 
 	if (!desc) {
 		dev_err(dev, "dmaengine_prep_slave_sg() fail\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	desc->callback		= rsnd_dmaen_complete;
@@ -228,7 +228,7 @@ static int rsnd_dmaen_start(struct rsnd_mod *mod,
 	dmaen->cookie = dmaengine_submit(desc);
 	if (dmaen->cookie < 0) {
 		dev_err(dev, "dmaengine_submit() fail\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	dma_async_issue_pending(dmaen->chan);
@@ -276,7 +276,7 @@ static int rsnd_dmaen_attach(struct rsnd_dai_stream *io,
 		 *	rsnd_ssi_fallback()
 		 *	rsnd_rdai_continuance_probe()
 		 */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	/*
@@ -467,7 +467,7 @@ static int rsnd_dmapp_stop(struct rsnd_mod *mod,
 		udelay(1);
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int rsnd_dmapp_start(struct rsnd_mod *mod,
@@ -774,7 +774,7 @@ static int rsnd_dma_alloc(struct rsnd_dai_stream *io, struct rsnd_mod *mod,
 	 *	rsnd_rdai_continuance_probe()
 	 */
 	if (!dmac)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	rsnd_dma_of_path(mod, io, is_play, &mod_from, &mod_to);
 

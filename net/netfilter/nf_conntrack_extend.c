@@ -93,7 +93,7 @@ int nf_ct_extend_register(const struct nf_ct_ext_type *type)
 
 	mutex_lock(&nf_ct_ext_type_mutex);
 	if (nf_ct_ext_types[type->id]) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 

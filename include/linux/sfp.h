@@ -578,13 +578,13 @@ static inline phy_interface_t sfp_select_interface(struct sfp_bus *bus,
 static inline int sfp_get_module_info(struct sfp_bus *bus,
 				      struct ethtool_modinfo *modinfo)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int sfp_get_module_eeprom(struct sfp_bus *bus,
 					struct ethtool_eeprom *ee, u8 *data)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void sfp_upstream_start(struct sfp_bus *bus)

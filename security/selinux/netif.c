@@ -93,7 +93,7 @@ static int sel_netif_insert(struct sel_netif *netif)
 	int idx;
 
 	if (sel_netif_total >= SEL_NETIF_HASH_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	idx = sel_netif_hashfn(netif->nsec.ns, netif->nsec.ifindex);
 	list_add_rcu(&netif->list, &sel_netif_hash[idx]);
@@ -144,7 +144,7 @@ static int sel_netif_sid_slow(struct net *ns, int ifindex, u32 *sid)
 	if (unlikely(dev == NULL)) {
 		pr_warn("SELinux: failure in %s(), invalid network interface (%d)\n",
 			__func__, ifindex);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	spin_lock_bh(&sel_netif_lock);

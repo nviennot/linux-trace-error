@@ -48,7 +48,7 @@ static int set_bits_ll(unsigned long *addr, unsigned long mask_to_set)
 	do {
 		val = nval;
 		if (val & mask_to_set)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		cpu_relax();
 	} while ((nval = cmpxchg(addr, val, val | mask_to_set)) != val);
 
@@ -63,7 +63,7 @@ static int clear_bits_ll(unsigned long *addr, unsigned long mask_to_clear)
 	do {
 		val = nval;
 		if ((val & mask_to_clear) != mask_to_clear)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		cpu_relax();
 	} while ((nval = cmpxchg(addr, val, val & ~mask_to_clear)) != val);
 
@@ -827,7 +827,7 @@ struct gen_pool *devm_gen_pool_create(struct device *dev, int min_alloc_order,
 
 	/* Check that genpool to be created is uniquely addressed on device */
 	if (gen_pool_get(dev, name))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (name) {
 		pool_name = kstrdup_const(name, GFP_KERNEL);

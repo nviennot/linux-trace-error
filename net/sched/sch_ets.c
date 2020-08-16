@@ -81,7 +81,7 @@ static int ets_quantum_parse(struct Qdisc *sch, const struct nlattr *attr,
 	*quantum = nla_get_u32(attr);
 	if (!*quantum) {
 		NL_SET_ERR_MSG(extack, "ETS quantum cannot be zero");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -210,12 +210,12 @@ static int ets_class_change(struct Qdisc *sch, u32 classid, u32 parentid,
 	 */
 	if (!cl) {
 		NL_SET_ERR_MSG(extack, "Fine-grained class addition and removal is not supported");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!opt) {
 		NL_SET_ERR_MSG(extack, "ETS options are required for this operation");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, TCA_ETS_MAX, opt, ets_class_policy, extack);
@@ -228,7 +228,7 @@ static int ets_class_change(struct Qdisc *sch, u32 classid, u32 parentid,
 
 	if (ets_class_is_strict(q, cl)) {
 		NL_SET_ERR_MSG(extack, "Strict bands do not have a configurable quantum");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = ets_quantum_parse(sch, tb[TCA_ETS_QUANTA_BAND], &quantum,
@@ -316,7 +316,7 @@ static int ets_class_dump(struct Qdisc *sch, unsigned long arg,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ets_class_dump_stats(struct Qdisc *sch, unsigned long arg,
@@ -526,18 +526,18 @@ static int ets_qdisc_priomap_parse(struct nlattr *priomap_attr,
 		case TCA_ETS_PRIOMAP_BAND:
 			if (prio > TC_PRIO_MAX) {
 				NL_SET_ERR_MSG_MOD(extack, "Too many priorities in ETS priomap");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			band = nla_get_u8(attr);
 			if (band >= nbands) {
 				NL_SET_ERR_MSG_MOD(extack, "Invalid band number in ETS priomap");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			priomap[prio++] = band;
 			break;
 		default:
 			WARN_ON_ONCE(1); /* Validate should have caught this. */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -565,7 +565,7 @@ static int ets_qdisc_quanta_parse(struct Qdisc *sch, struct nlattr *quanta_attr,
 		case TCA_ETS_QUANTA_BAND:
 			if (band >= nbands) {
 				NL_SET_ERR_MSG_MOD(extack, "ETS quanta has more values than bands");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			err = ets_quantum_parse(sch, attr, &quanta[band++],
 						extack);
@@ -574,7 +574,7 @@ static int ets_qdisc_quanta_parse(struct Qdisc *sch, struct nlattr *quanta_attr,
 			break;
 		default:
 			WARN_ON_ONCE(1); /* Validate should have caught this. */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -597,7 +597,7 @@ static int ets_qdisc_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!opt) {
 		NL_SET_ERR_MSG(extack, "ETS options are required for this operation");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, TCA_ETS_MAX, opt, ets_policy, extack);
@@ -606,12 +606,12 @@ static int ets_qdisc_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!tb[TCA_ETS_NBANDS]) {
 		NL_SET_ERR_MSG_MOD(extack, "Number of bands is a required argument");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	nbands = nla_get_u8(tb[TCA_ETS_NBANDS]);
 	if (nbands < 1 || nbands > TCQ_ETS_MAX_BANDS) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid number of bands");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* Unless overridden, traffic goes to the last band. */
 	memset(priomap, nbands - 1, sizeof(priomap));
@@ -620,7 +620,7 @@ static int ets_qdisc_change(struct Qdisc *sch, struct nlattr *opt,
 		nstrict = nla_get_u8(tb[TCA_ETS_NSTRICT]);
 		if (nstrict > nbands) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid number of strict bands");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -692,7 +692,7 @@ static int ets_qdisc_init(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
 	if (err)
@@ -781,7 +781,7 @@ static int ets_qdisc_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_err:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct Qdisc_class_ops ets_class_ops = {

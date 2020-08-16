@@ -111,10 +111,10 @@ int debugfs_file_get(struct dentry *dentry)
 	 * removers.
 	 */
 	if (d_unlinked(dentry))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!refcount_inc_not_zero(&fsd->active_users))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -155,7 +155,7 @@ static int debugfs_locked_down(struct inode *inode,
 		return 0;
 
 	if (security_locked_down(LOCKDOWN_DEBUGFS))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -168,7 +168,7 @@ static int open_proxy_open(struct inode *inode, struct file *filp)
 
 	r = debugfs_file_get(dentry);
 	if (r)
-		return r == -EIO ? -ENOENT : r;
+		return r == -ERR(EIO) ? -ERR(ENOENT) : r;
 
 	real_fops = debugfs_real_fops(filp);
 
@@ -186,7 +186,7 @@ static int open_proxy_open(struct inode *inode, struct file *filp)
 		/* Huh? Module did not clean up after itself at exit? */
 		WARN(1, "debugfs file owner did not clean up at exit: %pd",
 			dentry);
-		r = -ENXIO;
+		r = -ERR(ENXIO);
 		goto out;
 	}
 	replace_fops(filp, real_fops);
@@ -303,7 +303,7 @@ static int full_proxy_open(struct inode *inode, struct file *filp)
 
 	r = debugfs_file_get(dentry);
 	if (r)
-		return r == -EIO ? -ENOENT : r;
+		return r == -ERR(EIO) ? -ERR(ENOENT) : r;
 
 	real_fops = debugfs_real_fops(filp);
 
@@ -321,7 +321,7 @@ static int full_proxy_open(struct inode *inode, struct file *filp)
 		/* Huh? Module did not cleanup after itself at exit? */
 		WARN(1, "debugfs file owner did not clean up at exit: %pd",
 			dentry);
-		r = -ENXIO;
+		r = -ERR(ENXIO);
 		goto out;
 	}
 
@@ -1148,7 +1148,7 @@ struct dentry *debugfs_create_devm_seqfile(struct device *dev, const char *name,
 	struct debugfs_devm_entry *entry;
 
 	if (IS_ERR(parent))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	entry = devm_kzalloc(dev, sizeof(*entry), GFP_KERNEL);
 	if (!entry)

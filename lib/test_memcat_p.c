@@ -57,7 +57,7 @@ static int __init test_memcat_p_init(void)
 	if (!out)
 		goto err_free_all_elements;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (i = 0, p = out; *p && (i < INPUT_MAX * 2 - 1); p++, i++) {
 		total += (*p)->num;
 

@@ -214,7 +214,7 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
 	size_t orig_count;
 
 	if ((pos | length | align) & ((1 << blkbits) - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (iomap->type == IOMAP_UNWRITTEN) {
 		dio->flags |= IOMAP_DIO_UNWRITTEN;
@@ -377,7 +377,7 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
 	switch (iomap->type) {
 	case IOMAP_HOLE:
 		if (WARN_ON_ONCE(dio->flags & IOMAP_DIO_WRITE))
-			return -EIO;
+			return -ERR(EIO);
 		return iomap_dio_hole_actor(length, dio);
 	case IOMAP_UNWRITTEN:
 		if (!(dio->flags & IOMAP_DIO_WRITE))
@@ -389,7 +389,7 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
 		return iomap_dio_inline_actor(inode, pos, length, dio, iomap);
 	default:
 		WARN_ON_ONCE(1);
-		return -EIO;
+		return -ERR(EIO);
 	}
 }
 
@@ -420,7 +420,7 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 		return 0;
 
 	if (WARN_ON(is_sync_kiocb(iocb) && !wait_for_completion))
-		return -EIO;
+		return -ERR(EIO);
 
 	dio = kmalloc(sizeof(*dio), GFP_KERNEL);
 	if (!dio)
@@ -465,7 +465,7 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (filemap_range_has_page(mapping, pos, end)) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out_free_dio;
 		}
 		flags |= IOMAP_NOWAIT;
@@ -553,7 +553,7 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
 	dio->wait_for_completion = wait_for_completion;
 	if (!atomic_dec_and_test(&dio->ref)) {
 		if (!wait_for_completion)
-			return -EIOCBQUEUED;
+			return -ERR(EIOCBQUEUED);
 
 		for (;;) {
 			set_current_state(TASK_UNINTERRUPTIBLE);

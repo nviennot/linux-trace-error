@@ -158,7 +158,7 @@ static int fw_delete(struct tcf_proto *tp, void *arg, bool *last,
 	struct fw_filter *f = arg;
 	struct fw_filter __rcu **fp;
 	struct fw_filter *pfp;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int h;
 
 	if (head == NULL || f == NULL)
@@ -223,7 +223,7 @@ static int fw_set_parms(struct net *net, struct tcf_proto *tp,
 		f->ifindex = ret;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[TCA_FW_MASK]) {
 		mask = nla_get_u32(tb[TCA_FW_MASK]);
 		if (mask != head->mask)
@@ -247,7 +247,7 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 	int err;
 
 	if (!opt)
-		return handle ? -EINVAL : 0; /* Succeed if it is old method. */
+		return handle ? -ERR(EINVAL) : 0; /* Succeed if it is old method. */
 
 	err = nla_parse_nested_deprecated(tb, TCA_FW_MAX, opt, fw_policy,
 					  NULL);
@@ -259,11 +259,11 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 		struct fw_filter __rcu **fp;
 
 		if (f->id != handle && handle)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		fnew = kzalloc(sizeof(struct fw_filter), GFP_KERNEL);
 		if (!fnew)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		fnew->id = f->id;
 		fnew->res = f->res;
@@ -301,7 +301,7 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 	}
 
 	if (!handle)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!head) {
 		u32 mask = 0xFFFFFFFF;
@@ -310,7 +310,7 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 
 		head = kzalloc(sizeof(*head), GFP_KERNEL);
 		if (!head)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		head->mask = mask;
 
 		rcu_assign_pointer(tp->root, head);
@@ -318,7 +318,7 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 
 	f = kzalloc(sizeof(struct fw_filter), GFP_KERNEL);
 	if (f == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_exts_init(&f->exts, net, TCA_FW_ACT, TCA_FW_POLICE);
 	if (err < 0)

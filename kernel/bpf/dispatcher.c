@@ -87,7 +87,7 @@ static bool bpf_dispatcher_remove_prog(struct bpf_dispatcher *d,
 
 int __weak arch_prepare_bpf_dispatcher(void *image, s64 *funcs, int num_funcs)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int bpf_dispatcher_prepare(struct bpf_dispatcher *d, void *image)

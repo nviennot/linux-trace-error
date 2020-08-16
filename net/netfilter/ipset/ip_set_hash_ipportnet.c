@@ -74,7 +74,7 @@ hash_ipportnet4_data_equal(const struct hash_ipportnet4_elem *ip1,
 static int
 hash_ipportnet4_do_data_match(const struct hash_ipportnet4_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -146,7 +146,7 @@ hash_ipportnet4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!ip_set_get_ip4_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip);
 	ip4addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip2);
@@ -323,7 +323,7 @@ hash_ipportnet6_data_equal(const struct hash_ipportnet6_elem *ip1,
 static int
 hash_ipportnet6_do_data_match(const struct hash_ipportnet6_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -397,7 +397,7 @@ hash_ipportnet6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!ip_set_get_ip6_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip.in6);
 	ip6addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip2.in6);

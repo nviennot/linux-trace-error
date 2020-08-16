@@ -786,7 +786,7 @@ xchk_directory(
 	int			error = 0;
 
 	if (!S_ISDIR(VFS_I(sc->ip)->i_mode))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* Plausible size? */
 	if (sc->ip->i_d.di_size < xfs_dir2_sf_hdr_size(0)) {

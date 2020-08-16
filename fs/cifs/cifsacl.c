@@ -292,18 +292,18 @@ id_to_sid(unsigned int cid, uint sidtype, struct cifs_sid *ssid)
 	rc = snprintf(desc, sizeof(desc), "%ci:%u",
 			sidtype == SIDOWNER ? 'o' : 'g', cid);
 	if (rc >= sizeof(desc))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = 0;
 	saved_cred = override_creds(root_cred);
 	sidkey = request_key(&cifs_idmap_key_type, desc, "");
 	if (IS_ERR(sidkey)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		cifs_dbg(FYI, "%s: Can't map %cid %u to a SID\n",
 			 __func__, sidtype == SIDOWNER ? 'u' : 'g', cid);
 		goto out_revert_creds;
 	} else if (sidkey->datalen < CIFS_SID_BASE_SIZE) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(FYI, "%s: Downcall contained malformed key (datalen=%hu)\n",
 			 __func__, sidkey->datalen);
 		goto invalidate_key;
@@ -320,7 +320,7 @@ id_to_sid(unsigned int cid, uint sidtype, struct cifs_sid *ssid)
 
 	ksid_size = CIFS_SID_BASE_SIZE + (ksid->num_subauth * sizeof(__le32));
 	if (ksid_size > sidkey->datalen) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(FYI, "%s: Downcall contained malformed key (datalen=%hu, ksid_size=%u)\n",
 			 __func__, sidkey->datalen, ksid_size);
 		goto invalidate_key;
@@ -356,7 +356,7 @@ sid_to_id(struct cifs_sb_info *cifs_sb, struct cifs_sid *psid,
 	if (unlikely(psid->num_subauth > SID_MAX_SUB_AUTHORITIES)) {
 		cifs_dbg(FYI, "%s: %u subauthorities is too many!\n",
 			 __func__, psid->num_subauth);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_UID_FROM_ACL) {
@@ -403,7 +403,7 @@ try_upcall_to_get_id:
 	saved_cred = override_creds(root_cred);
 	sidkey = request_key(&cifs_idmap_key_type, sidstr, "");
 	if (IS_ERR(sidkey)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		cifs_dbg(FYI, "%s: Can't map SID %s to a %cid\n",
 			 __func__, sidstr, sidtype == SIDOWNER ? 'u' : 'g');
 		goto out_revert_creds;
@@ -416,7 +416,7 @@ try_upcall_to_get_id:
 	 */
 	BUILD_BUG_ON(sizeof(uid_t) != sizeof(gid_t));
 	if (sidkey->datalen != sizeof(uid_t)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(FYI, "%s: Downcall contained malformed key (datalen=%hu)\n",
 			 __func__, sidkey->datalen);
 		key_invalidate(sidkey);
@@ -913,7 +913,7 @@ static int parse_sid(struct cifs_sid *psid, char *end_of_acl)
 	   bytes long (assuming no sub-auths - e.g. the null SID */
 	if (end_of_acl < (char *)psid + 8) {
 		cifs_dbg(VFS, "ACL too small to parse SID %p\n", psid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 #ifdef CONFIG_CIFS_DEBUG2
@@ -950,7 +950,7 @@ static int parse_sec_desc(struct cifs_sb_info *cifs_sb,
 	__u32 dacloffset;
 
 	if (pntsd == NULL)
-		return -EIO;
+		return -ERR(EIO);
 
 	owner_sid_ptr = (struct cifs_sid *)((char *)pntsd +
 				le32_to_cpu(pntsd->osidoffset));
@@ -1257,7 +1257,7 @@ cifs_acl_to_fattr(struct cifs_sb_info *cifs_sb, struct cifs_fattr *fattr,
 		pntsd = ops->get_acl(cifs_sb, inode, path, &acllen);
 	else {
 		cifs_put_tlink(tlink);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	/* if we can retrieve the ACL, now parse Access Control Entries, ACEs */
 	if (IS_ERR(pntsd)) {
@@ -1304,7 +1304,7 @@ id_mode_to_cifs_acl(struct inode *inode, const char *path, __u64 nmode,
 
 	if (ops->get_acl == NULL) {
 		cifs_put_tlink(tlink);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	pntsd = ops->get_acl(cifs_sb, inode, path, &secdesclen);
@@ -1345,7 +1345,7 @@ id_mode_to_cifs_acl(struct inode *inode, const char *path, __u64 nmode,
 	cifs_dbg(NOISY, "build_sec_desc rc: %d\n", rc);
 
 	if (ops->set_acl == NULL)
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 
 	if (!rc) {
 		/* Set the security descriptor */

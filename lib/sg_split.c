@@ -71,7 +71,7 @@ static int sg_calculate_split(struct scatterlist *in, int nents, int nb_splits,
 			break;
 	}
 
-	return (size || !splitters[0].in_sg0) ? -EINVAL : 0;
+	return (size || !splitters[0].in_sg0) ? -ERR(EINVAL) : 0;
 }
 
 static void sg_split_phys(struct sg_splitter *splitters, const int nb_splits)

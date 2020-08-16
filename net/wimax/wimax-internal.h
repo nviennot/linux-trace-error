@@ -40,11 +40,11 @@ static inline __must_check
 int wimax_dev_is_ready(struct wimax_dev *wimax_dev)
 {
 	if (wimax_dev->state == __WIMAX_ST_NULL)
-		return -EINVAL;	/* Device is not even registered! */
+		return -ERR(EINVAL);	/* Device is not even registered! */
 	if (wimax_dev->state == WIMAX_ST_DOWN)
-		return -ENOMEDIUM;
+		return -ERR(ENOMEDIUM);
 	if (wimax_dev->state == __WIMAX_ST_QUIESCING)
-		return -ESHUTDOWN;
+		return -ERR(ESHUTDOWN);
 	return 0;
 }
 

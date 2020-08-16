@@ -148,7 +148,7 @@ static int prio_offload(struct Qdisc *sch, struct tc_prio_qopt *qopt)
 	};
 
 	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (qopt) {
 		opt.command = TC_PRIO_REPLACE;
@@ -184,15 +184,15 @@ static int prio_tune(struct Qdisc *sch, struct nlattr *opt,
 	struct tc_prio_qopt *qopt;
 
 	if (nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	qopt = nla_data(opt);
 
 	if (qopt->bands > TCQ_PRIO_BANDS || qopt->bands < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i <= TC_PRIO_MAX; i++) {
 		if (qopt->priomap[i] >= qopt->bands)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Before commit, make sure we can allocate all new qdiscs */
@@ -235,7 +235,7 @@ static int prio_init(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
 	if (err)

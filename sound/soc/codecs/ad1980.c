@@ -225,7 +225,7 @@ static int ad1980_reset(struct snd_soc_component *component, int try_warm)
 
 	dev_err(component->dev, "Failed to reset: AC97 link error\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int ad1980_soc_probe(struct snd_soc_component *component)

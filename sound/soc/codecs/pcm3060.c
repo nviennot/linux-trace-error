@@ -23,7 +23,7 @@ static int pcm3060_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	if (dir != SND_SOC_CLOCK_IN) {
 		dev_err(comp->dev, "unsupported sysclock dir: %d\n", dir);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
@@ -41,7 +41,7 @@ static int pcm3060_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	default:
 		dev_err(comp->dev, "unsupported sysclock id: %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dai->id == PCM3060_DAI_ID_DAC)
@@ -65,7 +65,7 @@ static int pcm3060_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) {
 		dev_err(comp->dev, "unsupported DAI polarity: 0x%x\n", fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -77,7 +77,7 @@ static int pcm3060_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(comp->dev, "unsupported DAI master mode: 0x%x\n", fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -92,7 +92,7 @@ static int pcm3060_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(comp->dev, "unsupported DAI format: 0x%x\n", fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dai->id == PCM3060_DAI_ID_DAC)
@@ -124,7 +124,7 @@ static int pcm3060_hw_params(struct snd_pcm_substream *substream,
 	rate = params_rate(params);
 	if (!rate) {
 		dev_err(comp->dev, "rate is not configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ratio = priv->dai[dai->id].sclk_freq / rate;
@@ -150,7 +150,7 @@ static int pcm3060_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(comp->dev, "unsupported ratio: %d\n", ratio);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 val_ready:

@@ -40,7 +40,7 @@ static int eee_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_eee)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
 		return ret;
@@ -110,7 +110,7 @@ static int eee_fill_reply(struct sk_buff *skb,
 	    nla_put_u8(skb, ETHTOOL_A_EEE_TX_LPI_ENABLED,
 		       !!eee->tx_lpi_enabled) ||
 	    nla_put_u32(skb, ETHTOOL_A_EEE_TX_LPI_TIMER, eee->tx_lpi_timer))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -165,7 +165,7 @@ int ethnl_set_eee(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!ops->get_eee || !ops->set_eee)
 		goto out_dev;
 

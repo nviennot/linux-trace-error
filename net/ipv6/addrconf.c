@@ -369,7 +369,7 @@ static struct inet6_dev *ipv6_add_dev(struct net_device *dev)
 	ASSERT_RTNL();
 
 	if (dev->mtu < IPV6_MIN_MTU)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ndev = kzalloc(sizeof(struct inet6_dev), GFP_KERNEL);
 	if (!ndev)
@@ -522,7 +522,7 @@ static int inet6_netconf_fill_devconf(struct sk_buff *skb, int ifindex,
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(struct netconfmsg),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (type == NETCONFA_ALL)
 		all = true;
@@ -560,14 +560,14 @@ out:
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 void inet6_netconf_notify_devconf(struct net *net, int event, int type,
 				  int ifindex, struct ipv6_devconf *devconf)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(inet6_netconf_msgsize_devconf(type), GFP_KERNEL);
 	if (!skb)
@@ -603,7 +603,7 @@ static int inet6_netconf_valid_get_req(struct sk_buff *skb,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(struct netconfmsg))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for netconf get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -626,7 +626,7 @@ static int inet6_netconf_valid_get_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in netconf get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -651,9 +651,9 @@ static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
 		return err;
 
 	if (!tb[NETCONFA_IFINDEX])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	ifindex = nla_get_s32(tb[NETCONFA_IFINDEX]);
 	switch (ifindex) {
 	case NETCONFA_IFINDEX_ALL:
@@ -665,7 +665,7 @@ static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
 	default:
 		dev = dev_get_by_index(net, ifindex);
 		if (!dev)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		in6_dev = in6_dev_get(dev);
 		if (!in6_dev)
 			goto errout;
@@ -673,7 +673,7 @@ static int inet6_netconf_get_devconf(struct sk_buff *in_skb,
 		break;
 	}
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	skb = nlmsg_new(inet6_netconf_msgsize_devconf(NETCONFA_ALL), GFP_KERNEL);
 	if (!skb)
 		goto errout;
@@ -714,12 +714,12 @@ static int inet6_netconf_dump_devconf(struct sk_buff *skb,
 
 		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid header for netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (nlmsg_attrlen(nlh, sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid data after header in netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1021,7 +1021,7 @@ static int ipv6_add_addr_hash(struct net_device *dev, struct inet6_ifaddr *ifa)
 	/* Ignore adding duplicate addresses on an interface */
 	if (ipv6_chk_same_addr(dev_net(dev), &ifa->addr, dev, hash)) {
 		netdev_dbg(dev, "ipv6_add_addr: already assigned\n");
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	} else {
 		hlist_add_head_rcu(&ifa->addr_lst, &inet6_addr_lst[hash]);
 	}
@@ -1050,15 +1050,15 @@ ipv6_add_addr(struct inet6_dev *idev, struct ifa6_config *cfg,
 	    (!(idev->dev->flags & IFF_LOOPBACK) &&
 	     !netif_is_l3_master(idev->dev) &&
 	     addr_type & IPV6_ADDR_LOOPBACK))
-		return ERR_PTR(-EADDRNOTAVAIL);
+		return ERR_PTR(-ERR(EADDRNOTAVAIL));
 
 	if (idev->dead) {
-		err = -ENODEV;			/*XXX*/
+		err = -ERR(ENODEV);			/*XXX*/
 		goto out;
 	}
 
 	if (idev->cnf.disable_ipv6) {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 
@@ -1080,7 +1080,7 @@ ipv6_add_addr(struct inet6_dev *idev, struct ifa6_config *cfg,
 
 	ifa = kzalloc(sizeof(*ifa), gfp_flags);
 	if (!ifa) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto out;
 	}
 
@@ -1819,7 +1819,7 @@ int ipv6_dev_get_saddr(struct net *net, const struct net_device *dst_dev,
 out:
 	hiscore = &scores[hiscore_idx];
 	if (!hiscore->ifa)
-		ret = -EADDRNOTAVAIL;
+		ret = -ERR(EADDRNOTAVAIL);
 	else
 		*saddr = hiscore->ifa->addr;
 
@@ -1832,7 +1832,7 @@ int __ipv6_get_lladdr(struct inet6_dev *idev, struct in6_addr *addr,
 		      u32 banned_flags)
 {
 	struct inet6_ifaddr *ifp;
-	int err = -EADDRNOTAVAIL;
+	int err = -ERR(EADDRNOTAVAIL);
 
 	list_for_each_entry_reverse(ifp, &idev->addr_list, if_list) {
 		if (ifp->scope > IFA_LINK)
@@ -1851,7 +1851,7 @@ int ipv6_get_lladdr(struct net_device *dev, struct in6_addr *addr,
 		    u32 banned_flags)
 {
 	struct inet6_dev *idev;
-	int err = -EADDRNOTAVAIL;
+	int err = -ERR(EADDRNOTAVAIL);
 
 	rcu_read_lock();
 	idev = __in6_dev_get(dev);
@@ -2044,7 +2044,7 @@ static void addrconf_dad_stop(struct inet6_ifaddr *ifp, int dad_failed)
 
 static int addrconf_dad_end(struct inet6_ifaddr *ifp)
 {
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	spin_lock_bh(&ifp->lock);
 	if (ifp->state == INET6_IFADDR_STATE_DAD) {
@@ -2461,7 +2461,7 @@ static struct inet6_dev *addrconf_add_dev(struct net_device *dev)
 		return idev;
 
 	if (idev->cnf.disable_ipv6)
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	/* Add default multicast route */
 	if (!(dev->flags & IFF_LOOPBACK) && !netif_is_l3_master(dev))
@@ -2790,7 +2790,7 @@ static int addrconf_set_sit_dstaddr(struct net *net, struct net_device *dev,
 	int err;
 
 	if (!(ipv6_addr_type(&ireq->ifr6_addr) & IPV6_ADDR_COMPATv4))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	p.iph.daddr = ireq->ifr6_addr.s6_addr32[3];
 	p.iph.version = 4;
@@ -2799,14 +2799,14 @@ static int addrconf_set_sit_dstaddr(struct net *net, struct net_device *dev,
 	p.iph.ttl = 64;
 
 	if (!dev->netdev_ops->ndo_tunnel_ctl)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	err = dev->netdev_ops->ndo_tunnel_ctl(dev, &p, SIOCADDTUNNEL);
 	if (err)
 		return err;
 
 	dev = __dev_get_by_name(net, p.name);
 	if (!dev)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	return dev_open(dev, NULL);
 }
 
@@ -2819,10 +2819,10 @@ int addrconf_set_dstaddr(struct net *net, void __user *arg)
 {
 	struct net_device *dev;
 	struct in6_ifreq ireq;
-	int err = -ENODEV;
+	int err = -ERR(ENODEV);
 
 	if (!IS_ENABLED(CONFIG_IPV6_SIT))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
 		return -EFAULT;
 
@@ -2868,18 +2868,18 @@ static int inet6_addr_add(struct net *net, int ifindex,
 	ASSERT_RTNL();
 
 	if (cfg->plen > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check the lifetime */
 	if (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cfg->ifa_flags & IFA_F_MANAGETEMPADDR && cfg->plen != 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = __dev_get_by_index(net, ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	idev = addrconf_add_dev(dev);
 	if (IS_ERR(idev))
@@ -2954,15 +2954,15 @@ static int inet6_addr_del(struct net *net, int ifindex, u32 ifa_flags,
 	struct net_device *dev;
 
 	if (plen > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = __dev_get_by_index(net, ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	idev = __in6_dev_get(dev);
 	if (!idev)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	read_lock_bh(&idev->lock);
 	list_for_each_entry(ifp, &idev->addr_list, if_list) {
@@ -2985,7 +2985,7 @@ static int inet6_addr_del(struct net *net, int ifindex, u32 ifa_flags,
 		}
 	}
 	read_unlock_bh(&idev->lock);
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 }
 
 
@@ -3000,7 +3000,7 @@ int addrconf_add_ifaddr(struct net *net, void __user *arg)
 	int err;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
 		return -EFAULT;
@@ -3020,7 +3020,7 @@ int addrconf_del_ifaddr(struct net *net, void __user *arg)
 	int err;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (copy_from_user(&ireq, arg, sizeof(struct in6_ifreq)))
 		return -EFAULT;
@@ -3678,7 +3678,7 @@ static int addrconf_ifdown(struct net_device *dev, int how)
 
 	idev = __in6_dev_get(dev);
 	if (!idev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Step 1: remove reference to ipv6 device from parent device.
@@ -4597,7 +4597,7 @@ inet6_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	ifm = nlmsg_data(nlh);
 	pfx = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer_pfx);
 	if (!pfx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ifa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) : ifm->ifa_flags;
 
@@ -4619,7 +4619,7 @@ static int modify_prefix_route(struct inet6_ifaddr *ifp,
 					ifp->prefix_len,
 					ifp->idev->dev, 0, RTF_DEFAULT, true);
 	if (!f6i)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	prio = ifp->rt_priority ? : IP6_RT_PRIO_ADDRCONF;
 	if (f6i->fib6_metric != prio) {
@@ -4655,11 +4655,11 @@ static int inet6_addr_modify(struct inet6_ifaddr *ifp, struct ifa6_config *cfg)
 	ASSERT_RTNL();
 
 	if (!cfg->valid_lft || cfg->preferred_lft > cfg->valid_lft)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cfg->ifa_flags & IFA_F_MANAGETEMPADDR &&
 	    (ifp->flags & IFA_F_TEMPORARY || ifp->prefix_len != 64))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(ifp->flags & IFA_F_TENTATIVE) || ifp->flags & IFA_F_DADFAILED)
 		cfg->ifa_flags &= ~IFA_F_OPTIMISTIC;
@@ -4712,7 +4712,7 @@ static int inet6_addr_modify(struct inet6_ifaddr *ifp, struct ifa6_config *cfg)
 		ipv6_ifa_notify(0, ifp);
 
 	if (!(cfg->ifa_flags & IFA_F_NOPREFIXROUTE)) {
-		int rc = -ENOENT;
+		int rc = -ERR(ENOENT);
 
 		if (had_prefixroute)
 			rc = modify_prefix_route(ifp, expires, flags, false);
@@ -4786,7 +4786,7 @@ inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	ifm = nlmsg_data(nlh);
 	cfg.pfx = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer_pfx);
 	if (!cfg.pfx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cfg.peer_pfx = peer_pfx;
 	cfg.plen = ifm->ifa_prefixlen;
@@ -4806,7 +4806,7 @@ inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	dev =  __dev_get_by_index(net, ifm->ifa_index);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (tb[IFA_FLAGS])
 		cfg.ifa_flags = nla_get_u32(tb[IFA_FLAGS]);
@@ -4828,7 +4828,7 @@ inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (cfg.ifa_flags & IFA_F_NODAD &&
 	    cfg.ifa_flags & IFA_F_OPTIMISTIC) {
 		NL_SET_ERR_MSG(extack, "IFA_F_NODAD and IFA_F_OPTIMISTIC are mutually exclusive");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifa = ipv6_get_ifaddr(net, cfg.pfx, dev, 1);
@@ -4842,7 +4842,7 @@ inet6_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_flags & NLM_F_EXCL ||
 	    !(nlh->nlmsg_flags & NLM_F_REPLACE))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else
 		err = inet6_addr_modify(ifa, &cfg);
 
@@ -4924,7 +4924,7 @@ static int inet6_fill_ifaddr(struct sk_buff *skb, struct inet6_ifaddr *ifa,
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
 			sizeof(struct ifaddrmsg), args->flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	put_ifaddrmsg(nlh, ifa->prefix_len, ifa->flags, rt_scope(ifa->scope),
 		      ifa->idev->dev->ifindex);
@@ -4978,7 +4978,7 @@ static int inet6_fill_ifaddr(struct sk_buff *skb, struct inet6_ifaddr *ifa,
 
 error:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int inet6_fill_ifmcaddr(struct sk_buff *skb, struct ifmcaddr6 *ifmca,
@@ -4994,18 +4994,18 @@ static int inet6_fill_ifmcaddr(struct sk_buff *skb, struct ifmcaddr6 *ifmca,
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
 			sizeof(struct ifaddrmsg), args->flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (args->netnsid >= 0 &&
 	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	put_ifaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, ifindex);
 	if (nla_put_in6_addr(skb, IFA_MULTICAST, &ifmca->mca_addr) < 0 ||
 	    put_cacheinfo(skb, ifmca->mca_cstamp, ifmca->mca_tstamp,
 			  INFINITY_LIFE_TIME, INFINITY_LIFE_TIME) < 0) {
 		nlmsg_cancel(skb, nlh);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	nlmsg_end(skb, nlh);
@@ -5026,18 +5026,18 @@ static int inet6_fill_ifacaddr(struct sk_buff *skb, struct ifacaddr6 *ifaca,
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event,
 			sizeof(struct ifaddrmsg), args->flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (args->netnsid >= 0 &&
 	    nla_put_s32(skb, IFA_TARGET_NETNSID, args->netnsid))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	put_ifaddrmsg(nlh, 128, IFA_F_PERMANENT, scope, ifindex);
 	if (nla_put_in6_addr(skb, IFA_ANYCAST, &ifaca->aca_addr) < 0 ||
 	    put_cacheinfo(skb, ifaca->aca_cstamp, ifaca->aca_tstamp,
 			  INFINITY_LIFE_TIME, INFINITY_LIFE_TIME) < 0) {
 		nlmsg_cancel(skb, nlh);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	nlmsg_end(skb, nlh);
@@ -5118,13 +5118,13 @@ static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for address dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifm = nlmsg_data(nlh);
 	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for address dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fillargs->ifindex = ifm->ifa_index;
@@ -5155,7 +5155,7 @@ static int inet6_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 			*tgt_net = net;
 		} else {
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -5196,7 +5196,7 @@ static int inet6_dump_addr(struct sk_buff *skb, struct netlink_callback *cb,
 		if (fillargs.ifindex) {
 			dev = __dev_get_by_index(tgt_net, fillargs.ifindex);
 			if (!dev) {
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto put_tgt_net;
 			}
 			idev = __in6_dev_get(dev);
@@ -5274,7 +5274,7 @@ static int inet6_rtm_valid_getaddr_req(struct sk_buff *skb,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for get address request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -5284,7 +5284,7 @@ static int inet6_rtm_valid_getaddr_req(struct sk_buff *skb,
 	ifm = nlmsg_data(nlh);
 	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for get address request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*ifm), tb, IFA_MAX,
@@ -5303,7 +5303,7 @@ static int inet6_rtm_valid_getaddr_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in get address request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -5345,7 +5345,7 @@ static int inet6_rtm_getaddr(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	addr = extract_addr(tb[IFA_ADDRESS], tb[IFA_LOCAL], &peer);
 	if (!addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ifm = nlmsg_data(nlh);
 	if (ifm->ifa_index)
@@ -5353,13 +5353,13 @@ static int inet6_rtm_getaddr(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	ifa = ipv6_get_ifaddr(tgt_net, addr, dev, 1);
 	if (!ifa) {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		goto errout;
 	}
 
 	skb = nlmsg_new(inet6_ifaddr_msgsize(), GFP_KERNEL);
 	if (!skb) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errout_ifa;
 	}
 
@@ -5393,7 +5393,7 @@ static void inet6_ifa_notify(int event, struct inet6_ifaddr *ifa)
 		.flags = 0,
 		.netnsid = -1,
 	};
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(inet6_ifaddr_msgsize(), GFP_ATOMIC);
 	if (!skb)
@@ -5609,7 +5609,7 @@ static int inet6_fill_ifla6_attrs(struct sk_buff *skb, struct inet6_dev *idev,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static size_t inet6_get_link_af_size(const struct net_device *dev,
@@ -5627,10 +5627,10 @@ static int inet6_fill_link_af(struct sk_buff *skb, const struct net_device *dev,
 	struct inet6_dev *idev = __in6_dev_get(dev);
 
 	if (!idev)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (inet6_fill_ifla6_attrs(skb, idev, ext_filter_mask) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -5645,13 +5645,13 @@ static int inet6_set_iftoken(struct inet6_dev *idev, struct in6_addr *token)
 	ASSERT_RTNL();
 
 	if (!token)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (dev->flags & (IFF_LOOPBACK | IFF_NOARP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!ipv6_accept_ra(idev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (idev->cnf.rtr_solicits == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock_bh(&idev->lock);
 
@@ -5712,7 +5712,7 @@ static int check_addr_gen_mode(int mode)
 	    mode != IN6_ADDR_GEN_MODE_NONE &&
 	    mode != IN6_ADDR_GEN_MODE_STABLE_PRIVACY &&
 	    mode != IN6_ADDR_GEN_MODE_RANDOM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 
@@ -5722,7 +5722,7 @@ static int check_stable_privacy(struct inet6_dev *idev, struct net *net,
 	if (mode == IN6_ADDR_GEN_MODE_STABLE_PRIVACY &&
 	    !idev->cnf.stable_secret.initialized &&
 	    !net->ipv6.devconf_dflt->stable_secret.initialized)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 1;
 }
 
@@ -5736,7 +5736,7 @@ static int inet6_validate_link_af(const struct net_device *dev,
 	if (dev) {
 		idev = __in6_dev_get(dev);
 		if (!idev)
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 	}
 
 	err = nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla,
@@ -5745,15 +5745,15 @@ static int inet6_validate_link_af(const struct net_device *dev,
 		return err;
 
 	if (!tb[IFLA_INET6_TOKEN] && !tb[IFLA_INET6_ADDR_GEN_MODE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[IFLA_INET6_ADDR_GEN_MODE]) {
 		u8 mode = nla_get_u8(tb[IFLA_INET6_ADDR_GEN_MODE]);
 
 		if (check_addr_gen_mode(mode) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dev && check_stable_privacy(idev, dev_net(dev), mode) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -5766,7 +5766,7 @@ static int inet6_set_link_af(struct net_device *dev, const struct nlattr *nla)
 	int err;
 
 	if (!idev)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (nla_parse_nested_deprecated(tb, IFLA_INET6_MAX, nla, NULL, NULL) < 0)
 		BUG();
@@ -5796,7 +5796,7 @@ static int inet6_fill_ifinfo(struct sk_buff *skb, struct inet6_dev *idev,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*hdr), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	hdr = nlmsg_data(nlh);
 	hdr->ifi_family = AF_INET6;
@@ -5828,7 +5828,7 @@ static int inet6_fill_ifinfo(struct sk_buff *skb, struct inet6_dev *idev,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int inet6_valid_dump_ifinfo(const struct nlmsghdr *nlh,
@@ -5838,19 +5838,19 @@ static int inet6_valid_dump_ifinfo(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for link dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nlmsg_attrlen(nlh, sizeof(*ifm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid data after header");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifm = nlmsg_data(nlh);
 	if (ifm->__ifi_pad || ifm->ifi_type || ifm->ifi_flags ||
 	    ifm->ifi_change || ifm->ifi_index) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -5909,7 +5909,7 @@ void inet6_ifinfo_notify(int event, struct inet6_dev *idev)
 {
 	struct sk_buff *skb;
 	struct net *net = dev_net(idev->dev);
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(inet6_if_nlmsg_size(), GFP_ATOMIC);
 	if (!skb)
@@ -5946,7 +5946,7 @@ static int inet6_fill_prefix(struct sk_buff *skb, struct inet6_dev *idev,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*pmsg), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	pmsg = nlmsg_data(nlh);
 	pmsg->prefix_family = AF_INET6;
@@ -5973,7 +5973,7 @@ static int inet6_fill_prefix(struct sk_buff *skb, struct inet6_dev *idev,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void inet6_prefix_notify(int event, struct inet6_dev *idev,
@@ -5981,7 +5981,7 @@ static void inet6_prefix_notify(int event, struct inet6_dev *idev,
 {
 	struct sk_buff *skb;
 	struct net *net = dev_net(idev->dev);
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(inet6_prefix_nlmsg_size(), GFP_ATOMIC);
 	if (!skb)
@@ -6254,13 +6254,13 @@ static int addrconf_sysctl_addr_gen_mode(struct ctl_table *ctl, int write,
 
 	if (write) {
 		if (check_addr_gen_mode(new_val) < 0) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
 		if (idev) {
 			if (check_stable_privacy(idev, net, new_val) < 0) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -6303,7 +6303,7 @@ static int addrconf_sysctl_stable_secret(struct ctl_table *ctl, int write,
 	struct ipv6_stable_secret *secret = ctl->data;
 
 	if (&net->ipv6.devconf_all->stable_secret == ctl->data)
-		return -EIO;
+		return -ERR(EIO);
 
 	lctl.maxlen = IPV6_MAX_STRLEN;
 	lctl.data = str;
@@ -6312,13 +6312,13 @@ static int addrconf_sysctl_stable_secret(struct ctl_table *ctl, int write,
 		return restart_syscall();
 
 	if (!write && !secret->initialized) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
 	err = snprintf(str, sizeof(str), "%pI6", &secret->secret);
 	if (err >= sizeof(str)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -6327,7 +6327,7 @@ static int addrconf_sysctl_stable_secret(struct ctl_table *ctl, int write,
 		goto out;
 
 	if (in6_pton(str, -1, addr.in6_u.u6_addr8, -1, NULL) != 1) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -6914,7 +6914,7 @@ static int __addrconf_sysctl_register(struct net *net, char *dev_name,
 free:
 	kfree(table);
 out:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static void __addrconf_sysctl_unregister(struct net *net,
@@ -6938,7 +6938,7 @@ static int addrconf_sysctl_register(struct inet6_dev *idev)
 	int err;
 
 	if (!sysctl_dev_name_is_allowed(idev->dev->name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = neigh_sysctl_register(idev->dev, idev->nd_parms,
 				    &ndisc_ifinfo_sysctl_change);

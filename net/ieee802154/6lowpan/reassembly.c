@@ -268,7 +268,7 @@ static int lowpan_get_cb(struct sk_buff *skb, u8 frag_type,
 	}
 
 	if (unlikely(fail))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }

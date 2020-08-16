@@ -126,7 +126,7 @@ static int romfs_readpage(struct file *file, struct page *page)
 		if (ret < 0) {
 			SetPageError(page);
 			fillsize = 0;
-			ret = -EIO;
+			ret = -ERR(EIO);
 		}
 	}
 
@@ -361,7 +361,7 @@ static struct inode *romfs_iget(struct super_block *sb, unsigned long pos)
 	return i;
 
 eio:
-	ret = -EIO;
+	ret = -ERR(EIO);
 error:
 	pr_err("read error for inode 0x%lx\n", pos);
 	return ERR_PTR(ret);
@@ -540,7 +540,7 @@ static int romfs_fill_super(struct super_block *sb, struct fs_context *fc)
 	return 0;
 
 error_rsb_inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 error_rsb:
 	kfree(rsb);
 	return ret;
@@ -551,7 +551,7 @@ error_rsb:
  */
 static int romfs_get_tree(struct fs_context *fc)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 #ifdef CONFIG_ROMFS_ON_MTD
 	ret = get_tree_mtd(fc, romfs_fill_super);

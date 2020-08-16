@@ -19,7 +19,7 @@ static inline int virtio_net_hdr_set_proto(struct sk_buff *skb,
 		skb->protocol = cpu_to_be16(ETH_P_IPV6);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -52,14 +52,14 @@ static inline int virtio_net_hdr_to_skb(struct sk_buff *skb,
 			thlen = sizeof(struct udphdr);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (hdr->gso_type & VIRTIO_NET_HDR_GSO_ECN)
 			gso_type |= SKB_GSO_TCP_ECN;
 
 		if (hdr->gso_size == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (hdr->flags & VIRTIO_NET_HDR_F_NEEDS_CSUM) {
@@ -67,11 +67,11 @@ static inline int virtio_net_hdr_to_skb(struct sk_buff *skb,
 		u16 off = __virtio16_to_cpu(little_endian, hdr->csum_offset);
 
 		if (!skb_partial_csum_set(skb, start, off))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		p_off = skb_transport_offset(skb) + thlen;
 		if (p_off > skb_headlen(skb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		/* gso packets without NEEDS_CSUM do not set transport_offset.
 		 * probe and drop if does not match one of the above types.
@@ -91,19 +91,19 @@ retry:
 					skb->protocol = htons(ETH_P_IPV6);
 					goto retry;
 				}
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			p_off = keys.control.thoff + thlen;
 			if (p_off > skb_headlen(skb) ||
 			    keys.basic.ip_proto != ip_proto)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			skb_set_transport_header(skb, keys.control.thoff);
 		} else if (gso_type) {
 			p_off = thlen;
 			if (p_off > skb_headlen(skb))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -146,7 +146,7 @@ static inline int virtio_net_hdr_from_skb(const struct sk_buff *skb,
 		else if (sinfo->gso_type & SKB_GSO_TCPV6)
 			hdr->gso_type = VIRTIO_NET_HDR_GSO_TCPV6;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (sinfo->gso_type & SKB_GSO_TCP_ECN)
 			hdr->gso_type |= VIRTIO_NET_HDR_GSO_ECN;
 	} else

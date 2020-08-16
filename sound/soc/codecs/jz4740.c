@@ -182,7 +182,7 @@ static int jz4740_codec_hw_params(struct snd_pcm_substream *substream,
 		val = 8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val <<= JZ4740_CODEC_2_SAMPLE_RATE_OFFSET;

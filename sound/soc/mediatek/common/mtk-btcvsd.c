@@ -376,7 +376,7 @@ static int mtk_btcvsd_read_from_bt(struct mtk_btcvsd_snd *bt,
 		/* bt return 0xdeadfeed if read register during bt sleep */
 		dev_warn(bt->dev, "%s(), connsys_addr_rx == 0xdeadfeed",
 			 __func__);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	src = (u8 *)ap_addr_rx;
@@ -427,7 +427,7 @@ static int mtk_btcvsd_write_to_bt(struct mtk_btcvsd_snd *bt,
 		/* bt return 0xdeadfeed if read register during bt sleep */
 		dev_warn(bt->dev, "%s(), connsys_addr_tx == 0xdeadfeed\n",
 			 __func__);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	spin_lock_irqsave(&bt->tx_lock, flags);
@@ -687,7 +687,7 @@ static int wait_for_bt_irq(struct mtk_btcvsd_snd *bt,
 
 			if (max_timeout_trial <= 0) {
 				bt_stream->timeout = 1;
-				return -ETIME;
+				return -ERR(ETIME);
 			}
 		}
 	}
@@ -921,7 +921,7 @@ static int mtk_pcm_btcvsd_hw_params(struct snd_soc_component *component,
 		dev_warn(bt->dev, "%s(), error, buffer size %d not valid\n",
 			 __func__,
 			 params_buffer_bytes(hw_params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	substream->runtime->dma_bytes = params_buffer_bytes(hw_params);
@@ -977,7 +977,7 @@ static int mtk_pcm_btcvsd_trigger(struct snd_soc_component *component,
 		mtk_btcvsd_snd_set_state(bt, bt_stream, BT_SCO_STATE_ENDING);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1070,7 +1070,7 @@ static int btcvsd_band_set(struct snd_kcontrol *kcontrol,
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 
 	if (ucontrol->value.enumerated.item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bt->band = ucontrol->value.integer.value[0];
 	dev_dbg(bt->dev, "%s(), band %d\n", __func__, bt->band);
@@ -1168,7 +1168,7 @@ static int btcvsd_rx_timestamp_get(struct snd_kcontrol *kcontrol,
 	struct mtk_btcvsd_snd_time_buffer_info time_buffer_info_rx;
 
 	if (size > sizeof(struct mtk_btcvsd_snd_time_buffer_info))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	get_rx_time_stamp(bt, &time_buffer_info_rx);
 
@@ -1218,7 +1218,7 @@ static int btcvsd_tx_timestamp_get(struct snd_kcontrol *kcontrol,
 	struct mtk_btcvsd_snd_time_buffer_info time_buffer_info_tx;
 
 	if (size > sizeof(struct mtk_btcvsd_snd_time_buffer_info))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	get_tx_time_stamp(bt, &time_buffer_info_tx);
 
@@ -1315,7 +1315,7 @@ static int mtk_btcvsd_snd_probe(struct platform_device *pdev)
 	/* irq */
 	irq_id = platform_get_irq(pdev, 0);
 	if (irq_id <= 0)
-		return irq_id < 0 ? irq_id : -ENXIO;
+		return irq_id < 0 ? irq_id : -ERR(ENXIO);
 
 	ret = devm_request_irq(dev, irq_id, mtk_btcvsd_snd_irq_handler,
 			       IRQF_TRIGGER_LOW, "BTCVSD_ISR_Handle",
@@ -1331,13 +1331,13 @@ static int mtk_btcvsd_snd_probe(struct platform_device *pdev)
 	btcvsd->bt_pkv_base = of_iomap(dev->of_node, 0);
 	if (!btcvsd->bt_pkv_base) {
 		dev_err(dev, "iomap bt_pkv_base fail\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	btcvsd->bt_sram_bank2_base = of_iomap(dev->of_node, 1);
 	if (!btcvsd->bt_sram_bank2_base) {
 		dev_err(dev, "iomap bt_sram_bank2_base fail\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	btcvsd->infra = syscon_regmap_lookup_by_phandle(dev->of_node,

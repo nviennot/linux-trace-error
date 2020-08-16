@@ -436,7 +436,7 @@ int snd_hdac_ext_stream_set_spib(struct hdac_bus *bus,
 
 	if (!bus->spbcap) {
 		dev_err(bus->dev, "Address of SPB capability is NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(value, stream->spib_addr);
@@ -458,7 +458,7 @@ int snd_hdac_ext_stream_get_spbmaxfifo(struct hdac_bus *bus,
 
 	if (!bus->spbcap) {
 		dev_err(bus->dev, "Address of SPB capability is NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return readl(stream->fifo_addr);
@@ -519,7 +519,7 @@ int snd_hdac_ext_stream_set_dpibr(struct hdac_bus *bus,
 
 	if (!bus->drsmcap) {
 		dev_err(bus->dev, "Address of DRSM capability is NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(value, stream->dpibr_addr);

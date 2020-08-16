@@ -101,13 +101,13 @@ int afs_sillyrename(struct afs_vnode *dvnode, struct afs_vnode *vnode,
 	static unsigned int sillycounter;
 	struct dentry *sdentry = NULL;
 	unsigned char silly[16];
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	_enter("");
 
 	/* We don't allow a dentry to be silly-renamed twice. */
 	if (dentry->d_flags & DCACHE_NFSFS_RENAMED)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sdentry = NULL;
 	do {

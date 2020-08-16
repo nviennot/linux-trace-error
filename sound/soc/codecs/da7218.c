@@ -576,7 +576,7 @@ static int da7218_biquad_coeff_get(struct snd_kcontrol *kcontrol,
 		       bytes_ext->max);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -609,7 +609,7 @@ static int da7218_biquad_coeff_put(struct snd_kcontrol *kcontrol,
 		       bytes_ext->max);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Make sure at least out filter1 enabled to allow programming */
@@ -1363,7 +1363,7 @@ static int da7218_in_filter_event(struct snd_soc_dapm_widget *w,
 		mask = (1 << DA7218_LVL_DET_EN_CHAN2R_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -1381,7 +1381,7 @@ static int da7218_in_filter_event(struct snd_soc_dapm_widget *w,
 		da7218->in_filt_en &= ~mask;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Enable configured level detection paths */
@@ -1470,7 +1470,7 @@ static int da7218_dai_event(struct snd_soc_dapm_widget *w,
 
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1497,7 +1497,7 @@ static int da7218_cp_event(struct snd_soc_dapm_widget *w,
 				    0);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1517,7 +1517,7 @@ static int da7218_hp_pga_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component, w->reg, DA7218_HP_AMP_OE_MASK, 0);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1819,7 +1819,7 @@ static int da7218_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if ((freq < 2000000) || (freq > 54000000)) {
 		dev_err(codec_dai->dev, "Unsupported MCLK value %d\n",
 			freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
@@ -1834,7 +1834,7 @@ static int da7218_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(codec_dai->dev, "Unknown clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (da7218->mclk) {
@@ -1867,7 +1867,7 @@ static int da7218_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	if (da7218->mclk_rate < 2000000) {
 		dev_err(component->dev, "PLL input clock %d below valid range\n",
 			da7218->mclk_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (da7218->mclk_rate <= 4500000) {
 		indiv_bits = DA7218_PLL_INDIV_2_TO_4_5_MHZ;
 		indiv = DA7218_PLL_INDIV_2_TO_4_5_MHZ_VAL;
@@ -1886,7 +1886,7 @@ static int da7218_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	} else {
 		dev_err(component->dev, "PLL input clock %d above valid range\n",
 			da7218->mclk_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	freq_ref = (da7218->mclk_rate / indiv);
 	pll_ctrl = indiv_bits;
@@ -1907,7 +1907,7 @@ static int da7218_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid PLL config\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate dividers for PLL */
@@ -1942,7 +1942,7 @@ static int da7218_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		da7218->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1963,7 +1963,7 @@ static int da7218_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 					DA7218_DAI_CLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_DSP_B:
@@ -1981,11 +1981,11 @@ static int da7218_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 			dai_clk_mode |= DA7218_DAI_WCLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2002,7 +2002,7 @@ static int da7218_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		dai_ctrl |= DA7218_DAI_FORMAT_DSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* By default 64 BCLKs per WCLK is supported */
@@ -2038,14 +2038,14 @@ static int da7218_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (fls(tx_mask) > DA7218_DAI_TDM_MAX_SLOTS) {
 		dev_err(component->dev, "Invalid number of slots, max = %d\n",
 			DA7218_DAI_TDM_MAX_SLOTS);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check we have a valid offset given (first 2 bytes of rx_mask) */
 	if (rx_mask >> DA7218_2BYTE_SHIFT) {
 		dev_err(component->dev, "Invalid slot offset, max = %d\n",
 			DA7218_2BYTE_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate & validate frame size based on slot info provided. */
@@ -2065,7 +2065,7 @@ static int da7218_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid frame size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, DA7218_DAI_CLK_MODE,
@@ -2106,7 +2106,7 @@ static int da7218_hw_params(struct snd_pcm_substream *substream,
 		dai_ctrl |= DA7218_DAI_WORD_LENGTH_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	channels = params_channels(params);
@@ -2114,7 +2114,7 @@ static int da7218_hw_params(struct snd_pcm_substream *substream,
 		dev_err(component->dev,
 			"Invalid number of channels, only 1 to %d supported\n",
 			DA7218_DAI_CH_NUM_MAX);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai_ctrl |= channels << DA7218_DAI_CH_NUM_SHIFT;
 
@@ -2153,7 +2153,7 @@ static int da7218_hw_params(struct snd_pcm_substream *substream,
 		fs = DA7218_SR_96000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, DA7218_DAI_CTRL,
@@ -2209,7 +2209,7 @@ int da7218_hpldet(struct snd_soc_component *component, struct snd_soc_jack *jack
 	struct da7218_priv *da7218 = snd_soc_component_get_drvdata(component);
 
 	if (da7218->dev_id == DA7217_DEV_ID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	da7218->jack = jack;
 	snd_soc_component_update_bits(component, DA7218_HPLDET_JACK,
@@ -2292,7 +2292,7 @@ static inline int da7218_of_get_id(struct device *dev)
 	if (id)
 		return (uintptr_t)id->data;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static enum da7218_micbias_voltage
@@ -3278,7 +3278,7 @@ static int da7218_i2c_probe(struct i2c_client *i2c,
 	if ((da7218->dev_id != DA7217_DEV_ID) &&
 	    (da7218->dev_id != DA7218_DEV_ID)) {
 		dev_err(&i2c->dev, "Invalid device Id\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	da7218->irq = i2c->irq;

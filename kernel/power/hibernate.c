@@ -556,7 +556,7 @@ int hibernation_platform_enter(void)
 	int error;
 
 	if (!hibernation_ops)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	/*
 	 * We have cancelled the power transition by running
@@ -592,7 +592,7 @@ int hibernation_platform_enter(void)
 	system_state = SYSTEM_SUSPEND;
 	syscore_suspend();
 	if (pm_wakeup_pending()) {
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto Power_up;
 	}
 
@@ -711,13 +711,13 @@ int hibernate(void)
 
 	if (!hibernation_available()) {
 		pm_pr_dbg("Hibernation not available.\n");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	lock_system_sleep();
 	/* The snapshot device should not be opened while we're running */
 	if (!hibernate_acquire()) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto Unlock;
 	}
 
@@ -837,7 +837,7 @@ static int software_resume(void)
 		goto Check_image;
 
 	if (!strlen(resume_file)) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto Unlock;
 	}
 
@@ -877,7 +877,7 @@ static int software_resume(void)
 
 		swsusp_resume_device = name_to_dev_t(resume_file);
 		if (!swsusp_resume_device) {
-			error = -ENODEV;
+			error = -ERR(ENODEV);
 			goto Unlock;
 		}
 	}
@@ -893,7 +893,7 @@ static int software_resume(void)
 
 	/* The snapshot device should not be opened while we're running */
 	if (!hibernate_acquire()) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		swsusp_close(FMODE_READ);
 		goto Unlock;
 	}
@@ -1018,7 +1018,7 @@ static ssize_t disk_store(struct kobject *kobj, struct kobj_attribute *attr,
 	int mode = HIBERNATION_INVALID;
 
 	if (!hibernation_available())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
@@ -1045,10 +1045,10 @@ static ssize_t disk_store(struct kobject *kobj, struct kobj_attribute *attr,
 			if (hibernation_ops)
 				hibernation_mode = mode;
 			else
-				error = -EINVAL;
+				error = -ERR(EINVAL);
 		}
 	} else
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 
 	if (!error)
 		pm_pr_dbg("Hibernation mode set to '%s'\n",
@@ -1082,7 +1082,7 @@ static ssize_t resume_store(struct kobject *kobj, struct kobj_attribute *attr,
 	res = name_to_dev_t(name);
 	kfree(name);
 	if (!res)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_system_sleep();
 	swsusp_resume_device = res;
@@ -1135,7 +1135,7 @@ static ssize_t image_size_store(struct kobject *kobj, struct kobj_attribute *att
 		return n;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 power_attr(image_size);
@@ -1157,7 +1157,7 @@ static ssize_t reserved_size_store(struct kobject *kobj,
 		return n;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 power_attr(reserved_size);

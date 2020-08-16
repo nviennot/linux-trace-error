@@ -234,13 +234,13 @@ static int xfrmi_rcv_cb(struct sk_buff *skb, int err)
 			if (inner_mode == NULL) {
 				XFRM_INC_STATS(dev_net(skb->dev),
 					       LINUX_MIB_XFRMINSTATEMODEERROR);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
 		if (!xfrm_policy_check(NULL, XFRM_POLICY_IN, skb,
 				       inner_mode->family))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	xfrmi_scrub_packet(skb, xnet);
@@ -306,7 +306,7 @@ xfrmi_xmit2(struct sk_buff *skb, struct net_device *dev, struct flowi *fl)
 		}
 
 		dst_release(dst);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	xfrmi_scrub_packet(skb, !net_eq(xi->net, dev_net(dev)));
@@ -513,7 +513,7 @@ static int xfrmi6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 static int xfrmi_change(struct xfrm_if *xi, const struct xfrm_if_parms *p)
 {
 	if (xi->p.link != p->link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xi->p.if_id = p->if_id;
 
@@ -663,7 +663,7 @@ static int xfrmi_newlink(struct net *src_net, struct net_device *dev,
 	xfrmi_netlink_parms(data, &p);
 	xi = xfrmi_locate(net, &p);
 	if (xi)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	xi = netdev_priv(dev);
 	xi->p = p;
@@ -693,7 +693,7 @@ static int xfrmi_changelink(struct net_device *dev, struct nlattr *tb[],
 		xi = netdev_priv(dev);
 	} else {
 		if (xi->dev != dev)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	return xfrmi_update(xi, &p);
@@ -720,7 +720,7 @@ static int xfrmi_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static struct net *xfrmi_get_link_net(const struct net_device *dev)

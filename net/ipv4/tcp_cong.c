@@ -75,7 +75,7 @@ int tcp_register_congestion_control(struct tcp_congestion_ops *ca)
 	if (!ca->ssthresh || !ca->undo_cwnd ||
 	    !(ca->cong_avoid || ca->cong_control)) {
 		pr_err("%s does not implement required ops\n", ca->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ca->key = jhash(ca->name, sizeof(ca->name), strlen(ca->name));
@@ -84,7 +84,7 @@ int tcp_register_congestion_control(struct tcp_congestion_ops *ca)
 	if (ca->key == TCP_CA_UNSPEC || tcp_ca_find_key(ca->key)) {
 		pr_notice("%s already registered or non-unique key\n",
 			  ca->name);
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	} else {
 		list_add_tail_rcu(&ca->list, &tcp_cong_list);
 		pr_debug("%s registered\n", ca->name);
@@ -221,9 +221,9 @@ int tcp_set_default_congestion_control(struct net *net, const char *name)
 	rcu_read_lock();
 	ca = tcp_ca_find_autoload(net, name);
 	if (!ca) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	} else if (!bpf_try_module_get(ca, ca->owner)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else {
 		prev = xchg(&net->ipv4.tcp_congestion_control, ca);
 		if (prev)
@@ -311,7 +311,7 @@ int tcp_set_allowed_congestion_control(char *val)
 	while ((name = strsep(&clone, " ")) && *name) {
 		ca = tcp_ca_find(name);
 		if (!ca) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 	}
@@ -347,7 +347,7 @@ int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
 	int err = 0;
 
 	if (icsk->icsk_ca_dst_locked)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	rcu_read_lock();
 	if (!load)
@@ -362,7 +362,7 @@ int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
 	}
 
 	if (!ca) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	} else if (!load) {
 		const struct tcp_congestion_ops *old_ca = icsk->icsk_ca_ops;
 
@@ -374,12 +374,12 @@ int tcp_set_congestion_control(struct sock *sk, const char *name, bool load,
 				bpf_module_put(old_ca, old_ca->owner);
 			}
 		} else {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		}
 	} else if (!((ca->flags & TCP_CONG_NON_RESTRICTED) || cap_net_admin)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 	} else if (!bpf_try_module_get(ca, ca->owner)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	} else {
 		tcp_reinit_congestion_control(sk, ca);
 	}

@@ -556,7 +556,7 @@ share_extant_sb:
 	if (user_ns != old->s_user_ns) {
 		spin_unlock(&sb_lock);
 		destroy_unused_super(s);
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 	}
 	if (!grab_super(old))
 		goto retry;
@@ -600,7 +600,7 @@ retry:
 			if (user_ns != old->s_user_ns) {
 				spin_unlock(&sb_lock);
 				destroy_unused_super(s);
-				return ERR_PTR(-EBUSY);
+				return ERR_PTR(-ERR(EBUSY));
 			}
 			if (!grab_super(old))
 				goto retry;
@@ -908,9 +908,9 @@ int reconfigure_super(struct fs_context *fc)
 	bool force = fc->sb_flags & SB_FORCE;
 
 	if (fc->sb_flags_mask & ~MS_RMT_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sb->s_writers.frozen != SB_UNFROZEN)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	retval = security_sb_remount(sb, fc->security);
 	if (retval)
@@ -919,7 +919,7 @@ int reconfigure_super(struct fs_context *fc)
 	if (fc->sb_flags_mask & SB_RDONLY) {
 #ifdef CONFIG_BLOCK
 		if (!(fc->sb_flags & SB_RDONLY) && bdev_read_only(sb->s_bdev))
-			return -EACCES;
+			return -ERR(EACCES);
 #endif
 
 		remount_ro = (fc->sb_flags & SB_RDONLY) && !sb_rdonly(sb);
@@ -933,7 +933,7 @@ int reconfigure_super(struct fs_context *fc)
 			if (!sb->s_root)
 				return 0;
 			if (sb->s_writers.frozen != SB_UNFROZEN)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			remount_ro = !sb_rdonly(sb);
 		}
 	}
@@ -1081,7 +1081,7 @@ int get_anon_bdev(dev_t *p)
 	dev = ida_alloc_range(&unnamed_dev_ida, 1, (1 << MINORBITS) - 1,
 			GFP_ATOMIC);
 	if (dev == -ENOSPC)
-		dev = -EMFILE;
+		dev = -ERR(EMFILE);
 	if (dev < 0)
 		return dev;
 
@@ -1304,7 +1304,7 @@ int get_tree_bdev(struct fs_context *fc,
 		mutex_unlock(&bdev->bd_fsfreeze_mutex);
 		warnf(fc, "%pg: Can't mount, blockdev is frozen", bdev);
 		blkdev_put(bdev, mode);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	fc->sb_flags |= SB_NOSEC;
@@ -1322,7 +1322,7 @@ int get_tree_bdev(struct fs_context *fc,
 			warnf(fc, "%pg: Can't mount, would change RO state", bdev);
 			deactivate_locked_super(s);
 			blkdev_put(bdev, mode);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		/*
@@ -1384,7 +1384,7 @@ struct dentry *mount_bdev(struct file_system_type *fs_type,
 	mutex_lock(&bdev->bd_fsfreeze_mutex);
 	if (bdev->bd_fsfreeze_count > 0) {
 		mutex_unlock(&bdev->bd_fsfreeze_mutex);
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto error_bdev;
 	}
 	s = sget(fs_type, test_bdev_super, set_bdev_super, flags | SB_NOSEC,
@@ -1396,7 +1396,7 @@ struct dentry *mount_bdev(struct file_system_type *fs_type,
 	if (s->s_root) {
 		if ((flags ^ s->s_flags) & SB_RDONLY) {
 			deactivate_locked_super(s);
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 			goto error_bdev;
 		}
 
@@ -1539,7 +1539,7 @@ int vfs_get_tree(struct fs_context *fc)
 	int error;
 
 	if (fc->root)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Get the mountable root in fc->root, with a ref on the root and a ref
 	 * on the superblock.
@@ -1763,7 +1763,7 @@ int freeze_super(struct super_block *sb)
 	down_write(&sb->s_umount);
 	if (sb->s_writers.frozen != SB_UNFROZEN) {
 		deactivate_locked_super(sb);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!(sb->s_flags & SB_BORN)) {
@@ -1830,7 +1830,7 @@ static int thaw_super_locked(struct super_block *sb)
 
 	if (sb->s_writers.frozen != SB_FREEZE_COMPLETE) {
 		up_write(&sb->s_umount);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sb_rdonly(sb)) {

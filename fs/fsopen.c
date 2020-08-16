@@ -38,7 +38,7 @@ static ssize_t fscontext_read(struct file *file,
 
 	if (log->head == log->tail) {
 		mutex_unlock(&fc->uapi_mutex);
-		return -ENODATA;
+		return -ERR(ENODATA);
 	}
 
 	index = log->tail & (logsize - 1);
@@ -49,7 +49,7 @@ static ssize_t fscontext_read(struct file *file,
 	log->tail++;
 	mutex_unlock(&fc->uapi_mutex);
 
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 	n = strlen(p);
 	if (n > len)
 		goto err_free;
@@ -120,10 +120,10 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	int ret;
 
 	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (flags & ~FSOPEN_CLOEXEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fs_name = strndup_user(_fs_name, PAGE_SIZE);
 	if (IS_ERR(fs_name))
@@ -132,7 +132,7 @@ SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
 	fs_type = get_fs_type(fs_name);
 	kfree(fs_name);
 	if (!fs_type)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	fc = fs_context_for_mount(fs_type, 0);
 	put_filesystem(fs_type);
@@ -163,13 +163,13 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
 	int ret;
 
 	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((flags & ~(FSPICK_CLOEXEC |
 		       FSPICK_SYMLINK_NOFOLLOW |
 		       FSPICK_NO_AUTOMOUNT |
 		       FSPICK_EMPTY_PATH)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
 	if (flags & FSPICK_SYMLINK_NOFOLLOW)
@@ -182,7 +182,7 @@ SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags
 	if (ret < 0)
 		goto err;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (target.mnt->mnt_root != target.dentry)
 		goto err_path;
 
@@ -225,9 +225,9 @@ static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
 	switch (cmd) {
 	case FSCONFIG_CMD_CREATE:
 		if (fc->phase != FS_CONTEXT_CREATE_PARAMS)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (!mount_capable(fc))
-			return -EPERM;
+			return -ERR(EPERM);
 		fc->phase = FS_CONTEXT_CREATING;
 		ret = vfs_get_tree(fc);
 		if (ret)
@@ -243,11 +243,11 @@ static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
 		return 0;
 	case FSCONFIG_CMD_RECONFIGURE:
 		if (fc->phase != FS_CONTEXT_RECONF_PARAMS)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		fc->phase = FS_CONTEXT_RECONFIGURING;
 		sb = fc->root->d_sb;
 		if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			break;
 		}
 		down_write(&sb->s_umount);
@@ -260,7 +260,7 @@ static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
 	default:
 		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
 		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		return vfs_parse_fs_param(fc, param);
 	}
@@ -328,43 +328,43 @@ SYSCALL_DEFINE5(fsconfig,
 	};
 
 	if (fd < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case FSCONFIG_SET_FLAG:
 		if (!_key || _value || aux)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case FSCONFIG_SET_STRING:
 		if (!_key || !_value || aux)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case FSCONFIG_SET_BINARY:
 		if (!_key || !_value || aux <= 0 || aux > 1024 * 1024)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case FSCONFIG_SET_PATH:
 	case FSCONFIG_SET_PATH_EMPTY:
 		if (!_key || !_value || (aux != AT_FDCWD && aux < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case FSCONFIG_SET_FD:
 		if (!_key || _value || aux < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case FSCONFIG_CMD_CREATE:
 	case FSCONFIG_CMD_RECONFIGURE:
 		if (_key || _value || aux)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	f = fdget(fd);
 	if (!f.file)
-		return -EBADF;
-	ret = -EINVAL;
+		return -ERR(EBADF);
+	ret = -ERR(EINVAL);
 	if (f.file->f_op != &fscontext_fops)
 		goto out_f;
 
@@ -375,7 +375,7 @@ SYSCALL_DEFINE5(fsconfig,
 		case FSCONFIG_SET_PATH:
 		case FSCONFIG_SET_PATH_EMPTY:
 		case FSCONFIG_SET_FD:
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out_f;
 		}
 	}
@@ -425,7 +425,7 @@ SYSCALL_DEFINE5(fsconfig,
 		break;
 	case FSCONFIG_SET_FD:
 		param.type = fs_value_is_file;
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		param.file = fget(aux);
 		if (!param.file)
 			goto out_key;

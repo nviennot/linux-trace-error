@@ -682,7 +682,7 @@ int proc_nmi_watchdog(struct ctl_table *table, int write,
 		      void *buffer, size_t *lenp, loff_t *ppos)
 {
 	if (!nmi_watchdog_available && write)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	return proc_watchdog_common(NMI_WATCHDOG_ENABLED,
 				    table, write, buffer, lenp, ppos);
 }

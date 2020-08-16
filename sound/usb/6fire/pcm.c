@@ -182,7 +182,7 @@ static int usb6fire_pcm_stream_start(struct pcm_runtime *rt)
 			rt->stream_state = STREAM_RUNNING;
 		else {
 			usb6fire_pcm_stream_stop(rt);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return 0;
@@ -390,7 +390,7 @@ static int usb6fire_pcm_open(struct snd_pcm_substream *alsa_sub)
 	struct snd_pcm_runtime *alsa_rt = alsa_sub->runtime;
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	mutex_lock(&rt->stream_mutex);
 	alsa_rt->hw = pcm_hw;
@@ -410,7 +410,7 @@ static int usb6fire_pcm_open(struct snd_pcm_substream *alsa_sub)
 	if (!sub) {
 		mutex_unlock(&rt->stream_mutex);
 		dev_err(&rt->chip->dev->dev, "invalid stream type.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sub->instance = alsa_sub;
@@ -454,9 +454,9 @@ static int usb6fire_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 	int ret;
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 	if (!sub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&rt->stream_mutex);
 	sub->dma_off = 0;
@@ -471,7 +471,7 @@ static int usb6fire_pcm_prepare(struct snd_pcm_substream *alsa_sub)
 			dev_err(&rt->chip->dev->dev,
 				"invalid rate %d in prepare.\n",
 				alsa_rt->rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = usb6fire_pcm_set_rate(rt);
@@ -498,9 +498,9 @@ static int usb6fire_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 	unsigned long flags;
 
 	if (rt->panic)
-		return -EPIPE;
+		return -ERR(EPIPE);
 	if (!sub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -518,7 +518,7 @@ static int usb6fire_pcm_trigger(struct snd_pcm_substream *alsa_sub, int cmd)
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

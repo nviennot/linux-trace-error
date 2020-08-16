@@ -121,17 +121,17 @@ int cfpkt_extr_head(struct cfpkt *pkt, void *data, u16 len)
 	struct sk_buff *skb = pkt_to_skb(pkt);
 	u8 *from;
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	if (unlikely(len > skb->len)) {
 		PKT_ERROR(pkt, "read beyond end of packet\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (unlikely(len > skb_headlen(skb))) {
 		if (unlikely(skb_linearize(skb) != 0)) {
 			PKT_ERROR(pkt, "linearize failed\n");
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 	}
 	from = skb_pull(skb, len);
@@ -148,15 +148,15 @@ int cfpkt_extr_trail(struct cfpkt *pkt, void *dta, u16 len)
 	u8 *data = dta;
 	u8 *from;
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	if (unlikely(skb_linearize(skb) != 0)) {
 		PKT_ERROR(pkt, "linearize failed\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	if (unlikely(skb->data + len > skb_tail_pointer(skb))) {
 		PKT_ERROR(pkt, "read beyond end of packet\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	from = skb_tail_pointer(skb) - len;
 	skb_trim(skb, skb->len - len);
@@ -178,7 +178,7 @@ int cfpkt_add_body(struct cfpkt *pkt, const void *data, u16 len)
 
 
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	lastskb = skb;
 
@@ -196,7 +196,7 @@ int cfpkt_add_body(struct cfpkt *pkt, const void *data, u16 len)
 		/* Make sure data is writable */
 		if (unlikely(skb_cow_data(skb, addlen, &lastskb) < 0)) {
 			PKT_ERROR(pkt, "cow failed\n");
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 	}
 
@@ -220,10 +220,10 @@ int cfpkt_add_head(struct cfpkt *pkt, const void *data2, u16 len)
 	const u8 *data = data2;
 	int ret;
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 	if (unlikely(skb_headroom(skb) < len)) {
 		PKT_ERROR(pkt, "no headroom\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	/* Make sure data is writable */
@@ -259,10 +259,10 @@ int cfpkt_iterate(struct cfpkt *pkt,
 	 * Checksum should not be used on high-speed interfaces anyway.
 	 */
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 	if (unlikely(skb_linearize(&pkt->skb) != 0)) {
 		PKT_ERROR(pkt, "linearize failed\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	return iter_func(data, pkt->skb.data, cfpkt_getlen(pkt));
 }
@@ -273,7 +273,7 @@ int cfpkt_setlen(struct cfpkt *pkt, u16 len)
 
 
 	if (unlikely(is_erronous(pkt)))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	if (likely(len <= skb->len)) {
 		if (unlikely(skb->data_len))

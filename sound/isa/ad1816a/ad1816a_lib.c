@@ -26,7 +26,7 @@ static inline int snd_ad1816a_busy_wait(struct snd_ad1816a *chip)
 			return 0;
 
 	snd_printk(KERN_WARNING "chip busy.\n");
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static inline unsigned char snd_ad1816a_in(struct snd_ad1816a *chip, unsigned char reg)
@@ -102,7 +102,7 @@ static int snd_ad1816a_open(struct snd_ad1816a *chip, unsigned int mode)
 
 	if (chip->mode & mode) {
 		spin_unlock_irqrestore(&chip->lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	switch ((mode &= AD1816A_MODE_OPEN)) {
@@ -186,7 +186,7 @@ static int snd_ad1816a_trigger(struct snd_ad1816a *chip, unsigned char what,
 		break;
 	default:
 		snd_printk(KERN_WARNING "invalid trigger mode 0x%x.\n", what);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	}
 
 	return error;
@@ -589,25 +589,25 @@ int snd_ad1816a_create(struct snd_card *card,
 	if ((chip->res_port = request_region(port, 16, "AD1816A")) == NULL) {
 		snd_printk(KERN_ERR "ad1816a: can't grab port 0x%lx\n", port);
 		snd_ad1816a_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (request_irq(irq, snd_ad1816a_interrupt, 0, "AD1816A", (void *) chip)) {
 		snd_printk(KERN_ERR "ad1816a: can't grab IRQ %d\n", irq);
 		snd_ad1816a_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
 	if (request_dma(dma1, "AD1816A - 1")) {
 		snd_printk(KERN_ERR "ad1816a: can't grab DMA1 %d\n", dma1);
 		snd_ad1816a_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma1 = dma1;
 	if (request_dma(dma2, "AD1816A - 2")) {
 		snd_printk(KERN_ERR "ad1816a: can't grab DMA2 %d\n", dma2);
 		snd_ad1816a_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma2 = dma2;
 
@@ -728,7 +728,7 @@ static int snd_ad1816a_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_ele
 	
 	if (ucontrol->value.enumerated.item[0] > 6 ||
 	    ucontrol->value.enumerated.item[1] > 6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = (ucontrol->value.enumerated.item[0] << 12) |
 	      (ucontrol->value.enumerated.item[1] << 4);
 	spin_lock_irqsave(&chip->lock, flags);
@@ -937,7 +937,7 @@ int snd_ad1816a_mixer(struct snd_ad1816a *chip)
 	int err;
 
 	if (snd_BUG_ON(!chip || !chip->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 

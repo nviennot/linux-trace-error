@@ -289,7 +289,7 @@ static ssize_t sta_aql_write(struct file *file, const char __user *userbuf,
 	char _buf[100] = {}, *buf = _buf;
 
 	if (count > sizeof(_buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, userbuf, count))
 		return -EFAULT;
@@ -297,10 +297,10 @@ static ssize_t sta_aql_write(struct file *file, const char __user *userbuf,
 	buf[sizeof(_buf) - 1] = '\0';
 	if (sscanf(buf, "limit %u %u %u", &ac, &q_limit_l, &q_limit_h)
 	    != 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ac >= IEEE80211_NUM_ACS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sta->airtime[ac].aql_limit_low = q_limit_l;
 	sta->airtime[ac].aql_limit_high = q_limit_h;
@@ -365,7 +365,7 @@ static ssize_t sta_agg_status_write(struct file *file, const char __user *userbu
 	int ret, timeout = 5000;
 
 	if (count > sizeof(_buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, userbuf, count))
 		return -EFAULT;
@@ -374,40 +374,40 @@ static ssize_t sta_agg_status_write(struct file *file, const char __user *userbu
 	pos = buf;
 	buf = strsep(&pos, " ");
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!strcmp(buf, "tx"))
 		tx = true;
 	else if (!strcmp(buf, "rx"))
 		tx = false;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = strsep(&pos, " ");
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!strcmp(buf, "start")) {
 		start = true;
 		if (!tx)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (!strcmp(buf, "stop")) {
 		start = false;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	buf = strsep(&pos, " ");
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (sscanf(buf, "timeout=%d", &timeout) == 1) {
 		buf = strsep(&pos, " ");
 		if (!buf || !tx || !start)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	ret = kstrtoul(buf, 0, &tid);
 	if (ret || tid >= IEEE80211_NUM_TIDS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tx) {
 		if (start)

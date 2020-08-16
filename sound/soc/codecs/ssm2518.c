@@ -322,14 +322,14 @@ static int ssm2518_lookup_mcs(struct ssm2518 *ssm2518,
 	}
 
 	if (!sysclks)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; sysclks[i]; i++) {
 		if (sysclks[i] == ssm2518->sysclk)
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ssm2518_hw_params(struct snd_pcm_substream *substream,
@@ -357,7 +357,7 @@ static int ssm2518_hw_params(struct snd_pcm_substream *substream,
 	else if (rate >= 64000 && rate <= 96000)
 		ctrl1 = SSM2518_SAI_CTRL1_FS_64000_96000;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ssm2518->right_j) {
 		switch (params_width(params)) {
@@ -368,7 +368,7 @@ static int ssm2518_hw_params(struct snd_pcm_substream *substream,
 			ctrl1 |= SSM2518_SAI_CTRL1_FMT_RJ_24BIT;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ctrl1_mask |= SSM2518_SAI_CTRL1_FMT_MASK;
 	}
@@ -413,7 +413,7 @@ static int ssm2518_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -432,7 +432,7 @@ static int ssm2518_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		invert_fclk = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ssm2518->right_j = false;
@@ -460,7 +460,7 @@ static int ssm2518_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		invert_fclk = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (invert_fclk)
@@ -534,11 +534,11 @@ static int ssm2518_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 			SSM2518_SAI_CTRL1_SAI_I2S);
 
 	if (tx_mask == 0 || rx_mask != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (slots == 1) {
 		if (tx_mask != 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		left_slot = 0;
 		right_slot = 0;
 	} else {
@@ -554,7 +554,7 @@ static int ssm2518_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	}
 
 	if (tx_mask != 0 || left_slot >= slots || right_slot >= slots)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (width) {
 	case 16:
@@ -567,7 +567,7 @@ static int ssm2518_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		ctrl2 = SSM2518_SAI_CTRL2_SLOT_WIDTH_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slots) {
@@ -587,7 +587,7 @@ static int ssm2518_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		ctrl1 = SSM2518_SAI_CTRL1_SAI_TDM_16;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_write(ssm2518->regmap, SSM2518_REG_CHAN_MAP,
@@ -647,7 +647,7 @@ static int ssm2518_set_sysclk(struct snd_soc_component *component, int clk_id,
 	unsigned int val;
 
 	if (clk_id != SSM2518_SYSCLK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (source) {
 	case SSM2518_SYSCLK_SRC_MCLK:
@@ -660,7 +660,7 @@ static int ssm2518_set_sysclk(struct snd_soc_component *component, int clk_id,
 		val = SSM2518_POWER1_NO_BCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -700,7 +700,7 @@ static int ssm2518_set_sysclk(struct snd_soc_component *component, int clk_id,
 		ssm2518->constraints = &ssm2518_constraints_12288000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ssm2518->sysclk = freq;

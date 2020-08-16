@@ -22,7 +22,7 @@ static int pdacf_pcm_clear_sram(struct snd_pdacf *chip)
 
 	while (inw(chip->port + PDAUDIOCF_REG_RDP) != inw(chip->port + PDAUDIOCF_REG_WDP)) {
 		if (max_loop-- < 0)
-			return -EIO;
+			return -ERR(EIO);
 		inw(chip->port + PDAUDIOCF_REG_MD);
 	}
 	return 0;
@@ -39,7 +39,7 @@ static int pdacf_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 	unsigned short mask, val, tmp;
 
 	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -62,7 +62,7 @@ static int pdacf_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 		rate = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mutex_lock(&chip->reg_lock);
 	chip->pcm_running += inc;
@@ -70,7 +70,7 @@ static int pdacf_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 	if (chip->pcm_running) {
 		if ((chip->ak4117->rcs0 & AK4117_UNLCK) || runtime->rate != rate) {
 			chip->pcm_running -= inc;
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto __end;
 		}
 	}
@@ -93,7 +93,7 @@ static int pdacf_pcm_prepare(struct snd_pcm_substream *subs)
 	u16 val, nval, aval;
 
 	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	chip->pcm_channels = runtime->channels;
 
@@ -108,7 +108,7 @@ static int pdacf_pcm_prepare(struct snd_pcm_substream *subs)
 		chip->pcm_xor = 0x80008000;
 
 	if (pdacf_pcm_clear_sram(chip) < 0)
-		return -EIO;
+		return -ERR(EIO);
 	
 	val = nval = pdacf_reg_read(chip, PDAUDIOCF_REG_SCR);
 	nval &= ~(PDAUDIOCF_DATAFMT0|PDAUDIOCF_DATAFMT1);
@@ -199,7 +199,7 @@ static int pdacf_pcm_capture_open(struct snd_pcm_substream *subs)
 	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
 
 	if (chip->chip_status & PDAUDIOCF_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	runtime->hw = pdacf_pcm_capture_hw;
 	runtime->private_data = chip;
@@ -216,7 +216,7 @@ static int pdacf_pcm_capture_close(struct snd_pcm_substream *subs)
 	struct snd_pdacf *chip = snd_pcm_substream_chip(subs);
 
 	if (!chip)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pdacf_reinit(chip, 0);
 	chip->pcm_substream = NULL;
 	return 0;

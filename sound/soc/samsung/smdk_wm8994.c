@@ -163,7 +163,7 @@ static int smdk_audio_probe(struct platform_device *pdev)
 		if (!smdk_dai[0].cpus->of_node) {
 			dev_err(&pdev->dev,
 			   "Property 'samsung,i2s-controller' missing or invalid\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		smdk_dai[0].platforms->name = NULL;

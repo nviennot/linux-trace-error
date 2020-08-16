@@ -57,7 +57,7 @@ get_formation_index(unsigned int rate, unsigned int *index)
 			return 0;
 		}
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int
@@ -139,7 +139,7 @@ int snd_bebob_stream_get_clock_src(struct snd_bebob *bebob,
 			dev_err(&bebob->unit->device,
 				"clock source %d out of range 0..%d\n",
 				id, clk_spec->num - 1);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto end;
 		}
 
@@ -247,7 +247,7 @@ int snd_bebob_stream_get_clock_src(struct snd_bebob *bebob,
 	}
 
 	/* Not supported. */
-	err = -EIO;
+	err = -ERR(EIO);
 end:
 	return err;
 }
@@ -308,7 +308,7 @@ static int map_data_channels(struct snd_bebob *bebob, struct amdtp_stream *s)
 		}
 		/* NoType */
 		if (type == 0xff) {
-			err = -ENOSYS;
+			err = -ERR(ENOSYS);
 			goto end;
 		}
 
@@ -335,7 +335,7 @@ static int map_data_channels(struct snd_bebob *bebob, struct amdtp_stream *s)
 			case 0x0a:
 				/* AMDTP_MAX_CHANNELS_FOR_MIDI is 1. */
 				if ((midi > 0) && (stm_pos != midi)) {
-					err = -ENOSYS;
+					err = -ERR(ENOSYS);
 					goto end;
 				}
 				amdtp_am824_set_midi_position(s, stm_pos);
@@ -355,7 +355,7 @@ static int map_data_channels(struct snd_bebob *bebob, struct amdtp_stream *s)
 			default:
 				location = pcm + sec_loc;
 				if (location >= AM824_MAX_CHANNELS_FOR_PCM) {
-					err = -ENOSYS;
+					err = -ERR(ENOSYS);
 					goto end;
 				}
 				amdtp_am824_set_pcm_position(s, location,
@@ -392,7 +392,7 @@ check_connection_used_by_others(struct snd_bebob *bebob, struct amdtp_stream *s)
 			"Connection established by others: %cPCR[%d]\n",
 			(conn->direction == CMP_OUTPUT) ? 'o' : 'i',
 			conn->pcr_index);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	return err;
@@ -611,7 +611,7 @@ int snd_bebob_stream_start_duplex(struct snd_bebob *bebob)
 
 	// Need no substreams.
 	if (bebob->substreams_counter == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	// packet queueing error or detecting discontinuity
 	if (amdtp_streaming_error(&bebob->rx_stream) ||
@@ -686,7 +686,7 @@ int snd_bebob_stream_start_duplex(struct snd_bebob *bebob)
 						CALLBACK_TIMEOUT) ||
 		    !amdtp_stream_wait_callback(&bebob->tx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 	}
@@ -738,7 +738,7 @@ parse_stream_formation(u8 *buf, unsigned int len,
 	 *  Level 1:	AM824 Compound  (0x40)
 	 */
 	if ((buf[0] != 0x90) || (buf[1] != 0x40))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	/* check sampling rate */
 	for (i = 0; i < ARRAY_SIZE(bridgeco_freq_table); i++) {
@@ -746,7 +746,7 @@ parse_stream_formation(u8 *buf, unsigned int len,
 			break;
 	}
 	if (i == ARRAY_SIZE(bridgeco_freq_table))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	/* Avoid double count by different entries for the same rate. */
 	memset(&formation[i], 0, sizeof(struct snd_bebob_stream_formation));
@@ -785,13 +785,13 @@ parse_stream_formation(u8 *buf, unsigned int len,
 		/* Don't care */
 		case 0xff:
 		default:
-			return -ENOSYS;	/* not supported */
+			return -ERR(ENOSYS);	/* not supported */
 		}
 	}
 
 	if (formation[i].pcm  > AM824_MAX_CHANNELS_FOR_PCM ||
 	    formation[i].midi > AM824_MAX_CHANNELS_FOR_MIDI)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	return 0;
 }
@@ -904,7 +904,7 @@ int snd_bebob_stream_discover(struct snd_bebob *bebob)
 	 * output plug.
 	 */
 	if ((plugs[0] == 0) || (plugs[1] == 0)) {
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 		goto end;
 	}
 
@@ -916,7 +916,7 @@ int snd_bebob_stream_discover(struct snd_bebob *bebob)
 			"fail to get type for isoc in plug 0: %d\n", err);
 		goto end;
 	} else if (type != AVC_BRIDGECO_PLUG_TYPE_ISOC) {
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 		goto end;
 	}
 	err = fill_stream_formations(bebob, AVC_BRIDGECO_PLUG_DIR_IN, 0);
@@ -931,7 +931,7 @@ int snd_bebob_stream_discover(struct snd_bebob *bebob)
 			"fail to get type for isoc out plug 0: %d\n", err);
 		goto end;
 	} else if (type != AVC_BRIDGECO_PLUG_TYPE_ISOC) {
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 		goto end;
 	}
 	err = fill_stream_formations(bebob, AVC_BRIDGECO_PLUG_DIR_OUT, 0);
@@ -991,7 +991,7 @@ int snd_bebob_stream_lock_try(struct snd_bebob *bebob)
 
 	/* user land lock this */
 	if (bebob->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

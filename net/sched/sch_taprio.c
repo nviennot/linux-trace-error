@@ -796,7 +796,7 @@ static int fill_sched_entry(struct nlattr **tb, struct sched_entry *entry,
 
 	if (interval == 0) {
 		NL_SET_ERR_MSG(extack, "Invalid interval for schedule entry");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry->interval = interval;
@@ -814,7 +814,7 @@ static int parse_sched_entry(struct nlattr *n, struct sched_entry *entry,
 					  entry_policy, NULL);
 	if (err < 0) {
 		NL_SET_ERR_MSG(extack, "Could not parse nested entry");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry->index = index;
@@ -831,7 +831,7 @@ static int parse_sched_list(struct nlattr *list,
 	int i = 0;
 
 	if (!list)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nla_for_each_nested(n, list, rem) {
 		struct sched_entry *entry;
@@ -870,7 +870,7 @@ static int parse_taprio_schedule(struct nlattr **tb,
 
 	if (tb[TCA_TAPRIO_ATTR_SCHED_SINGLE_ENTRY]) {
 		NL_SET_ERR_MSG(extack, "Adding a single entry is not supported");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	if (tb[TCA_TAPRIO_ATTR_SCHED_BASE_TIME])
@@ -909,7 +909,7 @@ static int taprio_parse_mqprio_opt(struct net_device *dev,
 
 	if (!qopt && !dev->num_tc) {
 		NL_SET_ERR_MSG(extack, "'mqprio' configuration is necessary");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If num_tc is already set, it means that the user already
@@ -921,20 +921,20 @@ static int taprio_parse_mqprio_opt(struct net_device *dev,
 	/* Verify num_tc is not out of max range */
 	if (qopt->num_tc > TC_MAX_QUEUE) {
 		NL_SET_ERR_MSG(extack, "Number of traffic classes is outside valid range");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* taprio imposes that traffic classes map 1:n to tx queues */
 	if (qopt->num_tc > dev->num_tx_queues) {
 		NL_SET_ERR_MSG(extack, "Number of traffic classes is greater than number of HW queues");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Verify priority mapping uses valid tcs */
 	for (i = 0; i <= TC_BITMASK; i++) {
 		if (qopt->prio_tc_map[i] >= qopt->num_tc) {
 			NL_SET_ERR_MSG(extack, "Invalid traffic class in priority to traffic class mapping");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -948,7 +948,7 @@ static int taprio_parse_mqprio_opt(struct net_device *dev,
 		    !qopt->count[i] ||
 		    last > dev->real_num_tx_queues) {
 			NL_SET_ERR_MSG(extack, "Invalid queue in traffic class to queue mapping");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (TXTIME_ASSIST_IS_ENABLED(taprio_flags))
@@ -958,7 +958,7 @@ static int taprio_parse_mqprio_opt(struct net_device *dev,
 		for (j = i + 1; j < qopt->num_tc; j++) {
 			if (last > qopt->offset[j]) {
 				NL_SET_ERR_MSG(extack, "Detected overlap in the traffic class to queue mapping");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -1214,7 +1214,7 @@ static int taprio_enable_offload(struct net_device *dev,
 	if (!ops->ndo_setup_tc) {
 		NL_SET_ERR_MSG(extack,
 			       "Device does not support taprio offload");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	offload = taprio_offload_alloc(sched->num_entries);
@@ -1251,7 +1251,7 @@ static int taprio_disable_offload(struct net_device *dev,
 		return 0;
 
 	if (!ops->ndo_setup_tc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	offload = taprio_offload_alloc(0);
 	if (!offload) {
@@ -1286,7 +1286,7 @@ static int taprio_parse_clockid(struct Qdisc *sch, struct nlattr **tb,
 {
 	struct taprio_sched *q = qdisc_priv(sch);
 	struct net_device *dev = qdisc_dev(sch);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (FULL_OFFLOAD_IS_ENABLED(q->flags)) {
 		const struct ethtool_ops *ops = dev->ethtool_ops;
@@ -1307,7 +1307,7 @@ static int taprio_parse_clockid(struct Qdisc *sch, struct nlattr **tb,
 		if (err || info.phc_index < 0) {
 			NL_SET_ERR_MSG(extack,
 				       "Device does not have a PTP clock");
-			err = -ENOTSUPP;
+			err = -ERR(ENOTSUPP);
 			goto out;
 		}
 	} else if (tb[TCA_TAPRIO_ATTR_SCHED_CLOCKID]) {
@@ -1320,7 +1320,7 @@ static int taprio_parse_clockid(struct Qdisc *sch, struct nlattr **tb,
 		    (q->clockid != -1 && q->clockid != clockid)) {
 			NL_SET_ERR_MSG(extack,
 				       "Changing the 'clockid' of a running schedule is not supported");
-			err = -ENOTSUPP;
+			err = -ERR(ENOTSUPP);
 			goto out;
 		}
 
@@ -1339,7 +1339,7 @@ static int taprio_parse_clockid(struct Qdisc *sch, struct nlattr **tb,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Invalid 'clockid'");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1392,12 +1392,12 @@ static int taprio_new_flags(const struct nlattr *attr, u32 old,
 
 	if (old != TAPRIO_FLAGS_INVALID && old != new) {
 		NL_SET_ERR_MSG_MOD(extack, "Changing 'flags' of a running schedule is not supported");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (!taprio_flags_valid(new)) {
 		NL_SET_ERR_MSG_MOD(extack, "Specified 'flags' are not valid");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return new;
@@ -1452,7 +1452,7 @@ static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (mqprio && (oper || admin)) {
 		NL_SET_ERR_MSG(extack, "Changing the traffic mapping of a running schedule is not supported");
-		err = -ENOTSUPP;
+		err = -ERR(ENOTSUPP);
 		goto free_sched;
 	}
 
@@ -1462,7 +1462,7 @@ static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (new_admin->num_entries == 0) {
 		NL_SET_ERR_MSG(extack, "There should be at least one entry in the schedule");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto free_sched;
 	}
 
@@ -1498,7 +1498,7 @@ static int taprio_change(struct Qdisc *sch, struct nlattr *opt,
 	if (tb[TCA_TAPRIO_ATTR_TXTIME_DELAY]) {
 		if (!TXTIME_ASSIST_IS_ENABLED(q->flags)) {
 			NL_SET_ERR_MSG_MOD(extack, "txtime-delay can only be set when txtime-assist mode is enabled");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto unlock;
 		}
 
@@ -1632,10 +1632,10 @@ static int taprio_init(struct Qdisc *sch, struct nlattr *opt,
 	spin_unlock(&taprio_list_lock);
 
 	if (sch->parent != TC_H_ROOT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!netif_is_multiqueue(dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* pre-allocate qdisc, attachment can't fail */
 	q->qdiscs = kcalloc(dev->num_tx_queues,
@@ -1646,7 +1646,7 @@ static int taprio_init(struct Qdisc *sch, struct nlattr *opt,
 		return -ENOMEM;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < dev->num_tx_queues; i++) {
 		struct netdev_queue *dev_queue;
@@ -1691,7 +1691,7 @@ static int taprio_graft(struct Qdisc *sch, unsigned long cl,
 	struct netdev_queue *dev_queue = taprio_queue_get(sch, cl);
 
 	if (!dev_queue)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dev->flags & IFF_UP)
 		dev_deactivate(dev);
@@ -1715,7 +1715,7 @@ static int dump_entry(struct sk_buff *msg,
 
 	item = nla_nest_start_noflag(msg, TCA_TAPRIO_SCHED_ENTRY);
 	if (!item)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (nla_put_u32(msg, TCA_TAPRIO_SCHED_ENTRY_INDEX, entry->index))
 		goto nla_put_failure;
@@ -1841,7 +1841,7 @@ options_error:
 
 start_error:
 	rcu_read_unlock();
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static struct Qdisc *taprio_leaf(struct Qdisc *sch, unsigned long cl)

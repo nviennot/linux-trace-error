@@ -107,7 +107,7 @@ static int __maybe_unused bcm963xx_nvram_checksum(
 	if (actual_out)
 		*actual_out = actual;
 
-	return expected == actual ? 0 : -EINVAL;
+	return expected == actual ? 0 : -ERR(EINVAL);
 };
 
 #endif /* __LINUX_BCM963XX_NVRAM_H__ */

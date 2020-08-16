@@ -86,7 +86,7 @@ int jfs_ioc_trim(struct inode *ip, struct fstrim_range *range)
 	if (minlen > bmp->db_agsize ||
 	    start >= bmp->db_mapsize ||
 	    range->len < sb->s_blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (end >= bmp->db_mapsize)
 		end = bmp->db_mapsize - 1;

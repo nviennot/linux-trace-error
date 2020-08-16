@@ -58,8 +58,8 @@ xattr_resolve_name(struct inode *inode, const char **name)
 
 	if (!(inode->i_opflags & IOP_XATTR)) {
 		if (unlikely(is_bad_inode(inode)))
-			return ERR_PTR(-EIO);
-		return ERR_PTR(-EOPNOTSUPP);
+			return ERR_PTR(-ERR(EIO));
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 	for_each_xattr_handler(handlers, handler) {
 		const char *n;
@@ -69,13 +69,13 @@ xattr_resolve_name(struct inode *inode, const char **name)
 			if (!handler->prefix ^ !*n) {
 				if (*n)
 					continue;
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 			}
 			*name = n;
 			return handler;
 		}
 	}
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 /*
@@ -91,14 +91,14 @@ xattr_permission(struct inode *inode, const char *name, int mask)
 	 */
 	if (mask & MAY_WRITE) {
 		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 		/*
 		 * Updating an xattr will likely cause i_uid and i_gid
 		 * to be writen back improperly if their true value is
 		 * unknown to the vfs.
 		 */
 		if (HAS_UNMAPPED_ID(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	/*
@@ -114,7 +114,7 @@ xattr_permission(struct inode *inode, const char *name, int mask)
 	 */
 	if (!strncmp(name, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN)) {
 		if (!capable(CAP_SYS_ADMIN))
-			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
+			return (mask & MAY_WRITE) ? -ERR(EPERM) : -ERR(ENODATA);
 		return 0;
 	}
 
@@ -125,10 +125,10 @@ xattr_permission(struct inode *inode, const char *name, int mask)
 	 */
 	if (!strncmp(name, XATTR_USER_PREFIX, XATTR_USER_PREFIX_LEN)) {
 		if (!S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-			return (mask & MAY_WRITE) ? -EPERM : -ENODATA;
+			return (mask & MAY_WRITE) ? -ERR(EPERM) : -ERR(ENODATA);
 		if (S_ISDIR(inode->i_mode) && (inode->i_mode & S_ISVTX) &&
 		    (mask & MAY_WRITE) && !inode_owner_or_capable(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	return inode_permission(inode, mask);
@@ -144,7 +144,7 @@ __vfs_setxattr(struct dentry *dentry, struct inode *inode, const char *name,
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
 	if (!handler->set)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (size == 0)
 		value = "";  /* empty EA, do not remove */
 	return handler->set(handler, dentry, inode, name, value, size, flags);
@@ -171,7 +171,7 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 		const void *value, size_t size, int flags)
 {
 	struct inode *inode = dentry->d_inode;
-	int error = -EAGAIN;
+	int error = -ERR(EAGAIN);
 	int issec = !strncmp(name, XATTR_SECURITY_PREFIX,
 				   XATTR_SECURITY_PREFIX_LEN);
 
@@ -186,10 +186,10 @@ int __vfs_setxattr_noperm(struct dentry *dentry, const char *name,
 		}
 	} else {
 		if (unlikely(is_bad_inode(inode)))
-			return -EIO;
+			return -ERR(EIO);
 	}
 	if (error == -EAGAIN) {
-		error = -EOPNOTSUPP;
+		error = -ERR(EOPNOTSUPP);
 
 		if (issec) {
 			const char *suffix = name + XATTR_SECURITY_PREFIX_LEN;
@@ -245,7 +245,7 @@ xattr_getsecurity(struct inode *inode, const char *name, void *value,
 	if (len < 0)
 		return len;
 	if (size < len) {
-		len = -ERANGE;
+		len = -ERR(ERANGE);
 		goto out;
 	}
 	memcpy(value, buffer, len);
@@ -280,7 +280,7 @@ vfs_getxattr_alloc(struct dentry *dentry, const char *name, char **xattr_value,
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
 	if (!handler->get)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	error = handler->get(handler, dentry, inode, name, NULL, 0);
 	if (error < 0)
 		return error;
@@ -307,7 +307,7 @@ __vfs_getxattr(struct dentry *dentry, struct inode *inode, const char *name,
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
 	if (!handler->get)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return handler->get(handler, dentry, inode, name, value, size);
 }
 EXPORT_SYMBOL(__vfs_getxattr);
@@ -357,7 +357,7 @@ vfs_listxattr(struct dentry *dentry, char *list, size_t size)
 	} else {
 		error = security_inode_listsecurity(inode, list, size);
 		if (size && error > size)
-			error = -ERANGE;
+			error = -ERR(ERANGE);
 	}
 	return error;
 }
@@ -373,7 +373,7 @@ __vfs_removexattr(struct dentry *dentry, const char *name)
 	if (IS_ERR(handler))
 		return PTR_ERR(handler);
 	if (!handler->set)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return handler->set(handler, dentry, inode, name, NULL, 0, XATTR_REPLACE);
 }
 EXPORT_SYMBOL(__vfs_removexattr);
@@ -419,17 +419,17 @@ setxattr(struct dentry *d, const char __user *name, const void __user *value,
 	char kname[XATTR_NAME_MAX + 1];
 
 	if (flags & ~(XATTR_CREATE|XATTR_REPLACE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = strncpy_from_user(kname, name, sizeof(kname));
 	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 	if (error < 0)
 		return error;
 
 	if (size) {
 		if (size > XATTR_SIZE_MAX)
-			return -E2BIG;
+			return -ERR(E2BIG);
 		kvalue = kvmalloc(size, GFP_KERNEL);
 		if (!kvalue)
 			return -ENOMEM;
@@ -496,7 +496,7 @@ SYSCALL_DEFINE5(fsetxattr, int, fd, const char __user *, name,
 		const void __user *,value, size_t, size, int, flags)
 {
 	struct fd f = fdget(fd);
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 
 	if (!f.file)
 		return error;
@@ -523,7 +523,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
 
 	error = strncpy_from_user(kname, name, sizeof(kname));
 	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 	if (error < 0)
 		return error;
 
@@ -545,7 +545,7 @@ getxattr(struct dentry *d, const char __user *name, void __user *value,
 	} else if (error == -ERANGE && size >= XATTR_SIZE_MAX) {
 		/* The file system tried to returned a value bigger
 		   than XATTR_SIZE_MAX bytes. Not possible. */
-		error = -E2BIG;
+		error = -ERR(E2BIG);
 	}
 
 	kvfree(kvalue);
@@ -588,7 +588,7 @@ SYSCALL_DEFINE4(fgetxattr, int, fd, const char __user *, name,
 		void __user *, value, size_t, size)
 {
 	struct fd f = fdget(fd);
-	ssize_t error = -EBADF;
+	ssize_t error = -ERR(EBADF);
 
 	if (!f.file)
 		return error;
@@ -622,7 +622,7 @@ listxattr(struct dentry *d, char __user *list, size_t size)
 	} else if (error == -ERANGE && size >= XATTR_LIST_MAX) {
 		/* The file system tried to returned a list bigger
 		   than XATTR_LIST_MAX bytes. Not possible. */
-		error = -E2BIG;
+		error = -ERR(E2BIG);
 	}
 
 	kvfree(klist);
@@ -663,7 +663,7 @@ SYSCALL_DEFINE3(llistxattr, const char __user *, pathname, char __user *, list,
 SYSCALL_DEFINE3(flistxattr, int, fd, char __user *, list, size_t, size)
 {
 	struct fd f = fdget(fd);
-	ssize_t error = -EBADF;
+	ssize_t error = -ERR(EBADF);
 
 	if (!f.file)
 		return error;
@@ -684,7 +684,7 @@ removexattr(struct dentry *d, const char __user *name)
 
 	error = strncpy_from_user(kname, name, sizeof(kname));
 	if (error == 0 || error == sizeof(kname))
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 	if (error < 0)
 		return error;
 
@@ -728,7 +728,7 @@ SYSCALL_DEFINE2(lremovexattr, const char __user *, pathname,
 SYSCALL_DEFINE2(fremovexattr, int, fd, const char __user *, name)
 {
 	struct fd f = fdget(fd);
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 
 	if (!f.file)
 		return error;
@@ -769,7 +769,7 @@ generic_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 				continue;
 			len = strlen(handler->name);
 			if (len + 1 > buffer_size)
-				return -ERANGE;
+				return -ERR(ERANGE);
 			memcpy(buf, handler->name, len + 1);
 			buf += len + 1;
 			buffer_size -= len + 1;
@@ -833,7 +833,7 @@ int simple_xattr_get(struct simple_xattrs *xattrs, const char *name,
 		     void *buffer, size_t size)
 {
 	struct simple_xattr *xattr;
-	int ret = -ENODATA;
+	int ret = -ERR(ENODATA);
 
 	spin_lock(&xattrs->lock);
 	list_for_each_entry(xattr, &xattrs->head, list) {
@@ -843,7 +843,7 @@ int simple_xattr_get(struct simple_xattrs *xattrs, const char *name,
 		ret = xattr->size;
 		if (buffer) {
 			if (size < xattr->size)
-				ret = -ERANGE;
+				ret = -ERR(ERANGE);
 			else
 				memcpy(buffer, xattr->value, xattr->size);
 		}
@@ -897,7 +897,7 @@ int simple_xattr_set(struct simple_xattrs *xattrs, const char *name,
 		if (!strcmp(name, xattr->name)) {
 			if (flags & XATTR_CREATE) {
 				xattr = new_xattr;
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 			} else if (new_xattr) {
 				list_replace(&xattr->list, &new_xattr->list);
 				if (removed_size)
@@ -912,7 +912,7 @@ int simple_xattr_set(struct simple_xattrs *xattrs, const char *name,
 	}
 	if (flags & XATTR_REPLACE) {
 		xattr = new_xattr;
-		err = -ENODATA;
+		err = -ERR(ENODATA);
 	} else {
 		list_add(&new_xattr->list, &xattrs->head);
 		xattr = NULL;
@@ -938,7 +938,7 @@ static int xattr_list_one(char **buffer, ssize_t *remaining_size,
 	size_t len = strlen(name) + 1;
 	if (*buffer) {
 		if (*remaining_size < len)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		memcpy(*buffer, name, len);
 		*buffer += len;
 	}

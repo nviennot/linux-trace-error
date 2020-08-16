@@ -300,7 +300,7 @@ have_carrier:
 			       user_dev_name);
 		else
 			pr_err("IP-Config: No network devices available\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -1427,7 +1427,7 @@ static int __init wait_for_devices(void)
 			return 0;
 		ssleep(1);
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /*

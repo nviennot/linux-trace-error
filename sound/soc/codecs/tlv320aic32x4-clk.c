@@ -228,7 +228,7 @@ static int clk_aic32x4_pll_set_rate(struct clk_hw *hw,
 
 	ret = clk_aic32x4_pll_calc_muldiv(&settings, rate, parent_rate);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return clk_aic32x4_pll_set_muldiv(pll, &settings);
 }
@@ -313,7 +313,7 @@ static int clk_aic32x4_div_set_rate(struct clk_hw *hw, unsigned long rate,
 
 	divisor = DIV_ROUND_UP(parent_rate, rate);
 	if (divisor > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return regmap_update_bits(div->regmap, div->reg,
 				AIC32X4_DIV_MASK, divisor);
@@ -326,7 +326,7 @@ static long clk_aic32x4_div_round_rate(struct clk_hw *hw, unsigned long rate,
 
 	divisor = DIV_ROUND_UP(*parent_rate, rate);
 	if (divisor > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return DIV_ROUND_UP(*parent_rate, divisor);
 }

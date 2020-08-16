@@ -118,7 +118,7 @@ int sk_filter_trim_cap(struct sock *sk, struct sk_buff *skb, unsigned int cap)
 		skb->sk = sk;
 		pkt_len = bpf_prog_run_save_cb(filter->prog, skb);
 		skb->sk = save_sk;
-		err = pkt_len ? pskb_trim(skb, max(cap, pkt_len)) : -EPERM;
+		err = pkt_len ? pskb_trim(skb, max(cap, pkt_len)) : -ERR(EPERM);
 	}
 	rcu_read_unlock();
 
@@ -536,7 +536,7 @@ static int bpf_convert_filter(struct sock_filter *prog, int len,
 	BUILD_BUG_ON(BPF_REG_FP + 1 != MAX_BPF_REG);
 
 	if (len <= 0 || len > BPF_MAXINSNS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (new_prog) {
 		first_insn = new_prog->insnsi;
@@ -864,7 +864,7 @@ jmp_rest:
 	return 0;
 err:
 	kfree(addrs);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Security:
@@ -898,7 +898,7 @@ static int check_load_and_stores(const struct sock_filter *filter, int flen)
 		case BPF_LD | BPF_MEM:
 		case BPF_LDX | BPF_MEM:
 			if (!(memvalid & (1 << filter[pc].k))) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto error;
 			}
 			break;
@@ -1030,7 +1030,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 
 		/* May we actually operate on this code? */
 		if (!chk_code_allowed(ftest->code))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Some instructions need special checks */
 		switch (ftest->code) {
@@ -1038,12 +1038,12 @@ static int bpf_check_classic(const struct sock_filter *filter,
 		case BPF_ALU | BPF_MOD | BPF_K:
 			/* Check for division by zero */
 			if (ftest->k == 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case BPF_ALU | BPF_LSH | BPF_K:
 		case BPF_ALU | BPF_RSH | BPF_K:
 			if (ftest->k >= 32)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case BPF_LD | BPF_MEM:
 		case BPF_LDX | BPF_MEM:
@@ -1051,7 +1051,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 		case BPF_STX:
 			/* Check for invalid memory addresses */
 			if (ftest->k >= BPF_MEMWORDS)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case BPF_JMP | BPF_JA:
 			/* Note, the large ftest->k might cause loops.
@@ -1059,7 +1059,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 			 * where offsets are limited. --ANK (981016)
 			 */
 			if (ftest->k >= (unsigned int)(flen - pc - 1))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case BPF_JMP | BPF_JEQ | BPF_K:
 		case BPF_JMP | BPF_JEQ | BPF_X:
@@ -1072,7 +1072,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 			/* Both conditionals must be safe */
 			if (pc + ftest->jt + 1 >= flen ||
 			    pc + ftest->jf + 1 >= flen)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case BPF_LD | BPF_W | BPF_ABS:
 		case BPF_LD | BPF_H | BPF_ABS:
@@ -1082,7 +1082,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 				anc_found = true;
 			/* Ancillary operation unknown or unsupported */
 			if (anc_found == false && ftest->k >= SKF_AD_OFF)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -1093,7 +1093,7 @@ static int bpf_check_classic(const struct sock_filter *filter,
 		return check_load_and_stores(filter, flen);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int bpf_prog_store_orig_filter(struct bpf_prog *fp,
@@ -1331,7 +1331,7 @@ int bpf_prog_create(struct bpf_prog **pfp, struct sock_fprog_kern *fprog)
 
 	/* Make sure new filter is there and in the right amounts. */
 	if (!bpf_check_basics_ok(fprog->filter, fprog->len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fp = bpf_prog_alloc(bpf_prog_size(fprog->len), 0);
 	if (!fp)
@@ -1378,7 +1378,7 @@ int bpf_prog_create_from_user(struct bpf_prog **pfp, struct sock_fprog *fprog,
 
 	/* Make sure new filter is there and in the right amounts. */
 	if (!bpf_check_basics_ok(fprog->filter, fprog->len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fp = bpf_prog_alloc(bpf_prog_size(fprog->len), 0);
 	if (!fp)
@@ -1452,11 +1452,11 @@ struct bpf_prog *__get_filter(struct sock_fprog *fprog, struct sock *sk)
 	int err;
 
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	/* Make sure new filter is there and in the right amounts. */
 	if (!bpf_check_basics_ok(fprog->filter, fprog->len))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	prog = bpf_prog_alloc(bpf_prog_size(fprog->len), 0);
 	if (!prog)
@@ -1531,7 +1531,7 @@ int sk_reuseport_attach_filter(struct sock_fprog *fprog, struct sock *sk)
 static struct bpf_prog *__get_bpf(u32 ufd, struct sock *sk)
 {
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	return bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER);
 }
@@ -1559,7 +1559,7 @@ int sk_reuseport_attach_bpf(u32 ufd, struct sock *sk)
 	int err;
 
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	prog = bpf_prog_get_type(ufd, BPF_PROG_TYPE_SOCKET_FILTER);
 	if (PTR_ERR(prog) == -EINVAL)
@@ -1579,7 +1579,7 @@ int sk_reuseport_attach_bpf(u32 ufd, struct sock *sk)
 		     sk->sk_protocol != IPPROTO_TCP) ||
 		    (sk->sk_family != AF_INET &&
 		     sk->sk_family != AF_INET6)) {
-			err = -ENOTSUPP;
+			err = -ERR(ENOTSUPP);
 			goto err_prog_put;
 		}
 	} else {
@@ -2076,7 +2076,7 @@ static inline int __bpf_tx_skb(struct net_device *dev, struct sk_buff *skb)
 	if (dev_xmit_recursion()) {
 		net_crit_ratelimited("bpf: recursion limit reached on datapath, buggy bpf program?\n");
 		kfree_skb(skb);
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 	}
 
 	skb->dev = dev;
@@ -2117,7 +2117,7 @@ static int __bpf_redirect_common(struct sk_buff *skb, struct net_device *dev,
 	/* Verify that a link layer header is carried */
 	if (unlikely(skb->mac_header >= skb->network_header)) {
 		kfree_skb(skb);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	bpf_push_mac_rcsum(skb);
@@ -2199,7 +2199,7 @@ int skb_do_redirect(struct sk_buff *skb)
 	ri->tgt_index = 0;
 	if (unlikely(!dev)) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return __bpf_redirect(skb, dev, ri->flags);
@@ -2876,7 +2876,7 @@ static int bpf_skb_proto_4_to_6(struct sk_buff *skb)
 	int ret;
 
 	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	ret = skb_cow(skb, len_diff);
 	if (unlikely(ret < 0))
@@ -2917,7 +2917,7 @@ static int bpf_skb_proto_6_to_4(struct sk_buff *skb)
 	int ret;
 
 	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	ret = skb_unclone(skb, GFP_ATOMIC);
 	if (unlikely(ret < 0))
@@ -2963,7 +2963,7 @@ static int bpf_skb_proto_xlat(struct sk_buff *skb, __be16 to_proto)
 	      to_proto == htons(ETH_P_IP))
 		return bpf_skb_proto_6_to_4(skb);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 BPF_CALL_3(bpf_skb_change_proto, struct sk_buff *, skb, __be16, proto,
@@ -3059,7 +3059,7 @@ static int bpf_skb_net_grow(struct sk_buff *skb, u32 off, u32 len_diff,
 		/* udp gso_size delineates datagrams, only allow if fixed */
 		if (!(skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) ||
 		    !(flags & BPF_F_ADJ_ROOM_FIXED_GSO))
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 	}
 
 	ret = skb_cow_head(skb, len_diff);
@@ -3069,23 +3069,23 @@ static int bpf_skb_net_grow(struct sk_buff *skb, u32 off, u32 len_diff,
 	if (encap) {
 		if (skb->protocol != htons(ETH_P_IP) &&
 		    skb->protocol != htons(ETH_P_IPV6))
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 
 		if (flags & BPF_F_ADJ_ROOM_ENCAP_L3_IPV4 &&
 		    flags & BPF_F_ADJ_ROOM_ENCAP_L3_IPV6)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (flags & BPF_F_ADJ_ROOM_ENCAP_L4_GRE &&
 		    flags & BPF_F_ADJ_ROOM_ENCAP_L4_UDP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (skb->encapsulation)
-			return -EALREADY;
+			return -ERR(EALREADY);
 
 		mac_len = skb->network_header - skb->mac_header;
 		inner_net = skb->network_header;
 		if (inner_mac_len > len_diff)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		inner_trans = skb->transport_header;
 	}
 
@@ -3151,13 +3151,13 @@ static int bpf_skb_net_shrink(struct sk_buff *skb, u32 off, u32 len_diff,
 
 	if (unlikely(flags & ~(BPF_F_ADJ_ROOM_FIXED_GSO |
 			       BPF_F_ADJ_ROOM_NO_CSUM_RESET)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (skb_is_gso(skb) && !skb_is_gso_tcp(skb)) {
 		/* udp gso_size delineates datagrams, only allow if fixed */
 		if (!(skb_shinfo(skb)->gso_type & SKB_GSO_UDP_L4) ||
 		    !(flags & BPF_F_ADJ_ROOM_FIXED_GSO))
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 	}
 
 	ret = skb_unclone(skb, GFP_ATOMIC);
@@ -3282,9 +3282,9 @@ static inline int __bpf_skb_change_tail(struct sk_buff *skb, u32 new_len,
 	int ret;
 
 	if (unlikely(flags || new_len > max_len || new_len < min_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (skb->encapsulation)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	/* The basic idea of this helper is that it's performing the
 	 * needed work to either grow or trim an skb, and eBPF program
@@ -3359,7 +3359,7 @@ static inline int __bpf_skb_change_head(struct sk_buff *skb, u32 head_room,
 
 	if (unlikely(flags || (!skb_is_gso(skb) && new_len > max_len) ||
 		     new_len < skb->len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = skb_cow(skb, head_room);
 	if (likely(!ret)) {
@@ -3524,7 +3524,7 @@ static int __bpf_tx_xdp_map(struct net_device *dev_rx, void *fwd,
 	case BPF_MAP_TYPE_XSKMAP:
 		return __xsk_map_redirect(fwd, xdp);
 	default:
-		return -EBADRQC;
+		return -ERR(EBADRQC);
 	}
 	return 0;
 }
@@ -3586,7 +3586,7 @@ int xdp_do_redirect(struct net_device *dev, struct xdp_buff *xdp,
 	if (unlikely(!map)) {
 		fwd = dev_get_by_index_rcu(dev_net(dev), index);
 		if (unlikely(!fwd)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -3637,7 +3637,7 @@ static int xdp_do_generic_redirect_map(struct net_device *dev,
 		consume_skb(skb);
 	} else {
 		/* TODO: Handle BPF_MAP_TYPE_CPUMAP */
-		err = -EBADRQC;
+		err = -ERR(EBADRQC);
 		goto err;
 	}
 
@@ -3663,7 +3663,7 @@ int xdp_do_generic_redirect(struct net_device *dev, struct sk_buff *skb,
 	ri->tgt_index = 0;
 	fwd = dev_get_by_index_rcu(dev_net(dev), index);
 	if (unlikely(!fwd)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -4295,13 +4295,13 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 	int val;
 
 	if (!sk_fullsock(sk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock_owned_by_me(sk);
 
 	if (level == SOL_SOCKET) {
 		if (optlen != sizeof(int) && optname != SO_BINDTODEVICE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		val = *((int *)optval);
 
 		/* Only some socketops are supported */
@@ -4350,7 +4350,7 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 			if (devname[0] != '\0') {
 				struct net_device *dev;
 
-				ret = -ENODEV;
+				ret = -ERR(ENODEV);
 
 				net = sock_net(sk);
 				dev = dev_get_by_name(net, devname);
@@ -4362,19 +4362,19 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 			ret = sock_bindtoindex(sk, ifindex, false);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 #ifdef CONFIG_INET
 	} else if (level == SOL_IP) {
 		if (optlen != sizeof(int) || sk->sk_family != AF_INET)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		val = *((int *)optval);
 		/* Only some options are supported */
 		switch (optname) {
 		case IP_TOS:
 			if (val < -1 || val > 0xff) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			} else {
 				struct inet_sock *inet = inet_sk(sk);
 
@@ -4384,19 +4384,19 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 			}
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 #if IS_ENABLED(CONFIG_IPV6)
 	} else if (level == SOL_IPV6) {
 		if (optlen != sizeof(int) || sk->sk_family != AF_INET6)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		val = *((int *)optval);
 		/* Only some options are supported */
 		switch (optname) {
 		case IPV6_TCLASS:
 			if (val < -1 || val > 0xff) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			} else {
 				struct ipv6_pinfo *np = inet6_sk(sk);
 
@@ -4406,7 +4406,7 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 			}
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 #endif
 	} else if (level == SOL_TCP &&
@@ -4424,20 +4424,20 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 			struct tcp_sock *tp = tcp_sk(sk);
 
 			if (optlen != sizeof(int))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			val = *((int *)optval);
 			/* Only some options are supported */
 			switch (optname) {
 			case TCP_BPF_IW:
 				if (val <= 0 || tp->data_segs_out > tp->syn_data)
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 				else
 					tp->snd_cwnd = val;
 				break;
 			case TCP_BPF_SNDCWND_CLAMP:
 				if (val <= 0) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 				} else {
 					tp->snd_cwnd_clamp = val;
 					tp->snd_ssthresh = val;
@@ -4445,17 +4445,17 @@ static int _bpf_setsockopt(struct sock *sk, int level, int optname,
 				break;
 			case TCP_SAVE_SYN:
 				if (val < 0 || val > 1)
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 				else
 					tp->save_syn = val;
 				break;
 			default:
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			}
 		}
 #endif
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -4530,7 +4530,7 @@ static int _bpf_getsockopt(struct sock *sk, int level, int optname,
 #endif
 err_clear:
 	memset(optval, 0, optlen);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 BPF_CALL_5(bpf_sock_addr_setsockopt, struct bpf_sock_addr_kern *, ctx,
@@ -4751,7 +4751,7 @@ static int bpf_ipv4_fib_lookup(struct net *net, struct bpf_fib_lookup *params,
 
 	dev = dev_get_by_index_rcu(net, params->ifindex);
 	if (unlikely(!dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* verify forwarding is enabled on this interface */
 	in_dev = __in_dev_get_rcu(dev);
@@ -4872,7 +4872,7 @@ static int bpf_ipv6_fib_lookup(struct net *net, struct bpf_fib_lookup *params,
 
 	dev = dev_get_by_index_rcu(net, params->ifindex);
 	if (unlikely(!dev))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	idev = __in6_dev_get_safely(dev);
 	if (unlikely(!idev || !idev->cnf.forwarding))
@@ -5050,12 +5050,12 @@ static int bpf_push_seg6_encap(struct sk_buff *skb, u32 type, void *hdr, u32 len
 	struct ipv6_sr_hdr *srh = (struct ipv6_sr_hdr *)hdr;
 
 	if (!seg6_validate_srh(srh, len, false))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (type) {
 	case BPF_LWT_ENCAP_SEG6_INLINE:
 		if (skb->protocol != htons(ETH_P_IPV6))
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 
 		err = seg6_do_srh_inline(skb, srh);
 		break;
@@ -5065,7 +5065,7 @@ static int bpf_push_seg6_encap(struct sk_buff *skb, u32 type, void *hdr, u32 len
 		err = seg6_do_srh_encap(skb, srh, IPPROTO_IPV6);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bpf_compute_data_pointers(skb);
@@ -8879,11 +8879,11 @@ const struct bpf_prog_ops flow_dissector_prog_ops = {
 
 int sk_detach_filter(struct sock *sk)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	struct sk_filter *filter;
 
 	if (sock_flag(sk, SOCK_FILTER_LOCKED))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	filter = rcu_dereference_protected(sk->sk_filter,
 					   lockdep_sock_is_held(sk));
@@ -8914,7 +8914,7 @@ int sk_get_filter(struct sock *sk, struct sock_filter __user *ubuf,
 	 * so no conversion/decode needed anymore. eBPF programs that
 	 * have no original program cannot be dumped through this.
 	 */
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 	fprog = filter->prog->orig_prog;
 	if (!fprog)
 		goto out;
@@ -8924,7 +8924,7 @@ int sk_get_filter(struct sock *sk, struct sock_filter __user *ubuf,
 		/* User space only enquires number of filter blocks. */
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (len < fprog->len)
 		goto out;
 
@@ -8969,7 +8969,7 @@ struct sock *bpf_run_sk_reuseport(struct sock_reuseport *reuse, struct sock *sk,
 	if (action == SK_PASS)
 		return reuse_kern.selected_sk;
 	else
-		return ERR_PTR(-ECONNREFUSED);
+		return ERR_PTR(-ERR(ECONNREFUSED));
 }
 
 BPF_CALL_4(sk_select_reuseport, struct sk_reuseport_kern *, reuse_kern,

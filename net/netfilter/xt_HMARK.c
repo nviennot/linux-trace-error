@@ -310,7 +310,7 @@ static int hmark_tg_check(const struct xt_tgchk_param *par)
 	const char *errmsg = "proto mask must be zero with L3 mode";
 
 	if (!info->hmodulus)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->proto_mask &&
 	    (info->flags & XT_HMARK_FLAG(XT_HMARK_METHOD_L3)))
@@ -319,7 +319,7 @@ static int hmark_tg_check(const struct xt_tgchk_param *par)
 	if (info->flags & XT_HMARK_FLAG(XT_HMARK_SPI_MASK) &&
 	    (info->flags & (XT_HMARK_FLAG(XT_HMARK_SPORT_MASK) |
 			     XT_HMARK_FLAG(XT_HMARK_DPORT_MASK))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->flags & XT_HMARK_FLAG(XT_HMARK_SPI) &&
 	    (info->flags & (XT_HMARK_FLAG(XT_HMARK_SPORT) |
@@ -330,7 +330,7 @@ static int hmark_tg_check(const struct xt_tgchk_param *par)
 	return 0;
 err:
 	pr_info_ratelimited("%s\n", errmsg);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct xt_target hmark_tg_reg[] __read_mostly = {

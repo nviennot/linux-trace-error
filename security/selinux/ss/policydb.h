@@ -349,7 +349,7 @@ struct policy_data {
 static inline int next_entry(void *buf, struct policy_file *fp, size_t bytes)
 {
 	if (bytes > fp->len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(buf, fp->data, bytes);
 	fp->data += bytes;

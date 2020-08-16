@@ -78,7 +78,7 @@ static int mcopy_atomic_pte(struct mm_struct *dst_mm,
 
 		/* fallback to copy_from_user outside mmap_lock */
 		if (unlikely(ret)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			*pagep = page;
 			/* don't free the page */
 			goto out;
@@ -117,7 +117,7 @@ static int mcopy_atomic_pte(struct mm_struct *dst_mm,
 		if (unlikely(offset >= max_off))
 			goto out_release_uncharge_unlock;
 	}
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (!pte_none(*dst_pte))
 		goto out_release_uncharge_unlock;
 
@@ -164,7 +164,7 @@ static int mfill_zeropage_pte(struct mm_struct *dst_mm,
 		if (unlikely(offset >= max_off))
 			goto out_unlock;
 	}
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (!pte_none(*dst_pte))
 		goto out_unlock;
 	set_pte_at(dst_mm, dst_addr, dst_pte, _dst_pte);
@@ -229,7 +229,7 @@ static __always_inline ssize_t __mcopy_atomic_hugetlb(struct mm_struct *dst_mm,
 	 */
 	if (zeropage) {
 		mmap_read_unlock(dst_mm);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	src_addr = src_start;
@@ -241,7 +241,7 @@ static __always_inline ssize_t __mcopy_atomic_hugetlb(struct mm_struct *dst_mm,
 	/*
 	 * Validate alignment based on huge page size
 	 */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (dst_start & (vma_hpagesize - 1) || len & (vma_hpagesize - 1))
 		goto out_unlock;
 
@@ -251,12 +251,12 @@ retry:
 	 * retry, dst_vma will be set to NULL and we must lookup again.
 	 */
 	if (!dst_vma) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		dst_vma = find_dst_vma(dst_mm, dst_start, len);
 		if (!dst_vma || !is_vm_hugetlb_page(dst_vma))
 			goto out_unlock;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (vma_hpagesize != vma_kernel_pagesize(dst_vma))
 			goto out_unlock;
 
@@ -297,7 +297,7 @@ retry:
 			goto out_unlock;
 		}
 
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		dst_pteval = huge_ptep_get(dst_pte);
 		if (!huge_pte_none(dst_pteval)) {
 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
@@ -339,7 +339,7 @@ retry:
 			copied += vma_hpagesize;
 
 			if (fatal_signal_pending(current))
-				err = -EINTR;
+				err = -ERR(EINTR);
 		}
 		if (err)
 			break;
@@ -492,7 +492,7 @@ retry:
 	 * operation (e.g. mremap) running in parallel, bail out and
 	 * request the user to retry later
 	 */
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (mmap_changing && READ_ONCE(*mmap_changing))
 		goto out_unlock;
 
@@ -500,12 +500,12 @@ retry:
 	 * Make sure the vma is not shared, that the dst range is
 	 * both valid and fully within a single existing vma.
 	 */
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	dst_vma = find_dst_vma(dst_mm, dst_start, len);
 	if (!dst_vma)
 		goto out_unlock;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	/*
 	 * shmem_zero_setup is invoked in mmap for MAP_ANONYMOUS|MAP_SHARED but
 	 * it will overwrite vm_ops, so vma_is_anonymous must return false.
@@ -559,7 +559,7 @@ retry:
 		 * override it and just be strict.
 		 */
 		if (unlikely(pmd_trans_huge(dst_pmdval))) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			break;
 		}
 		if (unlikely(pmd_none(dst_pmdval)) &&
@@ -605,7 +605,7 @@ retry:
 			copied += PAGE_SIZE;
 
 			if (fatal_signal_pending(current))
-				err = -EINTR;
+				err = -ERR(EINTR);
 		}
 		if (err)
 			break;
@@ -659,11 +659,11 @@ int mwriteprotect_range(struct mm_struct *dst_mm, unsigned long start,
 	 * operation (e.g. mremap) running in parallel, bail out and
 	 * request the user to retry later
 	 */
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (mmap_changing && READ_ONCE(*mmap_changing))
 		goto out_unlock;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	dst_vma = find_dst_vma(dst_mm, start, len);
 	/*
 	 * Make sure the vma is not shared, that the dst range is

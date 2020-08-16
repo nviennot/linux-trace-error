@@ -82,7 +82,7 @@ int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)
 	int ret;
 
 	if (WARN_ON_ONCE(start < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = idr_alloc_u32(idr, ptr, &id, end > 0 ? end - 1 : INT_MAX, gfp);
 	if (ret)
@@ -297,7 +297,7 @@ void *idr_replace(struct idr *idr, void *ptr, unsigned long id)
 
 	entry = __radix_tree_lookup(&idr->idr_rt, id, &node, &slot);
 	if (!slot || radix_tree_tag_get(&idr->idr_rt, id, IDR_FREE))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	__radix_tree_replace(&idr->idr_rt, node, slot, ptr);
 
@@ -385,7 +385,7 @@ int ida_alloc_range(struct ida *ida, unsigned int min, unsigned int max,
 	struct ida_bitmap *bitmap, *alloc = NULL;
 
 	if ((int)min < 0)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if ((int)max < 0)
 		max = INT_MAX;
@@ -470,7 +470,7 @@ alloc:
 	goto retry;
 nospc:
 	xas_unlock_irqrestore(&xas, flags);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 EXPORT_SYMBOL(ida_alloc_range);
 

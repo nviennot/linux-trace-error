@@ -31,7 +31,7 @@ static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
 	struct btrfs_key key;
 
 	if (WARN_ON_ONCE(!uuid_root)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -46,7 +46,7 @@ static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
 	if (ret < 0) {
 		goto out;
 	} else if (ret > 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -54,7 +54,7 @@ static int btrfs_uuid_tree_lookup(struct btrfs_root *uuid_root, u8 *uuid,
 	slot = path->slots[0];
 	item_size = btrfs_item_size_nr(eb, slot);
 	offset = btrfs_item_ptr_offset(eb, slot);
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 
 	if (!IS_ALIGNED(item_size, sizeof(u64))) {
 		btrfs_warn(uuid_root->fs_info,
@@ -97,7 +97,7 @@ int btrfs_uuid_tree_add(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 		return ret;
 
 	if (WARN_ON_ONCE(!uuid_root)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -161,7 +161,7 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 	unsigned long move_len;
 
 	if (WARN_ON_ONCE(!uuid_root)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -180,7 +180,7 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 		goto out;
 	}
 	if (ret > 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -191,7 +191,7 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 	if (!IS_ALIGNED(item_size, sizeof(u64))) {
 		btrfs_warn(fs_info, "uuid item with illegal size %lu!",
 			   (unsigned long)item_size);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	while (item_size) {
@@ -205,7 +205,7 @@ int btrfs_uuid_tree_remove(struct btrfs_trans_handle *trans, u8 *uuid, u8 type,
 	}
 
 	if (!item_size) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -319,7 +319,7 @@ again_search_slot:
 
 	while (1) {
 		if (btrfs_fs_closing(fs_info)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto out;
 		}
 		cond_resched();

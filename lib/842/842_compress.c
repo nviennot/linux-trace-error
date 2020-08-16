@@ -156,7 +156,7 @@ static int __split_add_bits(struct sw842_param *p, u64 d, u8 n, u8 s)
 	int ret;
 
 	if (n <= s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = add_bits(p, d >> s, n - s);
 	if (ret)
@@ -173,7 +173,7 @@ static int add_bits(struct sw842_param *p, u64 d, u8 n)
 	pr_debug("add %u bits %lx\n", (unsigned char)n, (unsigned long)d);
 
 	if (n > 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* split this up if writing to > 8 bytes (i.e. n == 64 && p->bit > 0),
 	 * or if we're at the end of the output buffer and would write past end
@@ -186,7 +186,7 @@ static int add_bits(struct sw842_param *p, u64 d, u8 n)
 		return __split_add_bits(p, d, n, 8);
 
 	if (DIV_ROUND_UP(bits, 8) > p->olen)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	o = *out & bmask[b];
 	d <<= s;
@@ -226,7 +226,7 @@ static int add_template(struct sw842_param *p, u8 c)
 	bool inv = false;
 
 	if (c >= OPS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("template %x\n", t[4]);
 
@@ -284,7 +284,7 @@ static int add_template(struct sw842_param *p, u8 c)
 		if (inv) {
 			pr_err("Invalid templ %x op %d : %x %x %x %x\n",
 			       c, i, t[0], t[1], t[2], t[3]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		b += t[i] & OP_AMOUNT;
@@ -293,7 +293,7 @@ static int add_template(struct sw842_param *p, u8 c)
 	if (b != 8) {
 		pr_err("Invalid template %x len %x : %x %x %x %x\n",
 		       c, b, t[0], t[1], t[2], t[3]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sw842_template_counts)
@@ -308,7 +308,7 @@ static int add_repeat_template(struct sw842_param *p, u8 r)
 
 	/* repeat param is 0-based */
 	if (!r || --r > REPEAT_BITS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = add_bits(p, OP_REPEAT, OP_BITS);
 	if (ret)
@@ -329,7 +329,7 @@ static int add_short_data_template(struct sw842_param *p, u8 b)
 	int ret, i;
 
 	if (!b || b > SHORT_DATA_BITS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = add_bits(p, OP_SHORT_DATA, OP_BITS);
 	if (ret)
@@ -503,7 +503,7 @@ int sw842_compress(const u8 *in, unsigned int ilen,
 	/* if using strict mode, we can only compress a multiple of 8 */
 	if (sw842_strict && (ilen % 8)) {
 		pr_err("Using strict mode, can't compress len %d\n", ilen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* let's compress at least 8 bytes, mkay? */
@@ -594,14 +594,14 @@ skip_comp:
 	pad = (8 - ((total - p->olen) % 8)) % 8;
 	if (pad) {
 		if (pad > p->olen) /* we were so close! */
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		memset(p->out, 0, pad);
 		p->out += pad;
 		p->olen -= pad;
 	}
 
 	if (unlikely((total - p->olen) > UINT_MAX))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	*olen = total - p->olen;
 

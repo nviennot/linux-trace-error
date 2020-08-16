@@ -138,7 +138,7 @@ static int ipip_err(struct sk_buff *skb, u32 info)
 	t = ip_tunnel_lookup(itn, skb->dev->ifindex, TUNNEL_NO_KEY,
 			     iph->daddr, iph->saddr, 0);
 	if (!t) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -180,7 +180,7 @@ static int ipip_err(struct sk_buff *skb, u32 info)
 	}
 
 	if (t->parms.iph.daddr == 0) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -333,7 +333,7 @@ ipip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 		if (p->iph.version != 4 ||
 		    !ipip_tunnel_ioctl_verify_protocol(p->iph.protocol) ||
 		    p->iph.ihl != 5 || (p->iph.frag_off & htons(~IP_DF)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	p->i_key = p->o_key = 0;
@@ -396,7 +396,7 @@ static int ipip_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
 
 	proto = nla_get_u8(data[IFLA_IPTUN_PROTO]);
 	if (proto != IPPROTO_IPIP && proto != IPPROTO_MPLS && proto != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -519,11 +519,11 @@ static int ipip_changelink(struct net_device *dev, struct nlattr *tb[],
 
 	ipip_netlink_parms(data, &p, &collect_md, &fwmark);
 	if (collect_md)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (((dev->flags & IFF_POINTOPOINT) && !p.iph.daddr) ||
 	    (!(dev->flags & IFF_POINTOPOINT) && p.iph.daddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ip_tunnel_changelink(dev, tb, &p, fwmark);
 }
@@ -592,7 +592,7 @@ static int ipip_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy ipip_policy[IFLA_IPTUN_MAX + 1] = {

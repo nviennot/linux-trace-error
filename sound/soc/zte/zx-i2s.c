@@ -194,7 +194,7 @@ static int zx_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Unknown i2s timing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -210,7 +210,7 @@ static int zx_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Unknown master/slave format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel_relaxed(val, i2s->reg_base + ZX_I2S_TIMING_CTRL);
@@ -248,7 +248,7 @@ static int zx_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(socdai->dev, "Unknown data format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	val |= ZX_I2S_TIMING_TS_WIDTH(ts_width) | ZX_I2S_TIMING_DATA_SIZE(len);
 
@@ -267,7 +267,7 @@ static int zx_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(socdai->dev, "Not support channel num %d\n", ch_num);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	val |= ZX_I2S_TIMING_LANE(lane);
 	val |= ZX_I2S_TIMING_TSCFG(chn_cfg);
@@ -318,7 +318,7 @@ static int zx_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

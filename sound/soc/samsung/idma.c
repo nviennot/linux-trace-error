@@ -210,7 +210,7 @@ static int idma_trigger(struct snd_soc_component *component,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

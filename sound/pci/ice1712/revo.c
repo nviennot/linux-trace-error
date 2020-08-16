@@ -511,7 +511,7 @@ static int revo_init(struct snd_ice1712 *ice)
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* second stage of initialization, analog parts and others */

@@ -535,9 +535,9 @@ static int newary(struct ipc_namespace *ns, struct ipc_params *params)
 	int i;
 
 	if (!nsems)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ns->used_sems + nsems > ns->sc_semmns)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	sma = sem_alloc(nsems);
 	if (!sma)
@@ -592,7 +592,7 @@ static inline int sem_more_checks(struct kern_ipc_perm *ipcp,
 
 	sma = container_of(ipcp, struct sem_array, sem_perm);
 	if (params->u.nsems > sma->sem_nsems)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -610,7 +610,7 @@ long ksys_semget(key_t key, int nsems, int semflg)
 	ns = current->nsproxy->ipc_ns;
 
 	if (nsems < 0 || nsems > ns->sc_semmsl)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sem_params.key = key;
 	sem_params.flg = semflg;
@@ -690,14 +690,14 @@ static int perform_atomic_semop_slow(struct sem_array *sma, struct sem_queue *q)
 	return 0;
 
 out_of_range:
-	result = -ERANGE;
+	result = -ERR(ERANGE);
 	goto undo;
 
 would_block:
 	q->blocking = sop;
 
 	if (sop->sem_flg & IPC_NOWAIT)
-		result = -EAGAIN;
+		result = -ERR(EAGAIN);
 	else
 		result = 1;
 
@@ -750,14 +750,14 @@ static int perform_atomic_semop(struct sem_array *sma, struct sem_queue *q)
 			goto would_block;
 
 		if (result > SEMVMX)
-			return -ERANGE;
+			return -ERR(ERANGE);
 
 		if (sop->sem_flg & SEM_UNDO) {
 			int undo = un->semadj[sop->sem_num] - sem_op;
 
 			/* Exceeding the undo range is an error. */
 			if (undo < (-SEMAEM - 1) || undo > SEMAEM)
-				return -ERANGE;
+				return -ERR(ERANGE);
 		}
 	}
 
@@ -779,7 +779,7 @@ static int perform_atomic_semop(struct sem_array *sma, struct sem_queue *q)
 
 would_block:
 	q->blocking = sop;
-	return sop->sem_flg & IPC_NOWAIT ? -EAGAIN : 1;
+	return sop->sem_flg & IPC_NOWAIT ? -ERR(EAGAIN) : 1;
 }
 
 static inline void wake_up_sem_queue_prepare(struct sem_queue *q, int error,
@@ -1209,7 +1209,7 @@ static unsigned long copy_semid_to_user(void __user *buf, struct semid64_ds *in,
 		return copy_to_user(buf, &out, sizeof(out));
 	    }
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1256,7 +1256,7 @@ static int semctl_stat(struct ipc_namespace *ns, int semid,
 	if (cmd == SEM_STAT_ANY)
 		audit_ipc_obj(&sma->sem_perm);
 	else {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if (ipcperms(ns, &sma->sem_perm, S_IRUGO))
 			goto out_unlock;
 	}
@@ -1269,7 +1269,7 @@ static int semctl_stat(struct ipc_namespace *ns, int semid,
 
 	if (!ipc_valid_object(&sma->sem_perm)) {
 		ipc_unlock_object(&sma->sem_perm);
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock;
 	}
 
@@ -1347,7 +1347,7 @@ static int semctl_setval(struct ipc_namespace *ns, int semid, int semnum,
 	DEFINE_WAKE_Q(wake_q);
 
 	if (val > SEMVMX || val < 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	rcu_read_lock();
 	sma = sem_obtain_object_check(ns, semid);
@@ -1358,19 +1358,19 @@ static int semctl_setval(struct ipc_namespace *ns, int semid, int semnum,
 
 	if (semnum < 0 || semnum >= sma->sem_nsems) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
 	if (ipcperms(ns, &sma->sem_perm, S_IWUGO)) {
 		rcu_read_unlock();
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	err = security_sem_semctl(&sma->sem_perm, SETVAL);
 	if (err) {
 		rcu_read_unlock();
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	sem_lock(sma, NULL, -1);
@@ -1378,7 +1378,7 @@ static int semctl_setval(struct ipc_namespace *ns, int semid, int semnum,
 	if (!ipc_valid_object(&sma->sem_perm)) {
 		sem_unlock(sma, -1);
 		rcu_read_unlock();
-		return -EIDRM;
+		return -ERR(EIDRM);
 	}
 
 	semnum = array_index_nospec(semnum, sma->sem_nsems);
@@ -1418,7 +1418,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 
 	nsems = sma->sem_nsems;
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (ipcperms(ns, &sma->sem_perm, cmd == SETALL ? S_IWUGO : S_IRUGO))
 		goto out_rcu_wakeup;
 
@@ -1426,7 +1426,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 	if (err)
 		goto out_rcu_wakeup;
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	switch (cmd) {
 	case GETALL:
 	{
@@ -1435,12 +1435,12 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 
 		sem_lock(sma, NULL, -1);
 		if (!ipc_valid_object(&sma->sem_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_unlock;
 		}
 		if (nsems > SEMMSL_FAST) {
 			if (!ipc_rcu_getref(&sma->sem_perm)) {
-				err = -EIDRM;
+				err = -ERR(EIDRM);
 				goto out_unlock;
 			}
 			sem_unlock(sma, -1);
@@ -1455,7 +1455,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 			rcu_read_lock();
 			sem_lock_and_putref(sma);
 			if (!ipc_valid_object(&sma->sem_perm)) {
-				err = -EIDRM;
+				err = -ERR(EIDRM);
 				goto out_unlock;
 			}
 		}
@@ -1474,7 +1474,7 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		struct sem_undo *un;
 
 		if (!ipc_rcu_getref(&sma->sem_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_rcu_wakeup;
 		}
 		rcu_read_unlock();
@@ -1497,14 +1497,14 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 		for (i = 0; i < nsems; i++) {
 			if (sem_io[i] > SEMVMX) {
 				ipc_rcu_putref(&sma->sem_perm, sem_rcu_free);
-				err = -ERANGE;
+				err = -ERR(ERANGE);
 				goto out_free;
 			}
 		}
 		rcu_read_lock();
 		sem_lock_and_putref(sma);
 		if (!ipc_valid_object(&sma->sem_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_unlock;
 		}
 
@@ -1526,13 +1526,13 @@ static int semctl_main(struct ipc_namespace *ns, int semid, int semnum,
 	}
 	/* GETVAL, GETPID, GETNCTN, GETZCNT: fall-through */
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (semnum < 0 || semnum >= nsems)
 		goto out_rcu_wakeup;
 
 	sem_lock(sma, NULL, -1);
 	if (!ipc_valid_object(&sma->sem_perm)) {
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock;
 	}
 
@@ -1587,7 +1587,7 @@ copy_semid_from_user(struct semid64_ds *out, void __user *buf, int version)
 		return 0;
 	    }
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1633,7 +1633,7 @@ static int semctl_down(struct ipc_namespace *ns, int semid,
 		sma->sem_ctime = ktime_get_real_seconds();
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock1;
 	}
 
@@ -1654,7 +1654,7 @@ static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int v
 	int err;
 
 	if (semid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ns = current->nsproxy->ipc_ns;
 
@@ -1696,7 +1696,7 @@ static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int v
 	case IPC_RMID:
 		return semctl_down(ns, semid, cmd, &semid64);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1779,7 +1779,7 @@ static long compat_ksys_semctl(int semid, int semnum, int cmd, int arg, int vers
 	ns = current->nsproxy->ipc_ns;
 
 	if (semid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd & (~IPC_64)) {
 	case IPC_INFO:
@@ -1810,7 +1810,7 @@ static long compat_ksys_semctl(int semid, int semnum, int cmd, int arg, int vers
 	case IPC_RMID:
 		return semctl_down(ns, semid, cmd, &semid64);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1930,7 +1930,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 	nsems = sma->sem_nsems;
 	if (!ipc_rcu_getref(&sma->sem_perm)) {
 		rcu_read_unlock();
-		un = ERR_PTR(-EIDRM);
+		un = ERR_PTR(-ERR(EIDRM));
 		goto out;
 	}
 	rcu_read_unlock();
@@ -1949,7 +1949,7 @@ static struct sem_undo *find_alloc_undo(struct ipc_namespace *ns, int semid)
 		sem_unlock(sma, -1);
 		rcu_read_unlock();
 		kfree(new);
-		un = ERR_PTR(-EIDRM);
+		un = ERR_PTR(-ERR(EIDRM));
 		goto out;
 	}
 	spin_lock(&ulp->lock);
@@ -1982,7 +1982,7 @@ out:
 static long do_semtimedop(int semid, struct sembuf __user *tsops,
 		unsigned nsops, const struct timespec64 *timeout)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	struct sem_array *sma;
 	struct sembuf fast_sops[SEMOPM_FAST];
 	struct sembuf *sops = fast_sops, *sop;
@@ -1996,9 +1996,9 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
 	ns = current->nsproxy->ipc_ns;
 
 	if (nsops < 1 || semid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (nsops > ns->sc_semopm)
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (nsops > SEMOPM_FAST) {
 		sops = kvmalloc_array(nsops, sizeof(*sops), GFP_KERNEL);
 		if (sops == NULL)
@@ -2013,7 +2013,7 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
 	if (timeout) {
 		if (timeout->tv_sec < 0 || timeout->tv_nsec < 0 ||
 			timeout->tv_nsec >= 1000000000L) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_free;
 		}
 		jiffies_left = timespec64_to_jiffies(timeout);
@@ -2061,13 +2061,13 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
 		goto out_free;
 	}
 
-	error = -EFBIG;
+	error = -ERR(EFBIG);
 	if (max >= sma->sem_nsems) {
 		rcu_read_unlock();
 		goto out_free;
 	}
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	if (ipcperms(ns, &sma->sem_perm, alter ? S_IWUGO : S_IRUGO)) {
 		rcu_read_unlock();
 		goto out_free;
@@ -2079,7 +2079,7 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
 		goto out_free;
 	}
 
-	error = -EIDRM;
+	error = -ERR(EIDRM);
 	locknum = sem_lock(sma, sops, nsops);
 	/*
 	 * We eventually might perform the following check in a lockless
@@ -2218,7 +2218,7 @@ static long do_semtimedop(int semid, struct sembuf __user *tsops,
 		 * If an interrupt occurred we have to clean up the queue.
 		 */
 		if (timeout && jiffies_left == 0)
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 	} while (error == -EINTR && !signal_pending(current)); /* spurious */
 
 	unlink_queue(sma, &queue);

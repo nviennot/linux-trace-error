@@ -124,7 +124,7 @@ static int sst_validate_fw_image(struct intel_sst_drv *ctx, unsigned long size,
 		(size != header->file_size + sizeof(*header))) {
 		/* Invalid FW signature */
 		dev_err(ctx->dev, "InvalidFW sign/filesize mismatch\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*num_modules = header->modules;
 	*module = (void *)sst_fw_in_mem + sizeof(*header);
@@ -187,7 +187,7 @@ static int sst_parse_module_memcpy(struct intel_sst_drv *sst_drv_ctx,
 	for (count = 0; count < module->blocks; count++) {
 		if (block->size <= 0) {
 			dev_err(sst_drv_ctx->dev, "block size invalid\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		switch (block->type) {
 		case SST_IRAM:
@@ -205,7 +205,7 @@ static int sst_parse_module_memcpy(struct intel_sst_drv *sst_drv_ctx,
 		default:
 			dev_err(sst_drv_ctx->dev, "wrong ram type0x%x in block0x%x\n",
 					block->type, count);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret_val = sst_fill_memcpy_list(memcpy_list,
@@ -352,7 +352,7 @@ static int sst_request_fw(struct intel_sst_drv *sst)
 	}
 	if (fw == NULL) {
 		dev_err(sst->dev, "fw is returning as null\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mutex_lock(&sst->sst_lock);
 	retval = sst_cache_and_parse_fw(sst, fw);
@@ -398,7 +398,7 @@ int sst_load_fw(struct intel_sst_drv *sst_drv_ctx)
 
 	if (sst_drv_ctx->sst_state !=  SST_RESET ||
 			sst_drv_ctx->sst_state == SST_SHUTDOWN)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (!sst_drv_ctx->fw_in_mem) {
 		dev_dbg(sst_drv_ctx->dev, "sst: FW not in memory retry to download\n");
@@ -435,7 +435,7 @@ int sst_load_fw(struct intel_sst_drv *sst_drv_ctx)
 	if (ret_val) {
 		dev_err(sst_drv_ctx->dev, "fw download failed %d\n" , ret_val);
 		/* FW download failed due to timeout */
-		ret_val = -EBUSY;
+		ret_val = -ERR(EBUSY);
 
 	}
 

@@ -54,13 +54,13 @@ static int cifs_attrib_set(unsigned int xid, struct cifs_tcon *pTcon,
 			   struct inode *inode, char *full_path,
 			   const void *value, size_t size)
 {
-	ssize_t rc = -EOPNOTSUPP;
+	ssize_t rc = -ERR(EOPNOTSUPP);
 	__u32 *pattrib = (__u32 *)value;
 	__u32 attrib;
 	FILE_BASIC_INFO info_buf;
 
 	if ((value == NULL) || (size != sizeof(__u32)))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	memset(&info_buf, 0, sizeof(info_buf));
 	attrib = *pattrib;
@@ -78,13 +78,13 @@ static int cifs_creation_time_set(unsigned int xid, struct cifs_tcon *pTcon,
 				  struct inode *inode, char *full_path,
 				  const void *value, size_t size)
 {
-	ssize_t rc = -EOPNOTSUPP;
+	ssize_t rc = -ERR(EOPNOTSUPP);
 	__u64 *pcreation_time = (__u64 *)value;
 	__u64 creation_time;
 	FILE_BASIC_INFO info_buf;
 
 	if ((value == NULL) || (size != sizeof(__u64)))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	memset(&info_buf, 0, sizeof(info_buf));
 	creation_time = *pcreation_time;
@@ -103,7 +103,7 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 			  const char *name, const void *value,
 			  size_t size, int flags)
 {
-	int rc = -EOPNOTSUPP;
+	int rc = -ERR(EOPNOTSUPP);
 	unsigned int xid;
 	struct super_block *sb = dentry->d_sb;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
@@ -131,7 +131,7 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 		returns as xattrs */
 	if (size > MAX_EA_VALUE_SIZE) {
 		cifs_dbg(FYI, "size of EA value too large\n");
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -192,7 +192,7 @@ static int cifs_xattr_set(const struct xattr_handler *handler,
 							CIFS_ACL_DACL);
 				}
 			} else {
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 			}
 			if (rc == 0) /* force revalidate of the inode */
 				CIFS_I(inode)->time = 0;
@@ -248,7 +248,7 @@ static int cifs_attrib_get(struct dentry *dentry,
 	if ((value == NULL) || (size == 0))
 		return sizeof(__u32);
 	else if (size < sizeof(__u32))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* return dos attributes as pseudo xattr */
 	pattribute = (__u32 *)value;
@@ -270,7 +270,7 @@ static int cifs_creation_time_get(struct dentry *dentry, struct inode *inode,
 	if ((value == NULL) || (size == 0))
 		return sizeof(__u64);
 	else if (size < sizeof(__u64))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* return dos attributes as pseudo xattr */
 	pcreatetime = (__u64 *)value;
@@ -283,7 +283,7 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 			  struct dentry *dentry, struct inode *inode,
 			  const char *name, void *value, size_t size)
 {
-	ssize_t rc = -EOPNOTSUPP;
+	ssize_t rc = -ERR(EOPNOTSUPP);
 	unsigned int xid;
 	struct super_block *sb = dentry->d_sb;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
@@ -344,7 +344,7 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 		} else {
 			if (value) {
 				if (acllen > size)
-					acllen = -ERANGE;
+					acllen = -ERR(ERANGE);
 				else
 					memcpy(value, pacl, acllen);
 			}
@@ -381,7 +381,7 @@ static int cifs_xattr_get(const struct xattr_handler *handler,
 		returns as xattrs */
 
 	if (rc == -EINVAL)
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 
 out:
 	kfree(full_path);
@@ -392,7 +392,7 @@ out:
 
 ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
 {
-	ssize_t rc = -EOPNOTSUPP;
+	ssize_t rc = -ERR(EOPNOTSUPP);
 	unsigned int xid;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(direntry->d_sb);
 	struct tcon_link *tlink;
@@ -400,7 +400,7 @@ ssize_t cifs_listxattr(struct dentry *direntry, char *data, size_t buf_size)
 	char *full_path;
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_XATTR)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	tlink = cifs_sb_tlink(cifs_sb);
 	if (IS_ERR(tlink))

@@ -172,7 +172,7 @@ static int hda_link_config_ipc(struct sof_intel_hda_stream *hda_stream,
 				dev_err(hda_stream->sdev->dev,
 					"error: no config for DAI %s\n",
 					sof_dai->name);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			/* update config with stream tag */
@@ -193,7 +193,7 @@ static int hda_link_config_ipc(struct sof_intel_hda_stream *hda_stream,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hda_link_hw_params(struct snd_pcm_substream *substream,
@@ -216,7 +216,7 @@ static int hda_link_hw_params(struct snd_pcm_substream *substream,
 	if (!link_dev) {
 		link_dev = hda_link_stream_assign(bus, substream);
 		if (!link_dev)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		snd_soc_dai_set_dma_data(dai, substream, (void *)link_dev);
 	}
@@ -233,7 +233,7 @@ static int hda_link_hw_params(struct snd_pcm_substream *substream,
 
 	link = snd_hdac_ext_bus_get_link(bus, codec_dai->component->name);
 	if (!link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set the stream tag in the codec dai dma params */
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
@@ -295,7 +295,7 @@ static int hda_link_pcm_trigger(struct snd_pcm_substream *substream,
 
 	link = snd_hdac_ext_bus_get_link(bus, asoc_rtd_to_codec(rtd, 0)->component->name);
 	if (!link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hda_stream = hstream_to_sof_hda_stream(link_dev);
 
@@ -338,7 +338,7 @@ static int hda_link_pcm_trigger(struct snd_pcm_substream *substream,
 		snd_hdac_ext_link_stream_clear(link_dev);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -363,7 +363,7 @@ static int hda_link_hw_free(struct snd_pcm_substream *substream,
 	if (!link_dev) {
 		dev_dbg(dai->dev,
 			"%s: link_dev is not assigned\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hda_stream = hstream_to_sof_hda_stream(link_dev);
@@ -376,7 +376,7 @@ static int hda_link_hw_free(struct snd_pcm_substream *substream,
 
 	link = snd_hdac_ext_bus_get_link(bus, asoc_rtd_to_codec(rtd, 0)->component->name);
 	if (!link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		stream_tag = hdac_stream(link_dev)->stream_tag;

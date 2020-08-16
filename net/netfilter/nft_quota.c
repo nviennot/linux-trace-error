@@ -70,24 +70,24 @@ static int nft_quota_do_init(const struct nlattr * const tb[],
 	u64 quota, consumed = 0;
 
 	if (!tb[NFTA_QUOTA_BYTES])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	quota = be64_to_cpu(nla_get_be64(tb[NFTA_QUOTA_BYTES]));
 	if (quota > S64_MAX)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (tb[NFTA_QUOTA_CONSUMED]) {
 		consumed = be64_to_cpu(nla_get_be64(tb[NFTA_QUOTA_CONSUMED]));
 		if (consumed > quota)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (tb[NFTA_QUOTA_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFTA_QUOTA_FLAGS]));
 		if (flags & ~NFT_QUOTA_F_INV)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (flags & NFT_QUOTA_F_DEPLETED)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	}
 
 	atomic64_set(&priv->quota, quota);

@@ -110,7 +110,7 @@ static int try_to_freeze_tasks(bool user_only)
 			elapsed_msecs % 1000);
 	}
 
-	return todo ? -EBUSY : 0;
+	return todo ? -ERR(EBUSY) : 0;
 }
 
 /**
@@ -152,7 +152,7 @@ int freeze_processes(void)
 	 * ever reach a point they go away we have to wait with a timeout.
 	 */
 	if (!error && !oom_killer_disable(msecs_to_jiffies(freeze_timeout_msecs)))
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 
 	if (error)
 		thaw_processes();

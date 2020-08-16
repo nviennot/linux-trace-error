@@ -64,7 +64,7 @@ do {									\
 				  "XT_GETPAGE: xtree page corrupt\n");	\
 			BT_PUTPAGE(MP);					\
 			MP = NULL;					\
-			RC = -EIO;					\
+			RC = -ERR(EIO);					\
 		}							\
 	}								\
 } while (0)
@@ -489,7 +489,7 @@ static int xtSearch(struct inode *ip, s64 xoff,	s64 *nextp,
 		if (BT_STACK_FULL(btstack)) {
 			jfs_error(ip->i_sb, "stack overrun!\n");
 			XT_PUTPAGE(mp);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		BT_PUSH(btstack, bn, index);
 
@@ -558,7 +558,7 @@ int xtInsert(tid_t tid,		/* transaction id */
 	/* This test must follow XT_GETSEARCH since mp must be valid if
 	 * we branch to out: */
 	if ((cmp == 0) || (next && (xlen > next - xoff))) {
-		rc = -EEXIST;
+		rc = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -784,7 +784,7 @@ xtSplitUp(tid_t tid,
 	XT_PUTPAGE(smp);
 
 	if (rc)
-		return -EIO;
+		return -ERR(EIO);
 	/*
 	 * propagate up the router entry for the leaf page just split
 	 *
@@ -984,7 +984,7 @@ xtSplitPage(tid_t tid, struct inode *ip,
 	 */
 	rmp = get_metapage(ip, rbn, PSIZE, 1);
 	if (rmp == NULL) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto clean_up;
 	}
 
@@ -1237,7 +1237,7 @@ xtSplitRoot(tid_t tid,
 	rbn = addressPXD(pxd);
 	rmp = get_metapage(ip, rbn, PSIZE, 1);
 	if (rmp == NULL)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Allocate blocks to quota. */
 	rc = dquot_alloc_block(ip, lengthPXD(pxd));
@@ -1374,7 +1374,7 @@ int xtExtend(tid_t tid,		/* transaction id */
 	if (cmp != 0) {
 		XT_PUTPAGE(mp);
 		jfs_error(ip->i_sb, "xtSearch did not find extent\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* extension must be contiguous */
@@ -1382,7 +1382,7 @@ int xtExtend(tid_t tid,		/* transaction id */
 	if ((offsetXAD(xad) + lengthXAD(xad)) != xoff) {
 		XT_PUTPAGE(mp);
 		jfs_error(ip->i_sb, "extension is not contiguous\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -1541,7 +1541,7 @@ printf("xtTailgate: nxoff:0x%lx nxlen:0x%x nxaddr:0x%lx\n",
 	if (cmp != 0) {
 		XT_PUTPAGE(mp);
 		jfs_error(ip->i_sb, "couldn't find extent\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* entry found must be last entry */
@@ -1549,7 +1549,7 @@ printf("xtTailgate: nxoff:0x%lx nxlen:0x%x nxaddr:0x%lx\n",
 	if (index != nextindex - 1) {
 		XT_PUTPAGE(mp);
 		jfs_error(ip->i_sb, "the entry found is not the last entry\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	BT_MARK_DIRTY(mp, ip);
@@ -2195,7 +2195,7 @@ int xtAppend(tid_t tid,		/* transaction id */
 	XT_GETSEARCH(ip, btstack.top, bn, mp, p, index);
 
 	if (cmp == 0) {
-		rc = -EEXIST;
+		rc = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -2345,7 +2345,7 @@ int xtDelete(tid_t tid, struct inode *ip, s64 xoff, s32 xlen, int flag)
 	if (cmp) {
 		/* unpin the leaf page */
 		XT_PUTPAGE(mp);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -2576,7 +2576,7 @@ xtRelocate(tid_t tid, struct inode * ip, xad_t * oxad,	/* old XAD */
 	/* validate extent offset */
 	offset = xoff << JFS_SBI(ip->i_sb)->l2bsize;
 	if (offset >= ip->i_size)
-		return -ESTALE;	/* stale extent */
+		return -ERR(ESTALE);	/* stale extent */
 
 	jfs_info("xtRelocate: xtype:%d xoff:0x%lx xlen:0x%x xaddr:0x%lx:0x%lx",
 		 xtype, (ulong) xoff, xlen, (ulong) oxaddr, (ulong) nxaddr);
@@ -2596,14 +2596,14 @@ xtRelocate(tid_t tid, struct inode * ip, xad_t * oxad,	/* old XAD */
 
 		if (cmp) {
 			XT_PUTPAGE(pmp);
-			return -ESTALE;
+			return -ERR(ESTALE);
 		}
 
 		/* validate for exact match with a single entry */
 		xad = &pp->xad[index];
 		if (addressXAD(xad) != oxaddr || lengthXAD(xad) != xlen) {
 			XT_PUTPAGE(pmp);
-			return -ESTALE;
+			return -ERR(ESTALE);
 		}
 	} else {		/* (xtype == XTPAGE) */
 
@@ -2617,7 +2617,7 @@ xtRelocate(tid_t tid, struct inode * ip, xad_t * oxad,	/* old XAD */
 
 		if (cmp) {
 			XT_PUTPAGE(pmp);
-			return -ESTALE;
+			return -ERR(ESTALE);
 		}
 
 		/* xtSearchNode() validated for exact match with a single entry
@@ -2918,7 +2918,7 @@ static int xtSearchNode(struct inode *ip, xad_t * xad,	/* required XAD entry */
 			return rc;
 		if (p->header.flag & BT_LEAF) {
 			XT_PUTPAGE(mp);
-			return -ESTALE;
+			return -ERR(ESTALE);
 		}
 
 		lim = le16_to_cpu(p->header.nextindex) - XTENTRYSTART;
@@ -3638,7 +3638,7 @@ s64 xtTruncate(tid_t tid, struct inode *ip, s64 newsize, int flag)
 	if (BT_STACK_FULL(&btstack)) {
 		jfs_error(ip->i_sb, "stack overrun!\n");
 		XT_PUTPAGE(mp);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	BT_PUSH(&btstack, bn, index);
 
@@ -3738,7 +3738,7 @@ s64 xtTruncate_pmap(tid_t tid, struct inode *ip, s64 committed_size)
 		if (cmp != 0) {
 			XT_PUTPAGE(mp);
 			jfs_error(ip->i_sb, "did not find extent\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	} else {
 		/*
@@ -3838,7 +3838,7 @@ s64 xtTruncate_pmap(tid_t tid, struct inode *ip, s64 committed_size)
 	if (BT_STACK_FULL(&btstack)) {
 		jfs_error(ip->i_sb, "stack overrun!\n");
 		XT_PUTPAGE(mp);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	BT_PUSH(&btstack, bn, index);
 

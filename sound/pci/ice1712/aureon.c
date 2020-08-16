@@ -213,7 +213,7 @@ static int aureon_universe_inmux_put(struct snd_kcontrol *kcontrol,
 
 	nval = ucontrol->value.enumerated.item[0];
 	if (nval >= 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_ice1712_save_gpio_status(ice);
 	oval = spec->pca9554_out;
 	change = (oval != nval);
@@ -960,7 +960,7 @@ static int wm_pcm_vol_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_val
 
 	nvol = ucontrol->value.integer.value[0];
 	if (nvol > PCM_RES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_ice1712_save_gpio_status(ice);
 	nvol = (nvol ? (nvol + PCM_MIN) : 0) & 0xff;
 	ovol = wm_get(ice, WM_DAC_DIG_MASTER_ATTEN) & 0xff;

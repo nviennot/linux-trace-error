@@ -319,7 +319,7 @@ static int adav80x_put_deemph(struct snd_kcontrol *kcontrol,
 	unsigned int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	adav80x->deemph = deemph;
 
@@ -376,7 +376,7 @@ static int adav80x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -393,14 +393,14 @@ static int adav80x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		playback |= ADAV80X_PLAYBACK_MODE_RIGHT_J_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][0],
@@ -469,7 +469,7 @@ static int adav80x_set_capture_pcm_format(struct snd_soc_component *component,
 		val = ADAV80X_CAPTURE_WORD_LEN24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][0],
@@ -501,7 +501,7 @@ static int adav80x_set_playback_pcm_format(struct snd_soc_component *component,
 		val = ADAV80X_PLAYBACK_MODE_RIGHT_J_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adav80x->regmap, adav80x_port_ctrl_regs[dai->id][1],
@@ -518,7 +518,7 @@ static int adav80x_hw_params(struct snd_pcm_substream *substream,
 	unsigned int rate = params_rate(params);
 
 	if (rate * 256 != adav80x->sysclk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		adav80x_set_playback_pcm_format(component, dai, params);
@@ -549,7 +549,7 @@ static int adav80x_set_sysclk(struct snd_soc_component *component,
 		case ADAV80X_CLK_PLL2:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		adav80x->sysclk = freq;
@@ -582,7 +582,7 @@ static int adav80x_set_sysclk(struct snd_soc_component *component,
 		case ADAV80X_CLK_SYSCLK3:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		clk_id -= ADAV80X_CLK_SYSCLK1;
@@ -633,7 +633,7 @@ static int adav80x_set_pll(struct snd_soc_component *component, int pll_id,
 	case ADAV80X_PLL_SRC_MCLKI:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!freq_out)
@@ -649,7 +649,7 @@ static int adav80x_set_pll(struct snd_soc_component *component, int pll_id,
 		}
 		/* fall through */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (freq_out > 12288000) {
@@ -669,7 +669,7 @@ static int adav80x_set_pll(struct snd_soc_component *component, int pll_id,
 		pll_ctrl2 |= ADAV80X_PLL_CTRL2_FS_48(pll_id);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adav80x->regmap, ADAV80X_PLL_CTRL1,

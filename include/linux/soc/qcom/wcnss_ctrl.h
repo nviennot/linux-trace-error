@@ -17,7 +17,7 @@ static struct rpmsg_endpoint *qcom_wcnss_open_channel(void *wcnss,
 						      void *priv)
 {
 	WARN_ON(1);
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 #endif

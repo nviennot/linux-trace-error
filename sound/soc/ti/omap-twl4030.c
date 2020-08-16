@@ -53,7 +53,7 @@ static int omap_twl4030_hw_params(struct snd_pcm_substream *substream,
 			SND_SOC_DAIFMT_CBM_CFM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_runtime_set_dai_fmt(rtd, fmt);
@@ -254,13 +254,13 @@ static int omap_twl4030_probe(struct platform_device *pdev)
 
 		if (snd_soc_of_parse_card_name(card, "ti,model")) {
 			dev_err(&pdev->dev, "Card name is not provided\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		dai_node = of_parse_phandle(node, "ti,mcbsp", 0);
 		if (!dai_node) {
 			dev_err(&pdev->dev, "McBSP node is not provided\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		omap_twl4030_dai_links[0].cpus->dai_name  = NULL;
 		omap_twl4030_dai_links[0].cpus->of_node = dai_node;
@@ -297,7 +297,7 @@ static int omap_twl4030_probe(struct platform_device *pdev)
 			card->name = pdata->card_name;
 		} else {
 			dev_err(&pdev->dev, "Card name is not provided\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		if (!pdata->voice_connected)
@@ -306,7 +306,7 @@ static int omap_twl4030_probe(struct platform_device *pdev)
 		priv->jack_detect = pdata->jack_detect;
 	} else {
 		dev_err(&pdev->dev, "Missing pdata\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	snd_soc_card_set_drvdata(card, priv);

@@ -284,7 +284,7 @@ static int sof_pci_probe(struct pci_dev *pci,
 	ret = snd_intel_dsp_driver_probe(pci);
 	if (ret != SND_INTEL_DSP_DRIVER_ANY &&
 	    ret != SND_INTEL_DSP_DRIVER_SOF)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev_dbg(&pci->dev, "PCI DSP detected");
 
@@ -292,7 +292,7 @@ static int sof_pci_probe(struct pci_dev *pci,
 	ops = desc->ops;
 	if (!ops) {
 		dev_err(dev, "error: no matching PCI descriptor ops\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sof_pdata = devm_kzalloc(dev, sizeof(*sof_pdata), GFP_KERNEL);

@@ -50,7 +50,7 @@ static struct dentry *cifs_get_parent(struct dentry *dentry)
 {
 	/* BB need to add code here eventually to enable export via NFSD */
 	cifs_dbg(FYI, "get parent for %p\n", dentry);
-	return ERR_PTR(-EACCES);
+	return ERR_PTR(-ERR(EACCES));
 }
 
 const struct export_operations cifs_export_ops = {

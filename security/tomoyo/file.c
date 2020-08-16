@@ -393,7 +393,7 @@ static int tomoyo_update_path_acl(const u16 perm,
 	int error;
 
 	if (!tomoyo_parse_name_union(param, &e.name))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = tomoyo_update_domain(&e.head, sizeof(e), param,
 					     tomoyo_same_path_acl,
@@ -472,7 +472,7 @@ static int tomoyo_update_mkdev_acl(const u8 perm,
 	    !tomoyo_parse_number_union(param, &e.mode) ||
 	    !tomoyo_parse_number_union(param, &e.major) ||
 	    !tomoyo_parse_number_union(param, &e.minor))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = tomoyo_update_domain(&e.head, sizeof(e), param,
 					     tomoyo_same_mkdev_acl,
@@ -549,7 +549,7 @@ static int tomoyo_update_path2_acl(const u8 perm,
 
 	if (!tomoyo_parse_name_union(param, &e.name1) ||
 	    !tomoyo_parse_name_union(param, &e.name2))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = tomoyo_update_domain(&e.head, sizeof(e), param,
 					     tomoyo_same_path2_acl,
@@ -686,7 +686,7 @@ static int tomoyo_update_path_number_acl(const u8 perm,
 
 	if (!tomoyo_parse_name_union(param, &e.name) ||
 	    !tomoyo_parse_number_union(param, &e.number))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = tomoyo_update_domain(&e.head, sizeof(e), param,
 					     tomoyo_same_path_number_acl,
@@ -989,7 +989,7 @@ static int tomoyo_update_mount_acl(struct tomoyo_acl_param *param)
 	    !tomoyo_parse_name_union(param, &e.dir_name) ||
 	    !tomoyo_parse_name_union(param, &e.fs_type) ||
 	    !tomoyo_parse_number_union(param, &e.flags))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = tomoyo_update_domain(&e.head, sizeof(e), param,
 					     tomoyo_same_mount_acl, NULL);
@@ -1041,5 +1041,5 @@ int tomoyo_write_file(struct tomoyo_acl_param *param)
 	if (tomoyo_permstr(operation,
 			   tomoyo_mac_keywords[TOMOYO_MAC_FILE_MOUNT]))
 		return tomoyo_update_mount_acl(param);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

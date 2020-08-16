@@ -57,7 +57,7 @@ int aead_decrypt(struct crypto_aead *tfm, u8 *b_0, u8 *aad, size_t aad_len,
 	int err;
 
 	if (data_len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	aead_req = kzalloc(reqsize + aad_len, GFP_ATOMIC);
 	if (!aead_req)

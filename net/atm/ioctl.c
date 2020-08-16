@@ -64,7 +64,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 	case SIOCOUTQ:
 		if (sock->state != SS_CONNECTED ||
 		    !test_bit(ATM_VF_READY, &vcc->flags)) {
-			error =  -EINVAL;
+			error =  -ERR(EINVAL);
 			goto done;
 		}
 		error = put_user(sk->sk_sndbuf - sk_wmem_alloc_get(sk),
@@ -75,7 +75,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 		struct sk_buff *skb;
 
 		if (sock->state != SS_CONNECTED) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto done;
 		}
 		skb = skb_peek(&sk->sk_receive_queue);
@@ -90,7 +90,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 		goto done;
 	case ATMSIGD_CTRL:
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 		/*
@@ -101,7 +101,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 		 * have the same privileges that /proc/kcore needs
 		 */
 		if (!capable(CAP_SYS_RAWIO)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 #ifdef CONFIG_COMPAT
@@ -110,7 +110,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 		   to think about it at all. dwmw2. */
 		if (compat) {
 			net_warn_ratelimited("32-bit task cannot be atmsigd\n");
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto done;
 		}
 #endif
@@ -147,7 +147,7 @@ static int do_vcc_ioctl(struct socket *sock, unsigned int cmd,
 		break;
 	}
 
-	error = -ENOIOCTLCMD;
+	error = -ERR(ENOIOCTLCMD);
 
 	mutex_lock(&ioctl_mutex);
 	list_for_each(pos, &ioctl_list) {
@@ -320,7 +320,7 @@ static int do_atm_ioctl(struct socket *sock, unsigned int cmd32,
 		}
 	}
 	if (i == NR_ATM_IOCTL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case ATM_GETNAMES:
@@ -345,7 +345,7 @@ static int do_atm_ioctl(struct socket *sock, unsigned int cmd32,
 		return do_atmif_sioc(sock, cmd, arg);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int vcc_compat_ioctl(struct socket *sock, unsigned int cmd,

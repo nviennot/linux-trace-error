@@ -25,7 +25,7 @@ static int fill_addr(struct sk_buff *skb, struct net_device *dev, u8 addr,
 void phonet_address_notify(int event, struct net_device *dev, u8 addr)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(NLMSG_ALIGN(sizeof(struct ifaddrmsg)) +
 			nla_total_size(1), GFP_KERNEL);
@@ -59,10 +59,10 @@ static int addr_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
 	u8 pnaddr;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!netlink_capable(skb, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ASSERT_RTNL();
 
@@ -73,15 +73,15 @@ static int addr_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	ifm = nlmsg_data(nlh);
 	if (tb[IFA_LOCAL] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pnaddr = nla_get_u8(tb[IFA_LOCAL]);
 	if (pnaddr & 3)
 		/* Phonet addresses only have 6 high-order bits */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = __dev_get_by_index(net, ifm->ifa_index);
 	if (dev == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (nlh->nlmsg_type == RTM_NEWADDR)
 		err = phonet_address_add(dev, pnaddr);
@@ -100,7 +100,7 @@ static int fill_addr(struct sk_buff *skb, struct net_device *dev, u8 addr,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*ifm), 0);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ifm = nlmsg_data(nlh);
 	ifm->ifa_family = AF_PHONET;
@@ -115,7 +115,7 @@ static int fill_addr(struct sk_buff *skb, struct net_device *dev, u8 addr,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int getaddr_dumpit(struct sk_buff *skb, struct netlink_callback *cb)
@@ -165,7 +165,7 @@ static int fill_route(struct sk_buff *skb, struct net_device *dev, u8 dst,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), 0);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm = nlmsg_data(nlh);
 	rtm->rtm_family = AF_PHONET;
@@ -185,13 +185,13 @@ static int fill_route(struct sk_buff *skb, struct net_device *dev, u8 dst,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 void rtm_phonet_notify(int event, struct net_device *dev, u8 dst)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(NLMSG_ALIGN(sizeof(struct ifaddrmsg)) +
 			nla_total_size(1) + nla_total_size(4), GFP_KERNEL);
@@ -226,10 +226,10 @@ static int route_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
 	u8 dst;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!netlink_capable(skb, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ASSERT_RTNL();
 
@@ -240,16 +240,16 @@ static int route_doit(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	rtm = nlmsg_data(nlh);
 	if (rtm->rtm_table != RT_TABLE_MAIN || rtm->rtm_type != RTN_UNICAST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (tb[RTA_DST] == NULL || tb[RTA_OIF] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dst = nla_get_u8(tb[RTA_DST]);
 	if (dst & 3) /* Phonet addresses only have 6 high-order bits */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = __dev_get_by_index(net, nla_get_u32(tb[RTA_OIF]));
 	if (dev == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (nlh->nlmsg_type == RTM_NEWROUTE)
 		err = phonet_route_add(dev, dst);

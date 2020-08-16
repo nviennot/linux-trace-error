@@ -103,7 +103,7 @@ static int usb6fire_chip_probe(struct usb_interface *intf,
 	if (regidx < 0) {
 		mutex_unlock(&register_mutex);
 		dev_err(&intf->dev, "too many cards registered.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	devices[regidx] = device;
 	mutex_unlock(&register_mutex);
@@ -118,7 +118,7 @@ static int usb6fire_chip_probe(struct usb_interface *intf,
 	/* if we are here, card can be registered in alsa. */
 	if (usb_set_interface(device, 0, 0) != 0) {
 		dev_err(&intf->dev, "can't set first interface.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	ret = snd_card_new(&intf->dev, index[regidx], id[regidx],
 			   THIS_MODULE, sizeof(struct sfire_chip), &card);

@@ -181,7 +181,7 @@ static ssize_t orangefs_attr_show(struct kobject *kobj,
 
 	attribute = container_of(attr, struct orangefs_attribute, attr);
 	if (!attribute->show)
-		return -EIO;
+		return -ERR(EIO);
 	return attribute->show(kobj, attribute, buf);
 }
 
@@ -194,11 +194,11 @@ static ssize_t orangefs_attr_store(struct kobject *kobj,
 
 	if (!strcmp(kobj->name, PC_KOBJ_ID) ||
 	    !strcmp(kobj->name, STATS_KOBJ_ID))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	attribute = container_of(attr, struct orangefs_attribute, attr);
 	if (!attribute->store)
-		return -EIO;
+		return -ERR(EIO);
 	return attribute->store(kobj, attribute, buf, len);
 }
 
@@ -210,7 +210,7 @@ static const struct sysfs_ops orangefs_sysfs_ops = {
 static ssize_t sysfs_int_show(struct kobject *kobj,
     struct orangefs_attribute *attr, char *buf)
 {
-	int rc = -EIO;
+	int rc = -ERR(EIO);
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG, "sysfs_int_show: id:%s:\n",
 	    kobj->name);
@@ -307,7 +307,7 @@ static ssize_t sysfs_int_store(struct kobject *kobj,
 
 out:
 	if (rc)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else
 		rc = count;
 
@@ -357,7 +357,7 @@ static ssize_t sysfs_service_op_show(struct kobject *kobj,
 		    !strcmp(attr->attr.name, "readahead_size") ||
 		    !strcmp(attr->attr.name, "readahead_count_size") ||
 		    !strcmp(attr->attr.name, "readahead_readcnt"))) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -476,7 +476,7 @@ static ssize_t sysfs_service_op_show(struct kobject *kobj,
 	} else {
 		gossip_err("sysfs_service_op_show: unknown kobj_id:%s:\n",
 			   kobj->name);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -545,7 +545,7 @@ static ssize_t sysfs_service_op_store(struct kobject *kobj,
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_PARAM);
 	if (!new_op)
-		return -EINVAL; /* sic */
+		return -ERR(EINVAL); /* sic */
 
 	/* Can't do a service_operation if the client is not running... */
 	rc = is_daemon_in_service();
@@ -576,7 +576,7 @@ static ssize_t sysfs_service_op_store(struct kobject *kobj,
 		    !strcmp(attr->attr.name, "readahead_size") ||
 		    !strcmp(attr->attr.name, "readahead_count_size") ||
 		    !strcmp(attr->attr.name, "readahead_readcnt"))) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -800,7 +800,7 @@ static ssize_t sysfs_service_op_store(struct kobject *kobj,
 	} else {
 		gossip_err("sysfs_service_op_store: unknown kobj_id:%s:\n",
 			   kobj->name);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -825,7 +825,7 @@ out:
 	op_release(new_op);
 
 	if (rc == -ENOMEM || rc == 0)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 
 	return rc;
 }
@@ -1111,7 +1111,7 @@ static struct kobject *stats_orangefs_obj;
 
 int orangefs_sysfs_init(void)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG, "orangefs_sysfs_init: start\n");
 
@@ -1133,7 +1133,7 @@ int orangefs_sysfs_init(void)
 	/* create /sys/fs/orangefs/acache. */
 	acache_orangefs_obj = kzalloc(sizeof(*acache_orangefs_obj), GFP_KERNEL);
 	if (!acache_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto ofs_obj_bail;
 	}
 
@@ -1151,7 +1151,7 @@ int orangefs_sysfs_init(void)
 	capcache_orangefs_obj =
 		kzalloc(sizeof(*capcache_orangefs_obj), GFP_KERNEL);
 	if (!capcache_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto acache_obj_bail;
 	}
 
@@ -1168,7 +1168,7 @@ int orangefs_sysfs_init(void)
 	ccache_orangefs_obj =
 		kzalloc(sizeof(*ccache_orangefs_obj), GFP_KERNEL);
 	if (!ccache_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto capcache_obj_bail;
 	}
 
@@ -1184,7 +1184,7 @@ int orangefs_sysfs_init(void)
 	/* create /sys/fs/orangefs/ncache. */
 	ncache_orangefs_obj = kzalloc(sizeof(*ncache_orangefs_obj), GFP_KERNEL);
 	if (!ncache_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto ccache_obj_bail;
 	}
 
@@ -1201,7 +1201,7 @@ int orangefs_sysfs_init(void)
 	/* create /sys/fs/orangefs/perf_counters. */
 	pc_orangefs_obj = kzalloc(sizeof(*pc_orangefs_obj), GFP_KERNEL);
 	if (!pc_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto ncache_obj_bail;
 	}
 
@@ -1218,7 +1218,7 @@ int orangefs_sysfs_init(void)
 	/* create /sys/fs/orangefs/stats. */
 	stats_orangefs_obj = kzalloc(sizeof(*stats_orangefs_obj), GFP_KERNEL);
 	if (!stats_orangefs_obj) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto pc_obj_bail;
 	}
 

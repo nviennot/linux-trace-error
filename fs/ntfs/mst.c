@@ -65,7 +65,7 @@ int post_read_mst_fixup(NTFS_RECORD *b, const u32 size)
 			 * Note that magic_BAAD is already converted to le32.
 			 */
 			b->magic = magic_BAAD;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		data_pos += NTFS_BLOCK_SIZE/sizeof(u16);
 	}
@@ -115,7 +115,7 @@ int pre_write_mst_fixup(NTFS_RECORD *b, const u32 size)
 	/* Sanity check + only fixup if it makes sense. */
 	if (!b || ntfs_is_baad_record(b->magic) ||
 			ntfs_is_hole_record(b->magic))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Setup the variables. */
 	usa_ofs = le16_to_cpu(b->usa_ofs);
 	/* Decrement usa_count to get number of fixups. */
@@ -125,7 +125,7 @@ int pre_write_mst_fixup(NTFS_RECORD *b, const u32 size)
 	     usa_ofs & 1			||
 	     usa_ofs + (usa_count * 2) > size	||
 	     (size >> NTFS_BLOCK_SIZE_BITS) != usa_count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Position of usn in update sequence array. */
 	usa_pos = (le16*)((u8*)b + usa_ofs);
 	/*

@@ -499,7 +499,7 @@ static int rt5514_calc_dmic_clk(struct snd_soc_component *component, int rate)
 
 	if (rate < 1000000 * div[0]) {
 		pr_warn("Base clock rate %d is too low\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(div); i++) {
@@ -509,7 +509,7 @@ static int rt5514_calc_dmic_clk(struct snd_soc_component *component, int rate)
 	}
 
 	dev_warn(component->dev, "Base clock rate %d is too high\n", rate);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rt5514_set_dmic_clk(struct snd_soc_dapm_widget *w,
@@ -760,13 +760,13 @@ static int rt5514_hw_params(struct snd_pcm_substream *substream,
 	pre_div = rl6231_get_clk_info(rt5514->sysclk, rt5514->lrck);
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_ms = frame_size > 32;
@@ -790,7 +790,7 @@ static int rt5514_hw_params(struct snd_pcm_substream *substream,
 		val_len = RT5514_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(rt5514->regmap, RT5514_I2S_CTRL1, RT5514_I2S_DL_MASK,
@@ -829,7 +829,7 @@ static int rt5514_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -849,7 +849,7 @@ static int rt5514_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(rt5514->regmap, RT5514_I2S_CTRL1,
@@ -880,7 +880,7 @@ static int rt5514_set_dai_sysclk(struct snd_soc_dai *dai,
 
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(rt5514->regmap, RT5514_CLK_CTRL2,
@@ -931,7 +931,7 @@ static int rt5514_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -1300,7 +1300,7 @@ static int rt5514_i2c_probe(struct i2c_client *i2c,
 	if (ret || val != RT5514_DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt5514\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = regmap_multi_reg_write(rt5514->i2c_regmap, rt5514_i2c_patch,

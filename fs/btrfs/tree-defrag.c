@@ -119,7 +119,7 @@ int btrfs_defrag_leaves(struct btrfs_trans_handle *trans,
 					   BTRFS_OLDEST_GENERATION);
 	if (next_key_ret == 0) {
 		memcpy(&root->defrag_progress, &key, sizeof(key));
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 out:
 	btrfs_free_path(path);

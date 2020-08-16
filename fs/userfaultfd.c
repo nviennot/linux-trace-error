@@ -1127,11 +1127,11 @@ static ssize_t userfaultfd_ctx_read(struct userfaultfd_ctx *ctx, int no_wait,
 		spin_unlock(&ctx->event_wqh.lock);
 
 		if (signal_pending(current)) {
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			break;
 		}
 		if (no_wait) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 		spin_unlock_irq(&ctx->fd_wqh.lock);
@@ -1205,11 +1205,11 @@ static ssize_t userfaultfd_read(struct file *file, char __user *buf,
 	int no_wait = file->f_flags & O_NONBLOCK;
 
 	if (ctx->state == UFFD_STATE_WAIT_API)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (;;) {
 		if (count < sizeof(msg))
-			return ret ? ret : -EINVAL;
+			return ret ? ret : -ERR(EINVAL);
 		_ret = userfaultfd_ctx_read(ctx, no_wait, &msg);
 		if (_ret < 0)
 			return ret ? ret : _ret;
@@ -1278,17 +1278,17 @@ static __always_inline int validate_range(struct mm_struct *mm,
 	*start = untagged_addr(*start);
 
 	if (*start & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (*start < mmap_min_addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (*start >= task_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len > task_size - *start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -1321,7 +1321,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 			   sizeof(uffdio_register)-sizeof(__u64)))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!uffdio_register.mode)
 		goto out;
 	if (uffdio_register.mode & ~(UFFDIO_REGISTER_MODE_MISSING|
@@ -1353,7 +1353,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		goto out_unlock;
 
 	/* check that there's at least one vma in the range */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (vma->vm_start >= end)
 		goto out_unlock;
 
@@ -1380,7 +1380,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		       !!(cur->vm_flags & (VM_UFFD_MISSING | VM_UFFD_WP)));
 
 		/* check not compatible vmas */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (!vma_can_userfault(cur, vm_flags))
 			goto out_unlock;
 
@@ -1392,7 +1392,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		 * MAP_SHARED vma: there is no F_WRITE_SEAL and no further
 		 * F_WRITE_SEAL can be taken until the vma is destroyed.
 		 */
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		if (unlikely(!(cur->vm_flags & VM_MAYWRITE)))
 			goto out_unlock;
 
@@ -1404,7 +1404,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		    end > cur->vm_start) {
 			unsigned long vma_hpagesize = vma_kernel_pagesize(cur);
 
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 
 			if (end & (vma_hpagesize - 1))
 				goto out_unlock;
@@ -1418,7 +1418,7 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
 		 * userfaultfd to own a single vma simultaneously or we
 		 * wouldn't know which one to deliver the userfaults to.
 		 */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		if (cur->vm_userfaultfd_ctx.ctx &&
 		    cur->vm_userfaultfd_ctx.ctx != ctx)
 			goto out_unlock;
@@ -1555,7 +1555,7 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
 		goto out_unlock;
 
 	/* check that there's at least one vma in the range */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (vma->vm_start >= end)
 		goto out_unlock;
 
@@ -1574,7 +1574,7 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
 	 * Search for not compatible vmas.
 	 */
 	found = false;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	for (cur = vma; cur && cur->vm_start < end; cur = cur->vm_next) {
 		cond_resched();
 
@@ -1716,7 +1716,7 @@ static int userfaultfd_copy(struct userfaultfd_ctx *ctx,
 
 	user_uffdio_copy = (struct uffdio_copy __user *) arg;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	if (READ_ONCE(ctx->mmap_changing))
 		goto out;
 
@@ -1734,7 +1734,7 @@ static int userfaultfd_copy(struct userfaultfd_ctx *ctx,
 	 * will later check uffdio_copy.src + uffdio_copy.len to fit
 	 * in the userland range.
 	 */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (uffdio_copy.src + uffdio_copy.len <= uffdio_copy.src)
 		goto out;
 	if (uffdio_copy.mode & ~(UFFDIO_COPY_MODE_DONTWAKE|UFFDIO_COPY_MODE_WP))
@@ -1745,7 +1745,7 @@ static int userfaultfd_copy(struct userfaultfd_ctx *ctx,
 				   uffdio_copy.mode);
 		mmput(ctx->mm);
 	} else {
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	if (unlikely(put_user(ret, &user_uffdio_copy->copy)))
 		return -EFAULT;
@@ -1758,7 +1758,7 @@ static int userfaultfd_copy(struct userfaultfd_ctx *ctx,
 		range.start = uffdio_copy.dst;
 		wake_userfault(ctx, &range);
 	}
-	ret = range.len == uffdio_copy.len ? 0 : -EAGAIN;
+	ret = range.len == uffdio_copy.len ? 0 : -ERR(EAGAIN);
 out:
 	return ret;
 }
@@ -1773,7 +1773,7 @@ static int userfaultfd_zeropage(struct userfaultfd_ctx *ctx,
 
 	user_uffdio_zeropage = (struct uffdio_zeropage __user *) arg;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	if (READ_ONCE(ctx->mmap_changing))
 		goto out;
 
@@ -1787,7 +1787,7 @@ static int userfaultfd_zeropage(struct userfaultfd_ctx *ctx,
 			     uffdio_zeropage.range.len);
 	if (ret)
 		goto out;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (uffdio_zeropage.mode & ~UFFDIO_ZEROPAGE_MODE_DONTWAKE)
 		goto out;
 
@@ -1797,7 +1797,7 @@ static int userfaultfd_zeropage(struct userfaultfd_ctx *ctx,
 				     &ctx->mmap_changing);
 		mmput(ctx->mm);
 	} else {
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	if (unlikely(put_user(ret, &user_uffdio_zeropage->zeropage)))
 		return -EFAULT;
@@ -1810,7 +1810,7 @@ static int userfaultfd_zeropage(struct userfaultfd_ctx *ctx,
 		range.start = uffdio_zeropage.range.start;
 		wake_userfault(ctx, &range);
 	}
-	ret = range.len == uffdio_zeropage.range.len ? 0 : -EAGAIN;
+	ret = range.len == uffdio_zeropage.range.len ? 0 : -ERR(EAGAIN);
 out:
 	return ret;
 }
@@ -1825,7 +1825,7 @@ static int userfaultfd_writeprotect(struct userfaultfd_ctx *ctx,
 	bool mode_wp, mode_dontwake;
 
 	if (READ_ONCE(ctx->mmap_changing))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	user_uffdio_wp = (struct uffdio_writeprotect __user *) arg;
 
@@ -1840,13 +1840,13 @@ static int userfaultfd_writeprotect(struct userfaultfd_ctx *ctx,
 
 	if (uffdio_wp.mode & ~(UFFDIO_WRITEPROTECT_MODE_DONTWAKE |
 			       UFFDIO_WRITEPROTECT_MODE_WP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mode_wp = uffdio_wp.mode & UFFDIO_WRITEPROTECT_MODE_WP;
 	mode_dontwake = uffdio_wp.mode & UFFDIO_WRITEPROTECT_MODE_DONTWAKE;
 
 	if (mode_wp && mode_dontwake)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = mwriteprotect_range(ctx->mm, uffdio_wp.range.start,
 				  uffdio_wp.range.len, mode_wp,
@@ -1883,17 +1883,17 @@ static int userfaultfd_api(struct userfaultfd_ctx *ctx,
 	int ret;
 	__u64 features;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (ctx->state != UFFD_STATE_WAIT_API)
 		goto out;
 	ret = -EFAULT;
 	if (copy_from_user(&uffdio_api, buf, sizeof(uffdio_api)))
 		goto out;
 	features = uffdio_api.features;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (uffdio_api.api != UFFD_API || (features & ~UFFD_API_FEATURES))
 		goto err_out;
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if ((features & UFFD_FEATURE_EVENT_FORK) && !capable(CAP_SYS_PTRACE))
 		goto err_out;
 	/* report all available features and ioctls to userland */
@@ -1918,11 +1918,11 @@ err_out:
 static long userfaultfd_ioctl(struct file *file, unsigned cmd,
 			      unsigned long arg)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	struct userfaultfd_ctx *ctx = file->private_data;
 
 	if (cmd != UFFDIO_API && ctx->state == UFFD_STATE_WAIT_API)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch(cmd) {
 	case UFFDIO_API:
@@ -2007,7 +2007,7 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
 	int fd;
 
 	if (!sysctl_unprivileged_userfaultfd && !capable(CAP_SYS_PTRACE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	BUG_ON(!current->mm);
 
@@ -2016,7 +2016,7 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
 	BUILD_BUG_ON(UFFD_NONBLOCK != O_NONBLOCK);
 
 	if (flags & ~UFFD_SHARED_FCNTL_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctx = kmem_cache_alloc(userfaultfd_ctx_cachep, GFP_KERNEL);
 	if (!ctx)

@@ -39,7 +39,7 @@ be_stream_prepare_req(struct xen_snd_front_evtchnl *evtchnl, u8 operation)
 static int be_stream_do_io(struct xen_snd_front_evtchnl *evtchnl)
 {
 	if (unlikely(evtchnl->state != EVTCHNL_STATE_CONNECTED))
-		return -EIO;
+		return -ERR(EIO);
 
 	reinit_completion(&evtchnl->u.req.completion);
 	xen_snd_front_evtchnl_flush(evtchnl);
@@ -50,7 +50,7 @@ static int be_stream_wait_io(struct xen_snd_front_evtchnl *evtchnl)
 {
 	if (wait_for_completion_timeout(&evtchnl->u.req.completion,
 			msecs_to_jiffies(VSND_WAIT_BACK_MS)) <= 0)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 
 	return evtchnl->u.req.resp_status;
 }
@@ -367,16 +367,16 @@ static struct xenbus_driver xen_driver = {
 static int __init xen_drv_init(void)
 {
 	if (!xen_domain())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!xen_has_pv_devices())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* At the moment we only support case with XEN_PAGE_SIZE == PAGE_SIZE */
 	if (XEN_PAGE_SIZE != PAGE_SIZE) {
 		pr_err(XENSND_DRIVER_NAME ": different kernel and Xen page sizes are not supported: XEN_PAGE_SIZE (%lu) != PAGE_SIZE (%lu)\n",
 		       XEN_PAGE_SIZE, PAGE_SIZE);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	pr_info("Initialising Xen " XENSND_DRIVER_NAME " frontend driver\n");

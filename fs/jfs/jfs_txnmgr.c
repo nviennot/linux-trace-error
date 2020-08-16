@@ -1138,7 +1138,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	jfs_info("txCommit, tid = %d, flag = %d", tid, flag);
 	/* is read-only file system ? */
 	if (isReadOnly(iplist[0])) {
-		rc = -EROFS;
+		rc = -ERR(EROFS);
 		goto TheEnd;
 	}
 

@@ -154,17 +154,17 @@ static struct bpf_map *ringbuf_map_alloc(union bpf_attr *attr)
 	int err;
 
 	if (attr->map_flags & ~RINGBUF_CREATE_FLAG_MASK)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (attr->key_size || attr->value_size ||
 	    !is_power_of_2(attr->max_entries) ||
 	    !PAGE_ALIGNED(attr->max_entries))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 #ifdef CONFIG_64BIT
 	/* on 32-bit arch, it's impossible to overflow record's hdr->pgoff */
 	if (attr->max_entries > RINGBUF_MAX_DATA_SZ)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 #endif
 
 	rb_map = kzalloc(sizeof(*rb_map), GFP_USER);
@@ -227,24 +227,24 @@ static void ringbuf_map_free(struct bpf_map *map)
 
 static void *ringbuf_map_lookup_elem(struct bpf_map *map, void *key)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static int ringbuf_map_update_elem(struct bpf_map *map, void *key, void *value,
 				   u64 flags)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int ringbuf_map_delete_elem(struct bpf_map *map, void *key)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int ringbuf_map_get_next_key(struct bpf_map *map, void *key,
 				    void *next_key)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static size_t bpf_ringbuf_mmap_page_cnt(const struct bpf_ringbuf *rb)
@@ -264,7 +264,7 @@ static int ringbuf_map_mmap(struct bpf_map *map, struct vm_area_struct *vma)
 	mmap_sz = bpf_ringbuf_mmap_page_cnt(rb_map->rb) << PAGE_SHIFT;
 
 	if (vma->vm_pgoff * PAGE_SIZE + (vma->vm_end - vma->vm_start) > mmap_sz)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return remap_vmalloc_range(vma, rb_map->rb,
 				   vma->vm_pgoff + RINGBUF_PGOFF);

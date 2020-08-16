@@ -120,7 +120,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_VLAN_MAX, nla, vlan_policy,
 					  NULL);
@@ -128,7 +128,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[TCA_VLAN_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	parm = nla_data(tb[TCA_VLAN_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
@@ -148,7 +148,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 				tcf_idr_release(*a, bind);
 			else
 				tcf_idr_cleanup(tn, index);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		push_vid = nla_get_u16(tb[TCA_VLAN_PUSH_VLAN_ID]);
 		if (push_vid >= VLAN_VID_MASK) {
@@ -156,7 +156,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 				tcf_idr_release(*a, bind);
 			else
 				tcf_idr_cleanup(tn, index);
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 
 		if (tb[TCA_VLAN_PUSH_VLAN_PROTOCOL]) {
@@ -170,7 +170,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 					tcf_idr_release(*a, bind);
 				else
 					tcf_idr_cleanup(tn, index);
-				return -EPROTONOSUPPORT;
+				return -ERR(EPROTONOSUPPORT);
 			}
 		} else {
 			push_proto = htons(ETH_P_8021Q);
@@ -184,7 +184,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	action = parm->v_action;
 
@@ -199,7 +199,7 @@ static int tcf_vlan_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);

@@ -55,12 +55,12 @@ static int bpf_tcp_ca_init(struct btf *btf)
 
 	type_id = btf_find_by_name_kind(btf, "sock", BTF_KIND_STRUCT);
 	if (type_id < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	sock_id = type_id;
 
 	type_id = btf_find_by_name_kind(btf, "tcp_sock", BTF_KIND_STRUCT);
 	if (type_id < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tcp_sock_id = type_id;
 	tcp_sock_type = btf_type_by_id(btf, tcp_sock_id);
 
@@ -134,7 +134,7 @@ static int bpf_tcp_ca_btf_struct_access(struct bpf_verifier_log *log,
 
 	if (t != tcp_sock_type) {
 		bpf_log(log, "only read is supported\n");
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	switch (off) {
@@ -159,14 +159,14 @@ static int bpf_tcp_ca_btf_struct_access(struct bpf_verifier_log *log,
 		break;
 	default:
 		bpf_log(log, "no write support to tcp_sock at off %d\n", off);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	if (off + size > end) {
 		bpf_log(log,
 			"write access at off %d with size %d beyond the member of tcp_sock ended at %zu\n",
 			off, size, end);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	return NOT_INIT;
@@ -227,15 +227,15 @@ static int bpf_tcp_ca_init_member(const struct btf_type *t,
 	switch (moff) {
 	case offsetof(struct tcp_congestion_ops, flags):
 		if (utcp_ca->flags & ~TCP_CONG_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		tcp_ca->flags = utcp_ca->flags;
 		return 1;
 	case offsetof(struct tcp_congestion_ops, name):
 		if (bpf_obj_name_cpy(tcp_ca->name, utcp_ca->name,
 				     sizeof(tcp_ca->name)) <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (tcp_ca_find(utcp_ca->name))
-			return -EEXIST;
+			return -ERR(EEXIST);
 		return 1;
 	}
 
@@ -245,7 +245,7 @@ static int bpf_tcp_ca_init_member(const struct btf_type *t,
 	/* Ensure bpf_prog is provided for compulsory func ptr */
 	prog_fd = (int)(*(unsigned long *)(udata + moff));
 	if (!prog_fd && !is_optional(moff) && !is_unsupported(moff))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -254,7 +254,7 @@ static int bpf_tcp_ca_check_member(const struct btf_type *t,
 				   const struct btf_member *member)
 {
 	if (is_unsupported(btf_member_bit_offset(t, member) / 8))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	return 0;
 }
 

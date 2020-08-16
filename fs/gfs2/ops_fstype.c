@@ -166,7 +166,7 @@ static int gfs2_check_sb(struct gfs2_sbd *sdp, int silent)
 	    sb->sb_type != GFS2_METATYPE_SB) {
 		if (!silent)
 			pr_warn("not a GFS2 filesystem\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*  If format numbers match exactly, we're done.  */
@@ -177,7 +177,7 @@ static int gfs2_check_sb(struct gfs2_sbd *sdp, int silent)
 
 	fs_warn(sdp, "Unknown on-disk format, unable to mount\n");
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void end_bio_io_page(struct bio *bio)
@@ -261,7 +261,7 @@ static int gfs2_read_super(struct gfs2_sbd *sdp, sector_t sector, int silent)
 	bio_put(bio);
 	if (!PageUptodate(page)) {
 		__free_page(page);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	p = kmap(page);
 	gfs2_sb_in(sdp, p);
@@ -484,14 +484,14 @@ static int init_sb(struct gfs2_sbd *sdp, int silent)
 
 	/* Set up the buffer cache and SB for real */
 	if (sdp->sd_sb.sb_bsize < bdev_logical_block_size(sb->s_bdev)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		fs_err(sdp, "FS block size (%u) is too small for device "
 		       "block size (%u)\n",
 		       sdp->sd_sb.sb_bsize, bdev_logical_block_size(sb->s_bdev));
 		goto out;
 	}
 	if (sdp->sd_sb.sb_bsize > PAGE_SIZE) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		fs_err(sdp, "FS block size (%u) is too big for machine "
 		       "page size (%u)\n",
 		       sdp->sd_sb.sb_bsize, (unsigned int)PAGE_SIZE);
@@ -584,7 +584,7 @@ static int gfs2_jindex_hold(struct gfs2_sbd *sdp, struct gfs2_holder *ji_gh)
 		jd->jd_inode = gfs2_lookupi(sdp->sd_jindex, &name, 1);
 		if (IS_ERR_OR_NULL(jd->jd_inode)) {
 			if (!jd->jd_inode)
-				error = -ENOENT;
+				error = -ERR(ENOENT);
 			else
 				error = PTR_ERR(jd->jd_inode);
 			kfree(jd);
@@ -631,7 +631,7 @@ static int init_journal(struct gfs2_sbd *sdp, int undo)
 		goto fail;
 	}
 
-	error = -EUSERS;
+	error = -ERR(EUSERS);
 	if (!gfs2_jindex_size(sdp)) {
 		fs_err(sdp, "no journals!\n");
 		goto fail_jindex;
@@ -918,7 +918,7 @@ static int gfs2_lm_mount(struct gfs2_sbd *sdp, int silent)
 #endif
 	} else {
 		pr_info("can't find protocol %s\n", proto);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	fs_info(sdp, "Trying to join cluster \"%s\", \"%s\"\n", proto, table);
@@ -956,7 +956,7 @@ static int gfs2_lm_mount(struct gfs2_sbd *sdp, int silent)
 		default:
 hostdata_error:
 			fs_info(sdp, "unknown hostdata (%s)\n", o);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -985,7 +985,7 @@ static int wait_on_journal(struct gfs2_sbd *sdp)
 		return 0;
 
 	return wait_on_bit(&sdp->sd_flags, SDF_NOJOURNALID, TASK_INTERRUPTIBLE)
-		? -EINTR : 0;
+		? -ERR(EINTR) : 0;
 }
 
 void gfs2_online_uevent(struct gfs2_sbd *sdp)
@@ -1429,27 +1429,27 @@ static int gfs2_reconfigure(struct fs_context *fc)
 
 	if (strcmp(newargs->ar_lockproto, oldargs->ar_lockproto)) {
 		errorfc(fc, "reconfiguration of locking protocol not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (strcmp(newargs->ar_locktable, oldargs->ar_locktable)) {
 		errorfc(fc, "reconfiguration of lock table not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (strcmp(newargs->ar_hostdata, oldargs->ar_hostdata)) {
 		errorfc(fc, "reconfiguration of host data not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (newargs->ar_spectator != oldargs->ar_spectator) {
 		errorfc(fc, "reconfiguration of spectator mode not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (newargs->ar_localflocks != oldargs->ar_localflocks) {
 		errorfc(fc, "reconfiguration of localflocks not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (newargs->ar_meta != oldargs->ar_meta) {
 		errorfc(fc, "switching between gfs2 and gfs2meta not allowed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (oldargs->ar_spectator)
 		fc->sb_flags |= SB_RDONLY;
@@ -1528,7 +1528,7 @@ static int gfs2_init_fs_context(struct fs_context *fc)
 
 static int set_meta_super(struct super_block *s, struct fs_context *fc)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int test_meta_super(struct super_block *s, struct fs_context *fc)
@@ -1544,7 +1544,7 @@ static int gfs2_meta_get_tree(struct fs_context *fc)
 	int error;
 
 	if (!fc->source || !*fc->source)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = kern_path(fc->source, LOOKUP_FOLLOW, &path);
 	if (error) {
@@ -1562,7 +1562,7 @@ static int gfs2_meta_get_tree(struct fs_context *fc)
 	}
 	if ((fc->sb_flags ^ s->s_flags) & SB_RDONLY) {
 		deactivate_locked_super(s);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	sdp = s->s_fs_info;
 	fc->root = dget(sdp->sd_master_dir);

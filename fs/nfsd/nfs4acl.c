@@ -703,7 +703,7 @@ static int nfs4_acl_nfsv4_to_posix(struct nfs4_acl *acl,
 	ret = init_state(&default_acl_state, acl->naces);
 	if (ret)
 		goto out_estate;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	for (ace = acl->aces; ace < acl->aces + acl->naces; ace++) {
 		if (ace->type != NFS4_ACE_ACCESS_ALLOWED_ACE_TYPE &&
 		    ace->type != NFS4_ACE_ACCESS_DENIED_ACE_TYPE)

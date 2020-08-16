@@ -253,7 +253,7 @@ static snd_pcm_sframes_t mulaw_transfer(struct snd_pcm_plugin *plugin,
 	struct mulaw_priv *data;
 
 	if (snd_BUG_ON(!plugin || !src_channels || !dst_channels))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (frames == 0)
 		return 0;
 #ifdef CONFIG_SND_DEBUG
@@ -262,10 +262,10 @@ static snd_pcm_sframes_t mulaw_transfer(struct snd_pcm_plugin *plugin,
 		for (channel = 0; channel < plugin->src_format.channels; channel++) {
 			if (snd_BUG_ON(src_channels[channel].area.first % 8 ||
 				       src_channels[channel].area.step % 8))
-				return -ENXIO;
+				return -ERR(ENXIO);
 			if (snd_BUG_ON(dst_channels[channel].area.first % 8 ||
 				       dst_channels[channel].area.step % 8))
-				return -ENXIO;
+				return -ERR(ENXIO);
 		}
 	}
 #endif
@@ -309,13 +309,13 @@ int snd_pcm_plugin_build_mulaw(struct snd_pcm_substream *plug,
 	mulaw_f func;
 
 	if (snd_BUG_ON(!r_plugin))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	*r_plugin = NULL;
 
 	if (snd_BUG_ON(src_format->rate != dst_format->rate))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(src_format->channels != dst_format->channels))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (dst_format->format == SNDRV_PCM_FORMAT_MU_LAW) {
 		format = src_format;
@@ -327,10 +327,10 @@ int snd_pcm_plugin_build_mulaw(struct snd_pcm_substream *plug,
 	}
 	else {
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (snd_BUG_ON(!snd_pcm_format_linear(format->format)))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	err = snd_pcm_plugin_build(plug, "Mu-Law<->linear conversion",
 				   src_format, dst_format,

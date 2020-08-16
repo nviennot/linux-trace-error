@@ -29,17 +29,17 @@ extern int __cci_control_port_by_index(u32 port, bool enable);
 #else
 static inline int cci_ace_get_port(struct device_node *dn)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
-static inline int cci_disable_port_by_cpu(u64 mpidr) { return -ENODEV; }
+static inline int cci_disable_port_by_cpu(u64 mpidr) { return -ERR(ENODEV); }
 static inline int __cci_control_port_by_device(struct device_node *dn,
 					       bool enable)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int __cci_control_port_by_index(u32 port, bool enable)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

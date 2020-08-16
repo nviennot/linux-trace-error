@@ -172,7 +172,7 @@ extern int amd_iommu_set_invalidate_ctx_cb(struct pci_dev *pdev,
 					   amd_iommu_invalidate_ctx cb);
 #else /* CONFIG_AMD_IOMMU */
 
-static inline int amd_iommu_detect(void) { return -ENODEV; }
+static inline int amd_iommu_detect(void) { return -ERR(ENODEV); }
 
 #endif /* CONFIG_AMD_IOMMU */
 

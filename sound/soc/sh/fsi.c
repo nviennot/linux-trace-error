@@ -568,7 +568,7 @@ static int fsi_stream_transfer(struct fsi_stream *io)
 {
 	struct fsi_priv *fsi = fsi_stream_to_priv(io);
 	if (!fsi)
-		return -EIO;
+		return -ERR(EIO);
 
 	return fsi_stream_handler_call(io, transfer, fsi, io);
 }
@@ -744,18 +744,18 @@ static int fsi_clk_init(struct device *dev,
 
 	clock->own = devm_clk_get(dev, NULL);
 	if (IS_ERR(clock->own))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* external clock */
 	if (xck) {
 		clock->xck = devm_clk_get(dev, is_porta ? "xcka" : "xckb");
 		if (IS_ERR(clock->xck)) {
 			dev_err(dev, "can't get xck clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (clock->xck == clock->own) {
 			dev_err(dev, "cpu doesn't support xck clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -764,11 +764,11 @@ static int fsi_clk_init(struct device *dev,
 		clock->ick = devm_clk_get(dev,  is_porta ? "icka" : "ickb");
 		if (IS_ERR(clock->ick)) {
 			dev_err(dev, "can't get ick clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (clock->ick == clock->own) {
 			dev_err(dev, "cpu doesn't support ick clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -777,11 +777,11 @@ static int fsi_clk_init(struct device *dev,
 		clock->div = devm_clk_get(dev,  is_porta ? "diva" : "divb");
 		if (IS_ERR(clock->div)) {
 			dev_err(dev, "can't get div clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (clock->div == clock->own) {
 			dev_err(dev, "cpu doesn't support div clock\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -804,7 +804,7 @@ static int fsi_clk_enable(struct device *dev,
 			  struct fsi_priv *fsi)
 {
 	struct fsi_clk *clock = &fsi->clock;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!fsi_clk_is_valid(fsi))
 		return ret;
@@ -832,7 +832,7 @@ static int fsi_clk_disable(struct device *dev,
 	struct fsi_clk *clock = &fsi->clock;
 
 	if (!fsi_clk_is_valid(fsi))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (1 == clock->count--) {
 		clk_disable(clock->xck);
@@ -852,7 +852,7 @@ static int fsi_clk_set_ackbpf(struct device *dev,
 	/* check ackmd/bpfmd relationship */
 	if (bpfmd > ackmd) {
 		dev_err(dev, "unsupported rate (%d/%d)\n", ackmd, bpfmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*  ACKMD */
@@ -874,7 +874,7 @@ static int fsi_clk_set_ackbpf(struct device *dev,
 		break;
 	default:
 		dev_err(dev, "unsupported ackmd (%d)\n", ackmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* BPFMD */
@@ -899,7 +899,7 @@ static int fsi_clk_set_ackbpf(struct device *dev,
 		break;
 	default:
 		dev_err(dev, "unsupported bpfmd (%d)\n", bpfmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dev, "ACKMD/BPFMD = %d/%d\n", ackmd, bpfmd);
@@ -924,7 +924,7 @@ static int fsi_clk_set_rate_external(struct device *dev,
 	xrate = clk_get_rate(xck);
 	if (xrate % rate) {
 		dev_err(dev, "unsupported clock rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	clk_set_parent(ick, xck);
@@ -954,7 +954,7 @@ static int fsi_clk_set_rate_cpg(struct device *dev,
 	unsigned long best_cout, best_act;
 	int adj;
 	int ackmd, bpfmd;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!(12288000 % rate))
 		target = 12288000;
@@ -1013,13 +1013,13 @@ static int fsi_clk_set_rate_cpg(struct device *dev,
 	ret = clk_set_rate(ick, best_cout);
 	if (ret < 0) {
 		dev_err(dev, "ick clock failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ret = clk_set_rate(div, clk_round_rate(div, best_act));
 	if (ret < 0) {
 		dev_err(dev, "div clock failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	dev_dbg(dev, "ick/div = %ld/%ld\n",
@@ -1117,7 +1117,7 @@ static int fsi_pio_transfer(struct fsi_priv *fsi, struct fsi_stream *io,
 	u8 *buf;
 
 	if (!fsi_stream_is_working(fsi, io))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = fsi_pio_get_area(fsi, io);
 
@@ -1129,7 +1129,7 @@ static int fsi_pio_transfer(struct fsi_priv *fsi, struct fsi_stream *io,
 		run32(fsi, buf, samples);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fsi_pointer_update(io, samples);
@@ -1288,7 +1288,7 @@ static int fsi_dma_transfer(struct fsi_priv *fsi, struct fsi_stream *io)
 	struct dma_async_tx_descriptor *desc;
 	int is_play = fsi_stream_is_play(fsi, io);
 	enum dma_transfer_direction dir;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	if (is_play)
 		dir = DMA_MEM_TO_DEV;
@@ -1608,7 +1608,7 @@ static int fsi_set_fmt_dai(struct fsi_priv *fsi, unsigned int fmt)
 		fsi->chan_num = 2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1619,7 +1619,7 @@ static int fsi_set_fmt_spdif(struct fsi_priv *fsi)
 	struct fsi_master *master = fsi_get_master(fsi);
 
 	if (fsi_version(master) < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fsi->fmt = CR_DTMD_SPDIF_PCM | CR_PCM;
 	fsi->chan_num = 2;
@@ -1640,7 +1640,7 @@ static int fsi_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		fsi->clk_master = 1; /* codec is slave, cpu is master */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set clock inversion */
@@ -1924,14 +1924,14 @@ static int fsi_probe(struct platform_device *pdev)
 
 	if (!core) {
 		dev_err(&pdev->dev, "unknown fsi device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	irq = platform_get_irq(pdev, 0);
 	if (!res || (int)irq <= 0) {
 		dev_err(&pdev->dev, "Not enough FSI platform resources.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	master = devm_kzalloc(&pdev->dev, sizeof(*master), GFP_KERNEL);
@@ -1941,7 +1941,7 @@ static int fsi_probe(struct platform_device *pdev)
 	master->base = devm_ioremap(&pdev->dev, res->start, resource_size(res));
 	if (!master->base) {
 		dev_err(&pdev->dev, "Unable to ioremap FSI registers.\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* master setting */

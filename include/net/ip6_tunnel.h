@@ -88,13 +88,13 @@ int ip6_tnl_encap_setup(struct ip6_tnl *t,
 static inline int ip6_encap_hlen(struct ip_tunnel_encap *e)
 {
 	const struct ip6_tnl_encap_ops *ops;
-	int hlen = -EINVAL;
+	int hlen = -ERR(EINVAL);
 
 	if (e->type == TUNNEL_ENCAP_NONE)
 		return 0;
 
 	if (e->type >= MAX_IPTUN_ENCAP_OPS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	ops = rcu_dereference(ip6tun_encaps[e->type]);
@@ -109,13 +109,13 @@ static inline int ip6_tnl_encap(struct sk_buff *skb, struct ip6_tnl *t,
 				u8 *protocol, struct flowi6 *fl6)
 {
 	const struct ip6_tnl_encap_ops *ops;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (t->encap.type == TUNNEL_ENCAP_NONE)
 		return 0;
 
 	if (t->encap.type >= MAX_IPTUN_ENCAP_OPS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	ops = rcu_dereference(ip6tun_encaps[t->encap.type]);

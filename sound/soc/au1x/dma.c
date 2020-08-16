@@ -197,7 +197,7 @@ static int alchemy_pcm_open(struct snd_soc_component *component,
 
 	dmaids = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
 	if (!dmaids)
-		return -ENODEV;	/* whoa, has ordering changed? */
+		return -ERR(ENODEV);	/* whoa, has ordering changed? */
 
 	/* DMA setup */
 	name = (s == SNDRV_PCM_STREAM_PLAYBACK) ? "audio-tx" : "audio-rx";
@@ -259,7 +259,7 @@ static int alchemy_pcm_trigger(struct snd_soc_component *component,
 		au1000_dma_stop(stream);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	return err;

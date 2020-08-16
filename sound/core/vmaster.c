@@ -102,7 +102,7 @@ static int slave_init(struct link_slave *slave)
 	     slave->info.type != SNDRV_CTL_ELEM_TYPE_BOOLEAN)) {
 		pr_err("ALSA: vmaster: invalid slave element\n");
 		kfree(uinfo);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	slave->info.min_val = uinfo->value.integer.min;
 	slave->info.max_val = uinfo->value.integer.max;
@@ -131,7 +131,7 @@ static int master_init(struct link_master *master)
 			master->hook(master->hook_private_data, master->val);
 		return 1;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int slave_get_val(struct link_slave *slave,

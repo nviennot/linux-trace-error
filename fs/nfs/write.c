@@ -633,7 +633,7 @@ static int nfs_page_async_flush(struct nfs_pageio_descriptor *pgio,
 			if (nfs_error_is_fatal_on_server(ret))
 				goto out_launder;
 		} else
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		nfs_redirty_request(req);
 		pgio->pg_error = 0;
 	} else
@@ -1244,7 +1244,7 @@ nfs_key_timeout_notify(struct file *filp, struct inode *inode)
 	if (nfs_ctx_key_to_expire(ctx, inode) &&
 	    !ctx->ll_cred)
 		/* Already expired! */
-		return -EACCES;
+		return -ERR(EACCES);
 	return 0;
 }
 
@@ -1623,13 +1623,13 @@ static void nfs_writeback_result(struct rpc_task *task,
 				complain = jiffies + 300 * HZ;
 			}
 			nfs_set_pgio_error(hdr, -EIO, argp->offset);
-			task->tk_status = -EIO;
+			task->tk_status = -ERR(EIO);
 			return;
 		}
 
 		/* For non rpc-based layout drivers, retry-through-MDS */
 		if (!task->tk_ops) {
-			hdr->pnfs_error = -EAGAIN;
+			hdr->pnfs_error = -ERR(EAGAIN);
 			return;
 		}
 
@@ -2110,10 +2110,10 @@ int nfs_migrate_page(struct address_space *mapping, struct page *newpage,
 	 *        the page lock.
 	 */
 	if (PagePrivate(page))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!nfs_fscache_release_page(page, GFP_KERNEL))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return migrate_page(mapping, newpage, page, mode);
 }

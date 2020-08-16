@@ -140,7 +140,7 @@ static unsigned short ep93xx_ac97_read(struct snd_ac97 *ac97,
 	if (!wait_for_completion_timeout(&info->done, AC97_TIMEOUT)) {
 		dev_warn(info->dev, "timeout reading register %x\n", reg);
 		mutex_unlock(&info->lock);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 	val = (unsigned short)ep93xx_ac97_read_reg(info, AC97S2DATA);
 
@@ -310,7 +310,7 @@ static int ep93xx_ac97_trigger(struct snd_pcm_substream *substream,
 
 	default:
 		dev_warn(info->dev, "unknown command %d\n", cmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -374,7 +374,7 @@ static int ep93xx_ac97_probe(struct platform_device *pdev)
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq <= 0)
-		return irq < 0 ? irq : -ENODEV;
+		return irq < 0 ? irq : -ERR(ENODEV);
 
 	ret = devm_request_irq(&pdev->dev, irq, ep93xx_ac97_interrupt,
 			       IRQF_TRIGGER_HIGH, pdev->name, info);

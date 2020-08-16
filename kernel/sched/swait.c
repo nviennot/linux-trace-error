@@ -112,7 +112,7 @@ long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait
 		 * must not see us.
 		 */
 		list_del_init(&wait->task_list);
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 	} else {
 		__prepare_to_swait(q, wait);
 		set_current_state(state);

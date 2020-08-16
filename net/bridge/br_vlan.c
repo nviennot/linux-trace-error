@@ -137,7 +137,7 @@ static int __vlan_vid_del(struct net_device *dev, struct net_bridge *br,
 	err = br_switchdev_port_vlan_del(dev, v->vid);
 	if (!(v->priv_flags & BR_VLFLAG_ADDED_BY_SWITCHDEV))
 		vlan_vid_del(dev, br->vlan_proto, v->vid);
-	return err == -EOPNOTSUPP ? 0 : err;
+	return err == -ERR(EOPNOTSUPP) ? 0 : err;
 }
 
 /* Returns a master vlan, if it didn't exist it gets created. In all cases a
@@ -656,7 +656,7 @@ static int br_vlan_add_existing(struct net_bridge *br,
 	if (!br_vlan_is_brentry(vlan)) {
 		/* Trying to change flags of non-existent bridge vlan */
 		if (!(flags & BRIDGE_VLAN_INFO_BRENTRY)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_flags;
 		}
 		/* It was only kept for port vlans, now make it real */
@@ -743,7 +743,7 @@ int br_vlan_delete(struct net_bridge *br, u16 vid)
 	vg = br_vlan_group(br);
 	v = br_vlan_find(vg, vid);
 	if (!v || !br_vlan_is_brentry(v))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	br_fdb_find_delete_local(br, NULL, br->dev->dev_addr, vid);
 	br_fdb_delete_by_port(br, NULL, vid, 0);
@@ -903,7 +903,7 @@ err_filt:
 int br_vlan_set_proto(struct net_bridge *br, unsigned long val)
 {
 	if (val != ETH_P_8021Q && val != ETH_P_8021AD)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	return __br_vlan_set_proto(br, htons(val));
 }
@@ -916,7 +916,7 @@ int br_vlan_set_stats(struct net_bridge *br, unsigned long val)
 		br_opt_toggle(br, BROPT_VLAN_STATS_ENABLED, !!val);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -931,7 +931,7 @@ int br_vlan_set_stats_per_port(struct net_bridge *br, unsigned long val)
 		struct net_bridge_vlan_group *vg = nbp_vlan_group(p);
 
 		if (vg->num_vlans)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	switch (val) {
@@ -940,7 +940,7 @@ int br_vlan_set_stats_per_port(struct net_bridge *br, unsigned long val)
 		br_opt_toggle(br, BROPT_VLAN_STATS_PER_PORT, !!val);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1091,7 +1091,7 @@ int br_vlan_set_default_pvid(struct net_bridge *br, unsigned long val)
 	int err = 0;
 
 	if (val >= VLAN_VID_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pvid == br->default_pvid)
 		goto out;
@@ -1099,7 +1099,7 @@ int br_vlan_set_default_pvid(struct net_bridge *br, unsigned long val)
 	/* Only allow default pvid change when filtering is disabled */
 	if (br_opt_get(br, BROPT_VLAN_ENABLED)) {
 		pr_info_once("Please disable vlan filtering to change default_pvid\n");
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out;
 	}
 	err = __br_vlan_set_default_pvid(br, pvid, NULL);
@@ -1241,7 +1241,7 @@ int nbp_vlan_delete(struct net_bridge_port *port, u16 vid)
 
 	v = br_vlan_find(nbp_vlan_group(port), vid);
 	if (!v)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	br_fdb_find_delete_local(port->br, port, port->dev->dev_addr, vid);
 	br_fdb_delete_by_port(port->br, port, vid, 0);
 
@@ -1298,7 +1298,7 @@ static int __br_vlan_get_pvid(const struct net_device *dev,
 	else if (netif_is_bridge_master(dev))
 		vg = br_vlan_group(netdev_priv(dev));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*p_pvid = br_get_pvid(vg);
 	return 0;
@@ -1332,11 +1332,11 @@ int br_vlan_get_info(const struct net_device *dev, u16 vid,
 	else if (netif_is_bridge_master(dev))
 		vg = br_vlan_group(netdev_priv(dev));
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	v = br_vlan_find(vg, vid);
 	if (!v)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	p_vinfo->vid = vid;
 	p_vinfo->flags = v->flags;
@@ -1663,7 +1663,7 @@ void br_vlan_notify(const struct net_bridge *br,
 	struct br_vlan_msg *bvm;
 	struct nlmsghdr *nlh;
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 	struct net *net;
 	u16 flags = 0;
 	int ifindex;
@@ -1685,7 +1685,7 @@ void br_vlan_notify(const struct net_bridge *br,
 	if (!skb)
 		goto out_err;
 
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 	nlh = nlmsg_put(skb, 0, 0, cmd, sizeof(*bvm), 0);
 	if (!nlh)
 		goto out_err;
@@ -1750,7 +1750,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 	u16 pvid;
 
 	if (!netif_is_bridge_master(dev) && !netif_is_bridge_port(dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (netif_is_bridge_master(dev)) {
 		br = netdev_priv(dev);
@@ -1759,7 +1759,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 	} else {
 		p = br_port_get_rcu(dev);
 		if (WARN_ON(!p))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		vg = nbp_vlan_group_rcu(p);
 		br = p->br;
 	}
@@ -1770,7 +1770,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 	nlh = nlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			RTM_NEWVLAN, sizeof(*bvm), NLM_F_MULTI);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	bvm = nlmsg_data(nlh);
 	memset(bvm, 0, sizeof(*bvm));
 	bvm->family = PF_BRIDGE;
@@ -1799,7 +1799,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 			if (!br_vlan_fill_vids(skb, range_start->vid,
 					       range_end->vid, range_start,
 					       vlan_flags, dump_stats)) {
-				err = -EMSGSIZE;
+				err = -ERR(EMSGSIZE);
 				break;
 			}
 			/* advance number of filled vlans */
@@ -1819,7 +1819,7 @@ static int br_vlan_dump_dev(const struct net_device *dev,
 	    !br_vlan_fill_vids(skb, range_start->vid, range_end->vid,
 			       range_start, br_vlan_flags(range_start, pvid),
 			       dump_stats))
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 
 	cb->args[1] = err ? idx : 0;
 
@@ -1854,7 +1854,7 @@ static int br_vlan_rtm_dump(struct sk_buff *skb, struct netlink_callback *cb)
 	if (bvm->ifindex) {
 		dev = dev_get_by_index_rcu(net, bvm->ifindex);
 		if (!dev) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out_err;
 		}
 		err = br_vlan_dump_dev(dev, skb, cb, dump_flags);
@@ -1909,13 +1909,13 @@ static int br_vlan_rtm_process_one(struct net_device *dev,
 	} else {
 		p = br_port_get_rtnl(dev);
 		if (WARN_ON(!p))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		br = p->br;
 		vg = nbp_vlan_group(p);
 	}
 
 	if (WARN_ON(!vg))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = nla_parse_nested(tb, BRIDGE_VLANDB_ENTRY_MAX, attr,
 			       br_vlan_db_policy, extack);
@@ -1924,7 +1924,7 @@ static int br_vlan_rtm_process_one(struct net_device *dev,
 
 	if (!tb[BRIDGE_VLANDB_ENTRY_INFO]) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing vlan entry info");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	memset(&vrange_end, 0, sizeof(vrange_end));
 
@@ -1932,10 +1932,10 @@ static int br_vlan_rtm_process_one(struct net_device *dev,
 	if (vinfo->flags & (BRIDGE_VLAN_INFO_RANGE_BEGIN |
 			    BRIDGE_VLAN_INFO_RANGE_END)) {
 		NL_SET_ERR_MSG_MOD(extack, "Old-style vlan ranges are not allowed when using RTM vlan calls");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!br_vlan_valid_id(vinfo->vid, extack))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[BRIDGE_VLANDB_ENTRY_RANGE]) {
 		vrange_end.vid = nla_get_u16(tb[BRIDGE_VLANDB_ENTRY_RANGE]);
@@ -1949,7 +1949,7 @@ static int br_vlan_rtm_process_one(struct net_device *dev,
 
 		if (!br_vlan_valid_id(vinfo->vid, extack) ||
 		    !br_vlan_valid_range(vinfo, vinfo_last, extack))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	switch (cmd) {
@@ -2015,11 +2015,11 @@ static int br_vlan_rtm_process(struct sk_buff *skb, struct nlmsghdr *nlh,
 	bvm = nlmsg_data(nlh);
 	dev = __dev_get_by_index(net, bvm->ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!netif_is_bridge_master(dev) && !netif_is_bridge_port(dev)) {
 		NL_SET_ERR_MSG_MOD(extack, "The device is not a valid bridge or bridge port");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nlmsg_for_each_attr(attr, nlh, sizeof(*bvm), rem) {
@@ -2034,7 +2034,7 @@ static int br_vlan_rtm_process(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 	if (!vlans) {
 		NL_SET_ERR_MSG_MOD(extack, "No vlans found to process");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	return err;

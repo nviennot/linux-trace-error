@@ -412,7 +412,7 @@ static int ecryptfs_write_inode_size_to_xattr(struct inode *ecryptfs_inode)
 	if (!(lower_inode->i_opflags & IOP_XATTR)) {
 		printk(KERN_WARNING
 		       "No support for setting xattr in lower filesystem\n");
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto out;
 	}
 	xattr_virt = kmem_cache_alloc(ecryptfs_xattr_cache, GFP_KERNEL);

@@ -397,11 +397,11 @@ static inline struct kprobe *kprobe_running(void)
 }
 static inline int register_kprobe(struct kprobe *p)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int register_kprobes(struct kprobe **kps, int num)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline void unregister_kprobe(struct kprobe *p)
 {
@@ -411,11 +411,11 @@ static inline void unregister_kprobes(struct kprobe **kps, int num)
 }
 static inline int register_kretprobe(struct kretprobe *rp)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int register_kretprobes(struct kretprobe **rps, int num)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline void unregister_kretprobe(struct kretprobe *rp)
 {
@@ -428,11 +428,11 @@ static inline void kprobe_flush_task(struct task_struct *tk)
 }
 static inline int disable_kprobe(struct kprobe *kp)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int enable_kprobe(struct kprobe *kp)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline bool within_kprobe_blacklist(unsigned long addr)

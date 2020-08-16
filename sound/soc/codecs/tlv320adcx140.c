@@ -608,7 +608,7 @@ static int adcx140_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "%s: Unsupported width %d\n",
 			__func__, params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, ADCX140_ASI_CFG0,
@@ -636,7 +636,7 @@ static int adcx140_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBM_CFS:
 	default:
 		dev_err(component->dev, "Invalid DAI master/slave interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* signal polarity */
@@ -654,7 +654,7 @@ static int adcx140_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI clock signal polarity\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -670,7 +670,7 @@ static int adcx140_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI interface format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adcx140->dai_fmt = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
@@ -696,14 +696,14 @@ static int adcx140_set_dai_tdm_slot(struct snd_soc_dai *codec_dai,
 
 	if (tx_mask != rx_mask) {
 		dev_err(component->dev, "tx and rx masks must be symmetric\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* TDM based on DSP mode requires slots to be adjacent */
 	lsb = __ffs(tx_mask);
 	if ((lsb + 1) != __fls(tx_mask)) {
 		dev_err(component->dev, "Invalid mask, slots must be adjacent\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slot_width) {
@@ -714,7 +714,7 @@ static int adcx140_set_dai_tdm_slot(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported slot width %d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adcx140->tdm_delay = lsb;
@@ -777,7 +777,7 @@ static int adcx140_codec_probe(struct snd_soc_component *component)
 
 	if (bias_source > ADCX140_MIC_BIAS_VAL_AVDD) {
 		dev_err(adcx140->dev, "Mic Bias source value is invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = device_property_read_u32(adcx140->dev, "ti,vref-source",
@@ -787,7 +787,7 @@ static int adcx140_codec_probe(struct snd_soc_component *component)
 
 	if (vref_source > ADCX140_MIC_BIAS_VREF_1375V) {
 		dev_err(adcx140->dev, "Mic Bias source value is invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bias_cfg = bias_source << ADCX140_MIC_BIAS_SHIFT | vref_source;

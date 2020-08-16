@@ -256,13 +256,13 @@ static int pipe_rcv_status(struct sock *sk, struct sk_buff *skb)
 	int wake = 0;
 
 	if (!pskb_may_pull(skb, sizeof(*hdr) + 4))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hdr = pnp_hdr(skb);
 	if (hdr->pep_type != PN_PEP_TYPE_COMMON) {
 		net_dbg_ratelimited("Phonet unknown PEP type: %u\n",
 				    (unsigned int)hdr->pep_type);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	switch (hdr->data[0]) {
@@ -294,7 +294,7 @@ static int pipe_rcv_status(struct sock *sk, struct sk_buff *skb)
 	default:
 		net_dbg_ratelimited("Phonet unknown PEP indication: %u\n",
 				    (unsigned int)hdr->data[0]);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	if (wake)
 		sk->sk_write_space(sk);
@@ -314,7 +314,7 @@ static int pipe_rcv_created(struct sock *sk, struct sk_buff *skb)
 		u8 *data = pep_get_sb(skb, &type, &len, buf);
 
 		if (data == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		switch (type) {
 		case PN_PIPE_SB_NEGOTIATED_FC:
 			if (len < 2 || (data[0] | data[1]) > 3)
@@ -365,7 +365,7 @@ static int pipe_do_rcv(struct sock *sk, struct sk_buff *skb)
 			pn->init_enable = 1;
 			break;
 		default: /* not allowed to send an error here!? */
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		/* fall through */
@@ -392,13 +392,13 @@ static int pipe_do_rcv(struct sock *sk, struct sk_buff *skb)
 			err = sock_queue_rcv_skb(sk, skb);
 			if (!err)
 				return NET_RX_SUCCESS;
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			break;
 		}
 
 		if (pn->rx_credits == 0) {
 			atomic_inc(&sk->sk_drops);
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			break;
 		}
 		pn->rx_credits--;
@@ -441,11 +441,11 @@ static int pipe_do_rcv(struct sock *sk, struct sk_buff *skb)
 	default:
 		net_dbg_ratelimited("Phonet unknown PEP message: %u\n",
 				    hdr->message_id);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 out:
 	kfree_skb(skb);
-	return (err == -ENOBUFS) ? NET_RX_DROP : NET_RX_SUCCESS;
+	return (err == -ERR(ENOBUFS)) ? NET_RX_DROP : NET_RX_SUCCESS;
 
 queue:
 	skb->dev = NULL;
@@ -486,11 +486,11 @@ static int pep_connresp_rcv(struct sock *sk, struct sk_buff *skb)
 	u8 n_sb;
 
 	if (!pskb_pull(skb, sizeof(*hdr) + 4))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hdr = pnp_hdr(skb);
 	if (hdr->error_code != PN_PIPE_NO_ERROR)
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 
 	/* Parse sub-blocks */
 	n_sb = hdr->data[3];
@@ -499,7 +499,7 @@ static int pep_connresp_rcv(struct sock *sk, struct sk_buff *skb)
 		const u8 *data = pep_get_sb(skb, &type, &len, buf);
 
 		if (data == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (type) {
 		case PN_PIPE_SB_REQUIRED_FC_TX:
@@ -526,7 +526,7 @@ static int pep_enableresp_rcv(struct sock *sk, struct sk_buff *skb)
 	struct pnpipehdr *hdr = pnp_hdr(skb);
 
 	if (hdr->error_code != PN_PIPE_NO_ERROR)
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 
 	return pep_indicate(sk, PNS_PIPE_ENABLED_IND, 0 /* sub-blocks */,
 		NULL, 0, GFP_ATOMIC);
@@ -778,12 +778,12 @@ static struct sock *pep_sock_accept(struct sock *sk, int flags, int *errp,
 
 	lock_sock(sk);
 	if (sk->sk_state != TCP_LISTEN) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto drop;
 	}
 	sk_acceptq_removed(sk);
 
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 	if (!pskb_may_pull(skb, sizeof(*hdr) + 4))
 		goto drop;
 
@@ -838,7 +838,7 @@ static struct sock *pep_sock_accept(struct sock *sk, int flags, int *errp,
 			 kern);
 	if (!newsk) {
 		pep_reject_conn(sk, skb, PN_PIPE_ERR_OVERLOAD, GFP_KERNEL);
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto drop;
 	}
 
@@ -919,12 +919,12 @@ static int pep_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
 	struct pep_sock *pn = pep_sk(sk);
 	int answ;
-	int ret = -ENOIOCTLCMD;
+	int ret = -ERR(ENOIOCTLCMD);
 
 	switch (cmd) {
 	case SIOCINQ:
 		if (sk->sk_state == TCP_LISTEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -943,9 +943,9 @@ static int pep_ioctl(struct sock *sk, int cmd, unsigned long arg)
 	case SIOCPNENABLEPIPE:
 		lock_sock(sk);
 		if (sk->sk_state == TCP_SYN_SENT)
-			ret =  -EBUSY;
+			ret =  -ERR(EBUSY);
 		else if (sk->sk_state == TCP_ESTABLISHED)
-			ret = -EISCONN;
+			ret = -ERR(EISCONN);
 		else
 			ret = pep_sock_enable(sk, NULL, 0);
 		release_sock(sk);
@@ -981,7 +981,7 @@ static int pep_setsockopt(struct sock *sk, int level, int optname,
 	int val = 0, err = 0;
 
 	if (level != SOL_PNPIPE)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	if (optlen >= sizeof(int)) {
 		if (get_user(val, (int __user *) optval))
 			return -EFAULT;
@@ -991,13 +991,13 @@ static int pep_setsockopt(struct sock *sk, int level, int optname,
 	switch (optname) {
 	case PNPIPE_ENCAP:
 		if (val && val != PNPIPE_ENCAP_IP) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		if (!pn->ifindex == !val)
 			break; /* Nothing to do! */
 		if (!capable(CAP_NET_ADMIN)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			break;
 		}
 		if (val) {
@@ -1020,7 +1020,7 @@ static int pep_setsockopt(struct sock *sk, int level, int optname,
 			(val >= 0) && (val < PN_PIPE_INVALID_HANDLE))
 			pn->pipe_handle = val;
 		else
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		break;
 
 	case PNPIPE_INITSTATE:
@@ -1028,7 +1028,7 @@ static int pep_setsockopt(struct sock *sk, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 	}
 	release_sock(sk);
 
@@ -1043,7 +1043,7 @@ static int pep_getsockopt(struct sock *sk, int level, int optname,
 	int len, val;
 
 	if (level != SOL_PNPIPE)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	if (get_user(len, optlen))
 		return -EFAULT;
 
@@ -1059,7 +1059,7 @@ static int pep_getsockopt(struct sock *sk, int level, int optname,
 	case PNPIPE_HANDLE:
 		val = pn->pipe_handle;
 		if (val == PN_PIPE_INVALID_HANDLE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 
 	case PNPIPE_INITSTATE:
@@ -1067,7 +1067,7 @@ static int pep_getsockopt(struct sock *sk, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	len = min_t(unsigned int, sizeof(int), len);
@@ -1087,7 +1087,7 @@ static int pipe_skb_send(struct sock *sk, struct sk_buff *skb)
 	if (pn_flow_safe(pn->tx_fc) &&
 	    !atomic_add_unless(&pn->tx_credits, -1, 0)) {
 		kfree_skb(skb);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	skb_push(skb, 3 + pn->aligned);
@@ -1117,12 +1117,12 @@ static int pep_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	int err, done;
 
 	if (len > USHRT_MAX)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if ((msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_NOSIGNAL|
 				MSG_CMSG_COMPAT)) ||
 			!(msg->msg_flags & MSG_EOR))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb = sock_alloc_send_skb(sk, MAX_PNPIPE_HEADER + len,
 					flags & MSG_DONTWAIT, &err);
@@ -1137,7 +1137,7 @@ static int pep_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	lock_sock(sk);
 	timeo = sock_sndtimeo(sk, flags & MSG_DONTWAIT);
 	if ((1 << sk->sk_state) & (TCPF_LISTEN|TCPF_CLOSE)) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto out;
 	}
 	if (sk->sk_state != TCP_ESTABLISHED) {
@@ -1148,7 +1148,7 @@ disabled:
 			goto out;
 
 		if (sk->sk_state == TCP_CLOSE_WAIT) {
-			err = -ECONNRESET;
+			err = -ERR(ECONNRESET);
 			goto out;
 		}
 	}
@@ -1160,7 +1160,7 @@ disabled:
 		DEFINE_WAIT_FUNC(wait, woken_wake_function);
 
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 		if (signal_pending(current)) {
@@ -1242,17 +1242,17 @@ static int pep_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 
 	if (flags & ~(MSG_OOB|MSG_PEEK|MSG_TRUNC|MSG_DONTWAIT|MSG_WAITALL|
 			MSG_NOSIGNAL|MSG_CMSG_COMPAT))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (unlikely(1 << sk->sk_state & (TCPF_LISTEN | TCPF_CLOSE)))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if ((flags & MSG_OOB) || sock_flag(sk, SOCK_URGINLINE)) {
 		/* Dequeue and acknowledge control request */
 		struct pep_sock *pn = pep_sk(sk);
 
 		if (flags & MSG_PEEK)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		skb = skb_dequeue(&pn->ctrlreq_queue);
 		if (skb) {
 			pep_ctrlreq_error(sk, skb, PN_PIPE_NO_ERROR,
@@ -1261,14 +1261,14 @@ static int pep_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 			goto copy;
 		}
 		if (flags & MSG_OOB)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
 	lock_sock(sk);
 	if (skb == NULL) {
 		if (err == -ENOTCONN && sk->sk_state == TCP_CLOSE_WAIT)
-			err = -ECONNRESET;
+			err = -ERR(ECONNRESET);
 		release_sock(sk);
 		return err;
 	}

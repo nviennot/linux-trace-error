@@ -644,7 +644,7 @@ static int wm8900_hw_params(struct snd_pcm_substream *substream,
 		reg |= 0x60;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8900_REG_AUDIO1, reg);
@@ -684,7 +684,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	unsigned int div;
 
 	if (WARN_ON(!Fout))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The FLL must run at 90-100MHz which is then scaled down to
 	 * the output value by FLLCLK_DIV. */
@@ -702,7 +702,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		printk(KERN_ERR "wm8900: Invalid FLL division rate %u, "
 		       "Fref=%u, Fout=%u, target=%u\n",
 		       div, Fref, Fout, target);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fll_div->fllclk_div = div >> 2;
@@ -737,7 +737,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 
 	if (WARN_ON(target != Fout * (fll_div->fllclk_div << 2)) ||
 	    WARN_ON(!K && target != Fref * fll_div->fll_ratio * fll_div->n))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -847,7 +847,7 @@ static int wm8900_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 				    WM8900_REG_DACCTRL_AIF_LRCLKRATE, div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -888,7 +888,7 @@ static int wm8900_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		aif4 &= ~WM8900_REG_AUDIO4_DACLRC_DIR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -912,7 +912,7 @@ static int wm8900_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		aif1 |= 0x8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock inversion */
@@ -928,7 +928,7 @@ static int wm8900_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			aif1 |= WM8900_REG_AUDIO1_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -952,11 +952,11 @@ static int wm8900_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			aif1 |= WM8900_REG_AUDIO1_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8900_REG_CLOCKING1, clocking1);
@@ -1173,7 +1173,7 @@ static int wm8900_probe(struct snd_soc_component *component)
 	reg = snd_soc_component_read32(component, WM8900_REG_ID);
 	if (reg != 0x8900) {
 		dev_err(component->dev, "Device is not a WM8900 - ID %x\n", reg);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	wm8900_reset(component);

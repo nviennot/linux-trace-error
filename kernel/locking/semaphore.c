@@ -225,11 +225,11 @@ static inline int __sched __down_common(struct semaphore *sem, long state,
 
  timed_out:
 	list_del(&waiter.list);
-	return -ETIME;
+	return -ERR(ETIME);
 
  interrupted:
 	list_del(&waiter.list);
-	return -EINTR;
+	return -ERR(EINTR);
 }
 
 static noinline void __sched __down(struct semaphore *sem)

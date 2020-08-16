@@ -98,7 +98,7 @@ static int nfs42_proc_fallocate(struct rpc_message *msg, struct file *filep,
 	do {
 		err = _nfs42_proc_fallocate(msg, filep, lock, offset, len);
 		if (err == -ENOTSUPP) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 		err = nfs4_handle_exception(server, err, &exception);
@@ -117,7 +117,7 @@ int nfs42_proc_allocate(struct file *filep, loff_t offset, loff_t len)
 	int err;
 
 	if (!nfs_server_capable(inode, NFS_CAP_ALLOCATE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode_lock(inode);
 
@@ -138,7 +138,7 @@ int nfs42_proc_deallocate(struct file *filep, loff_t offset, loff_t len)
 	int err;
 
 	if (!nfs_server_capable(inode, NFS_CAP_DEALLOCATE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode_lock(inode);
 	err = nfs_sync_inode(inode);
@@ -217,7 +217,7 @@ static int handle_async_copy(struct nfs42_copy_res *res,
 	if (status == -ERESTARTSYS) {
 		goto out_cancel;
 	} else if (copy->flags || copy->error == NFS4ERR_PARTNER_NO_AUTH) {
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 		*restart = true;
 		goto out_cancel;
 	}
@@ -252,7 +252,7 @@ static int process_copy_commit(struct file *dst, loff_t pos_dst,
 	if (nfs_write_verifier_cmp(&res->write_res.verifier.verifier,
 				    &cres.verf->verifier)) {
 		dprintk("commit verf differs from copy verf\n");
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 	}
 out_free:
 	kfree(cres.verf);
@@ -335,7 +335,7 @@ static ssize_t _nfs42_proc_copy(struct file *src,
 	if (args->sync &&
 		nfs_write_verifier_cmp(&res->write_res.verifier.verifier,
 				    &res->commit_res.verf->verifier)) {
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -417,7 +417,7 @@ ssize_t nfs42_proc_copy(struct file *src, loff_t pos_src,
 			break;
 		if (err == -ENOTSUPP &&
 				nfs42_files_from_same_server(src, dst)) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		} else if (err == -EAGAIN) {
 			if (!restart) {
@@ -434,7 +434,7 @@ ssize_t nfs42_proc_copy(struct file *src, loff_t pos_src,
 				err == -ENOTSUPP) &&
 				!nfs42_files_from_same_server(src, dst)) {
 			nfs42_do_offload_cancel_async(src, &args.src_stateid);
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 
@@ -508,7 +508,7 @@ static int nfs42_do_offload_cancel_async(struct file *dst,
 	int status;
 
 	if (!(dst_server->caps & NFS_CAP_OFFLOAD_CANCEL))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	data = kzalloc(sizeof(struct nfs42_offloadcancel_data), GFP_NOFS);
 	if (data == NULL)
@@ -581,7 +581,7 @@ int nfs42_proc_copy_notify(struct file *src, struct file *dst,
 	int status;
 
 	if (!(src_server->caps & NFS_CAP_COPY_NOTIFY))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	args = kzalloc(sizeof(struct nfs42_copy_notify_args), GFP_NOFS);
 	if (args == NULL)
@@ -595,7 +595,7 @@ int nfs42_proc_copy_notify(struct file *src, struct file *dst,
 	do {
 		status = _nfs42_proc_copy_notify(src, dst, args, res);
 		if (status == -ENOTSUPP) {
-			status = -EOPNOTSUPP;
+			status = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 		status = nfs4_handle_exception(src_server, status, &exception);
@@ -626,7 +626,7 @@ static loff_t _nfs42_proc_llseek(struct file *filep,
 	int status;
 
 	if (!nfs_server_capable(inode, NFS_CAP_SEEK))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	status = nfs4_set_rw_stateid(&args.sa_stateid, lock->open_context,
 			lock, FMODE_READ);
@@ -670,7 +670,7 @@ loff_t nfs42_proc_llseek(struct file *filep, loff_t offset, int whence)
 		if (err >= 0)
 			break;
 		if (err == -ENOTSUPP) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 		err = nfs4_handle_exception(server, err, &exception);
@@ -809,7 +809,7 @@ int nfs42_proc_layoutstats_generic(struct nfs_server *server,
 	data->inode = nfs_igrab_and_active(data->args.inode);
 	if (!data->inode) {
 		nfs42_layoutstat_release(data);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	nfs4_init_sequence(&data->args.seq_args, &data->res.seq_res, 0, 0);
 	task = rpc_run_task(&task_setup);
@@ -959,9 +959,9 @@ int nfs42_proc_layouterror(struct pnfs_layout_segment *lseg,
 	unsigned int i;
 
 	if (!nfs_server_capable(inode, NFS_CAP_LAYOUTERROR))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (n > NFS42_LAYOUTERROR_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	data = nfs42_alloc_layouterror_data(lseg, GFP_NOFS);
 	if (!data)
 		return -ENOMEM;
@@ -1050,7 +1050,7 @@ int nfs42_proc_clone(struct file *src_f, struct file *dst_f,
 	int err, err2;
 
 	if (!nfs_server_capable(inode, NFS_CAP_CLONE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	src_lock = nfs_get_lock_context(nfs_file_open_context(src_f));
 	if (IS_ERR(src_lock))
@@ -1073,7 +1073,7 @@ int nfs42_proc_clone(struct file *src_f, struct file *dst_f,
 					src_offset, dst_offset, count);
 		if (err == -ENOTSUPP || err == -EOPNOTSUPP) {
 			NFS_SERVER(inode)->caps &= ~NFS_CAP_CLONE;
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 

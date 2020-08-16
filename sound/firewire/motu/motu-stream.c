@@ -268,7 +268,7 @@ int snd_motu_stream_start_duplex(struct snd_motu *motu)
 						CALLBACK_TIMEOUT) ||
 		    !amdtp_stream_wait_callback(&motu->rx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto stop_streams;
 		}
 
@@ -382,7 +382,7 @@ int snd_motu_stream_lock_try(struct snd_motu *motu)
 	spin_lock_irq(&motu->lock);
 
 	if (motu->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 

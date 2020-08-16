@@ -397,7 +397,7 @@ static inline struct sk_buff *bt_skb_send_alloc(struct sock *sk,
 		goto out;
 
 	if (sk->sk_shutdown) {
-		*err = -ECONNRESET;
+		*err = -ERR(ECONNRESET);
 		goto out;
 	}
 

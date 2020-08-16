@@ -145,7 +145,7 @@ static inline void cec_notifier_set_phys_addr_from_edid(struct cec_notifier *n,
 
 static inline struct device *cec_notifier_parse_hdmi_phandle(struct device *dev)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 #endif

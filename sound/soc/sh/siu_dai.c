@@ -294,7 +294,7 @@ static int siu_dai_spbstart(struct siu_port *port_info)
 		cpu_relax();
 
 	if (!cnt)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* SPB program start address setting */
 	siu_write32(base + SIU_SBPSET, 0x00400000);
@@ -374,7 +374,7 @@ static int siu_dai_get_volume(struct snd_kcontrol *kctrl,
 	default:
 		dev_err(dev, "%s() invalid private_value=%ld\n",
 			__func__, kctrl->private_value);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -396,7 +396,7 @@ static int siu_dai_put_volume(struct snd_kcontrol *kctrl,
 	    ucontrol->value.integer.value[0] > SIU_MAX_VOLUME ||
 	    ucontrol->value.integer.value[1] < 0 ||
 	    ucontrol->value.integer.value[1] > SIU_MAX_VOLUME)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_vol = ucontrol->value.integer.value[0] |
 		ucontrol->value.integer.value[1] << 16;
@@ -418,7 +418,7 @@ static int siu_dai_put_volume(struct snd_kcontrol *kctrl,
 	default:
 		dev_err(dev, "%s() invalid private_value=%ld\n",
 			__func__, kctrl->private_value);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cur_vol != new_vol)
@@ -597,7 +597,7 @@ static int siu_dai_set_fmt(struct snd_soc_dai *dai,
 		__func__, fmt, info->port_id);
 
 	if (info->port_id < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Here select between I2S / PCM / SPDIF */
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -611,7 +611,7 @@ static int siu_dai_set_fmt(struct snd_soc_dai *dai,
 		break;
 	/* SPDIF disabled - see comment at the top */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifctl |= ~(siu_flags[info->port_id].playback.mask |
@@ -630,7 +630,7 @@ static int siu_dai_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	int ret;
 
 	if (dir != SND_SOC_CLOCK_IN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(dai->dev, "%s: using clock %d\n", __func__, clk_id);
 
@@ -652,7 +652,7 @@ static int siu_dai_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		parent_name = "siumckb_clk";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	siu_clk = clk_get(dai->dev, siu_name);
@@ -740,13 +740,13 @@ static int siu_probe(struct platform_device *pdev)
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	region = devm_request_mem_region(&pdev->dev, res->start,
 					 resource_size(res), pdev->name);
 	if (!region) {
 		dev_err(&pdev->dev, "SIU region already claimed\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	info->pram = devm_ioremap(&pdev->dev, res->start, PRAM_SIZE);

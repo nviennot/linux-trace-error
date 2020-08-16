@@ -69,7 +69,7 @@ static int comp_mt_check(const struct xt_mtchk_param *par)
 	/* Must specify no unknown invflags */
 	if (compinfo->invflags & ~XT_IPCOMP_INV_MASK) {
 		pr_info_ratelimited("unknown flags %X\n", compinfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

@@ -331,7 +331,7 @@ static int do_read_inode(struct inode *inode)
 
 	/* Check if ino is within scope */
 	if (f2fs_check_nid_range(sbi, inode->i_ino))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	node_page = f2fs_get_node_page(sbi, inode->i_ino);
 	if (IS_ERR(node_page))
@@ -513,7 +513,7 @@ make_now:
 		inode->i_op = &f2fs_special_inode_operations;
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
 	} else {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto bad_inode;
 	}
 	f2fs_set_inode_flags(inode);
@@ -679,7 +679,7 @@ int f2fs_write_inode(struct inode *inode, struct writeback_control *wbc)
 		return 0;
 
 	if (!f2fs_is_checkpoint_ready(sbi))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/*
 	 * We need to balance fs here to prevent from producing dirty node pages
@@ -738,7 +738,7 @@ retry:
 
 	if (time_to_inject(sbi, FAULT_EVICT_INODE)) {
 		f2fs_show_injection_info(sbi, FAULT_EVICT_INODE);
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 
 	if (!err) {

@@ -144,7 +144,7 @@ befs_get_block(struct inode *inode, sector_t block,
 		befs_error(sb, "befs_get_block() was asked to write to "
 			   "block %ld in inode %lu", (long)block,
 			   (unsigned long)inode->i_ino);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	res = befs_fblock2brun(sb, ds, block, &run);
@@ -153,7 +153,7 @@ befs_get_block(struct inode *inode, sector_t block,
 			   "<--- %s for inode %lu, block %ld ERROR",
 			   __func__, (unsigned long)inode->i_ino,
 			   (long)block);
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 
 	disk_off = (ulong) iaddr2blockno(sb, &run);
@@ -202,7 +202,7 @@ befs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 		inode = NULL;
 	} else if (ret != BEFS_OK || offset == 0) {
 		befs_error(sb, "<--- %s Error", __func__);
-		inode = ERR_PTR(-ENODATA);
+		inode = ERR_PTR(-ERR(ENODATA));
 	} else {
 		inode = befs_iget(dir->i_sb, (ino_t) offset);
 	}
@@ -233,7 +233,7 @@ befs_readdir(struct file *file, struct dir_context *ctx)
 			befs_debug(sb, "<--- %s ERROR", __func__);
 			befs_error(sb, "IO error reading %pD (inode %lu)",
 				   file, inode->i_ino);
-			return -EIO;
+			return -ERR(EIO);
 
 		} else if (result == BEFS_BT_END) {
 			befs_debug(sb, "<--- %s END", __func__);
@@ -422,7 +422,7 @@ unacquire_bh:
 unacquire_none:
 	iget_failed(inode);
 	befs_debug(sb, "<--- %s - Bad inode", __func__);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /* Initialize the inode cache. Called at fs setup.
@@ -493,7 +493,7 @@ static int befs_symlink_readpage(struct file *unused, struct page *page)
 fail:
 	SetPageError(page);
 	unlock_page(page);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -520,7 +520,7 @@ befs_utf2nls(struct super_block *sb, const char *in,
 
 	if (!nls) {
 		befs_error(sb, "%s called with no NLS table loaded", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*out = result = kmalloc(maxlen, GFP_NOFS);
@@ -553,7 +553,7 @@ conv_err:
 		   "cannot be converted to unicode.", nls->charset);
 	befs_debug(sb, "<--- %s", __func__);
 	kfree(result);
-	return -EILSEQ;
+	return -ERR(EILSEQ);
 }
 
 /**
@@ -599,7 +599,7 @@ befs_nls2utf(struct super_block *sb, const char *in,
 	if (!nls) {
 		befs_error(sb, "%s called with no NLS table loaded.",
 			   __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*out = result = kmalloc(maxlen, GFP_NOFS);
@@ -633,7 +633,7 @@ conv_err:
 		   "cannot be converted to unicode.", nls->charset);
 	befs_debug(sb, "<--- %s", __func__);
 	kfree(result);
-	return -EILSEQ;
+	return -ERR(EILSEQ);
 }
 
 static struct inode *befs_nfs_get_inode(struct super_block *sb, uint64_t ino,
@@ -811,7 +811,7 @@ befs_fill_super(struct super_block *sb, void *data, int silent)
 	struct befs_sb_info *befs_sb;
 	befs_super_block *disk_sb;
 	struct inode *root;
-	long ret = -EINVAL;
+	long ret = -ERR(EINVAL);
 	const unsigned long sb_block = 0;
 	const off_t x86_sb_off = 512;
 	int blocksize;
@@ -943,7 +943,7 @@ befs_remount(struct super_block *sb, int *flags, char *data)
 {
 	sync_filesystem(sb);
 	if (!(*flags & SB_RDONLY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

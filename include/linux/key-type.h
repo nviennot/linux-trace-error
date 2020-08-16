@@ -183,7 +183,8 @@ static inline int key_negate_and_link(struct key *key,
 				      struct key *keyring,
 				      struct key *authkey)
 {
-	return key_reject_and_link(key, timeout, ENOKEY, keyring, authkey);
+	return key_reject_and_link(key, timeout, ERR(ENOKEY), keyring,
+				   authkey);
 }
 
 extern int generic_key_instantiate(struct key *key, struct key_preparsed_payload *prep);

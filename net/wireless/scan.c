@@ -375,7 +375,7 @@ cfg80211_add_nontrans_list(struct cfg80211_bss *trans_bss,
 	ssid = ieee80211_bss_get_ie(nontrans_bss, WLAN_EID_SSID);
 	if (!ssid) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ssid_len = ssid[1];
 	ssid = ssid + 2;
@@ -581,18 +581,18 @@ int cfg80211_sched_scan_req_possible(struct cfg80211_registered_device *rdev,
 	list_for_each_entry(pos, &rdev->sched_scan_req_list, list) {
 		/* request id zero means legacy in progress */
 		if (!i && !pos->reqid)
-			return -EINPROGRESS;
+			return -ERR(EINPROGRESS);
 		i++;
 	}
 
 	if (i) {
 		/* no legacy allowed when multi request(s) are active */
 		if (!want_multi)
-			return -EINPROGRESS;
+			return -ERR(EINPROGRESS);
 
 		/* resource limit reached */
 		if (i == rdev->wiphy.max_sched_scan_reqs)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 	}
 	return 0;
 }
@@ -689,7 +689,7 @@ int __cfg80211_stop_sched_scan(struct cfg80211_registered_device *rdev,
 
 	sched_scan_req = cfg80211_find_sched_scan_req(rdev, reqid);
 	if (!sched_scan_req)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return cfg80211_stop_sched_scan_req(rdev, sched_scan_req,
 					    driver_initiated);
@@ -2100,11 +2100,11 @@ cfg80211_get_dev_from_ifindex(struct net *net, int ifindex)
 
 	dev = dev_get_by_index(net, ifindex);
 	if (!dev)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 	if (dev->ieee80211_ptr)
 		rdev = wiphy_to_rdev(dev->ieee80211_ptr->wiphy);
 	else
-		rdev = ERR_PTR(-ENODEV);
+		rdev = ERR_PTR(-ERR(ENODEV));
 	dev_put(dev);
 	return rdev;
 }
@@ -2121,7 +2121,7 @@ int cfg80211_wext_siwscan(struct net_device *dev,
 	enum nl80211_band band;
 
 	if (!netif_running(dev))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	if (wrqu->data.length == sizeof(struct iw_scan_req))
 		wreq = (struct iw_scan_req *)extra;
@@ -2132,7 +2132,7 @@ int cfg80211_wext_siwscan(struct net_device *dev,
 		return PTR_ERR(rdev);
 
 	if (rdev->scan_req || rdev->scan_msg) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -2201,7 +2201,7 @@ int cfg80211_wext_siwscan(struct net_device *dev,
 	}
 	/* No channels found? */
 	if (!i) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2212,7 +2212,7 @@ int cfg80211_wext_siwscan(struct net_device *dev,
 	if (wreq) {
 		if (wrqu->data.flags & IW_SCAN_THIS_ESSID) {
 			if (wreq->essid_len > IEEE80211_MAX_SSID_LEN) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 			memcpy(creq->ssids[0].ssid, wreq->essid, wreq->essid_len);
@@ -2498,7 +2498,7 @@ ieee80211_bss(struct wiphy *wiphy, struct iw_request_info *info,
 							 end_buf, &iwe,
 							 IW_EV_PARAM_LEN);
 				if (p == tmp) {
-					current_ev = ERR_PTR(-E2BIG);
+					current_ev = ERR_PTR(-ERR(E2BIG));
 					goto unlock;
 				}
 			}
@@ -2566,7 +2566,7 @@ static int ieee80211_scan_results(struct cfg80211_registered_device *rdev,
 
 	list_for_each_entry(bss, &rdev->bss_list, list) {
 		if (buf + len - current_ev <= IW_EV_ADDR_LEN) {
-			err = -E2BIG;
+			err = -ERR(E2BIG);
 			break;
 		}
 		current_ev = ieee80211_bss(&rdev->wiphy, info, bss,
@@ -2592,7 +2592,7 @@ int cfg80211_wext_giwscan(struct net_device *dev,
 	int res;
 
 	if (!netif_running(dev))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	rdev = cfg80211_get_dev_from_ifindex(dev_net(dev), dev->ifindex);
 
@@ -2600,7 +2600,7 @@ int cfg80211_wext_giwscan(struct net_device *dev,
 		return PTR_ERR(rdev);
 
 	if (rdev->scan_req || rdev->scan_msg)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	res = ieee80211_scan_results(rdev, info, extra, data->length);
 	data->length = 0;

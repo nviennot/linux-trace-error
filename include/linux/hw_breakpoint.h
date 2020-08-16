@@ -103,10 +103,10 @@ register_user_hw_breakpoint(struct perf_event_attr *attr,
 			    struct task_struct *tsk)	{ return NULL; }
 static inline int
 modify_user_hw_breakpoint(struct perf_event *bp,
-			  struct perf_event_attr *attr)	{ return -ENOSYS; }
+			  struct perf_event_attr *attr)	{ return -ERR(ENOSYS); }
 static inline int
 modify_user_hw_breakpoint_check(struct perf_event *bp, struct perf_event_attr *attr,
-				bool check)	{ return -ENOSYS; }
+				bool check)	{ return -ERR(ENOSYS); }
 
 static inline struct perf_event *
 register_wide_hw_breakpoint_cpu(struct perf_event_attr *attr,
@@ -118,14 +118,14 @@ register_wide_hw_breakpoint(struct perf_event_attr *attr,
 			    perf_overflow_handler_t triggered,
 			    void *context)		{ return NULL; }
 static inline int
-register_perf_hw_breakpoint(struct perf_event *bp)	{ return -ENOSYS; }
+register_perf_hw_breakpoint(struct perf_event *bp)	{ return -ERR(ENOSYS); }
 static inline int
-__register_perf_hw_breakpoint(struct perf_event *bp) 	{ return -ENOSYS; }
+__register_perf_hw_breakpoint(struct perf_event *bp) 	{ return -ERR(ENOSYS); }
 static inline void unregister_hw_breakpoint(struct perf_event *bp)	{ }
 static inline void
 unregister_wide_hw_breakpoint(struct perf_event * __percpu *cpu_events)	{ }
 static inline int
-reserve_bp_slot(struct perf_event *bp)			{return -ENOSYS; }
+reserve_bp_slot(struct perf_event *bp)			{return -ERR(ENOSYS); }
 static inline void release_bp_slot(struct perf_event *bp) 		{ }
 
 static inline void flush_ptrace_hw_breakpoint(struct task_struct *tsk)	{ }

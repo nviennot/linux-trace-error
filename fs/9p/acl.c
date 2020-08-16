@@ -46,7 +46,7 @@ static struct posix_acl *__v9fs_get_acl(struct p9_fid *fid, char *name)
 		   size == -ENOSYS || size == -EOPNOTSUPP) {
 		acl = NULL;
 	} else
-		acl = ERR_PTR(-EIO);
+		acl = ERR_PTR(-ERR(EIO));
 
 err_out:
 	kfree(value);
@@ -74,7 +74,7 @@ int v9fs_get_acl(struct inode *inode, struct p9_fid *fid)
 		set_cached_acl(inode, ACL_TYPE_DEFAULT, dacl);
 		set_cached_acl(inode, ACL_TYPE_ACCESS, pacl);
 	} else
-		retval = -EIO;
+		retval = -ERR(EIO);
 
 	if (!IS_ERR(dacl))
 		posix_acl_release(dacl);
@@ -153,7 +153,7 @@ int v9fs_acl_chmod(struct inode *inode, struct p9_fid *fid)
 	struct posix_acl *acl;
 
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	acl = v9fs_get_cached_acl(inode, ACL_TYPE_ACCESS);
 	if (acl) {
 		retval = __posix_acl_chmod(&acl, GFP_KERNEL, inode->i_mode);
@@ -231,7 +231,7 @@ static int v9fs_xattr_get_acl(const struct xattr_handler *handler,
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (acl == NULL)
-		return -ENODATA;
+		return -ERR(ENODATA);
 	error = posix_acl_to_xattr(&init_user_ns, acl, buffer, size);
 	posix_acl_release(acl);
 
@@ -257,9 +257,9 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
 				      flags);
 
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!inode_owner_or_capable(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (value) {
 		/* update the cached acl value */
 		acl = posix_acl_from_xattr(&init_user_ns, value, size);
@@ -302,7 +302,7 @@ static int v9fs_xattr_set_acl(const struct xattr_handler *handler,
 		break;
 	case ACL_TYPE_DEFAULT:
 		if (!S_ISDIR(inode->i_mode)) {
-			retval = acl ? -EINVAL : 0;
+			retval = acl ? -ERR(EINVAL) : 0;
 			goto err_out;
 		}
 		break;

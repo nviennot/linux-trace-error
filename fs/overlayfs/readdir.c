@@ -593,7 +593,7 @@ static int ovl_dir_read_impure(struct path *path,  struct list_head *list,
 
 			if (WARN_ON(ovl_cache_entry_find_link(p->name, p->len,
 							      &newp, &parent)))
-				return -EIO;
+				return -ERR(EIO);
 
 			rb_link_node(&p->node, parent, newp);
 			rb_insert_color(&p->node, root);
@@ -812,7 +812,7 @@ static loff_t ovl_dir_llseek(struct file *file, loff_t offset, int origin)
 		res = vfs_llseek(od->realfile, offset, origin);
 		file->f_pos = od->realfile->f_pos;
 	} else {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 
 		switch (origin) {
 		case SEEK_CUR:
@@ -979,7 +979,7 @@ int ovl_check_empty_dir(struct dentry *dentry, struct list_head *list)
 			if (p->len == 2 && p->name[1] == '.')
 				goto del_entry;
 		}
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 		break;
 
 del_entry:

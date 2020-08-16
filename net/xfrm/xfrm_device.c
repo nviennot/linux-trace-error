@@ -219,11 +219,11 @@ int xfrm_dev_state_add(struct net *net, struct xfrm_state *x,
 	xfrm_address_t *daddr;
 
 	if (!x->type_offload)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We don't yet support UDP encapsulation and TFC padding. */
 	if (x->encap || x->tfcpad)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = dev_get_by_index(net, xuo->ifindex);
 	if (!dev) {
@@ -257,7 +257,7 @@ int xfrm_dev_state_add(struct net *net, struct xfrm_state *x,
 	    !dev->xfrmdev_ops->xdo_dev_state_advance_esn) {
 		xso->dev = NULL;
 		dev_put(dev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	xso->dev = dev;

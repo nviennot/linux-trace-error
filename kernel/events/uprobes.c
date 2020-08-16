@@ -176,7 +176,7 @@ static int __replace_page(struct vm_area_struct *vma, unsigned long addr,
 	lock_page(old_page);
 
 	mmu_notifier_invalidate_range_start(&range);
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (!page_vma_mapped_walk(&pvmw))
 		goto unlock;
 	VM_BUG_ON_PAGE(addr != pvmw.address, old_page);
@@ -374,7 +374,7 @@ __update_ref_ctr(struct mm_struct *mm, unsigned long vaddr, short d)
 	short *ptr;
 
 	if (!vaddr || !d)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = get_user_pages_remote(NULL, mm, vaddr, 1,
 			FOLL_WRITE, &page, &vma, NULL);
@@ -383,7 +383,7 @@ __update_ref_ctr(struct mm_struct *mm, unsigned long vaddr, short d)
 		 * We are asking for 1 page. If get_user_pages_remote() fails,
 		 * it may return 0, in that case we have to return error.
 		 */
-		return ret == 0 ? -EBUSY : ret;
+		return ret == 0 ? -ERR(EBUSY) : ret;
 	}
 
 	kaddr = kmap_atomic(page);
@@ -392,7 +392,7 @@ __update_ref_ctr(struct mm_struct *mm, unsigned long vaddr, short d)
 	if (unlikely(*ptr + d < 0)) {
 		pr_warn("ref_ctr going negative. vaddr: 0x%lx, "
 			"curr val: %d, delta: %d\n", vaddr, *ptr, d);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -488,7 +488,7 @@ retry:
 
 	if (WARN(!is_register && PageCompound(old_page),
 		 "uprobe unregister should never work on compound page\n")) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto put_old;
 	}
 
@@ -748,7 +748,7 @@ static struct uprobe *alloc_uprobe(struct inode *inode, loff_t offset,
 			ref_ctr_mismatch_warn(cur_uprobe, uprobe);
 			put_uprobe(cur_uprobe);
 			kfree(uprobe);
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		kfree(uprobe);
 		uprobe = cur_uprobe;
@@ -816,7 +816,7 @@ static int copy_insn(struct uprobe *uprobe, struct file *filp)
 	loff_t offs = uprobe->offset;
 	void *insn = &uprobe->arch.insn;
 	int size = sizeof(uprobe->arch.insn);
-	int len, err = -EIO;
+	int len, err = -ERR(EIO);
 
 	/* Copy only available bytes, -EIO if nothing was read */
 	do {
@@ -853,7 +853,7 @@ static int prepare_uprobe(struct uprobe *uprobe, struct file *file,
 	if (ret)
 		goto out;
 
-	ret = -ENOTSUPP;
+	ret = -ERR(ENOTSUPP);
 	if (is_trap_insn((uprobe_opcode_t *)&uprobe->arch.insn))
 		goto out;
 
@@ -1147,23 +1147,23 @@ static int __uprobe_register(struct inode *inode, loff_t offset,
 
 	/* Uprobe must have at least one set consumer */
 	if (!uc->handler && !uc->ret_handler)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* copy_insn() uses read_mapping_page() or shmem_read_mapping_page() */
 	if (!inode->i_mapping->a_ops->readpage && !shmem_mapping(inode->i_mapping))
-		return -EIO;
+		return -ERR(EIO);
 	/* Racy, just to catch the obvious mistakes */
 	if (offset > i_size_read(inode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * This ensures that copy_from_page(), copy_to_page() and
 	 * __update_ref_ctr() can't cross page boundary.
 	 */
 	if (!IS_ALIGNED(offset, UPROBE_SWBP_INSN_SIZE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!IS_ALIGNED(ref_ctr_offset, sizeof(short)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
  retry:
 	uprobe = alloc_uprobe(inode, offset, ref_ctr_offset);
@@ -1177,7 +1177,7 @@ static int __uprobe_register(struct inode *inode, loff_t offset,
 	 * Check uprobe_is_active() and retry if it is false.
 	 */
 	down_write(&uprobe->register_rwsem);
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	if (likely(uprobe_is_active(uprobe))) {
 		consumer_add(uprobe, uc);
 		ret = register_for_each_vma(uprobe, uc);
@@ -1218,7 +1218,7 @@ int uprobe_apply(struct inode *inode, loff_t offset,
 {
 	struct uprobe *uprobe;
 	struct uprobe_consumer *con;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	uprobe = find_uprobe(inode, offset);
 	if (WARN_ON(!uprobe))
@@ -1445,10 +1445,10 @@ static int xol_add_vma(struct mm_struct *mm, struct xol_area *area)
 	int ret;
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	if (mm->uprobes_state.xol_area) {
-		ret = -EALREADY;
+		ret = -ERR(EALREADY);
 		goto fail;
 	}
 
@@ -2014,7 +2014,7 @@ static int is_trap_at_addr(struct mm_struct *mm, unsigned long vaddr)
 	int result;
 
 	if (WARN_ON_ONCE(!IS_ALIGNED(vaddr, UPROBE_SWBP_INSN_SIZE)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pagefault_disable();
 	result = __get_user(opcode, (uprobe_opcode_t __user *)vaddr);

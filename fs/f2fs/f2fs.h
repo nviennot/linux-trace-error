@@ -2064,7 +2064,7 @@ enospc:
 	percpu_counter_sub(&sbi->alloc_valid_block_count, release);
 release_quota:
 	dquot_release_reservation_block(inode, release);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 __printf(2, 3)
@@ -2314,7 +2314,7 @@ enospc:
 	} else {
 		dquot_release_reservation_block(inode, 1);
 	}
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static inline void dec_valid_node_count(struct f2fs_sb_info *sbi,
@@ -3891,7 +3891,7 @@ static inline bool f2fs_is_compress_backend_ready(struct inode *inode)
 static inline struct page *f2fs_compress_control_page(struct page *page)
 {
 	WARN_ON_ONCE(1);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline int f2fs_init_compress_mempool(void) { return 0; }
 static inline void f2fs_destroy_compress_mempool(void) { }

@@ -133,7 +133,7 @@ static int camelot_pcm_open(struct snd_soc_component *component,
 		if (unlikely(ret)) {
 			pr_debug("audio unit %d irqs already taken!\n",
 			     asoc_rtd_to_cpu(rtd, 0)->id);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		(void)dmabrg_request_irq(dmairq + 1,camelot_rxdma, cam);
 	} else {
@@ -142,7 +142,7 @@ static int camelot_pcm_open(struct snd_soc_component *component,
 		if (unlikely(ret)) {
 			pr_debug("audio unit %d irqs already taken!\n",
 			     asoc_rtd_to_cpu(rtd, 0)->id);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		(void)dmabrg_request_irq(dmairq + 1, camelot_txdma, cam);
 	}
@@ -259,7 +259,7 @@ static int camelot_trigger(struct snd_soc_component *component,
 			dmabrg_play_dma_stop(cam);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

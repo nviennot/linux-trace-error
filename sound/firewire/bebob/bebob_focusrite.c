@@ -148,7 +148,7 @@ saffirepro_both_clk_freq_get(struct snd_bebob *bebob, unsigned int *rate)
 	if (err < 0)
 		goto end;
 	if (id >= ARRAY_SIZE(rates))
-		err = -EIO;
+		err = -ERR(EIO);
 	else
 		*rate = rates[id];
 end:
@@ -164,7 +164,7 @@ saffirepro_both_clk_freq_set(struct snd_bebob *bebob, unsigned int rate)
 			break;
 	}
 	if (id == ARRAY_SIZE(rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return saffire_write_quad(bebob, SAFFIREPRO_RATE_NOREBOOT, id);
 }
@@ -193,7 +193,7 @@ saffirepro_both_clk_src_get(struct snd_bebob *bebob, unsigned int *id)
 	/* In a case that this driver cannot handle the value of register. */
 	value &= SAFFIREPRO_CLOCK_SOURCE_SELECT_MASK;
 	if (value >= SAFFIREPRO_CLOCK_SOURCE_COUNT || map[value] < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end;
 	}
 
@@ -243,7 +243,7 @@ saffire_meter_get(struct snd_bebob *bebob, u32 *buf, unsigned int size)
 
 	channels = spec->num * 2;
 	if (size < channels * sizeof(u32))
-		return -EIO;
+		return -ERR(EIO);
 
 	err = saffire_read_block(bebob, offset, buf, size);
 	if (err >= 0 && spec->labels == saffire_le_meter_labels) {

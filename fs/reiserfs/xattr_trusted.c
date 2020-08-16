@@ -13,7 +13,7 @@ trusted_get(const struct xattr_handler *handler, struct dentry *unused,
 	    struct inode *inode, const char *name, void *buffer, size_t size)
 {
 	if (!capable(CAP_SYS_ADMIN) || IS_PRIVATE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return reiserfs_xattr_get(inode, xattr_full_name(handler, name),
 				  buffer, size);
@@ -25,7 +25,7 @@ trusted_set(const struct xattr_handler *handler, struct dentry *unused,
 	    size_t size, int flags)
 {
 	if (!capable(CAP_SYS_ADMIN) || IS_PRIVATE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return reiserfs_xattr_set(inode,
 				  xattr_full_name(handler, name),

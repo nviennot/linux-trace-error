@@ -389,7 +389,7 @@ static int snd_vortex_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	default:
 		spin_unlock(&chip->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	spin_unlock(&chip->lock);
 	return 0;
@@ -600,7 +600,7 @@ static int snd_vortex_new_pcm(vortex_t *chip, int idx, int nr)
 	int err, nr_capt;
 
 	if (!chip || idx < 0 || idx >= VORTEX_PCM_LAST)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* idx indicates which kind of PCM device. ADB, SPDIF, I2S and A3D share the 
 	 * same dma engine. WT uses it own separate dma engine which can't capture. */

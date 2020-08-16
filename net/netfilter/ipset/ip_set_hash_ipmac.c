@@ -91,7 +91,7 @@ hash_ipmac4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (skb_mac_header(skb) < skb->head ||
 	    (skb_mac_header(skb) + ETH_HLEN) > skb->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (opt->flags & IPSET_DIM_TWO_SRC)
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_source);
@@ -99,7 +99,7 @@ hash_ipmac4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_dest);
 
 	if (is_zero_ether_addr(e.ether))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip);
 
@@ -207,7 +207,7 @@ hash_ipmac6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (skb_mac_header(skb) < skb->head ||
 	    (skb_mac_header(skb) + ETH_HLEN) > skb->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (opt->flags & IPSET_DIM_TWO_SRC)
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_source);
@@ -215,7 +215,7 @@ hash_ipmac6_kadt(struct ip_set *set, const struct sk_buff *skb,
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_dest);
 
 	if (is_zero_ether_addr(e.ether))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip.in6);
 

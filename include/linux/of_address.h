@@ -63,7 +63,7 @@ extern bool of_dma_is_coherent(struct device_node *np);
 static inline void __iomem *of_io_request_and_map(struct device_node *device,
 						  int index, const char *name)
 {
-	return IOMEM_ERR_PTR(-EINVAL);
+	return IOMEM_ERR_PTR(-ERR(EINVAL));
 }
 
 static inline u64 of_translate_address(struct device_node *np,
@@ -81,13 +81,13 @@ static inline const __be32 *of_get_address(struct device_node *dev, int index,
 static inline int of_pci_range_parser_init(struct of_pci_range_parser *parser,
 			struct device_node *node)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int of_pci_dma_range_parser_init(struct of_pci_range_parser *parser,
 			struct device_node *node)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline struct of_pci_range *of_pci_range_parser_one(
@@ -111,7 +111,7 @@ void __iomem *of_iomap(struct device_node *node, int index);
 static inline int of_address_to_resource(struct device_node *dev, int index,
 					 struct resource *r)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void __iomem *of_iomap(struct device_node *device, int index)
@@ -132,7 +132,7 @@ extern int of_pci_range_to_resource(struct of_pci_range *range,
 static inline int of_pci_address_to_resource(struct device_node *dev, int bar,
 				             struct resource *r)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline const __be32 *of_get_pci_address(struct device_node *dev,
@@ -144,7 +144,7 @@ static inline int of_pci_range_to_resource(struct of_pci_range *range,
 					   struct device_node *np,
 					   struct resource *res)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_OF_ADDRESS && CONFIG_PCI */
 

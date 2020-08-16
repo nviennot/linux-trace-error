@@ -62,7 +62,7 @@ static struct objagg_obj *world_obj_get(struct world *world,
 	} else if (world->objagg_objs[key_id_index(key_id)] != objagg_obj) {
 		pr_err("Key %u: God another object for the same key.\n",
 		       key_id);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_key_id_check;
 	}
 	world->key_refs[key_id_index(key_id)]++;
@@ -105,7 +105,7 @@ static void *delta_create(void *priv, void *parent_obj, void *obj)
 	struct delta *delta;
 
 	if (!delta_check(priv, parent_obj, obj))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	delta = kzalloc(sizeof(*delta), GFP_KERNEL);
 	if (!delta)
@@ -168,28 +168,28 @@ static int test_nodelta_obj_get(struct world *world, struct objagg *objagg,
 	if (should_create_root) {
 		if (world->root_count != orig_root_count + 1) {
 			pr_err("Key %u: Root was not created\n", key_id);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_check_root_count;
 		}
 	} else {
 		if (world->root_count != orig_root_count) {
 			pr_err("Key %u: Root was incorrectly created\n",
 			       key_id);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_check_root_count;
 		}
 	}
 	root = objagg_obj_root_priv(objagg_obj);
 	if (root->key.id != key_id) {
 		pr_err("Key %u: Root has unexpected key id\n", key_id);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_check_key_id;
 	}
 	if (should_create_root &&
 	    memcmp(world->next_root_buf, root->buf, sizeof(root->buf))) {
 		pr_err("Key %u: Buffer does not match the expected content\n",
 		       key_id);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_check_buf;
 	}
 	return 0;
@@ -211,13 +211,13 @@ static int test_nodelta_obj_put(struct world *world, struct objagg *objagg,
 	if (should_destroy_root) {
 		if (world->root_count != orig_root_count - 1) {
 			pr_err("Key %u: Root was not destroyed\n", key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		if (world->root_count != orig_root_count) {
 			pr_err("Key %u: Root was incorrectly destroyed\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -234,7 +234,7 @@ static int check_stats_zero(struct objagg *objagg)
 
 	if (stats->stats_info_count != 0) {
 		pr_err("Stats: Object count is not zero while it should be\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	objagg_stats_put(stats);
@@ -254,19 +254,19 @@ static int check_stats_nodelta(struct objagg *objagg)
 	if (stats->stats_info_count != NUM_KEYS) {
 		pr_err("Stats: Unexpected object count (%u expected, %u returned)\n",
 		       NUM_KEYS, stats->stats_info_count);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto stats_put;
 	}
 
 	for (i = 0; i < stats->stats_info_count; i++) {
 		if (stats->stats_info[i].stats.user_count != 2) {
 			pr_err("Stats: incorrect user count\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto stats_put;
 		}
 		if (stats->stats_info[i].stats.delta_user_count != 2) {
 			pr_err("Stats: incorrect delta user count\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto stats_put;
 		}
 	}
@@ -285,7 +285,7 @@ static bool delta_check_dummy(void *priv, const void *parent_obj,
 
 static void *delta_create_dummy(void *priv, void *parent_obj, void *obj)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static void delta_destroy_dummy(void *priv, void *delta_priv)
@@ -570,25 +570,25 @@ static int check_expect(struct world *world,
 		if (orig_delta_count != world->delta_count) {
 			pr_err("Key %u: Delta count changed while expected to remain the same.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case EXPECT_DELTA_INC:
 		if (WARN_ON(action_item->action == ACTION_PUT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (orig_delta_count + 1 != world->delta_count) {
 			pr_err("Key %u: Delta count was not incremented.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case EXPECT_DELTA_DEC:
 		if (WARN_ON(action_item->action == ACTION_GET))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (orig_delta_count - 1 != world->delta_count) {
 			pr_err("Key %u: Delta count was not decremented.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	}
@@ -598,25 +598,25 @@ static int check_expect(struct world *world,
 		if (orig_root_count != world->root_count) {
 			pr_err("Key %u: Root count changed while expected to remain the same.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case EXPECT_ROOT_INC:
 		if (WARN_ON(action_item->action == ACTION_PUT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (orig_root_count + 1 != world->root_count) {
 			pr_err("Key %u: Root count was not incremented.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case EXPECT_ROOT_DEC:
 		if (WARN_ON(action_item->action == ACTION_GET))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (orig_root_count - 1 != world->root_count) {
 			pr_err("Key %u: Root count was not decremented.\n",
 			       key_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -645,19 +645,19 @@ check_expect_stats_nums(const struct objagg_obj_stats_info *stats_info,
 	if (stats_info->is_root != expect_stats_info->is_root) {
 		if (errmsg)
 			*errmsg = "Incorrect root/delta indication";
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (stats_info->stats.user_count !=
 	    expect_stats_info->stats.user_count) {
 		if (errmsg)
 			*errmsg = "Incorrect user count";
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (stats_info->stats.delta_user_count !=
 	    expect_stats_info->stats.delta_user_count) {
 		if (errmsg)
 			*errmsg = "Incorrect delta user count";
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -671,7 +671,7 @@ check_expect_stats_key_id(const struct objagg_obj_stats_info *stats_info,
 	    expect_stats_info->key_id) {
 		if (errmsg)
 			*errmsg = "incorrect key id";
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -703,7 +703,7 @@ static int check_expect_stats_neigh(const struct objagg_stats *stats,
 		if (!err)
 			return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __check_expect_stats(const struct objagg_stats *stats,
@@ -715,7 +715,7 @@ static int __check_expect_stats(const struct objagg_stats *stats,
 
 	if (stats->stats_info_count != expect_stats->info_count) {
 		*errmsg = "Unexpected object count";
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < stats->stats_info_count; i++) {

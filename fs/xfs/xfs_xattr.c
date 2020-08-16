@@ -207,7 +207,7 @@ xfs_vn_listxattr(
 	if (error)
 		return error;
 	if (context.count < 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return context.count;
 }

@@ -93,7 +93,7 @@ static int wm1133_ev1_hw_params(struct snd_pcm_substream *substream,
 		}
 	}
 	if (!found)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* codec FLL input is 14.75 MHz from MCLK */
 	snd_soc_dai_set_pll(codec_dai, 0, 0, 14750000, wm8350_audio[i].sysclk);
@@ -107,7 +107,7 @@ static int wm1133_ev1_hw_params(struct snd_pcm_substream *substream,
 		snd_soc_dai_set_tdm_slot(cpu_dai, 0x1, 0x1, 1, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set MCLK as the codec system clock for DAC and ADC */

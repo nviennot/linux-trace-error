@@ -75,13 +75,13 @@ static int sof_of_probe(struct platform_device *pdev)
 
 	desc = device_get_match_data(dev);
 	if (!desc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* get ops for platform */
 	ops = desc->ops;
 	if (!ops) {
 		dev_err(dev, "error: no matching DT descriptor ops\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sof_pdata->desc = desc;

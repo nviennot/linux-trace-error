@@ -39,7 +39,7 @@ static int enable_midi_input(struct echoaudio *chip, char enable)
 	dev_dbg(chip->card->dev, "enable_midi_input(%d)\n", enable);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (enable) {
 		chip->mtc_state = MIDI_IN_STATE_NORMAL;
@@ -60,10 +60,10 @@ Returns how many actually written or < 0 on error */
 static int write_midi(struct echoaudio *chip, u8 *data, int bytes)
 {
 	if (snd_BUG_ON(bytes <= 0 || bytes >= MIDI_OUT_BUFFER_SIZE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* HF4 indicates that it is safe to write MIDI output data */
 	if (! (get_dsp_register(chip, CHI32_STATUS_REG) & CHI32_STATUS_REG_HF4))

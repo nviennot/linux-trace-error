@@ -210,7 +210,7 @@ long hpfs_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			secno n_trimmed;
 			int r;
 			if (!capable(CAP_SYS_ADMIN))
-				return -EPERM;
+				return -ERR(EPERM);
 			if (copy_from_user(&range, (struct fstrim_range __user *)arg, sizeof(range)))
 				return -EFAULT;
 			r = hpfs_trim_fs(file_inode(file)->i_sb, range.start >> 9, (range.start + range.len) >> 9, (range.minlen + 511) >> 9, &n_trimmed);
@@ -222,7 +222,7 @@ long hpfs_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			return 0;
 		}
 		default: {
-			return -ENOIOCTLCMD;
+			return -ERR(ENOIOCTLCMD);
 		}
 	}
 }
@@ -489,7 +489,7 @@ static int hpfs_remount_fs(struct super_block *s, int *flags, char *data)
 
 out_err:
 	hpfs_unlock(s);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hpfs_show_options(struct seq_file *seq, struct dentry *root)
@@ -750,7 +750,7 @@ bail1:
 bail0:
 	hpfs_unlock(s);
 	free_sbi(sbi);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct dentry *hpfs_mount(struct file_system_type *fs_type,

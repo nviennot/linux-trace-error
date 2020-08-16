@@ -43,7 +43,7 @@ int do_truncate(struct dentry *dentry, loff_t length, unsigned int time_attrs,
 
 	/* Not pretty: "inode->i_size" shouldn't really be signed. But it is. */
 	if (length < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newattrs.ia_size = length;
 	newattrs.ia_valid = ATTR_SIZE | time_attrs;
@@ -75,9 +75,9 @@ long vfs_truncate(const struct path *path, loff_t length)
 
 	/* For directories it's -EISDIR, for other non-regulars - -EINVAL */
 	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
+		return -ERR(EISDIR);
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = mnt_want_write(path->mnt);
 	if (error)
@@ -87,7 +87,7 @@ long vfs_truncate(const struct path *path, loff_t length)
 	if (error)
 		goto mnt_drop_write_and_out;
 
-	error = -EPERM;
+	error = -ERR(EPERM);
 	if (IS_APPEND(inode))
 		goto mnt_drop_write_and_out;
 
@@ -125,7 +125,7 @@ long do_sys_truncate(const char __user *pathname, loff_t length)
 	int error;
 
 	if (length < 0)	/* sorry, but loff_t says... */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 retry:
 	error = user_path_at(AT_FDCWD, pathname, lookup_flags, &path);
@@ -159,10 +159,10 @@ long do_sys_ftruncate(unsigned int fd, loff_t length, int small)
 	struct fd f;
 	int error;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (length < 0)
 		goto out;
-	error = -EBADF;
+	error = -ERR(EBADF);
 	f = fdget(fd);
 	if (!f.file)
 		goto out;
@@ -173,16 +173,16 @@ long do_sys_ftruncate(unsigned int fd, loff_t length, int small)
 
 	dentry = f.file->f_path.dentry;
 	inode = dentry->d_inode;
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!S_ISREG(inode->i_mode) || !(f.file->f_mode & FMODE_WRITE))
 		goto out_putf;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	/* Cannot ftruncate over 2^31 bytes without large file support */
 	if (small && length > MAX_NON_LFS)
 		goto out_putf;
 
-	error = -EPERM;
+	error = -ERR(EPERM);
 	/* Check IS_APPEND on real upper inode */
 	if (IS_APPEND(file_inode(f.file)))
 		goto out_putf;
@@ -232,54 +232,54 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 	long ret;
 
 	if (offset < 0 || len <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Return error if mode is not supported */
 	if (mode & ~FALLOC_FL_SUPPORTED_MASK)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Punch hole and zero range are mutually exclusive */
 	if ((mode & (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE)) ==
 	    (FALLOC_FL_PUNCH_HOLE | FALLOC_FL_ZERO_RANGE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Punch hole must have keep size set */
 	if ((mode & FALLOC_FL_PUNCH_HOLE) &&
 	    !(mode & FALLOC_FL_KEEP_SIZE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Collapse range should only be used exclusively. */
 	if ((mode & FALLOC_FL_COLLAPSE_RANGE) &&
 	    (mode & ~FALLOC_FL_COLLAPSE_RANGE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Insert range should only be used exclusively. */
 	if ((mode & FALLOC_FL_INSERT_RANGE) &&
 	    (mode & ~FALLOC_FL_INSERT_RANGE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Unshare range should only be used with allocate mode. */
 	if ((mode & FALLOC_FL_UNSHARE_RANGE) &&
 	    (mode & ~(FALLOC_FL_UNSHARE_RANGE | FALLOC_FL_KEEP_SIZE)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	/*
 	 * We can only allow pure fallocate on append only files
 	 */
 	if ((mode & ~FALLOC_FL_KEEP_SIZE) && IS_APPEND(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (IS_IMMUTABLE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * We cannot allow any fallocate operation on an active swapfile
 	 */
 	if (IS_SWAPFILE(inode))
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 
 	/*
 	 * Revalidate the write permissions, in case security policy has
@@ -290,20 +290,20 @@ int vfs_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 		return ret;
 
 	if (S_ISFIFO(inode->i_mode))
-		return -ESPIPE;
+		return -ERR(ESPIPE);
 
 	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
+		return -ERR(EISDIR);
 
 	if (!S_ISREG(inode->i_mode) && !S_ISBLK(inode->i_mode))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Check for wrap through zero too */
 	if (((offset + len) > inode->i_sb->s_maxbytes) || ((offset + len) < 0))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	if (!file->f_op->fallocate)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	file_start_write(file);
 	ret = file->f_op->fallocate(file, mode, offset, len);
@@ -326,7 +326,7 @@ EXPORT_SYMBOL_GPL(vfs_fallocate);
 int ksys_fallocate(int fd, int mode, loff_t offset, loff_t len)
 {
 	struct fd f = fdget(fd);
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 
 	if (f.file) {
 		error = vfs_fallocate(f.file, mode, offset, len);
@@ -403,10 +403,10 @@ long do_faccessat(int dfd, const char __user *filename, int mode, int flags)
 	const struct cred *old_cred = NULL;
 
 	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & ~(AT_EACCESS | AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & AT_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
@@ -431,7 +431,7 @@ retry:
 		 * MAY_EXEC on regular files is denied if the fs is mounted
 		 * with the "noexec" flag.
 		 */
-		res = -EACCES;
+		res = -ERR(EACCES);
 		if (path_noexec(&path))
 			goto out_path_release;
 	}
@@ -451,7 +451,7 @@ retry:
 	 * state before we even see this result.
 	 */
 	if (__mnt_is_readonly(path.mnt))
-		res = -EROFS;
+		res = -ERR(EROFS);
 
 out_path_release:
 	path_put(&path);
@@ -518,11 +518,11 @@ SYSCALL_DEFINE1(fchdir, unsigned int, fd)
 	struct fd f = fdget_raw(fd);
 	int error;
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	if (!f.file)
 		goto out;
 
-	error = -ENOTDIR;
+	error = -ERR(ENOTDIR);
 	if (!d_can_lookup(f.file->f_path.dentry))
 		goto out_putf;
 
@@ -549,7 +549,7 @@ retry:
 	if (error)
 		goto dput_and_out;
 
-	error = -EPERM;
+	error = -ERR(EPERM);
 	if (!ns_capable(current_user_ns(), CAP_SYS_CHROOT))
 		goto dput_and_out;
 	error = security_path_chroot(&path);
@@ -605,7 +605,7 @@ out_unlock:
 int ksys_fchmod(unsigned int fd, umode_t mode)
 {
 	struct fd f = fdget(fd);
-	int err = -EBADF;
+	int err = -ERR(EBADF);
 
 	if (f.file) {
 		audit_file(f.file);
@@ -665,13 +665,13 @@ retry_deleg:
 	newattrs.ia_valid =  ATTR_CTIME;
 	if (user != (uid_t) -1) {
 		if (!uid_valid(uid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		newattrs.ia_valid |= ATTR_UID;
 		newattrs.ia_uid = uid;
 	}
 	if (group != (gid_t) -1) {
 		if (!gid_valid(gid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		newattrs.ia_valid |= ATTR_GID;
 		newattrs.ia_gid = gid;
 	}
@@ -695,7 +695,7 @@ int do_fchownat(int dfd, const char __user *filename, uid_t user, gid_t group,
 		int flag)
 {
 	struct path path;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	int lookup_flags;
 
 	if ((flag & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
@@ -743,7 +743,7 @@ SYSCALL_DEFINE3(lchown, const char __user *, filename, uid_t, user, gid_t, group
 int ksys_fchown(unsigned int fd, uid_t user, gid_t group)
 {
 	struct fd f = fdget(fd);
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 
 	if (!f.file)
 		goto out;
@@ -786,7 +786,7 @@ static int do_dentry_open(struct file *f,
 
 	/* Any file opened for execve()/uselib() has to be a regular file. */
 	if (unlikely(f->f_flags & FMODE_EXEC && !S_ISREG(inode->i_mode))) {
-		error = -EACCES;
+		error = -ERR(EACCES);
 		goto cleanup_file;
 	}
 
@@ -808,7 +808,7 @@ static int do_dentry_open(struct file *f,
 
 	f->f_op = fops_get(inode->i_fop);
 	if (WARN_ON(!f->f_op)) {
-		error = -ENODEV;
+		error = -ERR(ENODEV);
 		goto cleanup_all;
 	}
 
@@ -847,7 +847,7 @@ static int do_dentry_open(struct file *f,
 	/* NB: we're sure to have correct a_ops only after f_op->open */
 	if (f->f_flags & O_DIRECT) {
 		if (!f->f_mapping->a_ops || !f->f_mapping->a_ops->direct_IO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/*
@@ -861,7 +861,7 @@ static int do_dentry_open(struct file *f,
 
 cleanup_all:
 	if (WARN_ON_ONCE(error > 0))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	fops_put(f->f_op);
 	if (f->f_mode & FMODE_WRITER) {
 		put_write_access(inode);
@@ -1017,18 +1017,18 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 	 * of its arguments.
 	 */
 	if (flags & ~VALID_OPEN_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (how->resolve & ~VALID_RESOLVE_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Deal with the mode. */
 	if (WILL_CREATE(flags)) {
 		if (how->mode & ~S_IALLUGO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		op->mode = how->mode | S_IFREG;
 	} else {
 		if (how->mode != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		op->mode = 0;
 	}
 
@@ -1040,14 +1040,14 @@ inline int build_open_flags(const struct open_how *how, struct open_flags *op)
 	 */
 	if (flags & __O_TMPFILE) {
 		if ((flags & O_TMPFILE_MASK) != O_TMPFILE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!(acc_mode & MAY_WRITE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (flags & O_PATH) {
 		/* O_PATH only permits certain other flags to be set. */
 		if (flags & ~O_PATH_FLAGS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		acc_mode = 0;
 	}
 
@@ -1219,7 +1219,7 @@ SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
 	BUILD_BUG_ON(sizeof(struct open_how) != OPEN_HOW_SIZE_LATEST);
 
 	if (unlikely(usize < OPEN_HOW_SIZE_VER0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
 	if (err)
@@ -1305,7 +1305,7 @@ SYSCALL_DEFINE1(close, unsigned int, fd)
 		     retval == -ERESTARTNOINTR ||
 		     retval == -ERESTARTNOHAND ||
 		     retval == -ERESTART_RESTARTBLOCK))
-		retval = -EINTR;
+		retval = -ERR(EINTR);
 
 	return retval;
 }
@@ -1320,7 +1320,7 @@ SYSCALL_DEFINE0(vhangup)
 		tty_vhangup_self();
 		return 0;
 	}
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 /*
@@ -1332,7 +1332,7 @@ SYSCALL_DEFINE0(vhangup)
 int generic_file_open(struct inode * inode, struct file * filp)
 {
 	if (!(filp->f_flags & O_LARGEFILE) && i_size_read(inode) > MAX_NON_LFS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	return 0;
 }
 

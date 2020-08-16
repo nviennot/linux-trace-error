@@ -32,7 +32,7 @@ static loff_t hpfs_dir_lseek(struct file *filp, loff_t off, int whence)
 
 	/* Somebody else will have to figure out what to do here */
 	if (whence == SEEK_DATA || whence == SEEK_HOLE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode_lock(i);
 	hpfs_lock(s);
@@ -59,7 +59,7 @@ fail:
 	/*pr_warn("illegal lseek: %016llx\n", new_off);*/
 	hpfs_unlock(s);
 	inode_unlock(i);
-	return -ESPIPE;
+	return -ERR(ESPIPE);
 }
 
 static int hpfs_readdir(struct file *file, struct dir_context *ctx)
@@ -115,7 +115,7 @@ static int hpfs_readdir(struct file *file, struct dir_context *ctx)
 		goto out;
 	}
 	if (ctx->pos == 13) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	
@@ -214,7 +214,7 @@ struct dentry *hpfs_lookup(struct inode *dir, struct dentry *dentry, unsigned in
 	if ((err = hpfs_chk_name(name, &len))) {
 		if (err == -ENAMETOOLONG) {
 			hpfs_unlock(dir->i_sb);
-			return ERR_PTR(-ENAMETOOLONG);
+			return ERR_PTR(-ERR(ENAMETOOLONG));
 		}
 		goto end_add;
 	}
@@ -268,7 +268,7 @@ struct dentry *hpfs_lookup(struct inode *dir, struct dentry *dentry, unsigned in
 	if (de->has_acl || de->has_xtd_perm) if (!sb_rdonly(dir->i_sb)) {
 		hpfs_error(result->i_sb, "ACLs or XPERM found. This is probably HPFS386. This driver doesn't support it now. Send me some info on these structures");
 		iput(result);
-		result = ERR_PTR(-EINVAL);
+		result = ERR_PTR(-ERR(EINVAL));
 		goto bail1;
 	}
 

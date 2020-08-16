@@ -223,13 +223,13 @@ long watch_queue_set_size(struct pipe_inode_info *pipe, unsigned int nr_notes)
 	int ret, i, nr_pages;
 
 	if (!wqueue)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (wqueue->notes)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (nr_notes < 1 ||
 	    nr_notes > 512) /* TODO: choose a better hard limit */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nr_pages = (nr_notes + WATCH_QUEUE_NOTES_PER_PAGE - 1);
 	nr_pages /= WATCH_QUEUE_NOTES_PER_PAGE;
@@ -239,7 +239,7 @@ long watch_queue_set_size(struct pipe_inode_info *pipe, unsigned int nr_notes)
 	    (too_many_pipe_buffers_hard(user_bufs) ||
 	     too_many_pipe_buffers_soft(user_bufs)) &&
 	    pipe_is_unprivileged_user()) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto error;
 	}
 
@@ -294,7 +294,7 @@ long watch_queue_set_filter(struct pipe_inode_info *pipe,
 	int ret, nr_filter = 0, i;
 
 	if (!wqueue)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!_filter) {
 		/* Remove the old filter */
@@ -308,13 +308,13 @@ long watch_queue_set_filter(struct pipe_inode_info *pipe,
 	if (filter.nr_filters == 0 ||
 	    filter.nr_filters > 16 ||
 	    filter.__reserved != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tf = memdup_user(_filter->filters, filter.nr_filters * sizeof(*tf));
 	if (IS_ERR(tf))
 		return PTR_ERR(tf);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	for (i = 0; i < filter.nr_filters; i++) {
 		if ((tf[i].info_filter & ~tf[i].info_mask) ||
 		    tf[i].info_mask & WATCH_INFO_LENGTH)
@@ -446,7 +446,7 @@ int add_watch_to_object(struct watch *watch, struct watch_list *wlist)
 	hlist_for_each_entry(w, &wlist->watchers, list_node) {
 		struct watch_queue *wq = rcu_access_pointer(w->queue);
 		if (wqueue == wq && watch->id == w->id)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	watch->cred = get_current_cred();
@@ -479,7 +479,7 @@ int remove_watch_from_object(struct watch_list *wlist, struct watch_queue *wq,
 	struct watch_notification_removal n;
 	struct watch_queue *wqueue;
 	struct watch *watch;
-	int ret = -EBADSLT;
+	int ret = -ERR(EBADSLT);
 
 	rcu_read_lock();
 
@@ -617,7 +617,7 @@ void watch_queue_clear(struct watch_queue *wqueue)
 struct watch_queue *get_watch_queue(int fd)
 {
 	struct pipe_inode_info *pipe;
-	struct watch_queue *wqueue = ERR_PTR(-EINVAL);
+	struct watch_queue *wqueue = ERR_PTR(-ERR(EINVAL));
 	struct fd f;
 
 	f = fdget(fd);

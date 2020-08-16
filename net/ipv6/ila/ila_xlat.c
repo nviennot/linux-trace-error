@@ -244,7 +244,7 @@ static int ila_add_mapping(struct net *net, struct ila_xlat_params *xp)
 
 		do {
 			if (!ila_cmp_params(tila, xp)) {
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 				goto out;
 			}
 
@@ -285,7 +285,7 @@ static int ila_del_mapping(struct net *net, struct ila_xlat_params *xp)
 	struct ila_net *ilan = net_generic(net, ila_net_id);
 	struct ila_map *ila, *head, *prev;
 	spinlock_t *lock = ila_get_lock(ilan, xp->ip.locator_match);
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	spin_lock(lock);
 
@@ -455,7 +455,7 @@ static int ila_dump_info(struct ila_map *ila,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int ila_xlat_nl_cmd_get_mapping(struct sk_buff *skb, struct genl_info *info)

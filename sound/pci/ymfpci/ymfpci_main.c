@@ -75,7 +75,7 @@ static int snd_ymfpci_codec_ready(struct snd_ymfpci *chip, int secondary)
 	dev_err(chip->card->dev,
 		"codec_ready: codec %i is not ready [0x%x]\n",
 		secondary, snd_ymfpci_readw(chip, reg));
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static void snd_ymfpci_codec_write(struct snd_ac97 *ac97, u16 reg, u16 val)
@@ -248,9 +248,9 @@ static int snd_ymfpci_voice_alloc(struct snd_ymfpci *chip,
 	int result;
 	
 	if (snd_BUG_ON(!rvoice))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(pair && type != YMFPCI_PCM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	spin_lock_irqsave(&chip->voice_lock, flags);
 	for (;;) {
@@ -269,7 +269,7 @@ static int snd_ymfpci_voice_free(struct snd_ymfpci *chip, struct snd_ymfpci_voic
 	unsigned long flags;
 	
 	if (snd_BUG_ON(!pvoice))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_ymfpci_hw_stop(chip);
 	spin_lock_irqsave(&chip->voice_lock, flags);
 	if (pvoice->number == chip->src441_used) {
@@ -383,7 +383,7 @@ static int snd_ymfpci_playback_trigger(struct snd_pcm_substream *substream,
 
 	spin_lock(&chip->reg_lock);
 	if (ypcm->voices[0] == NULL) {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto __unlock;
 	}
 	switch (cmd) {
@@ -409,7 +409,7 @@ static int snd_ymfpci_playback_trigger(struct snd_pcm_substream *substream,
 		ypcm->running = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
       __unlock:
@@ -443,7 +443,7 @@ static int snd_ymfpci_capture_trigger(struct snd_pcm_substream *substream,
 		ypcm->running = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->reg_lock);
@@ -1441,7 +1441,7 @@ static int snd_ymfpci_get_single(struct snd_kcontrol *kcontrol,
 	switch (reg) {
 	case YDSXGR_SPDIFOUTCTRL: break;
 	case YDSXGR_SPDIFINCTRL: break;
-	default: return -EINVAL;
+	default: return -ERR(EINVAL);
 	}
 	ucontrol->value.integer.value[0] =
 		(snd_ymfpci_readl(chip, reg) >> shift) & mask;
@@ -1461,7 +1461,7 @@ static int snd_ymfpci_put_single(struct snd_kcontrol *kcontrol,
 	switch (reg) {
 	case YDSXGR_SPDIFOUTCTRL: break;
 	case YDSXGR_SPDIFINCTRL: break;
-	default: return -EINVAL;
+	default: return -ERR(EINVAL);
 	}
 	val = (ucontrol->value.integer.value[0] & mask);
 	val <<= shift;
@@ -1489,7 +1489,7 @@ static int snd_ymfpci_info_double(struct snd_kcontrol *kcontrol, struct snd_ctl_
 	unsigned int reg = kcontrol->private_value;
 
 	if (reg < 0x80 || reg >= 0xc0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
 	uinfo->value.integer.min = 0;
@@ -1505,7 +1505,7 @@ static int snd_ymfpci_get_double(struct snd_kcontrol *kcontrol, struct snd_ctl_e
 	unsigned int val;
 	
 	if (reg < 0x80 || reg >= 0xc0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&chip->reg_lock);
 	val = snd_ymfpci_readl(chip, reg);
 	spin_unlock_irq(&chip->reg_lock);
@@ -1523,7 +1523,7 @@ static int snd_ymfpci_put_double(struct snd_kcontrol *kcontrol, struct snd_ctl_e
 	unsigned int val1, val2, oval;
 	
 	if (reg < 0x80 || reg >= 0xc0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val1 = ucontrol->value.integer.value[0] & mask;
 	val2 = ucontrol->value.integer.value[1] & mask;
 	val1 <<= shift_left;
@@ -1813,7 +1813,7 @@ int snd_ymfpci_mixer(struct snd_ymfpci *chip, int rear_switch)
 
 	/* add S/PDIF control */
 	if (snd_BUG_ON(!chip->pcm_spdif))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if ((err = snd_ctl_add(chip->card, kctl = snd_ctl_new1(&snd_ymfpci_spdif_default, chip))) < 0)
 		return err;
 	kctl->id.device = chip->pcm_spdif->device;
@@ -2011,7 +2011,7 @@ static int snd_ymfpci_request_firmware(struct snd_ymfpci *chip)
 		if (chip->dsp_microcode->size != YDSXG_DSPLENGTH) {
 			dev_err(chip->card->dev,
 				"DSP microcode has wrong size\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 	if (err < 0)
@@ -2027,7 +2027,7 @@ static int snd_ymfpci_request_firmware(struct snd_ymfpci *chip)
 		if (chip->controller_microcode->size != YDSXG_CTRLLENGTH) {
 			dev_err(chip->card->dev,
 				"controller microcode has wrong size\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 	}
 	if (err < 0)
@@ -2177,7 +2177,7 @@ static int snd_ymfpci_free(struct snd_ymfpci *chip)
 	u16 ctrl;
 
 	if (snd_BUG_ON(!chip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (chip->res_reg_area) {	/* don't touch busy hardware */
 		snd_ymfpci_writel(chip, YDSXGR_NATIVEDACOUTVOL, 0);
@@ -2361,13 +2361,13 @@ int snd_ymfpci_create(struct snd_card *card,
 		dev_err(chip->card->dev,
 			"unable to grab memory region 0x%lx-0x%lx\n",
 			chip->reg_area_phys, chip->reg_area_phys + 0x8000 - 1);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto free_chip;
 	}
 	if (request_irq(pci->irq, snd_ymfpci_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, chip)) {
 		dev_err(chip->card->dev, "unable to grab IRQ %d\n", pci->irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto free_chip;
 	}
 	chip->irq = pci->irq;
@@ -2375,7 +2375,7 @@ int snd_ymfpci_create(struct snd_card *card,
 
 	snd_ymfpci_aclink_reset(pci);
 	if (snd_ymfpci_codec_ready(chip, 0) < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto free_chip;
 	}
 
@@ -2389,7 +2389,7 @@ int snd_ymfpci_create(struct snd_card *card,
 	udelay(100); /* seems we need a delay after downloading image.. */
 
 	if (snd_ymfpci_memalloc(chip) < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto free_chip;
 	}
 

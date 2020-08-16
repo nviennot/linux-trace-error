@@ -87,7 +87,7 @@ int dns_query(struct net *net,
 	       type, (int)namelen, (int)namelen, name, namelen, options);
 
 	if (!name || namelen == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* construct the query key description as "[<type>:]<name>" */
 	typelen = 0;
@@ -95,12 +95,12 @@ int dns_query(struct net *net,
 	if (type) {
 		typelen = strlen(type);
 		if (typelen < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		desclen += typelen + 1;
 	}
 
 	if (namelen < 3 || namelen > 255)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	desclen += namelen + 1;
 
 	desc = kmalloc(desclen, GFP_KERNEL);

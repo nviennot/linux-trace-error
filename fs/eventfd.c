@@ -213,7 +213,7 @@ int eventfd_ctx_remove_wait_queue(struct eventfd_ctx *ctx, wait_queue_entry_t *w
 		wake_up_locked_poll(&ctx->wqh, EPOLLOUT);
 	spin_unlock_irqrestore(&ctx->wqh.lock, flags);
 
-	return *cnt != 0 ? 0 : -EAGAIN;
+	return *cnt != 0 ? 0 : -ERR(EAGAIN);
 }
 EXPORT_SYMBOL_GPL(eventfd_ctx_remove_wait_queue);
 
@@ -225,13 +225,13 @@ static ssize_t eventfd_read(struct kiocb *iocb, struct iov_iter *to)
 	DECLARE_WAITQUEUE(wait, current);
 
 	if (iov_iter_count(to) < sizeof(ucnt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&ctx->wqh.lock);
 	if (!ctx->count) {
 		if ((file->f_flags & O_NONBLOCK) ||
 		    (iocb->ki_flags & IOCB_NOWAIT)) {
 			spin_unlock_irq(&ctx->wqh.lock);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		__add_wait_queue(&ctx->wqh, &wait);
 		for (;;) {
@@ -242,7 +242,7 @@ static ssize_t eventfd_read(struct kiocb *iocb, struct iov_iter *to)
 				__remove_wait_queue(&ctx->wqh, &wait);
 				__set_current_state(TASK_RUNNING);
 				spin_unlock_irq(&ctx->wqh.lock);
-				return -ERESTARTSYS;
+				return -ERR(ERESTARTSYS);
 			}
 			spin_unlock_irq(&ctx->wqh.lock);
 			schedule();
@@ -270,13 +270,13 @@ static ssize_t eventfd_write(struct file *file, const char __user *buf, size_t c
 	DECLARE_WAITQUEUE(wait, current);
 
 	if (count < sizeof(ucnt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&ucnt, buf, sizeof(ucnt)))
 		return -EFAULT;
 	if (ucnt == ULLONG_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&ctx->wqh.lock);
-	res = -EAGAIN;
+	res = -ERR(EAGAIN);
 	if (ULLONG_MAX - ctx->count > ucnt)
 		res = sizeof(ucnt);
 	else if (!(file->f_flags & O_NONBLOCK)) {
@@ -288,7 +288,7 @@ static ssize_t eventfd_write(struct file *file, const char __user *buf, size_t c
 				break;
 			}
 			if (signal_pending(current)) {
-				res = -ERESTARTSYS;
+				res = -ERR(ERESTARTSYS);
 				break;
 			}
 			spin_unlock_irq(&ctx->wqh.lock);
@@ -348,10 +348,10 @@ struct file *eventfd_fget(int fd)
 
 	file = fget(fd);
 	if (!file)
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 	if (file->f_op != &eventfd_fops) {
 		fput(file);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return file;
@@ -372,7 +372,7 @@ struct eventfd_ctx *eventfd_ctx_fdget(int fd)
 	struct eventfd_ctx *ctx;
 	struct fd f = fdget(fd);
 	if (!f.file)
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 	ctx = eventfd_ctx_fileget(f.file);
 	fdput(f);
 	return ctx;
@@ -393,7 +393,7 @@ struct eventfd_ctx *eventfd_ctx_fileget(struct file *file)
 	struct eventfd_ctx *ctx;
 
 	if (file->f_op != &eventfd_fops)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ctx = file->private_data;
 	kref_get(&ctx->kref);
@@ -412,7 +412,7 @@ static int do_eventfd(unsigned int count, int flags)
 	BUILD_BUG_ON(EFD_NONBLOCK != O_NONBLOCK);
 
 	if (flags & ~EFD_FLAGS_SET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)

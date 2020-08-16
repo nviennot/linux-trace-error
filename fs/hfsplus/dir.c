@@ -62,14 +62,14 @@ again:
 	type = be16_to_cpu(entry.type);
 	if (type == HFSPLUS_FOLDER) {
 		if (fd.entrylength < sizeof(struct hfsplus_cat_folder)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto fail;
 		}
 		cnid = be32_to_cpu(entry.folder.id);
 		dentry->d_fsdata = (void *)(unsigned long)cnid;
 	} else if (type == HFSPLUS_FILE) {
 		if (fd.entrylength < sizeof(struct hfsplus_cat_file)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto fail;
 		}
 		cnid = be32_to_cpu(entry.file.id);
@@ -111,7 +111,7 @@ again:
 			dentry->d_fsdata = (void *)(unsigned long)cnid;
 	} else {
 		pr_err("invalid catalog entry type in lookup\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto fail;
 	}
 	hfs_find_exit(&fd);
@@ -162,7 +162,7 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 	}
 	if (ctx->pos == 1) {
 		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
@@ -170,12 +170,12 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 			fd.entrylength);
 		if (be16_to_cpu(entry.type) != HFSPLUS_FOLDER_THREAD) {
 			pr_err("bad catalog folder thread\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		if (fd.entrylength < HFSPLUS_MIN_THREAD_SZ) {
 			pr_err("truncated catalog thread\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		if (!dir_emit(ctx, "..", 2,
@@ -191,12 +191,12 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 	for (;;) {
 		if (be32_to_cpu(fd.key->cat.parent) != inode->i_ino) {
 			pr_err("walked past end of dir\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
 		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
@@ -211,7 +211,7 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 			if (fd.entrylength <
 					sizeof(struct hfsplus_cat_folder)) {
 				pr_err("small dir entry\n");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out;
 			}
 			if (HFSPLUS_SB(sb)->hidden_dir &&
@@ -227,7 +227,7 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 
 			if (fd.entrylength < sizeof(struct hfsplus_cat_file)) {
 				pr_err("small file entry\n");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out;
 			}
 
@@ -250,7 +250,7 @@ static int hfsplus_readdir(struct file *file, struct dir_context *ctx)
 				break;
 		} else {
 			pr_err("bad catalog entry type\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 next:
@@ -309,9 +309,9 @@ static int hfsplus_link(struct dentry *src_dentry, struct inode *dst_dir,
 	int res;
 
 	if (HFSPLUS_IS_RSRC(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (!S_ISREG(inode->i_mode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&sbi->vh_mutex);
 	if (inode->i_ino == (u32)(unsigned long)src_dentry->d_fsdata) {
@@ -365,7 +365,7 @@ static int hfsplus_unlink(struct inode *dir, struct dentry *dentry)
 	int res;
 
 	if (HFSPLUS_IS_RSRC(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&sbi->vh_mutex);
 	cnid = (u32)(unsigned long)dentry->d_fsdata;
@@ -419,7 +419,7 @@ static int hfsplus_rmdir(struct inode *dir, struct dentry *dentry)
 	int res;
 
 	if (inode->i_size != 2)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	mutex_lock(&sbi->vh_mutex);
 	res = hfsplus_delete_cat(inode->i_ino, dir, &dentry->d_name);
@@ -535,7 +535,7 @@ static int hfsplus_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int res;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Unlink destination if it already exists */
 	if (d_really_is_positive(new_dentry)) {

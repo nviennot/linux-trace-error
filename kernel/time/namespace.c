@@ -82,7 +82,7 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
 	struct ucounts *ucounts;
 	int err;
 
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	ucounts = inc_time_namespaces(user_ns);
 	if (!ucounts)
 		goto fail;
@@ -287,11 +287,11 @@ static int timens_install(struct nsset *nsset, struct ns_common *new)
 	int err;
 
 	if (!current_is_single_threaded())
-		return -EUSERS;
+		return -ERR(EUSERS);
 
 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	timens_set_vvar_page(current, ns);
 
@@ -380,12 +380,12 @@ int proc_timens_set_offset(struct file *file, struct task_struct *p,
 
 	ns = timens_for_children_get(p);
 	if (!ns)
-		return -ESRCH;
+		return -ERR(ESRCH);
 	time_ns = to_time_ns(ns);
 
 	if (!file_ns_capable(file, time_ns->user_ns, CAP_SYS_TIME)) {
 		put_time_ns(time_ns);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	for (i = 0; i < noffsets; i++) {
@@ -399,11 +399,11 @@ int proc_timens_set_offset(struct file *file, struct task_struct *p,
 			ktime_get_boottime_ts64(&tp);
 			break;
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
-		err = -ERANGE;
+		err = -ERR(ERANGE);
 
 		if (off->val.tv_sec > KTIME_SEC_MAX ||
 		    off->val.tv_sec < -KTIME_SEC_MAX)
@@ -420,7 +420,7 @@ int proc_timens_set_offset(struct file *file, struct task_struct *p,
 
 	mutex_lock(&offset_lock);
 	if (time_ns->frozen_offsets) {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out_unlock;
 	}
 

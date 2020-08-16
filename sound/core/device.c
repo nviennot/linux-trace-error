@@ -33,7 +33,7 @@ int snd_device_new(struct snd_card *card, enum snd_device_type type,
 	struct list_head *p;
 
 	if (snd_BUG_ON(!card || !device_data || !ops))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 	if (!dev)
 		return -ENOMEM;
@@ -173,12 +173,12 @@ int snd_device_register(struct snd_card *card, void *device_data)
 	struct snd_device *dev;
 
 	if (snd_BUG_ON(!card || !device_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	dev = look_for_dev(card, device_data);
 	if (dev)
 		return __snd_device_register(dev);
 	snd_BUG();
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 EXPORT_SYMBOL(snd_device_register);
 
@@ -192,7 +192,7 @@ int snd_device_register_all(struct snd_card *card)
 	int err;
 	
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	list_for_each_entry(dev, &card->devices, list) {
 		err = __snd_device_register(dev);
 		if (err < 0)

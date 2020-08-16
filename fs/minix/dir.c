@@ -251,7 +251,7 @@ int minix_add_link(struct dentry *dentry, struct inode *inode)
 			}
 			if (!inumber)
 				goto got_it;
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (namecompare(namelen, sbi->s_namelen, name, namx))
 				goto out_unlock;
 		}
@@ -259,7 +259,7 @@ int minix_add_link(struct dentry *dentry, struct inode *inode)
 		dir_put_page(page);
 	}
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 got_it:
 	pos = page_offset(page) + p - (char *)page_address(page);

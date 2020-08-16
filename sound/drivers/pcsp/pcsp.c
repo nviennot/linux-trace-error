@@ -99,7 +99,7 @@ static int snd_card_pcsp_probe(int devnum, struct device *dev)
 	int err;
 
 	if (devnum != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hrtimer_init(&pcsp_chip.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	pcsp_chip.timer.function = pcsp_do_timer;
@@ -226,7 +226,7 @@ static struct platform_driver pcsp_platform_driver = {
 static int __init pcsp_init(void)
 {
 	if (!enable)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return platform_driver_register(&pcsp_platform_driver);
 }
 

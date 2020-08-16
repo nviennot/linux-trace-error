@@ -133,7 +133,7 @@ static int snd_cs5530_create(struct snd_card *card,
 	mem = pci_ioremap_bar(pci, 0);
 	if (mem == NULL) {
 		snd_cs5530_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	map = readw(mem + 0x18);
@@ -155,7 +155,7 @@ static int snd_cs5530_create(struct snd_card *card,
 	else {
 		dev_err(card->dev, "Could not find XpressAudio!\n");
 		snd_cs5530_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (map & (1<<5))
@@ -175,7 +175,7 @@ static int snd_cs5530_create(struct snd_card *card,
 	else {
 		dev_err(card->dev, "No 16bit DMA enabled\n");
 		snd_cs5530_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (dma8 & 0x01)
@@ -187,7 +187,7 @@ static int snd_cs5530_create(struct snd_card *card,
 	else {
 		dev_err(card->dev, "No 8bit DMA enabled\n");
 		snd_cs5530_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (irq & 1)
@@ -201,7 +201,7 @@ static int snd_cs5530_create(struct snd_card *card,
 	else {
 		dev_err(card->dev, "SoundBlaster IRQ not set\n");
 		snd_cs5530_free(chip);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_info(card->dev, "IRQ: %d DMA8: %d DMA16: %d\n", irq, dma8, dma16);
@@ -247,10 +247,10 @@ static int snd_cs5530_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

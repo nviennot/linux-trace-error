@@ -252,13 +252,13 @@ static inline int get_int(char **bpp, int *anint)
 	int len = qword_get(bpp, buf, sizeof(buf));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	rv = simple_strtol(buf, &ep, 0);
 	if (*ep)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*anint = rv;
 	return 0;
@@ -270,12 +270,12 @@ static inline int get_uint(char **bpp, unsigned int *anint)
 	int len = qword_get(bpp, buf, sizeof(buf));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (kstrtouint(buf, 0, anint))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -287,12 +287,12 @@ static inline int get_time(char **bpp, time64_t *time)
 	int len = qword_get(bpp, buf, sizeof(buf));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (kstrtoll(buf, 0, &ll))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*time = ll;
 	return 0;

@@ -125,7 +125,7 @@ static ssize_t page_idle_bitmap_read(struct file *file, struct kobject *kobj,
 	int bit;
 
 	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pfn = pos * BITS_PER_BYTE;
 	if (pfn >= max_pfn)
@@ -170,11 +170,11 @@ static ssize_t page_idle_bitmap_write(struct file *file, struct kobject *kobj,
 	int bit;
 
 	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pfn = pos * BITS_PER_BYTE;
 	if (pfn >= max_pfn)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	end_pfn = pfn + count * BITS_PER_BYTE;
 	if (end_pfn > max_pfn)

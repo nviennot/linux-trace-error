@@ -401,7 +401,7 @@ static int ocfs2_sync_fs(struct super_block *sb, int wait)
 	struct ocfs2_super *osb = OCFS2_SB(sb);
 
 	if (ocfs2_is_hard_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (wait) {
 		status = ocfs2_flush_truncate_log(osb);
@@ -462,7 +462,7 @@ static int ocfs2_init_global_system_inodes(struct ocfs2_super *osb)
 		new = ocfs2_get_system_file_inode(osb, i, osb->slot_num);
 		if (!new) {
 			ocfs2_release_system_inodes(osb);
-			status = ocfs2_is_soft_readonly(osb) ? -EROFS : -EINVAL;
+			status = ocfs2_is_soft_readonly(osb) ? -ERR(EROFS) : -ERR(EINVAL);
 			mlog_errno(status);
 			mlog(ML_ERROR, "Unable to load system inode %d, "
 			     "possibly corrupt fs?", i);
@@ -492,7 +492,7 @@ static int ocfs2_init_local_system_inodes(struct ocfs2_super *osb)
 		new = ocfs2_get_system_file_inode(osb, i, osb->slot_num);
 		if (!new) {
 			ocfs2_release_system_inodes(osb);
-			status = ocfs2_is_soft_readonly(osb) ? -EROFS : -EINVAL;
+			status = ocfs2_is_soft_readonly(osb) ? -ERR(EROFS) : -ERR(EINVAL);
 			mlog(ML_ERROR, "status=%d, sysfile=%d, slot=%d\n",
 			     status, i, osb->slot_num);
 			goto bail;
@@ -617,13 +617,13 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 
 	if (!ocfs2_parse_options(sb, data, &parsed_options, 1) ||
 	    !ocfs2_check_set_options(sb, &parsed_options)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	tmp = OCFS2_MOUNT_NOCLUSTER;
 	if ((osb->s_mount_opt & tmp) != (parsed_options.mount_opt & tmp)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog(ML_ERROR, "Cannot change nocluster option on remount\n");
 		goto out;
 	}
@@ -631,14 +631,14 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 	tmp = OCFS2_MOUNT_HB_LOCAL | OCFS2_MOUNT_HB_GLOBAL |
 		OCFS2_MOUNT_HB_NONE;
 	if ((osb->s_mount_opt & tmp) != (parsed_options.mount_opt & tmp)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog(ML_ERROR, "Cannot change heartbeat mode on remount\n");
 		goto out;
 	}
 
 	if ((osb->s_mount_opt & OCFS2_MOUNT_DATA_WRITEBACK) !=
 	    (parsed_options.mount_opt & OCFS2_MOUNT_DATA_WRITEBACK)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog(ML_ERROR, "Cannot change data mode on remount\n");
 		goto out;
 	}
@@ -647,7 +647,7 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 	 * mess with other nodes */
 	if (!(osb->s_mount_opt & OCFS2_MOUNT_INODE64) &&
 	    (parsed_options.mount_opt & OCFS2_MOUNT_INODE64)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog(ML_ERROR, "Cannot enable inode64 on remount\n");
 		goto out;
 	}
@@ -665,7 +665,7 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 		spin_lock(&osb->osb_lock);
 		if (osb->osb_flags & OCFS2_OSB_HARD_RO) {
 			mlog(ML_ERROR, "Remount on readonly device is forbidden.\n");
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto unlock_osb;
 		}
 
@@ -676,7 +676,7 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 			if (osb->osb_flags & OCFS2_OSB_ERROR_FS) {
 				mlog(ML_ERROR, "Cannot remount RDWR "
 				     "filesystem due to previous errors.\n");
-				ret = -EROFS;
+				ret = -ERR(EROFS);
 				goto unlock_osb;
 			}
 			incompat_features = OCFS2_HAS_RO_COMPAT_FEATURE(sb, ~OCFS2_FEATURE_RO_COMPAT_SUPP);
@@ -684,7 +684,7 @@ static int ocfs2_remount(struct super_block *sb, int *flags, char *data)
 				mlog(ML_ERROR, "Cannot remount RDWR because "
 				     "of unsupported optional features "
 				     "(%x).\n", incompat_features);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto unlock_osb;
 			}
 			sb->s_flags &= ~SB_RDONLY;
@@ -747,7 +747,7 @@ static int ocfs2_sb_probe(struct super_block *sb,
 	if (*sector_size > OCFS2_MAX_BLOCKSIZE) {
 		mlog(ML_ERROR, "Hardware sector size too large: %d (max=%d)\n",
 		     *sector_size, OCFS2_MAX_BLOCKSIZE);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -765,13 +765,13 @@ static int ocfs2_sb_probe(struct super_block *sb,
 	if (hdr->major_version == OCFS1_MAJOR_VERSION) {
 		mlog(ML_ERROR, "incompatible version: %u.%u\n",
 		     hdr->major_version, hdr->minor_version);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 	if (memcmp(hdr->signature, OCFS1_VOLUME_SIGNATURE,
 		   strlen(OCFS1_VOLUME_SIGNATURE)) == 0) {
 		mlog(ML_ERROR, "incompatible volume signature: %8s\n",
 		     hdr->signature);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	}
 	brelse(*bh);
 	*bh = NULL;
@@ -786,7 +786,7 @@ static int ocfs2_sb_probe(struct super_block *sb,
 	 * blocksizes.  4096 is the maximum blocksize because it is
 	 * the minimum clustersize.
 	 */
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	for (blksize = *sector_size;
 	     blksize <= OCFS2_MAX_BLOCKSIZE;
 	     blksize <<= 1) {
@@ -824,19 +824,19 @@ static int ocfs2_verify_heartbeat(struct ocfs2_super *osb)
 		if (ocfs2_mount_local(osb)) {
 			mlog(ML_ERROR, "Cannot heartbeat on a locally "
 			     "mounted device.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (ocfs2_userspace_stack(osb)) {
 			mlog(ML_ERROR, "Userspace stack expected, but "
 			     "o2cb heartbeat arguments passed to mount\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (((osb->s_mount_opt & OCFS2_MOUNT_HB_GLOBAL) &&
 		     !ocfs2_cluster_o2cb_global_heartbeat(osb)) ||
 		    ((osb->s_mount_opt & OCFS2_MOUNT_HB_LOCAL) &&
 		     ocfs2_cluster_o2cb_global_heartbeat(osb))) {
 			mlog(ML_ERROR, "Mismatching o2cb heartbeat modes\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -845,7 +845,7 @@ static int ocfs2_verify_heartbeat(struct ocfs2_super *osb)
 		    !ocfs2_userspace_stack(osb)) {
 			mlog(ML_ERROR, "Heartbeat has to be started to mount "
 			     "a read-write clustered device.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -864,7 +864,7 @@ static int ocfs2_verify_userspace_stack(struct ocfs2_super *osb,
 		mlog(ML_ERROR,
 		     "cluster stack passed to mount, but this filesystem "
 		     "does not support it\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ocfs2_userspace_stack(osb) &&
@@ -876,7 +876,7 @@ static int ocfs2_verify_userspace_stack(struct ocfs2_super *osb,
 		     "match the filesystem (\"%s\")\n",
 		     mopt->cluster_stack,
 		     osb->osb_cluster_stack);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -933,7 +933,7 @@ static int ocfs2_enable_quotas(struct ocfs2_super *osb)
 		inode[type] = ocfs2_get_system_file_inode(osb, ino[type],
 							osb->slot_num);
 		if (!inode[type]) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			goto out_quota_off;
 		}
 		status = dquot_load_quota_inode(inode[type], type, QFMT_OCFS2,
@@ -993,7 +993,7 @@ static int ocfs2_fill_super(struct super_block *sb, void *data, int silent)
 	trace_ocfs2_fill_super(sb, data, silent);
 
 	if (!ocfs2_parse_options(sb, data, &parsed_options, 0)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto read_super_error;
 	}
 
@@ -1014,7 +1014,7 @@ static int ocfs2_fill_super(struct super_block *sb, void *data, int silent)
 	bh = NULL;
 
 	if (!ocfs2_check_set_options(sb, &parsed_options)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto read_super_error;
 	}
 	osb->s_mount_opt = parsed_options.mount_opt;
@@ -1043,7 +1043,7 @@ static int ocfs2_fill_super(struct super_block *sb, void *data, int silent)
 	 * heartbeat=none */
 	if (bdev_read_only(sb->s_bdev)) {
 		if (!sb_rdonly(sb)) {
-			status = -EACCES;
+			status = -ERR(EACCES);
 			mlog(ML_ERROR, "Readonly device detected but readonly "
 			     "mount was not specified.\n");
 			goto read_super_error;
@@ -1052,7 +1052,7 @@ static int ocfs2_fill_super(struct super_block *sb, void *data, int silent)
 		/* You should not be able to start a local heartbeat
 		 * on a readonly device. */
 		if (osb->s_mount_opt & OCFS2_MOUNT_HB_LOCAL) {
-			status = -EROFS;
+			status = -ERR(EROFS);
 			mlog(ML_ERROR, "Local heartbeat specified on readonly "
 			     "device.\n");
 			goto read_super_error;
@@ -1105,7 +1105,7 @@ static int ocfs2_fill_super(struct super_block *sb, void *data, int silent)
 		inode = igrab(osb->root_inode);
 
 	if (!inode) {
-		status = -EIO;
+		status = -ERR(EIO);
 		mlog_errno(status);
 		goto read_super_error;
 	}
@@ -1653,7 +1653,7 @@ static int ocfs2_statfs(struct dentry *dentry, struct kstatfs *buf)
 					    OCFS2_INVALID_SLOT);
 	if (!inode) {
 		mlog(ML_ERROR, "failed to get bitmap inode\n");
-		status = -EIO;
+		status = -ERR(EIO);
 		goto bail;
 	}
 
@@ -1780,7 +1780,7 @@ static int ocfs2_get_sector(struct super_block *sb,
 {
 	if (!sb_set_blocksize(sb, sect_size)) {
 		mlog(ML_ERROR, "unable to set blocksize\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*bh = sb_getblk(sb, block);
@@ -1798,7 +1798,7 @@ static int ocfs2_get_sector(struct super_block *sb,
 		mlog_errno(-EIO);
 		brelse(*bh);
 		*bh = NULL;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -1972,7 +1972,7 @@ static int ocfs2_setup_osb_uuid(struct ocfs2_super *osb, const unsigned char *uu
 		/* print with null */
 		ret = snprintf(ptr, 3, "%02X", uuid[i]);
 		if (ret != 2) /* drop super cleans up */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* then only advance past the last char */
 		ptr += 2;
 	}
@@ -2002,7 +2002,7 @@ static int ocfs2_journal_addressable(struct ocfs2_super *osb)
 					       JBD2_FEATURE_INCOMPAT_64BIT))) {
 		mlog(ML_ERROR, "The journal cannot address the entire volume. "
 		     "Enable the 'block64' journal option with tunefs.ocfs2");
-		status = -EFBIG;
+		status = -ERR(EFBIG);
 		goto out;
 	}
 
@@ -2087,7 +2087,7 @@ static int ocfs2_initialize_super(struct super_block *sb,
 	if (osb->max_slots > OCFS2_MAX_SLOTS || osb->max_slots == 0) {
 		mlog(ML_ERROR, "Invalid number of node slots (%u)\n",
 		     osb->max_slots);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2159,13 +2159,13 @@ static int ocfs2_initialize_super(struct super_block *sb,
 	if ((i = OCFS2_HAS_INCOMPAT_FEATURE(osb->sb, ~OCFS2_FEATURE_INCOMPAT_SUPP))) {
 		mlog(ML_ERROR, "couldn't mount because of unsupported "
 		     "optional features (%x).\n", i);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 	if (!sb_rdonly(osb->sb) && (i = OCFS2_HAS_RO_COMPAT_FEATURE(osb->sb, ~OCFS2_FEATURE_RO_COMPAT_SUPP))) {
 		mlog(ML_ERROR, "couldn't mount RDWR because of "
 		     "unsupported optional features (%x).\n", i);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2180,7 +2180,7 @@ static int ocfs2_initialize_super(struct super_block *sb,
 			     "couldn't mount because of an invalid "
 			     "cluster stack label (%s) \n",
 			     osb->osb_cluster_stack);
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			goto bail;
 		}
 		strlcpy(osb->osb_cluster_name,
@@ -2233,7 +2233,7 @@ static int ocfs2_initialize_super(struct super_block *sb,
 	    osb->s_clustersize > OCFS2_MAX_CLUSTERSIZE) {
 		mlog(ML_ERROR, "Volume has invalid cluster size (%d)\n",
 		     osb->s_clustersize);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -2245,7 +2245,7 @@ static int ocfs2_initialize_super(struct super_block *sb,
 	if (status) {
 		mlog(ML_ERROR, "Volume too large "
 		     "to mount safely on this system");
-		status = -EFBIG;
+		status = -ERR(EFBIG);
 		goto bail;
 	}
 
@@ -2291,7 +2291,7 @@ static int ocfs2_initialize_super(struct super_block *sb,
 	inode = ocfs2_get_system_file_inode(osb, GLOBAL_BITMAP_SYSTEM_INODE,
 					    OCFS2_INVALID_SLOT);
 	if (!inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -2330,7 +2330,7 @@ static int ocfs2_verify_volume(struct ocfs2_dinode *di,
 			       u32 blksz,
 			       struct ocfs2_blockcheck_stats *stats)
 {
-	int status = -EAGAIN;
+	int status = -ERR(EAGAIN);
 
 	if (memcmp(di->i_signature, OCFS2_SUPER_BLOCK_SIGNATURE,
 		   strlen(OCFS2_SUPER_BLOCK_SIGNATURE)) == 0) {
@@ -2344,7 +2344,7 @@ static int ocfs2_verify_volume(struct ocfs2_dinode *di,
 			if (status)
 				goto out;
 		}
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		if ((1 << le32_to_cpu(di->id2.i_super.s_blocksize_bits)) != blksz) {
 			mlog(ML_ERROR, "found superblock with incorrect block "
 			     "size: found %u, should be %u\n",
@@ -2543,9 +2543,9 @@ static int ocfs2_handle_error(struct super_block *sb)
 		      sb->s_id);
 	} else if (osb->s_mount_opt & OCFS2_MOUNT_ERRORS_CONT) {
 		pr_crit("OCFS2: Returning error to the calling process.\n");
-		rv = -EIO;
+		rv = -ERR(EIO);
 	} else { /* default option */
-		rv = -EROFS;
+		rv = -ERR(EROFS);
 		if (sb_rdonly(sb) && (ocfs2_is_soft_readonly(osb) || ocfs2_is_hard_readonly(osb)))
 			return rv;
 

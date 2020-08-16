@@ -194,7 +194,7 @@ struct sctp_datamsg *sctp_datamsg_from_user(struct sctp_association *asoc,
 		    sinfo->sinfo_ssn != asoc->active_key_id) {
 			shkey = sctp_auth_get_shkey(asoc, sinfo->sinfo_ssn);
 			if (!shkey) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto errout;
 			}
 		} else {

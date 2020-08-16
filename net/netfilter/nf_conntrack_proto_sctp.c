@@ -568,7 +568,7 @@ static int nlattr_to_sctp(struct nlattr *cda[], struct nf_conn *ct)
 	if (!tb[CTA_PROTOINFO_SCTP_STATE] ||
 	    !tb[CTA_PROTOINFO_SCTP_VTAG_ORIGINAL] ||
 	    !tb[CTA_PROTOINFO_SCTP_VTAG_REPLY])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&ct->lock);
 	ct->proto.sctp.state = nla_get_u8(tb[CTA_PROTOINFO_SCTP_STATE]);
@@ -625,7 +625,7 @@ sctp_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
         return 0;
 
 nla_put_failure:
-        return -ENOSPC;
+        return -ERR(ENOSPC);
 }
 
 static const struct nla_policy

@@ -69,7 +69,7 @@ static inline int nlm_pidbusy(struct nlm_host *host, uint32_t pid)
 	struct nlm_lockowner *lockowner;
 	list_for_each_entry(lockowner, &host->h_lockowners, list) {
 		if (lockowner->pid == pid)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 	return 0;
 }
@@ -187,7 +187,7 @@ int nlmclnt_proc(struct nlm_host *host, int cmd, struct file_lock *fl, void *dat
 	} else if (IS_GETLK(cmd))
 		status = nlmclnt_test(call, fl);
 	else
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 	fl->fl_ops->fl_release_private(fl);
 	fl->fl_ops = NULL;
 
@@ -241,7 +241,7 @@ static void nlmclnt_rpc_release(void *data)
 static int nlm_wait_on_grace(wait_queue_head_t *queue)
 {
 	DEFINE_WAIT(wait);
-	int status = -EINTR;
+	int status = -ERR(EINTR);
 
 	prepare_to_wait(queue, &wait, TASK_INTERRUPTIBLE);
 	if (!signalled ()) {
@@ -280,7 +280,7 @@ nlmclnt_call(const struct cred *cred, struct nlm_rqst *req, u32 proc)
 
 		/* If we have no RPC client yet, create one. */
 		if ((clnt = nlm_bind_host(host)) == NULL)
-			return -ENOLCK;
+			return -ERR(ENOLCK);
 		msg.rpc_proc = &clnt->cl_procinfo[proc];
 
 		/* Perform the RPC call. If an error occurs, try again */
@@ -288,16 +288,16 @@ nlmclnt_call(const struct cred *cred, struct nlm_rqst *req, u32 proc)
 			dprintk("lockd: rpc_call returned error %d\n", -status);
 			switch (status) {
 			case -EPROTONOSUPPORT:
-				status = -EINVAL;
+				status = -ERR(EINVAL);
 				break;
 			case -ECONNREFUSED:
 			case -ETIMEDOUT:
 			case -ENOTCONN:
 				nlm_rebind_host(host);
-				status = -EAGAIN;
+				status = -ERR(EAGAIN);
 				break;
 			case -ERESTARTSYS:
-				return signalled () ? -EINTR : status;
+				return signalled () ? -ERR(EINTR) : status;
 			default:
 				break;
 			}
@@ -308,7 +308,7 @@ nlmclnt_call(const struct cred *cred, struct nlm_rqst *req, u32 proc)
 			if (argp->reclaim) {
 				printk(KERN_WARNING
 				     "lockd: spurious grace period reject?!\n");
-				return -ENOLCK;
+				return -ERR(ENOLCK);
 			}
 		} else {
 			if (!argp->reclaim) {
@@ -361,7 +361,7 @@ static struct rpc_task *__nlm_async_call(struct nlm_rqst *req, u32 proc, struct 
 	return rpc_run_task(&task_setup_data);
 out_err:
 	tk_ops->rpc_release(req);
-	return ERR_PTR(-ENOLCK);
+	return ERR_PTR(-ERR(ENOLCK));
 }
 
 static int nlm_do_async_call(struct nlm_rqst *req, u32 proc, struct rpc_message *msg, const struct rpc_call_ops *tk_ops)
@@ -518,7 +518,7 @@ nlmclnt_lock(struct nlm_rqst *req, struct file_lock *fl)
 	struct nlm_wait *block = NULL;
 	unsigned char fl_flags = fl->fl_flags;
 	unsigned char fl_type;
-	int status = -ENOLCK;
+	int status = -ERR(ENOLCK);
 
 	if (nsm_monitor(host) < 0)
 		goto out;
@@ -589,7 +589,7 @@ again:
 	 * turn it into an ENOLCK.
 	 */
 	if (resp->status == nlm_lck_denied && (fl_flags & FL_SLEEP))
-		status = -ENOLCK;
+		status = -ERR(ENOLCK);
 	else
 		status = nlm_stat_to_errno(resp->status);
 out_unblock:
@@ -651,7 +651,7 @@ nlmclnt_reclaim(struct nlm_host *host, struct file_lock *fl,
 	 * for b or c, I'll choose option a.
 	 */
 
-	return -ENOLCK;
+	return -ERR(ENOLCK);
 }
 
 /*
@@ -693,7 +693,7 @@ nlmclnt_unlock(struct nlm_rqst *req, struct file_lock *fl)
 		printk("lockd: unexpected unlock status: %d\n",
 			ntohl(resp->status));
 	/* What to do now? I'm out of my depth... */
-	status = -ENOLCK;
+	status = -ERR(ENOLCK);
 out:
 	nlmclnt_release_call(req);
 	return status;
@@ -775,7 +775,7 @@ static int nlmclnt_cancel(struct nlm_host *host, int block, struct file_lock *fl
 	status = nlmclnt_async_call(nfs_file_cred(fl->fl_file), req,
 			NLMPROC_CANCEL, &nlmclnt_cancel_ops);
 	if (status == 0 && req->a_res.status == nlm_lck_denied)
-		status = -ENOLCK;
+		status = -ERR(ENOLCK);
 	nlmclnt_release_call(req);
 	return status;
 }
@@ -838,27 +838,27 @@ nlm_stat_to_errno(__be32 status)
 	case NLM_LCK_GRANTED:
 		return 0;
 	case NLM_LCK_DENIED:
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case NLM_LCK_DENIED_NOLOCKS:
 	case NLM_LCK_DENIED_GRACE_PERIOD:
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 	case NLM_LCK_BLOCKED:
 		printk(KERN_NOTICE "lockd: unexpected status NLM_BLOCKED\n");
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 #ifdef CONFIG_LOCKD_V4
 	case NLM_DEADLCK:
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 	case NLM_ROFS:
-		return -EROFS;
+		return -ERR(EROFS);
 	case NLM_STALE_FH:
-		return -ESTALE;
+		return -ERR(ESTALE);
 	case NLM_FBIG:
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	case NLM_FAILED:
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 #endif
 	}
 	printk(KERN_NOTICE "lockd: unexpected server status %d\n",
 		 ntohl(status));
-	return -ENOLCK;
+	return -ERR(ENOLCK);
 }

@@ -532,7 +532,7 @@ int nft_meta_get_init(const struct nft_ctx *ctx,
 		len = sizeof(u32);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->dreg = nft_parse_register(tb[NFTA_META_DREG]);
@@ -553,7 +553,7 @@ static int nft_meta_get_validate_sdif(const struct nft_ctx *ctx)
 			(1 << NF_INET_FORWARD);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);
@@ -576,7 +576,7 @@ static int nft_meta_get_validate_xfrm(const struct nft_ctx *ctx)
 			(1 << NF_INET_FORWARD);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);
@@ -627,7 +627,7 @@ int nft_meta_set_validate(const struct nft_ctx *ctx,
 		hooks = 1 << NF_INET_PRE_ROUTING;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);
@@ -658,7 +658,7 @@ int nft_meta_set_init(const struct nft_ctx *ctx,
 		len = sizeof(u8);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->sreg = nft_parse_register(tb[NFTA_META_SREG]);
@@ -742,7 +742,7 @@ static int nft_meta_get_offload(struct nft_offload_ctx *ctx,
 				  ingress_iftype, sizeof(__u16), reg);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return 0;
@@ -773,14 +773,14 @@ nft_meta_select_ops(const struct nft_ctx *ctx,
 		    const struct nlattr * const tb[])
 {
 	if (tb[NFTA_META_KEY] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (tb[NFTA_META_DREG] && tb[NFTA_META_SREG])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 #if IS_ENABLED(CONFIG_NF_TABLES_BRIDGE) && IS_MODULE(CONFIG_NFT_BRIDGE_META)
 	if (ctx->family == NFPROTO_BRIDGE)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 #endif
 	if (tb[NFTA_META_DREG])
 		return &nft_meta_get_ops;
@@ -788,7 +788,7 @@ nft_meta_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_META_SREG])
 		return &nft_meta_set_ops;
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 struct nft_expr_type nft_meta_type __read_mostly = {
@@ -819,7 +819,7 @@ static int nft_secmark_compute_secid(struct nft_secmark *priv)
 		return err;
 
 	if (!tmp_secid)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = security_secmark_relabel_packet(tmp_secid);
 	if (err)
@@ -846,7 +846,7 @@ static int nft_secmark_obj_init(const struct nft_ctx *ctx,
 	int err;
 
 	if (tb[NFTA_SECMARK_CTX] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->ctx = nla_strdup(tb[NFTA_SECMARK_CTX], GFP_KERNEL);
 	if (!priv->ctx)

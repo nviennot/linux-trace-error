@@ -304,7 +304,7 @@ void rpc_clnt_swap_deactivate(struct rpc_clnt *clnt);
 static inline int
 rpc_clnt_swap_activate(struct rpc_clnt *clnt)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void

@@ -228,7 +228,7 @@ static inline long follow_hugetlb_page(struct mm_struct *mm,
 static inline struct page *follow_huge_addr(struct mm_struct *mm,
 					unsigned long address, int write)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int copy_hugetlb_page_range(struct mm_struct *dst,
@@ -279,7 +279,7 @@ static inline struct page *follow_huge_pgd(struct mm_struct *mm,
 static inline int prepare_hugepage_range(struct file *file,
 				unsigned long addr, unsigned long len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int pmd_huge(pmd_t pmd)
@@ -454,7 +454,7 @@ hugetlb_file_setup(const char *name, size_t size, vm_flags_t acctflag,
 		struct user_struct **user, int creat_flags,
 		int page_size_log)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline struct hstate *hstate_inode(struct inode *i)

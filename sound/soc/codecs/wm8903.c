@@ -462,7 +462,7 @@ static int wm8903_put_deemph(struct snd_kcontrol *kcontrol,
 	int ret = 0;
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&wm8903->lock);
 	if (wm8903->deemph != deemph) {
@@ -1242,7 +1242,7 @@ static int wm8903_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		aif1 |= WM8903_BCLK_DIR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1261,7 +1261,7 @@ static int wm8903_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_LEFT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock inversion */
@@ -1276,7 +1276,7 @@ static int wm8903_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			aif1 |= WM8903_AIF_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -1295,11 +1295,11 @@ static int wm8903_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			aif1 |= WM8903_AIF_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8903_AUDIO_INTERFACE_1, aif1);
@@ -1498,7 +1498,7 @@ static int wm8903_hw_params(struct snd_pcm_substream *substream,
 		aif1 |= 0xc;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "MCLK = %dHz, target sample rate = %dHz\n",
@@ -1775,7 +1775,7 @@ static int wm8903_resume(struct snd_soc_component *component)
 static int wm8903_gpio_request(struct gpio_chip *chip, unsigned offset)
 {
 	if (offset >= WM8903_NUM_GPIO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1917,7 +1917,7 @@ static int wm8903_set_pdata_irq_trigger(struct i2c_client *i2c,
 	if (!irq_data) {
 		dev_err(&i2c->dev, "Invalid IRQ: %d\n",
 			i2c->irq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (irqd_get_trigger_type(irq_data)) {
@@ -1974,7 +1974,7 @@ static int wm8903_set_pdata_from_of(struct i2c_client *i2c,
 			} else if (pdata->gpio_cfg[i] > 0x7fff) {
 				dev_err(&i2c->dev, "Invalid gpio-cfg[%d] %x\n",
 					i, pdata->gpio_cfg[i]);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -2057,7 +2057,7 @@ static int wm8903_i2c_probe(struct i2c_client *i2c,
 	}
 	if (val != 0x8903) {
 		dev_err(&i2c->dev, "Device with ID %x is not a WM8903\n", val);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 

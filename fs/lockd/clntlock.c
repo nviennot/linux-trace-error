@@ -76,7 +76,7 @@ out_nobind:
 	nlmclnt_release_host(host);
 out_nohost:
 	lockd_down(nlm_init->net);
-	return ERR_PTR(-ENOLCK);
+	return ERR_PTR(-ERR(ENOLCK));
 }
 EXPORT_SYMBOL_GPL(nlmclnt_init);
 
@@ -136,7 +136,7 @@ int nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout)
 	 * request it. Just say no!
 	 */
 	if (block == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/* Go to sleep waiting for GRANT callback. Some servers seem
 	 * to lose callbacks, however, so we're going to poll from
@@ -150,7 +150,7 @@ int nlmclnt_block(struct nlm_wait *block, struct nlm_rqst *req, long timeout)
 			block->b_status != nlm_lck_blocked,
 			timeout);
 	if (ret < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	/* Reset the lock status after a server reboot so we resend */
 	if (block->b_status == nlm_lck_denied_grace_period)
 		block->b_status = nlm_lck_blocked;

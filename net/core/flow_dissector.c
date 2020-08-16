@@ -87,14 +87,14 @@ int flow_dissector_bpf_prog_attach_check(struct net *net,
 			if (ns == &init_net)
 				continue;
 			if (rcu_access_pointer(ns->bpf.run_array[type]))
-				return -EEXIST;
+				return -ERR(EEXIST);
 		}
 	} else {
 		/* Make sure root flow dissector is not attached
 		 * when attaching to the non-root namespace.
 		 */
 		if (rcu_access_pointer(init_net.bpf.run_array[type]))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	return 0;

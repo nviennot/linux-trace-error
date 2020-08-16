@@ -65,7 +65,7 @@ static int init_pipe_urbs(struct usb_stream_kernel *sk, unsigned use_packsize,
 		if (usb_pipeout(pipe))
 			continue;
 		if (usb_urb_ep_type_check(urb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		urb->transfer_buffer_length = transfer_length;
 		desc = urb->iso_frame_desc;
@@ -102,7 +102,7 @@ static int init_urbs(struct usb_stream_kernel *sk, unsigned use_packsize,
 	if (init_pipe_urbs(sk, use_packsize, sk->inurb, indata, dev, in_pipe) ||
 	    init_pipe_urbs(sk, use_packsize, sk->outurb, sk->write_page, dev,
 			   out_pipe))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -655,7 +655,7 @@ int usb_stream_start(struct usb_stream_kernel *sk)
 	int try = 0;
 
 	if (s->state != usb_stream_stopped)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	subs_set_complete(sk->inurb, i_capture_start);
 	subs_set_complete(sk->outurb, i_playback_start);

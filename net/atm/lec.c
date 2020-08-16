@@ -460,7 +460,7 @@ static int lec_atm_send(struct atm_vcc *vcc, struct sk_buff *skb)
 	default:
 		pr_info("%s: Unknown message type %d\n", dev->name, mesg->type);
 		dev_kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_kfree_skb(skb);
 	return 0;
@@ -691,10 +691,10 @@ static int lec_vcc_attach(struct atm_vcc *vcc, void __user *arg)
 	if (bytes_left != 0)
 		pr_info("copy from user failed for %d bytes\n", bytes_left);
 	if (ioc_data.dev_num < 0 || ioc_data.dev_num >= MAX_LEC_ITF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ioc_data.dev_num = array_index_nospec(ioc_data.dev_num, MAX_LEC_ITF);
 	if (!dev_lec[ioc_data.dev_num])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	vpriv = kmalloc(sizeof(struct lec_vcc_priv), GFP_KERNEL);
 	if (!vpriv)
 		return -ENOMEM;
@@ -712,10 +712,10 @@ static int lec_vcc_attach(struct atm_vcc *vcc, void __user *arg)
 static int lec_mcast_attach(struct atm_vcc *vcc, int arg)
 {
 	if (arg < 0 || arg >= MAX_LEC_ITF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	arg = array_index_nospec(arg, MAX_LEC_ITF);
 	if (!dev_lec[arg])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	vcc->proto_data = dev_lec[arg];
 	return lec_mcast_make(netdev_priv(dev_lec[arg]), vcc);
 }
@@ -729,7 +729,7 @@ static int lecd_attach(struct atm_vcc *vcc, int arg)
 	if (arg < 0)
 		arg = 0;
 	if (arg >= MAX_LEC_ITF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i = array_index_nospec(arg, MAX_LEC_ITF);
 	if (!dev_lec[i]) {
 		int size;
@@ -743,14 +743,14 @@ static int lecd_attach(struct atm_vcc *vcc, int arg)
 		snprintf(dev_lec[i]->name, IFNAMSIZ, "lec%d", i);
 		if (register_netdev(dev_lec[i])) {
 			free_netdev(dev_lec[i]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		priv = netdev_priv(dev_lec[i]);
 	} else {
 		priv = netdev_priv(dev_lec[i]);
 		if (priv->lecd)
-			return -EADDRINUSE;
+			return -ERR(EADDRINUSE);
 	}
 	lec_arp_init(priv);
 	priv->itfnum = i;	/* LANE2 addition */
@@ -999,10 +999,10 @@ static int lane_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case ATMLEC_MCAST:
 	case ATMLEC_DATA:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	switch (cmd) {

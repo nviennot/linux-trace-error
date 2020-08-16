@@ -63,7 +63,7 @@ static int snd_adlib_probe(struct device *dev, unsigned int n)
 	card->private_data = request_region(port[n], 4, CRD_NAME);
 	if (!card->private_data) {
 		dev_err(dev, "could not grab ports\n");
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out;
 	}
 	card->private_free = snd_adlib_free;

@@ -134,10 +134,10 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	int ret;
 
 	if (!host_file->f_op->mmap)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (WARN_ON(coda_file != vma->vm_file))
-		return -EIO;
+		return -ERR(EIO);
 
 	count = vma->vm_end - vma->vm_start;
 	ppos = vma->vm_pgoff * PAGE_SIZE;
@@ -163,7 +163,7 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	else if (coda_inode->i_mapping != host_inode->i_mapping) {
 		spin_unlock(&cii->c_lock);
 		kfree(cvm_ops);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* keep track of how often the coda_inode/host_file has been mmapped */
@@ -211,7 +211,7 @@ int coda_open(struct inode *coda_inode, struct file *coda_file)
 	error = venus_open(coda_inode->i_sb, coda_i2f(coda_inode), coda_flags,
 			   &host_file);
 	if (!host_file)
-		error = -EIO;
+		error = -ERR(EIO);
 
 	if (error) {
 		kfree(cfi);
@@ -275,7 +275,7 @@ int coda_fsync(struct file *coda_file, loff_t start, loff_t end, int datasync)
 
 	if (!(S_ISREG(coda_inode->i_mode) || S_ISDIR(coda_inode->i_mode) ||
 	      S_ISLNK(coda_inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = filemap_write_and_wait_range(coda_inode->i_mapping, start, end);
 	if (err)

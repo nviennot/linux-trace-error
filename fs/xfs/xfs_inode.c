@@ -695,7 +695,7 @@ xfs_lookup(
 	trace_xfs_lookup(dp, name);
 
 	if (XFS_FORCED_SHUTDOWN(dp->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_dir_lookup(NULL, dp, name, &inum, ci_name);
 	if (error)
@@ -992,7 +992,7 @@ xfs_dir_ialloc(
 	}
 	if (!ialloc_context && !ip) {
 		*ipp = NULL;
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	/*
@@ -1129,7 +1129,7 @@ xfs_create(
 	trace_xfs_create(dp, name);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	prid = xfs_get_initial_prid(dp);
 
@@ -1278,7 +1278,7 @@ xfs_create_tmpfile(
 	uint			resblks;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	prid = xfs_get_initial_prid(dp);
 
@@ -1368,7 +1368,7 @@ xfs_link(
 	ASSERT(!S_ISDIR(VFS_I(sip)->i_mode));
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_qm_dqattach(sip);
 	if (error)
@@ -1399,7 +1399,7 @@ xfs_link(
 	 */
 	if (unlikely((tdp->i_d.di_flags & XFS_DIFLAG_PROJINHERIT) &&
 		     tdp->i_d.di_projid != sip->i_d.di_projid)) {
-		error = -EXDEV;
+		error = -ERR(EXDEV);
 		goto error_return;
 	}
 
@@ -2862,7 +2862,7 @@ xfs_remove(
 	trace_xfs_remove(dp, name);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_qm_dqattach(dp);
 	if (error)
@@ -2904,11 +2904,11 @@ xfs_remove(
 	if (is_dir) {
 		ASSERT(VFS_I(ip)->i_nlink >= 2);
 		if (VFS_I(ip)->i_nlink != 2) {
-			error = -ENOTEMPTY;
+			error = -ERR(ENOTEMPTY);
 			goto out_trans_cancel;
 		}
 		if (!xfs_dir_isempty(ip)) {
-			error = -ENOTEMPTY;
+			error = -ERR(ENOTEMPTY);
 			goto out_trans_cancel;
 		}
 
@@ -3199,7 +3199,7 @@ xfs_rename(
 	trace_xfs_rename(src_dp, target_dp, src_name, target_name);
 
 	if ((flags & RENAME_EXCHANGE) && !target_ip)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If we are doing a whiteout operation, allocate the whiteout inode
@@ -3265,7 +3265,7 @@ xfs_rename(
 	 */
 	if (unlikely((target_dp->i_d.di_flags & XFS_DIFLAG_PROJINHERIT) &&
 		     target_dp->i_d.di_projid != src_ip->i_d.di_projid)) {
-		error = -EXDEV;
+		error = -ERR(EXDEV);
 		goto out_trans_cancel;
 	}
 
@@ -3297,7 +3297,7 @@ xfs_rename(
 		if (S_ISDIR(VFS_I(target_ip)->i_mode) &&
 		    (!xfs_dir_isempty(target_ip) ||
 		     (VFS_I(target_ip)->i_nlink > 2))) {
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 			goto out_trans_cancel;
 		}
 	}

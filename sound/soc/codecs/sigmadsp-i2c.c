@@ -60,7 +60,7 @@ static int sigmadsp_read_i2c(void *control_data,
 	if (ret < 0)
 		return ret;
 	else if (ret != ARRAY_SIZE(msgs))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 

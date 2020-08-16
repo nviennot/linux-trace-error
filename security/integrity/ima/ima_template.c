@@ -193,7 +193,7 @@ int template_desc_init_fields(const char *template_fmt,
 	if (template_num_fields > IMA_TEMPLATE_NUM_FIELDS_MAX) {
 		pr_err("format string '%s' contains too many fields\n",
 		       template_fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0, template_fmt_ptr = template_fmt; i < template_num_fields;
@@ -203,7 +203,7 @@ int template_desc_init_fields(const char *template_fmt,
 		len = strchrnul(template_fmt_ptr, '|') - template_fmt_ptr;
 		if (len == 0 || len > IMA_TEMPLATE_FIELD_ID_MAX_LEN) {
 			pr_err("Invalid field with length %d\n", len);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		memcpy(tmp_field_id, template_fmt_ptr, len);
@@ -211,7 +211,7 @@ int template_desc_init_fields(const char *template_fmt,
 		found_fields[i] = lookup_template_field(tmp_field_id);
 		if (!found_fields[i]) {
 			pr_err("field '%s' not found\n", tmp_field_id);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -384,12 +384,12 @@ int ima_restore_measurement_list(loff_t size, void *buf)
 
 	if (khdr->version != 1) {
 		pr_err("attempting to restore a incompatible measurement list");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (khdr->count > ULONG_MAX - 1) {
 		pr_err("attempting to restore too many measurements");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bitmap_zero(hdr_mask, HDR__LAST);
@@ -413,7 +413,7 @@ int ima_restore_measurement_list(loff_t size, void *buf)
 
 		if (hdr[HDR_TEMPLATE_NAME].len >= MAX_TEMPLATE_NAME_LEN) {
 			pr_err("attempting to restore a template name that is too long\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -425,7 +425,7 @@ int ima_restore_measurement_list(loff_t size, void *buf)
 		if (strcmp(template_name, "ima") == 0) {
 			pr_err("attempting to restore an unsupported template \"%s\" failed\n",
 			       template_name);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -446,7 +446,7 @@ int ima_restore_measurement_list(loff_t size, void *buf)
 		if (ret < 0) {
 			pr_err("attempting to restore the template fmt \"%s\" failed\n",
 			       template_desc->fmt);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -463,7 +463,7 @@ int ima_restore_measurement_list(loff_t size, void *buf)
 						entry);
 			if (ret < 0) {
 				pr_err("cannot calculate template digest\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				break;
 			}
 		}

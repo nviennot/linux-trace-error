@@ -87,7 +87,7 @@ int axg_fifo_pcm_trigger(struct snd_soc_component *component,
 		__dma_enable(fifo, false);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -330,7 +330,7 @@ int axg_fifo_probe(struct platform_device *pdev)
 	data = of_device_get_match_data(dev);
 	if (!data) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	fifo = devm_kzalloc(dev, sizeof(*fifo), GFP_KERNEL);

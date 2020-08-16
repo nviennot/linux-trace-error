@@ -940,7 +940,7 @@ int snd_scarlett_controls_create(struct usb_mixer_interface *mixer)
 		info = &s18i20_info;
 		break;
 	default: /* device not (yet) supported */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* generic function to create controls */

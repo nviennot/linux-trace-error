@@ -130,13 +130,13 @@ static ssize_t cluster_set(struct dlm_cluster *cl, unsigned int *cl_field,
 	int rc;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	rc = kstrtouint(buf, 0, &x);
 	if (rc)
 		return rc;
 
 	if (check_zero && !x)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*cl_field = x;
 	*info_field = x;
@@ -594,10 +594,10 @@ static ssize_t comm_addr_store(struct config_item *item, const char *buf,
 	int rv;
 
 	if (len != sizeof(struct sockaddr_storage))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cm->addr_count >= DLM_MAX_ADDR_COUNT)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	addr = kzalloc(sizeof(*addr), GFP_NOFS);
 	if (!addr)
@@ -782,11 +782,11 @@ int dlm_config_nodes(char *lsname, struct dlm_config_node **nodes_out,
 
 	sp = get_space(lsname);
 	if (!sp)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	mutex_lock(&sp->members_lock);
 	if (!sp->members_count) {
-		rv = -EINVAL;
+		rv = -ERR(EINVAL);
 		printk(KERN_ERR "dlm: zero members_count\n");
 		goto out;
 	}
@@ -823,7 +823,7 @@ int dlm_comm_seq(int nodeid, uint32_t *seq)
 {
 	struct dlm_comm *cm = get_comm(nodeid);
 	if (!cm)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	*seq = cm->seq;
 	put_comm(cm);
 	return 0;

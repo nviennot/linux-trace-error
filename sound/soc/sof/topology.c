@@ -69,7 +69,7 @@ static int ipc_pcm_params(struct snd_sof_widget *swidget, int dir)
 	if (!spcm) {
 		dev_err(scomp->dev, "error: cannot find PCM for %s\n",
 			swidget->widget->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	params = &spcm->params[dir];
@@ -98,7 +98,7 @@ static int ipc_pcm_params(struct snd_sof_widget *swidget, int dir)
 		pcm.params.frame_fmt = SOF_IPC_FRAME_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* send IPC to the DSP */
@@ -157,7 +157,7 @@ static int sof_keyword_dapm_event(struct snd_soc_dapm_widget *w,
 	if (!spcm) {
 		dev_err(scomp->dev, "error: cannot find PCM for %s\n",
 			swidget->widget->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* process events */
@@ -220,7 +220,7 @@ static inline int get_tlv_data(const int *p, int tlv[TLV_ITEMS])
 {
 	/* we only support dB scale TLV type at the moment */
 	if ((int)p[SNDRV_CTL_TLVO_TYPE] != SNDRV_CTL_TLVT_DB_SCALE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* min value in topology tlv data is multiplied by 100 */
 	tlv[TLV_MIN] = (int)p[SNDRV_CTL_TLVO_DB_SCALE_MIN] / 100;
@@ -917,7 +917,7 @@ static int sof_parse_token_sets(struct snd_soc_component *scomp,
 		if (asize < 0) { /* FIXME: A zero-size array makes no sense */
 			dev_err(scomp->dev, "error: invalid array size 0x%x\n",
 				asize);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* make sure there is enough data before parsing */
@@ -925,7 +925,7 @@ static int sof_parse_token_sets(struct snd_soc_component *scomp,
 		if (priv_size < 0) {
 			dev_err(scomp->dev, "error: invalid array size 0x%x\n",
 				asize);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* call correct parser depending on type */
@@ -948,7 +948,7 @@ static int sof_parse_token_sets(struct snd_soc_component *scomp,
 		default:
 			dev_err(scomp->dev, "error: unknown token type %d\n",
 				array->type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* next array */
@@ -1010,7 +1010,7 @@ static int sof_control_load_volume(struct snd_soc_component *scomp,
 
 	/* validate topology data */
 	if (le32_to_cpu(mc->num_channels) > SND_SOC_TPLG_MAX_CHAN) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1039,7 +1039,7 @@ static int sof_control_load_volume(struct snd_soc_component *scomp,
 	/* extract tlv data */
 	if (get_tlv_data(kc->tlv.p, tlv) < 0) {
 		dev_err(scomp->dev, "error: invalid TLV data\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_free;
 	}
 
@@ -1093,7 +1093,7 @@ static int sof_control_load_enum(struct snd_soc_component *scomp,
 
 	/* validate topology data */
 	if (le32_to_cpu(ec->num_channels) > SND_SOC_TPLG_MAX_CHAN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* init the enum get/put data */
 	scontrol->size = struct_size(scontrol->control_data, chanv,
@@ -1133,7 +1133,7 @@ static int sof_control_load_bytes(struct snd_soc_component *scomp,
 	if (scontrol->size > max_size) {
 		dev_err(scomp->dev, "err: bytes data size %d exceeds max %d.\n",
 			scontrol->size, max_size);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1157,7 +1157,7 @@ static int sof_control_load_bytes(struct snd_soc_component *scomp,
 		if (cdata->data->magic != SOF_ABI_MAGIC) {
 			dev_err(scomp->dev, "error: Wrong ABI magic 0x%08x.\n",
 				cdata->data->magic);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_free;
 		}
 		if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION,
@@ -1165,14 +1165,14 @@ static int sof_control_load_bytes(struct snd_soc_component *scomp,
 			dev_err(scomp->dev,
 				"error: Incompatible ABI version 0x%08x.\n",
 				cdata->data->abi);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_free;
 		}
 		if (cdata->data->size + sizeof(const struct sof_abi_hdr) !=
 		    le32_to_cpu(control->priv.size)) {
 			dev_err(scomp->dev,
 				"error: Conflict in bytes vs. priv size.\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_free;
 		}
 	}
@@ -1196,7 +1196,7 @@ static int sof_control_load(struct snd_soc_component *scomp, int index,
 	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
 	struct snd_soc_dobj *dobj;
 	struct snd_sof_control *scontrol;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	dev_dbg(scomp->dev, "tplg: load control type %d name : %s\n",
 		hdr->type, hdr->name);
@@ -1316,7 +1316,7 @@ static int sof_connect_dai_widget(struct snd_soc_component *scomp,
 				dev_err(scomp->dev, "error: can't find BE for DAI %s\n",
 					w->name);
 
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			dai->name = rtd->dai_link->name;
 			dev_dbg(scomp->dev, "tplg: connected widget %s -> DAI link %s\n",
@@ -1338,7 +1338,7 @@ static int sof_connect_dai_widget(struct snd_soc_component *scomp,
 				dev_err(scomp->dev, "error: can't find BE for DAI %s\n",
 					w->name);
 
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			dai->name = rtd->dai_link->name;
 			dev_dbg(scomp->dev, "tplg: connected widget %s -> DAI link %s\n",
@@ -1353,7 +1353,7 @@ static int sof_connect_dai_widget(struct snd_soc_component *scomp,
 	if (!dai->name) {
 		dev_err(scomp->dev, "error: can't connect DAI %s stream %s\n",
 			w->name, w->sname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1474,7 +1474,7 @@ static int spcm_bind(struct snd_soc_component *scomp, struct snd_sof_pcm *spcm,
 						 dir);
 	if (!host_widget) {
 		dev_err(scomp->dev, "can't find host comp to bind pcm\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spcm->stream[dir].comp_id = host_widget->comp_id;
@@ -1617,7 +1617,7 @@ static int sof_widget_load_pipeline(struct snd_soc_component *scomp,
 	if (!comp_swidget) {
 		dev_err(scomp->dev, "error: widget %s refers to non existent widget %s\n",
 			tw->name, tw->sname);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1769,7 +1769,7 @@ static int sof_widget_load_pga(struct snd_soc_component *scomp, int index,
 	if (!le32_to_cpu(tw->num_kcontrols)) {
 		dev_err(scomp->dev, "error: invalid kcontrol count %d for volume\n",
 			tw->num_kcontrols);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -2035,22 +2035,22 @@ static int sof_get_control_data(struct snd_soc_component *scomp,
 			dev_err(scomp->dev, "error: unknown kcontrol type %d in widget %s\n",
 				widget->dobj.widget.kcontrol_type,
 				widget->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (!wdata[i].control) {
 			dev_err(scomp->dev, "error: no scontrol for widget %s\n",
 				widget->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		wdata[i].pdata = wdata[i].control->control_data->data;
 		if (!wdata[i].pdata)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* make sure data is valid - data can be updated at runtime */
 		if (wdata[i].pdata->magic != SOF_ABI_MAGIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		*size += wdata[i].pdata->size;
 
@@ -2094,7 +2094,7 @@ static int sof_process_load(struct snd_soc_component *scomp, int index,
 	if (type == SOF_COMP_NONE) {
 		dev_err(scomp->dev, "error: invalid process comp type %d\n",
 			type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* allocate struct for widget control data sizes and types */
@@ -2217,7 +2217,7 @@ static int sof_widget_load_process(struct snd_soc_component *scomp, int index,
 	/* check we have some tokens - we need at least process type */
 	if (le32_to_cpu(private->size) == 0) {
 		dev_err(scomp->dev, "error: process tokens not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&config, 0, sizeof(config));
@@ -2272,7 +2272,7 @@ static int sof_widget_bind_event(struct snd_soc_component *scomp,
 	dev_err(scomp->dev,
 		"error: invalid event type %d for widget %s\n",
 		event_type, swidget->widget->name);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* external widget init - used for any driver specific init */
@@ -2785,13 +2785,13 @@ static int sof_link_ssp_load(struct snd_soc_component *scomp, int index,
 	if (config->ssp.fsync_rate < 8000 || config->ssp.fsync_rate > 192000) {
 		dev_err(scomp->dev, "error: invalid fsync rate for SSP%d\n",
 			config->dai_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (config->ssp.tdm_slots < 1 || config->ssp.tdm_slots > 8) {
 		dev_err(scomp->dev, "error: invalid channel count for SSP%d\n",
 			config->dai_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set config for all DAI's with name matching the link name */
@@ -2847,7 +2847,7 @@ static int sof_link_sai_load(struct snd_soc_component *scomp, int index,
 	if (config->sai.tdm_slots < 1 || config->sai.tdm_slots > 8) {
 		dev_err(scomp->dev, "error: invalid channel count for SAI%d\n",
 			config->dai_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set config for all DAI's with name matching the link name */
@@ -2904,7 +2904,7 @@ static int sof_link_esai_load(struct snd_soc_component *scomp, int index,
 	if (config->esai.tdm_slots < 1 || config->esai.tdm_slots > 8) {
 		dev_err(scomp->dev, "error: invalid channel count for ESAI%d\n",
 			config->dai_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set config for all DAI's with name matching the link name */
@@ -3044,7 +3044,7 @@ static int sof_link_hda_load(struct snd_soc_component *scomp, int index,
 	if (!dai) {
 		dev_err(scomp->dev, "error: failed to find dai %s in %s",
 			link->cpus->dai_name, __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	config->hda.link_dma_ch = DMA_CHAN_INVALID;
@@ -3103,7 +3103,7 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 
 	if (!link->platforms) {
 		dev_err(scomp->dev, "error: no platforms\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	link->platforms->name = dev_name(scomp->dev);
 
@@ -3133,7 +3133,7 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 	/* check we have some tokens - we need at least DAI type */
 	if (le32_to_cpu(private->size) == 0) {
 		dev_err(scomp->dev, "error: expected tokens for DAI, none found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Send BE DAI link configurations to DSP */
@@ -3158,7 +3158,7 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 		if (config.type != SOF_DAI_INTEL_HDA) {
 			dev_err(scomp->dev, "error: unexpected DAI config count %d!\n",
 				le32_to_cpu(cfg->num_hw_configs));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		dev_dbg(scomp->dev, "tplg: %d hw_configs found, default id: %d!\n",
@@ -3172,7 +3172,7 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 		if (i == num_hw_configs) {
 			dev_err(scomp->dev, "error: default hw_config id: %d not found!\n",
 				le32_to_cpu(cfg->default_hw_config_id));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -3211,7 +3211,7 @@ static int sof_link_load(struct snd_soc_component *scomp, int index,
 	default:
 		dev_err(scomp->dev, "error: invalid DAI type %d\n",
 			config.type);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	if (ret < 0)
@@ -3230,7 +3230,7 @@ static int sof_link_hda_unload(struct snd_sof_dev *sdev,
 	if (!dai) {
 		dev_err(sdev->dev, "error: failed to find dai %s in %s",
 			link->cpus->dai_name, __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -3260,7 +3260,7 @@ static int sof_link_unload(struct snd_soc_component *scomp,
 
 	dev_err(scomp->dev, "error: failed to find dai %s in %s",
 		link->name, __func__);
-	return -EINVAL;
+	return -ERR(EINVAL);
 found:
 
 	switch (sof_dai->dai_config->type) {
@@ -3277,7 +3277,7 @@ found:
 	default:
 		dev_err(scomp->dev, "error: invalid DAI type %d\n",
 			sof_dai->dai_config->type);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -3321,7 +3321,7 @@ static int sof_route_load(struct snd_soc_component *scomp, int index,
 	if (!source_swidget) {
 		dev_err(scomp->dev, "error: source %s not found\n",
 			route->source);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -3342,7 +3342,7 @@ static int sof_route_load(struct snd_soc_component *scomp, int index,
 	if (!sink_swidget) {
 		dev_err(scomp->dev, "error: sink %s not found\n",
 			route->sink);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -3437,7 +3437,7 @@ static int snd_sof_cache_kcontrol_val(struct snd_soc_component *scomp)
 			dev_err(scomp->dev,
 				"error: Invalid scontrol->cmd: %d\n",
 				scontrol->cmd);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ret = snd_sof_ipc_set_get_comp_data(scontrol,
 						    ipc_cmd, ctrl_type,
@@ -3521,7 +3521,7 @@ static int sof_manifest(struct snd_soc_component *scomp, int index,
 
 	if (size != SOF_TPLG_ABI_SIZE) {
 		dev_err(scomp->dev, "error: invalid topology ABI size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_info(scomp->dev,
@@ -3536,7 +3536,7 @@ static int sof_manifest(struct snd_soc_component *scomp, int index,
 
 	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, abi_version)) {
 		dev_err(scomp->dev, "error: incompatible topology ABI version\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (abi_version > SOF_ABI_VERSION) {
@@ -3544,7 +3544,7 @@ static int sof_manifest(struct snd_soc_component *scomp, int index,
 			dev_warn(scomp->dev, "warn: topology ABI is more recent than kernel\n");
 		} else {
 			dev_err(scomp->dev, "error: topology ABI is more recent than kernel\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -3621,7 +3621,7 @@ int snd_sof_load_topology(struct snd_soc_component *scomp, const char *file)
 	if (ret < 0) {
 		dev_err(scomp->dev, "error: tplg component load failed %d\n",
 			ret);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	release_firmware(fw);

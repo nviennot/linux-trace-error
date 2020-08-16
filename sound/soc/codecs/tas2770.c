@@ -68,7 +68,7 @@ static int tas2770_set_bias_level(struct snd_soc_component *component,
 	default:
 		dev_err(tas2770->dev,
 				"wrong power level setting %d\n", level);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -148,7 +148,7 @@ static int tas2770_dac_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(tas2770->dev, "Not supported evevt\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 end:
@@ -240,7 +240,7 @@ static int tas2770_set_bitwidth(struct tas2770_priv *tas2770, int bitwidth)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tas2770->channel_size = bitwidth;
@@ -352,7 +352,7 @@ static int tas2770_set_samplerate(struct tas2770_priv *tas2770, int samplerate)
 			TAS2770_TDM_CFG_REG0_31_176_4_192KHZ);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 end:
@@ -396,7 +396,7 @@ static int tas2770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(tas2770->dev, "ASI format master is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -408,7 +408,7 @@ static int tas2770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(tas2770->dev, "ASI format Inverse is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, TAS2770_TDM_CFG_REG1,
@@ -433,7 +433,7 @@ static int tas2770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(tas2770->dev,
 			"DAI Format is not found, fmt=0x%x\n", fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, TAS2770_TDM_CFG_REG1,
@@ -459,11 +459,11 @@ static int tas2770_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	int ret;
 
 	if (tx_mask == 0 || rx_mask != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (slots == 1) {
 		if (tx_mask != 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		left_slot = 0;
 		right_slot = 0;
 	} else {
@@ -478,7 +478,7 @@ static int tas2770_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	}
 
 	if (tx_mask != 0 || left_slot >= slots || right_slot >= slots)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = snd_soc_component_update_bits(component, TAS2770_TDM_CFG_REG3,
 		TAS2770_TDM_CFG_REG3_30_MASK,
@@ -519,7 +519,7 @@ static int tas2770_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	if (ret < 0)

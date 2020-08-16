@@ -117,7 +117,7 @@ static int ac97_channel_mode_put(struct snd_kcontrol *kcontrol, struct snd_ctl_e
 	unsigned char mode = ucontrol->value.enumerated.item[0];
 
 	if (mode >= kcontrol->private_value)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (mode != ac97->channel_mode) {
 		ac97->channel_mode = mode;
@@ -243,7 +243,7 @@ static int snd_ac97_ymf7x3_put_speaker(struct snd_kcontrol *kcontrol,
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = (ucontrol->value.enumerated.item[0] + 1) << 10;
 	return snd_ac97_update(ac97, AC97_YMF7X3_3D_MODE_SEL, val);
 }
@@ -285,7 +285,7 @@ static int snd_ac97_ymf7x3_spdif_source_put(struct snd_kcontrol *kcontrol,
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = ucontrol->value.enumerated.item[0] << 1;
 	return snd_ac97_update_bits(ac97, AC97_YMF7X3_DIT_CTRL, 0x0002, val);
 }
@@ -385,7 +385,7 @@ static int snd_ac97_ymf753_spdif_output_pin_put(struct snd_kcontrol *kcontrol, s
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = (ucontrol->value.enumerated.item[0] == 2) ? 0x0008 :
 	      (ucontrol->value.enumerated.item[0] == 1) ? 0x0020 : 0;
 	return snd_ac97_update_bits(ac97, AC97_YMF7X3_DIT_CTRL, 0x0028, val);
@@ -1088,7 +1088,7 @@ static int snd_ac97_stac9758_output_jack_put(struct snd_kcontrol *kcontrol, stru
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ucontrol->value.enumerated.item[0] == 0)
 		val = 0;
 	else
@@ -1768,7 +1768,7 @@ static int snd_ac97_ad198x_spdif_source_put(struct snd_kcontrol *kcontrol, struc
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = ucontrol->value.enumerated.item[0] << 2;
 	return snd_ac97_update_bits(ac97, AC97_AD_SERIAL_CFG, 0x0004, val);
 }
@@ -1955,7 +1955,7 @@ static int snd_ac97_ad1888_downmix_put(struct snd_kcontrol *kcontrol, struct snd
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ucontrol->value.enumerated.item[0] == 0)
 		val = 0;
 	else
@@ -2111,7 +2111,7 @@ static int snd_ac97_ad1985_vrefout_put(struct snd_kcontrol *kcontrol,
 	unsigned short val;
 
 	if (ucontrol->value.enumerated.item[0] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = ctrl2reg[ucontrol->value.enumerated.item[0]]
 	      << AC97_AD198X_VREF_SHIFT;
 	return snd_ac97_update_bits(ac97, AC97_AD_MISC,
@@ -2360,7 +2360,7 @@ static int snd_ac97_ad1986_vrefout_put(struct snd_kcontrol *kcontrol,
 		mval = AC97_AD1986_MVREF1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cret = snd_ac97_update_bits(ac97, AC97_AD_MISC2,
@@ -3446,7 +3446,7 @@ static int patch_vt1616_specific(struct snd_ac97 * ac97)
 	/* There is already a misnamed master switch.  Rename it.  */
 	kctl = snd_ac97_find_mixer_ctl(ac97, "Master Playback Volume");
 	if (!kctl)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_ac97_rename_vol_ctl(ac97, "Master Playback", "Front Playback");
 

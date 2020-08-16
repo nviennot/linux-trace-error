@@ -135,7 +135,7 @@ static int pmf_set_notify(struct gpio_runtime *rt,
 	notify_func_t old;
 	struct pmf_irq_client *irq_client;
 	char *name;
-	int err = -EBUSY;
+	int err = -ERR(EBUSY);
 
 	switch (type) {
 	case AOA_NOTIFY_HEADPHONE:
@@ -151,7 +151,7 @@ static int pmf_set_notify(struct gpio_runtime *rt,
 		name = "lineout-detect";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&notif->mutex);
@@ -209,7 +209,7 @@ static int pmf_get_detect(struct gpio_runtime *rt,
 			  enum notify_type type)
 {
 	char *name;
-	int err = -EBUSY, ret;
+	int err = -ERR(EBUSY), ret;
 	struct pmf_args args = { .count = 1, .u[0].p = &ret };
 
 	switch (type) {
@@ -223,7 +223,7 @@ static int pmf_get_detect(struct gpio_runtime *rt,
 		name = "lineout-detect";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = pmf_call_function(rt->node, name, &args);

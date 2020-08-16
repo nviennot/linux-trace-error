@@ -94,7 +94,7 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
 	}
 	nr_pages = i;
 	if (WARN_ON(nr_pages <= 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* This always succeeds since __GFP_DIRECT_RECLAIM is set. */
 	bio = bio_alloc(GFP_NOFS, nr_pages);
@@ -119,7 +119,7 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
 			if (offset == PAGE_SIZE || len == 0) {
 				ret = bio_add_page(bio, pages[i++], offset, 0);
 				if (WARN_ON(ret != offset)) {
-					err = -EIO;
+					err = -ERR(EIO);
 					goto out;
 				}
 				offset = 0;

@@ -503,7 +503,7 @@ static int start_usb_capture(struct ua101 *ua)
 	int err;
 
 	if (test_bit(DISCONNECTED, &ua->states))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (test_bit(USB_CAPTURE_RUNNING, &ua->states))
 		return 0;
@@ -544,7 +544,7 @@ static int start_usb_playback(struct ua101 *ua)
 	int err = 0;
 
 	if (test_bit(DISCONNECTED, &ua->states))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (test_bit(USB_PLAYBACK_RUNNING, &ua->states))
 		return 0;
@@ -573,11 +573,11 @@ static int start_usb_playback(struct ua101 *ua)
 		   test_bit(DISCONNECTED, &ua->states));
 	if (test_bit(DISCONNECTED, &ua->states)) {
 		stop_usb_playback(ua);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (!test_bit(USB_CAPTURE_RUNNING, &ua->states)) {
 		stop_usb_playback(ua);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	for (i = 0; i < ua->playback.queue_length; ++i) {
@@ -768,9 +768,9 @@ static int capture_pcm_prepare(struct snd_pcm_substream *substream)
 		   test_bit(CAPTURE_URB_COMPLETED, &ua->states) ||
 		   !test_bit(USB_CAPTURE_RUNNING, &ua->states));
 	if (test_bit(DISCONNECTED, &ua->states))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!test_bit(USB_CAPTURE_RUNNING, &ua->states))
-		return -EIO;
+		return -ERR(EIO);
 
 	ua->capture.period_pos = 0;
 	ua->capture.buffer_pos = 0;
@@ -795,9 +795,9 @@ static int playback_pcm_prepare(struct snd_pcm_substream *substream)
 		   test_bit(PLAYBACK_URB_COMPLETED, &ua->states) ||
 		   !test_bit(USB_PLAYBACK_RUNNING, &ua->states));
 	if (test_bit(DISCONNECTED, &ua->states))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!test_bit(USB_PLAYBACK_RUNNING, &ua->states))
-		return -EIO;
+		return -ERR(EIO);
 
 	substream->runtime->delay = 0;
 	ua->playback.period_pos = 0;
@@ -812,14 +812,14 @@ static int capture_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 		if (!test_bit(USB_CAPTURE_RUNNING, &ua->states))
-			return -EIO;
+			return -ERR(EIO);
 		set_bit(ALSA_CAPTURE_RUNNING, &ua->states);
 		return 0;
 	case SNDRV_PCM_TRIGGER_STOP:
 		clear_bit(ALSA_CAPTURE_RUNNING, &ua->states);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -830,14 +830,14 @@ static int playback_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 		if (!test_bit(USB_PLAYBACK_RUNNING, &ua->states))
-			return -EIO;
+			return -ERR(EIO);
 		set_bit(ALSA_PLAYBACK_RUNNING, &ua->states);
 		return 0;
 	case SNDRV_PCM_TRIGGER_STOP:
 		clear_bit(ALSA_PLAYBACK_RUNNING, &ua->states);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -947,7 +947,7 @@ static int detect_usb_format(struct ua101 *ua)
 	fmt_capture = find_format_descriptor(ua->intf[INTF_CAPTURE]);
 	fmt_playback = find_format_descriptor(ua->intf[INTF_PLAYBACK]);
 	if (!fmt_capture || !fmt_playback)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (fmt_capture->bSubframeSize) {
 	case 3:
@@ -958,18 +958,18 @@ static int detect_usb_format(struct ua101 *ua)
 		break;
 	default:
 		dev_err(&ua->dev->dev, "sample width is not 24 or 32 bits\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	if (fmt_capture->bSubframeSize != fmt_playback->bSubframeSize) {
 		dev_err(&ua->dev->dev,
 			"playback/capture sample widths do not match\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (fmt_capture->bBitResolution != 24 ||
 	    fmt_playback->bBitResolution != 24) {
 		dev_err(&ua->dev->dev, "sample width is not 24 bits\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	ua->rate = combine_triple(fmt_capture->tSamFreq[0]);
@@ -978,7 +978,7 @@ static int detect_usb_format(struct ua101 *ua)
 		dev_err(&ua->dev->dev,
 			"playback/capture rates do not match: %u/%u\n",
 			rate2, ua->rate);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	switch (ua->dev->speed) {
@@ -990,7 +990,7 @@ static int detect_usb_format(struct ua101 *ua)
 		break;
 	default:
 		dev_err(&ua->dev->dev, "unknown device speed\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	ua->capture.channels = fmt_capture->bNrChannels;
@@ -1003,7 +1003,7 @@ static int detect_usb_format(struct ua101 *ua)
 	epd = &ua->intf[INTF_CAPTURE]->altsetting[1].endpoint[0].desc;
 	if (!usb_endpoint_is_isoc_in(epd)) {
 		dev_err(&ua->dev->dev, "invalid capture endpoint\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	ua->capture.usb_pipe = usb_rcvisocpipe(ua->dev, usb_endpoint_num(epd));
 	ua->capture.max_packet_bytes = usb_endpoint_maxp(epd);
@@ -1011,7 +1011,7 @@ static int detect_usb_format(struct ua101 *ua)
 	epd = &ua->intf[INTF_PLAYBACK]->altsetting[1].endpoint[0].desc;
 	if (!usb_endpoint_is_isoc_out(epd)) {
 		dev_err(&ua->dev->dev, "invalid playback endpoint\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	ua->playback.usb_pipe = usb_sndisocpipe(ua->dev, usb_endpoint_num(epd));
 	ua->playback.max_packet_bytes = usb_endpoint_maxp(epd);
@@ -1052,7 +1052,7 @@ static int alloc_stream_buffers(struct ua101 *ua, struct ua101_stream *stream)
 	}
 	if (remaining_packets) {
 		dev_err(&ua->dev->dev, "too many packets\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	return 0;
 }
@@ -1109,7 +1109,7 @@ static int alloc_stream_urbs(struct ua101 *ua, struct ua101_stream *stream,
 		return 0;
 bufsize_error:
 	dev_err(&ua->dev->dev, "internal buffer size error\n");
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static void free_stream_urbs(struct ua101_stream *stream)
@@ -1191,7 +1191,7 @@ static int ua101_probe(struct usb_interface *interface,
 
 	if (interface->altsetting->desc.bInterfaceNumber !=
 	    intf_numbers[is_ua1000][0])
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&devices_mutex);
 
@@ -1200,7 +1200,7 @@ static int ua101_probe(struct usb_interface *interface,
 			break;
 	if (card_index >= SNDRV_CARDS) {
 		mutex_unlock(&devices_mutex);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	err = snd_card_new(&interface->dev,
 			   index[card_index], id[card_index], THIS_MODULE,
@@ -1231,14 +1231,14 @@ static int ua101_probe(struct usb_interface *interface,
 		if (!ua->intf[i]) {
 			dev_err(&ua->dev->dev, "interface %u not found\n",
 				intf_numbers[is_ua1000][i]);
-			err = -ENXIO;
+			err = -ERR(ENXIO);
 			goto probe_error;
 		}
 		err = usb_driver_claim_interface(&ua101_driver,
 						 ua->intf[i], ua);
 		if (err < 0) {
 			ua->intf[i] = NULL;
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto probe_error;
 		}
 	}

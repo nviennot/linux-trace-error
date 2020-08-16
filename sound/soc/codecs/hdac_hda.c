@@ -225,7 +225,7 @@ static int hdac_hda_dai_hw_params(struct snd_pcm_substream *substream,
 			params_rate(params), params_channels(params),
 			params_format(params), maxbps);
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hda_pvt->pcm[dai->id].format_val[substream->stream] = format_val;
@@ -243,7 +243,7 @@ static int hdac_hda_dai_hw_free(struct snd_pcm_substream *substream,
 	hda_pvt = snd_soc_component_get_drvdata(component);
 	pcm = snd_soc_find_pcm_from_dai(hda_pvt, dai);
 	if (!pcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hda_stream = &pcm->stream[substream->stream];
 	snd_hda_codec_cleanup(&hda_pvt->codec, hda_stream, substream);
@@ -267,7 +267,7 @@ static int hdac_hda_dai_prepare(struct snd_pcm_substream *substream,
 	hdev = &hda_pvt->codec.core;
 	pcm = snd_soc_find_pcm_from_dai(hda_pvt, dai);
 	if (!pcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hda_stream = &pcm->stream[substream->stream];
 
@@ -294,7 +294,7 @@ static int hdac_hda_dai_open(struct snd_pcm_substream *substream,
 	hda_pvt = snd_soc_component_get_drvdata(component);
 	pcm = snd_soc_find_pcm_from_dai(hda_pvt, dai);
 	if (!pcm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_hda_codec_pcm_get(pcm);
 
@@ -403,7 +403,7 @@ static int hdac_hda_codec_probe(struct snd_soc_component *component)
 	hlink = snd_hdac_ext_bus_get_link(hdev->bus, dev_name(&hdev->dev));
 	if (!hlink) {
 		dev_err(&hdev->dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	snd_hdac_ext_bus_link_get(hdev->bus, hlink);
@@ -580,7 +580,7 @@ static int hdac_hda_dev_probe(struct hdac_device *hdev)
 	hlink = snd_hdac_ext_bus_get_link(hdev->bus, dev_name(&hdev->dev));
 	if (!hlink) {
 		dev_err(&hdev->dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	snd_hdac_ext_bus_link_get(hdev->bus, hlink);
 

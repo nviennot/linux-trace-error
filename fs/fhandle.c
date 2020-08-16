@@ -29,13 +29,13 @@ static long do_sys_name_to_handle(struct path *path,
 	 */
 	if (!path->dentry->d_sb->s_export_op ||
 	    !path->dentry->d_sb->s_export_op->fh_to_dentry)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
 		return -EFAULT;
 
 	if (f_handle.handle_bytes > MAX_HANDLE_SZ)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_bytes,
 			 GFP_KERNEL);
@@ -65,7 +65,7 @@ static long do_sys_name_to_handle(struct path *path,
 		 * non variable part of the file_handle
 		 */
 		handle_bytes = 0;
-		retval = -EOVERFLOW;
+		retval = -ERR(EOVERFLOW);
 	} else
 		retval = 0;
 	/* copy the mount id */
@@ -99,7 +99,7 @@ SYSCALL_DEFINE5(name_to_handle_at, int, dfd, const char __user *, name,
 	int err;
 
 	if ((flag & ~(AT_SYMLINK_FOLLOW | AT_EMPTY_PATH)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lookup_flags = (flag & AT_SYMLINK_FOLLOW) ? LOOKUP_FOLLOW : 0;
 	if (flag & AT_EMPTY_PATH)
@@ -124,7 +124,7 @@ static struct vfsmount *get_vfsmount_from_fd(int fd)
 	} else {
 		struct fd f = fdget(fd);
 		if (!f.file)
-			return ERR_PTR(-EBADF);
+			return ERR_PTR(-ERR(EBADF));
 		mnt = mntget(f.file->f_path.mnt);
 		fdput(f);
 	}
@@ -177,7 +177,7 @@ static int handle_to_path(int mountdirfd, struct file_handle __user *ufh,
 	 * But we don't have that
 	 */
 	if (!capable(CAP_DAC_READ_SEARCH)) {
-		retval = -EPERM;
+		retval = -ERR(EPERM);
 		goto out_err;
 	}
 	if (copy_from_user(&f_handle, ufh, sizeof(struct file_handle))) {
@@ -186,7 +186,7 @@ static int handle_to_path(int mountdirfd, struct file_handle __user *ufh,
 	}
 	if ((f_handle.handle_bytes > MAX_HANDLE_SZ) ||
 	    (f_handle.handle_bytes == 0)) {
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		goto out_err;
 	}
 	handle = kmalloc(sizeof(struct file_handle) + f_handle.handle_bytes,

@@ -75,15 +75,15 @@ static struct inode *__ecryptfs_get_inode(struct inode *lower_inode,
 	struct inode *inode;
 
 	if (lower_inode->i_sb != ecryptfs_superblock_to_lower(sb))
-		return ERR_PTR(-EXDEV);
+		return ERR_PTR(-ERR(EXDEV));
 	if (!igrab(lower_inode))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	inode = iget5_locked(sb, (unsigned long)lower_inode,
 			     ecryptfs_inode_test, ecryptfs_inode_set,
 			     lower_inode);
 	if (!inode) {
 		iput(lower_inode);
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 	}
 	if (!(inode->i_state & I_NEW))
 		iput(lower_inode);
@@ -137,9 +137,9 @@ static int ecryptfs_do_unlink(struct inode *dir, struct dentry *dentry,
 	inode_lock_nested(lower_dir_inode, I_MUTEX_PARENT);
 	dget(lower_dentry);	// don't even try to make the lower negative
 	if (lower_dentry->d_parent != lower_dir_dentry)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else if (d_unhashed(lower_dentry))
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else
 		rc = vfs_unlink(lower_dir_inode, lower_dentry, NULL);
 	if (rc) {
@@ -537,9 +537,9 @@ static int ecryptfs_rmdir(struct inode *dir, struct dentry *dentry)
 	inode_lock_nested(lower_dir_inode, I_MUTEX_PARENT);
 	dget(lower_dentry);	// don't even try to make the lower negative
 	if (lower_dentry->d_parent != lower_dir_dentry)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else if (d_unhashed(lower_dentry))
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else
 		rc = vfs_rmdir(lower_dir_inode, lower_dentry);
 	if (!rc) {
@@ -592,7 +592,7 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct inode *target_inode;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lower_old_dir_dentry = ecryptfs_dentry_to_lower(old_dentry->d_parent);
 	lower_new_dir_dentry = ecryptfs_dentry_to_lower(new_dentry->d_parent);
@@ -604,7 +604,7 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	trap = lock_rename(lower_old_dir_dentry, lower_new_dir_dentry);
 	dget(lower_new_dentry);
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (lower_old_dentry->d_parent != lower_old_dir_dentry)
 		goto out_lock;
 	if (lower_new_dentry->d_parent != lower_new_dir_dentry)
@@ -616,7 +616,7 @@ ecryptfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		goto out_lock;
 	/* target should not be ancestor of source */
 	if (trap == lower_new_dentry) {
-		rc = -ENOTEMPTY;
+		rc = -ERR(ENOTEMPTY);
 		goto out_lock;
 	}
 	rc = vfs_rename(d_inode(lower_old_dir_dentry), lower_old_dentry,
@@ -665,7 +665,7 @@ static const char *ecryptfs_get_link(struct dentry *dentry,
 	char *buf;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	buf = ecryptfs_readlink_lower(dentry, &len);
 	if (IS_ERR(buf))
@@ -917,7 +917,7 @@ static int ecryptfs_setattr(struct dentry *dentry, struct iattr *ia)
 		if (rc) {
 			if (!(mount_crypt_stat->flags
 			      & ECRYPTFS_PLAINTEXT_PASSTHROUGH_ENABLED)) {
-				rc = -EIO;
+				rc = -ERR(EIO);
 				printk(KERN_WARNING "Either the lower file "
 				       "is not in a valid eCryptfs format, "
 				       "or the key could not be retrieved. "
@@ -1019,7 +1019,7 @@ ecryptfs_setxattr(struct dentry *dentry, struct inode *inode,
 
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	if (!(d_inode(lower_dentry)->i_opflags & IOP_XATTR)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 	rc = vfs_setxattr(lower_dentry, name, value, size, flags);
@@ -1036,7 +1036,7 @@ ecryptfs_getxattr_lower(struct dentry *lower_dentry, struct inode *lower_inode,
 	int rc;
 
 	if (!(lower_inode->i_opflags & IOP_XATTR)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 	inode_lock(lower_inode);
@@ -1063,7 +1063,7 @@ ecryptfs_listxattr(struct dentry *dentry, char *list, size_t size)
 
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	if (!d_inode(lower_dentry)->i_op->listxattr) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 	inode_lock(d_inode(lower_dentry));
@@ -1083,7 +1083,7 @@ static int ecryptfs_removexattr(struct dentry *dentry, struct inode *inode,
 	lower_dentry = ecryptfs_dentry_to_lower(dentry);
 	lower_inode = ecryptfs_inode_to_lower(inode);
 	if (!(lower_inode->i_opflags & IOP_XATTR)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 	inode_lock(lower_inode);

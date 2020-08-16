@@ -216,7 +216,7 @@ static inline int find_codec_info_part(unsigned int part_id)
 			break;
 
 	if (i == ARRAY_SIZE(codec_info_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return i;
 }
@@ -226,7 +226,7 @@ static inline int find_codec_info_acpi(const u8 *acpi_id)
 	int i;
 
 	if (!acpi_id[0])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < ARRAY_SIZE(codec_info_list); i++)
 		if (!memcmp(codec_info_list[i].acpi_id, acpi_id,
@@ -234,7 +234,7 @@ static inline int find_codec_info_acpi(const u8 *acpi_id)
 			break;
 
 	if (i == ARRAY_SIZE(codec_info_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return i;
 }
@@ -257,7 +257,7 @@ static int get_sdw_dailink_info(const struct snd_soc_acpi_link_adr *links,
 	*sdw_be_num  = 0;
 
 	if (!links)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < SDW_MAX_GROUPS; i++)
 		group_visited[i] = false;
@@ -475,7 +475,7 @@ static int get_slave_info(const struct snd_soc_acpi_link_adr *adr_link,
 
 	/* make sure the link mask has a single bit set */
 	if (!is_power_of_2(adr_link->mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cpu_dai_id[index++] = ffs(adr_link->mask) - 1;
 	if (!adr_d->endpoints->aggregated || no_aggregation) {
@@ -498,11 +498,11 @@ static int get_slave_info(const struct snd_soc_acpi_link_adr *adr_link,
 
 		/* make sure the link mask has a single bit set */
 		if (!is_power_of_2(adr_next->mask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (index >= SDW_MAX_CPU_DAIS) {
 			dev_err(dev, " cpu_dai_id array overflows");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		cpu_dai_id[index++] = ffs(adr_next->mask) - 1;
@@ -609,7 +609,7 @@ static int create_sdw_dailink(struct device *dev, int *be_index,
 			if (cpu_dai_index >= sdw_cpu_dai_num) {
 				dev_err(dev, "invalid cpu dai index %d",
 					cpu_dai_index);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			cpus[cpu_dai_index++].dai_name = cpu_name;
@@ -617,12 +617,12 @@ static int create_sdw_dailink(struct device *dev, int *be_index,
 
 		if (*be_index >= sdw_be_num) {
 			dev_err(dev, " invalid be dai index %d", *be_index);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (*cpu_id >= sdw_cpu_dai_num) {
 			dev_err(dev, " invalid cpu dai index %d", *cpu_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		playback = (stream == SNDRV_PCM_STREAM_PLAYBACK);
@@ -731,7 +731,7 @@ static int sof_card_dai_links_create(struct device *dev,
 
 	adr_link = mach_params->links;
 	if (!adr_link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * SoundWire Slaves aggregated in the same group may be

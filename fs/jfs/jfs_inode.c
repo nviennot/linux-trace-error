@@ -60,7 +60,7 @@ struct inode *ialloc(struct inode *parent, umode_t mode)
 	}
 
 	if (insert_inode_locked(inode) < 0) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto fail_put;
 	}
 

@@ -207,7 +207,7 @@ struct nfs_client *nfs4_alloc_client(const struct nfs_client_initdata *cl_init)
 		goto error;
 
 	if (cl_init->minorversion > NFS4_MAX_MINOR_VERSION) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -696,7 +696,7 @@ out_err:
 	pr_info("NFS:  %s: Session trunking failed for %s\n", clp->cl_hostname,
 		xprt->address_strings[RPC_DISPLAY_ADDR]);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -898,7 +898,7 @@ static int nfs4_set_client(struct nfs_server *server,
 
 	if (server->nfs_client == clp) {
 		nfs_put_client(clp);
-		return -ELOOP;
+		return -ERR(ELOOP);
 	}
 
 	/*
@@ -946,7 +946,7 @@ struct nfs_client *nfs4_set_ds_client(struct nfs_server *mds_srv,
 	char buf[INET6_ADDRSTRLEN + 1];
 
 	if (rpc_ntop(ds_addr, buf, sizeof(buf)) <= 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	cl_init.hostname = buf;
 
 	if (mds_clp->cl_nconnect > 1 && ds_proto == XPRT_TRANSPORT_TCP)
@@ -1000,7 +1000,7 @@ static int nfs4_server_common_setup(struct nfs_server *server,
 
 	/* data servers support only a subset of NFSv4.1 */
 	if (is_ds_only_client(server->nfs_client))
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	fattr = nfs_alloc_fattr();
 	if (fattr == NULL)
@@ -1280,7 +1280,7 @@ int nfs4_update_server(struct nfs_server *server, const char *hostname,
 		return error;
 
 	if (rpc_ntop(localaddr, buf, sizeof(buf)) == 0)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	nfs_server_remove_lists(server);
 	set_bit(NFS_MIG_TSM_POSSIBLE, &server->mig_status);

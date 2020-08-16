@@ -91,7 +91,7 @@ static int atmel_asoc_wm8904_dt_init(struct platform_device *pdev)
 
 	if (!np) {
 		dev_err(&pdev->dev, "only device tree supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_of_parse_card_name(card, "atmel,model");
@@ -109,7 +109,7 @@ static int atmel_asoc_wm8904_dt_init(struct platform_device *pdev)
 	cpu_np = of_parse_phandle(np, "atmel,ssc-controller", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "failed to get dai and pcm info\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		return ret;
 	}
 	dailink->cpus->of_node = cpu_np;
@@ -119,7 +119,7 @@ static int atmel_asoc_wm8904_dt_init(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "atmel,audio-codec", 0);
 	if (!codec_np) {
 		dev_err(&pdev->dev, "failed to get codec info\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		return ret;
 	}
 	dailink->codecs->of_node = codec_np;

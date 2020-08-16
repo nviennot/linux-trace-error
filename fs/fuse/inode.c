@@ -127,7 +127,7 @@ static int fuse_reconfigure(struct fs_context *fc)
 
 	sync_filesystem(sb);
 	if (fc->sb_flags & SB_MANDLOCK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -331,7 +331,7 @@ int fuse_reverse_inval_inode(struct super_block *sb, u64 nodeid,
 
 	inode = ilookup5(sb, nodeid, fuse_inode_eq, &nodeid);
 	if (!inode)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	fi = get_fuse_inode(inode);
 	spin_lock(&fi->lock);
@@ -552,7 +552,7 @@ static int fuse_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -688,7 +688,7 @@ static struct dentry *fuse_get_dentry(struct super_block *sb,
 	struct fuse_conn *fc = get_fuse_conn_super(sb);
 	struct inode *inode;
 	struct dentry *entry;
-	int err = -ESTALE;
+	int err = -ERR(ESTALE);
 
 	if (handle->nodeid == 0)
 		goto out_err;
@@ -706,14 +706,14 @@ static struct dentry *fuse_get_dentry(struct super_block *sb,
 		if (err && err != -ENOENT)
 			goto out_err;
 		if (err || !inode) {
-			err = -ESTALE;
+			err = -ERR(ESTALE);
 			goto out_err;
 		}
-		err = -EIO;
+		err = -ERR(EIO);
 		if (get_node_id(inode) != handle->nodeid)
 			goto out_iput;
 	}
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (inode->i_generation != handle->generation)
 		goto out_iput;
 
@@ -800,13 +800,13 @@ static struct dentry *fuse_get_parent(struct dentry *child)
 	int err;
 
 	if (!fc->export_support)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	err = fuse_lookup_name(child_inode->i_sb, get_node_id(child_inode),
 			       &name, &outarg, &inode);
 	if (err) {
 		if (err == -ENOENT)
-			return ERR_PTR(-ESTALE);
+			return ERR_PTR(-ERR(ESTALE));
 		return ERR_PTR(err);
 	}
 
@@ -1138,7 +1138,7 @@ int fuse_fill_super_common(struct super_block *sb, struct fuse_fs_context *ctx)
 	struct dentry *root_dentry;
 	int err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sb->s_flags & SB_MANDLOCK)
 		goto err;
 
@@ -1146,7 +1146,7 @@ int fuse_fill_super_common(struct super_block *sb, struct fuse_fs_context *ctx)
 
 	if (ctx->is_bdev) {
 #ifdef CONFIG_BLOCK
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!sb_set_blocksize(sb, ctx->blksize))
 			goto err;
 #endif
@@ -1212,7 +1212,7 @@ int fuse_fill_super_common(struct super_block *sb, struct fuse_fs_context *ctx)
 	sb->s_d_op = &fuse_dentry_operations;
 
 	mutex_lock(&fuse_mutex);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (ctx->fudptr && *ctx->fudptr)
 		goto err_unlock;
 
@@ -1245,7 +1245,7 @@ static int fuse_fill_super(struct super_block *sb, struct fs_context *fsc)
 	int err;
 	struct fuse_conn *fc;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	file = fget(ctx->fd);
 	if (!file)
 		goto err;
@@ -1295,7 +1295,7 @@ static int fuse_get_tree(struct fs_context *fc)
 
 	if (!ctx->fd_present || !ctx->rootmode_present ||
 	    !ctx->user_id_present || !ctx->group_id_present)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_BLOCK
 	if (ctx->is_bdev)

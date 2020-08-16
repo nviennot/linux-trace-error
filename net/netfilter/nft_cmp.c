@@ -82,7 +82,7 @@ static int nft_cmp_init(const struct nft_ctx *ctx, const struct nft_expr *expr,
 		return err;
 
 	if (desc.type != NFT_DATA_VALUE) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		nft_data_release(&priv->data, desc.type);
 		return err;
 	}
@@ -124,7 +124,7 @@ static int __nft_cmp_offload(struct nft_offload_ctx *ctx,
 	u8 *key = (u8 *)&flow->match.key;
 
 	if (priv->op != NFT_CMP_EQ || reg->len != priv->len)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memcpy(key + reg->offset, &priv->data, priv->len);
 	memcpy(mask + reg->offset, &reg->mask, priv->len);
@@ -135,7 +135,7 @@ static int __nft_cmp_offload(struct nft_offload_ctx *ctx,
 	if (reg->key == FLOW_DISSECTOR_KEY_META &&
 	    reg->offset == offsetof(struct nft_flow_key, meta.ingress_iftype) &&
 	    nft_reg_load16(priv->data.data) != ARPHRD_ETHER)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	nft_offload_update_dependency(ctx, &priv->data, priv->len);
 
@@ -247,7 +247,7 @@ nft_cmp_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 	if (tb[NFTA_CMP_SREG] == NULL ||
 	    tb[NFTA_CMP_OP] == NULL ||
 	    tb[NFTA_CMP_DATA] == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	op = ntohl(nla_get_be32(tb[NFTA_CMP_OP]));
 	switch (op) {
@@ -259,7 +259,7 @@ nft_cmp_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 	case NFT_CMP_GTE:
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	err = nft_data_init(NULL, &data, sizeof(data), &desc,
@@ -268,7 +268,7 @@ nft_cmp_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 		return ERR_PTR(err);
 
 	if (desc.type != NFT_DATA_VALUE) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err1;
 	}
 
@@ -278,7 +278,7 @@ nft_cmp_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 	return &nft_cmp_ops;
 err1:
 	nft_data_release(&data, desc.type);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 struct nft_expr_type nft_cmp_type __read_mostly = {

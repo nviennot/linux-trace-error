@@ -972,7 +972,7 @@ static inline __must_check int sk_add_backlog(struct sock *sk, struct sk_buff *s
 					      unsigned int limit)
 {
 	if (sk_rcvqueues_full(sk, limit))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/*
 	 * If the skb was allocated from pfmemalloc reserves, only
@@ -1291,7 +1291,7 @@ static inline int sk_under_cgroup_hierarchy(struct sock *sk,
 	return cgroup_is_descendant(sock_cgroup_ptr(&sk->sk_cgrp_data),
 				    ancestor);
 #else
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 #endif
 }
 
@@ -2348,7 +2348,7 @@ static inline int sock_rcvlowat(const struct sock *sk, int waitall, int len)
  */
 static inline int sock_intr_errno(long timeo)
 {
-	return timeo == MAX_SCHEDULE_TIMEOUT ? -ERESTARTSYS : -EINTR;
+	return timeo == MAX_SCHEDULE_TIMEOUT ? -ERR(ERESTARTSYS) : -ERR(EINTR);
 }
 
 struct sock_skb_cb {

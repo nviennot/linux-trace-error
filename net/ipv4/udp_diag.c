@@ -30,7 +30,7 @@ static int udp_dump_one(struct udp_table *tbl,
 			const struct inet_diag_req_v2 *req)
 {
 	struct sk_buff *in_skb = cb->skb;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct sock *sk = NULL;
 	struct sk_buff *rep;
 	struct net *net = sock_net(in_skb->sk);
@@ -54,7 +54,7 @@ static int udp_dump_one(struct udp_table *tbl,
 	if (sk && !refcount_inc_not_zero(&sk->sk_refcnt))
 		sk = NULL;
 	rcu_read_unlock();
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!sk)
 		goto out_nosk;
 
@@ -201,7 +201,7 @@ static int __udp_diag_destroy(struct sk_buff *in_skb,
 #endif
 	else {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sk && !refcount_inc_not_zero(&sk->sk_refcnt))
@@ -210,14 +210,14 @@ static int __udp_diag_destroy(struct sk_buff *in_skb,
 	rcu_read_unlock();
 
 	if (!sk)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (sock_diag_check_cookie(sk, req->id.idiag_cookie)) {
 		sock_put(sk);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
-	err = sock_diag_destroy(sk, ECONNABORTED);
+	err = sock_diag_destroy(sk, ERR(ECONNABORTED));
 
 	sock_put(sk);
 

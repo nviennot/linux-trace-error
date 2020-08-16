@@ -44,7 +44,7 @@ int irq_set_chip(unsigned int irq, struct irq_chip *chip)
 	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!chip)
 		chip = &no_irq_chip;
@@ -72,7 +72,7 @@ int irq_set_irq_type(unsigned int irq, unsigned int type)
 	int ret = 0;
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = __irq_set_trigger(desc, type);
 	irq_put_desc_busunlock(desc, flags);
@@ -93,7 +93,7 @@ int irq_set_handler_data(unsigned int irq, void *data)
 	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	desc->irq_common_data.handler_data = data;
 	irq_put_desc_unlock(desc, flags);
 	return 0;
@@ -115,7 +115,7 @@ int irq_set_msi_desc_off(unsigned int irq_base, unsigned int irq_offset,
 	struct irq_desc *desc = irq_get_desc_lock(irq_base + irq_offset, &flags, IRQ_GET_DESC_CHECK_GLOBAL);
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	desc->irq_common_data.msi_desc = entry;
 	if (entry && !irq_offset)
 		entry->irq = irq_base;
@@ -148,7 +148,7 @@ int irq_set_chip_data(unsigned int irq, void *data)
 	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	desc->irq_data.chip_data = data;
 	irq_put_desc_unlock(desc, flags);
 	return 0;
@@ -1441,7 +1441,7 @@ int irq_chip_set_affinity_parent(struct irq_data *data,
 	if (data->chip->irq_set_affinity)
 		return data->chip->irq_set_affinity(data, dest, force);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(irq_chip_set_affinity_parent);
 
@@ -1459,7 +1459,7 @@ int irq_chip_set_type_parent(struct irq_data *data, unsigned int type)
 	if (data->chip->irq_set_type)
 		return data->chip->irq_set_type(data, type);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(irq_chip_set_type_parent);
 
@@ -1490,7 +1490,7 @@ int irq_chip_set_vcpu_affinity_parent(struct irq_data *data, void *vcpu_info)
 	if (data->chip->irq_set_vcpu_affinity)
 		return data->chip->irq_set_vcpu_affinity(data, vcpu_info);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 /**
@@ -1510,7 +1510,7 @@ int irq_chip_set_wake_parent(struct irq_data *data, unsigned int on)
 	if (data->chip->irq_set_wake)
 		return data->chip->irq_set_wake(data, on);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(irq_chip_set_wake_parent);
 
@@ -1525,7 +1525,7 @@ int irq_chip_request_resources_parent(struct irq_data *data)
 	if (data->chip->irq_request_resources)
 		return data->chip->irq_request_resources(data);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(irq_chip_request_resources_parent);
 
@@ -1561,7 +1561,7 @@ int irq_chip_compose_msi_msg(struct irq_data *data, struct msi_msg *msg)
 		if (data->chip && data->chip->irq_compose_msi_msg)
 			pos = data;
 	if (!pos)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	pos->chip->irq_compose_msi_msg(pos, msg);
 

@@ -182,7 +182,7 @@ nfs_async_unlink(struct dentry *dentry, const struct qstr *name)
 	data->res.dir_attr = &data->dir_attr;
 	init_waitqueue_head(&data->wq);
 
-	status = -EBUSY;
+	status = -ERR(EBUSY);
 	spin_lock(&dentry->d_lock);
 	if (dentry->d_flags & DCACHE_NFSFS_RENAMED)
 		goto out_unlock;
@@ -436,7 +436,7 @@ nfs_sillyrename(struct inode *dir, struct dentry *dentry)
 	struct dentry *sdentry;
 	struct inode *inode = d_inode(dentry);
 	struct rpc_task *task;
-	int            error = -EBUSY;
+	int            error = -ERR(EBUSY);
 
 	dfprintk(VFS, "NFS: silly-rename(%pd2, ct=%d)\n",
 		dentry, d_count(dentry));
@@ -485,7 +485,7 @@ nfs_sillyrename(struct inode *dir, struct dentry *dentry)
 	task = nfs_async_rename(dir, dir, dentry, sdentry,
 					nfs_complete_sillyrename);
 	if (IS_ERR(task)) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		nfs_cancel_async_unlink(dentry);
 		goto out_dput;
 	}

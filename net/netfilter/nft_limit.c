@@ -58,13 +58,13 @@ static int nft_limit_init(struct nft_limit *limit,
 
 	if (tb[NFTA_LIMIT_RATE] == NULL ||
 	    tb[NFTA_LIMIT_UNIT] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	limit->rate = be64_to_cpu(nla_get_be64(tb[NFTA_LIMIT_RATE]));
 	unit = be64_to_cpu(nla_get_be64(tb[NFTA_LIMIT_UNIT]));
 	limit->nsecs = unit * NSEC_PER_SEC;
 	if (limit->rate == 0 || limit->nsecs < unit)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (tb[NFTA_LIMIT_BURST])
 		limit->burst = ntohl(nla_get_be32(tb[NFTA_LIMIT_BURST]));
@@ -73,7 +73,7 @@ static int nft_limit_init(struct nft_limit *limit,
 		limit->burst = NFT_LIMIT_PKT_BURST_DEFAULT;
 
 	if (limit->rate + limit->burst < limit->rate)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (pkts) {
 		tokens = div_u64(limit->nsecs, limit->rate) * limit->burst;
@@ -224,7 +224,7 @@ nft_limit_select_ops(const struct nft_ctx *ctx,
 	case NFT_LIMIT_PKT_BYTES:
 		return &nft_limit_bytes_ops;
 	}
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static struct nft_expr_type nft_limit_type __read_mostly = {
@@ -330,7 +330,7 @@ nft_limit_obj_select_ops(const struct nft_ctx *ctx,
 	case NFT_LIMIT_PKT_BYTES:
 		return &nft_limit_obj_bytes_ops;
 	}
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static struct nft_object_type nft_limit_obj_type __read_mostly = {

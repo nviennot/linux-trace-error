@@ -347,7 +347,7 @@ static int iucv_query_maxconn(void)
 	if (ccode == 0)
 		iucv_max_pathid = max_pathid;
 	kfree(param);
-	return ccode ? -EPERM : 0;
+	return ccode ? -ERR(EPERM) : 0;
 }
 
 /**
@@ -547,7 +547,7 @@ static int iucv_enable(void)
 	if (!iucv_path_table)
 		goto out;
 	/* Declare per cpu buffers. */
-	rc = -EIO;
+	rc = -ERR(EIO);
 	for_each_online_cpu(cpu)
 		smp_call_function_single(cpu, iucv_declare_cpu, NULL, 1);
 	if (cpumask_empty(&iucv_buffer_cpumask))
@@ -634,7 +634,7 @@ static int iucv_cpu_down_prep(unsigned int cpu)
 	cpumask_clear_cpu(cpu, &cpumask);
 	if (cpumask_empty(&cpumask))
 		/* Can't offline last IUCV enabled cpu. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iucv_retrieve_cpu(NULL);
 	if (!cpumask_empty(&iucv_irq_cpumask))
@@ -721,7 +721,7 @@ int iucv_register(struct iucv_handler *handler, int smp)
 	int rc;
 
 	if (!iucv_available)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	mutex_lock(&iucv_register_mutex);
 	if (!smp)
 		iucv_nonsmp_handler++;
@@ -821,7 +821,7 @@ int iucv_path_accept(struct iucv_path *path, struct iucv_handler *handler,
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	/* Prepare parameter block. */
@@ -870,7 +870,7 @@ int iucv_path_connect(struct iucv_path *path, struct iucv_handler *handler,
 	spin_lock_bh(&iucv_table_lock);
 	iucv_cleanup_queue();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -904,7 +904,7 @@ int iucv_path_connect(struct iucv_path *path, struct iucv_handler *handler,
 		} else {
 			iucv_sever_pathid(parm->ctrl.ippathid,
 					  iucv_error_pathid);
-			rc = -EIO;
+			rc = -ERR(EIO);
 		}
 	}
 out:
@@ -930,7 +930,7 @@ int iucv_path_quiesce(struct iucv_path *path, u8 *userdata)
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -962,7 +962,7 @@ int iucv_path_resume(struct iucv_path *path, u8 *userdata)
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -991,7 +991,7 @@ int iucv_path_sever(struct iucv_path *path, u8 *userdata)
 
 	preempt_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	if (iucv_active_cpu != smp_processor_id())
@@ -1025,7 +1025,7 @@ int iucv_message_purge(struct iucv_path *path, struct iucv_message *msg,
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1117,7 +1117,7 @@ int __iucv_message_receive(struct iucv_path *path, struct iucv_message *msg,
 		return iucv_message_receive_iprmdata(path, msg, flags,
 						     buffer, size, residual);
 	 if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1190,7 +1190,7 @@ int iucv_message_reject(struct iucv_path *path, struct iucv_message *msg)
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1229,7 +1229,7 @@ int iucv_message_reply(struct iucv_path *path, struct iucv_message *msg,
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1279,7 +1279,7 @@ int __iucv_message_send(struct iucv_path *path, struct iucv_message *msg,
 	int rc;
 
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1366,7 +1366,7 @@ int iucv_message_send2way(struct iucv_path *path, struct iucv_message *msg,
 
 	local_bh_disable();
 	if (cpumask_empty(&iucv_buffer_cpumask)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto out;
 	}
 	parm = iucv_param[smp_processor_id()];
@@ -1818,7 +1818,7 @@ static int __init iucv_init(void)
 	int rc;
 
 	if (!MACHINE_IS_VM) {
-		rc = -EPROTONOSUPPORT;
+		rc = -ERR(EPROTONOSUPPORT);
 		goto out;
 	}
 	ctl_set_bit(0, 1);

@@ -164,7 +164,7 @@ static int s3c24xx_uda134x_hw_params(struct snd_pcm_substream *substream,
 	if ((err * 100 / rate) > 5) {
 		dev_err(rtd->dev, "effective frequency too different "
 				  "from desired (%ld%%)\n", err * 100 / rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, clk_source , clk,

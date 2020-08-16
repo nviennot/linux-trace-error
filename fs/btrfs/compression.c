@@ -119,7 +119,7 @@ static int compression_compress_pages(int type, struct list_head *ws,
 		 * before we get here. As a sane fallback, return what the
 		 * callers will understand as 'no compression happened'.
 		 */
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 }
 
@@ -201,7 +201,7 @@ static int check_compressed_csum(struct btrfs_inode *inode,
 		if (memcmp(&csum, cb_sum, csum_size)) {
 			btrfs_print_data_csum_error(inode, disk_start,
 					csum, cb_sum, cb->mirror_num);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto fail;
 		}
 		cb_sum += csum_size;

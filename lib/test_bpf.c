@@ -6600,7 +6600,7 @@ static struct bpf_prog *generate_filter(int which, int *err)
 				/* Verifier didn't reject the test that's
 				 * bad enough, just return!
 				 */
-				*err = -EINVAL;
+				*err = -ERR(EINVAL);
 				return NULL;
 			}
 		}
@@ -6740,7 +6740,7 @@ static __init int prepare_bpf_tests(void)
 		 */
 		if (test_id >= ARRAY_SIZE(tests)) {
 			pr_err("test_bpf: invalid test_id specified.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		test_range[0] = test_id;
@@ -6755,7 +6755,7 @@ static __init int prepare_bpf_tests(void)
 		if (idx < 0) {
 			pr_err("test_bpf: no test named '%s' found.\n",
 			       test_name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		test_range[0] = idx;
 		test_range[1] = idx;
@@ -6767,12 +6767,12 @@ static __init int prepare_bpf_tests(void)
 		    test_range[1] >= ARRAY_SIZE(tests) ||
 		    test_range[0] < 0 || test_range[1] < 0) {
 			pr_err("test_bpf: test_range is out of bound.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (test_range[1] < test_range[0]) {
 			pr_err("test_bpf: test_range is ending before it starts.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -6978,7 +6978,7 @@ static __init int test_skb_segment(void)
 
 	pr_info("%s: Summary: %d PASSED, %d FAILED\n", __func__,
 		pass_cnt, err_cnt);
-	return err_cnt ? -EINVAL : 0;
+	return err_cnt ? -ERR(EINVAL) : 0;
 }
 
 static __init int test_bpf(void)
@@ -7027,7 +7027,7 @@ static __init int test_bpf(void)
 	pr_info("Summary: %d PASSED, %d FAILED, [%d/%d JIT'ed]\n",
 		pass_cnt, err_cnt, jit_cnt, run_cnt);
 
-	return err_cnt ? -EINVAL : 0;
+	return err_cnt ? -ERR(EINVAL) : 0;
 }
 
 static int __init test_bpf_init(void)

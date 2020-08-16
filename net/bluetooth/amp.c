@@ -132,7 +132,7 @@ static int hmac_sha256(u8 *key, u8 ksize, char *plaintext, u8 psize, u8 *output)
 	int ret;
 
 	if (!ksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tfm = crypto_alloc_shash("hmac(sha256)", 0, 0);
 	if (IS_ERR(tfm)) {
@@ -173,14 +173,14 @@ int phylink_gen_key(struct hci_conn *conn, u8 *data, u8 *len, u8 *type)
 	int err;
 
 	if (!hci_conn_check_link_mode(conn))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	BT_DBG("conn %p key_type %d", conn, conn->key_type);
 
 	/* Legacy key */
 	if (conn->key_type < 3) {
 		bt_dev_err(hdev, "legacy key type %d", conn->key_type);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	*type = conn->key_type;
@@ -189,7 +189,7 @@ int phylink_gen_key(struct hci_conn *conn, u8 *data, u8 *len, u8 *type)
 	key = hci_find_link_key(hdev, &conn->dst);
 	if (!key) {
 		BT_DBG("No Link key for conn %p dst %pMR", conn, &conn->dst);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	/* BR/EDR Link Key concatenated together with itself */

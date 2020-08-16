@@ -249,7 +249,7 @@ static inline int sem_check_semmni(struct ipc_namespace *ns) {
 	 * semmni is the last element of sem_ctls[4] array
 	 */
 	return ((ns->sem_ctls[3] < 0) || (ns->sem_ctls[3] > ipc_mni))
-		? -ERANGE : 0;
+		? -ERR(ERANGE) : 0;
 }
 
 #ifdef CONFIG_COMPAT

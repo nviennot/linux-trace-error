@@ -292,7 +292,7 @@ int ocfs2_load_local_alloc(struct ocfs2_super *osb)
 	inode = ocfs2_get_system_file_inode(osb, LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
 	if (!inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -311,7 +311,7 @@ int ocfs2_load_local_alloc(struct ocfs2_super *osb)
 	    (OCFS2_LOCAL_ALLOC_FL|OCFS2_BITMAP_FL))) {
 		mlog(ML_ERROR, "Invalid local alloc inode, %llu\n",
 		     (unsigned long long)OCFS2_I(inode)->ip_blkno);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -319,7 +319,7 @@ int ocfs2_load_local_alloc(struct ocfs2_super *osb)
 	    (le16_to_cpu(la->la_size) > ocfs2_local_alloc_size(inode->i_sb))) {
 		mlog(ML_ERROR, "Local alloc size is invalid (la_size = %u)\n",
 		     le16_to_cpu(la->la_size));
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -339,7 +339,7 @@ int ocfs2_load_local_alloc(struct ocfs2_super *osb)
 		     le32_to_cpu(alloc->id1.bitmap1.i_total),
 		     OCFS2_LOCAL_ALLOC(alloc)->la_bm_off);
 
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -388,7 +388,7 @@ void ocfs2_shutdown_local_alloc(struct ocfs2_super *osb)
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
 	if (!local_alloc_inode) {
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		mlog_errno(status);
 		goto out;
 	}
@@ -401,7 +401,7 @@ void ocfs2_shutdown_local_alloc(struct ocfs2_super *osb)
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
 	if (!main_bm_inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto out;
 	}
@@ -492,7 +492,7 @@ int ocfs2_begin_local_alloc_recovery(struct ocfs2_super *osb,
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    slot_num);
 	if (!inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -557,7 +557,7 @@ int ocfs2_complete_local_alloc_recovery(struct ocfs2_super *osb,
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
 	if (!main_bm_inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto out;
 	}
@@ -629,7 +629,7 @@ int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
 					    LOCAL_ALLOC_SYSTEM_INODE,
 					    osb->slot_num);
 	if (!local_alloc_inode) {
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -644,7 +644,7 @@ int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
 	if (!ocfs2_la_state_enabled(osb) ||
 	    (bits_wanted > osb->local_alloc_bits)) {
 		spin_unlock(&osb->osb_lock);
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		goto bail;
 	}
 	spin_unlock(&osb->osb_lock);
@@ -680,7 +680,7 @@ int ocfs2_reserve_local_alloc_bits(struct ocfs2_super *osb,
 		 * disabled the the local alloc entirely. Re-check
 		 * here and return -ENOSPC if necessary.
 		 */
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		if (!ocfs2_la_state_enabled(osb))
 			goto bail;
 
@@ -735,7 +735,7 @@ int ocfs2_claim_local_alloc_bits(struct ocfs2_super *osb,
 						  ac->ac_resv);
 	if (start == -1) {
 		/* TODO: Shouldn't we just BUG here? */
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		mlog_errno(status);
 		goto bail;
 	}

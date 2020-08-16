@@ -48,12 +48,12 @@ static int __init parse_crashkernel_mem(char *cmdline,
 		start = memparse(cur, &tmp);
 		if (cur == tmp) {
 			pr_warn("crashkernel: Memory value expected\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cur = tmp;
 		if (*cur != '-') {
 			pr_warn("crashkernel: '-' expected\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cur++;
 
@@ -62,30 +62,30 @@ static int __init parse_crashkernel_mem(char *cmdline,
 			end = memparse(cur, &tmp);
 			if (cur == tmp) {
 				pr_warn("crashkernel: Memory value expected\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			cur = tmp;
 			if (end <= start) {
 				pr_warn("crashkernel: end <= start\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
 		if (*cur != ':') {
 			pr_warn("crashkernel: ':' expected\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cur++;
 
 		size = memparse(cur, &tmp);
 		if (cur == tmp) {
 			pr_warn("Memory value expected\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		cur = tmp;
 		if (size >= system_ram) {
 			pr_warn("crashkernel: invalid size\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* match ? */
@@ -103,7 +103,7 @@ static int __init parse_crashkernel_mem(char *cmdline,
 			*crash_base = memparse(cur, &tmp);
 			if (cur == tmp) {
 				pr_warn("Memory value expected after '@'\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	} else
@@ -128,14 +128,14 @@ static int __init parse_crashkernel_simple(char *cmdline,
 	*crash_size = memparse(cmdline, &cur);
 	if (cmdline == cur) {
 		pr_warn("crashkernel: memory value expected\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (*cur == '@')
 		*crash_base = memparse(cur+1, &cur);
 	else if (*cur != ' ' && *cur != '\0') {
 		pr_warn("crashkernel: unrecognized char: %c\n", *cur);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -166,18 +166,18 @@ static int __init parse_crashkernel_suffix(char *cmdline,
 	*crash_size = memparse(cmdline, &cur);
 	if (cmdline == cur) {
 		pr_warn("crashkernel: memory value expected\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check with suffix */
 	if (strncmp(cur, suffix, strlen(suffix))) {
 		pr_warn("crashkernel: unrecognized char: %c\n", *cur);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	cur += strlen(suffix);
 	if (*cur != ' ' && *cur != '\0') {
 		pr_warn("crashkernel: unrecognized char: %c\n", *cur);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -241,7 +241,7 @@ static int __init __parse_crashkernel(char *cmdline,
 	ck_cmdline = get_last_crashkernel(cmdline, name, suffix);
 
 	if (!ck_cmdline)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ck_cmdline += strlen(name);
 

@@ -54,7 +54,7 @@ static inline int calculate_message_bytes(u8 status)
 	break;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int fill_message(struct snd_fw_async_midi_port *port,

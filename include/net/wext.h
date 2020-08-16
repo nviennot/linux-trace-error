@@ -18,12 +18,12 @@ int call_commit_handler(struct net_device *dev);
 static inline int wext_handle_ioctl(struct net *net, unsigned int cmd,
 				    void __user *arg)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int compat_wext_handle_ioctl(struct net *net, unsigned int cmd,
 					   unsigned long arg)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

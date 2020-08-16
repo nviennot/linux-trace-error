@@ -221,7 +221,7 @@ static void yama_task_free(struct task_struct *task)
 static int yama_task_prctl(int option, unsigned long arg2, unsigned long arg3,
 			   unsigned long arg4, unsigned long arg5)
 {
-	int rc = -ENOSYS;
+	int rc = -ERR(ENOSYS);
 	struct task_struct *myself = current;
 
 	switch (option) {
@@ -248,7 +248,7 @@ static int yama_task_prctl(int option, unsigned long arg2, unsigned long arg3,
 
 			tracer = find_get_task_by_vpid(arg2);
 			if (!tracer) {
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 			} else {
 				rc = yama_ptracer_add(tracer, myself);
 				put_task_struct(tracer);
@@ -365,22 +365,22 @@ static int yama_ptrace_access_check(struct task_struct *child,
 		case YAMA_SCOPE_RELATIONAL:
 			rcu_read_lock();
 			if (!pid_alive(child))
-				rc = -EPERM;
+				rc = -ERR(EPERM);
 			if (!rc && !task_is_descendant(current, child) &&
 			    !ptracer_exception_found(current, child) &&
 			    !ns_capable(__task_cred(child)->user_ns, CAP_SYS_PTRACE))
-				rc = -EPERM;
+				rc = -ERR(EPERM);
 			rcu_read_unlock();
 			break;
 		case YAMA_SCOPE_CAPABILITY:
 			rcu_read_lock();
 			if (!ns_capable(__task_cred(child)->user_ns, CAP_SYS_PTRACE))
-				rc = -EPERM;
+				rc = -ERR(EPERM);
 			rcu_read_unlock();
 			break;
 		case YAMA_SCOPE_NO_ATTACH:
 		default:
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 			break;
 		}
 	}
@@ -405,10 +405,10 @@ static int yama_ptrace_traceme(struct task_struct *parent)
 	switch (ptrace_scope) {
 	case YAMA_SCOPE_CAPABILITY:
 		if (!has_ns_capability(parent, current_user_ns(), CAP_SYS_PTRACE))
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 		break;
 	case YAMA_SCOPE_NO_ATTACH:
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		break;
 	}
 
@@ -435,7 +435,7 @@ static int yama_dointvec_minmax(struct ctl_table *table, int write,
 	struct ctl_table table_copy;
 
 	if (write && !capable(CAP_SYS_PTRACE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Lock the max value if it ever gets set. */
 	table_copy = *table;

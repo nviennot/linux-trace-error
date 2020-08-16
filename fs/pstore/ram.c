@@ -333,11 +333,11 @@ static int notrace ramoops_pstore_write(struct pstore_record *record)
 		return 0;
 	} else if (record->type == PSTORE_TYPE_PMSG) {
 		pr_warn_ratelimited("PMSG shouldn't call %s\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (record->type != PSTORE_TYPE_DMESG)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We could filter on record->reason here if we wanted to (which
@@ -356,10 +356,10 @@ static int notrace ramoops_pstore_write(struct pstore_record *record)
 	 * report split across multiple records.
 	 */
 	if (record->part != 1)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (!cxt->dprzs)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	prz = cxt->dprzs[cxt->dump_write_cnt];
 
@@ -400,7 +400,7 @@ static int notrace ramoops_pstore_write_user(struct pstore_record *record,
 		return persistent_ram_write_user(cxt->mprz, buf, record->size);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ramoops_pstore_erase(struct pstore_record *record)
@@ -411,7 +411,7 @@ static int ramoops_pstore_erase(struct pstore_record *record)
 	switch (record->type) {
 	case PSTORE_TYPE_DMESG:
 		if (record->id >= cxt->max_dump_cnt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		prz = cxt->dprzs[record->id];
 		break;
 	case PSTORE_TYPE_CONSOLE:
@@ -419,14 +419,14 @@ static int ramoops_pstore_erase(struct pstore_record *record)
 		break;
 	case PSTORE_TYPE_FTRACE:
 		if (record->id >= cxt->max_ftrace_cnt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		prz = cxt->fprzs[record->id];
 		break;
 	case PSTORE_TYPE_PMSG:
 		prz = cxt->mprz;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	persistent_ram_free_old(prz);
@@ -621,7 +621,7 @@ static int ramoops_parse_dt_u32(struct platform_device *pdev,
 	/* Sanity check our results. */
 	if (val32 > INT_MAX) {
 		dev_err(&pdev->dev, "%s %u > INT_MAX\n", propname, val32);
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	}
 
 	*value = val32;
@@ -643,7 +643,7 @@ static int ramoops_parse_dt(struct platform_device *pdev,
 	if (!res) {
 		dev_err(&pdev->dev,
 			"failed to locate DT /reserved-memory resource\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pdata->mem_size = resource_size(res);
@@ -707,7 +707,7 @@ static int ramoops_probe(struct platform_device *pdev)
 	struct ramoops_context *cxt = &oops_cxt;
 	size_t dump_mem_sz;
 	phys_addr_t paddr;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	/*
 	 * Only a single ramoops area allowed at a time, so fail extra

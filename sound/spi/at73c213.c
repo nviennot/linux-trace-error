@@ -158,14 +158,14 @@ static int snd_at73c213_set_bitrate(struct snd_at73c213 *chip)
 	if ((ssc_rate / (ssc_div * 2 * 16)) < BITRATE_MIN) {
 		ssc_div -= 2;
 		if ((ssc_rate / (ssc_div * 2 * 16)) > BITRATE_MAX)
-			return -ENXIO;
+			return -ERR(ENXIO);
 	}
 
 	/* Search for a possible bitrate. */
 	do {
 		/* SSC clock / (ssc divider * 16-bit * stereo). */
 		if ((ssc_rate / (ssc_div * 2 * 16)) < BITRATE_MIN)
-			return -ENXIO;
+			return -ERR(ENXIO);
 
 		/* 256 / (2 * 16) = 8 */
 		dac_rate_new = 8 * (ssc_rate / ssc_div);
@@ -182,7 +182,7 @@ static int snd_at73c213_set_bitrate(struct snd_at73c213 *chip)
 	} while (--max_tries);
 
 	/* Not able to find a valid bitrate. */
-	return -ENXIO;
+	return -ERR(ENXIO);
 
 set_rate:
 	status = clk_set_rate(chip->board->dac_clk, status);
@@ -286,7 +286,7 @@ static int snd_at73c213_pcm_trigger(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_dbg(&chip->spi->dev, "spurious command %x\n", cmd);
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		break;
 	}
 
@@ -707,7 +707,7 @@ static int snd_at73c213_mixer(struct snd_at73c213 *chip)
 	int errval, idx;
 
 	if (chip == NULL || chip->pcm == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 
@@ -945,12 +945,12 @@ static int snd_at73c213_probe(struct spi_device *spi)
 	board = spi->dev.platform_data;
 	if (!board) {
 		dev_dbg(&spi->dev, "no platform_data\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (!board->dac_clk) {
 		dev_dbg(&spi->dev, "no DAC clk\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (IS_ERR(board->dac_clk)) {

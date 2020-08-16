@@ -222,7 +222,7 @@ int trace_event_raw_init(struct trace_event_call *call)
 
 	id = register_trace_event(&call->event);
 	if (!id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -782,7 +782,7 @@ __ftrace_set_clr_event_nolock(struct trace_array *tr, const char *match,
 	struct trace_event_file *file;
 	struct trace_event_call *call;
 	const char *name;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int eret = 0;
 
 	list_for_each_entry(file, &tr->events, list) {
@@ -841,7 +841,7 @@ int ftrace_set_clr_event(struct trace_array *tr, char *buf, int set)
 	int ret;
 
 	if (!tr)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/*
 	 * The buf format can be <subsystem>:<event-name>
 	 *  *:<event-name> means any event by that name.
@@ -892,7 +892,7 @@ int trace_set_clr_event(const char *system, const char *event, int set)
 	struct trace_array *tr = top_trace_array();
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return __ftrace_set_clr_event(tr, NULL, system, event, set);
 }
@@ -917,7 +917,7 @@ int trace_array_set_clr_event(struct trace_array *tr, const char *system,
 	int set;
 
 	if (!tr)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	set = (enable == true) ? 1 : 0;
 	return __ftrace_set_clr_event(tr, NULL, system, event, set);
@@ -1143,7 +1143,7 @@ event_enable_read(struct file *filp, char __user *ubuf, size_t cnt,
 	mutex_unlock(&event_mutex);
 
 	if (!file)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (flags & EVENT_FILE_FL_ENABLED &&
 	    !(flags & EVENT_FILE_FL_SOFT_DISABLED))
@@ -1177,7 +1177,7 @@ event_enable_write(struct file *filp, const char __user *ubuf, size_t cnt,
 	switch (val) {
 	case 0:
 	case 1:
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		mutex_lock(&event_mutex);
 		file = event_file_data(filp);
 		if (likely(file))
@@ -1186,7 +1186,7 @@ event_enable_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*ppos += cnt;
@@ -1259,7 +1259,7 @@ system_enable_write(struct file *filp, const char __user *ubuf, size_t cnt,
 		return ret;
 
 	if (val != 0 && val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Opening of "enable" adds a ref count to system,
@@ -1376,7 +1376,7 @@ static void *f_start(struct seq_file *m, loff_t *pos)
 	/* ->stop() is called even if ->start() fails */
 	mutex_lock(&event_mutex);
 	if (!event_file_data(m->private))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	while (l < *pos && p)
 		p = f_next(m, p, &l);
@@ -1421,7 +1421,7 @@ event_id_read(struct file *filp, char __user *ubuf, size_t cnt, loff_t *ppos)
 	int len;
 
 	if (unlikely(!id))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	len = sprintf(buf, "%d\n", id);
 
@@ -1434,7 +1434,7 @@ event_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
 {
 	struct trace_event_file *file;
 	struct trace_seq *s;
-	int r = -ENODEV;
+	int r = -ERR(ENODEV);
 
 	if (*ppos)
 		return 0;
@@ -1467,10 +1467,10 @@ event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 {
 	struct trace_event_file *file;
 	char *buf;
-	int err = -ENODEV;
+	int err = -ERR(ENODEV);
 
 	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = memdup_user_nul(ubuf, cnt);
 	if (IS_ERR(buf))
@@ -1501,7 +1501,7 @@ static int subsystem_open(struct inode *inode, struct file *filp)
 	int ret;
 
 	if (tracing_is_disabled())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Make sure the system still exists */
 	mutex_lock(&event_mutex);
@@ -1523,7 +1523,7 @@ static int subsystem_open(struct inode *inode, struct file *filp)
 	mutex_unlock(&event_mutex);
 
 	if (!system)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Some versions of gcc think dir can be uninitialized here */
 	WARN_ON(!dir);
@@ -1531,7 +1531,7 @@ static int subsystem_open(struct inode *inode, struct file *filp)
 	/* Still need to increment the ref count of the system */
 	if (trace_array_get(tr) < 0) {
 		put_system(dir);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = tracing_open_generic(inode, filp);
@@ -1620,7 +1620,7 @@ subsystem_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
 	int err;
 
 	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = memdup_user_nul(ubuf, cnt);
 	if (IS_ERR(buf))
@@ -2280,7 +2280,7 @@ static int event_init(struct trace_event_call *call)
 
 	name = trace_event_name(call);
 	if (WARN_ON(!name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (call->class->raw_init) {
 		ret = call->class->raw_init(call);
@@ -2534,7 +2534,7 @@ static int probe_remove_event_call(struct trace_event_call *call)
 
 #ifdef CONFIG_PERF_EVENTS
 	if (call->perf_refcount)
-		return -EBUSY;
+		return -ERR(EBUSY);
 #endif
 	do_for_each_event_file(tr, file) {
 		if (file->event_call != call)
@@ -2545,7 +2545,7 @@ static int probe_remove_event_call(struct trace_event_call *call)
 		 * TRACE_REG_UNREGISTER.
 		 */
 		if (file->flags & EVENT_FILE_FL_ENABLED)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		/*
 		 * The do_for_each_event_file_safe() is
 		 * a double loop. After finding the call for this
@@ -2733,12 +2733,12 @@ struct trace_event_file *trace_get_event_file(const char *instance,
 {
 	struct trace_array *tr = top_trace_array();
 	struct trace_event_file *file = NULL;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (instance) {
 		tr = trace_array_find_get(instance);
 		if (!tr)
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 	} else {
 		ret = trace_array_get(tr);
 		if (ret)
@@ -2750,7 +2750,7 @@ struct trace_event_file *trace_get_event_file(const char *instance,
 	file = find_event_file(tr, system, event);
 	if (!file) {
 		trace_array_put(tr);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2758,7 +2758,7 @@ struct trace_event_file *trace_get_event_file(const char *instance,
 	ret = try_module_get(file->event_call->mod);
 	if (!ret) {
 		trace_array_put(tr);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -2899,7 +2899,7 @@ event_enable_init(struct ftrace_probe_ops *ops, struct trace_array *tr,
 	if (!mapper) {
 		mapper = allocate_ftrace_func_mapper();
 		if (!mapper)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		*data = mapper;
 	}
 
@@ -2993,21 +2993,21 @@ event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
 	int ret;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* hash funcs only work with set_ftrace_filter */
 	if (!enabled || !param)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	system = strsep(&param, ":");
 	if (!param)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	event = strsep(&param, ":");
 
 	mutex_lock(&event_mutex);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	file = find_event_file(tr, system, event);
 	if (!file)
 		goto out;
@@ -3039,7 +3039,7 @@ event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
 
 	number = strsep(&param, ":");
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!strlen(number))
 		goto out_free;
 
@@ -3055,7 +3055,7 @@ event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
 	/* Don't let event modules unload while probe registered */
 	ret = try_module_get(file->event_call->mod);
 	if (!ret) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_free;
 	}
 
@@ -3070,7 +3070,7 @@ event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
 	 * Consider no functions a failure too.
 	 */
 	if (!ret) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_disable;
 	} else if (ret < 0)
 		goto out_disable;
@@ -3377,7 +3377,7 @@ static __init int event_trace_enable(void)
 	int ret;
 
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	for_each_event(iter, __start_ftrace_events, __stop_ftrace_events) {
 
@@ -3422,7 +3422,7 @@ static __init int event_trace_enable_again(void)
 
 	tr = top_trace_array();
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	early_enable_events(tr, true);
 
@@ -3440,7 +3440,7 @@ __init int event_trace_init(void)
 
 	tr = top_trace_array();
 	if (!tr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	d_tracer = tracing_init_dentry();
 	if (IS_ERR(d_tracer))

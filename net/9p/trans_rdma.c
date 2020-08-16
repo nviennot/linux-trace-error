@@ -406,7 +406,7 @@ post_recv(struct p9_client *client, struct p9_rdma_context *c)
 
  error:
 	p9_debug(P9_DEBUG_ERROR, "EIO\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int rdma_request(struct p9_client *client, struct p9_req_t *req)
@@ -455,7 +455,7 @@ static int rdma_request(struct p9_client *client, struct p9_req_t *req)
 	 * overflowing the RQ.
 	 */
 	if (down_interruptible(&rdma->rq_sem)) {
-		err = -EINTR;
+		err = -ERR(EINTR);
 		goto recv_error;
 	}
 
@@ -480,7 +480,7 @@ dont_need_post_recv:
 				    c->req->tc.sdata, c->req->tc.size,
 				    DMA_TO_DEVICE);
 	if (ib_dma_mapping_error(rdma->cm_id->device, c->busa)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto send_error;
 	}
 
@@ -498,7 +498,7 @@ dont_need_post_recv:
 	wr.num_sge = 1;
 
 	if (down_interruptible(&rdma->sq_sem)) {
-		err = -EINTR;
+		err = -ERR(EINTR);
 		goto send_error;
 	}
 
@@ -605,7 +605,7 @@ static int p9_rdma_bind_privport(struct p9_trans_rdma *rdma)
 		.sin_family = AF_INET,
 		.sin_addr.s_addr = htonl(INADDR_ANY),
 	};
-	int port, err = -EINVAL;
+	int port, err = -ERR(EINVAL);
 
 	for (port = P9_DEF_MAX_RESVPORT; port >= P9_DEF_MIN_RESVPORT; port--) {
 		cl.sin_port = htons((ushort)port);
@@ -632,7 +632,7 @@ rdma_create_trans(struct p9_client *client, const char *addr, char *args)
 	struct ib_qp_init_attr qp_attr;
 
 	if (addr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Parse the transport specific mount options */
 	err = parse_opts(args, &opts);
@@ -732,7 +732,7 @@ rdma_create_trans(struct p9_client *client, const char *addr, char *args)
 
 error:
 	rdma_destroy_trans(rdma);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 static struct p9_trans_module p9_rdma_trans = {

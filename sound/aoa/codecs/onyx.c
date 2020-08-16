@@ -140,10 +140,10 @@ static int onyx_snd_vol_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < -128 + VOLUME_RANGE_SHIFT ||
 	    ucontrol->value.integer.value[0] > -1 + VOLUME_RANGE_SHIFT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ucontrol->value.integer.value[1] < -128 + VOLUME_RANGE_SHIFT ||
 	    ucontrol->value.integer.value[1] > -1 + VOLUME_RANGE_SHIFT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&onyx->mutex);
 	onyx_read_register(onyx, ONYX_REG_DAC_ATTEN_LEFT, &l);
@@ -215,7 +215,7 @@ static int onyx_snd_inputgain_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < 3 + INPUTGAIN_RANGE_SHIFT ||
 	    ucontrol->value.integer.value[0] > 28 + INPUTGAIN_RANGE_SHIFT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&onyx->mutex);
 	onyx_read_register(onyx, ONYX_REG_ADC_CONTROL, &v);
 	n = v;
@@ -277,7 +277,7 @@ static int onyx_snd_capture_source_put(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	if (ucontrol->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	onyx_set_capture_source(snd_kcontrol_chip(kcontrol),
 				ucontrol->value.enumerated.item[0]);
 	return 1;
@@ -326,7 +326,7 @@ static int onyx_snd_mute_put(struct snd_kcontrol *kcontrol,
 {
 	struct onyx *onyx = snd_kcontrol_chip(kcontrol);
 	u8 v = 0, c = 0;
-	int err = -EBUSY;
+	int err = -ERR(EBUSY);
 
 	mutex_lock(&onyx->mutex);
 	if (onyx->analog_locked)
@@ -396,7 +396,7 @@ static int onyx_snd_single_bit_put(struct snd_kcontrol *kcontrol,
 	mutex_lock(&onyx->mutex);
 	if (spdiflock && onyx->spdif_locked) {
 		/* even if alsamixer doesn't care.. */
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_unlock;
 	}
 	onyx_read_register(onyx, address, &v);
@@ -695,7 +695,7 @@ static int onyx_prepare(struct codec_info_item *cii,
 {
 	u8 v;
 	struct onyx *onyx = cii->codec_data;
-	int err = -EBUSY;
+	int err = -ERR(EBUSY);
 
 	mutex_lock(&onyx->mutex);
 
@@ -794,7 +794,7 @@ static int onyx_suspend(struct codec_info_item *cii, pm_message_t state)
 {
 	struct onyx *onyx = cii->codec_data;
 	u8 v;
-	int err = -ENXIO;
+	int err = -ERR(ENXIO);
 
 	mutex_lock(&onyx->mutex);
 	if (onyx_read_register(onyx, ONYX_REG_CONTROL, &v))
@@ -812,7 +812,7 @@ static int onyx_resume(struct codec_info_item *cii)
 {
 	struct onyx *onyx = cii->codec_data;
 	u8 v;
-	int err = -ENXIO;
+	int err = -ERR(ENXIO);
 
 	mutex_lock(&onyx->mutex);
 
@@ -867,7 +867,7 @@ static int onyx_init_codec(struct aoa_codec *codec)
 
 	if (!onyx->codec.gpio || !onyx->codec.gpio->methods) {
 		printk(KERN_ERR PFX "gpios not assigned!!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	onyx->codec.gpio->methods->set_hw_reset(onyx->codec.gpio, 0);
@@ -879,17 +879,17 @@ static int onyx_init_codec(struct aoa_codec *codec)
 
 	if (onyx_register_init(onyx)) {
 		printk(KERN_ERR PFX "failed to initialise onyx registers\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (aoa_snd_device_new(SNDRV_DEV_CODEC, onyx, &ops)) {
 		printk(KERN_ERR PFX "failed to create onyx snd device!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* nothing connected? what a joke! */
 	if ((onyx->codec.connected & 0xF) == 0)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	/* if no inputs are present... */
 	if ((onyx->codec.connected & 0xC) == 0) {
@@ -919,7 +919,7 @@ static int onyx_init_codec(struct aoa_codec *codec)
 						   aoa_get_card(),
 						   ci, onyx)) {
 		printk(KERN_ERR PFX "error creating onyx pcm\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 #define ADDCTL(n)							\
 	do {								\
@@ -1026,7 +1026,7 @@ static int onyx_i2c_probe(struct i2c_client *client,
 	return 0;
  fail:
 	kfree(onyx);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int onyx_i2c_remove(struct i2c_client *client)

@@ -272,7 +272,7 @@ int mt2701_mclk_configuration(struct mtk_base_afe *afe, int id)
 {
 	struct mt2701_afe_private *priv = afe->platform_priv;
 	struct mt2701_i2s_path *i2s_path = &priv->i2s_path[id];
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/* Set mclk source */
 	if (!(MT2701_PLL_DOMAIN_0_RATE % i2s_path->mclk_rate))

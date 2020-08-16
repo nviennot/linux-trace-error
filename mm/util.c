@@ -226,7 +226,7 @@ char *strndup_user(const char __user *s, long n)
 		return ERR_PTR(-EFAULT);
 
 	if (length > n)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	p = memdup_user(s, length);
 
@@ -502,7 +502,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
 	ret = security_mmap_file(file, prot, flag);
 	if (!ret) {
 		if (mmap_write_lock_killable(mm))
-			return -EINTR;
+			return -ERR(EINTR);
 		ret = do_mmap_pgoff(file, addr, len, prot, flag, pgoff,
 				    &populate, &uf);
 		mmap_write_unlock(mm);
@@ -518,9 +518,9 @@ unsigned long vm_mmap(struct file *file, unsigned long addr,
 	unsigned long flag, unsigned long offset)
 {
 	if (unlikely(offset + PAGE_ALIGN(len) < offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(offset_in_page(offset)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return vm_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
 }

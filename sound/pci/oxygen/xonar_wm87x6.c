@@ -588,7 +588,7 @@ static int wm8776_field_enum_info(struct snd_kcontrol *ctl,
 		names = tranwin;
 		break;
 	default:
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	return snd_ctl_enum_info(info, 1, max + 1, names);
 }
@@ -645,7 +645,7 @@ static int wm8776_field_set(struct snd_kcontrol *ctl, unsigned int value)
 	min = (ctl->private_value >> 8) & 0xf;
 	max = (ctl->private_value >> 12) & 0xf;
 	if (value < min || value > max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mutex);
 	changed = value != (ctl->private_value & 0xf);
 	if (changed) {
@@ -892,7 +892,7 @@ static int wm8776_level_control_put(struct snd_kcontrol *ctl,
 	int changed;
 
 	if (value->value.enumerated.item[0] >= 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mutex);
 	changed = value->value.enumerated.item[0] != ctl->private_value;
 	if (changed) {
@@ -1192,7 +1192,7 @@ static int xonar_ds_mixer_init(struct oxygen *chip)
 			data->mic_adcmux_control = ctl;
 	}
 	if (!data->line_adcmux_control || !data->mic_adcmux_control)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	return add_lc_controls(chip);
 }
@@ -1325,7 +1325,7 @@ int get_xonar_wm87x6_model(struct oxygen *chip,
 		chip->model = model_xonar_hdav_slim;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

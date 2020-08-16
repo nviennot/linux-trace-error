@@ -379,7 +379,7 @@ static int simple_for_each_link(struct asoc_simple_priv *priv,
 		codec = of_get_child_by_name(node, is_top ?
 					     PREFIX "codec" : "codec");
 		if (!codec) {
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto error;
 		}
 		/* get platform */
@@ -437,7 +437,7 @@ static int simple_parse_aux_devs(struct device_node *node,
 
 	n = len / sizeof(__be32);
 	if (n <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card->aux_dev = devm_kcalloc(dev,
 			n, sizeof(*card->aux_dev), GFP_KERNEL);
@@ -447,7 +447,7 @@ static int simple_parse_aux_devs(struct device_node *node,
 	for (i = 0; i < n; i++) {
 		aux_node = of_parse_phandle(node, PREFIX "aux-devs", i);
 		if (!aux_node)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		card->aux_dev[i].dlc.of_node = aux_node;
 	}
 
@@ -464,7 +464,7 @@ static int simple_parse_of(struct asoc_simple_priv *priv)
 	int ret;
 
 	if (!top)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = asoc_simple_parse_widgets(card, PREFIX);
 	if (ret < 0)
@@ -639,7 +639,7 @@ static int asoc_simple_probe(struct platform_device *pdev)
 	memset(&li, 0, sizeof(li));
 	simple_get_dais_count(priv, &li);
 	if (!li.link || !li.dais)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = asoc_simple_init_priv(priv, &li);
 	if (ret < 0)
@@ -667,7 +667,7 @@ static int asoc_simple_probe(struct platform_device *pdev)
 		cinfo = dev->platform_data;
 		if (!cinfo) {
 			dev_err(dev, "no info for asoc-simple-card\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (!cinfo->name ||
@@ -676,7 +676,7 @@ static int asoc_simple_probe(struct platform_device *pdev)
 		    !cinfo->platform ||
 		    !cinfo->cpu_dai.name) {
 			dev_err(dev, "insufficient asoc_simple_card_info settings\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dai_props->cpu_dai	= &priv->dais[dai_idx++];

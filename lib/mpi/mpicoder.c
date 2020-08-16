@@ -85,19 +85,19 @@ MPI mpi_read_from_buffer(const void *xbuffer, unsigned *ret_nread)
 	MPI val;
 
 	if (*ret_nread < 2)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	nbits = buffer[0] << 8 | buffer[1];
 
 	if (nbits > MAX_EXTERN_MPI_BITS) {
 		pr_info("MPI: mpi too large (%u bits)\n", nbits);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	nbytes = DIV_ROUND_UP(nbits, 8);
 	if (nbytes + 2 > *ret_nread) {
 		pr_info("MPI: mpi larger than buffer nbytes=%u ret_nread=%u\n",
 				nbytes, *ret_nread);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	val = mpi_read_raw_data(buffer + 2, nbytes);
@@ -155,7 +155,7 @@ int mpi_read_buffer(MPI a, uint8_t *buf, unsigned buf_len, unsigned *nbytes,
 	int i, lzeros;
 
 	if (!buf || !nbytes)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sign)
 		*sign = a->sign;
@@ -164,7 +164,7 @@ int mpi_read_buffer(MPI a, uint8_t *buf, unsigned buf_len, unsigned *nbytes,
 
 	if (buf_len < n - lzeros) {
 		*nbytes = n - lzeros;
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	}
 
 	p = buf;
@@ -264,11 +264,11 @@ int mpi_write_to_sgl(MPI a, struct scatterlist *sgl, unsigned nbytes,
 		*sign = a->sign;
 
 	if (nbytes < n)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	nents = sg_nents_for_len(sgl, nbytes);
 	if (nents < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sg_miter_start(&miter, sgl, nents, SG_MITER_ATOMIC | SG_MITER_TO_SG);
 	sg_miter_next(&miter);

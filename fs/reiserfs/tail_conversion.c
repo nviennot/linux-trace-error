@@ -68,7 +68,7 @@ int direct2indirect(struct reiserfs_transaction_handle *th, struct inode *inode,
 			       "pasted or inserted byte exists in "
 			       "the tree %K. Use fsck to repair.", &end_key);
 		pathrelse(path);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	p_le_ih = tp_item_head(path);

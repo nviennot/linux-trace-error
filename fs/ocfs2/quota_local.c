@@ -413,7 +413,7 @@ struct ocfs2_quota_recovery *ocfs2_begin_quota_recovery(
 		 * we can trust metadata and data of the quota file */
 		lqinode = ocfs2_get_system_file_inode(osb, ino[type], slot_num);
 		if (!lqinode) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			goto out;
 		}
 		status = ocfs2_inode_lock_full(lqinode, NULL, 1,
@@ -604,7 +604,7 @@ int ocfs2_finish_quota_recovery(struct ocfs2_super *osb,
 		trace_ocfs2_finish_quota_recovery(slot_num);
 		lqinode = ocfs2_get_system_file_inode(osb, ino[type], slot_num);
 		if (!lqinode) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			goto out;
 		}
 		status = ocfs2_inode_lock_full(lqinode, NULL, 1,
@@ -950,7 +950,7 @@ static struct ocfs2_quota_chunk *ocfs2_find_free_entry(struct super_block *sb,
 		mlog(ML_ERROR, "Did not find empty entry in chunk %d with %u"
 		     " entries free (type=%d)\n", chunk->qc_num,
 		     le32_to_cpu(dchunk->dqc_free), type);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	*offset = found;
 	return chunk;

@@ -66,7 +66,7 @@ static int v2_read_header(struct super_block *sb, int type,
 			    sizeof(struct v2_disk_dqheader), size);
 		if (size < 0)
 			return size;
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -105,7 +105,7 @@ static int v2_read_file_info(struct super_block *sb, int type)
 	version = le32_to_cpu(dqhead.dqh_version);
 	if ((info->dqi_fmt_id == QFMT_VFS_V0 && version != 0) ||
 	    (info->dqi_fmt_id == QFMT_VFS_V1 && version != 1)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -116,7 +116,7 @@ static int v2_read_file_info(struct super_block *sb, int type)
 		if (size < 0)
 			ret = size;
 		else
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto out;
 	}
 	info->dqi_priv = kmalloc(sizeof(struct qtree_mem_dqinfo), GFP_NOFS);

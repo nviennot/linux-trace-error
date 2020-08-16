@@ -113,13 +113,13 @@ xfs_fs_set_info(
 	struct qc_dqblk		newlim;
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	if (!XFS_IS_QUOTA_ON(mp))
-		return -ESRCH;
+		return -ERR(ESRCH);
 	if (info->i_fieldmask & ~XFS_QC_SETINFO_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((info->i_fieldmask & XFS_QC_SETINFO_MASK) == 0)
 		return 0;
 
@@ -163,9 +163,9 @@ xfs_quota_enable(
 	struct xfs_mount	*mp = XFS_M(sb);
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	return xfs_qm_scall_quotaon(mp, xfs_quota_flags(uflags));
 }
@@ -178,11 +178,11 @@ xfs_quota_disable(
 	struct xfs_mount	*mp = XFS_M(sb);
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	if (!XFS_IS_QUOTA_ON(mp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xfs_qm_scall_quotaoff(mp, xfs_quota_flags(uflags));
 }
@@ -196,13 +196,13 @@ xfs_fs_rm_xquota(
 	unsigned int		flags = 0;
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (XFS_IS_QUOTA_ON(mp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (uflags & ~(FS_USER_QUOTA | FS_GROUP_QUOTA | FS_PROJ_QUOTA))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (uflags & FS_USER_QUOTA)
 		flags |= XFS_DQ_USER;
@@ -224,9 +224,9 @@ xfs_fs_get_dqblk(
 	xfs_dqid_t		id;
 
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	if (!XFS_IS_QUOTA_ON(mp))
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	id = from_kqid(&init_user_ns, qid);
 	return xfs_qm_scall_getquota(mp, id, xfs_quota_type(qid.type), qdq);
@@ -244,9 +244,9 @@ xfs_fs_get_nextdqblk(
 	xfs_dqid_t		id;
 
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	if (!XFS_IS_QUOTA_ON(mp))
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	id = from_kqid(&init_user_ns, *qid);
 	ret = xfs_qm_scall_getquota_next(mp, &id, xfs_quota_type(qid->type),
@@ -268,11 +268,11 @@ xfs_fs_set_dqblk(
 	struct xfs_mount	*mp = XFS_M(sb);
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!XFS_IS_QUOTA_RUNNING(mp))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	if (!XFS_IS_QUOTA_ON(mp))
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	return xfs_qm_scall_setqlim(mp, from_kqid(&init_user_ns, qid),
 				     xfs_quota_type(qid.type), qdq);

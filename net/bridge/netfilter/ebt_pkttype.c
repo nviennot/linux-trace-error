@@ -26,7 +26,7 @@ static int ebt_pkttype_mt_check(const struct xt_mtchk_param *par)
 	const struct ebt_pkttype_info *info = par->matchinfo;
 
 	if (info->invert != 0 && info->invert != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Allow any pkt_type value */
 	return 0;
 }

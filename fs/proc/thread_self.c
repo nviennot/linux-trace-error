@@ -18,10 +18,10 @@ static const char *proc_thread_self_get_link(struct dentry *dentry,
 	char *name;
 
 	if (!pid)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	name = kmalloc(10 + 6 + 10 + 1, dentry ? GFP_KERNEL : GFP_ATOMIC);
 	if (unlikely(!name))
-		return dentry ? ERR_PTR(-ENOMEM) : ERR_PTR(-ECHILD);
+		return dentry ? ERR_PTR(-ENOMEM) : ERR_PTR(-ERR(ECHILD));
 	sprintf(name, "%u/task/%u", tgid, pid);
 	set_delayed_call(done, kfree_link, name);
 	return name;

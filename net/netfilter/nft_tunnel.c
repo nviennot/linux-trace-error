@@ -79,7 +79,7 @@ static int nft_tunnel_get_init(const struct nft_ctx *ctx,
 
 	if (!tb[NFTA_TUNNEL_KEY] ||
 	    !tb[NFTA_TUNNEL_DREG])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->key = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY]));
 	switch (priv->key) {
@@ -90,7 +90,7 @@ static int nft_tunnel_get_init(const struct nft_ctx *ctx,
 		len = sizeof(u32);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->dreg = nft_parse_register(tb[NFTA_TUNNEL_DREG]);
@@ -98,7 +98,7 @@ static int nft_tunnel_get_init(const struct nft_ctx *ctx,
 	if (tb[NFTA_TUNNEL_MODE]) {
 		priv->mode = ntohl(nla_get_be32(tb[NFTA_TUNNEL_MODE]));
 		if (priv->mode > NFT_TUNNEL_MODE_MAX)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	} else {
 		priv->mode = NFT_TUNNEL_MODE_NONE;
 	}
@@ -174,7 +174,7 @@ static int nft_tunnel_obj_ip_init(const struct nft_ctx *ctx,
 		return err;
 
 	if (!tb[NFTA_TUNNEL_KEY_IP_DST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_TUNNEL_KEY_IP_SRC])
 		info->key.u.ipv4.src = nla_get_be32(tb[NFTA_TUNNEL_KEY_IP_SRC]);
@@ -203,7 +203,7 @@ static int nft_tunnel_obj_ip6_init(const struct nft_ctx *ctx,
 		return err;
 
 	if (!tb[NFTA_TUNNEL_KEY_IP6_DST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_TUNNEL_KEY_IP6_SRC]) {
 		memcpy(&info->key.u.ipv6.src,
@@ -239,7 +239,7 @@ static int nft_tunnel_obj_vxlan_init(const struct nlattr *attr,
 		return err;
 
 	if (!tb[NFTA_TUNNEL_KEY_VXLAN_GBP])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	opts->u.vxlan.gbp = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_VXLAN_GBP]));
 
@@ -270,13 +270,13 @@ static int nft_tunnel_obj_erspan_init(const struct nlattr *attr,
 		return err;
 
 	if (!tb[NFTA_TUNNEL_KEY_ERSPAN_VERSION])
-		 return -EINVAL;
+		 return -ERR(EINVAL);
 
 	version = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_ERSPAN_VERSION]));
 	switch (version) {
 	case ERSPAN_VERSION:
 		if (!tb[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		opts->u.erspan.u.index =
 			nla_get_be32(tb[NFTA_TUNNEL_KEY_ERSPAN_V1_INDEX]);
@@ -284,7 +284,7 @@ static int nft_tunnel_obj_erspan_init(const struct nlattr *attr,
 	case ERSPAN_VERSION2:
 		if (!tb[NFTA_TUNNEL_KEY_ERSPAN_V2_DIR] ||
 		    !tb[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		hwid = nla_get_u8(tb[NFTA_TUNNEL_KEY_ERSPAN_V2_HWID]);
 		dir = nla_get_u8(tb[NFTA_TUNNEL_KEY_ERSPAN_V2_DIR]);
@@ -293,7 +293,7 @@ static int nft_tunnel_obj_erspan_init(const struct nlattr *attr,
 		opts->u.erspan.u.md2.dir = dir;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	opts->u.erspan.version = version;
 
@@ -324,16 +324,16 @@ static int nft_tunnel_obj_geneve_init(const struct nlattr *attr,
 	if (!tb[NFTA_TUNNEL_KEY_GENEVE_CLASS] ||
 	    !tb[NFTA_TUNNEL_KEY_GENEVE_TYPE] ||
 	    !tb[NFTA_TUNNEL_KEY_GENEVE_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	attr = tb[NFTA_TUNNEL_KEY_GENEVE_DATA];
 	data_len = nla_len(attr);
 	if (data_len % 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	opts->len += sizeof(*opt) + data_len;
 	if (opts->len > IP_TUNNEL_OPTS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(opt->opt_data, nla_data(attr), data_len);
 	opt->length = data_len / 4;
@@ -369,7 +369,7 @@ static int nft_tunnel_obj_opts_init(const struct nft_ctx *ctx,
 		switch (nla_type(nla)) {
 		case NFTA_TUNNEL_KEY_OPTS_VXLAN:
 			if (type)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			err = nft_tunnel_obj_vxlan_init(nla, opts);
 			if (err)
 				return err;
@@ -377,7 +377,7 @@ static int nft_tunnel_obj_opts_init(const struct nft_ctx *ctx,
 			break;
 		case NFTA_TUNNEL_KEY_OPTS_ERSPAN:
 			if (type)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			err = nft_tunnel_obj_erspan_init(nla, opts);
 			if (err)
 				return err;
@@ -385,14 +385,14 @@ static int nft_tunnel_obj_opts_init(const struct nft_ctx *ctx,
 			break;
 		case NFTA_TUNNEL_KEY_OPTS_GENEVE:
 			if (type && type != TUNNEL_GENEVE_OPT)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			err = nft_tunnel_obj_geneve_init(nla, opts);
 			if (err)
 				return err;
 			type = TUNNEL_GENEVE_OPT;
 			break;
 		default:
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	}
 
@@ -421,7 +421,7 @@ static int nft_tunnel_obj_init(const struct nft_ctx *ctx,
 	int err;
 
 	if (!tb[NFTA_TUNNEL_KEY_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&info, 0, sizeof(info));
 	info.mode		= IP_TUNNEL_INFO_TX;
@@ -437,7 +437,7 @@ static int nft_tunnel_obj_init(const struct nft_ctx *ctx,
 		if (err < 0)
 			return err;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[NFTA_TUNNEL_KEY_SPORT]) {
@@ -452,7 +452,7 @@ static int nft_tunnel_obj_init(const struct nft_ctx *ctx,
 
 		tun_flags = ntohl(nla_get_be32(tb[NFTA_TUNNEL_KEY_FLAGS]));
 		if (tun_flags & ~NFT_TUNNEL_F_MASK)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		if (tun_flags & NFT_TUNNEL_F_ZERO_CSUM_TX)
 			info.key.tun_flags &= ~TUNNEL_CSUM;

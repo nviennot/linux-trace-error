@@ -222,7 +222,7 @@ static int cs4271_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -242,7 +242,7 @@ static int cs4271_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(cs4271->regmap, CS4271_MODE1,
@@ -391,7 +391,7 @@ static int cs4271_hw_params(struct snd_pcm_substream *substream,
 
 	if (i == CS4271_NR_RATIOS) {
 		dev_err(component->dev, "Invalid sample rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val |= cs4271_clk_tab[i].ratio_mask;

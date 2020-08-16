@@ -39,7 +39,7 @@ static void init_early_allocated_pages(void);
 static int __init early_page_owner_param(char *buf)
 {
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(buf, "on") == 0)
 		page_owner_enabled = true;
@@ -462,7 +462,7 @@ read_page_owner(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 	depot_stack_handle_t handle;
 
 	if (!static_branch_unlikely(&page_owner_inited))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	page = NULL;
 	pfn = min_low_pfn + *ppos;

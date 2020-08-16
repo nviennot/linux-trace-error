@@ -287,12 +287,12 @@ tag_in_use:
 	pr_err("Cache tag '%s' already in use\n", tagname);
 	__fscache_release_cache_tag(tag);
 	_leave(" = -EXIST");
-	return -EEXIST;
+	return -ERR(EEXIST);
 
 error:
 	__fscache_release_cache_tag(tag);
 	_leave(" = -EINVAL");
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 nomem:
 	_leave(" = -ENOMEM");

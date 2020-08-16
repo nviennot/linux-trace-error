@@ -529,7 +529,7 @@ nfssvc_encode_entry(void *ccdv, const char *name,
 
 	if (offset > ~((u32) 0)) {
 		cd->common.err = nfserr_fbig;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (cd->offset)
 		*cd->offset = htonl(offset);
@@ -540,11 +540,11 @@ nfssvc_encode_entry(void *ccdv, const char *name,
 
 	if ((buflen = cd->buflen - slen - 4) < 0) {
 		cd->common.err = nfserr_toosmall;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ino > ~((u32) 0)) {
 		cd->common.err = nfserr_fbig;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*p++ = xdr_one;				/* mark entry present */
 	*p++ = htonl((u32) ino);		/* file id */

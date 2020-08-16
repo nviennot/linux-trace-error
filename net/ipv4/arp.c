@@ -201,7 +201,7 @@ int arp_mc_map(__be32 addr, u8 *haddr, struct net_device *dev, int dir)
 			return 0;
 		}
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 
@@ -233,7 +233,7 @@ static int arp_constructor(struct neighbour *neigh)
 	in_dev = __in_dev_get_rcu(dev);
 	if (!in_dev) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	neigh->type = inet_addr_type_dev_table(dev_net(dev), dev, addr);
@@ -989,7 +989,7 @@ static int arp_req_set_proxy(struct net *net, struct net_device *dev, int on)
 		IN_DEV_CONF_SET(__in_dev_get_rtnl(dev), PROXY_ARP, on);
 		return 0;
 	}
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static int arp_req_set_public(struct net *net, struct arpreq *r,
@@ -999,16 +999,16 @@ static int arp_req_set_public(struct net *net, struct arpreq *r,
 	__be32 mask = ((struct sockaddr_in *)&r->arp_netmask)->sin_addr.s_addr;
 
 	if (mask && mask != htonl(0xFFFFFFFF))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!dev && (r->arp_flags & ATF_COM)) {
 		dev = dev_getbyhwaddr_rcu(net, r->arp_ha.sa_family,
 				      r->arp_ha.sa_data);
 		if (!dev)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 	if (mask) {
 		if (!pneigh_lookup(&arp_tbl, net, &ip, dev, 1))
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		return 0;
 	}
 
@@ -1036,7 +1036,7 @@ static int arp_req_set(struct net *net, struct arpreq *r,
 		dev = rt->dst.dev;
 		ip_rt_put(rt);
 		if (!dev)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	switch (dev->type) {
 #if IS_ENABLED(CONFIG_FDDI)
@@ -1050,12 +1050,12 @@ static int arp_req_set(struct net *net, struct arpreq *r,
 		if (r->arp_ha.sa_family != ARPHRD_FDDI &&
 		    r->arp_ha.sa_family != ARPHRD_ETHER &&
 		    r->arp_ha.sa_family != ARPHRD_IEEE802)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 #endif
 	default:
 		if (r->arp_ha.sa_family != dev->type)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	}
 
@@ -1092,7 +1092,7 @@ static int arp_req_get(struct arpreq *r, struct net_device *dev)
 {
 	__be32 ip = ((struct sockaddr_in *) &r->arp_pa)->sin_addr.s_addr;
 	struct neighbour *neigh;
-	int err = -ENXIO;
+	int err = -ERR(ENXIO);
 
 	neigh = neigh_lookup(&arp_tbl, &ip, dev);
 	if (neigh) {
@@ -1113,7 +1113,7 @@ static int arp_req_get(struct arpreq *r, struct net_device *dev)
 static int arp_invalidate(struct net_device *dev, __be32 ip)
 {
 	struct neighbour *neigh = neigh_lookup(&arp_tbl, &ip, dev);
-	int err = -ENXIO;
+	int err = -ERR(ENXIO);
 	struct neigh_table *tbl = &arp_tbl;
 
 	if (neigh) {
@@ -1140,7 +1140,7 @@ static int arp_req_delete_public(struct net *net, struct arpreq *r,
 		return pneigh_delete(&arp_tbl, net, &ip, dev);
 
 	if (mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return arp_req_set_proxy(net, dev, 0);
 }
@@ -1161,7 +1161,7 @@ static int arp_req_delete(struct net *net, struct arpreq *r,
 		dev = rt->dst.dev;
 		ip_rt_put(rt);
 		if (!dev)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return arp_invalidate(dev, ip);
 }
@@ -1180,7 +1180,7 @@ int arp_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 	case SIOCDARP:
 	case SIOCSARP:
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		fallthrough;
 	case SIOCGARP:
 		err = copy_from_user(&r, arg, sizeof(struct arpreq));
@@ -1188,21 +1188,21 @@ int arp_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 			return -EFAULT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (r.arp_pa.sa_family != AF_INET)
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 
 	if (!(r.arp_flags & ATF_PUBL) &&
 	    (r.arp_flags & (ATF_NETMASK | ATF_DONTPUB)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!(r.arp_flags & ATF_NETMASK))
 		((struct sockaddr_in *)&r.arp_netmask)->sin_addr.s_addr =
 							   htonl(0xFFFFFFFFUL);
 	rtnl_lock();
 	if (r.arp_dev[0]) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		dev = __dev_get_by_name(net, r.arp_dev);
 		if (!dev)
 			goto out;
@@ -1210,11 +1210,11 @@ int arp_ioctl(struct net *net, unsigned int cmd, void __user *arg)
 		/* Mmmm... It is wrong... ARPHRD_NETROM==0 */
 		if (!r.arp_ha.sa_family)
 			r.arp_ha.sa_family = dev->type;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if ((r.arp_flags & ATF_COM) && r.arp_ha.sa_family != dev->type)
 			goto out;
 	} else if (cmd == SIOCGARP) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 

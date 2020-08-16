@@ -108,7 +108,7 @@ static int __uuid_parse(const char *uuid, __u8 b[16], const u8 ei[16])
 	unsigned int i;
 
 	if (!uuid_is_valid(uuid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < 16; i++) {
 		int hi = hex_to_bin(uuid[si[i] + 0]);

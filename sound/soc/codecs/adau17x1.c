@@ -196,7 +196,7 @@ static int adau17x1_dsp_mux_enum_put(struct snd_kcontrol *kcontrol,
 	int reg;
 
 	if (ucontrol->value.enumerated.item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (ucontrol->value.enumerated.item[0]) {
 	case 0:
@@ -353,7 +353,7 @@ static int adau17x1_set_dai_pll(struct snd_soc_dai *dai, int pll_id,
 	int ret;
 
 	if (freq_in < 8000000 || freq_in > 27000000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = adau_calc_pll_cfg(freq_in, freq_out, adau->pll_regs);
 	if (ret < 0)
@@ -384,13 +384,13 @@ static int adau17x1_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	case ADAU17X1_CLK_SRC_PLL_AUTO:
 		if (!adau->mclk)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Fall-through */
 	case ADAU17X1_CLK_SRC_PLL:
 		is_pll = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (adau->clk_src) {
@@ -402,7 +402,7 @@ static int adau17x1_set_dai_sysclk(struct snd_soc_dai *dai,
 		was_pll = true;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adau->sysclk = freq;
@@ -448,7 +448,7 @@ static int adau17x1_auto_pll(struct snd_soc_dai *dai,
 		pll_rate = 44100 * 1024;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return adau17x1_set_dai_pll(dai, ADAU17X1_PLL, ADAU17X1_PLL_SRC_MCLK,
@@ -479,7 +479,7 @@ static int adau17x1_hw_params(struct snd_pcm_substream *substream,
 	}
 
 	if (freq % params_rate(params) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (freq / params_rate(params)) {
 	case 1024: /* fs */
@@ -511,7 +511,7 @@ static int adau17x1_hw_params(struct snd_pcm_substream *substream,
 		dsp_div = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau->regmap, ADAU17X1_CONVERTER0,
@@ -541,7 +541,7 @@ static int adau17x1_hw_params(struct snd_pcm_substream *substream,
 		val = ADAU17X1_SERIAL_PORT1_DELAY0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_update_bits(adau->regmap, ADAU17X1_SERIAL_PORT1,
@@ -565,7 +565,7 @@ static int adau17x1_set_dai_fmt(struct snd_soc_dai *dai,
 		adau->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -589,7 +589,7 @@ static int adau17x1_set_dai_fmt(struct snd_soc_dai *dai,
 		ctrl1 = ADAU17X1_SERIAL_PORT1_DELAY0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -606,7 +606,7 @@ static int adau17x1_set_dai_fmt(struct snd_soc_dai *dai,
 		lrclk_pol = !lrclk_pol;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (lrclk_pol)
@@ -644,18 +644,18 @@ static int adau17x1_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	case 8:
 		if (adau->type == ADAU1361)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ser_ctrl0 = ADAU17X1_SERIAL_PORT0_TDM8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slot_width * slots) {
 	case 32:
 		if (adau->type == ADAU1761)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ser_ctrl1 = ADAU17X1_SERIAL_PORT1_BCLK32;
 		break;
@@ -670,12 +670,12 @@ static int adau17x1_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	case 256:
 		if (adau->type == ADAU1361)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ser_ctrl1 = ADAU17X1_SERIAL_PORT1_BCLK256;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rx_mask) {
@@ -696,7 +696,7 @@ static int adau17x1_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		adau->tdm_slot[SNDRV_PCM_STREAM_CAPTURE] = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (tx_mask) {
@@ -717,7 +717,7 @@ static int adau17x1_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		adau->tdm_slot[SNDRV_PCM_STREAM_PLAYBACK] = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau->regmap, ADAU17X1_CONVERTER0,
@@ -776,7 +776,7 @@ int adau17x1_set_micbias_voltage(struct snd_soc_component *component,
 	case ADAU17X1_MICBIAS_0_65_AVDD:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_write(adau->regmap, ADAU17X1_MICBIAS, micbias << 2);

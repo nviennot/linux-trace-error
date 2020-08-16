@@ -574,7 +574,7 @@ static inline int mapping_writably_mapped(struct address_space *mapping)
 static inline int mapping_map_writable(struct address_space *mapping)
 {
 	return atomic_inc_unless_negative(&mapping->i_mmap_writable) ?
-		0 : -EPERM;
+		0 : -ERR(EPERM);
 }
 
 static inline void mapping_unmap_writable(struct address_space *mapping)
@@ -585,7 +585,7 @@ static inline void mapping_unmap_writable(struct address_space *mapping)
 static inline int mapping_deny_writable(struct address_space *mapping)
 {
 	return atomic_dec_unless_positive(&mapping->i_mmap_writable) ?
-		0 : -EBUSY;
+		0 : -ERR(EBUSY);
 }
 
 static inline void mapping_allow_writable(struct address_space *mapping)
@@ -1191,31 +1191,31 @@ extern void show_fd_locks(struct seq_file *f,
 static inline int fcntl_getlk(struct file *file, unsigned int cmd,
 			      struct flock __user *user)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int fcntl_setlk(unsigned int fd, struct file *file,
 			      unsigned int cmd, struct flock __user *user)
 {
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 #if BITS_PER_LONG == 32
 static inline int fcntl_getlk64(struct file *file, unsigned int cmd,
 				struct flock64 __user *user)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int fcntl_setlk64(unsigned int fd, struct file *file,
 				unsigned int cmd, struct flock64 __user *user)
 {
-	return -EACCES;
+	return -ERR(EACCES);
 }
 #endif
 static inline int fcntl_setlease(unsigned int fd, struct file *filp, long arg)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int fcntl_getlease(struct file *filp)
@@ -1261,12 +1261,12 @@ static inline void posix_test_lock(struct file *filp, struct file_lock *fl)
 static inline int posix_lock_file(struct file *filp, struct file_lock *fl,
 				  struct file_lock *conflock)
 {
-	return -ENOLCK;
+	return -ERR(ENOLCK);
 }
 
 static inline int locks_delete_block(struct file_lock *waiter)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static inline int vfs_test_lock(struct file *filp, struct file_lock *fl)
@@ -1277,7 +1277,7 @@ static inline int vfs_test_lock(struct file *filp, struct file_lock *fl)
 static inline int vfs_lock_file(struct file *filp, unsigned int cmd,
 				struct file_lock *fl, struct file_lock *conf)
 {
-	return -ENOLCK;
+	return -ERR(ENOLCK);
 }
 
 static inline int vfs_cancel_lock(struct file *filp, struct file_lock *fl)
@@ -1287,7 +1287,7 @@ static inline int vfs_cancel_lock(struct file *filp, struct file_lock *fl)
 
 static inline int locks_lock_inode_wait(struct inode *inode, struct file_lock *fl)
 {
-	return -ENOLCK;
+	return -ERR(ENOLCK);
 }
 
 static inline int __break_lease(struct inode *inode, unsigned int mode, unsigned int type)
@@ -1304,19 +1304,19 @@ static inline void lease_get_mtime(struct inode *inode,
 static inline int generic_setlease(struct file *filp, long arg,
 				    struct file_lock **flp, void **priv)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int vfs_setlease(struct file *filp, long arg,
 			       struct file_lock **lease, void **priv)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int lease_modify(struct file_lock *fl, int arg,
 			       struct list_head *dispose)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct files_struct;
@@ -2273,7 +2273,7 @@ static inline struct dentry *mount_bdev(struct file_system_type *fs_type,
 	int flags, const char *dev_name, void *data,
 	int (*fill_super)(struct super_block *, void *, int))
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 #endif
 extern struct dentry *mount_single(struct file_system_type *fs_type,
@@ -2897,7 +2897,7 @@ extern int bmap(struct inode *inode, sector_t *block);
 #else
 static inline int bmap(struct inode *inode,  sector_t *block)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -2950,12 +2950,12 @@ static inline void file_end_write(struct file *file)
  */
 static inline int get_write_access(struct inode *inode)
 {
-	return atomic_inc_unless_negative(&inode->i_writecount) ? 0 : -ETXTBSY;
+	return atomic_inc_unless_negative(&inode->i_writecount) ? 0 : -ERR(ETXTBSY);
 }
 static inline int deny_write_access(struct file *file)
 {
 	struct inode *inode = file_inode(file);
-	return atomic_dec_unless_positive(&inode->i_writecount) ? 0 : -ETXTBSY;
+	return atomic_dec_unless_positive(&inode->i_writecount) ? 0 : -ERR(ETXTBSY);
 }
 static inline void put_write_access(struct inode * inode)
 {
@@ -3440,11 +3440,11 @@ static inline int iocb_flags(struct file *file)
 static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
 {
 	if (unlikely(flags & ~RWF_SUPPORTED))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (flags & RWF_NOWAIT) {
 		if (!(ki->ki_filp->f_mode & FMODE_NOWAIT))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		ki->ki_flags |= IOCB_NOWAIT;
 	}
 	if (flags & RWF_HIPRI)

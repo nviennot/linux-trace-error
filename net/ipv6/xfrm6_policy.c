@@ -60,7 +60,7 @@ static int xfrm6_get_saddr(struct net *net, int oif,
 
 	dst = xfrm6_dst_lookup(net, 0, oif, NULL, daddr, mark);
 	if (IS_ERR(dst))
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	dev = ip6_dst_idev(dst)->dev;
 	ipv6_dev_get_saddr(dev_net(dev), dev, &daddr->in6, 0, &saddr->in6);
@@ -79,7 +79,7 @@ static int xfrm6_fill_dst(struct xfrm_dst *xdst, struct net_device *dev,
 	xdst->u.rt6.rt6i_idev = in6_dev_get(dev);
 	if (!xdst->u.rt6.rt6i_idev) {
 		dev_put(dev);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Sheit... I remember I did this right. Apparently,

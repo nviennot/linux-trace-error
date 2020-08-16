@@ -157,7 +157,7 @@ static int ea_write_inline(struct inode *ip, struct jfs_ea_list *ealist,
 		 * used for an inline EA.
 		 */
 		if (!(ji->mode2 & INLINEEA) && !(ji->ea.flag & DXD_INLINE))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		DXDsize(ea, size);
 		DXDlength(ea, 0);
@@ -254,7 +254,7 @@ static int ea_write(struct inode *ip, struct jfs_ea_list *ealist, int size,
 		    << sb->s_blocksize_bits;
 
 		if (!(mp = get_metapage(ip, blkno + i, bytes_to_write, 1))) {
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto failed;
 		}
 
@@ -326,10 +326,10 @@ static int ea_read_inline(struct inode *ip, struct jfs_ea_list *ealist)
 
 	/* Sanity Check */
 	if ((sizeDXD(&ji->ea) > sizeof (ji->i_inline_ea)))
-		return -EIO;
+		return -ERR(EIO);
 	if (le32_to_cpu(((struct jfs_ea_list *) &ji->i_inline_ea)->size)
 	    != ea_size)
-		return -EIO;
+		return -ERR(EIO);
 
 	memcpy(ealist, ji->i_inline_ea, ea_size);
 	return 0;
@@ -368,7 +368,7 @@ static int ea_read(struct inode *ip, struct jfs_ea_list *ealist)
 	nbytes = sizeDXD(&ji->ea);
 	if (!nbytes) {
 		jfs_error(sb, "nbytes is 0\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -394,7 +394,7 @@ static int ea_read(struct inode *ip, struct jfs_ea_list *ealist)
 		    << sb->s_blocksize_bits;
 
 		if (!(mp = read_metapage(ip, blkno + i, bytes_to_read, 1)))
-			return -EIO;
+			return -ERR(EIO);
 
 		memcpy(cp, mp->data, nb);
 		release_metapage(mp);
@@ -468,7 +468,7 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 	} else {
 		if (!(ji->ea.flag & DXD_EXTENT)) {
 			jfs_error(sb, "invalid ea.flag\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		current_blocks = (ea_size + sb->s_blocksize - 1) >>
 		    sb->s_blocksize_bits;
@@ -507,7 +507,7 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 		/* Allocate new blocks to quota. */
 		rc = dquot_alloc_block(inode, blocks_needed);
 		if (rc)
-			return -EDQUOT;
+			return -ERR(EDQUOT);
 
 		quota_allocation = blocks_needed;
 
@@ -528,7 +528,7 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 					  1);
 		if (ea_buf->mp == NULL) {
 			dbFree(inode, blkno, (s64) blocks_needed);
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto clean_up;
 		}
 		ea_buf->xattr = ea_buf->mp->data;
@@ -548,7 +548,7 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 				   lengthDXD(&ji->ea) << sb->s_blocksize_bits,
 				   1);
 	if (ea_buf->mp == NULL) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto clean_up;
 	}
 	ea_buf->xattr = ea_buf->mp->data;
@@ -561,7 +561,7 @@ static int ea_get(struct inode *inode, struct ea_buffer *ea_buf, int min_size)
 		print_hex_dump(KERN_ERR, "", DUMP_PREFIX_ADDRESS, 16, 1,
 				     ea_buf->xattr, ea_size, 1);
 		ea_release(inode, ea_buf);
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto clean_up;
 	}
 
@@ -685,7 +685,7 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 			    (memcmp(name, ea->name, namelen) == 0)) {
 				found = 1;
 				if (flags & XATTR_CREATE) {
-					rc = -EEXIST;
+					rc = -ERR(EEXIST);
 					goto release;
 				}
 				old_ea = ea;
@@ -698,7 +698,7 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 
 	if (!found) {
 		if (flags & XATTR_REPLACE) {
-			rc = -ENODATA;
+			rc = -ERR(ENODATA);
 			goto release;
 		}
 		if (value == NULL) {
@@ -747,7 +747,7 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 		 * VFS setxattr interface.
 		 */
 		if (value_len >= USHRT_MAX) {
-			rc = -E2BIG;
+			rc = -ERR(E2BIG);
 			goto release;
 		}
 
@@ -768,7 +768,7 @@ int __jfs_setxattr(tid_t tid, struct inode *inode, const char *name,
 		       "__jfs_setxattr: xattr_size = %d, new_size = %d\n",
 		       xattr_size, new_size);
 
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto release;
 	}
 
@@ -825,7 +825,7 @@ ssize_t __jfs_getxattr(struct inode *inode, const char *name, void *data,
 			if (!data)
 				goto release;
 			else if (size > buf_size) {
-				size = -ERANGE;
+				size = -ERR(ERANGE);
 				goto release;
 			}
 			value = ((char *) &ea->name) + ea->namelen + 1;
@@ -833,7 +833,7 @@ ssize_t __jfs_getxattr(struct inode *inode, const char *name, void *data,
 			goto release;
 		}
       not_found:
-	size = -ENODATA;
+	size = -ERR(ENODATA);
       release:
 	ea_release(inode, &ea_buf);
       out:
@@ -885,7 +885,7 @@ ssize_t jfs_listxattr(struct dentry * dentry, char *data, size_t buf_size)
 		goto release;
 
 	if (size > buf_size) {
-		size = -ERANGE;
+		size = -ERR(ERANGE);
 		goto release;
 	}
 
@@ -945,7 +945,7 @@ static int jfs_xattr_get_os2(const struct xattr_handler *handler,
 			     const char *name, void *value, size_t size)
 {
 	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return __jfs_getxattr(inode, name, value, size);
 }
 
@@ -955,7 +955,7 @@ static int jfs_xattr_set_os2(const struct xattr_handler *handler,
 			     size_t size, int flags)
 {
 	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return __jfs_xattr_set(inode, name, value, size, flags);
 }
 

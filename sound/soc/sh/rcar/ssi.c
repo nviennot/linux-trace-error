@@ -294,12 +294,12 @@ static int rsnd_ssi_master_clk_start(struct rsnd_mod *mod,
 	if (ssi->usrcnt > 0) {
 		if (ssi->rate != rate) {
 			dev_err(dev, "SSI parent/child should use same rate\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (ssi->chan != chan) {
 			dev_err(dev, "SSI parent/child should use same chan\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		return 0;
@@ -308,7 +308,7 @@ static int rsnd_ssi_master_clk_start(struct rsnd_mod *mod,
 	main_rate = rsnd_ssi_clk_query(rdai, rate, chan, &idx);
 	if (!main_rate) {
 		dev_err(dev, "unsupported clock rate\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ret = rsnd_adg_ssi_clk_try_start(mod, main_rate);
@@ -544,7 +544,7 @@ static int rsnd_ssi_quit(struct rsnd_mod *mod,
 
 	if (!ssi->usrcnt) {
 		dev_err(dev, "%s usrcnt error\n", rsnd_mod_name(mod));
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	rsnd_ssi_master_clk_stop(mod, io);
@@ -607,7 +607,7 @@ static int rsnd_ssi_hw_params(struct rsnd_mod *mod,
 		struct device *dev = rsnd_priv_to_dev(priv);
 
 		dev_err(dev, "invalid combination of slot-width and format-data-width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1259,11 +1259,11 @@ int rsnd_ssi_probe(struct rsnd_priv *priv)
 
 	node = rsnd_ssi_of_node(priv);
 	if (!node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nr = of_get_child_count(node);
 	if (!nr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto rsnd_ssi_probe_done;
 	}
 
@@ -1301,7 +1301,7 @@ int rsnd_ssi_probe(struct rsnd_priv *priv)
 
 		ssi->irq = irq_of_parse_and_map(np, 0);
 		if (!ssi->irq) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			of_node_put(np);
 			goto rsnd_ssi_probe_done;
 		}

@@ -99,10 +99,10 @@ static int relay_mmap_buf(struct rchan_buf *buf, struct vm_area_struct *vma)
 	struct file *filp = vma->vm_file;
 
 	if (!buf)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (length != (unsigned long)buf->chan->alloc_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vma->vm_ops = &relay_file_mmap_ops;
 	vma->vm_flags |= VM_DONTEXPAND;
@@ -315,7 +315,7 @@ static struct dentry *create_buf_file_default_callback(const char *filename,
  */
 static int remove_buf_file_default_callback(struct dentry *dentry)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* relay channel default callbacks */
@@ -663,7 +663,7 @@ int relay_late_setup_files(struct rchan *chan,
 	struct rchan_percpu_buf_dispatcher disp;
 
 	if (!chan || !base_filename)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	strlcpy(chan->base_filename, base_filename, NAME_MAX);
 
@@ -671,13 +671,13 @@ int relay_late_setup_files(struct rchan *chan,
 	/* Is chan already set up? */
 	if (unlikely(chan->has_base_filename)) {
 		mutex_unlock(&relay_channels_mutex);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	chan->has_base_filename = 1;
 	chan->parent = parent;
 
 	if (chan->is_global) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		buf = *per_cpu_ptr(chan->buf, 0);
 		if (!WARN_ON_ONCE(!buf)) {
 			dentry = relay_create_buf_file(chan, buf, 0);
@@ -700,13 +700,13 @@ int relay_late_setup_files(struct rchan *chan,
 		buf = *per_cpu_ptr(chan->buf, i);
 		if (unlikely(!buf)) {
 			WARN_ONCE(1, KERN_ERR "CPU has no buffer!\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
 		dentry = relay_create_buf_file(chan, buf, i);
 		if (unlikely(!dentry)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -1302,7 +1302,7 @@ static ssize_t relay_file_splice_read(struct file *in,
 			break;
 		else if (!ret) {
 			if (flags & SPLICE_F_NONBLOCK)
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			break;
 		}
 

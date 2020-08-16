@@ -47,7 +47,7 @@ int dsa_port_set_state(struct dsa_port *dp, u8 state,
 	int port = dp->index;
 
 	if (switchdev_trans_ph_prepare(trans))
-		return ds->ops->port_stp_state_set ? 0 : -EOPNOTSUPP;
+		return ds->ops->port_stp_state_set ? 0 : -ERR(EOPNOTSUPP);
 
 	if (ds->ops->port_stp_state_set)
 		ds->ops->port_stp_state_set(ds, port, state);
@@ -240,7 +240,7 @@ int dsa_port_vlan_filtering(struct dsa_port *dp, bool vlan_filtering,
 		return 0;
 
 	if (!dsa_port_can_apply_vlan_filtering(dp, vlan_filtering))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dsa_port_is_vlan_filtering(dp) == vlan_filtering)
 		return 0;
@@ -296,7 +296,7 @@ int dsa_port_pre_bridge_flags(const struct dsa_port *dp, unsigned long flags,
 
 	if (!ds->ops->port_egress_floods ||
 	    (flags & ~(BR_FLOOD | BR_MCAST_FLOOD)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -325,7 +325,7 @@ int dsa_port_mrouter(struct dsa_port *dp, bool mrouter,
 	int port = dp->index;
 
 	if (switchdev_trans_ph_prepare(trans))
-		return ds->ops->port_egress_floods ? 0 : -EOPNOTSUPP;
+		return ds->ops->port_egress_floods ? 0 : -ERR(EOPNOTSUPP);
 
 	return ds->ops->port_egress_floods(ds, port, true, mrouter);
 }
@@ -376,7 +376,7 @@ int dsa_port_fdb_dump(struct dsa_port *dp, dsa_fdb_dump_cb_t *cb, void *data)
 	int port = dp->index;
 
 	if (!ds->ops->port_fdb_dump)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->port_fdb_dump(ds, port, cb, data);
 }
@@ -747,7 +747,7 @@ void dsa_port_link_unregister_of(struct dsa_port *dp)
 int dsa_port_get_phy_strings(struct dsa_port *dp, uint8_t *data)
 {
 	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (of_phy_is_fixed_link(dp->dn))
 		return ret;
@@ -766,7 +766,7 @@ EXPORT_SYMBOL_GPL(dsa_port_get_phy_strings);
 int dsa_port_get_ethtool_phy_stats(struct dsa_port *dp, uint64_t *data)
 {
 	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (of_phy_is_fixed_link(dp->dn))
 		return ret;
@@ -785,7 +785,7 @@ EXPORT_SYMBOL_GPL(dsa_port_get_ethtool_phy_stats);
 int dsa_port_get_phy_sset_count(struct dsa_port *dp)
 {
 	struct phy_device *phydev;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (of_phy_is_fixed_link(dp->dn))
 		return ret;

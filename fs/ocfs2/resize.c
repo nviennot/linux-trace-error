@@ -271,10 +271,10 @@ int ocfs2_group_extend(struct inode * inode, int new_clusters)
 	u64 lgd_blkno;
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (new_clusters < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (new_clusters == 0)
 		return 0;
 
@@ -282,7 +282,7 @@ int ocfs2_group_extend(struct inode * inode, int new_clusters)
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
 	if (!main_bm_inode) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -306,7 +306,7 @@ int ocfs2_group_extend(struct inode * inode, int new_clusters)
 					osb->s_feature_incompat) * 8) {
 		mlog(ML_ERROR, "The disk is too old and small. "
 		     "Force to do offline resize.");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -325,7 +325,7 @@ int ocfs2_group_extend(struct inode * inode, int new_clusters)
 	cl_bpc = le16_to_cpu(fe->id2.i_chain.cl_bpc);
 	if (le16_to_cpu(group->bg_bits) / cl_bpc + new_clusters >
 		le16_to_cpu(fe->id2.i_chain.cl_cpg)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -336,7 +336,7 @@ int ocfs2_group_extend(struct inode * inode, int new_clusters)
 	handle = ocfs2_start_trans(osb, OCFS2_GROUP_EXTEND_CREDITS);
 	if (IS_ERR(handle)) {
 		mlog_errno(PTR_ERR(handle));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -382,7 +382,7 @@ static int ocfs2_check_new_group(struct inode *inode,
 	if (ret)
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (le16_to_cpu(gd->bg_chain) != input->chain)
 		mlog(ML_ERROR, "Group descriptor # %llu has bad chain %u "
 		     "while input has %u set.\n",
@@ -416,7 +416,7 @@ static int ocfs2_verify_group_and_input(struct inode *inode,
 	u16 next_free = le16_to_cpu(di->id2.i_chain.cl_next_free_rec);
 	u32 cluster = ocfs2_blocks_to_clusters(inode->i_sb, input->group);
 	u32 total_clusters = le32_to_cpu(di->i_clusters);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (cluster < total_clusters)
 		mlog(ML_ERROR, "add a group which is in the current volume.\n");
@@ -461,13 +461,13 @@ int ocfs2_group_add(struct inode *inode, struct ocfs2_new_group_input *input)
 	u64 bg_ptr;
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	main_bm_inode = ocfs2_get_system_file_inode(osb,
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
 	if (!main_bm_inode) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -487,7 +487,7 @@ int ocfs2_group_add(struct inode *inode, struct ocfs2_new_group_input *input)
 					osb->s_feature_incompat) * 8) {
 		mlog(ML_ERROR, "The disk is too old and small."
 		     " Force to do offline resize.");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -512,7 +512,7 @@ int ocfs2_group_add(struct inode *inode, struct ocfs2_new_group_input *input)
 	handle = ocfs2_start_trans(osb, OCFS2_GROUP_ADD_CREDITS);
 	if (IS_ERR(handle)) {
 		mlog_errno(PTR_ERR(handle));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_free_group_bh;
 	}
 

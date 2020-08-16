@@ -76,9 +76,9 @@ static int __must_check ax25_rt_add(struct ax25_routes_struct *route)
 	int i;
 
 	if ((ax25_dev = ax25_addr_ax25dev(&route->port_addr)) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (route->digi_count > AX25_MAX_DIGIS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock_bh(&ax25_route_lock);
 
@@ -148,7 +148,7 @@ static int ax25_rt_del(struct ax25_routes_struct *route)
 	ax25_dev *ax25_dev;
 
 	if ((ax25_dev = ax25_addr_ax25dev(&route->port_addr)) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock_bh(&ax25_route_lock);
 
@@ -184,7 +184,7 @@ static int ax25_rt_opt(struct ax25_route_opt_struct *rt_option)
 	int err = 0;
 
 	if ((ax25_dev = ax25_addr_ax25dev(&rt_option->port_addr)) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock_bh(&ax25_route_lock);
 
@@ -201,12 +201,12 @@ static int ax25_rt_opt(struct ax25_route_opt_struct *rt_option)
 					ax25_rt->ip_mode = rt_option->arg;
 					break;
 				default:
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					goto out;
 				}
 				break;
 			default:
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 		}
@@ -240,7 +240,7 @@ int ax25_rt_ioctl(unsigned int cmd, void __user *arg)
 		return ax25_rt_opt(&rt_option);
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -396,10 +396,10 @@ int ax25_rt_autobind(ax25_cb *ax25, ax25_address *addr)
 	ax25_rt = ax25_get_route(addr, NULL);
 	if (!ax25_rt) {
 		ax25_route_lock_unuse();
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 	}
 	if ((ax25->ax25_dev = ax25_dev_ax25dev(ax25_rt->dev)) == NULL) {
-		err = -EHOSTUNREACH;
+		err = -ERR(EHOSTUNREACH);
 		goto put;
 	}
 
@@ -409,7 +409,7 @@ int ax25_rt_autobind(ax25_cb *ax25, ax25_address *addr)
 		ax25_uid_put(user);
 	} else {
 		if (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			goto put;
 		}
 		ax25->source_addr = *(ax25_address *)ax25->ax25_dev->dev->dev_addr;

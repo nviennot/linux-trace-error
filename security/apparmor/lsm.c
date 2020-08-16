@@ -460,7 +460,7 @@ static int common_file_perm(const char *op, struct file *file, u32 mask,
 
 	/* don't reaudit files closed during inheritance */
 	if (file->f_path.dentry == aa_null.dentry)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	label = __begin_current_label_crit_section();
 	error = aa_file_perm(op, label, file, mask, in_atomic);
@@ -588,7 +588,7 @@ static int apparmor_sb_pivotroot(const struct path *old_path,
 static int apparmor_getprocattr(struct task_struct *task, char *name,
 				char **value)
 {
-	int error = -ENOENT;
+	int error = -ERR(ENOENT);
 	/* released below */
 	const struct cred *cred = get_task_cred(task);
 	struct aa_task_ctx *ctx = task_ctx(current);
@@ -601,7 +601,7 @@ static int apparmor_getprocattr(struct task_struct *task, char *name,
 	else if (strcmp(name, "exec") == 0 && ctx->onexec)
 		label = aa_get_newest_label(ctx->onexec);
 	else
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 
 	if (label)
 		error = aa_getprocattr(label, value);
@@ -621,7 +621,7 @@ static int apparmor_setprocattr(const char *name, void *value,
 	DEFINE_AUDIT_DATA(sa, LSM_AUDIT_DATA_NONE, OP_SETPROCATTR);
 
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* AppArmor requires that the buffer must be null terminated atm */
 	if (args[size - 1] != '\0') {
@@ -633,7 +633,7 @@ static int apparmor_setprocattr(const char *name, void *value,
 		args[size] = '\0';
 	}
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	args = strim(args);
 	command = strsep(&args, " ");
 	if (!args)
@@ -679,7 +679,7 @@ out:
 fail:
 	aad(&sa)->label = begin_current_label_crit_section();
 	aad(&sa)->info = name;
-	aad(&sa)->error = error = -EINVAL;
+	aad(&sa)->error = error = -ERR(EINVAL);
 	aa_audit_msg(AUDIT_APPARMOR_DENIED, &sa, NULL);
 	end_current_label_crit_section(aad(&sa)->label);
 	goto out;
@@ -1061,7 +1061,7 @@ static struct aa_label *sk_peer_label(struct sock *sk)
 	if (ctx->peer)
 		return ctx->peer;
 
-	return ERR_PTR(-ENOPROTOOPT);
+	return ERR_PTR(-ERR(ENOPROTOOPT));
 }
 
 /**
@@ -1093,7 +1093,7 @@ static int apparmor_socket_getpeersec_stream(struct socket *sock,
 		error = -ENOMEM;
 	} else {
 		if (slen > len) {
-			error = -ERANGE;
+			error = -ERR(ERANGE);
 		} else if (copy_to_user(optval, name, slen)) {
 			error = -EFAULT;
 			goto out;
@@ -1124,7 +1124,7 @@ static int apparmor_socket_getpeersec_dgram(struct socket *sock,
 
 {
 	/* TODO: requires secid support */
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 /**
@@ -1391,36 +1391,36 @@ __setup("apparmor=", apparmor_enabled_setup);
 static int param_set_aalockpolicy(const char *val, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_admin_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_set_bool(val, kp);
 }
 
 static int param_get_aalockpolicy(char *buffer, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_get_bool(buffer, kp);
 }
 
 static int param_set_aabool(const char *val, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_admin_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_set_bool(val, kp);
 }
 
 static int param_get_aabool(char *buffer, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_get_bool(buffer, kp);
 }
 
@@ -1429,10 +1429,10 @@ static int param_set_aauint(const char *val, const struct kernel_param *kp)
 	int error;
 
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* file is ro but enforce 2nd line check */
 	if (apparmor_initialized)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = param_set_uint(val, kp);
 	aa_g_path_max = max_t(uint32_t, aa_g_path_max, sizeof(union aa_buffer));
@@ -1444,9 +1444,9 @@ static int param_set_aauint(const char *val, const struct kernel_param *kp)
 static int param_get_aauint(char *buffer, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_get_uint(buffer, kp);
 }
 
@@ -1458,7 +1458,7 @@ static int param_set_aaintbool(const char *val, const struct kernel_param *kp)
 	int error;
 
 	if (apparmor_initialized)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Create local copy, with arg pointing to bool type. */
 	value = !!*((int *)kp->arg);
@@ -1496,9 +1496,9 @@ static int param_set_aacompressionlevel(const char *val,
 	int error;
 
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = param_set_int(val, kp);
 
@@ -1515,18 +1515,18 @@ static int param_get_aacompressionlevel(char *buffer,
 					const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return param_get_int(buffer, kp);
 }
 
 static int param_get_audit(char *buffer, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	return sprintf(buffer, "%s", audit_mode_names[aa_g_audit]);
 }
 
@@ -1535,15 +1535,15 @@ static int param_set_audit(const char *val, const struct kernel_param *kp)
 	int i;
 
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_admin_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	i = match_string(audit_mode_names, AUDIT_MAX_INDEX, val);
 	if (i < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	aa_g_audit = i;
 	return 0;
@@ -1552,9 +1552,9 @@ static int param_set_audit(const char *val, const struct kernel_param *kp)
 static int param_get_mode(char *buffer, const struct kernel_param *kp)
 {
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_view_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return sprintf(buffer, "%s", aa_profile_mode_names[aa_g_profile_mode]);
 }
@@ -1564,16 +1564,16 @@ static int param_set_mode(const char *val, const struct kernel_param *kp)
 	int i;
 
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (apparmor_initialized && !policy_admin_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	i = match_string(aa_profile_mode_names, APPARMOR_MODE_NAMES_MAX_INDEX,
 			 val);
 	if (i < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	aa_g_profile_mode = i;
 	return 0;
@@ -1704,9 +1704,9 @@ static int apparmor_dointvec(struct ctl_table *table, int write,
 			     void *buffer, size_t *lenp, loff_t *ppos)
 {
 	if (!policy_admin_capable(NULL))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (!apparmor_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return proc_dointvec(table, write, buffer, lenp, ppos);
 }
@@ -1759,7 +1759,7 @@ static unsigned int apparmor_ip_postroute(void *priv,
 				    skb->secmark, sk))
 		return NF_ACCEPT;
 
-	return NF_DROP_ERR(-ECONNREFUSED);
+	return NF_DROP_ERR(-ERR(ECONNREFUSED));
 
 }
 

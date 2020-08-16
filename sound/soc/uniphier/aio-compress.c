@@ -81,7 +81,7 @@ static int uniphier_aio_compr_open(struct snd_soc_component *component,
 	int ret;
 
 	if (sub->cstream)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sub->cstream = cstream;
 	sub->pass_through = 1;
@@ -144,12 +144,12 @@ static int uniphier_aio_compr_set_params(struct snd_soc_component *component,
 	if (params->codec.id != SND_AUDIOCODEC_IEC61937) {
 		dev_err(dev, "Codec ID is not supported(%d)\n",
 			params->codec.id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (params->codec.profile != SND_AUDIOPROFILE_IEC61937_SPDIF) {
 		dev_err(dev, "Codec profile is not supported(%d)\n",
 			params->codec.profile);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* IEC frame type will be changed after received valid data */
@@ -245,7 +245,7 @@ static int uniphier_aio_compr_trigger(struct snd_soc_component *component,
 		break;
 	default:
 		dev_warn(dev, "Unknown trigger(%d)\n", cmd);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	spin_unlock_irqrestore(&sub->lock, flags);
 
@@ -420,7 +420,7 @@ static int uniphier_aio_compr_get_codec_caps(struct snd_soc_component *component
 	if (codec->codec == SND_AUDIOCODEC_IEC61937)
 		*codec = caps_iec;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

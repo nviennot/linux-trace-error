@@ -44,7 +44,7 @@ static int read_block_bitmap(struct super_block *sb,
 
 	bh = udf_tread(sb, udf_get_lb_pblock(sb, &loc, block));
 	if (!bh)
-		retval = -EIO;
+		retval = -ERR(EIO);
 
 	bitmap->s_block_bitmap[bitmap_nr] = bh;
 	return retval;
@@ -84,7 +84,7 @@ static inline int load_block_bitmap(struct super_block *sb,
 		return slot;
 
 	if (!bitmap->s_block_bitmap[slot])
-		return -EIO;
+		return -ERR(EIO);
 
 	return slot;
 }
@@ -229,7 +229,7 @@ static udf_pblk_t udf_bitmap_new_block(struct super_block *sb,
 	char *ptr;
 	udf_pblk_t newblock = 0;
 
-	*err = -ENOSPC;
+	*err = -ERR(ENOSPC);
 	mutex_lock(&sbi->s_alloc_mutex);
 
 repeat:
@@ -349,7 +349,7 @@ got_block:
 	return newblock;
 
 error_return:
-	*err = -EIO;
+	*err = -ERR(EIO);
 	mutex_unlock(&sbi->s_alloc_mutex);
 	return 0;
 }
@@ -569,7 +569,7 @@ static udf_pblk_t udf_table_new_block(struct super_block *sb,
 	int8_t etype;
 	struct udf_inode_info *iinfo = UDF_I(table);
 
-	*err = -ENOSPC;
+	*err = -ERR(ENOSPC);
 
 	if (iinfo->i_alloc_type == ICBTAG_FLAG_AD_SHORT)
 		adsize = sizeof(struct short_ad);
@@ -711,7 +711,7 @@ inline udf_pblk_t udf_new_block(struct super_block *sb,
 					    map->s_uspace.s_table,
 					    partition, goal, err);
 	else {
-		*err = -EIO;
+		*err = -ERR(EIO);
 		return 0;
 	}
 	if (inode && block)

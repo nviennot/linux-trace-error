@@ -52,14 +52,14 @@ int snd_fw_transaction(struct fw_unit *unit, int tcode,
 			return 0;
 
 		if (rcode == RCODE_GENERATION && (flags & FW_FIXED_GENERATION))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		if (rcode_is_permanent_error(rcode) || ++tries >= 3) {
 			if (!(flags & FW_QUIET))
 				dev_err(&unit->device,
 					"transaction failed: %s\n",
 					fw_rcode_string(rcode));
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		msleep(ERROR_RETRY_DELAY_MS);

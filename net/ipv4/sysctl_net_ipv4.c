@@ -96,7 +96,7 @@ static int ipv4_local_port_range(struct ctl_table *table, int write,
 		 */
 		if ((range[1] < range[0]) ||
 		    (range[0] < net->ipv4.sysctl_ip_prot_sock))
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			set_local_port_range(net, range);
 	}
@@ -131,7 +131,7 @@ static int ipv4_privileged_ports(struct ctl_table *table, int write,
 		 * privileged port range.
 		 */
 		if (range[0] < pports)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			net->ipv4.sysctl_ip_prot_sock = pports;
 	}
@@ -190,7 +190,7 @@ static int ipv4_ping_group_range(struct ctl_table *table, int write,
 		low = make_kgid(user_ns, urange[0]);
 		high = make_kgid(user_ns, urange[1]);
 		if (!gid_valid(low) || !gid_valid(high))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (urange[1] < urange[0] || gid_lt(high, low)) {
 			low = make_kgid(&init_user_ns, 1);
 			high = make_kgid(&init_user_ns, 0);
@@ -279,7 +279,7 @@ static int sscanf_key(char *buf, __le32 *key)
 
 	if (sscanf(buf, "%x-%x-%x-%x", user_key, user_key + 1,
 		   user_key + 2, user_key + 3) != 4) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		for (i = 0; i < ARRAY_SIZE(user_key); i++)
 			key[i] = cpu_to_le32(user_key[i]);
@@ -351,12 +351,12 @@ static int proc_tcp_fastopen_key(struct ctl_table *table, int write,
 			backup_data++;
 		}
 		if (sscanf_key(tbl.data, key)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto bad_key;
 		}
 		if (backup_data) {
 			if (sscanf_key(backup_data, key + 4)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto bad_key;
 			}
 		}

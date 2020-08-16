@@ -72,7 +72,7 @@ static inline void extcon_dev_unregister(struct extcon_dev *edev) { }
 static inline int devm_extcon_dev_register(struct device *dev,
 				struct extcon_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void devm_extcon_dev_unregister(struct device *dev,
@@ -80,7 +80,7 @@ static inline void devm_extcon_dev_unregister(struct device *dev,
 
 static inline struct extcon_dev *extcon_dev_allocate(const unsigned int *cable)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline void extcon_dev_free(struct extcon_dev *edev) { }
@@ -88,7 +88,7 @@ static inline void extcon_dev_free(struct extcon_dev *edev) { }
 static inline struct extcon_dev *devm_extcon_dev_allocate(struct device *dev,
 				const unsigned int *cable)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline void devm_extcon_dev_free(struct extcon_dev *edev) { }

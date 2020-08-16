@@ -524,11 +524,11 @@ static int sta_info_insert_check(struct sta_info *sta)
 	 * and another CPU turns off the net device.
 	 */
 	if (unlikely(!ieee80211_sdata_running(sdata)))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	if (WARN_ON(ether_addr_equal(sta->sta.addr, sdata->vif.addr) ||
 		    is_multicast_ether_addr(sta->sta.addr)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The RCU read lock is required by rhashtable due to
 	 * asynchronous resize/rehash.  We also require the mutex
@@ -539,7 +539,7 @@ static int sta_info_insert_check(struct sta_info *sta)
 	if (ieee80211_hw_check(&sdata->local->hw, NEEDS_UNIQUE_STA_ADDR) &&
 	    ieee80211_find_sta_by_ifaddr(&sdata->local->hw, sta->addr, NULL)) {
 		rcu_read_unlock();
-		return -ENOTUNIQ;
+		return -ERR(ENOTUNIQ);
 	}
 	rcu_read_unlock();
 
@@ -624,7 +624,7 @@ static int sta_info_insert_finish(struct sta_info *sta) __acquires(RCU)
 
 	/* check if STA exists already */
 	if (sta_info_get_bss(sdata, sta->sta.addr)) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out_err;
 	}
 
@@ -987,7 +987,7 @@ static int __must_check __sta_info_destroy_part1(struct sta_info *sta)
 	might_sleep();
 
 	if (!sta)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	local = sta->local;
 	sdata = sta->sdata;
@@ -1951,25 +1951,25 @@ int sta_info_move_state(struct sta_info *sta,
 	switch (new_state) {
 	case IEEE80211_STA_NONE:
 		if (sta->sta_state != IEEE80211_STA_AUTH)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case IEEE80211_STA_AUTH:
 		if (sta->sta_state != IEEE80211_STA_NONE &&
 		    sta->sta_state != IEEE80211_STA_ASSOC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case IEEE80211_STA_ASSOC:
 		if (sta->sta_state != IEEE80211_STA_AUTH &&
 		    sta->sta_state != IEEE80211_STA_AUTHORIZED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case IEEE80211_STA_AUTHORIZED:
 		if (sta->sta_state != IEEE80211_STA_ASSOC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		WARN(1, "invalid state %d", new_state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sta_dbg(sta->sdata, "moving STA %pM to state %d\n",
@@ -2148,7 +2148,7 @@ static int sta_set_rate_info_rx(struct sta_info *sta, struct rate_info *rinfo)
 	u16 rate = READ_ONCE(sta_get_last_rx_stats(sta)->last_rate);
 
 	if (rate == STA_STATS_RATE_INVALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sta_stats_decode_rate(sta->local, rate, rinfo);
 	return 0;

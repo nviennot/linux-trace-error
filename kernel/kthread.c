@@ -284,7 +284,7 @@ static int kthread(void *_create)
 	schedule_preempt_disabled();
 	preempt_enable();
 
-	ret = -EINTR;
+	ret = -ERR(EINTR);
 	if (!test_bit(KTHREAD_SHOULD_STOP, &self->flags)) {
 		cgroup_kthread_ready();
 		__kthread_parkme(self);
@@ -360,7 +360,7 @@ struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
 		 * that thread.
 		 */
 		if (xchg(&create->done, NULL))
-			return ERR_PTR(-EINTR);
+			return ERR_PTR(-ERR(EINTR));
 		/*
 		 * kthreadd (or new kernel thread) will call complete()
 		 * shortly.
@@ -541,10 +541,10 @@ int kthread_park(struct task_struct *k)
 	struct kthread *kthread = to_kthread(k);
 
 	if (WARN_ON(k->flags & PF_EXITING))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	if (WARN_ON_ONCE(test_bit(KTHREAD_SHOULD_PARK, &kthread->flags)))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	set_bit(KTHREAD_SHOULD_PARK, &kthread->flags);
 	if (k != current) {

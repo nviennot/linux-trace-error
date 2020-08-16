@@ -18,16 +18,16 @@ static int ipv6_mc_check_ip6hdr(struct sk_buff *skb)
 	unsigned int offset = skb_network_offset(skb) + sizeof(*ip6h);
 
 	if (!pskb_may_pull(skb, offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip6h = ipv6_hdr(skb);
 
 	if (ip6h->version != 6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = offset + ntohs(ip6h->payload_len);
 	if (skb->len < len || len <= offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_set_transport_header(skb, offset);
 
@@ -44,17 +44,17 @@ static int ipv6_mc_check_exthdrs(struct sk_buff *skb)
 	ip6h = ipv6_hdr(skb);
 
 	if (ip6h->nexthdr != IPPROTO_HOPOPTS)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	nexthdr = ip6h->nexthdr;
 	offset = skb_network_offset(skb) + sizeof(*ip6h);
 	offset = ipv6_skip_exthdr(skb, offset, &nexthdr, &frag_off);
 
 	if (offset < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nexthdr != IPPROTO_ICMPV6)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	skb_set_transport_header(skb, offset);
 
@@ -67,7 +67,7 @@ static int ipv6_mc_check_mld_reportv2(struct sk_buff *skb)
 
 	len += sizeof(struct mld2_report);
 
-	return ipv6_mc_may_pull(skb, len) ? 0 : -EINVAL;
+	return ipv6_mc_may_pull(skb, len) ? 0 : -ERR(EINVAL);
 }
 
 static int ipv6_mc_check_mld_query(struct sk_buff *skb)
@@ -78,17 +78,17 @@ static int ipv6_mc_check_mld_query(struct sk_buff *skb)
 
 	/* RFC2710+RFC3810 (MLDv1+MLDv2) require link-local source addresses */
 	if (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* MLDv1? */
 	if (transport_len != sizeof(struct mld_msg)) {
 		/* or MLDv2? */
 		if (transport_len < sizeof(struct mld2_query))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = skb_transport_offset(skb) + sizeof(struct mld2_query);
 		if (!ipv6_mc_may_pull(skb, len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	mld = (struct mld_msg *)skb_transport_header(skb);
@@ -98,7 +98,7 @@ static int ipv6_mc_check_mld_query(struct sk_buff *skb)
 	 */
 	if (ipv6_addr_any(&mld->mld_mca) &&
 	    !ipv6_addr_is_ll_all_nodes(&ipv6_hdr(skb)->daddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -109,7 +109,7 @@ static int ipv6_mc_check_mld_msg(struct sk_buff *skb)
 	struct mld_msg *mld;
 
 	if (!ipv6_mc_may_pull(skb, len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mld = (struct mld_msg *)skb_transport_header(skb);
 
@@ -122,7 +122,7 @@ static int ipv6_mc_check_mld_msg(struct sk_buff *skb)
 	case ICMPV6_MGM_QUERY:
 		return ipv6_mc_check_mld_query(skb);
 	default:
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	}
 }
 
@@ -138,12 +138,12 @@ int ipv6_mc_check_icmpv6(struct sk_buff *skb)
 	struct sk_buff *skb_chk;
 
 	if (!ipv6_mc_may_pull(skb, len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_chk = skb_checksum_trimmed(skb, transport_len,
 				       ipv6_mc_validate_checksum);
 	if (!skb_chk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (skb_chk != skb)
 		kfree_skb(skb_chk);

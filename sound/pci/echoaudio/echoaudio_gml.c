@@ -49,11 +49,11 @@ static int check_asic_status(struct echoaudio *chip)
 		dev_err(chip->card->dev,
 			"check_asic_status: failed on read_dsp\n");
 		chip->asic_loaded = false;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	chip->asic_loaded = (asic_status == ASIC_ALREADY_LOADED);
-	return chip->asic_loaded ? 0 : -EIO;
+	return chip->asic_loaded ? 0 : -ERR(EIO);
 }
 
 
@@ -77,7 +77,7 @@ static int write_control_reg(struct echoaudio *chip, u32 value, char force)
 	reg_value = cpu_to_le32(value);
 	if (reg_value != chip->comm_page->control_register || force) {
 		if (wait_handshake(chip))
-			return -EIO;
+			return -ERR(EIO);
 		chip->comm_page->control_register = reg_value;
 		clear_handshake(chip);
 		return send_vector(chip, DSP_VC_WRITE_CONTROL_REG);
@@ -112,14 +112,14 @@ static int set_digital_mode(struct echoaudio *chip, u8 mode)
 	int err, i, o;
 
 	if (chip->bad_board)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* All audio channels must be closed before changing the digital mode */
 	if (snd_BUG_ON(chip->pipe_alloc_mask))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (snd_BUG_ON(!(chip->digital_modes & (1 << mode))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	previous_mode = chip->digital_mode;
 	err = dsp_set_digital_mode(chip, mode);

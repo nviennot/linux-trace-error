@@ -118,7 +118,7 @@ static int z_erofs_lz4_decompress(struct z_erofs_decompress_req *rq, u8 *out)
 	int ret;
 
 	if (rq->inputsize > PAGE_SIZE)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	src = kmap_atomic(*rq->in);
 	inputmargin = 0;
@@ -135,7 +135,7 @@ static int z_erofs_lz4_decompress(struct z_erofs_decompress_req *rq, u8 *out)
 
 		if (inputmargin >= rq->inputsize) {
 			kunmap_atomic(src);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -178,7 +178,7 @@ static int z_erofs_lz4_decompress(struct z_erofs_decompress_req *rq, u8 *out)
 
 		if (ret >= 0)
 			memset(out + ret, 0, rq->outputsize - ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	if (copied)
@@ -307,7 +307,7 @@ static int z_erofs_shifted_transform(const struct z_erofs_decompress_req *rq,
 
 	if (nrpages_out > 2) {
 		DBG_BUGON(1);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (rq->out[0] == *rq->in) {

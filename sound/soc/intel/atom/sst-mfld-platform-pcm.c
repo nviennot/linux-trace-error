@@ -29,15 +29,15 @@ static DEFINE_MUTEX(sst_lock);
 int sst_register_dsp(struct sst_device *dev)
 {
 	if (WARN_ON(!dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!try_module_get(dev->dev->driver->owner))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	mutex_lock(&sst_lock);
 	if (sst) {
 		dev_err(dev->dev, "we already have a device %s\n", sst->name);
 		module_put(dev->dev->driver->owner);
 		mutex_unlock(&sst_lock);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	dev_dbg(dev->dev, "registering device %s\n", dev->name);
 	sst = dev;
@@ -49,15 +49,15 @@ EXPORT_SYMBOL_GPL(sst_register_dsp);
 int sst_unregister_dsp(struct sst_device *dev)
 {
 	if (WARN_ON(!dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (dev != sst)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&sst_lock);
 
 	if (!sst) {
 		mutex_unlock(&sst_lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	module_put(sst->dev->driver->owner);
@@ -159,7 +159,7 @@ static int sst_get_stream_mapping(int dev, int sdev, int dir,
 	int i;
 
 	if (map == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 
 	/* index 0 is not used in stream map */
@@ -195,7 +195,7 @@ int sst_fill_stream_params(void *substream,
 					  pstream->number, pstream->stream,
 					  map, map_size);
 		if (index <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		str_params->stream_id = index;
 		str_params->device_type = map[index].device_id;
@@ -209,7 +209,7 @@ int sst_fill_stream_params(void *substream,
 					       0, cstream->direction,
 					       map, map_size);
 		if (index <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		str_params->stream_id = index;
 		str_params->device_type = map[index].device_id;
 		str_params->task = map[index].task_id;
@@ -317,7 +317,7 @@ static int sst_media_open(struct snd_pcm_substream *substream,
 	if (!sst ||
 	    !try_module_get(sst->dev->driver->owner)) {
 		dev_err(dai->dev, "no device available to run\n");
-		ret_val = -ENODEV;
+		ret_val = -ERR(ENODEV);
 		goto out_ops;
 	}
 	stream->ops = sst->ops;
@@ -614,7 +614,7 @@ static int sst_soc_trigger(struct snd_soc_component *component,
 		ret_val = stream->ops->stream_pause_release(sst->dev, str_id);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!ret_val)

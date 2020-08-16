@@ -777,7 +777,7 @@ int snd_soc_new_compress(struct snd_soc_pcm_runtime *rtd, int num)
 	    rtd->num_codecs > 1) {
 		dev_err(rtd->card->dev,
 			"Compress ASoC: Multi CPU/Codec not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check client and interface hw capabilities */
@@ -796,7 +796,7 @@ int snd_soc_new_compress(struct snd_soc_pcm_runtime *rtd, int num)
 		dev_err(rtd->card->dev,
 			"Compress ASoC: Invalid direction for P %d, C %d\n",
 			playback, capture);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (playback)

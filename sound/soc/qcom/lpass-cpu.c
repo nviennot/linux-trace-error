@@ -107,7 +107,7 @@ static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "invalid bitwidth given: %d\n", bitwidth);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
@@ -117,7 +117,7 @@ static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
 
 	if (!mode) {
 		dev_err(dai->dev, "no line is assigned\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (channels) {
@@ -139,7 +139,7 @@ static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
 		if (mode < LPAIF_I2SCTL_MODE_QUAD01) {
 			dev_err(dai->dev, "cannot configure 4 channels with mode %d\n",
 				mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (mode) {
@@ -153,7 +153,7 @@ static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
 		if (mode < LPAIF_I2SCTL_MODE_6CH) {
 			dev_err(dai->dev, "cannot configure 6 channels with mode %d\n",
 				mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (mode) {
@@ -166,12 +166,12 @@ static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
 		if (mode < LPAIF_I2SCTL_MODE_8CH) {
 			dev_err(dai->dev, "cannot configure 8 channels with mode %d\n",
 				mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(dai->dev, "invalid channels given: %u\n", channels);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -252,7 +252,7 @@ static int lpass_cpu_daiops_trigger(struct snd_pcm_substream *substream,
 		int cmd, struct snd_soc_dai *dai)
 {
 	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	unsigned int val, mask;
 
 	switch (cmd) {
@@ -528,7 +528,7 @@ int asoc_qcom_lpass_cpu_platform_probe(struct platform_device *pdev)
 	dsp_of_node = of_parse_phandle(pdev->dev.of_node, "qcom,adsp", 0);
 	if (dsp_of_node) {
 		dev_err(dev, "DSP exists and holds audio resources\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	drvdata = devm_kzalloc(dev, sizeof(struct lpass_data), GFP_KERNEL);
@@ -538,7 +538,7 @@ int asoc_qcom_lpass_cpu_platform_probe(struct platform_device *pdev)
 
 	match = of_match_device(dev->driver->of_match_table, dev);
 	if (!match || !match->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	drvdata->variant = (struct lpass_variant *)match->data;
 	variant = drvdata->variant;

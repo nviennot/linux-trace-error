@@ -51,7 +51,7 @@ static inline int ethnl_put_strz(struct sk_buff *skb, u16 attrtype,
 
 	attr = nla_reserve(skb, attrtype, len + 1);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(attr), s, len);
 	((char *)nla_data(attr))[len] = '\0';

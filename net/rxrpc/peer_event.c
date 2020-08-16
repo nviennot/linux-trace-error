@@ -272,7 +272,7 @@ static void rxrpc_store_error(struct rxrpc_peer *peer,
 
 	case SO_EE_ORIGIN_ICMP6:
 		if (err == EACCES)
-			err = EHOSTUNREACH;
+			err = ERR(EHOSTUNREACH);
 		/* Fall through */
 	default:
 		_proto("Rx Received error report { orig=%u }", ee->ee_origin);

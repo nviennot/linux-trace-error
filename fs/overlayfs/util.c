@@ -764,7 +764,7 @@ int ovl_nlink_start(struct dentry *dentry)
 	int err;
 
 	if (WARN_ON(!inode))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * With inodes index is enabled, we store the union overlay nlink
@@ -841,7 +841,7 @@ err_unlock:
 	unlock_rename(workdir, upperdir);
 err:
 	pr_err("failed to lock workdir+upperdir\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* err < 0, 0 if no metacopy xattr, 1 if metacopy xattr found */
@@ -891,7 +891,7 @@ ssize_t ovl_getxattr(struct dentry *dentry, char *name, char **value,
 	res = vfs_getxattr(dentry, name, NULL, 0);
 	if (res < 0) {
 		if (res == -ENODATA || res == -EOPNOTSUPP)
-			return -ENODATA;
+			return -ERR(ENODATA);
 		goto fail;
 	}
 
@@ -942,7 +942,7 @@ char *ovl_get_redirect_xattr(struct dentry *dentry, int padding)
 	return buf;
 invalid:
 	pr_warn_ratelimited("invalid redirect (%s)\n", buf);
-	res = -EINVAL;
+	res = -ERR(EINVAL);
 	kfree(buf);
 	return ERR_PTR(res);
 }

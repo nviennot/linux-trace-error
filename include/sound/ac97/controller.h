@@ -71,7 +71,7 @@ snd_ac97_controller_register(const struct ac97_controller_ops *ops,
 			     unsigned short slots_available,
 			     void **codecs_pdata)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void

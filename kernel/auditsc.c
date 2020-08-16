@@ -1713,7 +1713,7 @@ void __audit_syscall_exit(int success, long return_code)
 		if (unlikely(return_code <= -ERESTARTSYS) &&
 		    (return_code >= -ERESTART_RESTARTBLOCK) &&
 		    (return_code != -ENOIOCTLCMD))
-			context->return_code = -EINTR;
+			context->return_code = -ERR(EINTR);
 		else
 			context->return_code  = return_code;
 
@@ -2332,7 +2332,7 @@ int __audit_socketcall(int nargs, unsigned long *args)
 	struct audit_context *context = audit_context();
 
 	if (nargs <= 0 || nargs > AUDITSC_ARGS || !args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	context->type = AUDIT_SOCKETCALL;
 	context->socketcall.nargs = nargs;
 	memcpy(context->socketcall.args, args, nargs * sizeof(unsigned long));

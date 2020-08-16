@@ -318,20 +318,20 @@ devm_regulator_get(struct device *dev, const char *id)
 static inline struct regulator *__must_check
 regulator_get_exclusive(struct device *dev, const char *id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct regulator *__must_check
 regulator_get_optional(struct device *dev, const char *id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 
 static inline struct regulator *__must_check
 devm_regulator_get_optional(struct device *dev, const char *id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void regulator_put(struct regulator *regulator)
@@ -473,7 +473,7 @@ static inline int regulator_set_voltage_time(struct regulator *regulator,
 
 static inline int regulator_get_voltage(struct regulator *regulator)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regulator_is_supported_voltage(struct regulator *regulator,
@@ -512,7 +512,7 @@ static inline unsigned int regulator_get_mode(struct regulator *regulator)
 static inline int regulator_get_error_flags(struct regulator *regulator,
 					    unsigned int *flags)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int regulator_set_load(struct regulator *regulator, int load_uA)
@@ -528,20 +528,20 @@ static inline int regulator_allow_bypass(struct regulator *regulator,
 
 static inline struct regmap *regulator_get_regmap(struct regulator *regulator)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline int regulator_get_hardware_vsel_register(struct regulator *regulator,
 						       unsigned *vsel_reg,
 						       unsigned *vsel_mask)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int regulator_list_hardware_vsel(struct regulator *regulator,
 					       unsigned selector)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int regulator_register_notifier(struct regulator *regulator,
@@ -585,7 +585,7 @@ static inline int regulator_count_voltages(struct regulator *regulator)
 
 static inline int regulator_list_voltage(struct regulator *regulator, unsigned selector)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void

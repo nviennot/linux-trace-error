@@ -450,10 +450,10 @@ static int dac33_set_fifo_mode(struct snd_kcontrol *kcontrol,
 		return 0;
 	/* Do not allow changes while stream is running*/
 	if (snd_soc_component_active(component))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (ucontrol->value.enumerated.item[0] >= DAC33_FIFO_LAST_MODE)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	else
 		dac33->fifo_mode = ucontrol->value.enumerated.item[0];
 
@@ -816,7 +816,7 @@ static int dac33_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "unsupported rate %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -831,7 +831,7 @@ static int dac33_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "unsupported width %d\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -864,7 +864,7 @@ static int dac33_prepare_chip(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "unsupported rate %d\n",
 			substream->runtime->rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -886,7 +886,7 @@ static int dac33_prepare_chip(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "unsupported format %d\n",
 			substream->runtime->format);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&dac33->mutex);
@@ -1127,7 +1127,7 @@ static int dac33_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
 		}
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1327,12 +1327,12 @@ static int dac33_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		/* Codec Slave */
 		if (dac33->fifo_mode) {
 			dev_err(component->dev, "FIFO mode requires master mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else
 			aictrl_a &= ~(DAC33_MSBCLK | DAC33_MSWCLK);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aictrl_a &= ~DAC33_AFMT_MASK;
@@ -1354,7 +1354,7 @@ static int dac33_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	default:
 		dev_err(component->dev, "Unsupported format (%u)\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dac33_write_reg_cache(component, DAC33_SER_AUDIOIF_CTRL_A, aictrl_a);
@@ -1381,7 +1381,7 @@ static int dac33_soc_probe(struct snd_soc_component *component)
 
 	if (ret < 0) {
 		dev_err(component->dev, "Failed to read chip ID: %d\n", ret);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err_power;
 	}
 
@@ -1472,7 +1472,7 @@ static int dac33_i2c_probe(struct i2c_client *client,
 
 	if (client->dev.platform_data == NULL) {
 		dev_err(&client->dev, "Platform data not set\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	pdata = client->dev.platform_data;
 

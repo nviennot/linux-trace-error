@@ -19,7 +19,7 @@ static int __init sw842_debugfs_create(void)
 	int i;
 
 	if (!debugfs_initialized())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	sw842_debugfs_root = debugfs_create_dir(MODULE_NAME, NULL);
 

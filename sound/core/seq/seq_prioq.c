@@ -137,7 +137,7 @@ int snd_seq_prioq_cell_in(struct snd_seq_prioq * f,
 	int prior;
 
 	if (snd_BUG_ON(!f || !cell))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	/* check flags */
 	prior = (cell->event.flags & SNDRV_SEQ_PRIORITY_MASK);
@@ -181,7 +181,7 @@ int snd_seq_prioq_cell_in(struct snd_seq_prioq * f,
 		if (! --count) {
 			spin_unlock_irqrestore(&f->lock, flags);
 			pr_err("ALSA: seq: cannot find a pointer.. infinite loop?\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

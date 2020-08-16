@@ -47,7 +47,7 @@ static ssize_t uevent_helper_store(struct kobject *kobj,
 				   const char *buf, size_t count)
 {
 	if (count+1 > UEVENT_HELPER_PATH_LEN)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	memcpy(uevent_helper, buf, count);
 	uevent_helper[count] = '\0';
 	if (count && uevent_helper[count-1] == '\n')
@@ -70,7 +70,7 @@ static ssize_t profiling_store(struct kobject *kobj,
 	int ret;
 
 	if (prof_on)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	/*
 	 * This eventually calls into get_option() which
 	 * has a ton of callers and is not const.  It is
@@ -116,7 +116,7 @@ static ssize_t kexec_crash_size_store(struct kobject *kobj,
 	int ret;
 
 	if (kstrtoul(buf, 0, &cnt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = crash_shrink_memory(cnt);
 	return ret < 0 ? ret : count;
@@ -158,7 +158,7 @@ static ssize_t rcu_expedited_store(struct kobject *kobj,
 				   const char *buf, size_t count)
 {
 	if (kstrtoint(buf, 0, &rcu_expedited))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -175,7 +175,7 @@ static ssize_t rcu_normal_store(struct kobject *kobj,
 				const char *buf, size_t count)
 {
 	if (kstrtoint(buf, 0, &rcu_normal))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }

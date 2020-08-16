@@ -374,7 +374,7 @@ static int __rfcomm_dlc_open(struct rfcomm_dlc *d, bdaddr_t *src, bdaddr_t *dst,
 	       d, d->state, src, dst, channel);
 
 	if (rfcomm_check_channel(channel))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (d->state != BT_OPEN && d->state != BT_CLOSED)
 		return 0;
@@ -390,7 +390,7 @@ static int __rfcomm_dlc_open(struct rfcomm_dlc *d, bdaddr_t *src, bdaddr_t *dst,
 
 	/* Check if DLCI already exists */
 	if (rfcomm_dlc_get(s, dlci))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	rfcomm_dlc_clear_state(d);
 
@@ -537,7 +537,7 @@ struct rfcomm_dlc *rfcomm_dlc_exists(bdaddr_t *src, bdaddr_t *dst, u8 channel)
 	u8 dlci;
 
 	if (rfcomm_check_channel(channel))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	rfcomm_lock();
 	s = rfcomm_session_get(src, dst);
@@ -554,12 +554,12 @@ int rfcomm_dlc_send(struct rfcomm_dlc *d, struct sk_buff *skb)
 	int len = skb->len;
 
 	if (d->state != BT_CONNECTED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	BT_DBG("dlc %p mtu %d len %d", d, d->mtu, len);
 
 	if (len > d->mtu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rfcomm_make_uih(skb, d->addr);
 	skb_queue_tail(&d->tx_queue, skb);
@@ -1097,7 +1097,7 @@ static int rfcomm_send_test(struct rfcomm_session *s, int cr, u8 *pattern, int l
 	unsigned char hdr[5], crc[1];
 
 	if (len > 125)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("%p cr %d", s, cr);
 
@@ -1206,7 +1206,7 @@ static struct rfcomm_session *rfcomm_recv_ua(struct rfcomm_session *s, u8 dlci)
 			break;
 
 		case BT_DISCONN:
-			s = rfcomm_session_close(s, ECONNRESET);
+			s = rfcomm_session_close(s, ERR(ECONNRESET));
 			break;
 		}
 	}
@@ -1224,18 +1224,18 @@ static struct rfcomm_session *rfcomm_recv_dm(struct rfcomm_session *s, u8 dlci)
 		struct rfcomm_dlc *d = rfcomm_dlc_get(s, dlci);
 		if (d) {
 			if (d->state == BT_CONNECT || d->state == BT_CONFIG)
-				err = ECONNREFUSED;
+				err = ERR(ECONNREFUSED);
 			else
-				err = ECONNRESET;
+				err = ERR(ECONNRESET);
 
 			d->state = BT_CLOSED;
 			__rfcomm_dlc_close(d, err);
 		}
 	} else {
 		if (s->state == BT_CONNECT)
-			err = ECONNREFUSED;
+			err = ERR(ECONNREFUSED);
 		else
-			err = ECONNRESET;
+			err = ERR(ECONNRESET);
 
 		s = rfcomm_session_close(s, err);
 	}
@@ -1255,9 +1255,9 @@ static struct rfcomm_session *rfcomm_recv_disc(struct rfcomm_session *s,
 			rfcomm_send_ua(s, dlci);
 
 			if (d->state == BT_CONNECT || d->state == BT_CONFIG)
-				err = ECONNREFUSED;
+				err = ERR(ECONNREFUSED);
 			else
-				err = ECONNRESET;
+				err = ERR(ECONNRESET);
 
 			d->state = BT_CLOSED;
 			__rfcomm_dlc_close(d, err);
@@ -1268,9 +1268,9 @@ static struct rfcomm_session *rfcomm_recv_disc(struct rfcomm_session *s,
 		rfcomm_send_ua(s, 0);
 
 		if (s->state == BT_CONNECT)
-			err = ECONNREFUSED;
+			err = ERR(ECONNREFUSED);
 		else
-			err = ECONNRESET;
+			err = ERR(ECONNRESET);
 
 		s = rfcomm_session_close(s, err);
 	}

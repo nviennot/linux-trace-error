@@ -193,7 +193,7 @@ static void mpol_relative_nodemask(nodemask_t *ret, const nodemask_t *orig,
 static int mpol_new_interleave(struct mempolicy *pol, const nodemask_t *nodes)
 {
 	if (nodes_empty(*nodes))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pol->v.nodes = *nodes;
 	return 0;
 }
@@ -203,7 +203,7 @@ static int mpol_new_preferred(struct mempolicy *pol, const nodemask_t *nodes)
 	if (!nodes)
 		pol->flags |= MPOL_F_LOCAL;	/* local allocation */
 	else if (nodes_empty(*nodes))
-		return -EINVAL;			/*  no allowed nodes */
+		return -ERR(EINVAL);			/*  no allowed nodes */
 	else
 		pol->v.preferred_node = first_node(*nodes);
 	return 0;
@@ -212,7 +212,7 @@ static int mpol_new_preferred(struct mempolicy *pol, const nodemask_t *nodes)
 static int mpol_new_bind(struct mempolicy *pol, const nodemask_t *nodes)
 {
 	if (nodes_empty(*nodes))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pol->v.nodes = *nodes;
 	return 0;
 }
@@ -275,7 +275,7 @@ static struct mempolicy *mpol_new(unsigned short mode, unsigned short flags,
 
 	if (mode == MPOL_DEFAULT) {
 		if (nodes && !nodes_empty(*nodes))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		return NULL;
 	}
 	VM_BUG_ON(!nodes);
@@ -289,16 +289,16 @@ static struct mempolicy *mpol_new(unsigned short mode, unsigned short flags,
 		if (nodes_empty(*nodes)) {
 			if (((flags & MPOL_F_STATIC_NODES) ||
 			     (flags & MPOL_F_RELATIVE_NODES)))
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 		}
 	} else if (mode == MPOL_LOCAL) {
 		if (!nodes_empty(*nodes) ||
 		    (flags & MPOL_F_STATIC_NODES) ||
 		    (flags & MPOL_F_RELATIVE_NODES))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		mode = MPOL_PREFERRED;
 	} else if (nodes_empty(*nodes))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	policy = kmem_cache_alloc(policy_cache, GFP_KERNEL);
 	if (!policy)
 		return ERR_PTR(-ENOMEM);
@@ -476,7 +476,7 @@ static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
 	unsigned long flags;
 
 	if (unlikely(is_pmd_migration_entry(*pmd))) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto unlock;
 	}
 	page = pmd_page(*pmd);
@@ -498,7 +498,7 @@ static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
 			goto unlock;
 		}
 	} else
-		ret = -EIO;
+		ret = -ERR(EIO);
 unlock:
 	spin_unlock(ptl);
 out:
@@ -577,7 +577,7 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
 	if (has_unmovable)
 		return 1;
 
-	return addr != end ? -EIO : 0;
+	return addr != end ? -ERR(EIO) : 0;
 }
 
 static int queue_pages_hugetlb(pte_t *pte, unsigned long hmask,
@@ -605,7 +605,7 @@ static int queue_pages_hugetlb(pte_t *pte, unsigned long hmask,
 		 * STRICT alone means only detecting misplaced page and no
 		 * need to further check other vma.
 		 */
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto unlock;
 	}
 
@@ -947,11 +947,11 @@ static long do_get_mempolicy(int *policy, nodemask_t *nmask,
 
 	if (flags &
 		~(unsigned long)(MPOL_F_NODE|MPOL_F_ADDR|MPOL_F_MEMS_ALLOWED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & MPOL_F_MEMS_ALLOWED) {
 		if (flags & (MPOL_F_NODE|MPOL_F_ADDR))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*policy = 0;	/* just so it's initialized */
 		task_lock(current);
 		*nmask  = cpuset_current_mems_allowed;
@@ -976,7 +976,7 @@ static long do_get_mempolicy(int *policy, nodemask_t *nmask,
 		else
 			pol = vma->vm_policy;
 	} else if (addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!pol)
 		pol = &default_policy;	/* indicates default behavior */
@@ -1000,7 +1000,7 @@ static long do_get_mempolicy(int *policy, nodemask_t *nmask,
 				pol->mode == MPOL_INTERLEAVE) {
 			*policy = next_node_in(current->il_prev, pol->v.nodes);
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
@@ -1058,7 +1058,7 @@ static int migrate_page_add(struct page *page, struct list_head *pagelist,
 			 * isolated, so they can't be moved at the moment.  It
 			 * should return -EIO for this case too.
 			 */
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -1268,13 +1268,13 @@ static struct page *new_page(struct page *page, unsigned long start)
 static int migrate_page_add(struct page *page, struct list_head *pagelist,
 				unsigned long flags)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
 		     const nodemask_t *to, int flags)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static struct page *new_page(struct page *page, unsigned long start)
@@ -1295,12 +1295,12 @@ static long do_mbind(unsigned long start, unsigned long len,
 	LIST_HEAD(pagelist);
 
 	if (flags & ~(unsigned long)MPOL_MF_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((flags & MPOL_MF_MOVE_ALL) && !capable(CAP_SYS_NICE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (start & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (mode == MPOL_DEFAULT)
 		flags &= ~MPOL_MF_STRICT;
@@ -1309,7 +1309,7 @@ static long do_mbind(unsigned long start, unsigned long len,
 	end = start + len;
 
 	if (end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (end == start)
 		return 0;
 
@@ -1375,7 +1375,7 @@ static long do_mbind(unsigned long start, unsigned long len,
 		}
 
 		if ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
-			err = -EIO;
+			err = -ERR(EIO);
 	} else {
 up_out:
 		if (!list_empty(&pagelist))
@@ -1406,7 +1406,7 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
 	if (maxnode == 0 || !nmask)
 		return 0;
 	if (maxnode > PAGE_SIZE*BITS_PER_BYTE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nlongs = BITS_TO_LONGS(maxnode);
 	if ((maxnode % BITS_PER_LONG) == 0)
@@ -1429,9 +1429,9 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
 				return -EFAULT;
 			if (k == nlongs - 1) {
 				if (t & endmask)
-					return -EINVAL;
+					return -ERR(EINVAL);
 			} else if (t)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		nlongs = BITS_TO_LONGS(MAX_NUMNODES);
 		endmask = ~0UL;
@@ -1444,7 +1444,7 @@ static int get_nodes(nodemask_t *nodes, const unsigned long __user *nmask,
 		if (get_user(t, nmask + nlongs - 1))
 			return -EFAULT;
 		if (t & valid_mask)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(nodes_addr(*nodes), nmask, nlongs*sizeof(unsigned long)))
@@ -1462,7 +1462,7 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
 
 	if (copy > nbytes) {
 		if (copy > PAGE_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (clear_user((char __user *)mask + nbytes, copy - nbytes))
 			return -EFAULT;
 		copy = nbytes;
@@ -1482,10 +1482,10 @@ static long kernel_mbind(unsigned long start, unsigned long len,
 	mode_flags = mode & MPOL_MODE_FLAGS;
 	mode &= ~MPOL_MODE_FLAGS;
 	if (mode >= MPOL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((mode_flags & MPOL_F_STATIC_NODES) &&
 	    (mode_flags & MPOL_F_RELATIVE_NODES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = get_nodes(&nodes, nmask, maxnode);
 	if (err)
 		return err;
@@ -1510,9 +1510,9 @@ static long kernel_set_mempolicy(int mode, const unsigned long __user *nmask,
 	flags = mode & MPOL_MODE_FLAGS;
 	mode &= ~MPOL_MODE_FLAGS;
 	if ((unsigned int)mode >= MPOL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((flags & MPOL_F_STATIC_NODES) && (flags & MPOL_F_RELATIVE_NODES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = get_nodes(&nodes, nmask, maxnode);
 	if (err)
 		return err;
@@ -1556,12 +1556,12 @@ static int kernel_migrate_pages(pid_t pid, unsigned long maxnode,
 	task = pid ? find_task_by_vpid(pid) : current;
 	if (!task) {
 		rcu_read_unlock();
-		err = -ESRCH;
+		err = -ERR(ESRCH);
 		goto out;
 	}
 	get_task_struct(task);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	/*
 	 * Check if this process has the right to modify the specified process.
@@ -1569,7 +1569,7 @@ static int kernel_migrate_pages(pid_t pid, unsigned long maxnode,
 	 */
 	if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
 		rcu_read_unlock();
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out_put;
 	}
 	rcu_read_unlock();
@@ -1577,7 +1577,7 @@ static int kernel_migrate_pages(pid_t pid, unsigned long maxnode,
 	task_nodes = cpuset_mems_allowed(task);
 	/* Is the user allowed to access the target nodes? */
 	if (!nodes_subset(*new, task_nodes) && !capable(CAP_SYS_NICE)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out_put;
 	}
 
@@ -1594,7 +1594,7 @@ static int kernel_migrate_pages(pid_t pid, unsigned long maxnode,
 	put_task_struct(task);
 
 	if (!mm) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1635,7 +1635,7 @@ static int kernel_get_mempolicy(int __user *policy,
 	addr = untagged_addr(addr);
 
 	if (nmask != NULL && maxnode < nr_node_ids)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = do_get_mempolicy(&pval, &nodes, addr, flags);
 

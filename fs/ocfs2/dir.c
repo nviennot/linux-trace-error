@@ -524,7 +524,7 @@ static int ocfs2_read_dir_block(struct inode *inode, u64 v_block,
 		*bh = tmp;
 
 out:
-	return rc ? -EIO : 0;
+	return rc ? -ERR(EIO) : 0;
 }
 
 /*
@@ -974,7 +974,7 @@ search:
 
 		if (found == -1) {
 			/* This means we found a bad directory entry. */
-			ret = -EIO;
+			ret = -ERR(EIO);
 			mlog_errno(ret);
 			goto out;
 		}
@@ -984,7 +984,7 @@ search:
 	}
 
 	if (found <= 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1076,7 +1076,7 @@ int ocfs2_find_entry(const char *name, int namelen,
 		bh = ocfs2_find_entry_el(name, namelen, dir, &res_dir);
 
 	if (bh == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	lookup->dl_leaf_bh = bh;
 	lookup->dl_entry = res_dir;
@@ -1130,7 +1130,7 @@ static int __ocfs2_delete_entry(handle_t *handle, struct inode *dir,
 				unsigned int bytes)
 {
 	struct ocfs2_dir_entry *de, *pde;
-	int i, status = -ENOENT;
+	int i, status = -ERR(ENOENT);
 	ocfs2_journal_access_func access = ocfs2_journal_access_db;
 
 	if (OCFS2_I(dir)->ip_dyn_features & OCFS2_INLINE_DATA_FL)
@@ -1141,7 +1141,7 @@ static int __ocfs2_delete_entry(handle_t *handle, struct inode *dir,
 	de = (struct ocfs2_dir_entry *) first_de;
 	while (i < bytes) {
 		if (!ocfs2_check_dir_entry(dir, de, bh, i)) {
-			status = -EIO;
+			status = -ERR(EIO);
 			mlog_errno(status);
 			goto bail;
 		}
@@ -1149,7 +1149,7 @@ static int __ocfs2_delete_entry(handle_t *handle, struct inode *dir,
 			status = access(handle, INODE_CACHE(dir), bh,
 					OCFS2_JOURNAL_ACCESS_WRITE);
 			if (status < 0) {
-				status = -EIO;
+				status = -ERR(EIO);
 				mlog_errno(status);
 				goto bail;
 			}
@@ -1271,7 +1271,7 @@ static int ocfs2_delete_entry_dx(handle_t *handle, struct inode *dir,
 		mlog(ML_ERROR, "Dir %llu: Bad dx_entry ptr idx %d, (%p, %p)\n",
 		     (unsigned long long)OCFS2_I(dir)->ip_blkno, index,
 		     entry_list, dx_entry);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -1596,7 +1596,7 @@ int __ocfs2_add_entry(handle_t *handle,
 	char *data_start = insert_bh->b_data;
 
 	if (!namelen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ocfs2_dir_indexed(dir)) {
 		struct buffer_head *bh;
@@ -1641,11 +1641,11 @@ int __ocfs2_add_entry(handle_t *handle,
 		 * prepare function, but I guess we can leave them
 		 * here anyway. */
 		if (!ocfs2_check_dir_entry(dir, de, insert_bh, offset)) {
-			retval = -ENOENT;
+			retval = -ERR(ENOENT);
 			goto bail;
 		}
 		if (ocfs2_match(namelen, name, de)) {
-			retval = -EEXIST;
+			retval = -ERR(EEXIST);
 			goto bail;
 		}
 
@@ -1724,7 +1724,7 @@ int __ocfs2_add_entry(handle_t *handle,
 
 	/* when you think about it, the assert above should prevent us
 	 * from ever getting here. */
-	retval = -ENOSPC;
+	retval = -ERR(ENOSPC);
 bail:
 	if (retval)
 		mlog_errno(retval);
@@ -1967,7 +1967,7 @@ int ocfs2_find_files_on_disk(const char *name,
 			     struct inode *inode,
 			     struct ocfs2_dir_lookup_result *lookup)
 {
-	int status = -ENOENT;
+	int status = -ERR(ENOENT);
 
 	trace_ocfs2_find_files_on_disk(namelen, name, blkno,
 				(unsigned long long)OCFS2_I(inode)->ip_blkno);
@@ -2018,7 +2018,7 @@ int ocfs2_check_dir_for_entry(struct inode *dir,
 		(unsigned long long)OCFS2_I(dir)->ip_blkno, namelen, name);
 
 	if (ocfs2_find_entry(name, namelen, dir, &lookup) == 0) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		mlog_errno(ret);
 	}
 
@@ -3364,11 +3364,11 @@ static int ocfs2_find_dir_space_id(struct inode *dir, struct buffer_head *di_bh,
 		de = (struct ocfs2_dir_entry *)de_buf;
 
 		if (!ocfs2_check_dir_entry(dir, de, di_bh, offset)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 		if (ocfs2_match(namelen, name, de)) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto out;
 		}
 		/*
@@ -3400,7 +3400,7 @@ static int ocfs2_find_dir_space_id(struct inode *dir, struct buffer_head *di_bh,
 	if (new_rec_len < (rec_len + OCFS2_DIR_REC_LEN(last_de->name_len)))
 		*blocks_wanted = 2;
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 out:
 	return ret;
 }
@@ -3433,7 +3433,7 @@ static int ocfs2_find_dir_space_el(struct inode *dir, const char *name,
 				 * Caller will have to expand this
 				 * directory.
 				 */
-				status = -ENOSPC;
+				status = -ERR(ENOSPC);
 				goto bail;
 			}
 			status = ocfs2_read_dir_block(dir,
@@ -3446,11 +3446,11 @@ static int ocfs2_find_dir_space_el(struct inode *dir, const char *name,
 			de = (struct ocfs2_dir_entry *) bh->b_data;
 		}
 		if (!ocfs2_check_dir_entry(dir, de, bh, offset)) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			goto bail;
 		}
 		if (ocfs2_match(namelen, name, de)) {
-			status = -EEXIST;
+			status = -ERR(EEXIST);
 			goto bail;
 		}
 
@@ -3565,7 +3565,7 @@ static int ocfs2_dx_dir_find_leaf_split(struct ocfs2_dx_leaf *dx_leaf,
 			 * in their existing block, we know there
 			 * won't be space after the split.
 			 */
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 
 		if (val == leaf_cpos) {
@@ -3714,14 +3714,14 @@ static int ocfs2_dx_dir_rebalance(struct ocfs2_super *osb, struct inode *dir,
 	 * realistic value.
 	 */
 	if (le32_to_cpu(dx_root->dr_clusters) == UINT_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	num_used = le16_to_cpu(dx_leaf->dl_list.de_num_used);
 	if (num_used < le16_to_cpu(dx_leaf->dl_list.de_count)) {
 		mlog(ML_ERROR, "DX Dir: %llu, Asked to rebalance empty leaf: "
 		     "%llu, %d\n", (unsigned long long)OCFS2_I(dir)->ip_blkno,
 		     (unsigned long long)leaf_blkno, num_used);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -3919,7 +3919,7 @@ restart_search:
 			 * XXX: Is this an abnormal condition then?
 			 * Should we print a message here?
 			 */
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			goto out;
 		}
 
@@ -3956,7 +3956,7 @@ static int ocfs2_search_dx_free_list(struct inode *dir,
 				     int namelen,
 				     struct ocfs2_dir_lookup_result *lookup)
 {
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 	struct buffer_head *leaf_bh = NULL, *prev_leaf_bh = NULL;
 	struct ocfs2_dir_block_trailer *db;
 	u64 next_block;
@@ -3990,7 +3990,7 @@ static int ocfs2_search_dx_free_list(struct inode *dir,
 	}
 
 	if (!next_block)
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 
 out:
 
@@ -4125,7 +4125,7 @@ static int ocfs2_inline_dx_has_space(struct buffer_head *dx_root_bh)
 
 	if (le16_to_cpu(entry_list->de_num_used) >=
 	    le16_to_cpu(entry_list->de_count))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	return 0;
 }
@@ -4151,7 +4151,7 @@ static int ocfs2_prepare_dx_dir_for_insert(struct inode *dir,
 
 	dx_root = (struct ocfs2_dx_root_block *)dx_root_bh->b_data;
 	if (le32_to_cpu(dx_root->dr_num_entries) == OCFS2_DX_ENTRIES_MAX) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -4247,7 +4247,7 @@ int ocfs2_prepare_dir_for_insert(struct ocfs2_super *osb,
 		(unsigned long long)OCFS2_I(dir)->ip_blkno, namelen);
 
 	if (!namelen) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto out;
 	}

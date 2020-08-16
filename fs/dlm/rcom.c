@@ -39,7 +39,7 @@ static int create_rcom(struct dlm_ls *ls, int to_nodeid, int type, int len,
 	if (!mh) {
 		log_print("create_rcom to %d type %d len %d ENOBUFS",
 			  to_nodeid, type, len);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	memset(mb, 0, mb_len);
 
@@ -98,7 +98,7 @@ static int check_rcom_config(struct dlm_ls *ls, struct dlm_rcom *rc, int nodeid)
 		log_error(ls, "version mismatch: %x nodeid %d: %x",
 			  DLM_HEADER_MAJOR | DLM_HEADER_MINOR, nodeid,
 			  rc->rc_header.h_version);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (le32_to_cpu(rf->rf_lvblen) != ls->ls_lvblen ||
@@ -107,7 +107,7 @@ static int check_rcom_config(struct dlm_ls *ls, struct dlm_rcom *rc, int nodeid)
 			  ls->ls_lvblen, ls->ls_exflags, nodeid,
 			  le32_to_cpu(rf->rf_lvblen),
 			  le32_to_cpu(rf->rf_lsflags));
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	return 0;
 }
@@ -461,7 +461,7 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
 
 	mh = dlm_lowcomms_get_buffer(nodeid, mb_len, GFP_NOFS, &mb);
 	if (!mh)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	memset(mb, 0, mb_len);
 
 	rc = (struct dlm_rcom *) mb;
@@ -475,7 +475,7 @@ int dlm_send_ls_not_ready(int nodeid, struct dlm_rcom *rc_in)
 	rc->rc_type = DLM_RCOM_STATUS_REPLY;
 	rc->rc_id = rc_in->rc_id;
 	rc->rc_seq_reply = rc_in->rc_seq;
-	rc->rc_result = -ESRCH;
+	rc->rc_result = -ERR(ESRCH);
 
 	rf = (struct rcom_config *) rc->rc_buf;
 	rf->rf_lvblen = cpu_to_le32(~0U);

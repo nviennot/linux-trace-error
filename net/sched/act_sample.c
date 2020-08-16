@@ -49,14 +49,14 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 	int ret, err;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = nla_parse_nested_deprecated(tb, TCA_SAMPLE_MAX, nla,
 					  sample_policy, NULL);
 	if (ret < 0)
 		return ret;
 	if (!tb[TCA_SAMPLE_PARMS] || !tb[TCA_SAMPLE_RATE] ||
 	    !tb[TCA_SAMPLE_PSAMPLE_GROUP])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_SAMPLE_PARMS]);
 	index = parm->index;
@@ -77,7 +77,7 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
 	if (err < 0)
@@ -86,7 +86,7 @@ static int tcf_sample_init(struct net *net, struct nlattr *nla,
 	rate = nla_get_u32(tb[TCA_SAMPLE_RATE]);
 	if (!rate) {
 		NL_SET_ERR_MSG(extack, "invalid sample rate");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto put_chain;
 	}
 	psample_group_num = nla_get_u32(tb[TCA_SAMPLE_PSAMPLE_GROUP]);

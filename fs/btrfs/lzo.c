@@ -166,7 +166,7 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 		if (ret != LZO_E_OK) {
 			pr_debug("BTRFS: lzo in loop returned %d\n",
 			       ret);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 
@@ -212,7 +212,7 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 				kunmap(out_page);
 				if (nr_pages == nr_dest_pages) {
 					out_page = NULL;
-					ret = -E2BIG;
+					ret = -ERR(E2BIG);
 					goto out;
 				}
 
@@ -231,7 +231,7 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 
 		/* we're making it bigger, give up */
 		if (tot_in > 8192 && tot_in < tot_out) {
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 
@@ -253,7 +253,7 @@ int lzo_compress_pages(struct list_head *ws, struct address_space *mapping,
 	}
 
 	if (tot_out >= tot_in) {
-		ret = -E2BIG;
+		ret = -ERR(E2BIG);
 		goto out;
 	}
 
@@ -317,7 +317,7 @@ int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 	 */
 	if (tot_len > min_t(size_t, BTRFS_MAX_COMPRESSED, srclen) ||
 	    tot_len < srclen - PAGE_SIZE) {
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		goto done;
 	}
 
@@ -340,7 +340,7 @@ int lzo_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 		 * compression size, nor the total compressed size.
 		 */
 		if (in_len > max_segment_len || tot_in + in_len > tot_len) {
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			goto done;
 		}
 
@@ -378,7 +378,7 @@ cont:
 					break;
 
 				if (page_in_index + 1 >= total_pages_in) {
-					ret = -EIO;
+					ret = -ERR(EIO);
 					goto done;
 				}
 
@@ -401,7 +401,7 @@ cont:
 			kunmap(pages_in[page_in_index - 1]);
 		if (ret != LZO_E_OK) {
 			pr_warn("BTRFS: decompress failed\n");
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 		}
 
@@ -433,16 +433,16 @@ int lzo_decompress(struct list_head *ws, unsigned char *data_in,
 	unsigned long bytes;
 
 	if (srclen < LZO_LEN || srclen > max_segment_len + LZO_LEN * 2)
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	in_len = read_compress_length(data_in);
 	if (in_len != srclen)
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	data_in += LZO_LEN;
 
 	in_len = read_compress_length(data_in);
 	if (in_len != srclen - LZO_LEN * 2) {
-		ret = -EUCLEAN;
+		ret = -ERR(EUCLEAN);
 		goto out;
 	}
 	data_in += LZO_LEN;
@@ -451,12 +451,12 @@ int lzo_decompress(struct list_head *ws, unsigned char *data_in,
 	ret = lzo1x_decompress_safe(data_in, in_len, workspace->buf, &out_len);
 	if (ret != LZO_E_OK) {
 		pr_warn("BTRFS: decompress failed!\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
 	if (out_len < start_byte) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 

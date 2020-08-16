@@ -631,24 +631,24 @@ static int sfq_change(struct Qdisc *sch, struct nlattr *opt)
 	struct sk_buff *tail = NULL;
 
 	if (opt->nla_len < nla_attr_size(sizeof(*ctl)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (opt->nla_len >= nla_attr_size(sizeof(*ctl_v1)))
 		ctl_v1 = nla_data(opt);
 	if (ctl->divisor &&
 	    (!is_power_of_2(ctl->divisor) || ctl->divisor > 65536))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* slot->allot is a short, make sure quantum is not too big. */
 	if (ctl->quantum) {
 		unsigned int scaled = SFQ_ALLOT_SIZE(ctl->quantum);
 
 		if (scaled <= 0 || scaled > SHRT_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (ctl_v1 && !red_check_params(ctl_v1->qth_min, ctl_v1->qth_max,
 					ctl_v1->Wlog))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ctl_v1 && ctl_v1->qth_min) {
 		p = kmalloc(sizeof(*p), GFP_KERNEL);
 		if (!p)

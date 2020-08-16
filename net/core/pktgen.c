@@ -502,10 +502,10 @@ static ssize_t pgctrl_write(struct file *file, const char __user *buf,
 	struct pktgen_net *pn = net_generic(current->nsproxy->net_ns, pg_net_id);
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (count > sizeof(data))
 		count = sizeof(data);
@@ -525,7 +525,7 @@ static ssize_t pgctrl_write(struct file *file, const char __user *buf,
 		pktgen_reset_all_threads(pn);
 
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -817,7 +817,7 @@ static ssize_t get_labels(const char __user *buffer, struct pktgen_dev *pkt_dev)
 		i++;
 		n++;
 		if (n >= MAX_MPLS_LABELS)
-			return -E2BIG;
+			return -ERR(E2BIG);
 	} while (c == ',');
 
 	pkt_dev->nr_labels = n;
@@ -870,7 +870,7 @@ static ssize_t pktgen_if_write(struct file *file,
 
 	if (count < 1) {
 		pr_warn("wrong command format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max = count;
@@ -1088,7 +1088,7 @@ static ssize_t pktgen_if_write(struct file *file,
 		if ((value > 0) &&
 		    ((pkt_dev->xmit_mode == M_NETIF_RECEIVE) ||
 		     !(pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)))
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 		i += len;
 		pkt_dev->clone_skb = value;
 
@@ -1144,7 +1144,7 @@ static ssize_t pktgen_if_write(struct file *file,
 		    ((pkt_dev->xmit_mode == M_QUEUE_XMIT) ||
 		     ((pkt_dev->xmit_mode == M_START_XMIT) &&
 		     (!(pkt_dev->odev->priv_flags & IFF_TX_SKB_SHARING)))))
-			return -ENOTSUPP;
+			return -ERR(ENOTSUPP);
 		pkt_dev->burst = value < 1 ? 1 : value;
 		sprintf(pg_result, "OK: burst=%d", pkt_dev->burst);
 		return count;
@@ -1185,7 +1185,7 @@ static ssize_t pktgen_if_write(struct file *file,
 		} else if (strcmp(f, "netif_receive") == 0) {
 			/* clone_skb set earlier, not supported in this mode */
 			if (pkt_dev->clone_skb > 0)
-				return -ENOTSUPP;
+				return -ERR(ENOTSUPP);
 
 			pkt_dev->xmit_mode = M_NETIF_RECEIVE;
 
@@ -1428,7 +1428,7 @@ static ssize_t pktgen_if_write(struct file *file,
 			return -EFAULT;
 
 		if (!mac_pton(valstr, pkt_dev->dst_mac))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Set up Dest MAC */
 		ether_addr_copy(&pkt_dev->hh[0], pkt_dev->dst_mac);
 
@@ -1445,7 +1445,7 @@ static ssize_t pktgen_if_write(struct file *file,
 			return -EFAULT;
 
 		if (!mac_pton(valstr, pkt_dev->src_mac))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Set up Src MAC */
 		ether_addr_copy(&pkt_dev->hh[6], pkt_dev->src_mac);
 
@@ -1699,7 +1699,7 @@ static ssize_t pktgen_if_write(struct file *file,
 	}
 
 	sprintf(pkt_dev->result, "No such parameter \"%s\"", name);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int pktgen_if_open(struct inode *inode, struct file *file)
@@ -1757,7 +1757,7 @@ static ssize_t pktgen_thread_write(struct file *file,
 
 	if (count < 1) {
 		//      sprintf(pg_result, "Wrong command format");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max = count;
@@ -1790,7 +1790,7 @@ static ssize_t pktgen_thread_write(struct file *file,
 
 	if (!t) {
 		pr_err("ERROR: No thread\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1834,7 +1834,7 @@ static ssize_t pktgen_thread_write(struct file *file,
 		goto out;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 out:
 	return ret;
 }
@@ -2000,15 +2000,15 @@ static int pktgen_setup_dev(const struct pktgen_net *pn,
 	odev = pktgen_dev_get_by_name(pn, pkt_dev, ifname);
 	if (!odev) {
 		pr_err("no such netdevice: \"%s\"\n", ifname);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (odev->type != ARPHRD_ETHER && odev->type != ARPHRD_LOOPBACK) {
 		pr_err("not an ethernet or loopback device: \"%s\"\n", ifname);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	} else if (!netif_running(odev)) {
 		pr_err("device is down: \"%s\"\n", ifname);
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 	} else {
 		pkt_dev->odev = odev;
 		return 0;
@@ -3176,7 +3176,7 @@ static int pktgen_stop_device(struct pktgen_dev *pkt_dev)
 	if (!pkt_dev->running) {
 		pr_warn("interface: %s is already stopped\n",
 			pkt_dev->odevname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pkt_dev->running = 0;
@@ -3571,7 +3571,7 @@ static int add_dev_to_thread(struct pktgen_thread *t,
 
 	if (pkt_dev->pg_thread) {
 		pr_err("ERROR: already assigned to a thread\n");
-		rv = -EBUSY;
+		rv = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -3597,7 +3597,7 @@ static int pktgen_add_device(struct pktgen_thread *t, const char *ifname)
 	pkt_dev = __pktgen_NN_threads(t->net, ifname, FIND);
 	if (pkt_dev) {
 		pr_err("ERROR: interface already used\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pkt_dev = kzalloc_node(sizeof(struct pktgen_dev), GFP_KERNEL, node);
@@ -3642,7 +3642,7 @@ static int pktgen_add_device(struct pktgen_thread *t, const char *ifname)
 	if (!pkt_dev->entry) {
 		pr_err("cannot create %s/%s procfs entry\n",
 		       PG_PROC_DIR, ifname);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out2;
 	}
 #ifdef CONFIG_XFRM
@@ -3715,7 +3715,7 @@ static int __net_init pktgen_create_thread(int cpu, struct pktgen_net *pn)
 		kthread_stop(p);
 		list_del(&t->th_list);
 		kfree(t);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	t->net = pn;
@@ -3791,12 +3791,12 @@ static int __net_init pg_net_init(struct net *net)
 	pn->proc_dir = proc_mkdir(PG_PROC_DIR, pn->net->proc_net);
 	if (!pn->proc_dir) {
 		pr_warn("cannot create /proc/net/%s\n", PG_PROC_DIR);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	pe = proc_create(PGCTRL, 0600, pn->proc_dir, &pktgen_proc_ops);
 	if (pe == NULL) {
 		pr_err("cannot create %s procfs entry\n", PGCTRL);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto remove;
 	}
 
@@ -3811,7 +3811,7 @@ static int __net_init pg_net_init(struct net *net)
 
 	if (list_empty(&pn->pktgen_threads)) {
 		pr_err("Initialization failed for all threads\n");
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto remove_entry;
 	}
 

@@ -291,7 +291,7 @@ static int cs4270_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "invalid dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set master/slave audio interface */
@@ -305,7 +305,7 @@ static int cs4270_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	default:
 		/* all other modes are unsupported by the hardware */
 		dev_err(component->dev, "Unknown master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -350,7 +350,7 @@ static int cs4270_hw_params(struct snd_pcm_substream *substream,
 	if (i == NUM_MCLK_RATIOS) {
 		/* We did not find a matching ratio */
 		dev_err(component->dev, "could not find matching ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set the sample rate */
@@ -384,7 +384,7 @@ static int cs4270_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unknown dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_write(component, CS4270_FORMAT, reg);
@@ -728,7 +728,7 @@ static int cs4270_i2c_probe(struct i2c_client *i2c_client,
 	if ((val & 0xF0) != 0xC0) {
 		dev_err(&i2c_client->dev, "device at addr %X is not a CS4270\n",
 		       i2c_client->addr);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_info(&i2c_client->dev, "found device at i2c address %X\n",

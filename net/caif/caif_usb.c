@@ -64,7 +64,7 @@ static int cfusbl_transmit(struct cflayer *layr, struct cfpkt *pkt)
 	if (skb_headroom(skb) < ETH_HLEN + CFUSB_PAD_DESCR_SZ + hpad) {
 		pr_warn("Headroom too small\n");
 		kfree_skb(skb);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	memset(zeros, 0, hpad);
 

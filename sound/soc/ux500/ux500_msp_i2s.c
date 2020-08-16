@@ -182,7 +182,7 @@ static int configure_protocol(struct ux500_msp *msp,
 		if (config->protocol >= MSP_INVALID_PROTOCOL) {
 			dev_err(msp->dev, "%s: ERROR: Invalid protocol!\n",
 				__func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		protdesc =
 		    (struct msp_protdesc *)&prot_descs[config->protocol];
@@ -194,7 +194,7 @@ static int configure_protocol(struct ux500_msp *msp,
 		dev_err(msp->dev,
 			"%s: ERROR: Invalid data-size requested (data_size = %d)!\n",
 			__func__, data_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (config->direction & MSP_DIR_TX)
@@ -249,7 +249,7 @@ static int setup_bitclk(struct ux500_msp *msp, struct ux500_msp_config *config)
 		dev_err(msp->dev, "%s: ERROR: Unknown protocol (%d)!\n",
 			__func__,
 			config->protocol);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	temp_reg = (sck_div - 1) & SCK_DIV_MASK;
@@ -280,7 +280,7 @@ static int configure_multichannel(struct ux500_msp *msp,
 			dev_err(msp->dev,
 				"%s: ERROR: Invalid protocol (%d)!\n",
 				__func__, config->protocol);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		protdesc = (struct msp_protdesc *)
 				&prot_descs[config->protocol];
@@ -307,7 +307,7 @@ static int configure_multichannel(struct ux500_msp *msp,
 			dev_err(msp->dev,
 				"%s: ERROR: Only single-phase supported (TX-mode: %d)!\n",
 				__func__, protdesc->tx_phase_mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	if (mcfg->rx_multichannel_enable) {
@@ -328,7 +328,7 @@ static int configure_multichannel(struct ux500_msp *msp,
 			dev_err(msp->dev,
 				"%s: ERROR: Only single-phase supported (RX-mode: %d)!\n",
 				__func__, protdesc->rx_phase_mode);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (mcfg->rx_comparison_enable_mode) {
 			reg_val_MCR = readl(msp->registers + MSP_MCR);
@@ -368,13 +368,13 @@ static int enable_msp(struct ux500_msp *msp, struct ux500_msp_config *config)
 			!msp->capture_dma_data.dma_cfg) {
 		dev_err(msp->dev, "%s: ERROR: MSP RX-mode is not configured!",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if ((config->direction == MSP_DIR_TX) &&
 			!msp->playback_dma_data.dma_cfg) {
 		dev_err(msp->dev, "%s: ERROR: MSP TX-mode is not configured!",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg_val_DMACR = readl(msp->registers + MSP_DMACR);
@@ -447,18 +447,18 @@ int ux500_msp_i2s_open(struct ux500_msp *msp,
 	if (!tx_sel && !rx_sel) {
 		dev_err(msp->dev, "%s: Error: No direction selected!\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tx_busy = (msp->dir_busy & MSP_DIR_TX) > 0;
 	rx_busy = (msp->dir_busy & MSP_DIR_RX) > 0;
 	if (tx_busy && tx_sel) {
 		dev_err(msp->dev, "%s: Error: TX is in use!\n", __func__);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (rx_busy && rx_sel) {
 		dev_err(msp->dev, "%s: Error: RX is in use!\n", __func__);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	msp->dir_busy |= (tx_sel ? MSP_DIR_TX : 0) | (rx_sel ? MSP_DIR_RX : 0);
@@ -485,7 +485,7 @@ int ux500_msp_i2s_open(struct ux500_msp *msp,
 	if (res < 0) {
 		dev_err(msp->dev, "%s: ERROR: enable_msp failed (%d)!\n",
 			__func__, res);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (config->loopback_enable & 0x80)
 		msp->loopback_enable = 1;
@@ -575,7 +575,7 @@ int ux500_msp_i2s_trigger(struct ux500_msp *msp, int cmd, int direction)
 	if (msp->msp_state == MSP_STATE_IDLE) {
 		dev_err(msp->dev, "%s: ERROR: MSP is not configured!\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cmd) {
@@ -599,7 +599,7 @@ int ux500_msp_i2s_trigger(struct ux500_msp *msp, int cmd, int direction)
 			disable_msp_rx(msp);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -690,7 +690,7 @@ int ux500_msp_i2s_init_msp(struct platform_device *pdev,
 			if (ret)
 				return ret;
 		} else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		msp->playback_dma_data.dma_cfg = platform_data->msp_i2s_dma_tx;
 		msp->capture_dma_data.dma_cfg = platform_data->msp_i2s_dma_rx;

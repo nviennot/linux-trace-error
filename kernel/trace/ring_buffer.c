@@ -593,7 +593,7 @@ int ring_buffer_wait(struct trace_buffer *buffer, int cpu, int full)
 		full = 0;
 	} else {
 		if (!cpumask_test_cpu(cpu, buffer->cpumask))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		cpu_buffer = buffer->buffers[cpu];
 		work = &cpu_buffer->irq_work;
 	}
@@ -631,7 +631,7 @@ int ring_buffer_wait(struct trace_buffer *buffer, int cpu, int full)
 			work->waiters_pending = true;
 
 		if (signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -696,7 +696,7 @@ __poll_t ring_buffer_poll_wait(struct trace_buffer *buffer, int cpu,
 		work = &buffer->irq_work;
 	else {
 		if (!cpumask_test_cpu(cpu, buffer->cpumask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		cpu_buffer = buffer->buffers[cpu];
 		work = &cpu_buffer->irq_work;
@@ -1754,7 +1754,7 @@ int ring_buffer_resize(struct trace_buffer *buffer, unsigned long size,
 		for_each_buffer_cpu(buffer, cpu) {
 			cpu_buffer = buffer->buffers[cpu];
 			if (atomic_read(&cpu_buffer->resize_disabled)) {
-				err = -EBUSY;
+				err = -ERR(EBUSY);
 				goto out_err_unlock;
 			}
 		}
@@ -1832,7 +1832,7 @@ int ring_buffer_resize(struct trace_buffer *buffer, unsigned long size,
 		 * this is true.
 		 */
 		if (atomic_read(&cpu_buffer->resize_disabled)) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto out_err_unlock;
 		}
 
@@ -2363,7 +2363,7 @@ rb_move_tail(struct ring_buffer_per_cpu *cpu_buffer,
 	local_inc(&cpu_buffer->committing);
 
 	/* fail and let the caller try again */
-	return ERR_PTR(-EAGAIN);
+	return ERR_PTR(-ERR(EAGAIN));
 
  out_reset:
 	/* reset write */
@@ -3189,7 +3189,7 @@ int ring_buffer_write(struct trace_buffer *buffer,
 	struct ring_buffer_per_cpu *cpu_buffer;
 	struct ring_buffer_event *event;
 	void *body;
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 	int cpu;
 
 	preempt_disable_notrace();
@@ -4607,7 +4607,7 @@ int ring_buffer_swap_cpu(struct trace_buffer *buffer_a,
 {
 	struct ring_buffer_per_cpu *cpu_buffer_a;
 	struct ring_buffer_per_cpu *cpu_buffer_b;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!cpumask_test_cpu(cpu, buffer_a->cpumask) ||
 	    !cpumask_test_cpu(cpu, buffer_b->cpumask))
@@ -4620,7 +4620,7 @@ int ring_buffer_swap_cpu(struct trace_buffer *buffer_a,
 	if (cpu_buffer_a->nr_pages != cpu_buffer_b->nr_pages)
 		goto out;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 
 	if (atomic_read(&buffer_a->record_disabled))
 		goto out;
@@ -4643,7 +4643,7 @@ int ring_buffer_swap_cpu(struct trace_buffer *buffer_a,
 	atomic_inc(&cpu_buffer_a->record_disabled);
 	atomic_inc(&cpu_buffer_b->record_disabled);
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (local_read(&cpu_buffer_a->committing))
 		goto out_dec;
 	if (local_read(&cpu_buffer_b->committing))
@@ -4690,7 +4690,7 @@ void *ring_buffer_alloc_read_page(struct trace_buffer *buffer, int cpu)
 	struct page *page;
 
 	if (!cpumask_test_cpu(cpu, buffer->cpumask))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	cpu_buffer = buffer->buffers[cpu];
 	local_irq_save(flags);

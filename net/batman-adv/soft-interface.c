@@ -133,7 +133,7 @@ static int batadv_interface_set_mac_addr(struct net_device *dev, void *p)
 	u8 old_addr[ETH_ALEN];
 
 	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	ether_addr_copy(old_addr, dev->dev_addr);
 	ether_addr_copy(dev->dev_addr, addr->sa_data);
@@ -158,7 +158,7 @@ static int batadv_interface_change_mtu(struct net_device *dev, int new_mtu)
 {
 	/* check ranges */
 	if (new_mtu < 68 || new_mtu > batadv_hardif_min_mtu(dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->mtu = new_mtu;
 
@@ -583,7 +583,7 @@ int batadv_softif_create_vlan(struct batadv_priv *bat_priv, unsigned short vid)
 	if (vlan) {
 		batadv_softif_vlan_put(vlan);
 		spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	vlan = kzalloc(sizeof(*vlan), GFP_ATOMIC);
@@ -668,7 +668,7 @@ static int batadv_interface_add_vid(struct net_device *dev, __be16 proto,
 	 * batman-adv does not know how to handle other types
 	 */
 	if (proto != htons(ETH_P_8021Q))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vid |= BATADV_VLAN_HAS_TAG;
 
@@ -726,11 +726,11 @@ static int batadv_interface_kill_vid(struct net_device *dev, __be16 proto,
 	 * handle other types
 	 */
 	if (proto != htons(ETH_P_8021Q))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vlan = batadv_softif_vlan_get(bat_priv, vid | BATADV_VLAN_HAS_TAG);
 	if (!vlan)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	batadv_softif_destroy_vlan(bat_priv, vlan);
 
@@ -883,7 +883,7 @@ static int batadv_softif_slave_add(struct net_device *dev,
 {
 	struct batadv_hard_iface *hard_iface;
 	struct net *net = dev_net(dev);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	hard_iface = batadv_hardif_get_by_netdev(slave_dev);
 	if (!hard_iface || hard_iface->soft_iface)
@@ -908,7 +908,7 @@ static int batadv_softif_slave_del(struct net_device *dev,
 				   struct net_device *slave_dev)
 {
 	struct batadv_hard_iface *hard_iface;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	hard_iface = batadv_hardif_get_by_netdev(slave_dev);
 
@@ -1021,7 +1021,7 @@ static int batadv_get_sset_count(struct net_device *dev, int stringset)
 	if (stringset == ETH_SS_STATS)
 		return BATADV_CNT_NUM;
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static const struct ethtool_ops batadv_ethtool_ops = {

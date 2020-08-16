@@ -60,7 +60,7 @@ static int check_dice_category(struct fw_unit *unit)
 		category = DICE_CATEGORY_ID;
 	if (device->config_rom[3] != ((vendor << 8) | category) ||
 	    device->config_rom[4] >> 22 != model)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -201,7 +201,7 @@ static int dice_probe(struct fw_unit *unit,
 	if (!entry->driver_data && entry->vendor_id != OUI_SSL) {
 		err = check_dice_category(unit);
 		if (err < 0)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 
 	/* Allocate this independent of sound card instance. */

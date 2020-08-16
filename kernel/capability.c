@@ -100,7 +100,7 @@ static int cap_validate_magic(cap_user_header_t header, unsigned *tocopy)
 	default:
 		if (put_user((u32)_KERNEL_CAPABILITY_VERSION, &header->version))
 			return -EFAULT;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -125,7 +125,7 @@ static inline int cap_get_target_pid(pid_t pid, kernel_cap_t *pEp,
 
 		target = find_task_by_vpid(pid);
 		if (!target)
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 		else
 			ret = security_capget(target, pEp, pIp, pPp);
 
@@ -154,13 +154,13 @@ SYSCALL_DEFINE2(capget, cap_user_header_t, header, cap_user_data_t, dataptr)
 
 	ret = cap_validate_magic(header, &tocopy);
 	if ((dataptr == NULL) || (ret != 0))
-		return ((dataptr == NULL) && (ret == -EINVAL)) ? 0 : ret;
+		return ((dataptr == NULL) && (ret == -ERR(EINVAL))) ? 0 : ret;
 
 	if (get_user(pid, &header->pid))
 		return -EFAULT;
 
 	if (pid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = cap_get_target_pid(pid, &pE, &pI, &pP);
 	if (!ret) {
@@ -237,7 +237,7 @@ SYSCALL_DEFINE2(capset, cap_user_header_t, header, const cap_user_data_t, data)
 
 	/* may only affect current now */
 	if (pid != 0 && pid != task_pid_vnr(current))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	copybytes = tocopy * sizeof(struct __user_cap_data_struct);
 	if (copybytes > sizeof(kdata))

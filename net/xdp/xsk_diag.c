@@ -88,7 +88,7 @@ static int xsk_diag_fill(struct sock *sk, struct sk_buff *nlskb,
 	nlh = nlmsg_put(nlskb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*msg),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	msg = nlmsg_data(nlh);
 	memset(msg, 0, sizeof(*msg));
@@ -125,7 +125,7 @@ static int xsk_diag_fill(struct sock *sk, struct sk_buff *nlskb,
 out_nlmsg_trim:
 	mutex_unlock(&xs->mutex);
 	nlmsg_cancel(nlskb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int xsk_diag_dump(struct sk_buff *nlskb, struct netlink_callback *cb)
@@ -165,10 +165,10 @@ static int xsk_diag_handler_dump(struct sk_buff *nlskb, struct nlmsghdr *hdr)
 	struct net *net = sock_net(nlskb->sk);
 
 	if (nlmsg_len(hdr) < hdrlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(hdr->nlmsg_flags & NLM_F_DUMP))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return netlink_dump_start(net->diag_nlsk, nlskb, hdr, &c);
 }

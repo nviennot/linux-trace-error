@@ -81,7 +81,7 @@ int meson_card_parse_dai(struct snd_soc_card *card,
 	int ret;
 
 	if (!dai_name || !dai_of_node || !node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = of_parse_phandle_with_args(node, "sound-dai",
 					 "#sound-dai-cells", 0, &args);
@@ -155,7 +155,7 @@ int meson_card_set_be_link(struct snd_soc_card *card,
 	if (!num_codecs) {
 		dev_err(card->dev, "be link %s has no codec\n",
 			node->full_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	codec = devm_kcalloc(card->dev, num_codecs, sizeof(*codec), GFP_KERNEL);
@@ -224,7 +224,7 @@ static int meson_card_add_links(struct snd_soc_card *card)
 	num = of_get_child_count(node);
 	if (!num) {
 		dev_err(card->dev, "card has no links\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = meson_card_reallocate_links(card, num);
@@ -283,7 +283,7 @@ static int meson_card_add_aux_devices(struct snd_soc_card *card)
 		aux->dlc.of_node =
 			of_parse_phandle(node, "audio-aux-devs", i);
 		if (!aux->dlc.of_node)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -325,7 +325,7 @@ int meson_card_probe(struct platform_device *pdev)
 	data = of_device_get_match_data(dev);
 	if (!data) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);

@@ -87,11 +87,11 @@ static int add_del_if(struct net_bridge *br, int ifindex, int isadd)
 	int ret;
 
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	dev = __dev_get_by_index(net, ifindex);
 	if (dev == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (isadd)
 		ret = br_add_if(br, dev, NULL);
@@ -111,7 +111,7 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	struct net_bridge *br = netdev_priv(dev);
 	struct net_bridge_port *p = NULL;
 	unsigned long args[4];
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (copy_from_user(args, rq->ifr_data, sizeof(args)))
 		return -EFAULT;
@@ -160,7 +160,7 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 		num = args[2];
 		if (num < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (num == 0)
 			num = 256;
 		if (num > BR_MAX_PORTS)
@@ -179,28 +179,28 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 	case BRCTL_SET_BRIDGE_FORWARD_DELAY:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ret = br_set_forward_delay(br, args[1]);
 		break;
 
 	case BRCTL_SET_BRIDGE_HELLO_TIME:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ret = br_set_hello_time(br, args[1]);
 		break;
 
 	case BRCTL_SET_BRIDGE_MAX_AGE:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ret = br_set_max_age(br, args[1]);
 		break;
 
 	case BRCTL_SET_AGEING_TIME:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ret = br_set_ageing_time(br, args[1]);
 		break;
@@ -213,7 +213,7 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 		rcu_read_lock();
 		if ((pt = br_get_port(br, args[2])) == NULL) {
 			rcu_read_unlock();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		memset(&p, 0, sizeof(struct __port_info));
@@ -240,14 +240,14 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 
 	case BRCTL_SET_BRIDGE_STP_STATE:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ret = br_stp_set_enabled(br, args[1], NULL);
 		break;
 
 	case BRCTL_SET_BRIDGE_PRIORITY:
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		br_stp_set_bridge_priority(br, args[1]);
 		ret = 0;
@@ -256,11 +256,11 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	case BRCTL_SET_PORT_PRIORITY:
 	{
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		spin_lock_bh(&br->lock);
 		if ((p = br_get_port(br, args[1])) == NULL)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			ret = br_stp_set_port_priority(p, args[2]);
 		spin_unlock_bh(&br->lock);
@@ -270,11 +270,11 @@ static int old_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	case BRCTL_SET_PATH_COST:
 	{
 		if (!ns_capable(dev_net(dev)->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		spin_lock_bh(&br->lock);
 		if ((p = br_get_port(br, args[1])) == NULL)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			ret = br_stp_set_path_cost(p, args[2]);
 		spin_unlock_bh(&br->lock);
@@ -333,7 +333,7 @@ static int old_deviceless(struct net *net, void __user *uarg)
 		char buf[IFNAMSIZ];
 
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(buf, (void __user *)args[1], IFNAMSIZ))
 			return -EFAULT;
@@ -347,7 +347,7 @@ static int old_deviceless(struct net *net, void __user *uarg)
 	}
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __user *uarg)
@@ -363,7 +363,7 @@ int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __user *uar
 		char buf[IFNAMSIZ];
 
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(buf, uarg, IFNAMSIZ))
 			return -EFAULT;
@@ -375,7 +375,7 @@ int br_ioctl_deviceless_stub(struct net *net, unsigned int cmd, void __user *uar
 		return br_del_bridge(net, buf);
 	}
 	}
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 int br_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
@@ -393,5 +393,5 @@ int br_dev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	}
 
 	br_debug(br, "Bridge does not support ioctl 0x%x\n", cmd);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }

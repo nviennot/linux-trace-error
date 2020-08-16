@@ -181,11 +181,11 @@ static struct sock *esp6_find_tcp_sk(struct xfrm_state *x)
 	sk = __inet6_lookup_established(xs_net(x), &tcp_hashinfo, &x->id.daddr.in6,
 					dport, &x->props.saddr.in6, ntohs(sport), 0, 0);
 	if (!sk)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	if (!tcp_is_ulp_esp(sk)) {
 		sock_put(sk);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	spin_lock_bh(&x->lock);
@@ -194,7 +194,7 @@ static struct sock *esp6_find_tcp_sk(struct xfrm_state *x)
 	if (encap->encap_sport != sport ||
 	    encap->encap_dport != dport) {
 		sock_put(sk);
-		sk = nsk ?: ERR_PTR(-EREMCHG);
+		sk = nsk ?: ERR_PTR(-ERR(EREMCHG));
 	} else if (sk == nsk) {
 		sock_put(sk);
 	} else {
@@ -250,14 +250,14 @@ static int esp_output_tail_tcp(struct xfrm_state *x, struct sk_buff *skb)
 	 * actually means that the skb has been consumed and
 	 * isn't coming back.
 	 */
-	return err ?: -EINPROGRESS;
+	return err ?: -ERR(EINPROGRESS);
 }
 #else
 static int esp_output_tail_tcp(struct xfrm_state *x, struct sk_buff *skb)
 {
 	kfree_skb(skb);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -388,7 +388,7 @@ static struct ip_esp_hdr *esp6_output_udp_encap(struct sk_buff *skb,
 
 	len = skb->len + esp->tailen - skb_transport_offset(skb);
 	if (len > U16_MAX)
-		return ERR_PTR(-EMSGSIZE);
+		return ERR_PTR(-ERR(EMSGSIZE));
 
 	uh = (struct udphdr *)esp->esph;
 	uh->source = sport;
@@ -419,7 +419,7 @@ static struct ip_esp_hdr *esp6_output_tcp_encap(struct xfrm_state *x,
 
 	len = skb->len + esp->tailen - skb_transport_offset(skb);
 	if (len > IP_MAX_MTU)
-		return ERR_PTR(-EMSGSIZE);
+		return ERR_PTR(-ERR(EMSGSIZE));
 
 	rcu_read_lock();
 	sk = esp6_find_tcp_sk(x);
@@ -438,7 +438,7 @@ static struct ip_esp_hdr *esp6_output_tcp_encap(struct xfrm_state *x,
 						struct sk_buff *skb,
 						struct esp_info *esp)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 #endif
 
@@ -763,7 +763,7 @@ static inline int esp_remove_trailer(struct sk_buff *skb)
 	ret = skb_copy_bits(skb, skb->len - alen - 2, nexthdr, 2);
 	BUG_ON(ret);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	padlen = nexthdr[0];
 	if (padlen + 2 + alen >= elen) {
 		net_dbg_ratelimited("ipsec esp packet is garbage padlen=%d, elen=%d\n",
@@ -827,7 +827,7 @@ int esp6_input_done2(struct sk_buff *skb, int err)
 			break;
 		default:
 			WARN_ON_ONCE(1);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -874,7 +874,7 @@ int esp6_input_done2(struct sk_buff *skb, int err)
 
 	/* RFC4303: Drop dummy packets without any error */
 	if (err == IPPROTO_NONE)
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 out:
 	return err;
@@ -936,12 +936,12 @@ static int esp6_input(struct xfrm_state *x, struct sk_buff *skb)
 	struct scatterlist *sg;
 
 	if (!pskb_may_pull(skb, sizeof(struct ip_esp_hdr) + ivlen)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (elen <= 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -968,7 +968,7 @@ static int esp6_input(struct xfrm_state *x, struct sk_buff *skb)
 
 	nfrags = skb_cow_data(skb, 0, &trailer);
 	if (nfrags < 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1059,7 +1059,7 @@ static int esp_init_aead(struct xfrm_state *x)
 	struct crypto_aead *aead;
 	int err;
 
-	err = -ENAMETOOLONG;
+	err = -ERR(ENAMETOOLONG);
 	if (snprintf(aead_name, CRYPTO_MAX_ALG_NAME, "%s(%s)",
 		     x->geniv, x->aead->alg_name) >= CRYPTO_MAX_ALG_NAME)
 		goto error;
@@ -1095,11 +1095,11 @@ static int esp_init_authenc(struct xfrm_state *x)
 	unsigned int keylen;
 	int err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!x->ealg)
 		goto error;
 
-	err = -ENAMETOOLONG;
+	err = -ERR(ENAMETOOLONG);
 
 	if ((x->props.flags & XFRM_STATE_ESN)) {
 		if (snprintf(authenc_name, CRYPTO_MAX_ALG_NAME,
@@ -1149,7 +1149,7 @@ static int esp_init_authenc(struct xfrm_state *x)
 		aalg_desc = xfrm_aalg_get_byname(x->aalg->alg_name, 0);
 		BUG_ON(!aalg_desc);
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (aalg_desc->uinfo.auth.icv_fullbits / 8 !=
 		    crypto_aead_authsize(aead)) {
 			pr_info("ESP: %s digestsize %u != %hu\n",
@@ -1216,7 +1216,7 @@ static int esp6_init_state(struct xfrm_state *x)
 
 		switch (encap->encap_type) {
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		case UDP_ENCAP_ESPINUDP:
 			x->props.header_len += sizeof(struct udphdr);
@@ -1271,12 +1271,12 @@ static int __init esp6_init(void)
 {
 	if (xfrm_register_type(&esp6_type, AF_INET6) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (xfrm6_protocol_register(&esp6_protocol, IPPROTO_ESP) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
 		xfrm_unregister_type(&esp6_type, AF_INET6);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	return 0;

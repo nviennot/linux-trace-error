@@ -1061,14 +1061,14 @@ int bch_decode(struct bch_control *bch, const uint8_t *data, unsigned int len,
 
 	/* sanity check: make sure data length can be handled */
 	if (8*len > (bch->n-bch->ecc_bits))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* if caller does not provide syndromes, compute them */
 	if (!syn) {
 		if (!calc_ecc) {
 			/* compute received data ecc into an internal buffer */
 			if (!data || !recv_ecc)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			bch_encode(bch, data, len, NULL);
 		} else {
 			/* load provided calculated ecc */
@@ -1110,7 +1110,7 @@ int bch_decode(struct bch_control *bch, const uint8_t *data, unsigned int len,
 					    (7-(errloc[i] & 7));
 		}
 	}
-	return (err >= 0) ? err : -EBADMSG;
+	return (err >= 0) ? err : -ERR(EBADMSG);
 }
 EXPORT_SYMBOL_GPL(bch_decode);
 

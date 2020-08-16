@@ -103,9 +103,9 @@ static int ttl_tg_check(const struct xt_tgchk_param *par)
 	const struct ipt_TTL_info *info = par->targinfo;
 
 	if (info->mode > IPT_TTL_MAXMODE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->mode != IPT_TTL_SET && info->ttl == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -114,9 +114,9 @@ static int hl_tg6_check(const struct xt_tgchk_param *par)
 	const struct ip6t_HL_info *info = par->targinfo;
 
 	if (info->mode > IP6T_HL_MAXMODE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->mode != IP6T_HL_SET && info->hop_limit == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

@@ -179,7 +179,7 @@ int trace_benchmark_reg(void)
 {
 	if (!ok_to_run) {
 		pr_warn("trace benchmark cannot be started via kernel command line\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	bm_event_thread = kthread_run(benchmark_event_kthread,

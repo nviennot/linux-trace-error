@@ -39,7 +39,7 @@ static int ima_dump_measurement_list(unsigned long *buffer_size, void **buffer,
 			khdr.count++;
 			ima_measurements_show(&file, qe);
 		} else {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 	}

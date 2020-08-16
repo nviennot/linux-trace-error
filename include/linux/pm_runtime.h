@@ -130,11 +130,11 @@ static inline int pm_runtime_force_resume(struct device *dev) { return 0; }
 
 static inline int __pm_runtime_idle(struct device *dev, int rpmflags)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int __pm_runtime_suspend(struct device *dev, int rpmflags)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int __pm_runtime_resume(struct device *dev, int rpmflags)
 {
@@ -142,16 +142,16 @@ static inline int __pm_runtime_resume(struct device *dev, int rpmflags)
 }
 static inline int pm_schedule_suspend(struct device *dev, unsigned int delay)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int pm_runtime_get_if_in_use(struct device *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int pm_runtime_get_if_active(struct device *dev,
 					   bool ign_usage_count)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int __pm_runtime_set_status(struct device *dev,
 					    unsigned int status) { return 0; }

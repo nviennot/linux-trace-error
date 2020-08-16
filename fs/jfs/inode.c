@@ -131,7 +131,7 @@ int jfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 
 	if (jfs_commit_inode(inode, wait)) {
 		jfs_err("jfs_write_inode: jfs_commit_inode failed!");
-		return -EIO;
+		return -ERR(EIO);
 	} else
 		return 0;
 }

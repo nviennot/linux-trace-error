@@ -167,7 +167,7 @@ static int __kstrncpy(char **dst, const char *name, size_t count, gfp_t gfp)
 {
 	*dst = kstrndup(name, count, gfp);
 	if (!*dst)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return count;
 }
 
@@ -302,7 +302,7 @@ static int test_dev_config_update_bool(const char *buf, size_t size,
 
 	mutex_lock(&test_fw_mutex);
 	if (strtobool(buf, cfg) < 0)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	else
 		ret = size;
 	mutex_unlock(&test_fw_mutex);
@@ -330,7 +330,7 @@ static int test_dev_config_update_u8(const char *buf, size_t size, u8 *cfg)
 		return ret;
 
 	if (new > U8_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&test_fw_mutex);
 	*(u8 *)cfg = new;
@@ -362,7 +362,7 @@ static ssize_t config_num_requests_store(struct device *dev,
 	mutex_lock(&test_fw_mutex);
 	if (test_fw_config->reqs) {
 		pr_err("Must call release_all_firmware prior to changing config\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		mutex_unlock(&test_fw_mutex);
 		goto out;
 	}
@@ -464,7 +464,7 @@ static ssize_t trigger_request_store(struct device *dev,
 
 	name = kstrndup(buf, count, GFP_KERNEL);
 	if (!name)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	pr_info("loading '%s'\n", name);
 
@@ -506,7 +506,7 @@ static ssize_t trigger_request_platform_store(struct device *dev,
 
 	name = kstrndup(buf, count, GFP_KERNEL);
 	if (!name)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	pr_info("inserting test platform fw '%s'\n", name);
 	efi_embedded_fw.name = name;
@@ -523,7 +523,7 @@ static ssize_t trigger_request_platform_store(struct device *dev,
 	if (firmware->size != sizeof(test_data) ||
 	    memcmp(firmware->data, test_data, sizeof(test_data)) != 0) {
 		pr_info("firmware contents mismatch for '%s'\n", name);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	pr_info("loaded: %zu\n", firmware->size);
@@ -556,7 +556,7 @@ static ssize_t trigger_async_request_store(struct device *dev,
 
 	name = kstrndup(buf, count, GFP_KERNEL);
 	if (!name)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	pr_info("loading '%s'\n", name);
 
@@ -599,7 +599,7 @@ static ssize_t trigger_custom_fallback_store(struct device *dev,
 
 	name = kstrndup(buf, count, GFP_KERNEL);
 	if (!name)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	pr_info("loading '%s' using custom fallback mechanism\n", name);
 
@@ -624,7 +624,7 @@ static ssize_t trigger_custom_fallback_store(struct device *dev,
 		rc = count;
 	} else {
 		pr_err("failed to async load firmware\n");
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 	}
 
 out:
@@ -639,8 +639,8 @@ static int test_fw_run_batch_request(void *data)
 	struct test_batched_req *req = data;
 
 	if (!req) {
-		test_fw_config->test_result = -EINVAL;
-		return -EINVAL;
+		test_fw_config->test_result = -ERR(EINVAL);
+		return -ERR(EINVAL);
 	}
 
 	if (test_fw_config->into_buf) {
@@ -648,7 +648,7 @@ static int test_fw_run_batch_request(void *data)
 
 		test_buf = kzalloc(TEST_FIRMWARE_BUF_SIZE, GFP_KERNEL);
 		if (!test_buf)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 		req->rc = request_firmware_into_buf(&req->fw,
 						    req->name,
@@ -760,7 +760,7 @@ static void trigger_batched_cb(const struct firmware *fw, void *context)
 	struct test_batched_req *req = context;
 
 	if (!req) {
-		test_fw_config->test_result = -EINVAL;
+		test_fw_config->test_result = -ERR(EINVAL);
 		return;
 	}
 
@@ -777,7 +777,7 @@ static void trigger_batched_cb(const struct firmware *fw, void *context)
 	 * value to the callback.
 	 */
 	if (!fw && !test_fw_config->test_result)
-		test_fw_config->test_result = -ENOENT;
+		test_fw_config->test_result = -ERR(ENOENT);
 
 	complete(&req->completion);
 }
@@ -885,19 +885,19 @@ static ssize_t read_firmware_show(struct device *dev,
 
 	idx = test_fw_config->read_fw_idx;
 	if (idx >= test_fw_config->num_requests) {
-		rc = -ERANGE;
+		rc = -ERR(ERANGE);
 		goto out;
 	}
 
 	if (!test_fw_config->reqs) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
 	req = &test_fw_config->reqs[idx];
 	if (!req->fw) {
 		pr_err("#%u: failed to async load firmware\n", idx);
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -905,7 +905,7 @@ static ssize_t read_firmware_show(struct device *dev,
 
 	if (req->fw->size > PAGE_SIZE) {
 		pr_err("Testing interface must use PAGE_SIZE firmware for now\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	memcpy(buf, req->fw->data, req->fw->size);

@@ -122,7 +122,7 @@ static int ipcomp6_tunnel_attach(struct xfrm_state *x)
 	if (!t) {
 		t = ipcomp6_tunnel_create(x);
 		if (!t) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		xfrm_state_insert(t);
@@ -137,7 +137,7 @@ out:
 
 static int ipcomp6_init_state(struct xfrm_state *x)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	x->props.header_len = 0;
 	switch (x->props.mode) {
@@ -193,12 +193,12 @@ static int __init ipcomp6_init(void)
 {
 	if (xfrm_register_type(&ipcomp6_type, AF_INET6) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (xfrm6_protocol_register(&ipcomp6_protocol, IPPROTO_COMP) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
 		xfrm_unregister_type(&ipcomp6_type, AF_INET6);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	return 0;
 }

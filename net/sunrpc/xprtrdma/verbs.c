@@ -258,11 +258,11 @@ rpcrdma_cm_event_handler(struct rdma_cm_id *id, struct rdma_cm_event *event)
 		complete(&ep->re_done);
 		return 0;
 	case RDMA_CM_EVENT_ADDR_ERROR:
-		ep->re_async_rc = -EPROTO;
+		ep->re_async_rc = -ERR(EPROTO);
 		complete(&ep->re_done);
 		return 0;
 	case RDMA_CM_EVENT_ROUTE_ERROR:
-		ep->re_async_rc = -ENETUNREACH;
+		ep->re_async_rc = -ERR(ENETUNREACH);
 		complete(&ep->re_done);
 		return 0;
 	case RDMA_CM_EVENT_DEVICE_REMOVAL:
@@ -270,7 +270,7 @@ rpcrdma_cm_event_handler(struct rdma_cm_id *id, struct rdma_cm_event *event)
 			ep->re_id->device->name, sap);
 		/* fall through */
 	case RDMA_CM_EVENT_ADDR_CHANGE:
-		ep->re_connect_status = -ENODEV;
+		ep->re_connect_status = -ERR(ENODEV);
 		goto disconnected;
 	case RDMA_CM_EVENT_ESTABLISHED:
 		rpcrdma_ep_get(ep);
@@ -280,22 +280,22 @@ rpcrdma_cm_event_handler(struct rdma_cm_id *id, struct rdma_cm_event *event)
 		wake_up_all(&ep->re_connect_wait);
 		break;
 	case RDMA_CM_EVENT_CONNECT_ERROR:
-		ep->re_connect_status = -ENOTCONN;
+		ep->re_connect_status = -ERR(ENOTCONN);
 		goto wake_connect_worker;
 	case RDMA_CM_EVENT_UNREACHABLE:
-		ep->re_connect_status = -ENETUNREACH;
+		ep->re_connect_status = -ERR(ENETUNREACH);
 		goto wake_connect_worker;
 	case RDMA_CM_EVENT_REJECTED:
 		dprintk("rpcrdma: connection to %pISpc rejected: %s\n",
 			sap, rdma_reject_msg(id, event->status));
-		ep->re_connect_status = -ECONNREFUSED;
+		ep->re_connect_status = -ERR(ECONNREFUSED);
 		if (event->status == IB_CM_REJ_STALE_CONN)
-			ep->re_connect_status = -ENOTCONN;
+			ep->re_connect_status = -ERR(ENOTCONN);
 wake_connect_worker:
 		wake_up_all(&ep->re_connect_wait);
 		return 0;
 	case RDMA_CM_EVENT_DISCONNECTED:
-		ep->re_connect_status = -ECONNABORTED;
+		ep->re_connect_status = -ERR(ECONNABORTED);
 disconnected:
 		rpcrdma_force_disconnect(ep);
 		return rpcrdma_ep_put(ep);
@@ -323,7 +323,7 @@ static struct rdma_cm_id *rpcrdma_create_id(struct rpcrdma_xprt *r_xprt,
 	if (IS_ERR(id))
 		return id;
 
-	ep->re_async_rc = -ETIMEDOUT;
+	ep->re_async_rc = -ERR(ETIMEDOUT);
 	rc = rdma_resolve_addr(id, NULL, (struct sockaddr *)&xprt->addr,
 			       RDMA_RESOLVE_TIMEOUT);
 	if (rc)
@@ -336,7 +336,7 @@ static struct rdma_cm_id *rpcrdma_create_id(struct rpcrdma_xprt *r_xprt,
 	if (rc)
 		goto out;
 
-	ep->re_async_rc = -ETIMEDOUT;
+	ep->re_async_rc = -ERR(ETIMEDOUT);
 	rc = rdma_resolve_route(id, RDMA_RESOLVE_TIMEOUT);
 	if (rc)
 		goto out;
@@ -402,7 +402,7 @@ static int rpcrdma_ep_create(struct rpcrdma_xprt *r_xprt)
 
 	ep = kzalloc(sizeof(*ep), GFP_NOFS);
 	if (!ep)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	ep->re_xprt = &r_xprt->rx_xprt;
 	kref_init(&ep->re_kref);
 
@@ -552,13 +552,13 @@ int rpcrdma_xprt_connect(struct rpcrdma_xprt *r_xprt)
 
 	rc = rpcrdma_sendctxs_create(r_xprt);
 	if (rc) {
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out;
 	}
 
 	rc = rpcrdma_reqs_setup(r_xprt);
 	if (rc) {
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out;
 	}
 	rpcrdma_mrs_create(r_xprt);
@@ -1368,7 +1368,7 @@ int rpcrdma_post_sends(struct rpcrdma_xprt *r_xprt, struct rpcrdma_req *req)
 	trace_xprtrdma_post_send(req);
 	rc = frwr_send(r_xprt, req);
 	if (rc)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	return 0;
 }
 

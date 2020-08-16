@@ -727,14 +727,14 @@ static ssize_t soft_store(struct device *dev, struct device_attribute *attr,
 	int err;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = kstrtoul(buf, 0, &state);
 	if (err)
 		return err;
 
 	if (state > 1 )
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&rfkill_global_mutex);
 	rfkill_set_block(rfkill, state);
@@ -770,7 +770,7 @@ static ssize_t state_store(struct device *dev, struct device_attribute *attr,
 	int err;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = kstrtoul(buf, 0, &state);
 	if (err)
@@ -778,7 +778,7 @@ static ssize_t state_store(struct device *dev, struct device_attribute *attr,
 
 	if (state != RFKILL_USER_STATE_SOFT_BLOCKED &&
 	    state != RFKILL_USER_STATE_UNBLOCKED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&rfkill_global_mutex);
 	rfkill_set_block(rfkill, state == RFKILL_USER_STATE_SOFT_BLOCKED);
@@ -1006,14 +1006,14 @@ int __must_check rfkill_register(struct rfkill *rfkill)
 	int error;
 
 	if (!rfkill)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = &rfkill->dev;
 
 	mutex_lock(&rfkill_global_mutex);
 
 	if (rfkill->registered) {
-		error = -EALREADY;
+		error = -ERR(EALREADY);
 		goto unlock;
 	}
 
@@ -1173,7 +1173,7 @@ static ssize_t rfkill_fop_read(struct file *file, char __user *buf,
 
 	while (list_empty(&data->events)) {
 		if (file->f_flags & O_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 		mutex_unlock(&data->mtx);
@@ -1212,7 +1212,7 @@ static ssize_t rfkill_fop_write(struct file *file, const char __user *buf,
 
 	/* we don't need the 'hard' variable but accept it */
 	if (count < RFKILL_EVENT_SIZE_V1 - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Copy as much data as we can accept into our 'ev' buffer,
@@ -1224,7 +1224,7 @@ static ssize_t rfkill_fop_write(struct file *file, const char __user *buf,
 		return -EFAULT;
 
 	if (ev.type >= NUM_RFKILL_TYPES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&rfkill_global_mutex);
 
@@ -1246,7 +1246,7 @@ static ssize_t rfkill_fop_write(struct file *file, const char __user *buf,
 		ret = 0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -1286,10 +1286,10 @@ static long rfkill_fop_ioctl(struct file *file, unsigned int cmd,
 	struct rfkill_data *data = file->private_data;
 
 	if (_IOC_TYPE(cmd) != RFKILL_IOC_MAGIC)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	if (_IOC_NR(cmd) != RFKILL_IOC_NOINPUT)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	mutex_lock(&data->mtx);
 

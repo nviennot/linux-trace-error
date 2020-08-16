@@ -427,7 +427,7 @@ static int cz_probe(struct platform_device *pdev)
 	if (IS_ERR(rdev)) {
 		dev_err(&pdev->dev, "Failed to register regulator: %d\n",
 			(int)PTR_ERR(rdev));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	machine = devm_kzalloc(&pdev->dev, sizeof(struct acp_platform_info),

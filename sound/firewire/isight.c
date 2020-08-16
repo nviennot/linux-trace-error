@@ -424,7 +424,7 @@ static int isight_trigger(struct snd_pcm_substream *substream, int cmd)
 		WRITE_ONCE(isight->pcm_running, false);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -498,7 +498,7 @@ static int isight_gain_put(struct snd_kcontrol *ctl,
 
 	if (value->value.integer.value[0] < isight->gain_min ||
 	    value->value.integer.value[0] > isight->gain_max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return reg_write(isight, REG_GAIN,
 			 cpu_to_be32(value->value.integer.value[0]));
@@ -630,7 +630,7 @@ static int isight_probe(struct fw_unit *unit,
 	isight->audio_base = get_unit_base(unit);
 	if (!isight->audio_base) {
 		dev_err(&unit->device, "audio unit base not found\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto error;
 	}
 	fw_iso_resources_init(&isight->resources, unit);

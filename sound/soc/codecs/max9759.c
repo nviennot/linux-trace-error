@@ -65,7 +65,7 @@ static int speaker_gain_control_put(struct snd_kcontrol *kcontrol,
 	struct max9759 *priv = snd_soc_component_get_drvdata(c);
 
 	if (ucontrol->value.integer.value[0] > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->gain = ucontrol->value.integer.value[0];
 
@@ -177,7 +177,7 @@ static int max9759_probe(struct platform_device *pdev)
 	if (priv->gpiod_gain->ndescs != 2) {
 		dev_err(dev, "Invalid 'gain' gpios count: %d",
 			priv->gpiod_gain->ndescs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return devm_snd_soc_register_component(dev, &max9759_component_driver,

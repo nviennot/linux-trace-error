@@ -95,7 +95,7 @@ int tegra30_ahub_allocate_rx_fifo(enum tegra30_ahub_rxcif *rxcif,
 	channel = find_first_zero_bit(ahub->rx_usage,
 				      TEGRA30_AHUB_CHANNEL_CTRL_COUNT);
 	if (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	__set_bit(channel, ahub->rx_usage);
 
@@ -197,7 +197,7 @@ int tegra30_ahub_allocate_tx_fifo(enum tegra30_ahub_txcif *txcif,
 	channel = find_first_zero_bit(ahub->tx_usage,
 				      TEGRA30_AHUB_CHANNEL_CTRL_COUNT);
 	if (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	__set_bit(channel, ahub->tx_usage);
 
@@ -516,11 +516,11 @@ static int tegra30_ahub_probe(struct platform_device *pdev)
 	int ret = 0;
 
 	if (ahub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	match = of_match_device(tegra30_ahub_of_match, &pdev->dev);
 	if (!match)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	soc_data = match->data;
 
 	/*
@@ -620,7 +620,7 @@ err_pm_disable:
 static int tegra30_ahub_remove(struct platform_device *pdev)
 {
 	if (!ahub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	pm_runtime_disable(&pdev->dev);
 	if (!pm_runtime_status_suspended(&pdev->dev))

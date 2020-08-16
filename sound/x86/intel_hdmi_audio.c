@@ -315,7 +315,7 @@ static int had_prog_status_reg(struct snd_pcm_substream *substream,
 
 	default:
 		/* control should never come here */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	had_write_register(intelhaddata,
@@ -332,7 +332,7 @@ static int had_prog_status_reg(struct snd_pcm_substream *substream,
 		ch_stat1.regx.wrd_len = SMPL_WIDTH_24BITS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	had_write_register(intelhaddata,
@@ -671,7 +671,7 @@ static int had_calculate_maud_value(u32 aud_samp_freq, u32 link_rate)
 			break;
 
 		default:
-			maud_val = -EINVAL;
+			maud_val = -ERR(EINVAL);
 			break;
 		}
 	} else if (link_rate == DP_1_62_GHZ) {
@@ -705,11 +705,11 @@ static int had_calculate_maud_value(u32 aud_samp_freq, u32 link_rate)
 			break;
 
 		default:
-			maud_val = -EINVAL;
+			maud_val = -ERR(EINVAL);
 			break;
 		}
 	} else
-		maud_val = -EINVAL;
+		maud_val = -ERR(EINVAL);
 
 	return maud_val;
 }
@@ -780,7 +780,7 @@ static int had_calculate_n_value(u32 aud_samp_freq)
 		break;
 
 	default:
-		n_val = -EINVAL;
+		n_val = -ERR(EINVAL);
 		break;
 	}
 	return n_val;
@@ -957,7 +957,7 @@ static int had_process_ringbuf(struct snd_pcm_substream *substream,
 		if (len < 0 || len > intelhaddata->period_bytes) {
 			dev_dbg(intelhaddata->dev, "Invalid buf length %d\n",
 				len);
-			len = -EPIPE;
+			len = -ERR(EPIPE);
 			goto out;
 		}
 
@@ -966,7 +966,7 @@ static int had_process_ringbuf(struct snd_pcm_substream *substream,
 
 		/* len=0 => already empty, check the next buffer */
 		if (++processed >= intelhaddata->num_bds) {
-			len = -EPIPE; /* all empty? - report underrun */
+			len = -ERR(EPIPE); /* all empty? - report underrun */
 			goto out;
 		}
 		had_advance_ringbuf(substream, intelhaddata);
@@ -1182,7 +1182,7 @@ static int had_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 
 	default:
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 	}
 	spin_unlock(&intelhaddata->had_spinlock);
 	return retval;
@@ -1699,7 +1699,7 @@ static int hdmi_lpe_audio_probe(struct platform_device *pdev)
 	pdata = pdev->dev.platform_data;
 	if (!pdata) {
 		dev_err(&pdev->dev, "%s: quit: pdata not allocated by i915!!\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* get resources */
@@ -1710,7 +1710,7 @@ static int hdmi_lpe_audio_probe(struct platform_device *pdev)
 	res_mmio = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res_mmio) {
 		dev_err(&pdev->dev, "Could not get IO_MEM resources\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* create a card instance with ALSA framework */
@@ -1755,7 +1755,7 @@ static int hdmi_lpe_audio_probe(struct platform_device *pdev)
 					       (size_t)(resource_size(res_mmio)));
 	if (!card_ctx->mmio_start) {
 		dev_err(&pdev->dev, "Could not get ioremap\n");
-		ret = -EACCES;
+		ret = -ERR(EACCES);
 		goto err;
 	}
 

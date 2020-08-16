@@ -125,7 +125,7 @@ int follow_pfn(struct vm_area_struct *vma, unsigned long address,
 	unsigned long *pfn)
 {
 	if (!(vma->vm_flags & (VM_IO | VM_PFNMAP)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*pfn = address >> PAGE_SHIFT;
 	return 0;
@@ -370,21 +370,21 @@ EXPORT_SYMBOL_GPL(free_vm_area);
 int vm_insert_page(struct vm_area_struct *vma, unsigned long addr,
 		   struct page *page)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(vm_insert_page);
 
 int vm_map_pages(struct vm_area_struct *vma, struct page **pages,
 			unsigned long num)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(vm_map_pages);
 
 int vm_map_pages_zero(struct vm_area_struct *vma, struct page **pages,
 				unsigned long num)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(vm_map_pages_zero);
 
@@ -772,14 +772,14 @@ static int validate_mmap_request(struct file *file,
 
 	/* do the simple checks first */
 	if (flags & MAP_FIXED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((flags & MAP_TYPE) != MAP_PRIVATE &&
 	    (flags & MAP_TYPE) != MAP_SHARED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Careful about overflows.. */
 	rlen = PAGE_ALIGN(len);
@@ -788,12 +788,12 @@ static int validate_mmap_request(struct file *file,
 
 	/* offset overflow? */
 	if ((pgoff + (rlen >> PAGE_SHIFT)) < pgoff)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (file) {
 		/* files must support mmap */
 		if (!file->f_op->mmap)
-			return -ENODEV;
+			return -ERR(ENODEV);
 
 		/* work out if what we've got could possibly be shared
 		 * - we support chardevs that provide their own "memory"
@@ -818,7 +818,7 @@ static int validate_mmap_request(struct file *file,
 				break;
 
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -831,23 +831,23 @@ static int validate_mmap_request(struct file *file,
 
 		/* The file shall have been opened with read permission. */
 		if (!(file->f_mode & FMODE_READ))
-			return -EACCES;
+			return -ERR(EACCES);
 
 		if (flags & MAP_SHARED) {
 			/* do checks for writing, appending and locking */
 			if ((prot & PROT_WRITE) &&
 			    !(file->f_mode & FMODE_WRITE))
-				return -EACCES;
+				return -ERR(EACCES);
 
 			if (IS_APPEND(file_inode(file)) &&
 			    (file->f_mode & FMODE_WRITE))
-				return -EACCES;
+				return -ERR(EACCES);
 
 			if (locks_verify_locked(file))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 
 			if (!(capabilities & NOMMU_MAP_DIRECT))
-				return -ENODEV;
+				return -ERR(ENODEV);
 
 			/* we mustn't privatise shared mappings */
 			capabilities &= ~NOMMU_MAP_COPY;
@@ -855,7 +855,7 @@ static int validate_mmap_request(struct file *file,
 			/* we're going to read the file into private memory we
 			 * allocate */
 			if (!(capabilities & NOMMU_MAP_COPY))
-				return -ENODEV;
+				return -ERR(ENODEV);
 
 			/* we don't permit a private writable mapping to be
 			 * shared with the backing device */
@@ -871,7 +871,7 @@ static int validate_mmap_request(struct file *file,
 				capabilities &= ~NOMMU_MAP_DIRECT;
 				if (flags & MAP_SHARED) {
 					pr_warn("MAP_SHARED not completely supported on !MMU\n");
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			}
 		}
@@ -880,7 +880,7 @@ static int validate_mmap_request(struct file *file,
 		 * mappings */
 		if (path_noexec(&file->f_path)) {
 			if (prot & PROT_EXEC)
-				return -EPERM;
+				return -ERR(EPERM);
 		} else if ((prot & PROT_READ) && !(prot & PROT_EXEC)) {
 			/* handle implication of PROT_EXEC by PROT_READ */
 			if (current->personality & READ_IMPLIES_EXEC) {
@@ -973,7 +973,7 @@ static int do_mmap_shared_file(struct vm_area_struct *vma)
 	/* getting -ENOSYS indicates that direct mmap isn't possible (as
 	 * opposed to tried but failed) so we can only give a suitable error as
 	 * it's not possible to make a private copy if MAP_SHARED was given */
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /*
@@ -1217,7 +1217,7 @@ unsigned long do_mmap(struct file *file,
 				/* the driver refused to tell us where to site
 				 * the mapping so we'll have to attempt to copy
 				 * it */
-				ret = -ENODEV;
+				ret = -ERR(ENODEV);
 				if (!(capabilities & NOMMU_MAP_COPY))
 					goto error_just_free;
 
@@ -1282,7 +1282,7 @@ error:
 sharing_violation:
 	up_write(&nommu_region_sem);
 	pr_warn("Attempt to share mismatched mappings\n");
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto error;
 
 error_getting_vma:
@@ -1304,7 +1304,7 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 			      unsigned long fd, unsigned long pgoff)
 {
 	struct file *file = NULL;
-	unsigned long retval = -EBADF;
+	unsigned long retval = -ERR(EBADF);
 
 	audit_mmap_fd(fd, flags);
 	if (!(flags & MAP_ANONYMOUS)) {
@@ -1347,7 +1347,7 @@ SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
 	if (copy_from_user(&a, arg, sizeof(a)))
 		return -EFAULT;
 	if (offset_in_page(a.offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
 			       a.offset >> PAGE_SHIFT);
@@ -1468,7 +1468,7 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list
 
 	len = PAGE_ALIGN(len);
 	if (len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	end = start + len;
 
@@ -1482,29 +1482,29 @@ int do_munmap(struct mm_struct *mm, unsigned long start, size_t len, struct list
 					start, start + len - 1);
 			limit++;
 		}
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* we're allowed to split an anonymous VMA but not a file-backed one */
 	if (vma->vm_file) {
 		do {
 			if (start > vma->vm_start)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (end == vma->vm_end)
 				goto erase_whole_vma;
 			vma = vma->vm_next;
 		} while (vma);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else {
 		/* the chunk must be a subset of the VMA found */
 		if (start == vma->vm_start && end == vma->vm_end)
 			goto erase_whole_vma;
 		if (start < vma->vm_start || end > vma->vm_end)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (offset_in_page(start))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (end != vma->vm_end && offset_in_page(end))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (start != vma->vm_start && end != vma->vm_end) {
 			ret = split_vma(mm, vma, start, 1);
 			if (ret < 0)
@@ -1582,23 +1582,23 @@ static unsigned long do_mremap(unsigned long addr,
 	old_len = PAGE_ALIGN(old_len);
 	new_len = PAGE_ALIGN(new_len);
 	if (old_len == 0 || new_len == 0)
-		return (unsigned long) -EINVAL;
+		return (unsigned long) -ERR(EINVAL);
 
 	if (offset_in_page(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & MREMAP_FIXED && new_addr != addr)
-		return (unsigned long) -EINVAL;
+		return (unsigned long) -ERR(EINVAL);
 
 	vma = find_vma_exact(current->mm, addr, old_len);
 	if (!vma)
-		return (unsigned long) -EINVAL;
+		return (unsigned long) -ERR(EINVAL);
 
 	if (vma->vm_end != vma->vm_start + old_len)
 		return (unsigned long) -EFAULT;
 
 	if (vma->vm_flags & VM_MAYSHARE)
-		return (unsigned long) -EPERM;
+		return (unsigned long) -ERR(EPERM);
 
 	if (new_len > vma->vm_region->vm_end - vma->vm_region->vm_start)
 		return (unsigned long) -ENOMEM;
@@ -1630,7 +1630,7 @@ int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
 		unsigned long pfn, unsigned long size, pgprot_t prot)
 {
 	if (addr != (pfn << PAGE_SHIFT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
 	return 0;
@@ -1653,7 +1653,7 @@ int remap_vmalloc_range(struct vm_area_struct *vma, void *addr,
 	unsigned int size = vma->vm_end - vma->vm_start;
 
 	if (!(vma->vm_flags & VM_USERMAP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vma->vm_start = (unsigned long)(addr + (pgoff << PAGE_SHIFT));
 	vma->vm_end = vma->vm_start + size;
@@ -1787,7 +1787,7 @@ int nommu_shrink_inode_mappings(struct inode *inode, size_t size,
 		if (vma->vm_flags & VM_SHARED) {
 			i_mmap_unlock_read(inode->i_mapping);
 			up_write(&nommu_region_sem);
-			return -ETXTBSY; /* not quite true, but near enough */
+			return -ERR(ETXTBSY); /* not quite true, but near enough */
 		}
 	}
 

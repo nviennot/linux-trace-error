@@ -134,13 +134,13 @@ int ubifs_calc_lpt_geom(struct ubifs_info *c)
 	lebs_needed = div_u64(sz + c->leb_size - 1, c->leb_size);
 	if (lebs_needed > c->lpt_lebs) {
 		ubifs_err(c, "too few LPT LEBs");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Verify that ltab fits in a single LEB (since ltab is a single node */
 	if (c->ltab_sz > c->leb_size) {
 		ubifs_err(c, "LPT ltab too big");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	c->check_lpt_free = c->big_lpt;
@@ -169,7 +169,7 @@ static int calc_dflt_lpt_geom(struct ubifs_info *c, int *main_lebs,
 	c->lpt_lebs = UBIFS_MIN_LPT_LEBS;
 	c->main_lebs = *main_lebs - c->lpt_lebs;
 	if (c->main_lebs <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* And assume we will use the small LPT model */
 	c->big_lpt = 0;
@@ -196,19 +196,19 @@ static int calc_dflt_lpt_geom(struct ubifs_info *c, int *main_lebs,
 			c->lpt_lebs = lebs_needed;
 			c->main_lebs = *main_lebs - c->lpt_lebs;
 			if (c->main_lebs <= 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			do_calc_lpt_geom(c);
 			continue;
 		}
 		if (c->ltab_sz > c->leb_size) {
 			ubifs_err(c, "LPT ltab too big");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*main_lebs = c->main_lebs;
 		*big_lpt = c->big_lpt;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -934,7 +934,7 @@ static int check_lpt_crc(const struct ubifs_info *c, void *buf, int len)
 		ubifs_err(c, "invalid crc in LPT node: crc %hx calc %hx",
 			  crc, calc_crc);
 		dump_stack();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -958,7 +958,7 @@ static int check_lpt_type(const struct ubifs_info *c, uint8_t **addr,
 		ubifs_err(c, "invalid type (%d) in LPT node type %d",
 			  node_type, type);
 		dump_stack();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1055,7 +1055,7 @@ static int unpack_ltab(const struct ubifs_info *c, void *buf)
 
 		if (free < 0 || free > c->leb_size || dirty < 0 ||
 		    dirty > c->leb_size || free + dirty > c->leb_size)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		c->ltab[i].free = free;
 		c->ltab[i].dirty = dirty;
@@ -1085,7 +1085,7 @@ static int unpack_lsave(const struct ubifs_info *c, void *buf)
 		int lnum = ubifs_unpack_bits(c, &addr, &pos, c->lnum_bits);
 
 		if (lnum < c->main_first || lnum >= c->leb_cnt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		c->lsave[i] = lnum;
 	}
 	err = check_lpt_crc(c, buf, c->lsave_sz);
@@ -1110,11 +1110,11 @@ static int validate_nnode(const struct ubifs_info *c, struct ubifs_nnode *nnode,
 		int num = calc_nnode_num_from_parent(c, parent, iip);
 
 		if (nnode->num != num)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	lvl = parent ? parent->level - 1 : c->lpt_hght;
 	if (lvl < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (lvl == 1)
 		max_offs = c->leb_size - c->pnode_sz;
 	else
@@ -1125,13 +1125,13 @@ static int validate_nnode(const struct ubifs_info *c, struct ubifs_nnode *nnode,
 
 		if (lnum == 0) {
 			if (offs != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			continue;
 		}
 		if (lnum < c->lpt_first || lnum > c->lpt_last)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (offs < 0 || offs > max_offs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1154,7 +1154,7 @@ static int validate_pnode(const struct ubifs_info *c, struct ubifs_pnode *pnode,
 		int num = calc_pnode_num_from_parent(c, parent, iip);
 
 		if (pnode->num != num)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	for (i = 0; i < UBIFS_LPT_FANOUT; i++) {
 		int free = pnode->lprops[i].free;
@@ -1162,11 +1162,11 @@ static int validate_pnode(const struct ubifs_info *c, struct ubifs_pnode *pnode,
 
 		if (free < 0 || free > c->leb_size || free % c->min_io_size ||
 		    (free & 7))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dirty < 0 || dirty > c->leb_size || (dirty & 7))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dirty + free > c->leb_size)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1758,7 +1758,7 @@ static int lpt_check_hash(struct ubifs_info *c)
 		return err;
 
 	if (ubifs_check_hash(c, c->mst_node->hash_lpt, hash)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		ubifs_err(c, "Failed to authenticate LPT");
 	} else {
 		err = 0;
@@ -2192,7 +2192,7 @@ again:
 			 * We got to the end without finding what we were
 			 * looking for
 			 */
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto out;
 		}
 		if (lnum + 1 >= c->leb_cnt) {
@@ -2255,7 +2255,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 	if (pnode->num != col) {
 		ubifs_err(c, "pnode num %d expected %d parent num %d iip %d",
 			  pnode->num, col, pnode->parent->num, pnode->iip);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < UBIFS_LPT_FANOUT; i++) {
 		struct ubifs_lprops *lp, *lprops = &pnode->lprops[i];
@@ -2270,13 +2270,13 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 		if (lprops->lnum != lnum) {
 			ubifs_err(c, "bad LEB number %d expected %d",
 				  lprops->lnum, lnum);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (lprops->flags & LPROPS_TAKEN) {
 			if (cat != LPROPS_UNCAT) {
 				ubifs_err(c, "LEB %d taken but not uncat %d",
 					  lprops->lnum, cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			continue;
 		}
@@ -2289,7 +2289,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 			default:
 				ubifs_err(c, "LEB %d index but cat %d",
 					  lprops->lnum, cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		} else {
 			switch (cat) {
@@ -2302,7 +2302,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 			default:
 				ubifs_err(c, "LEB %d not index but cat %d",
 					  lprops->lnum, cat);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		switch (cat) {
@@ -2343,7 +2343,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 		if (!found) {
 			ubifs_err(c, "LEB %d cat %d not found in cat heap/list",
 				  lprops->lnum, cat);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		switch (cat) {
 		case LPROPS_EMPTY:
@@ -2351,7 +2351,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 				ubifs_err(c, "LEB %d cat %d free %d dirty %d",
 					  lprops->lnum, cat, lprops->free,
 					  lprops->dirty);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		case LPROPS_FREEABLE:
@@ -2360,7 +2360,7 @@ static int dbg_chk_pnode(struct ubifs_info *c, struct ubifs_pnode *pnode,
 				ubifs_err(c, "LEB %d cat %d free %d dirty %d",
 					  lprops->lnum, cat, lprops->free,
 					  lprops->dirty);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		}
@@ -2397,7 +2397,7 @@ int dbg_check_lpt_nodes(struct ubifs_info *c, struct ubifs_cnode *cnode,
 				ubifs_err(c, "nnode num %d expected %d parent num %d iip %d",
 					  cnode->num, num,
 					  (nnode ? nnode->num : 0), cnode->iip);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			nn = (struct ubifs_nnode *)cnode;
 			while (iip < UBIFS_LPT_FANOUT) {

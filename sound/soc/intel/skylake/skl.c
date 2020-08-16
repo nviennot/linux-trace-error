@@ -506,7 +506,7 @@ static int skl_find_machine(struct skl_dev *skl, void *driver_data)
 		mach = skl_find_hda_machine(skl, driver_data);
 		if (!mach) {
 			dev_err(bus->dev, "No matching machine driver found\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -534,7 +534,7 @@ static int skl_machine_device_register(struct skl_dev *skl)
 	pdev = platform_device_alloc(mach->drv_name, -1);
 	if (pdev == NULL) {
 		dev_err(bus->dev, "platform device alloc failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	mach->mach_params.platform = dev_name(bus->dev);
@@ -551,7 +551,7 @@ static int skl_machine_device_register(struct skl_dev *skl)
 	if (ret) {
 		dev_err(bus->dev, "failed to add machine device\n");
 		platform_device_put(pdev);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 
@@ -709,7 +709,7 @@ static int probe_codec(struct hdac_bus *bus, int addr)
 	snd_hdac_bus_get_response(bus, addr, &res);
 	mutex_unlock(&bus->cmd_mutex);
 	if (res == -1)
-		return -EIO;
+		return -ERR(EIO);
 	dev_dbg(bus->dev, "codec #%d probed OK: %x\n", addr, res);
 
 #if IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
@@ -918,7 +918,7 @@ static int skl_first_init(struct hdac_bus *bus)
 	bus->remap_addr = pci_ioremap_bar(pci, 0);
 	if (bus->remap_addr == NULL) {
 		dev_err(bus->dev, "ioremap error\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	snd_hdac_bus_parse_capabilities(bus);
@@ -926,11 +926,11 @@ static int skl_first_init(struct hdac_bus *bus)
 	/* check if PPCAP exists */
 	if (!bus->ppcap) {
 		dev_err(bus->dev, "bus ppcap not set, HDaudio or DSP not present?\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (skl_acquire_irq(bus, 0) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	pci_set_master(pci);
 	synchronize_irq(bus->irq);
@@ -944,7 +944,7 @@ static int skl_first_init(struct hdac_bus *bus)
 
 	if (!pb_streams && !cp_streams) {
 		dev_err(bus->dev, "no streams found in GCAP definitions?\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	bus->num_streams = cp_streams + pb_streams;
@@ -983,11 +983,11 @@ static int skl_probe(struct pci_dev *pci,
 		err = snd_intel_dsp_driver_probe(pci);
 		if (err != SND_INTEL_DSP_DRIVER_ANY &&
 		    err != SND_INTEL_DSP_DRIVER_SST)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		break;
 	case SND_SKL_PCI_BIND_LEGACY:
 		dev_info(&pci->dev, "Module parameter forced binding with HDaudio legacy, aborting probe\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	case SND_SKL_PCI_BIND_ASOC:
 		dev_info(&pci->dev, "Module parameter forced binding with SKL driver, bypassed detection logic\n");
 		break;
@@ -1018,7 +1018,7 @@ static int skl_probe(struct pci_dev *pci,
 	if (skl->nhlt == NULL) {
 #if !IS_ENABLED(CONFIG_SND_SOC_INTEL_SKYLAKE_HDAUDIO_CODEC)
 		dev_err(bus->dev, "no nhlt info found\n");
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out_free;
 #else
 		dev_warn(bus->dev, "no nhlt info found, continuing to try to enable HDaudio codec\n");

@@ -81,7 +81,7 @@ static ssize_t sof_dfsentry_trace_read(struct file *file, char __user *buffer,
 
 	/* check pos and count */
 	if (lpos < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!count)
 		return 0;
 
@@ -96,7 +96,7 @@ static ssize_t sof_dfsentry_trace_read(struct file *file, char __user *buffer,
 	avail = sof_wait_trace_avail(sdev, lpos, buffer_size);
 	if (sdev->dtrace_error) {
 		dev_err(sdev->dev, "error: trace IO error\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* make sure count is <= avail */
@@ -137,7 +137,7 @@ static int trace_debugfs_create(struct snd_sof_dev *sdev)
 	struct snd_sof_dfsentry *dfse;
 
 	if (!sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dfse = devm_kzalloc(sdev->dev, sizeof(*dfse), GFP_KERNEL);
 	if (!dfse)
@@ -166,7 +166,7 @@ int snd_sof_init_trace_ipc(struct snd_sof_dev *sdev)
 		return 0;
 
 	if (sdev->dtrace_is_enabled || !sdev->dma_trace_pages)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set IPC parameters */
 	params.hdr.cmd = SOF_IPC_GLB_TRACE_MSG;

@@ -236,7 +236,7 @@ static int __release_resource(struct resource *old, bool release_child)
 		}
 		p = &tmp->sibling;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void __release_child_resources(struct resource *r)
@@ -298,7 +298,7 @@ int request_resource(struct resource *root, struct resource *new)
 	struct resource *conflict;
 
 	conflict = request_resource_conflict(root, new);
-	return conflict ? -EBUSY : 0;
+	return conflict ? -ERR(EBUSY) : 0;
 }
 
 EXPORT_SYMBOL(request_resource);
@@ -346,10 +346,10 @@ static int find_next_iomem_res(resource_size_t start, resource_size_t end,
 	struct resource *p;
 
 	if (!res)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (start >= end)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock(&resource_lock);
 
@@ -389,7 +389,7 @@ static int find_next_iomem_res(resource_size_t start, resource_size_t end,
 	}
 
 	read_unlock(&resource_lock);
-	return p ? 0 : -ENODEV;
+	return p ? 0 : -ERR(ENODEV);
 }
 
 static int __walk_iomem_res_desc(resource_size_t start, resource_size_t end,
@@ -398,7 +398,7 @@ static int __walk_iomem_res_desc(resource_size_t start, resource_size_t end,
 				 int (*func)(struct resource *, void *))
 {
 	struct resource res;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	while (start < end &&
 	       !find_next_iomem_res(start, end, flags, desc, first_lvl, &res)) {
@@ -479,7 +479,7 @@ int walk_system_ram_range(unsigned long start_pfn, unsigned long nr_pages,
 	unsigned long flags;
 	struct resource res;
 	unsigned long pfn, end_pfn;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	start = (u64) start_pfn << PAGE_SHIFT;
 	end = ((u64)(start_pfn + nr_pages) << PAGE_SHIFT) - 1;
@@ -642,7 +642,7 @@ next:		if (!this || this->end == root->end)
 			tmp.start = this->end + 1;
 		this = this->sibling;
 	}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /*
@@ -685,7 +685,7 @@ static int reallocate_resource(struct resource *root, struct resource *old,
 	}
 
 	if (old->child) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -746,7 +746,7 @@ int allocate_resource(struct resource *root, struct resource *new,
 	write_lock(&resource_lock);
 	err = find_resource(root, new, size, &constraint);
 	if (err >= 0 && __request_resource(root, new))
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	write_unlock(&resource_lock);
 	return err;
 }
@@ -868,7 +868,7 @@ int insert_resource(struct resource *parent, struct resource *new)
 	struct resource *conflict;
 
 	conflict = insert_resource_conflict(parent, new);
-	return conflict ? -EBUSY : 0;
+	return conflict ? -ERR(EBUSY) : 0;
 }
 EXPORT_SYMBOL_GPL(insert_resource);
 
@@ -937,7 +937,7 @@ static int __adjust_resource(struct resource *res, resource_size_t start,
 {
 	struct resource *tmp, *parent = res->parent;
 	resource_size_t end = start + size - 1;
-	int result = -EBUSY;
+	int result = -ERR(EBUSY);
 
 	if (!parent)
 		goto skip;
@@ -1262,7 +1262,7 @@ int release_mem_region_adjustable(struct resource *parent,
 	struct resource *res;
 	struct resource *new_res;
 	resource_size_t end;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	end = start + size - 1;
 	if ((start < parent->start) || (end > parent->end))
@@ -1397,7 +1397,7 @@ int devm_request_resource(struct device *dev, struct resource *root,
 		dev_err(dev, "resource collision: %pR conflicts with %s %pR\n",
 			new, conflict->name, conflict);
 		devres_free(ptr);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	devres_add(dev, ptr);
@@ -1674,7 +1674,7 @@ static struct resource *__request_free_mem_region(struct device *dev,
 		return res;
 	}
 
-	return ERR_PTR(-ERANGE);
+	return ERR_PTR(-ERR(ERANGE));
 }
 
 /**

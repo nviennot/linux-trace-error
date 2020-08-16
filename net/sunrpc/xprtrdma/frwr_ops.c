@@ -176,7 +176,7 @@ int frwr_query_device(struct rpcrdma_ep *ep, const struct ib_device *device)
 	    attrs->max_fast_reg_page_list_len == 0) {
 		pr_err("rpcrdma: 'frwr' mode is not supported by device %s\n",
 		       device->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max_sge = min_t(unsigned int, attrs->max_send_sge,
@@ -344,11 +344,11 @@ struct rpcrdma_mr_seg *frwr_map(struct rpcrdma_xprt *r_xprt,
 out_dmamap_err:
 	mr->mr_dir = DMA_NONE;
 	trace_xprtrdma_frwr_sgerr(mr, i);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 
 out_mapmr_err:
 	trace_xprtrdma_frwr_maperr(mr, n);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /**

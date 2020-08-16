@@ -963,7 +963,7 @@ ip_vs_new_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest,
 		if ((!(atype & IPV6_ADDR_UNICAST) ||
 			atype & IPV6_ADDR_LINKLOCAL) &&
 			!__ip_vs_addr_is_local_v6(svc->ipvs->net, &udest->addr.in6))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = nf_defrag_ipv6_enable(svc->ipvs->net);
 		if (ret)
@@ -973,7 +973,7 @@ ip_vs_new_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest,
 	{
 		atype = inet_addr_type(svc->ipvs->net, udest->addr.ip);
 		if (atype != RTN_LOCAL && atype != RTN_UNICAST)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	dest = kzalloc(sizeof(struct ip_vs_dest), GFP_KERNEL);
@@ -1034,19 +1034,19 @@ ip_vs_add_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 
 	if (udest->weight < 0) {
 		pr_err("%s(): server weight less than zero\n", __func__);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	if (udest->l_threshold > udest->u_threshold) {
 		pr_err("%s(): lower threshold is higher than upper threshold\n",
 			__func__);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	if (udest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) {
 		if (udest->tun_port == 0) {
 			pr_err("%s(): tunnel port is zero\n", __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1059,7 +1059,7 @@ ip_vs_add_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 
 	if (dest != NULL) {
 		IP_VS_DBG(1, "%s(): dest already exists\n", __func__);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/*
@@ -1105,19 +1105,19 @@ ip_vs_edit_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 
 	if (udest->weight < 0) {
 		pr_err("%s(): server weight less than zero\n", __func__);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	if (udest->l_threshold > udest->u_threshold) {
 		pr_err("%s(): lower threshold is higher than upper threshold\n",
 			__func__);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	if (udest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) {
 		if (udest->tun_port == 0) {
 			pr_err("%s(): tunnel port is zero\n", __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1130,7 +1130,7 @@ ip_vs_edit_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 
 	if (dest == NULL) {
 		IP_VS_DBG(1, "%s(): dest doesn't exist\n", __func__);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	__ip_vs_update_dest(svc, dest, udest, 0);
@@ -1212,7 +1212,7 @@ ip_vs_del_dest(struct ip_vs_service *svc, struct ip_vs_dest_user_kern *udest)
 
 	if (dest == NULL) {
 		IP_VS_DBG(1, "%s(): destination not found!\n", __func__);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -1275,7 +1275,7 @@ ip_vs_add_service(struct netns_ipvs *ipvs, struct ip_vs_service_user_kern *u,
 
 	/* increase the module use count */
 	if (!ip_vs_use_count_inc())
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	/* Lookup the scheduler by 'u->sched_name' */
 	if (strcmp(u->sched_name, "none")) {
@@ -1283,7 +1283,7 @@ ip_vs_add_service(struct netns_ipvs *ipvs, struct ip_vs_service_user_kern *u,
 		if (!sched) {
 			pr_info("Scheduler module ip_vs_%s not found\n",
 				u->sched_name);
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out_err;
 		}
 	}
@@ -1293,7 +1293,7 @@ ip_vs_add_service(struct netns_ipvs *ipvs, struct ip_vs_service_user_kern *u,
 		if (pe == NULL) {
 			pr_info("persistence engine module ip_vs_pe_%s "
 				"not found\n", u->pe_name);
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out_err;
 		}
 	}
@@ -1303,7 +1303,7 @@ ip_vs_add_service(struct netns_ipvs *ipvs, struct ip_vs_service_user_kern *u,
 		__u32 plen = (__force __u32) u->netmask;
 
 		if (plen < 1 || plen > 128) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_err;
 		}
 
@@ -1418,7 +1418,7 @@ ip_vs_edit_service(struct ip_vs_service *svc, struct ip_vs_service_user_kern *u)
 		if (!sched) {
 			pr_info("Scheduler module ip_vs_%s not found\n",
 				u->sched_name);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	old_sched = sched;
@@ -1428,7 +1428,7 @@ ip_vs_edit_service(struct ip_vs_service *svc, struct ip_vs_service_user_kern *u)
 		if (pe == NULL) {
 			pr_info("persistence engine module ip_vs_pe_%s "
 				"not found\n", u->pe_name);
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 		old_pe = pe;
@@ -1439,7 +1439,7 @@ ip_vs_edit_service(struct ip_vs_service *svc, struct ip_vs_service_user_kern *u)
 		__u32 plen = (__force __u32) u->netmask;
 
 		if (plen < 1 || plen > 128) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -1564,7 +1564,7 @@ static void ip_vs_unlink_service(struct ip_vs_service *svc, bool cleanup)
 static int ip_vs_del_service(struct ip_vs_service *svc)
 {
 	if (svc == NULL)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	ip_vs_unlink_service(svc, false);
 
 	return 0;
@@ -1752,7 +1752,7 @@ proc_do_defense_mode(struct ctl_table *table, int write,
 	rc = proc_dointvec(&tmp, write, buffer, lenp, ppos);
 	if (write && (*valp != val)) {
 		if (val < 0 || val > 3) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		} else {
 			*valp = val;
 			update_defense_level(ipvs);
@@ -1779,7 +1779,7 @@ proc_do_sync_threshold(struct ctl_table *table, int write,
 	if (write) {
 		if (val[0] < 0 || val[1] < 0 ||
 		    (val[0] >= val[1] && val[1]))
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		else
 			memcpy(valp, val, sizeof(val));
 	}
@@ -1803,7 +1803,7 @@ proc_do_sync_ports(struct ctl_table *table, int write,
 	rc = proc_dointvec(&tmp, write, buffer, lenp, ppos);
 	if (write && (*valp != val)) {
 		if (val < 1 || !is_power_of_2(val))
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		else
 			*valp = val;
 	}
@@ -2311,13 +2311,13 @@ static int ip_vs_set_timeout(struct netns_ipvs *ipvs, struct ip_vs_timeout_user 
 #ifdef CONFIG_IP_VS_PROTO_TCP
 	if (u->tcp_timeout < 0 || u->tcp_timeout > (INT_MAX / HZ) ||
 	    u->tcp_fin_timeout < 0 || u->tcp_fin_timeout > (INT_MAX / HZ)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 
 #ifdef CONFIG_IP_VS_PROTO_UDP
 	if (u->udp_timeout < 0 || u->udp_timeout > (INT_MAX / HZ))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 #ifdef CONFIG_IP_VS_PROTO_TCP
@@ -2428,14 +2428,14 @@ do_ip_vs_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 
 	BUILD_BUG_ON(sizeof(arg) > 255);
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (cmd < IP_VS_BASE_CTL || cmd > IP_VS_SO_SET_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len != set_arglen[CMDID(cmd)]) {
 		IP_VS_DBG(1, "set_ctl: len %u != %u\n",
 			  len, set_arglen[CMDID(cmd)]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(arg, user, len) != 0)
@@ -2450,7 +2450,7 @@ do_ip_vs_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 			struct ipvs_sync_daemon_cfg cfg;
 
 			memset(&cfg, 0, sizeof(cfg));
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			if (strscpy(cfg.mcast_ifn, dm->mcast_ifn,
 				    sizeof(cfg.mcast_ifn)) <= 0)
 				return ret;
@@ -2492,7 +2492,7 @@ do_ip_vs_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 	if ((cmd == IP_VS_SO_SET_ADD || cmd == IP_VS_SO_SET_EDIT) &&
 	    strnlen(usvc.sched_name, IP_VS_SCHEDNAME_MAXLEN) ==
 	    IP_VS_SCHEDNAME_MAXLEN) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -2517,14 +2517,14 @@ do_ip_vs_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 
 	if (cmd != IP_VS_SO_SET_ADD
 	    && (svc == NULL || svc->protocol != usvc.protocol)) {
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 		goto out_unlock;
 	}
 
 	switch (cmd) {
 	case IP_VS_SO_SET_ADD:
 		if (svc != NULL)
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 		else
 			ret = ip_vs_add_service(ipvs, &usvc, &svc);
 		break;
@@ -2549,7 +2549,7 @@ do_ip_vs_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 		ret = ip_vs_del_dest(svc, &udest);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
   out_unlock:
@@ -2683,7 +2683,7 @@ __ip_vs_get_dest_entries(struct netns_ipvs *ipvs, const struct ip_vs_get_dests *
 			count++;
 		}
 	} else
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 	return ret;
 }
 
@@ -2742,15 +2742,15 @@ do_ip_vs_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 	BUG_ON(!net);
 	BUILD_BUG_ON(sizeof(arg) > 255);
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (cmd < IP_VS_BASE_CTL || cmd > IP_VS_SO_GET_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	copylen = get_arglen[CMDID(cmd)];
 	if (*len < (int) copylen) {
 		IP_VS_DBG(1, "get_ctl: len %d < %u\n", *len, copylen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(arg, user, copylen) != 0)
@@ -2817,7 +2817,7 @@ do_ip_vs_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 		size = struct_size(get, entrytable, get->num_services);
 		if (*len != size) {
 			pr_err("length: %u != %u\n", *len, size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		ret = __ip_vs_get_service_entries(ipvs, get, user);
@@ -2845,7 +2845,7 @@ do_ip_vs_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 			if (copy_to_user(user, entry, sizeof(*entry)) != 0)
 				ret = -EFAULT;
 		} else
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 	}
 	break;
 
@@ -2858,7 +2858,7 @@ do_ip_vs_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 		size = struct_size(get, entrytable, get->num_dests);
 		if (*len != size) {
 			pr_err("length: %u != %u\n", *len, size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		ret = __ip_vs_get_dest_entries(ipvs, get, user);
@@ -2876,7 +2876,7 @@ do_ip_vs_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 	break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 out:
@@ -2970,7 +2970,7 @@ static int ip_vs_genl_fill_stats(struct sk_buff *skb, int container_type,
 	struct nlattr *nl_stats = nla_nest_start_noflag(skb, container_type);
 
 	if (!nl_stats)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, IPVS_STATS_ATTR_CONNS, (u32)kstats->conns) ||
 	    nla_put_u32(skb, IPVS_STATS_ATTR_INPKTS, (u32)kstats->inpkts) ||
@@ -2991,7 +2991,7 @@ static int ip_vs_genl_fill_stats(struct sk_buff *skb, int container_type,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nl_stats);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_fill_stats64(struct sk_buff *skb, int container_type,
@@ -3000,7 +3000,7 @@ static int ip_vs_genl_fill_stats64(struct sk_buff *skb, int container_type,
 	struct nlattr *nl_stats = nla_nest_start_noflag(skb, container_type);
 
 	if (!nl_stats)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u64_64bit(skb, IPVS_STATS_ATTR_CONNS, kstats->conns,
 			      IPVS_STATS_ATTR_PAD) ||
@@ -3029,7 +3029,7 @@ static int ip_vs_genl_fill_stats64(struct sk_buff *skb, int container_type,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nl_stats);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_fill_service(struct sk_buff *skb,
@@ -3045,7 +3045,7 @@ static int ip_vs_genl_fill_service(struct sk_buff *skb,
 
 	nl_service = nla_nest_start_noflag(skb, IPVS_CMD_ATTR_SERVICE);
 	if (!nl_service)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u16(skb, IPVS_SVC_ATTR_AF, svc->af))
 		goto nla_put_failure;
@@ -3080,7 +3080,7 @@ static int ip_vs_genl_fill_service(struct sk_buff *skb,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nl_service);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_service(struct sk_buff *skb,
@@ -3093,7 +3093,7 @@ static int ip_vs_genl_dump_service(struct sk_buff *skb,
 			  &ip_vs_genl_family, NLM_F_MULTI,
 			  IPVS_CMD_NEW_SERVICE);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (ip_vs_genl_fill_service(skb, svc) < 0)
 		goto nla_put_failure;
@@ -3103,7 +3103,7 @@ static int ip_vs_genl_dump_service(struct sk_buff *skb,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_services(struct sk_buff *skb,
@@ -3168,7 +3168,7 @@ static int ip_vs_genl_parse_service(struct netns_ipvs *ipvs,
 	/* Parse mandatory identifying service fields first */
 	if (nla == NULL ||
 	    nla_parse_nested_deprecated(attrs, IPVS_SVC_ATTR_MAX, nla, ip_vs_svc_policy, NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nla_af		= attrs[IPVS_SVC_ATTR_AF];
 	nla_protocol	= attrs[IPVS_SVC_ATTR_PROTOCOL];
@@ -3177,13 +3177,13 @@ static int ip_vs_genl_parse_service(struct netns_ipvs *ipvs,
 	nla_fwmark	= attrs[IPVS_SVC_ATTR_FWMARK];
 
 	if (!(nla_af && (nla_fwmark || (nla_port && nla_protocol && nla_addr))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(usvc, 0, sizeof(*usvc));
 
 	usvc->af = nla_get_u16(nla_af);
 	if (!ip_vs_is_af_valid(usvc->af))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (nla_fwmark) {
 		usvc->protocol = IPPROTO_TCP;
@@ -3217,7 +3217,7 @@ static int ip_vs_genl_parse_service(struct netns_ipvs *ipvs,
 		nla_netmask = attrs[IPVS_SVC_ATTR_NETMASK];
 
 		if (!(nla_sched && nla_flags && nla_timeout && nla_netmask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		nla_memcpy(&flags, nla_flags, sizeof(flags));
 
@@ -3255,7 +3255,7 @@ static int ip_vs_genl_fill_dest(struct sk_buff *skb, struct ip_vs_dest *dest)
 
 	nl_dest = nla_nest_start_noflag(skb, IPVS_CMD_ATTR_DEST);
 	if (!nl_dest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put(skb, IPVS_DEST_ATTR_ADDR, sizeof(dest->addr), &dest->addr) ||
 	    nla_put_be16(skb, IPVS_DEST_ATTR_PORT, dest->port) ||
@@ -3292,7 +3292,7 @@ static int ip_vs_genl_fill_dest(struct sk_buff *skb, struct ip_vs_dest *dest)
 
 nla_put_failure:
 	nla_nest_cancel(skb, nl_dest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_dest(struct sk_buff *skb, struct ip_vs_dest *dest,
@@ -3304,7 +3304,7 @@ static int ip_vs_genl_dump_dest(struct sk_buff *skb, struct ip_vs_dest *dest,
 			  &ip_vs_genl_family, NLM_F_MULTI,
 			  IPVS_CMD_NEW_DEST);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (ip_vs_genl_fill_dest(skb, dest) < 0)
 		goto nla_put_failure;
@@ -3314,7 +3314,7 @@ static int ip_vs_genl_dump_dest(struct sk_buff *skb, struct ip_vs_dest *dest,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_dests(struct sk_buff *skb,
@@ -3368,14 +3368,14 @@ static int ip_vs_genl_parse_dest(struct ip_vs_dest_user_kern *udest,
 	/* Parse mandatory identifying destination fields first */
 	if (nla == NULL ||
 	    nla_parse_nested_deprecated(attrs, IPVS_DEST_ATTR_MAX, nla, ip_vs_dest_policy, NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nla_addr	= attrs[IPVS_DEST_ATTR_ADDR];
 	nla_port	= attrs[IPVS_DEST_ATTR_PORT];
 	nla_addr_family	= attrs[IPVS_DEST_ATTR_ADDR_FAMILY];
 
 	if (!(nla_addr && nla_port))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(udest, 0, sizeof(*udest));
 
@@ -3402,7 +3402,7 @@ static int ip_vs_genl_parse_dest(struct ip_vs_dest_user_kern *udest,
 		nla_tun_flags	= attrs[IPVS_DEST_ATTR_TUN_FLAGS];
 
 		if (!(nla_fwd && nla_weight && nla_u_thresh && nla_l_thresh))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		udest->conn_flags = nla_get_u32(nla_fwd)
 				    & IP_VS_CONN_F_FWD_MASK;
@@ -3430,7 +3430,7 @@ static int ip_vs_genl_fill_daemon(struct sk_buff *skb, __u32 state,
 
 	nl_daemon = nla_nest_start_noflag(skb, IPVS_CMD_ATTR_DAEMON);
 	if (!nl_daemon)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, IPVS_DAEMON_ATTR_STATE, state) ||
 	    nla_put_string(skb, IPVS_DAEMON_ATTR_MCAST_IFN, c->mcast_ifn) ||
@@ -3456,7 +3456,7 @@ static int ip_vs_genl_fill_daemon(struct sk_buff *skb, __u32 state,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nl_daemon);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_daemon(struct sk_buff *skb, __u32 state,
@@ -3468,7 +3468,7 @@ static int ip_vs_genl_dump_daemon(struct sk_buff *skb, __u32 state,
 			  &ip_vs_genl_family, NLM_F_MULTI,
 			  IPVS_CMD_NEW_DAEMON);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (ip_vs_genl_fill_daemon(skb, state, c))
 		goto nla_put_failure;
@@ -3478,7 +3478,7 @@ static int ip_vs_genl_dump_daemon(struct sk_buff *skb, __u32 state,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ip_vs_genl_dump_daemons(struct sk_buff *skb,
@@ -3520,7 +3520,7 @@ static int ip_vs_genl_new_daemon(struct netns_ipvs *ipvs, struct nlattr **attrs)
 	if (!(attrs[IPVS_DAEMON_ATTR_STATE] &&
 	      attrs[IPVS_DAEMON_ATTR_MCAST_IFN] &&
 	      attrs[IPVS_DAEMON_ATTR_SYNC_ID]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	strlcpy(c.mcast_ifn, nla_data(attrs[IPVS_DAEMON_ATTR_MCAST_IFN]),
 		sizeof(c.mcast_ifn));
 	c.syncid = nla_get_u32(attrs[IPVS_DAEMON_ATTR_SYNC_ID]);
@@ -3534,7 +3534,7 @@ static int ip_vs_genl_new_daemon(struct netns_ipvs *ipvs, struct nlattr **attrs)
 		c.mcast_af = AF_INET;
 		c.mcast_group.ip = nla_get_in_addr(a);
 		if (!ipv4_is_multicast(c.mcast_group.ip))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		a = attrs[IPVS_DAEMON_ATTR_MCAST_GROUP6];
 		if (a) {
@@ -3545,9 +3545,9 @@ static int ip_vs_genl_new_daemon(struct netns_ipvs *ipvs, struct nlattr **attrs)
 			c.mcast_group.in6 = nla_get_in6_addr(a);
 			addr_type = ipv6_addr_type(&c.mcast_group.in6);
 			if (!(addr_type & IPV6_ADDR_MULTICAST))
-				return -EINVAL;
+				return -ERR(EINVAL);
 #else
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 #endif
 		}
 	}
@@ -3564,7 +3564,7 @@ static int ip_vs_genl_new_daemon(struct netns_ipvs *ipvs, struct nlattr **attrs)
 	 * services
 	 */
 	if (ipvs->mixed_address_family_dests > 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = start_sync_thread(ipvs, &c,
 				nla_get_u32(attrs[IPVS_DAEMON_ATTR_STATE]));
@@ -3576,7 +3576,7 @@ static int ip_vs_genl_del_daemon(struct netns_ipvs *ipvs, struct nlattr **attrs)
 	int ret;
 
 	if (!attrs[IPVS_DAEMON_ATTR_STATE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = stop_sync_thread(ipvs,
 			       nla_get_u32(attrs[IPVS_DAEMON_ATTR_STATE]));
@@ -3604,7 +3604,7 @@ static int ip_vs_genl_set_config(struct netns_ipvs *ipvs, struct nlattr **attrs)
 
 static int ip_vs_genl_set_daemon(struct sk_buff *skb, struct genl_info *info)
 {
-	int ret = -EINVAL, cmd;
+	int ret = -ERR(EINVAL), cmd;
 	struct net *net = sock_net(skb->sk);
 	struct netns_ipvs *ipvs = net_ipvs(net);
 
@@ -3667,7 +3667,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 
 	/* Unless we're adding a new service, the service must already exist */
 	if ((cmd != IPVS_CMD_NEW_SERVICE) && (svc == NULL)) {
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 		goto out;
 	}
 
@@ -3695,7 +3695,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 			udest.af = svc->af;
 
 		if (!ip_vs_is_af_valid(udest.af)) {
-			ret = -EAFNOSUPPORT;
+			ret = -ERR(EAFNOSUPPORT);
 			goto out;
 		}
 
@@ -3704,7 +3704,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 			 * with mixed family services
 			 */
 			if (ipvs->sync_state) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -3714,7 +3714,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 				/* We are able to forward this */
 				break;
 			default:
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 		}
@@ -3725,7 +3725,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 		if (svc == NULL)
 			ret = ip_vs_add_service(ipvs, &usvc, &svc);
 		else
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 		break;
 	case IPVS_CMD_SET_SERVICE:
 		ret = ip_vs_edit_service(svc, &usvc);
@@ -3747,7 +3747,7 @@ static int ip_vs_genl_set_cmd(struct sk_buff *skb, struct genl_info *info)
 		ret = ip_vs_zero_service(svc);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 out:
@@ -3774,7 +3774,7 @@ static int ip_vs_genl_get_cmd(struct sk_buff *skb, struct genl_info *info)
 		reply_cmd = IPVS_CMD_SET_CONFIG;
 	else {
 		pr_err("unknown Generic Netlink command\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
@@ -3802,7 +3802,7 @@ static int ip_vs_genl_get_cmd(struct sk_buff *skb, struct genl_info *info)
 			if (ret)
 				goto nla_put_failure;
 		} else {
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 			goto out_err;
 		}
 
@@ -3844,7 +3844,7 @@ static int ip_vs_genl_get_cmd(struct sk_buff *skb, struct genl_info *info)
 
 nla_put_failure:
 	pr_err("not enough space in Netlink message\n");
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 
 out_err:
 	nlmsg_free(msg);

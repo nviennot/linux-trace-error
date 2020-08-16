@@ -48,7 +48,7 @@ static int cfvei_receive(struct cflayer *layr, struct cfpkt *pkt)
 	if (cfpkt_extr_head(pkt, &cmd, 1) < 0) {
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	switch (cmd) {
 	case VEI_PAYLOAD:
@@ -68,7 +68,7 @@ static int cfvei_receive(struct cflayer *layr, struct cfpkt *pkt)
 	default:		/* SET RS232 PIN */
 		pr_warn("Unknown VEI control packet %d (0x%x)!\n", cmd, cmd);
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 }
 
@@ -85,7 +85,7 @@ static int cfvei_transmit(struct cflayer *layr, struct cfpkt *pkt)
 
 	if (cfpkt_add_head(pkt, &tmp, 1) < 0) {
 		pr_err("Packet is erroneous!\n");
-		ret = -EPROTO;
+		ret = -ERR(EPROTO);
 		goto err;
 	}
 

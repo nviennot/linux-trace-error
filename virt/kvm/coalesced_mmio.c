@@ -70,7 +70,7 @@ static int coalesced_mmio_write(struct kvm_vcpu *vcpu,
 	__u32 insert;
 
 	if (!coalesced_mmio_in_range(dev, addr, len))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	spin_lock(&dev->kvm->ring_lock);
 
@@ -78,7 +78,7 @@ static int coalesced_mmio_write(struct kvm_vcpu *vcpu,
 	if (!coalesced_mmio_has_room(dev, insert) ||
 	    insert >= KVM_COALESCED_MMIO_MAX) {
 		spin_unlock(&dev->kvm->ring_lock);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* copy data in first free entry of the ring */
@@ -141,7 +141,7 @@ int kvm_vm_ioctl_register_coalesced_mmio(struct kvm *kvm,
 	struct kvm_coalesced_mmio_dev *dev;
 
 	if (zone->pio != 1 && zone->pio != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = kzalloc(sizeof(struct kvm_coalesced_mmio_dev),
 		      GFP_KERNEL_ACCOUNT);
@@ -176,7 +176,7 @@ int kvm_vm_ioctl_unregister_coalesced_mmio(struct kvm *kvm,
 	struct kvm_coalesced_mmio_dev *dev, *tmp;
 
 	if (zone->pio != 1 && zone->pio != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kvm->slots_lock);
 

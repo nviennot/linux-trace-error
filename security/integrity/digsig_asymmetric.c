@@ -36,7 +36,7 @@ static struct key *request_asymmetric_key(struct key *keyring, uint32_t keyid)
 				      &key_type_asymmetric, name, true);
 		if (!IS_ERR(kref)) {
 			pr_err("Key '%s' is in ima_blacklist_keyring\n", name);
-			return ERR_PTR(-EKEYREJECTED);
+			return ERR_PTR(-ERR(EKEYREJECTED));
 		}
 	}
 
@@ -62,7 +62,7 @@ static struct key *request_asymmetric_key(struct key *keyring, uint32_t keyid)
 		case -EACCES:
 		case -ENOTDIR:
 		case -EAGAIN:
-			return ERR_PTR(-ENOKEY);
+			return ERR_PTR(-ERR(ENOKEY));
 		default:
 			return key;
 		}
@@ -82,15 +82,15 @@ int asymmetric_verify(struct key *keyring, const char *sig,
 	int ret = -ENOMEM;
 
 	if (siglen <= sizeof(*hdr))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	siglen -= sizeof(*hdr);
 
 	if (siglen != be16_to_cpu(hdr->sig_size))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	if (hdr->hash_algo >= HASH_ALGO__LAST)
-		return -ENOPKG;
+		return -ERR(ENOPKG);
 
 	key = request_asymmetric_key(keyring, be32_to_cpu(hdr->keyid));
 	if (IS_ERR(key))
@@ -136,7 +136,7 @@ int asymmetric_verify(struct key *keyring, const char *sig,
 int integrity_kernel_module_request(char *kmod_name)
 {
 	if (strncmp(kmod_name, "crypto-pkcs1pad(rsa,", 20) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

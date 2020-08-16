@@ -163,7 +163,7 @@ static int reiserfs_sync_file(struct file *filp, loff_t start, loff_t end,
 	inode_unlock(inode);
 	if (barrier_done < 0)
 		return barrier_done;
-	return (err < 0) ? -EIO : 0;
+	return (err < 0) ? -ERR(EIO) : 0;
 }
 
 /* taken fs/buffer.c:__block_commit_write */

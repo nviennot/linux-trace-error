@@ -39,7 +39,7 @@ int kexec_image_probe_default(struct kimage *image, void *buf,
 			      unsigned long buf_len)
 {
 	const struct kexec_file_ops * const *fops;
-	int ret = -ENOEXEC;
+	int ret = -ERR(ENOEXEC);
 
 	for (fops = &kexec_file_loaders[0]; *fops && (*fops)->probe; ++fops) {
 		ret = (*fops)->probe(buf, buf_len);
@@ -62,7 +62,7 @@ int __weak arch_kexec_kernel_image_probe(struct kimage *image, void *buf,
 static void *kexec_image_load_default(struct kimage *image)
 {
 	if (!image->fops || !image->fops->load)
-		return ERR_PTR(-ENOEXEC);
+		return ERR_PTR(-ERR(ENOEXEC));
 
 	return image->fops->load(image, image->kernel_buf,
 				 image->kernel_buf_len, image->initrd_buf,
@@ -94,7 +94,7 @@ static int kexec_image_verify_sig_default(struct kimage *image, void *buf,
 {
 	if (!image->fops || !image->fops->verify_sig) {
 		pr_debug("kernel loader does not support signature verification.\n");
-		return -EKEYREJECTED;
+		return -ERR(EKEYREJECTED);
 	}
 
 	return image->fops->verify_sig(buf, buf_len);
@@ -121,7 +121,7 @@ arch_kexec_apply_relocations_add(struct purgatory_info *pi, Elf_Shdr *section,
 				 const Elf_Shdr *relsec, const Elf_Shdr *symtab)
 {
 	pr_err("RELA relocation unsupported.\n");
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 }
 
 /*
@@ -138,7 +138,7 @@ arch_kexec_apply_relocations(struct purgatory_info *pi, Elf_Shdr *section,
 			     const Elf_Shdr *relsec, const Elf_Shdr *symtab)
 {
 	pr_err("REL relocation unsupported.\n");
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 }
 
 /*
@@ -199,7 +199,7 @@ kimage_validate_signature(struct kimage *image)
 		 */
 		if (!ima_appraise_signature(READING_KEXEC_IMAGE) &&
 		    security_locked_down(LOCKDOWN_KEXEC))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		pr_debug("kernel signature verification failed (%d).\n", ret);
 	}
@@ -261,7 +261,7 @@ kimage_file_prepare_segments(struct kimage *image, int kernel_fd, int initrd_fd,
 
 		/* command line should be a string with last byte null */
 		if (image->cmdline_buf[cmdline_len - 1] != '\0') {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -354,16 +354,16 @@ SYSCALL_DEFINE5(kexec_file_load, int, kernel_fd, int, initrd_fd,
 
 	/* We only trust the superuser with rebooting the system. */
 	if (!capable(CAP_SYS_BOOT) || kexec_load_disabled)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Make sure we have a legal set of flags */
 	if (flags != (flags & KEXEC_FILE_FLAGS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	image = NULL;
 
 	if (!mutex_trylock(&kexec_mutex))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dest_image = &kexec_image;
 	if (flags & KEXEC_FILE_ON_CRASH) {
@@ -632,7 +632,7 @@ int kexec_locate_mem_hole(struct kexec_buf *kbuf)
 	else
 		ret = kexec_walk_memblock(kbuf, locate_mem_hole_callback);
 
-	return ret == 1 ? 0 : -EADDRNOTAVAIL;
+	return ret == 1 ? 0 : -ERR(EADDRNOTAVAIL);
 }
 
 /**
@@ -653,10 +653,10 @@ int kexec_add_buffer(struct kexec_buf *kbuf)
 
 	/* Currently adding segment this way is allowed only in file mode */
 	if (!kbuf->image->file_mode)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (kbuf->image->nr_segments >= KEXEC_SEGMENT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Make sure we are not trying to add buffer after allocating
@@ -667,7 +667,7 @@ int kexec_add_buffer(struct kexec_buf *kbuf)
 	 */
 	if (!list_empty(&kbuf->image->control_pages)) {
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Ensure minimum alignment needed for segments. */
@@ -962,7 +962,7 @@ static int kexec_apply_relocations(struct kimage *image)
 		 */
 		if (relsec->sh_info >= pi->ehdr->e_shnum ||
 		    relsec->sh_link >= pi->ehdr->e_shnum)
-			return -ENOEXEC;
+			return -ERR(ENOEXEC);
 
 		section = pi->sechdrs + relsec->sh_info;
 		symtab = sechdrs + relsec->sh_link;
@@ -1012,7 +1012,7 @@ int kexec_load_purgatory(struct kimage *image, struct kexec_buf *kbuf)
 	int ret;
 
 	if (kexec_purgatory_size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pi->ehdr = (const Elf_Ehdr *)kexec_purgatory;
 
@@ -1101,7 +1101,7 @@ void *kexec_purgatory_get_symbol_addr(struct kimage *image, const char *name)
 
 	sym = kexec_purgatory_find_symbol(pi, name);
 	if (!sym)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	sechdr = &pi->sechdrs[sym->st_shndx];
 
@@ -1126,12 +1126,12 @@ int kexec_purgatory_get_set_symbol(struct kimage *image, const char *name,
 
 	sym = kexec_purgatory_find_symbol(pi, name);
 	if (!sym)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sym->st_size != size) {
 		pr_err("symbol %s size mismatch: expected %lu actual %u\n",
 		       name, (unsigned long)sym->st_size, size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sec = pi->sechdrs + sym->st_shndx;
@@ -1139,7 +1139,7 @@ int kexec_purgatory_get_set_symbol(struct kimage *image, const char *name,
 	if (sec->sh_type == SHT_NOBITS) {
 		pr_err("symbol %s is in a bss section. Cannot %s\n", name,
 		       get_value ? "get" : "set");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sym_buf = (char *)pi->purgatory_buf + sec->sh_offset + sym->st_value;

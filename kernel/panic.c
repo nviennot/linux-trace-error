@@ -700,7 +700,7 @@ core_param(crash_kexec_post_notifiers, crash_kexec_post_notifiers, bool, 0644);
 static int __init oops_setup(char *s)
 {
 	if (!s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!strcmp(s, "panic"))
 		panic_on_oops = 1;
 	return 0;
@@ -712,17 +712,17 @@ static int __init panic_on_taint_setup(char *s)
 	char *taint_str;
 
 	if (!s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	taint_str = strsep(&s, ",");
 	if (kstrtoul(taint_str, 16, &panic_on_taint))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* make sure panic_on_taint doesn't hold out-of-range TAINT flags */
 	panic_on_taint &= TAINT_FLAGS_MAX;
 
 	if (!panic_on_taint)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (s && !strcmp(s, "nousertaint"))
 		panic_on_taint_nousertaint = true;

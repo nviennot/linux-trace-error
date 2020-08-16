@@ -56,7 +56,7 @@ static int irq_sw_resend(struct irq_desc *desc)
 	 * non interrupt context
 	 */
 	if (handle_enforce_irqctx(&desc->irq_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If the interrupt is running in the thread context of the parent
@@ -69,7 +69,7 @@ static int irq_sw_resend(struct irq_desc *desc)
 		 * otherwise we do nothing.
 		 */
 		if (!desc->parent_irq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		irq = desc->parent_irq;
 	}
 
@@ -82,7 +82,7 @@ static int irq_sw_resend(struct irq_desc *desc)
 #else
 static int irq_sw_resend(struct irq_desc *desc)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -102,11 +102,11 @@ int check_irq_resend(struct irq_desc *desc, bool inject)
 	 */
 	if (irq_settings_is_level(desc)) {
 		desc->istate &= ~IRQS_PENDING;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (desc->istate & IRQS_REPLAY)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!(desc->istate & IRQS_PENDING) && !inject)
 		return 0;
@@ -154,7 +154,7 @@ int irq_inject_interrupt(unsigned int irq)
 	/* That failed, try via the resend mechanism */
 	desc = irq_get_desc_buslock(irq, &flags, 0);
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Only try to inject when the interrupt is:
@@ -162,7 +162,7 @@ int irq_inject_interrupt(unsigned int irq)
 	 *  - activated
 	 */
 	if ((desc->istate & IRQS_NMI) || !irqd_is_activated(&desc->irq_data))
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else
 		err = check_irq_resend(desc, true);
 

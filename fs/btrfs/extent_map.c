@@ -110,7 +110,7 @@ static int tree_insert(struct rb_root_cached *root, struct extent_map *em)
 			p = &(*p)->rb_right;
 			leftmost = false;
 		} else {
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -121,7 +121,7 @@ static int tree_insert(struct rb_root_cached *root, struct extent_map *em)
 	}
 	if (parent)
 		if (end > entry->start && em->start < extent_map_end(entry))
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 	parent = orig_parent;
 	entry = rb_entry(parent, struct extent_map, rb_node);
@@ -131,7 +131,7 @@ static int tree_insert(struct rb_root_cached *root, struct extent_map *em)
 	}
 	if (parent)
 		if (end > entry->start && em->start < extent_map_end(entry))
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 	rb_link_node(&em->rb_node, orig_parent, p);
 	rb_insert_color_cached(&em->rb_node, root, leftmost);

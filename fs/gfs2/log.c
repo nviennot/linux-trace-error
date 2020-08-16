@@ -134,7 +134,7 @@ __acquires(&sdp->sd_ail_lock)
 		spin_lock(&sdp->sd_ail_lock);
 		if (ret || wbc->nr_to_write <= 0)
 			break;
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return ret;
@@ -433,7 +433,7 @@ int gfs2_log_reserve(struct gfs2_sbd *sdp, unsigned int blks)
 
 	if (gfs2_assert_warn(sdp, blks) ||
 	    gfs2_assert_warn(sdp, blks <= sdp->sd_jdesc->jd_blocks))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	atomic_add(blks, &sdp->sd_log_blks_needed);
 retry:
 	free_blocks = atomic_read(&sdp->sd_log_blks_free);
@@ -469,7 +469,7 @@ retry:
 	down_read(&sdp->sd_log_flush_lock);
 	if (unlikely(!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))) {
 		gfs2_log_release(sdp, blks);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 	}
 	if (atomic_dec_and_test(&sdp->sd_reserving_log))
 		wake_up(&sdp->sd_reserving_log_wait);

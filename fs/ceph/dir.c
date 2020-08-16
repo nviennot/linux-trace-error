@@ -143,7 +143,7 @@ __dcache_find_get_entry(struct dentry *parent, u64 idx,
 		cache_ctl->page = find_lock_page(&dir->i_data, ptr_pgoff);
 		if (!cache_ctl->page) {
 			dout(" page %lu not found\n", ptr_pgoff);
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 		}
 		/* reading/filling the cache are serialized by
 		   i_mutex, no need to use page lock */
@@ -165,7 +165,7 @@ __dcache_find_get_entry(struct dentry *parent, u64 idx,
 	if (dentry && !lockref_get_not_dead(&dentry->d_lockref))
 		dentry = NULL;
 	rcu_read_unlock();
-	return dentry ? : ERR_PTR(-EAGAIN);
+	return dentry ? : ERR_PTR(-ERR(EAGAIN));
 }
 
 /*
@@ -245,7 +245,7 @@ static int __dcache_readdir(struct file *file,  struct dir_context *ctx,
 		    di->lease_shared_gen != shared_gen) {
 			spin_unlock(&dentry->d_lock);
 			dput(dentry);
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 		if (fpos_cmp(ctx->pos, di->offset) <= 0) {
@@ -633,14 +633,14 @@ static loff_t ceph_dir_llseek(struct file *file, loff_t offset, int whence)
 	loff_t retval;
 
 	inode_lock(inode);
-	retval = -EINVAL;
+	retval = -ERR(EINVAL);
 	switch (whence) {
 	case SEEK_CUR:
 		offset += file->f_pos;
 	case SEEK_SET:
 		break;
 	case SEEK_END:
-		retval = -EOPNOTSUPP;
+		retval = -ERR(EOPNOTSUPP);
 	default:
 		goto out;
 	}
@@ -714,7 +714,7 @@ struct dentry *ceph_finish_lookup(struct ceph_mds_request *req,
 			     dentry, d_inode(dentry));
 			if (d_really_is_positive(dentry)) {
 				d_drop(dentry);
-				err = -ENOENT;
+				err = -ERR(ENOENT);
 			} else {
 				d_add(dentry, NULL);
 			}
@@ -753,7 +753,7 @@ static struct dentry *ceph_lookup(struct inode *dir, struct dentry *dentry,
 	     dir, dentry, dentry);
 
 	if (dentry->d_name.len > NAME_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	/* can we conclude ENOENT locally? */
 	if (d_really_is_negative(dentry)) {
@@ -824,7 +824,7 @@ int ceph_handle_notrace_create(struct inode *dir, struct dentry *dentry)
 		 * reply for request that creates new inode.
 		 */
 		d_drop(result);
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 	return PTR_ERR(result);
 }
@@ -839,10 +839,10 @@ static int ceph_mknod(struct inode *dir, struct dentry *dentry,
 	int err;
 
 	if (ceph_snap(dir) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ceph_quota_is_max_files_exceeded(dir)) {
-		err = -EDQUOT;
+		err = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -901,10 +901,10 @@ static int ceph_symlink(struct inode *dir, struct dentry *dentry,
 	int err;
 
 	if (ceph_snap(dir) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (ceph_quota_is_max_files_exceeded(dir)) {
-		err = -EDQUOT;
+		err = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -947,7 +947,7 @@ static int ceph_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	struct ceph_mds_client *mdsc = fsc->mdsc;
 	struct ceph_mds_request *req;
 	struct ceph_acl_sec_ctx as_ctx = {};
-	int err = -EROFS;
+	int err = -ERR(EROFS);
 	int op;
 
 	if (ceph_snap(dir) == CEPH_SNAPDIR) {
@@ -964,7 +964,7 @@ static int ceph_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 
 	if (op == CEPH_MDS_OP_MKDIR &&
 	    ceph_quota_is_max_files_exceeded(dir)) {
-		err = -EDQUOT;
+		err = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -1017,7 +1017,7 @@ static int ceph_link(struct dentry *old_dentry, struct inode *dir,
 	int err;
 
 	if (ceph_snap(dir) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	dout("link in dir %p old_dentry %p dentry %p\n", dir,
 	     old_dentry, dentry);
@@ -1128,7 +1128,7 @@ static int ceph_unlink(struct inode *dir, struct dentry *dentry)
 	struct inode *inode = d_inode(dentry);
 	struct ceph_mds_request *req;
 	bool try_async = ceph_test_mount_opt(fsc, ASYNC_DIROPS);
-	int err = -EROFS;
+	int err = -ERR(EROFS);
 	int op;
 
 	if (ceph_snap(dir) == CEPH_SNAPDIR) {
@@ -1200,15 +1200,15 @@ static int ceph_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ceph_snap(old_dir) != ceph_snap(new_dir))
-		return -EXDEV;
+		return -ERR(EXDEV);
 	if (ceph_snap(old_dir) != CEPH_NOSNAP) {
 		if (old_dir == new_dir && ceph_snap(old_dir) == CEPH_SNAPDIR)
 			op = CEPH_MDS_OP_RENAMESNAP;
 		else
-			return -EROFS;
+			return -ERR(EROFS);
 	} else if (old_dir != new_dir) {
 		err = ceph_quota_check_rename(mdsc, d_inode(old_dentry),
 					      new_dir);
@@ -1498,7 +1498,7 @@ int ceph_trim_dentries(struct ceph_mds_client *mdsc)
 	lwc.nr_to_scan  = CEPH_CAPS_PER_RELEASE * 2;
 	freed = __dentry_leases_walk(mdsc, &lwc, __dentry_lease_check);
 	if (!lwc.nr_to_scan) /* more invalid leases */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (lwc.nr_to_scan < CEPH_CAPS_PER_RELEASE)
 		lwc.nr_to_scan = CEPH_CAPS_PER_RELEASE;
@@ -1508,7 +1508,7 @@ int ceph_trim_dentries(struct ceph_mds_client *mdsc)
 	lwc.dir_lease_ttl = mdsc->fsc->mount_options->caps_wanted_delay_max * HZ;
 	freed +=__dentry_leases_walk(mdsc, &lwc, __dir_lease_check);
 	if (!lwc.nr_to_scan) /* more to check */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return freed > 0 ? 1 : 0;
 }
@@ -1577,7 +1577,7 @@ static int dentry_lease_is_valid(struct dentry *dentry, unsigned int flags)
 			 * -ECHILD.
 			 */
 			if (flags & LOOKUP_RCU) {
-				valid = -ECHILD;
+				valid = -ERR(ECHILD);
 			} else {
 				session = ceph_get_mds_session(di->lease_session);
 				seq = di->lease_seq;
@@ -1621,7 +1621,7 @@ static int __dir_lease_try_check(const struct dentry *dentry)
 			valid = 1;
 		spin_unlock(&ci->i_ceph_lock);
 	} else {
-		valid = -EBUSY;
+		valid = -ERR(EBUSY);
 	}
 
 	if (!valid)
@@ -1676,7 +1676,7 @@ static int ceph_d_revalidate(struct dentry *dentry, unsigned int flags)
 		parent = READ_ONCE(dentry->d_parent);
 		dir = d_inode_rcu(parent);
 		if (!dir)
-			return -ECHILD;
+			return -ERR(ECHILD);
 		inode = d_inode_rcu(dentry);
 	} else {
 		parent = dget_parent(dentry);
@@ -1714,7 +1714,7 @@ static int ceph_d_revalidate(struct dentry *dentry, unsigned int flags)
 		u32 mask;
 
 		if (flags & LOOKUP_RCU)
-			return -ECHILD;
+			return -ERR(ECHILD);
 
 		percpu_counter_inc(&mdsc->metric.d_lease_mis);
 
@@ -1864,7 +1864,7 @@ static ssize_t ceph_read_dir(struct file *file, char __user *buf, size_t size,
 	const int bufsize = 1024;
 
 	if (!ceph_test_mount_opt(ceph_sb_to_client(inode->i_sb), DIRSTAT))
-		return -EISDIR;
+		return -ERR(EISDIR);
 
 	if (!dfi->dir_info) {
 		dfi->dir_info = kmalloc(bufsize, GFP_KERNEL);

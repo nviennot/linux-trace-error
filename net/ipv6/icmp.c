@@ -368,7 +368,7 @@ static struct dst_entry *icmpv6_route_lookup(struct net *net,
 	if (ipv6_anycast_destination(dst, &fl6->daddr)) {
 		net_dbg_ratelimited("icmp6_send: acast source\n");
 		dst_release(dst);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/* No need to clone since we're just using its address. */
@@ -1055,7 +1055,7 @@ int __init icmpv6_init(void)
 	if (err < 0)
 		return err;
 
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (inet6_add_protocol(&icmpv6_protocol, IPPROTO_ICMPV6) < 0)
 		goto fail;
 
@@ -1118,7 +1118,7 @@ int icmpv6_err_convert(u8 type, u8 code, int *err)
 {
 	int fatal = 0;
 
-	*err = EPROTO;
+	*err = ERR(EPROTO);
 
 	switch (type) {
 	case ICMPV6_DEST_UNREACH:
@@ -1130,16 +1130,16 @@ int icmpv6_err_convert(u8 type, u8 code, int *err)
 		break;
 
 	case ICMPV6_PKT_TOOBIG:
-		*err = EMSGSIZE;
+		*err = ERR(EMSGSIZE);
 		break;
 
 	case ICMPV6_PARAMPROB:
-		*err = EPROTO;
+		*err = ERR(EPROTO);
 		fatal = 1;
 		break;
 
 	case ICMPV6_TIME_EXCEED:
-		*err = EHOSTUNREACH;
+		*err = ERR(EHOSTUNREACH);
 		break;
 	}
 

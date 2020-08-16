@@ -123,7 +123,7 @@ static int snd_opl4_detect(struct snd_opl4 *opl4)
 		opl4->hardware = OPL3_HW_OPL4_ML;
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	snd_opl4_write(opl4, OPL4_REG_MIX_CONTROL_FM, 0x00);
@@ -132,7 +132,7 @@ static int snd_opl4_detect(struct snd_opl4 *opl4)
 	id2 = snd_opl4_read(opl4, OPL4_REG_MIX_CONTROL_PCM);
 	snd_printdd("OPL4 id1=%02x id2=%02x\n", id1, id2);
        	if (id1 != 0x00 || id2 != 0xff)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	snd_opl4_write(opl4, OPL4_REG_MIX_CONTROL_FM, 0x3f);
 	snd_opl4_write(opl4, OPL4_REG_MIX_CONTROL_PCM, 0x3f);
@@ -202,7 +202,7 @@ int snd_opl4_create(struct snd_card *card,
 	if (!opl4->res_fm_port || !opl4->res_pcm_port) {
 		snd_printk(KERN_ERR "opl4: can't grab ports 0x%lx, 0x%lx\n", fm_port, pcm_port);
 		snd_opl4_free(opl4);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	opl4->card = card;

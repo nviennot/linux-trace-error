@@ -15,7 +15,7 @@ int smp_call_function_single(int cpu, void (*func) (void *info), void *info,
 	unsigned long flags;
 
 	if (cpu != 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	local_irq_save(flags);
 	func(info);
@@ -96,7 +96,7 @@ int smp_call_on_cpu(unsigned int cpu, int (*func)(void *), void *par, bool phys)
 	int ret;
 
 	if (cpu != 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (phys)
 		hypervisor_pin_vcpu(0);

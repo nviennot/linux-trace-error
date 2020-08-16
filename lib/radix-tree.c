@@ -681,7 +681,7 @@ static inline int insert_entries(struct radix_tree_node *node,
 		void __rcu **slot, void *item, bool replace)
 {
 	if (*slot)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	rcu_assign_pointer(*slot, item);
 	if (node) {
 		node->count++;
@@ -1486,7 +1486,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
 	if (!radix_tree_tagged(root, IDR_FREE))
 		start = max(start, maxindex + 1);
 	if (start > max)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	if (start > maxindex) {
 		int error = radix_tree_extend(root, gfp, start, shift);
@@ -1520,7 +1520,7 @@ void __rcu **idr_get_free(struct radix_tree_root *root,
 							offset + 1);
 			start = next_index(start, node, offset);
 			if (start > max || start == 0)
-				return ERR_PTR(-ENOSPC);
+				return ERR_PTR(-ERR(ENOSPC));
 			while (offset == RADIX_TREE_MAP_SIZE) {
 				offset = node->offset + 1;
 				node = node->parent;

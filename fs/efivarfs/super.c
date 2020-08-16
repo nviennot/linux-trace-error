@@ -64,7 +64,7 @@ static int efivarfs_d_hash(const struct dentry *dentry, struct qstr *qstr)
 	unsigned int len = qstr->len;
 
 	if (!efivarfs_valid_name(s, len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (len-- > EFI_VARIABLE_GUID_LEN)
 		hash = partial_name_hash(*s++, hash);
@@ -256,7 +256,7 @@ static struct file_system_type efivarfs_type = {
 static __init int efivarfs_init(void)
 {
 	if (!efivars_kobject())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return register_filesystem(&efivarfs_type);
 }

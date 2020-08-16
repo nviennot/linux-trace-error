@@ -63,12 +63,12 @@ static ssize_t tomoyo_write_self(struct file *file, const char __user *buf,
 		r.param.task.domainname = &name;
 		tomoyo_check_acl(&r, tomoyo_check_task_acl);
 		if (!r.granted)
-			error = -EPERM;
+			error = -ERR(EPERM);
 		else {
 			struct tomoyo_domain_info *new_domain =
 				tomoyo_assign_domain(data, true);
 			if (!new_domain) {
-				error = -ENOENT;
+				error = -ERR(ENOENT);
 			} else {
 				struct tomoyo_task *s = tomoyo_task(current);
 				struct tomoyo_domain_info *old_domain =
@@ -82,7 +82,7 @@ static ssize_t tomoyo_write_self(struct file *file, const char __user *buf,
 		}
 		tomoyo_read_unlock(idx);
 	} else
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	kfree(data);
 	return error ? error : count;
 }

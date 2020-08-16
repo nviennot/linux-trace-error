@@ -208,12 +208,12 @@ static int snd_usbmidi_urb_error(const struct urb *urb)
 	case -ECONNRESET:
 	case -ESHUTDOWN:
 	case -ENODEV:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	/* errors that might occur during unplugging */
 	case -EPROTO:
 	case -ETIME:
 	case -EILSEQ:
-		return -EIO;
+		return -ERR(EIO);
 	default:
 		dev_err(&urb->dev->dev, "urb status %d\n", urb->status);
 		return 0; /* continue */
@@ -1099,7 +1099,7 @@ static int substream_open(struct snd_rawmidi_substream *substream, int dir,
 	down_read(&umidi->disc_rwsem);
 	if (umidi->disconnected) {
 		up_read(&umidi->disc_rwsem);
-		return open ? -ENODEV : 0;
+		return open ? -ERR(ENODEV) : 0;
 	}
 
 	mutex_lock(&umidi->mutex);
@@ -1151,7 +1151,7 @@ static int snd_usbmidi_output_open(struct snd_rawmidi_substream *substream)
 				}
 	if (!port) {
 		snd_BUG();
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	substream->runtime->private_data = port;
@@ -1866,7 +1866,7 @@ static int snd_usbmidi_get_ms_info(struct snd_usb_midi *umidi,
 
 	intf = umidi->iface;
 	if (!intf)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	hostif = &intf->altsetting[0];
 	intfd = get_iface_desc(hostif);
 	ms_header = (struct usb_ms_header_descriptor *)hostif->extra;
@@ -1955,7 +1955,7 @@ static int roland_load_put(struct snd_kcontrol *kcontrol,
 	int changed;
 
 	if (value->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&umidi->mutex);
 	changed = value->value.enumerated.item[0] != kcontrol->private_value;
 	if (changed)
@@ -2030,7 +2030,7 @@ static int snd_usbmidi_detect_endpoints(struct snd_usb_midi *umidi,
 
 	intf = umidi->iface;
 	if (!intf || intf->num_altsetting < 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hostif = intf->cur_altsetting;
 	intfd = get_iface_desc(hostif);
 
@@ -2054,7 +2054,7 @@ static int snd_usbmidi_detect_endpoints(struct snd_usb_midi *umidi,
 			++in_eps;
 		}
 	}
-	return (out_eps || in_eps) ? 0 : -ENOENT;
+	return (out_eps || in_eps) ? 0 : -ERR(ENOENT);
 }
 
 /*
@@ -2088,11 +2088,11 @@ static int snd_usbmidi_detect_yamaha(struct snd_usb_midi *umidi,
 
 	intf = umidi->iface;
 	if (!intf)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hostif = intf->altsetting;
 	intfd = get_iface_desc(hostif);
 	if (intfd->bNumEndpoints < 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * For each port there is one MIDI_IN/OUT_JACK descriptor, not
@@ -2111,7 +2111,7 @@ static int snd_usbmidi_detect_yamaha(struct snd_usb_midi *umidi,
 		}
 	}
 	if (!endpoint->in_cables && !endpoint->out_cables)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return snd_usbmidi_detect_endpoints(umidi, endpoint, 1);
 }
@@ -2128,7 +2128,7 @@ static int snd_usbmidi_detect_roland(struct snd_usb_midi *umidi,
 
 	intf = umidi->iface;
 	if (!intf)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hostif = intf->altsetting;
 	/*
 	 * Some devices have a descriptor <06 24 F1 02 <inputs> <outputs>>,
@@ -2151,7 +2151,7 @@ static int snd_usbmidi_detect_roland(struct snd_usb_midi *umidi,
 		}
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /*
@@ -2169,7 +2169,7 @@ static int snd_usbmidi_create_endpoints_midiman(struct snd_usb_midi *umidi,
 
 	intf = umidi->iface;
 	if (!intf)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	hostif = intf->altsetting;
 	intfd = get_iface_desc(hostif);
 	/*
@@ -2184,18 +2184,18 @@ static int snd_usbmidi_create_endpoints_midiman(struct snd_usb_midi *umidi,
 	 */
 	if (intfd->bNumEndpoints < (endpoint->out_cables > 0x0001 ? 5 : 3)) {
 		dev_dbg(&umidi->dev->dev, "not enough endpoints\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	epd = get_endpoint(hostif, 0);
 	if (!usb_endpoint_dir_in(epd) || !usb_endpoint_xfer_int(epd)) {
 		dev_dbg(&umidi->dev->dev, "endpoint[0] isn't interrupt\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	epd = get_endpoint(hostif, 2);
 	if (!usb_endpoint_dir_out(epd) || !usb_endpoint_xfer_bulk(epd)) {
 		dev_dbg(&umidi->dev->dev, "endpoint[2] isn't bulk output\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	if (endpoint->out_cables > 0x0001) {
 		epd = get_endpoint(hostif, 4);
@@ -2203,7 +2203,7 @@ static int snd_usbmidi_create_endpoints_midiman(struct snd_usb_midi *umidi,
 		    !usb_endpoint_xfer_bulk(epd)) {
 			dev_dbg(&umidi->dev->dev,
 				"endpoint[4] isn't bulk output\n");
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 	}
 
@@ -2479,7 +2479,7 @@ int __snd_usbmidi_create(struct snd_card *card,
 	default:
 		dev_err(&umidi->dev->dev, "invalid quirk type %d\n",
 			quirk->type);
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		break;
 	}
 	if (err < 0)

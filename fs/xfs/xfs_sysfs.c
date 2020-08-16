@@ -94,7 +94,7 @@ bug_on_assert_store(
 	else if (val == 0)
 		xfs_globals.bug_on_assert = false;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -122,7 +122,7 @@ log_recovery_delay_store(
 		return ret;
 
 	if (val < 0 || val > 60)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xfs_globals.log_recovery_delay = val;
 
@@ -152,7 +152,7 @@ mount_delay_store(
 		return ret;
 
 	if (val < 0 || val > 60)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xfs_globals.mount_delay = val;
 
@@ -211,7 +211,7 @@ pwork_threads_store(
 		return ret;
 
 	if (val < -1 || val > num_possible_cpus())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xfs_globals.pwork_threads = val;
 
@@ -283,7 +283,7 @@ stats_clear_store(
 		return ret;
 
 	if (val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	xfs_stats_clearall(stats->xs_stats);
 	return count;
@@ -442,7 +442,7 @@ max_retries_store(
 		return ret;
 
 	if (val < -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val == -1)
 		cfg->max_retries = XFS_ERR_RETRY_FOREVER;
@@ -484,7 +484,7 @@ retry_timeout_seconds_store(
 
 	/* 1 day timeout maximum, -1 means infinite */
 	if (val < -1 || val > 86400)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val == -1)
 		cfg->retry_timeout = XFS_ERR_RETRY_FOREVER;
@@ -521,7 +521,7 @@ fail_at_unmount_store(
 		return ret;
 
 	if (val < 0 || val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mp->m_fail_unmount = val;
 	return count;

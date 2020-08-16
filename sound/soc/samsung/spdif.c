@@ -163,7 +163,7 @@ static int spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		spin_unlock_irqrestore(&spdif->lock, flags);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -191,7 +191,7 @@ static int spdif_hw_params(struct snd_pcm_substream *substream,
 		dma_data = spdif->dma_playback;
 	else {
 		dev_err(spdif->dev, "Capture is not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_dai_set_dma_data(asoc_rtd_to_cpu(rtd, 0), substream, dma_data);
@@ -273,7 +273,7 @@ static int spdif_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 err:
 	spin_unlock_irqrestore(&spdif->lock, flags);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void spdif_shutdown(struct snd_pcm_substream *substream,
@@ -372,13 +372,13 @@ static int spdif_probe(struct platform_device *pdev)
 	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!mem_res) {
 		dev_err(&pdev->dev, "Unable to get register resource.\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (spdif_pdata && spdif_pdata->cfg_gpio
 			&& spdif_pdata->cfg_gpio(pdev)) {
 		dev_err(&pdev->dev, "Unable to configure GPIO pins\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spdif = &spdif_info;
@@ -389,7 +389,7 @@ static int spdif_probe(struct platform_device *pdev)
 	spdif->pclk = devm_clk_get(&pdev->dev, "spdif");
 	if (IS_ERR(spdif->pclk)) {
 		dev_err(&pdev->dev, "failed to get peri-clock\n");
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto err0;
 	}
 	ret = clk_prepare_enable(spdif->pclk);
@@ -399,7 +399,7 @@ static int spdif_probe(struct platform_device *pdev)
 	spdif->sclk = devm_clk_get(&pdev->dev, "sclk_spdif");
 	if (IS_ERR(spdif->sclk)) {
 		dev_err(&pdev->dev, "failed to get internal source clock\n");
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto err1;
 	}
 	ret = clk_prepare_enable(spdif->sclk);
@@ -410,14 +410,14 @@ static int spdif_probe(struct platform_device *pdev)
 	if (!request_mem_region(mem_res->start,
 				resource_size(mem_res), "samsung-spdif")) {
 		dev_err(&pdev->dev, "Unable to request register region\n");
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto err2;
 	}
 
 	spdif->regs = ioremap(mem_res->start, 0x100);
 	if (spdif->regs == NULL) {
 		dev_err(&pdev->dev, "Cannot ioremap registers\n");
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		goto err3;
 	}
 

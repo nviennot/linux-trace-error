@@ -230,7 +230,7 @@ ssize_t ocfs2_quota_write(struct super_block *sb, int type,
 		mlog(ML_ERROR, "Quota write (off=%llu, len=%llu) cancelled "
 		     "because transaction was not started.\n",
 		     (unsigned long long)off, (unsigned long long)len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (len > sb->s_blocksize - OCFS2_QBLK_RESERVED_SPACE - offset) {
 		WARN_ON(1);
@@ -352,7 +352,7 @@ int ocfs2_global_read_info(struct super_block *sb, int type)
 	if (!gqinode) {
 		mlog(ML_ERROR, "failed to get global quota inode (type=%d)\n",
 			type);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto out_err;
 	}
 	oinfo->dqi_gi.dqi_sb = sb;
@@ -386,7 +386,7 @@ int ocfs2_global_read_info(struct super_block *sb, int type)
 		mlog(ML_ERROR, "Cannot read global quota info (%d).\n",
 		     status);
 		if (status >= 0)
-			status = -EIO;
+			status = -ERR(EIO);
 		mlog_errno(status);
 		goto out_err;
 	}
@@ -436,7 +436,7 @@ static int __ocfs2_global_write_info(struct super_block *sb, int type)
 	if (size != sizeof(struct ocfs2_global_disk_dqinfo)) {
 		mlog(ML_ERROR, "Cannot write global quota info structure\n");
 		if (size >= 0)
-			size = -EIO;
+			size = -ERR(EIO);
 		return size;
 	}
 	return 0;
@@ -498,7 +498,7 @@ int __ocfs2_sync_dquot(struct dquot *dquot, int freeing)
 		if (err >= 0) {
 			mlog(ML_ERROR, "Short read from global quota file "
 				       "(%u read)\n", err);
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 		goto out;
 	}
@@ -882,7 +882,7 @@ static int ocfs2_get_next_id(struct super_block *sb, struct kqid *qid)
 
 	trace_ocfs2_get_next_id(from_kqid(&init_user_ns, *qid), type);
 	if (!sb_has_quota_loaded(sb, type)) {
-		status = -ESRCH;
+		status = -ERR(ESRCH);
 		goto out;
 	}
 	status = ocfs2_lock_global_qf(info, 0);

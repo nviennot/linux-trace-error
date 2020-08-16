@@ -232,7 +232,7 @@ static int wm8711_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8711->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8711_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -249,7 +249,7 @@ static int wm8711_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -269,7 +269,7 @@ static int wm8711_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -286,7 +286,7 @@ static int wm8711_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set iface */

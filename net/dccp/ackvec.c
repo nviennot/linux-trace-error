@@ -54,7 +54,7 @@ int dccp_ackvec_update_records(struct dccp_ackvec *av, u64 seqno, u8 nonce_sum)
 
 	avr = kmem_cache_alloc(dccp_ackvec_record_slab, GFP_ATOMIC);
 	if (avr == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	avr->avr_ack_seqno  = seqno;
 	avr->avr_ack_ptr    = av->av_buf_head;
@@ -349,7 +349,7 @@ int dccp_ackvec_parsed_add(struct list_head *head, u8 *vec, u8 len, u8 nonce)
 	struct dccp_ackvec_parsed *new = kmalloc(sizeof(*new), GFP_ATOMIC);
 
 	if (new == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	new->vec   = vec;
 	new->len   = len;
 	new->nonce = nonce;
@@ -390,7 +390,7 @@ out_destroy_slab:
 	dccp_ackvec_slab = NULL;
 out_err:
 	DCCP_CRIT("Unable to create Ack Vector slab cache");
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 void dccp_ackvec_exit(void)

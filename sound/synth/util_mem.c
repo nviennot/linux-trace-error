@@ -151,7 +151,7 @@ __snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk)
 int snd_util_mem_free(struct snd_util_memhdr *hdr, struct snd_util_memblk *blk)
 {
 	if (snd_BUG_ON(!hdr || !blk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&hdr->block_mutex);
 	__snd_util_mem_free(hdr, blk);

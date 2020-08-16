@@ -261,7 +261,7 @@ static struct afs_addr_list *afs_vl_lookup_addrs(struct afs_cell *cell,
 	struct afs_addr_list *alist = NULL;
 	int ret;
 
-	ret = -ERESTARTSYS;
+	ret = -ERR(ERESTARTSYS);
 	if (afs_begin_vlserver_operation(&vc, cell, key)) {
 		while (afs_select_vlserver(&vc)) {
 			if (test_bit(AFS_VLSERVER_FL_IS_YFS, &vc.server->flags))
@@ -701,7 +701,7 @@ wait:
 	retries++;
 	if (retries == 4) {
 		_leave(" = f [stale]");
-		ret = -ESTALE;
+		ret = -ERR(ESTALE);
 		return false;
 	}
 	goto retry;

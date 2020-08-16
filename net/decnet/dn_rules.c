@@ -69,7 +69,7 @@ static int dn_fib_rule_action(struct fib_rule *rule, struct flowi *flp,
 			      int flags, struct fib_lookup_arg *arg)
 {
 	struct flowidn *fld = &flp->u.dn;
-	int err = -EAGAIN;
+	int err = -ERR(EAGAIN);
 	struct dn_fib_table *tbl;
 
 	switch(rule->action) {
@@ -77,16 +77,16 @@ static int dn_fib_rule_action(struct fib_rule *rule, struct flowi *flp,
 		break;
 
 	case FR_ACT_UNREACHABLE:
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto errout;
 
 	case FR_ACT_PROHIBIT:
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto errout;
 
 	case FR_ACT_BLACKHOLE:
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -96,7 +96,7 @@ static int dn_fib_rule_action(struct fib_rule *rule, struct flowi *flp,
 
 	err = tbl->lookup(tbl, fld, (struct dn_fib_res *)arg->result);
 	if (err > 0)
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 errout:
 	return err;
 }
@@ -124,7 +124,7 @@ static int dn_fib_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 				 struct nlattr **tb,
 				 struct netlink_ext_ack *extack)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct dn_fib_rule *r = (struct dn_fib_rule *)rule;
 
 	if (frh->tos) {
@@ -138,7 +138,7 @@ static int dn_fib_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 
 			table = dn_fib_empty_table();
 			if (table == NULL) {
-				err = -ENOBUFS;
+				err = -ERR(ENOBUFS);
 				goto errout;
 			}
 
@@ -216,7 +216,7 @@ static int dn_fib_rule_fill(struct fib_rule *rule, struct sk_buff *skb,
 	return 0;
 
 nla_put_failure:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static void dn_fib_rule_flush_cache(struct fib_rules_ops *ops)

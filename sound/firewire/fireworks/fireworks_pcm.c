@@ -57,7 +57,7 @@ int snd_efw_get_multiplier_mode(unsigned int sampling_rate, unsigned int *mode)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int
@@ -317,7 +317,7 @@ static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&efw->tx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -334,7 +334,7 @@ static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&efw->rx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

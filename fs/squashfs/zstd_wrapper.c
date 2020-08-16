@@ -75,7 +75,7 @@ static int zstd_uncompress(struct squashfs_sb_info *msblk, void *strm,
 
 	if (!stream) {
 		ERROR("Failed to initialize zstd decompressor\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	out_buf.size = PAGE_SIZE;
@@ -89,7 +89,7 @@ static int zstd_uncompress(struct squashfs_sb_info *msblk, void *strm,
 			int avail;
 
 			if (!bio_next_segment(bio, &iter_all)) {
-				error = -EIO;
+				error = -ERR(EIO);
 				break;
 			}
 
@@ -108,7 +108,7 @@ static int zstd_uncompress(struct squashfs_sb_info *msblk, void *strm,
 				/* Shouldn't run out of pages
 				 * before stream is done.
 				 */
-				error = -EIO;
+				error = -ERR(EIO);
 				break;
 			}
 			out_buf.pos = 0;
@@ -124,7 +124,7 @@ static int zstd_uncompress(struct squashfs_sb_info *msblk, void *strm,
 		if (ZSTD_isError(zstd_err)) {
 			ERROR("zstd decompression error: %d\n",
 					(int)ZSTD_getErrorCode(zstd_err));
-			error = -EIO;
+			error = -ERR(EIO);
 			break;
 		}
 	}

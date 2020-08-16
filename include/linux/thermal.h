@@ -353,13 +353,13 @@ static inline int thermal_zone_of_get_sensor_id(struct device_node *tz_np,
 					 struct device_node *sensor_np,
 					 u32 *id)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 static inline struct thermal_zone_device *
 thermal_zone_of_sensor_register(struct device *dev, int id, void *data,
 				const struct thermal_zone_of_device_ops *ops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline
@@ -372,7 +372,7 @@ static inline struct thermal_zone_device *devm_thermal_zone_of_sensor_register(
 		struct device *dev, int id, void *data,
 		const struct thermal_zone_of_device_ops *ops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline
@@ -422,41 +422,41 @@ static inline struct thermal_zone_device *thermal_zone_device_register(
 	struct thermal_zone_device_ops *ops,
 	struct thermal_zone_params *tzp,
 	int passive_delay, int polling_delay)
-{ return ERR_PTR(-ENODEV); }
+{ return ERR_PTR(-ERR(ENODEV)); }
 static inline void thermal_zone_device_unregister(
 	struct thermal_zone_device *tz)
 { }
 static inline struct thermal_cooling_device *
 thermal_cooling_device_register(char *type, void *devdata,
 	const struct thermal_cooling_device_ops *ops)
-{ return ERR_PTR(-ENODEV); }
+{ return ERR_PTR(-ERR(ENODEV)); }
 static inline struct thermal_cooling_device *
 thermal_of_cooling_device_register(struct device_node *np,
 	char *type, void *devdata, const struct thermal_cooling_device_ops *ops)
-{ return ERR_PTR(-ENODEV); }
+{ return ERR_PTR(-ERR(ENODEV)); }
 static inline struct thermal_cooling_device *
 devm_thermal_of_cooling_device_register(struct device *dev,
 				struct device_node *np,
 				char *type, void *devdata,
 				const struct thermal_cooling_device_ops *ops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 static inline void thermal_cooling_device_unregister(
 	struct thermal_cooling_device *cdev)
 { }
 static inline struct thermal_zone_device *thermal_zone_get_zone_by_name(
 		const char *name)
-{ return ERR_PTR(-ENODEV); }
+{ return ERR_PTR(-ERR(ENODEV)); }
 static inline int thermal_zone_get_temp(
 		struct thermal_zone_device *tz, int *temp)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 static inline int thermal_zone_get_slope(
 		struct thermal_zone_device *tz)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 static inline int thermal_zone_get_offset(
 		struct thermal_zone_device *tz)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 static inline void thermal_cdev_update(struct thermal_cooling_device *cdev)
 { }

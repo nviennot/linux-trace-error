@@ -379,13 +379,13 @@ int netlbl_unlhsh_add(struct net *net,
 
 	if (addr_len != sizeof(struct in_addr) &&
 	    addr_len != sizeof(struct in6_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	if (dev_name != NULL) {
 		dev = dev_get_by_name_rcu(net, dev_name);
 		if (dev == NULL) {
-			ret_val = -ENODEV;
+			ret_val = -ERR(ENODEV);
 			goto unlhsh_add_return;
 		}
 		ifindex = dev->ifindex;
@@ -430,7 +430,7 @@ int netlbl_unlhsh_add(struct net *net,
 	}
 #endif /* IPv6 */
 	default:
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 	}
 	if (ret_val == 0)
 		atomic_inc(&netlabel_mgmt_protocount);
@@ -505,7 +505,7 @@ static int netlbl_unlhsh_remove_addr4(struct net *net,
 	}
 
 	if (entry == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kfree_rcu(entry, rcu);
 	return 0;
@@ -566,7 +566,7 @@ static int netlbl_unlhsh_remove_addr6(struct net *net,
 	}
 
 	if (entry == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kfree_rcu(entry, rcu);
 	return 0;
@@ -638,20 +638,20 @@ int netlbl_unlhsh_remove(struct net *net,
 
 	if (addr_len != sizeof(struct in_addr) &&
 	    addr_len != sizeof(struct in6_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	if (dev_name != NULL) {
 		dev = dev_get_by_name_rcu(net, dev_name);
 		if (dev == NULL) {
-			ret_val = -ENODEV;
+			ret_val = -ERR(ENODEV);
 			goto unlhsh_remove_return;
 		}
 		iface = netlbl_unlhsh_search_iface(dev->ifindex);
 	} else
 		iface = rcu_dereference(netlbl_unlhsh_def);
 	if (iface == NULL) {
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 		goto unlhsh_remove_return;
 	}
 	switch (addr_len) {
@@ -668,7 +668,7 @@ int netlbl_unlhsh_remove(struct net *net,
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 	}
 	if (ret_val == 0) {
 		netlbl_unlhsh_condremove_iface(iface);
@@ -773,7 +773,7 @@ static int netlbl_unlabel_addrinfo_get(struct genl_info *info,
 		addr_len = nla_len(info->attrs[NLBL_UNLABEL_A_IPV4ADDR]);
 		if (addr_len != sizeof(struct in_addr) &&
 		    addr_len != nla_len(info->attrs[NLBL_UNLABEL_A_IPV4MASK]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*len = addr_len;
 		*addr = nla_data(info->attrs[NLBL_UNLABEL_A_IPV4ADDR]);
 		*mask = nla_data(info->attrs[NLBL_UNLABEL_A_IPV4MASK]);
@@ -782,14 +782,14 @@ static int netlbl_unlabel_addrinfo_get(struct genl_info *info,
 		addr_len = nla_len(info->attrs[NLBL_UNLABEL_A_IPV6ADDR]);
 		if (addr_len != sizeof(struct in6_addr) &&
 		    addr_len != nla_len(info->attrs[NLBL_UNLABEL_A_IPV6MASK]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*len = addr_len;
 		*addr = nla_data(info->attrs[NLBL_UNLABEL_A_IPV6ADDR]);
 		*mask = nla_data(info->attrs[NLBL_UNLABEL_A_IPV6MASK]);
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -820,7 +820,7 @@ static int netlbl_unlabel_accept(struct sk_buff *skb, struct genl_info *info)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -835,7 +835,7 @@ static int netlbl_unlabel_accept(struct sk_buff *skb, struct genl_info *info)
  */
 static int netlbl_unlabel_list(struct sk_buff *skb, struct genl_info *info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct sk_buff *ans_skb;
 	void *data;
 
@@ -895,7 +895,7 @@ static int netlbl_unlabel_staticadd(struct sk_buff *skb,
 	       !info->attrs[NLBL_UNLABEL_A_IPV4MASK]) ^
 	      (!info->attrs[NLBL_UNLABEL_A_IPV6ADDR] ||
 	       !info->attrs[NLBL_UNLABEL_A_IPV6MASK])))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -945,7 +945,7 @@ static int netlbl_unlabel_staticadddef(struct sk_buff *skb,
 	       !info->attrs[NLBL_UNLABEL_A_IPV4MASK]) ^
 	      (!info->attrs[NLBL_UNLABEL_A_IPV6ADDR] ||
 	       !info->attrs[NLBL_UNLABEL_A_IPV6MASK])))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -992,7 +992,7 @@ static int netlbl_unlabel_staticremove(struct sk_buff *skb,
 	       !info->attrs[NLBL_UNLABEL_A_IPV4MASK]) ^
 	      (!info->attrs[NLBL_UNLABEL_A_IPV6ADDR] ||
 	       !info->attrs[NLBL_UNLABEL_A_IPV6MASK])))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -1032,7 +1032,7 @@ static int netlbl_unlabel_staticremovedef(struct sk_buff *skb,
 	       !info->attrs[NLBL_UNLABEL_A_IPV4MASK]) ^
 	      (!info->attrs[NLBL_UNLABEL_A_IPV6ADDR] ||
 	       !info->attrs[NLBL_UNLABEL_A_IPV6MASK])))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -1085,7 +1085,7 @@ static int netlbl_unlabel_staticlist_gen(u32 cmd,
 	if (iface->ifindex > 0) {
 		dev = dev_get_by_index(&init_net, iface->ifindex);
 		if (!dev) {
-			ret_val = -ENODEV;
+			ret_val = -ERR(ENODEV);
 			goto list_cb_failure;
 		}
 		ret_val = nla_put_string(cb_arg->skb,
@@ -1413,7 +1413,7 @@ int __init netlbl_unlabel_init(u32 size)
 	struct netlbl_unlhsh_tbl *hsh_tbl;
 
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hsh_tbl = kmalloc(sizeof(*hsh_tbl), GFP_KERNEL);
 	if (hsh_tbl == NULL)
@@ -1510,7 +1510,7 @@ int netlbl_unlabel_getattr(const struct sk_buff *skb,
 unlabel_getattr_nolabel:
 	rcu_read_unlock();
 	if (netlabel_unlabel_acceptflg == 0)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 	secattr->type = NETLBL_NLTYPE_UNLABELED;
 	return 0;
 }

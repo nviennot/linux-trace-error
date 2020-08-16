@@ -90,7 +90,7 @@ static int safesetid_security_capable(const struct cred *cred,
 	 */
 	pr_warn("Operation requires CAP_SETUID, which is not available to UID %u for operations besides approved set*uid transitions\n",
 		__kuid_val(cred->uid));
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 /*
@@ -146,7 +146,7 @@ static int safesetid_task_fix_setuid(struct cred *new,
 	 * privileged process from dropping to a lesser-privileged one.
 	 */
 	force_sig(SIGKILL);
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 static struct security_hook_list safesetid_security_hooks[] = {

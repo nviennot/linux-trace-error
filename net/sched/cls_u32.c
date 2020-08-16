@@ -355,7 +355,7 @@ static int u32_init(struct tcf_proto *tp)
 
 	root_ht = kzalloc(sizeof(*root_ht), GFP_KERNEL);
 	if (root_ht == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	root_ht->refcnt++;
 	root_ht->handle = tp_c ? gen_new_htid(tp_c, root_ht) : 0x80000000;
@@ -367,7 +367,7 @@ static int u32_init(struct tcf_proto *tp)
 		tp_c = kzalloc(sizeof(*tp_c), GFP_KERNEL);
 		if (tp_c == NULL) {
 			kfree(root_ht);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		tp_c->ptr = key;
 		INIT_HLIST_NODE(&tp_c->hnode);
@@ -507,7 +507,7 @@ static int u32_replace_hw_hnode(struct tcf_proto *tp, struct tc_u_hnode *h,
 	}
 
 	if (skip_sw && !offloaded)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -560,7 +560,7 @@ static int u32_replace_hw_knode(struct tcf_proto *tp, struct tc_u_knode *n,
 	}
 
 	if (skip_sw && !(n->flags & TCA_CLS_FLAGS_IN_HW))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -613,7 +613,7 @@ static int u32_destroy_hnode(struct tcf_proto *tp, struct tc_u_hnode *ht,
 		}
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static void u32_destroy(struct tcf_proto *tp, bool rtnl_held,
@@ -665,14 +665,14 @@ static int u32_delete(struct tcf_proto *tp, void *arg, bool *last,
 
 	if (ht->is_root) {
 		NL_SET_ERR_MSG_MOD(extack, "Not allowed to delete root node");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ht->refcnt == 1) {
 		u32_destroy_hnode(tp, ht, extack);
 	} else {
 		NL_SET_ERR_MSG_MOD(extack, "Can not delete in-use filter");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 out:
@@ -724,7 +724,7 @@ static int u32_set_parms(struct net *net, struct tcf_proto *tp,
 
 		if (TC_U32_KEY(handle)) {
 			NL_SET_ERR_MSG_MOD(extack, "u32 Link handle must be a hash table");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (handle) {
@@ -732,11 +732,11 @@ static int u32_set_parms(struct net *net, struct tcf_proto *tp,
 
 			if (!ht_down) {
 				NL_SET_ERR_MSG_MOD(extack, "Link hash table not found");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (ht_down->is_root) {
 				NL_SET_ERR_MSG_MOD(extack, "Not linking to root node");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			ht_down->refcnt++;
 		}
@@ -756,7 +756,7 @@ static int u32_set_parms(struct net *net, struct tcf_proto *tp,
 		int ret;
 		ret = tcf_change_indev(net, tb[TCA_U32_INDEV], extack);
 		if (ret < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		n->ifindex = ret;
 	}
 	return 0;
@@ -861,7 +861,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 	if (!opt) {
 		if (handle) {
 			NL_SET_ERR_MSG_MOD(extack, "Filter handle requires options");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else {
 			return 0;
 		}
@@ -876,7 +876,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 		flags = nla_get_u32(tb[TCA_U32_FLAGS]);
 		if (!tc_flags_valid(flags)) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid filter flags");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -886,13 +886,13 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 		if (TC_U32_KEY(n->handle) == 0) {
 			NL_SET_ERR_MSG_MOD(extack, "Key node id cannot be zero");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if ((n->flags ^ flags) &
 		    ~(TCA_CLS_FLAGS_IN_HW | TCA_CLS_FLAGS_NOT_IN_HW)) {
 			NL_SET_ERR_MSG_MOD(extack, "Key node flags do not match passed flags");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		new = u32_init_knode(net, tp, n);
@@ -928,19 +928,19 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 		if (!is_power_of_2(divisor)) {
 			NL_SET_ERR_MSG_MOD(extack, "Divisor is not a power of 2");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (divisor-- > 0x100) {
 			NL_SET_ERR_MSG_MOD(extack, "Exceeded maximum 256 hash buckets");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (TC_U32_KEY(handle)) {
 			NL_SET_ERR_MSG_MOD(extack, "Divisor can only be used on a hash table");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ht = kzalloc(sizeof(*ht) + divisor*sizeof(void *), GFP_KERNEL);
 		if (ht == NULL)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		if (handle == 0) {
 			handle = gen_new_htid(tp->data, ht);
 			if (handle == 0) {
@@ -985,7 +985,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 			ht = u32_lookup_ht(tp->data, TC_U32_HTID(htid));
 			if (!ht) {
 				NL_SET_ERR_MSG_MOD(extack, "Specified hash table not found");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	} else {
@@ -995,13 +995,13 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 	if (ht->divisor < TC_U32_HASH(htid)) {
 		NL_SET_ERR_MSG_MOD(extack, "Specified hash table buckets exceed configured value");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (handle) {
 		if (TC_U32_HTID(handle) && TC_U32_HTID(handle ^ htid)) {
 			NL_SET_ERR_MSG_MOD(extack, "Handle specified hash table address mismatch");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		handle = htid | TC_U32_NODE(handle);
 		err = idr_alloc_u32(&ht->handle_idr, NULL, &handle, handle,
@@ -1013,20 +1013,20 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 
 	if (tb[TCA_U32_SEL] == NULL) {
 		NL_SET_ERR_MSG_MOD(extack, "Selector not specified");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto erridr;
 	}
 
 	s = nla_data(tb[TCA_U32_SEL]);
 	sel_size = struct_size(s, keys, s->nkeys);
 	if (nla_len(tb[TCA_U32_SEL]) < sel_size) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto erridr;
 	}
 
 	n = kzalloc(offsetof(typeof(*n), sel) + sel_size, GFP_KERNEL);
 	if (n == NULL) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto erridr;
 	}
 
@@ -1034,7 +1034,7 @@ static int u32_change(struct net *net, struct sk_buff *in_skb,
 	size = sizeof(struct tc_u32_pcnt) + s->nkeys * sizeof(u64);
 	n->pf = __alloc_percpu(size, __alignof__(struct tc_u32_pcnt));
 	if (!n->pf) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errfree;
 	}
 #endif

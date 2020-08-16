@@ -146,7 +146,7 @@ snd_emu8000_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 
 	emu = rec->hw;
 	if (snd_BUG_ON(!sp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sp->v.size == 0)
 		return 0;
@@ -166,7 +166,7 @@ snd_emu8000_sample_new(struct snd_emux *rec, struct snd_sf_sample *sp,
 	if (sp->block == NULL) {
 		/*snd_printd("EMU8000: out of memory\n");*/
 		/* not ENOMEM (for compatibility) */
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (sp->v.mode_flags & SNDRV_SFNT_SAMPLE_8BITS) {

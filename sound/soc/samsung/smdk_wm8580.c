@@ -32,7 +32,7 @@ static int smdk_hw_params(struct snd_pcm_substream *substream,
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The Fvco for WM8580 PLLs must fall within [90,100]MHz.
@@ -60,7 +60,7 @@ static int smdk_hw_params(struct snd_pcm_substream *substream,
 		rfs = 512;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	pll_out = params_rate(params) * rfs;
 

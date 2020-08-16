@@ -71,14 +71,14 @@ static struct posix_acl *reiserfs_posix_acl_from_disk(const void *value, size_t 
 	if (!value)
 		return NULL;
 	if (size < sizeof(reiserfs_acl_header))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (((reiserfs_acl_header *) value)->a_version !=
 	    cpu_to_le32(REISERFS_ACL_VERSION))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	value = (char *)value + sizeof(reiserfs_acl_header);
 	count = reiserfs_acl_count(size);
 	if (count < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (count == 0)
 		return NULL;
 	acl = posix_acl_alloc(count, GFP_NOFS);
@@ -126,7 +126,7 @@ static struct posix_acl *reiserfs_posix_acl_from_disk(const void *value, size_t 
 
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /*
@@ -179,7 +179,7 @@ static void *reiserfs_posix_acl_to_disk(const struct posix_acl *acl, size_t * si
 
 fail:
 	kfree(ext_acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /*
@@ -256,10 +256,10 @@ __reiserfs_set_acl(struct reiserfs_transaction_handle *th, struct inode *inode,
 	case ACL_TYPE_DEFAULT:
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
+			return acl ? -ERR(EACCES) : 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (acl) {

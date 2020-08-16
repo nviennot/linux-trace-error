@@ -22,7 +22,7 @@ static int tlv320aic23_i2c_probe(struct i2c_client *i2c,
 	struct regmap *regmap;
 
 	if (!i2c_check_functionality(i2c->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap = devm_regmap_init_i2c(i2c, &tlv320aic23_regmap);
 	return tlv320aic23_probe(&i2c->dev, regmap);

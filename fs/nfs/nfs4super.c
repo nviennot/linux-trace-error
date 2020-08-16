@@ -109,7 +109,7 @@ static int nfs_referral_loop_protect(void)
 	p = nfs_find_referral_count();
 	if (p != NULL) {
 		if (p->referral_count >= NFS_MAX_NESTED_REFERRALS)
-			ret = -ELOOP;
+			ret = -ERR(ELOOP);
 		else
 			p->referral_count++;
 	} else {

@@ -143,20 +143,20 @@ static int snd_open(struct inode *inode, struct file *file)
 	int err = 0;
 
 	if (minor >= ARRAY_SIZE(snd_minors))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	mutex_lock(&sound_mutex);
 	mptr = snd_minors[minor];
 	if (mptr == NULL) {
 		mptr = autoload_device(minor);
 		if (!mptr) {
 			mutex_unlock(&sound_mutex);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	new_fops = fops_get(mptr->f_ops);
 	mutex_unlock(&sound_mutex);
 	if (!new_fops)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	replace_fops(file, new_fops);
 
 	if (file->f_op->open)
@@ -192,7 +192,7 @@ static int snd_find_free_minor(int type, struct snd_card *card, int dev)
 		if (!snd_minors[minor])
 			return minor;
 	}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 #else
 static int snd_find_free_minor(int type, struct snd_card *card, int dev)
@@ -206,7 +206,7 @@ static int snd_find_free_minor(int type, struct snd_card *card, int dev)
 		break;
 	case SNDRV_DEVICE_TYPE_CONTROL:
 		if (snd_BUG_ON(!card))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		minor = SNDRV_MINOR(card->number, type);
 		break;
 	case SNDRV_DEVICE_TYPE_HWDEP:
@@ -215,16 +215,16 @@ static int snd_find_free_minor(int type, struct snd_card *card, int dev)
 	case SNDRV_DEVICE_TYPE_PCM_CAPTURE:
 	case SNDRV_DEVICE_TYPE_COMPRESS:
 		if (snd_BUG_ON(!card))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		minor = SNDRV_MINOR(card->number, type + dev);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (snd_BUG_ON(minor < 0 || minor >= SNDRV_OS_MINORS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_minors[minor])
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return minor;
 }
 #endif
@@ -252,7 +252,7 @@ int snd_register_device(int type, struct snd_card *card, int dev,
 	struct snd_minor *preg;
 
 	if (snd_BUG_ON(!device))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	preg = kmalloc(sizeof *preg, GFP_KERNEL);
 	if (preg == NULL)
@@ -311,7 +311,7 @@ int snd_unregister_device(struct device *dev)
 	}
 	mutex_unlock(&sound_mutex);
 	if (minor >= ARRAY_SIZE(snd_minors))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return 0;
 }
 EXPORT_SYMBOL(snd_unregister_device);
@@ -389,7 +389,7 @@ static int __init alsa_sound_init(void)
 	snd_ecards_limit = cards_limit;
 	if (register_chrdev(major, "alsa", &snd_fops)) {
 		pr_err("ALSA core: unable to register native major device number %d\n", major);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (snd_info_init() < 0) {
 		unregister_chrdev(major, "alsa");

@@ -30,7 +30,7 @@ void isa_unregister_driver(struct isa_driver *);
 #else
 static inline int isa_register_driver(struct isa_driver *d, unsigned int i)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void isa_unregister_driver(struct isa_driver *d)

@@ -190,7 +190,7 @@ static int __rpc_clnt_handle_event(struct rpc_clnt *clnt, unsigned long event,
 	case RPC_PIPEFS_MOUNT:
 		dentry = rpc_setup_pipedir_sb(sb, clnt);
 		if (!dentry)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		if (IS_ERR(dentry))
 			return PTR_ERR(dentry);
 		break;
@@ -199,7 +199,7 @@ static int __rpc_clnt_handle_event(struct rpc_clnt *clnt, unsigned long event,
 		break;
 	default:
 		printk(KERN_ERR "%s: unknown event: %ld\n", __func__, event);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 	return 0;
 }
@@ -374,7 +374,7 @@ static struct rpc_clnt * rpc_new_client(const struct rpc_create_args *args,
 	if (err)
 		goto out_no_rpciod;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (args->version >= program->nrvers)
 		goto out_err;
 	version = program->version[args->version];
@@ -572,7 +572,7 @@ struct rpc_clnt *rpc_create(struct rpc_create_args *args)
 		default:
 			/* caller wants default server name, but
 			 * address family isn't recognized. */
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		xprtargs.servername = servername;
 	}
@@ -785,7 +785,7 @@ int rpc_clnt_xprt_iter_init(struct rpc_clnt *clnt, struct rpc_xprt_iter *xpi)
 	xps = xprt_switch_get(rcu_dereference(clnt->cl_xpi.xpi_xpswitch));
 	rcu_read_unlock();
 	if (xps == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	xprt_iter_init_listall(xpi, xps);
 	xprt_switch_put(xps);
 	return 0;
@@ -1167,7 +1167,7 @@ int rpc_call_sync(struct rpc_clnt *clnt, const struct rpc_message *msg, int flag
 	if (flags & RPC_TASK_ASYNC) {
 		rpc_release_calldata(task_setup_data.callback_ops,
 			task_setup_data.callback_data);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	task = rpc_run_task(&task_setup_data);
@@ -1364,7 +1364,7 @@ static int rpc_sockname(struct net *net, struct sockaddr *sap, size_t salen,
 				sizeof(rpc_in6addr_loopback));
 		break;
 	default:
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		goto out;
 	}
 	if (err < 0) {
@@ -1410,20 +1410,20 @@ static int rpc_anyaddr(int family, struct sockaddr *buf, size_t buflen)
 	switch (family) {
 	case AF_INET:
 		if (buflen < sizeof(rpc_inaddr_loopback))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(buf, &rpc_inaddr_loopback,
 				sizeof(rpc_inaddr_loopback));
 		break;
 	case AF_INET6:
 		if (buflen < sizeof(rpc_in6addr_loopback))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(buf, &rpc_in6addr_loopback,
 				sizeof(rpc_in6addr_loopback));
 		break;
 	default:
 		dprintk("RPC:       %s: address family not supported\n",
 			__func__);
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 	dprintk("RPC:       %s: succeeded\n", __func__);
 	return 0;
@@ -1764,7 +1764,7 @@ call_refreshresult(struct rpc_task *task)
 		rpc_delay(task, 3*HZ);
 		/* fall through */
 	case -EAGAIN:
-		status = -EACCES;
+		status = -ERR(EACCES);
 		/* fall through */
 	case -EKEYEXPIRED:
 		if (!task->tk_cred_retry)
@@ -1976,7 +1976,7 @@ static void
 call_bind_status(struct rpc_task *task)
 {
 	struct rpc_xprt *xprt = task->tk_rqstp->rq_xprt;
-	int status = -EIO;
+	int status = -ERR(EIO);
 
 	if (rpc_task_transmitted(task)) {
 		rpc_task_handle_transmitted(task);
@@ -2002,7 +2002,7 @@ call_bind_status(struct rpc_task *task)
 				"unavailable\n", task->tk_pid);
 		/* fail immediately if this is an RPC ping */
 		if (task->tk_msg.rpc_proc->p_proc == 0) {
-			status = -EOPNOTSUPP;
+			status = -ERR(EOPNOTSUPP);
 			break;
 		}
 		if (task->tk_rebind_retry == 0)
@@ -2186,7 +2186,7 @@ call_transmit(struct rpc_task *task)
 	task->tk_status = 0;
 	if (test_bit(RPC_TASK_NEED_XMIT, &task->tk_runstate)) {
 		if (!xprt_connected(task->tk_xprt)) {
-			task->tk_status = -ENOTCONN;
+			task->tk_status = -ERR(ENOTCONN);
 			return;
 		}
 		xprt_transmit(task);
@@ -2518,7 +2518,7 @@ call_decode(struct rpc_task *task)
 	 * Did we ever call xprt_complete_rqst()? If not, we should assume
 	 * the message is incomplete.
 	 */
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (!req->rq_reply_bytes_recvd)
 		goto out;
 
@@ -2565,7 +2565,7 @@ rpc_encode_header(struct rpc_task *task, struct xdr_stream *xdr)
 	__be32 *p;
 	int error;
 
-	error = -EMSGSIZE;
+	error = -ERR(EMSGSIZE);
 	p = xdr_reserve_space(xdr, RPC_CALLHDRSIZE << 2);
 	if (!p)
 		goto out_fail;
@@ -2622,20 +2622,20 @@ rpc_decode_header(struct rpc_task *task, struct xdr_stream *xdr)
 		return 0;
 	case rpc_prog_unavail:
 		trace_rpc__prog_unavail(task);
-		error = -EPFNOSUPPORT;
+		error = -ERR(EPFNOSUPPORT);
 		goto out_err;
 	case rpc_prog_mismatch:
 		trace_rpc__prog_mismatch(task);
-		error = -EPROTONOSUPPORT;
+		error = -ERR(EPROTONOSUPPORT);
 		goto out_err;
 	case rpc_proc_unavail:
 		trace_rpc__proc_unavail(task);
-		error = -EOPNOTSUPP;
+		error = -ERR(EOPNOTSUPP);
 		goto out_err;
 	case rpc_garbage_args:
 	case rpc_system_err:
 		trace_rpc__garbage_args(task);
-		error = -EIO;
+		error = -ERR(EIO);
 		break;
 	default:
 		goto out_unparsable;
@@ -2646,7 +2646,7 @@ out_garbage:
 	if (task->tk_garb_retry) {
 		task->tk_garb_retry--;
 		task->tk_action = call_encode;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 out_err:
 	rpc_call_rpcerror(task, error);
@@ -2654,7 +2654,7 @@ out_err:
 
 out_unparsable:
 	trace_rpc__unparsable(task);
-	error = -EIO;
+	error = -ERR(EIO);
 	goto out_garbage;
 
 out_verifier:
@@ -2662,7 +2662,7 @@ out_verifier:
 	goto out_garbage;
 
 out_msg_denied:
-	error = -EACCES;
+	error = -ERR(EACCES);
 	p = xdr_inline_decode(xdr, sizeof(*p));
 	if (!p)
 		goto out_unparsable;
@@ -2671,7 +2671,7 @@ out_msg_denied:
 		break;
 	case rpc_mismatch:
 		trace_rpc__mismatch(task);
-		error = -EPROTONOSUPPORT;
+		error = -ERR(EPROTONOSUPPORT);
 		goto out_err;
 	default:
 		goto out_unparsable;
@@ -2689,7 +2689,7 @@ out_msg_denied:
 			break;
 		task->tk_cred_retry--;
 		trace_rpc__stale_creds(task);
-		return -EKEYREJECTED;
+		return -ERR(EKEYREJECTED);
 	case rpc_autherr_badcred:
 	case rpc_autherr_badverf:
 		/* possibly garbled cred/verf? */
@@ -2698,7 +2698,7 @@ out_msg_denied:
 		task->tk_garb_retry--;
 		trace_rpc__bad_creds(task);
 		task->tk_action = call_encode;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case rpc_autherr_tooweak:
 		trace_rpc__auth_tooweak(task);
 		pr_warn("RPC: server %s requires stronger authentication.\n",
@@ -2850,7 +2850,7 @@ int rpc_clnt_setup_test_and_add_xprt(struct rpc_clnt *clnt,
 {
 	struct rpc_task *task;
 	struct rpc_add_xprt_test *xtest = (struct rpc_add_xprt_test *)data;
-	int status = -EADDRINUSE;
+	int status = -ERR(EADDRINUSE);
 
 	xprt = xprt_get(xprt);
 	xprt_switch_get(xps);
@@ -2921,7 +2921,7 @@ int rpc_clnt_add_xprt(struct rpc_clnt *clnt,
 	if (xps == NULL || xprt == NULL) {
 		rcu_read_unlock();
 		xprt_switch_put(xps);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	resvport = xprt->resvport;
 	reuseport = xprt->reuseport;

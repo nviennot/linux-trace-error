@@ -239,7 +239,7 @@ static int tpa6130a2_probe(struct i2c_client *client,
 	} else {
 		dev_err(dev, "Platform data not set\n");
 		dump_stack();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	i2c_set_clientdata(client, data);

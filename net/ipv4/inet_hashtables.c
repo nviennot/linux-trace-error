@@ -139,7 +139,7 @@ int __inet_inherit_port(const struct sock *sk, struct sock *child)
 	tb = inet_csk(sk)->icsk_bind_hash;
 	if (unlikely(!tb)) {
 		spin_unlock(&head->lock);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (tb->port != port) {
 		l3mdev = inet_sk_bound_l3mdev(sk);
@@ -455,7 +455,7 @@ static int __inet_check_established(struct inet_timewait_death_row *death_row,
 
 not_unique:
 	spin_unlock(lock);
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 }
 
 static u32 inet_sk_port_offset(const struct sock *sk)
@@ -708,7 +708,7 @@ next_port:
 	if ((offset & 1) && remaining > 1)
 		goto other_parity_scan;
 
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 
 ok:
 	hint += i + 2;

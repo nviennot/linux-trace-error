@@ -783,7 +783,7 @@ static int get_dist_table(struct Qdisc *sch, struct disttable **tbl,
 	int i;
 
 	if (!n || n > NETEM_DIST_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	d = kvmalloc(sizeof(struct disttable) + n * sizeof(s16), GFP_KERNEL);
 	if (!d)
@@ -874,7 +874,7 @@ static int get_loss_clg(struct netem_sched_data *q, const struct nlattr *attr)
 
 			if (nla_len(la) < sizeof(struct tc_netem_gimodel)) {
 				pr_info("netem: incorrect gi model size\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			q->loss_model = CLG_4_STATES;
@@ -893,7 +893,7 @@ static int get_loss_clg(struct netem_sched_data *q, const struct nlattr *attr)
 
 			if (nla_len(la) < sizeof(struct tc_netem_gemodel)) {
 				pr_info("netem: incorrect ge model size\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			q->loss_model = CLG_GILB_ELL;
@@ -907,7 +907,7 @@ static int get_loss_clg(struct netem_sched_data *q, const struct nlattr *attr)
 
 		default:
 			pr_info("netem: unknown loss type %u\n", type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -934,7 +934,7 @@ static int parse_attr(struct nlattr *tb[], int maxtype, struct nlattr *nla,
 
 	if (nested_len < 0) {
 		pr_info("netem: invalid attributes len %d\n", nested_len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nested_len >= nla_attr_size(0))
@@ -958,7 +958,7 @@ static int netem_change(struct Qdisc *sch, struct nlattr *opt,
 	int ret;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	qopt = nla_data(opt);
 	ret = parse_attr(tb, TCA_NETEM_MAX, opt, netem_policy, sizeof(*qopt));
@@ -1058,7 +1058,7 @@ static int netem_init(struct Qdisc *sch, struct nlattr *opt,
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	q->loss_model = CLG_RANDOM;
 	ret = netem_change(sch, opt, extack);
@@ -1216,7 +1216,7 @@ static int netem_dump_class(struct Qdisc *sch, unsigned long cl,
 	struct netem_sched_data *q = qdisc_priv(sch);
 
 	if (cl != 1 || !q->qdisc) 	/* only one class */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	tcm->tcm_handle |= TC_H_MIN(1);
 	tcm->tcm_info = q->qdisc->handle;

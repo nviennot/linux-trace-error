@@ -194,7 +194,7 @@ int dlm_launch_recovery_thread(struct dlm_ctxt *dlm)
 	if (IS_ERR(dlm->dlm_reco_thread_task)) {
 		mlog_errno(PTR_ERR(dlm->dlm_reco_thread_task));
 		dlm->dlm_reco_thread_task = NULL;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -537,7 +537,7 @@ master_here:
 	dlm_end_recovery(dlm);
 
 	/* continue and look for another dead node */
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int dlm_remaster_locks(struct dlm_ctxt *dlm, u8 dead_node)
@@ -828,7 +828,7 @@ int dlm_request_all_locks_handler(struct o2net_msg *msg, u32 len, void *data,
 	struct dlm_work_item *item = NULL;
 
 	if (!dlm_grab(dlm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (lr->dead_node != dlm->reco.dead_node) {
 		mlog(ML_ERROR, "%s: node %u sent dead_node=%u, but local "
@@ -981,10 +981,10 @@ int dlm_reco_data_done_handler(struct o2net_msg *msg, u32 len, void *data,
 	struct dlm_ctxt *dlm = data;
 	struct dlm_reco_data_done *done = (struct dlm_reco_data_done *)msg->buf;
 	struct dlm_reco_node_data *ndata = NULL;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!dlm_grab(dlm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mlog(0, "got DATA DONE: dead_node=%u, reco.dead_node=%u, "
 	     "node_idx=%u, this node=%u\n", done->dead_node,
@@ -1366,7 +1366,7 @@ int dlm_mig_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
 	unsigned int hash;
 
 	if (!dlm_grab(dlm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!dlm_joined(dlm)) {
 		mlog(ML_ERROR, "Domain %s not joined! "
@@ -1374,7 +1374,7 @@ int dlm_mig_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
 			  dlm->name, mres->lockname_len,
 			  mres->lockname, mres->master);
 		dlm_put(dlm);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	BUG_ON(!(mres->flags & (DLM_MRES_RECOVERY|DLM_MRES_MIGRATION)));
@@ -1413,7 +1413,7 @@ int dlm_mig_lockres_handler(struct o2net_msg *msg, u32 len, void *data,
 				"lockres %.*s, but marked as dropping "
 				" ref!\n", dlm->name,
 				mres->lockname_len, mres->lockname);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			spin_unlock(&res->spinlock);
 			spin_unlock(&dlm->spinlock);
 			dlm_lockres_put(res);
@@ -2555,7 +2555,7 @@ static int dlm_pick_recovery_master(struct dlm_ctxt *dlm)
 {
 	enum dlm_status ret;
 	struct dlm_lockstatus lksb;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 
 	mlog(0, "starting recovery of %s at %lu, dead=%u, this=%u\n",
 	     dlm->name, jiffies, dlm->reco.dead_node, dlm->node_num);
@@ -2579,14 +2579,14 @@ again:
 			mlog(0, "%s: got reco EX lock, but %u will "
 			     "do the recovery\n", dlm->name,
 			     dlm->reco.new_master);
-			status = -EEXIST;
+			status = -ERR(EEXIST);
 		} else {
 			status = 0;
 
 			/* see if recovery was already finished elsewhere */
 			spin_lock(&dlm->spinlock);
 			if (dlm->reco.dead_node == O2NM_INVALID_NODE_NUM) {
-				status = -EINVAL;
+				status = -ERR(EINVAL);
 				mlog(0, "%s: got reco EX lock, but "
 				     "node got recovered already\n", dlm->name);
 				if (dlm->reco.new_master != O2NM_INVALID_NODE_NUM) {
@@ -2649,7 +2649,7 @@ again:
 		/* another node has informed this one that it is reco master */
 		mlog(0, "%s: reco master %u is ready to recover %u\n",
 		     dlm->name, dlm->reco.new_master, dlm->reco.dead_node);
-		status = -EEXIST;
+		status = -ERR(EEXIST);
 	} else if (ret == DLM_RECOVERING) {
 		mlog(0, "dlm=%s dlmlock says master node died (this=%u)\n",
 		     dlm->name, dlm->node_num);
@@ -2707,7 +2707,7 @@ static int dlm_send_begin_reco_message(struct dlm_ctxt *dlm, u8 dead_node)
 			continue;
 		}
 retry:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog(0, "attempting to send begin reco msg to %d\n",
 			  nodenum);
 		ret = o2net_send_message(DLM_BEGIN_RECO_MSG, dlm->key,
@@ -2780,7 +2780,7 @@ int dlm_begin_reco_handler(struct o2net_msg *msg, u32 len, void *data,
 		     dlm->reco.dead_node, dlm->reco.new_master);
 		spin_unlock(&dlm->spinlock);
 		dlm_put(dlm);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	spin_unlock(&dlm->spinlock);
 

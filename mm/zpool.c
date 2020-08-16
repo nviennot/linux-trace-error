@@ -64,7 +64,7 @@ int zpool_unregister_driver(struct zpool_driver *driver)
 	refcount = atomic_read(&driver->refcount);
 	WARN_ON(refcount < 0);
 	if (refcount > 0)
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else
 		list_del(&driver->list);
 	spin_unlock(&drivers_lock);
@@ -316,7 +316,7 @@ int zpool_shrink(struct zpool *zpool, unsigned int pages,
 			unsigned int *reclaimed)
 {
 	return zpool->driver->shrink ?
-	       zpool->driver->shrink(zpool->pool, pages, reclaimed) : -EINVAL;
+	       zpool->driver->shrink(zpool->pool, pages, reclaimed) : -ERR(EINVAL);
 }
 
 /**

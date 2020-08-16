@@ -139,7 +139,7 @@ not_in_zone:
 	pr_err("CMA area %s could not be activated\n", cma->name);
 	bitmap_free(cma->bitmap);
 	cma->count = 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __init cma_init_reserved_areas(void)
@@ -180,11 +180,11 @@ int __init cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
 	/* Sanity checks */
 	if (cma_area_count == ARRAY_SIZE(cma_areas)) {
 		pr_err("Not enough slots for CMA reserved regions!\n");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (!size || !memblock_is_region_reserved(base, size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ensure minimal alignment required by mm core */
 	alignment = PAGE_SIZE <<
@@ -192,10 +192,10 @@ int __init cma_init_reserved_mem(phys_addr_t base, phys_addr_t size,
 
 	/* alignment should be aligned with order_per_bit */
 	if (!IS_ALIGNED(alignment >> PAGE_SHIFT, 1 << order_per_bit))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ALIGN(base, alignment) != base || ALIGN(size, alignment) != size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Each reserved area must be initialised later, when more kernel
@@ -261,14 +261,14 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 
 	if (cma_area_count == ARRAY_SIZE(cma_areas)) {
 		pr_err("Not enough slots for CMA reserved regions!\n");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (!size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (alignment && !is_power_of_2(alignment))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Sanitise input arguments.
@@ -279,7 +279,7 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 	alignment = max(alignment,  (phys_addr_t)PAGE_SIZE <<
 			  max_t(unsigned long, MAX_ORDER - 1, pageblock_order));
 	if (fixed && base & (alignment - 1)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		pr_err("Region at %pa must be aligned to %pa bytes\n",
 			&base, &alignment);
 		goto err;
@@ -293,14 +293,14 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 
 	/* size should be aligned with order_per_bit */
 	if (!IS_ALIGNED(size >> PAGE_SHIFT, 1 << order_per_bit))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If allocating at a fixed base the request region must not cross the
 	 * low/high memory boundary.
 	 */
 	if (fixed && base < highmem_start && base + size > highmem_start) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		pr_err("Region at %pa defined on low/high memory boundary (%pa)\n",
 			&base, &highmem_start);
 		goto err;
@@ -315,7 +315,7 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 		limit = memblock_end;
 
 	if (base + size > limit) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		pr_err("Size (%pa) of region at %pa exceeds limit (%pa)\n",
 			&size, &base, &limit);
 		goto err;
@@ -325,7 +325,7 @@ int __init cma_declare_contiguous_nid(phys_addr_t base,
 	if (fixed) {
 		if (memblock_is_region_reserved(base, size) ||
 		    memblock_reserve(base, size) < 0) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto err;
 		}
 	} else {

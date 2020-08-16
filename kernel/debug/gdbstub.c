@@ -385,7 +385,7 @@ static int write_mem_msg(int binary)
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void error_packet(char *pkt, int error)

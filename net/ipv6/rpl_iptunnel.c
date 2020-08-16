@@ -76,7 +76,7 @@ static int rpl_build_state(struct net *net, struct nlattr *nla,
 	int err, srh_len;
 
 	if (family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested(tb, RPL_IPTUNNEL_MAX, nla,
 			       rpl_iptunnel_policy, extack);
@@ -84,17 +84,17 @@ static int rpl_build_state(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[RPL_IPTUNNEL_SRH])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	srh = nla_data(tb[RPL_IPTUNNEL_SRH]);
 	srh_len = nla_len(tb[RPL_IPTUNNEL_SRH]);
 
 	if (srh_len < sizeof(*srh))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* verify that SRH is consistent */
 	if (!rpl_validate_srh(net, srh, srh_len - sizeof(*srh)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newts = lwtunnel_state_alloc(srh_len + sizeof(*rlwt));
 	if (!newts)
@@ -194,7 +194,7 @@ static int rpl_do_srh(struct sk_buff *skb, const struct rpl_lwt *rlwt)
 	int err = 0;
 
 	if (skb->protocol != htons(ETH_P_IPV6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tinfo = rpl_encap_lwtunnel(dst->lwtstate);
 
@@ -311,7 +311,7 @@ static int nla_put_rpl_srh(struct sk_buff *skb, int attrtype,
 
 	nla = nla_reserve(skb, attrtype, len);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	data = nla_data(nla);
 	memcpy(data, tuninfo->srh, len);
@@ -325,7 +325,7 @@ static int rpl_fill_encap_info(struct sk_buff *skb,
 	struct rpl_iptunnel_encap *tuninfo = rpl_encap_lwtunnel(lwtstate);
 
 	if (nla_put_rpl_srh(skb, RPL_IPTUNNEL_SRH, tuninfo))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

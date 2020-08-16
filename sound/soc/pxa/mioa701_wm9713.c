@@ -173,7 +173,7 @@ static int mioa701_wm9713_probe(struct platform_device *pdev)
 	int rc;
 
 	if (!machine_is_mioa701())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mioa701.dev = &pdev->dev;
 	rc = devm_snd_soc_register_card(&pdev->dev, &mioa701);

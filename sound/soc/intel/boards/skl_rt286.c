@@ -506,7 +506,7 @@ static int skylake_card_late_probe(struct snd_soc_card *card)
 	}
 
 	if (!component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return hdac_hdmi_jack_port_init(component, &card->dapm);
 }

@@ -524,7 +524,7 @@ static inline const struct nand_sdr_timings *
 nand_get_sdr_timings(const struct nand_data_interface *conf)
 {
 	if (conf->type != NAND_SDR_IFACE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return &conf->timings.sdr;
 }

@@ -704,7 +704,7 @@ static int ra_data_block(struct inode *inode, pgoff_t index)
 	f2fs_put_dnode(&dn);
 
 	if (!__is_valid_data_blkaddr(dn.data_blkaddr)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto put_page;
 	}
 	if (unlikely(!f2fs_is_valid_blkaddr(sbi, dn.data_blkaddr,
@@ -782,20 +782,20 @@ static int move_data_block(struct inode *inode, block_t bidx,
 		return -ENOMEM;
 
 	if (!check_valid_map(F2FS_I_SB(inode), segno, off)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (f2fs_is_atomic_file(inode)) {
 		F2FS_I(inode)->i_gc_failures[GC_FAILURE_ATOMIC]++;
 		F2FS_I_SB(inode)->skipped_atomic_files[gc_type]++;
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
 	if (f2fs_is_pinned_file(inode)) {
 		f2fs_pin_file_control(inode, true);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -806,7 +806,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 
 	if (unlikely(dn.data_blkaddr == NULL_ADDR)) {
 		ClearPageUptodate(page);
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto put_out;
 	}
 
@@ -852,7 +852,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 		lock_page(mpage);
 		if (unlikely(mpage->mapping != META_MAPPING(fio.sbi) ||
 						!PageUptodate(mpage))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			f2fs_put_page(mpage, 1);
 			goto up_out;
 		}
@@ -892,7 +892,7 @@ static int move_data_block(struct inode *inode, block_t bidx,
 	fio.new_blkaddr = newaddr;
 	f2fs_submit_page_write(&fio);
 	if (fio.retry) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		if (PageWriteback(fio.encrypted_page))
 			end_page_writeback(fio.encrypted_page);
 		goto put_page_out;
@@ -931,26 +931,26 @@ static int move_data_page(struct inode *inode, block_t bidx, int gc_type,
 		return PTR_ERR(page);
 
 	if (!check_valid_map(F2FS_I_SB(inode), segno, off)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (f2fs_is_atomic_file(inode)) {
 		F2FS_I(inode)->i_gc_failures[GC_FAILURE_ATOMIC]++;
 		F2FS_I_SB(inode)->skipped_atomic_files[gc_type]++;
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 	if (f2fs_is_pinned_file(inode)) {
 		if (gc_type == FG_GC)
 			f2fs_pin_file_control(inode, true);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
 	if (gc_type == BG_GC) {
 		if (PageWriteback(page)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 		set_page_dirty(page);
@@ -1304,11 +1304,11 @@ int f2fs_gc(struct f2fs_sb_info *sbi, bool sync,
 	first_skipped = last_skipped;
 gc_more:
 	if (unlikely(!(sbi->sb->s_flags & SB_ACTIVE))) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto stop;
 	}
 	if (unlikely(f2fs_cp_error(sbi))) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto stop;
 	}
 
@@ -1330,11 +1330,11 @@ gc_more:
 
 	/* f2fs_balance_fs doesn't need to do BG_GC in critical path. */
 	if (gc_type == BG_GC && !background) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto stop;
 	}
 	if (!__get_victim(sbi, &segno, gc_type)) {
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 		goto stop;
 	}
 
@@ -1392,7 +1392,7 @@ stop:
 	put_gc_inode(&gc_list);
 
 	if (sync && !ret)
-		ret = sec_freed ? 0 : -EAGAIN;
+		ret = sec_freed ? 0 : -ERR(EAGAIN);
 	return ret;
 }
 
@@ -1447,11 +1447,11 @@ static int free_segment_range(struct f2fs_sb_info *sbi,
 		put_gc_inode(&gc_list);
 
 		if (!gc_only && get_valid_blocks(sbi, segno, true)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto out;
 		}
 	}
@@ -1544,7 +1544,7 @@ int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
 
 	old_block_count = le64_to_cpu(F2FS_RAW_SUPER(sbi)->block_count);
 	if (block_count > old_block_count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (f2fs_is_multi_device(sbi)) {
 		int last_dev = sbi->s_ndevs - 1;
@@ -1552,13 +1552,13 @@ int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
 
 		if (block_count + last_segs * sbi->blocks_per_seg <=
 								old_block_count)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* new fs size should align to section size */
 	div_u64_rem(block_count, BLKS_PER_SEC(sbi), &rem);
 	if (rem)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (block_count == old_block_count)
 		return 0;
@@ -1570,7 +1570,7 @@ int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
 
 	if (test_opt(sbi, DISABLE_CHECKPOINT)) {
 		f2fs_err(sbi, "Checkpoint should be enabled.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	shrunk_blocks = old_block_count - block_count;
@@ -1578,7 +1578,7 @@ int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
 
 	/* stop other GC */
 	if (!down_write_trylock(&sbi->gc_lock))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/* stop CP to protect MAIN_SEC in free_segment_range */
 	f2fs_lock_op(sbi);
@@ -1598,7 +1598,7 @@ int f2fs_resize_fs(struct f2fs_sb_info *sbi, __u64 block_count)
 	if (shrunk_blocks + valid_user_blocks(sbi) +
 		sbi->current_reserved_blocks + sbi->unusable_block_count +
 		F2FS_OPTION(sbi).root_reserved_blocks > sbi->user_block_count)
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 	else
 		sbi->user_block_count -= shrunk_blocks;
 	spin_unlock(&sbi->stat_lock);

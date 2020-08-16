@@ -183,7 +183,7 @@ int snd_emu10k1_i2c_write(struct snd_emu10k1 *emu,
 
 	if ((reg > 0x7f) || (value > 0x1ff)) {
 		dev_err(emu->card->dev, "i2c_write: invalid values.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* This function is not re-entrant, so protect against it. */
@@ -226,7 +226,7 @@ int snd_emu10k1_i2c_write(struct snd_emu10k1 *emu,
 		dev_err(emu->card->dev, "status=0x%x, reg=%d, value=%d\n",
 			status, reg, value);
 		/* dump_stack(); */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
     
 	spin_unlock(&emu->i2c_lock);

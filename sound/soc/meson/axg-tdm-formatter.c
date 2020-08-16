@@ -60,7 +60,7 @@ int axg_tdm_formatter_set_channel_masks(struct regmap *map,
 	 */
 	if (WARN_ON(ch != 0)) {
 		pr_err("channel mask error\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -186,7 +186,7 @@ static int axg_tdm_formatter_power_up(struct axg_tdm_formatter *formatter,
 	 * It should not happen, ever !
 	 */
 	if (WARN_ON(!ts))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Clock our device */
 	ret = clk_prepare_enable(formatter->pclk);
@@ -241,7 +241,7 @@ int axg_tdm_formatter_event(struct snd_soc_dapm_widget *w,
 
 	default:
 		dev_err(c->dev, "Unexpected event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -259,7 +259,7 @@ int axg_tdm_formatter_probe(struct platform_device *pdev)
 	drv = of_device_get_match_data(dev);
 	if (!drv) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	formatter = devm_kzalloc(dev, sizeof(*formatter), GFP_KERNEL);

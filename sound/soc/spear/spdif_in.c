@@ -99,7 +99,7 @@ static int spdif_in_hw_params(struct snd_pcm_substream *substream,
 	u32 format;
 
 	if (substream->stream != SNDRV_PCM_STREAM_CAPTURE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	format = params_format(params);
 	host->saved_params.format = format;
@@ -115,7 +115,7 @@ static int spdif_in_trigger(struct snd_pcm_substream *substream, int cmd,
 	int ret = 0;
 
 	if (substream->stream != SNDRV_PCM_STREAM_CAPTURE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -145,7 +145,7 @@ static int spdif_in_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -212,7 +212,7 @@ static int spdif_in_probe(struct platform_device *pdev)
 
 	res_fifo = platform_get_resource(pdev, IORESOURCE_IO, 0);
 	if (!res_fifo)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	host = devm_kzalloc(&pdev->dev, sizeof(*host), GFP_KERNEL);
 	if (!host)
@@ -232,7 +232,7 @@ static int spdif_in_probe(struct platform_device *pdev)
 	pdata = dev_get_platdata(&pdev->dev);
 
 	if (!pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	host->dma_params.data = pdata->dma_params;
 	host->dma_params.addr = res_fifo->start;

@@ -25,18 +25,18 @@ struct bpf_map *bpf_map_meta_alloc(int inner_map_ufd)
 	    inner_map->map_type == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE ||
 	    inner_map->map_type == BPF_MAP_TYPE_STRUCT_OPS) {
 		fdput(f);
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 	}
 
 	/* Does not support >1 level map-in-map */
 	if (inner_map->inner_map_meta) {
 		fdput(f);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (map_value_has_spin_lock(inner_map)) {
 		fdput(f);
-		return ERR_PTR(-ENOTSUPP);
+		return ERR_PTR(-ERR(ENOTSUPP));
 	}
 
 	inner_map_meta_size = sizeof(*inner_map_meta);
@@ -100,7 +100,7 @@ void *bpf_map_fd_get_ptr(struct bpf_map *map,
 	if (bpf_map_meta_equal(map->inner_map_meta, inner_map))
 		bpf_map_inc(inner_map);
 	else
-		inner_map = ERR_PTR(-EINVAL);
+		inner_map = ERR_PTR(-ERR(EINVAL));
 
 	fdput(f);
 	return inner_map;

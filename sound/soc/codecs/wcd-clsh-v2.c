@@ -532,7 +532,7 @@ int wcd_clsh_ctrl_set_state(struct wcd_clsh_ctrl *ctrl,
 
 	if (!wcd_clsh_is_state_valid(nstate)) {
 		dev_err(comp->dev, "Class-H not a valid new state:\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clsh_event) {

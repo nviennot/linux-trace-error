@@ -33,25 +33,25 @@ static int __init check(struct debug_el *ela, struct debug_el *elb)
 {
 	if (ela->serial >= TEST_LIST_LEN) {
 		pr_err("error: incorrect serial %d\n", ela->serial);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (elb->serial >= TEST_LIST_LEN) {
 		pr_err("error: incorrect serial %d\n", elb->serial);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (elts[ela->serial] != ela || elts[elb->serial] != elb) {
 		pr_err("error: phantom element\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ela->poison1 != TEST_POISON1 || ela->poison2 != TEST_POISON2) {
 		pr_err("error: bad poison: %#x/%#x\n",
 			ela->poison1, ela->poison2);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (elb->poison1 != TEST_POISON1 || elb->poison2 != TEST_POISON2) {
 		pr_err("error: bad poison: %#x/%#x\n",
 			elb->poison1, elb->poison2);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -96,7 +96,7 @@ static int __init list_sort_test(void)
 
 	list_sort(NULL, &head, cmp);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (cur = head.next; cur->next != &head; cur = cur->next) {
 		struct debug_el *el1;
 		int cmp_result;

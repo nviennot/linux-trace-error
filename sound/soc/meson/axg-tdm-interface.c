@@ -50,7 +50,7 @@ int axg_tdm_set_tdm_slots(struct snd_soc_dai *dai, u32 *tx_mask,
 	/* We should at least have a slot for a valid interface */
 	if (!tx_slots && !rx_slots) {
 		dev_err(dai->dev, "interface has no slot\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iface->slots = slots;
@@ -74,7 +74,7 @@ int axg_tdm_set_tdm_slots(struct snd_soc_dai *dai, u32 *tx_mask,
 		break;
 	default:
 		dev_err(dai->dev, "unsupported slot width: %d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iface->slot_width = slot_width;
@@ -100,7 +100,7 @@ static int axg_tdm_iface_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 				    unsigned int freq, int dir)
 {
 	struct axg_tdm_iface *iface = snd_soc_dai_get_drvdata(dai);
-	int ret = -ENOTSUPP;
+	int ret = -ERR(ENOTSUPP);
 
 	if (dir == SND_SOC_CLOCK_OUT && clk_id == 0) {
 		if (!iface->mclk) {
@@ -122,13 +122,13 @@ static int axg_tdm_iface_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	/* These modes are not supported */
 	if (fmt & (SND_SOC_DAIFMT_CBS_CFM | SND_SOC_DAIFMT_CBM_CFS)) {
 		dev_err(dai->dev, "only CBS_CFS and CBM_CFM are supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If the TDM interface is the clock master, it requires mclk */
 	if (!iface->mclk && (fmt & SND_SOC_DAIFMT_CBS_CFS)) {
 		dev_err(dai->dev, "cpu clock master: mclk missing\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	iface->fmt = fmt;
@@ -145,7 +145,7 @@ static int axg_tdm_iface_startup(struct snd_pcm_substream *substream,
 
 	if (!axg_tdm_slots_total(ts->mask)) {
 		dev_err(dai->dev, "interface has not slots\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Apply component wide rate symmetry */
@@ -178,12 +178,12 @@ static int axg_tdm_iface_set_stream(struct snd_pcm_substream *substream,
 	/* Make sure this interface can cope with the stream */
 	if (axg_tdm_slots_total(ts->mask) < channels) {
 		dev_err(dai->dev, "not enough slots for channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (iface->slot_width < width) {
 		dev_err(dai->dev, "incompatible slots width for stream\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Save the parameter for tdmout/tdmin widgets */
@@ -227,7 +227,7 @@ static int axg_tdm_iface_set_lrclk(struct snd_soc_dai *dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_duty_cycle(iface->lrclk, ratio_num, 2);
@@ -267,7 +267,7 @@ static int axg_tdm_iface_set_sclk(struct snd_soc_dai *dai,
 			dev_err(dai->dev,
 				"can't derive sclk %lu from mclk %lu\n",
 				srate, iface->mclk_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -302,7 +302,7 @@ static int axg_tdm_iface_hw_params(struct snd_pcm_substream *substream,
 		if (iface->slots > 2) {
 			dev_err(dai->dev, "bad slot number for format: %d\n",
 				iface->slots);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -312,7 +312,7 @@ static int axg_tdm_iface_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dai->dev, "unsupported dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = axg_tdm_iface_set_stream(substream, params, dai);

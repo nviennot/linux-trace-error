@@ -205,7 +205,7 @@ static int rsi_parse(struct cache_detail *cd,
 	int len;
 	struct rsi rsii, *rsip = NULL;
 	time64_t expiry;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 
 	memset(&rsii, 0, sizeof(rsii));
 	/* handle */
@@ -218,7 +218,7 @@ static int rsi_parse(struct cache_detail *cd,
 
 	/* token */
 	len = qword_get(&mesg, buf, mlen);
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	if (len < 0)
 		goto out;
 	status = -ENOMEM;
@@ -232,7 +232,7 @@ static int rsi_parse(struct cache_detail *cd,
 	rsii.h.flags = 0;
 	/* expiry */
 	expiry = get_expiry(&mesg);
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	if (expiry == 0)
 		goto out;
 
@@ -260,7 +260,7 @@ static int rsi_parse(struct cache_detail *cd,
 
 	/* out_token */
 	len = qword_get(&mesg, buf, mlen);
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	if (len < 0)
 		goto out;
 	status = -ENOMEM;
@@ -432,7 +432,7 @@ rsc_alloc(void)
 
 static int rsc_upcall(struct cache_detail *cd, struct cache_head *h)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rsc_parse(struct cache_detail *cd,
@@ -444,7 +444,7 @@ static int rsc_parse(struct cache_detail *cd,
 	int len, rv;
 	struct rsc rsci, *rscp = NULL;
 	time64_t expiry;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 	struct gss_api_mech *gm = NULL;
 
 	memset(&rsci, 0, sizeof(rsci));
@@ -458,7 +458,7 @@ static int rsc_parse(struct cache_detail *cd,
 	rsci.h.flags = 0;
 	/* expiry */
 	expiry = get_expiry(&mesg);
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	if (expiry == 0)
 		goto out;
 
@@ -502,7 +502,7 @@ static int rsc_parse(struct cache_detail *cd,
 			goto out;
 
 		/* gid's */
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		for (i=0; i<N; i++) {
 			kgid_t kgid;
 			if (get_int(&mesg, &id))
@@ -519,11 +519,11 @@ static int rsc_parse(struct cache_detail *cd,
 		if (len < 0)
 			goto out;
 		gm = rsci.cred.cr_gss_mech = gss_mech_get_by_name(buf);
-		status = -EOPNOTSUPP;
+		status = -ERR(EOPNOTSUPP);
 		if (!gm)
 			goto out;
 
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		/* mech-specific data: */
 		len = qword_get(&mesg, buf, mlen);
 		if (len < 0)
@@ -830,7 +830,7 @@ svcauth_gss_register_pseudoflavor(u32 pseudoflavor, char * name)
 	if (test != &new->h) {
 		pr_warn("svc: duplicate registration of gss pseudo flavour %s.\n",
 			name);
-		stat = -EADDRINUSE;
+		stat = -ERR(EADDRINUSE);
 		auth_domain_put(test);
 		goto out_free_name;
 	}
@@ -866,7 +866,7 @@ read_u32_from_xdr_buf(struct xdr_buf *buf, int base, u32 *obj)
 static int
 unwrap_integ_data(struct svc_rqst *rqstp, struct xdr_buf *buf, u32 seq, struct gss_ctx *ctx)
 {
-	int stat = -EINVAL;
+	int stat = -ERR(EINVAL);
 	u32 integ_len, maj_stat;
 	struct xdr_netobj mic;
 	struct xdr_buf integ_buf;
@@ -951,7 +951,7 @@ unwrap_priv_data(struct svc_rqst *rqstp, struct xdr_buf *buf, u32 seq, struct gs
 	 * not yet read from the head, so these two values are different: */
 	remaining_len = total_buf_len(buf);
 	if (priv_len > remaining_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pad = remaining_len - priv_len;
 	buf->len -= pad;
 	fix_priv_head(buf, pad);
@@ -972,10 +972,10 @@ unwrap_priv_data(struct svc_rqst *rqstp, struct xdr_buf *buf, u32 seq, struct gs
 		fix_priv_head(buf, pad);
 	}
 	if (maj_stat != GSS_S_COMPLETE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 out_seq:
 	if (svc_getnl(&buf->head[0]) != seq)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -1226,7 +1226,7 @@ static int gss_proxy_save_rsc(struct cache_detail *cd,
 	long long ctxh;
 	struct gss_api_mech *gm = NULL;
 	time64_t expiry;
-	int status = -EINVAL;
+	int status = -ERR(EINVAL);
 
 	memset(&rsci, 0, sizeof(rsci));
 	/* context handle */
@@ -1257,14 +1257,14 @@ static int gss_proxy_save_rsc(struct cache_detail *cd,
 		rsci.cred = ud->creds;
 		memset(&ud->creds, 0, sizeof(struct svc_cred));
 
-		status = -EOPNOTSUPP;
+		status = -ERR(EOPNOTSUPP);
 		/* get mech handle from OID */
 		gm = gss_mech_get_by_OID(&ud->mech_oid);
 		if (!gm)
 			goto out;
 		rsci.cred.cr_gss_mech = gm;
 
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		/* mech-specific data: */
 		status = gss_import_sec_context(ud->out_handle.data,
 						ud->out_handle.len,
@@ -1361,7 +1361,7 @@ static int set_gss_proxy(struct net *net, int type)
 	WARN_ON_ONCE(type != 0 && type != 1);
 	ret = cmpxchg(&sn->use_gss_proxy, -1, type);
 	if (ret != -1 && ret != type)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 
@@ -1386,7 +1386,7 @@ static ssize_t write_gssp(struct file *file, const char __user *buf,
 	int res;
 
 	if (*ppos || count > sizeof(tbuf)-1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(tbuf, buf, count))
 		return -EFAULT;
 
@@ -1395,7 +1395,7 @@ static ssize_t write_gssp(struct file *file, const char __user *buf,
 	if (res)
 		return res;
 	if (i != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	res = set_gssp_clnt(net);
 	if (res)
 		return res;
@@ -1667,7 +1667,7 @@ svcauth_gss_wrap_resp_integ(struct svc_rqst *rqstp)
 	struct kvec *resv;
 	__be32 *p;
 	int integ_offset, integ_len;
-	int stat = -EINVAL;
+	int stat = -ERR(EINVAL);
 
 	p = svcauth_gss_prepare_to_wrap(resbuf, gsd);
 	if (p == NULL)
@@ -1738,9 +1738,9 @@ svcauth_gss_wrap_resp_priv(struct svc_rqst *rqstp)
 	if (resbuf->tail[0].iov_base) {
 		if (resbuf->tail[0].iov_base >=
 			resbuf->head[0].iov_base + PAGE_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (resbuf->tail[0].iov_base < resbuf->head[0].iov_base)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (resbuf->tail[0].iov_len + resbuf->head[0].iov_len
 				+ 2 * RPC_MAX_AUTH_SIZE > PAGE_SIZE)
 			return -ENOMEM;
@@ -1780,7 +1780,7 @@ svcauth_gss_release(struct svc_rqst *rqstp)
 	struct gss_svc_data *gsd = (struct gss_svc_data *)rqstp->rq_auth_data;
 	struct rpc_gss_wire_cred *gc = &gsd->clcred;
 	struct xdr_buf *resbuf = &rqstp->rq_res;
-	int stat = -EINVAL;
+	int stat = -ERR(EINVAL);
 	struct sunrpc_net *sn = net_generic(SVC_NET(rqstp), sunrpc_net_id);
 
 	if (gc->gc_proc != RPC_GSS_PROC_DATA)

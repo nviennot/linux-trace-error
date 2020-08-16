@@ -169,7 +169,7 @@ static int snd_es18xx_dsp_command(struct snd_es18xx *chip, unsigned char val)
                         return 0;
                 }
 	snd_printk(KERN_ERR "dsp_command: timeout (0x%x)\n", val);
-        return -EINVAL;
+        return -ERR(EINVAL);
 }
 
 static int snd_es18xx_dsp_get_byte(struct snd_es18xx *chip)
@@ -181,7 +181,7 @@ static int snd_es18xx_dsp_get_byte(struct snd_es18xx *chip)
                         return inb(chip->port + 0x0A);
 	snd_printk(KERN_ERR "dsp_get_byte failed: 0x%lx = 0x%x!!!\n",
 		   chip->port + 0x0A, inb(chip->port + 0x0A));
-        return -ENODEV;
+        return -ERR(ENODEV);
 }
 
 #undef REG_DEBUG
@@ -447,7 +447,7 @@ static int snd_es18xx_playback_hw_params(struct snd_pcm_substream *substream,
 		    (chip->capture_a_substream) &&
 		    params_channels(hw_params) != 1) {
 			_snd_pcm_hw_param_setempty(hw_params, SNDRV_PCM_HW_PARAM_CHANNELS);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		chip->dma2_shift = shift;
 	} else {
@@ -526,7 +526,7 @@ static int snd_es18xx_playback1_trigger(struct snd_es18xx *chip,
 #endif
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -543,7 +543,7 @@ static int snd_es18xx_capture_hw_params(struct snd_pcm_substream *substream,
 	    chip->playback_a_substream &&
 	    params_channels(hw_params) != 1) {
 		_snd_pcm_hw_param_setempty(hw_params, SNDRV_PCM_HW_PARAM_CHANNELS);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (params_channels(hw_params) == 2)
 		shift++;
@@ -613,7 +613,7 @@ static int snd_es18xx_capture_trigger(struct snd_pcm_substream *substream,
                 snd_es18xx_write(chip, 0xB8, 0x00);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -688,7 +688,7 @@ static int snd_es18xx_playback2_trigger(struct snd_es18xx *chip,
 #endif
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -863,15 +863,15 @@ static int snd_es18xx_playback_open(struct snd_pcm_substream *substream)
 		if ((chip->caps & ES18XX_DUPLEX_MONO) &&
 		    chip->capture_a_substream && 
 		    chip->capture_a_substream->runtime->channels != 1)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		chip->playback_a_substream = substream;
 	} else if (substream->number <= 1) {
 		if (chip->capture_a_substream)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		chip->playback_b_substream = substream;
 	} else {
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	substream->runtime->hw = snd_es18xx_playback;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -885,11 +885,11 @@ static int snd_es18xx_capture_open(struct snd_pcm_substream *substream)
         struct snd_es18xx *chip = snd_pcm_substream_chip(substream);
 
         if (chip->playback_b_substream)
-                return -EAGAIN;
+                return -ERR(EAGAIN);
 	if ((chip->caps & ES18XX_DUPLEX_MONO) &&
 	    chip->playback_a_substream &&
 	    chip->playback_a_substream->runtime->channels != 1)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
         chip->capture_a_substream = substream;
 	substream->runtime->hw = snd_es18xx_capture;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -959,7 +959,7 @@ static int snd_es18xx_info_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_ele
 	case 0x1879:
 		return snd_ctl_enum_info(uinfo, 1, 8, texts8Source);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -992,7 +992,7 @@ static int snd_es18xx_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_elem
 	case 0x1887:
 	case 0x1888:
 		if (val > 4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (val == 4) {
 			retVal = snd_es18xx_mixer_bits(chip, 0x7a, 0x08, 0x08) != 0x08;
 			val = 3;
@@ -1003,17 +1003,17 @@ static int snd_es18xx_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_elem
 	case 0x1868:
 	case 0x1878:
 		if (val > 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		val = map4Source[val];
 		break;
  /* 8 source chips */
 	case 0x1869:
 	case 0x1879:
 		if (val > 7)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return (snd_es18xx_mixer_bits(chip, 0x1c, 0x07, val) != val) || retVal;
 }
@@ -1432,7 +1432,7 @@ static int snd_es18xx_initialize(struct snd_es18xx *chip,
 			break;
 		default:
 			snd_printk(KERN_ERR "invalid irq %d\n", chip->irq);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		switch (chip->dma1) {
 		case 0:
@@ -1446,7 +1446,7 @@ static int snd_es18xx_initialize(struct snd_es18xx *chip,
 			break;
 		default:
 			snd_printk(KERN_ERR "invalid dma1 %d\n", chip->dma1);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		switch (chip->dma2) {
 		case 0:
@@ -1463,7 +1463,7 @@ static int snd_es18xx_initialize(struct snd_es18xx *chip,
 			break;
 		default:
 			snd_printk(KERN_ERR "invalid dma2 %d\n", chip->dma2);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		/* Enable and set Audio 1 IRQ */
@@ -1538,7 +1538,7 @@ static int snd_es18xx_identify(struct snd_es18xx *chip)
 	/* reset */
 	if (snd_es18xx_reset(chip) < 0) {
 		snd_printk(KERN_ERR "reset at 0x%lx failed!!!\n", chip->port);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	snd_es18xx_dsp_command(chip, 0xe7);
@@ -1548,14 +1548,14 @@ static int snd_es18xx_identify(struct snd_es18xx *chip)
 	}
 	lo = snd_es18xx_dsp_get_byte(chip);
 	if ((lo & 0xf0) != 0x80) {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (hi == 0x48) {
 		chip->version = 0x488;
 		return 0;
 	}
 	if (hi != 0x68) {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if ((lo & 0x0f) < 8) {
 		chip->version = 0x688;
@@ -1575,7 +1575,7 @@ static int snd_es18xx_identify(struct snd_es18xx *chip)
 
 		if ((chip->res_ctrl_port = request_region(chip->ctrl_port, 8, "ES18xx - CTRL")) == NULL) {
 			snd_printk(KERN_ERR PFX "unable go grab port 0x%lx\n", chip->ctrl_port);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		return 0;
@@ -1606,7 +1606,7 @@ static int snd_es18xx_probe(struct snd_es18xx *chip,
 {
 	if (snd_es18xx_identify(chip) < 0) {
 		snd_printk(KERN_ERR PFX "[0x%lx] ESS chip not found\n", chip->port);
-                return -ENODEV;
+                return -ERR(ENODEV);
 	}
 
 	switch (chip->version) {
@@ -1629,7 +1629,7 @@ static int snd_es18xx_probe(struct snd_es18xx *chip,
 	default:
 		snd_printk(KERN_ERR "[0x%lx] unsupported chip ES%x\n",
                            chip->port, chip->version);
-                return -ENODEV;
+                return -ERR(ENODEV);
         }
 
         snd_printd("[0x%lx] ESS%x chip found\n", chip->port, chip->version);
@@ -1771,14 +1771,14 @@ static int snd_es18xx_new_device(struct snd_card *card,
 	if (chip->res_port == NULL) {
 		snd_es18xx_free(card);
 		snd_printk(KERN_ERR PFX "unable to grap ports 0x%lx-0x%lx\n", port, port + 16 - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (request_irq(irq, snd_es18xx_interrupt, 0, "ES18xx",
 			(void *) card)) {
 		snd_es18xx_free(card);
 		snd_printk(KERN_ERR PFX "unable to grap IRQ %d\n", irq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
@@ -1786,20 +1786,20 @@ static int snd_es18xx_new_device(struct snd_card *card,
 	if (request_dma(dma1, "ES18xx DMA 1")) {
 		snd_es18xx_free(card);
 		snd_printk(KERN_ERR PFX "unable to grap DMA1 %d\n", dma1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma1 = dma1;
 
 	if (dma2 != dma1 && request_dma(dma2, "ES18xx DMA 2")) {
 		snd_es18xx_free(card);
 		snd_printk(KERN_ERR PFX "unable to grap DMA2 %d\n", dma2);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma2 = dma2;
 
 	if (snd_es18xx_probe(chip, mpu_port, fm_port) < 0) {
 		snd_es18xx_free(card);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops);
 	if (err < 0) {
@@ -1999,7 +1999,7 @@ static int snd_audiodrive_pnp_init_main(int dev, struct pnp_dev *pdev)
 {
 	if (pnp_activate_dev(pdev) < 0) {
 		snd_printk(KERN_ERR PFX "PnP configure failure (out of resources?)\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	/* ok. hack using Vendor-Defined Card-Level registers */
 	/* skip csn and logdev initialization - already done in isapnp_configure */
@@ -2027,7 +2027,7 @@ static int snd_audiodrive_pnp(int dev, struct snd_es18xx *chip,
 {
 	chip->dev = pdev;
 	if (snd_audiodrive_pnp_init_main(dev, chip->dev) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 
@@ -2058,21 +2058,21 @@ static int snd_audiodrive_pnpc(int dev, struct snd_es18xx *chip,
 {
 	chip->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (chip->dev == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	chip->devc = pnp_request_card_device(card, id->devs[1].id, NULL);
 	if (chip->devc == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Control port initialization */
 	if (pnp_activate_dev(chip->devc) < 0) {
 		snd_printk(KERN_ERR PFX "PnP control configure failure (out of resources?)\n");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	snd_printdd("pnp: port=0x%llx\n",
 			(unsigned long long)pnp_port_start(chip->devc, 0));
 	if (snd_audiodrive_pnp_init_main(dev, chip->dev) < 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -2179,19 +2179,19 @@ static int snd_es18xx_isa_probe(struct device *pdev, unsigned int dev)
 	if (irq[dev] == SNDRV_AUTO_IRQ) {
 		if ((irq[dev] = snd_legacy_find_free_irq(possible_irqs)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1[dev] == SNDRV_AUTO_DMA) {
 		if ((dma1[dev] = snd_legacy_find_free_dma(possible_dmas)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma2[dev] == SNDRV_AUTO_DMA) {
 		if ((dma2[dev] = snd_legacy_find_free_dma(possible_dmas)) < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free DMA2\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -2255,13 +2255,13 @@ static int snd_audiodrive_pnp_detect(struct pnp_dev *pdev,
 	struct snd_card *card;
 
 	if (pnp_device_is_isapnp(pdev))
-		return -ENOENT;	/* we have another procedure - card */
+		return -ERR(ENOENT);	/* we have another procedure - card */
 	for (; dev < SNDRV_CARDS; dev++) {
 		if (enable[dev] && isapnp[dev])
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = snd_es18xx_card_new(&pdev->dev, dev, &card);
 	if (err < 0)
@@ -2318,7 +2318,7 @@ static int snd_audiodrive_pnpc_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	res = snd_es18xx_card_new(&pcard->card->dev, dev, &card);
 	if (res < 0)

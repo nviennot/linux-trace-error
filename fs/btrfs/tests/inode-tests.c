@@ -259,7 +259,7 @@ static noinline int test_btrfs_get_extent(u32 sectorsize, u32 nodesize)
 
 	btrfs_set_header_nritems(root->node, 0);
 	btrfs_set_header_level(root->node, 0);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 
 	/* First with no extents */
 	BTRFS_I(inode)->root = root;
@@ -862,7 +862,7 @@ static int test_hole_first(u32 sectorsize, u32 nodesize)
 	btrfs_set_header_nritems(root->node, 0);
 	btrfs_set_header_level(root->node, 0);
 	BTRFS_I(inode)->root = root;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 
 	/*
 	 * Need a blank inode item here just so we don't confuse
@@ -961,7 +961,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 1) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 1, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -976,7 +976,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 2) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 2, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -992,7 +992,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 2) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 2, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1008,7 +1008,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 2) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 2, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1026,7 +1026,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 4) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 4, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1043,7 +1043,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 3) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 3, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1059,7 +1059,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 4) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 4, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1077,7 +1077,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents != 3) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 3, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;
@@ -1091,7 +1091,7 @@ static int test_extent_accounting(u32 sectorsize, u32 nodesize)
 		goto out;
 	}
 	if (BTRFS_I(inode)->outstanding_extents) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		test_err("miscount, wanted 0, got %u",
 			 BTRFS_I(inode)->outstanding_extents);
 		goto out;

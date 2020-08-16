@@ -115,7 +115,7 @@ static ssize_t widget_attr_show(struct kobject *kobj, struct attribute *attr,
 	int nid;
 
 	if (!wid_attr->show)
-		return -EIO;
+		return -ERR(EIO);
 	nid = get_codec_nid(kobj, &codec);
 	if (nid < 0)
 		return nid;
@@ -131,7 +131,7 @@ static ssize_t widget_attr_store(struct kobject *kobj, struct attribute *attr,
 	int nid;
 
 	if (!wid_attr->store)
-		return -EIO;
+		return -ERR(EIO);
 	nid = get_codec_nid(kobj, &codec);
 	if (nid < 0)
 		return nid;

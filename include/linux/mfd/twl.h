@@ -221,7 +221,7 @@ int twl6030_mmc_card_detect(struct device *dev, int slot);
 static inline int twl6030_mmc_card_detect(struct device *dev, int slot)
 {
 	pr_debug("Call back twl6030_mmc_card_detect not supported\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 #endif
 /*----------------------------------------------------------------------*/

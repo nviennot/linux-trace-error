@@ -231,7 +231,7 @@ static int mtk_dai_pcm_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_warn(afe->dev, "%s(), id %d not support\n",
 			 __func__, dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

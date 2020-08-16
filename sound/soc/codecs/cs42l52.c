@@ -694,7 +694,7 @@ static const struct cs42l52_clk_para clk_map_table[] = {
 
 static int cs42l52_get_clk(int mclk, int rate)
 {
-	int i, ret = -EINVAL;
+	int i, ret = -ERR(EINVAL);
 	u_int mclk1, mclk2 = 0;
 
 	for (i = 0; i < ARRAY_SIZE(clk_map_table); i++) {
@@ -719,7 +719,7 @@ static int cs42l52_set_sysclk(struct snd_soc_dai *codec_dai,
 		cs42l52->sysclk = freq;
 	} else {
 		dev_err(component->dev, "Invalid freq parameter\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -738,7 +738,7 @@ static int cs42l52_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface = CS42L52_IFACE_CTL1_SLAVE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	 /* interface format */
@@ -760,7 +760,7 @@ static int cs42l52_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_DSP_B:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -776,7 +776,7 @@ static int cs42l52_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_NB_IF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	cs42l52->config.format = iface;
 	snd_soc_component_write(component, CS42L52_IFACE_CTL1, cs42l52->config.format);
@@ -822,7 +822,7 @@ static int cs42l52_pcm_hw_params(struct snd_pcm_substream *substream,
 		snd_soc_component_write(component, CS42L52_CLK_CTL, clk);
 	} else {
 		dev_err(component->dev, "can't get correct mclk\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1163,7 +1163,7 @@ static int cs42l52_i2c_probe(struct i2c_client *i2c_client,
 	ret = regmap_read(cs42l52->regmap, CS42L52_CHIP, &reg);
 	devid = reg & CS42L52_CHIP_ID_MASK;
 	if (devid != CS42L52_CHIP_ID) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c_client->dev,
 			"CS42L52 Device ID (%X). Expected %X\n",
 			devid, CS42L52_CHIP_ID);

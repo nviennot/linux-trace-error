@@ -219,8 +219,8 @@ gss_fill_context(const void *p, const void *end, struct gss_cl_ctx *ctx, struct 
 		 */
 		p = simple_get_bytes(p, end, &ret, sizeof(ret));
 		if (!IS_ERR(p))
-			p = (ret == -EKEYEXPIRED) ? ERR_PTR(-EKEYEXPIRED) :
-						    ERR_PTR(-EACCES);
+			p = (ret == -ERR(EKEYEXPIRED)) ? ERR_PTR(-ERR(EKEYEXPIRED)) :
+						    ERR_PTR(-ERR(EACCES));
 		goto err;
 	}
 	/* copy the opaque wire context */
@@ -291,7 +291,7 @@ static int get_pipe_version(struct net *net)
 		atomic_inc(&sn->pipe_users);
 		ret = sn->pipe_version;
 	} else
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	spin_unlock(&pipe_version_lock);
 	return ret;
 }
@@ -620,7 +620,7 @@ gss_refresh_upcall(struct rpc_task *task)
 		warn_gssd();
 		rpc_sleep_on_timeout(&pipe_version_rpc_waitqueue,
 				task, NULL, jiffies + (15 * HZ));
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 	if (IS_ERR(gss_msg)) {
@@ -664,7 +664,7 @@ retry:
 	/* if gssd is down, just skip upcalling altogether */
 	if (!gssd_running(net)) {
 		warn_gssd();
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 	gss_msg = gss_setup_upcall(gss_auth, cred);
@@ -673,7 +673,7 @@ retry:
 				sn->pipe_version >= 0, 15 * HZ);
 		if (sn->pipe_version < 0) {
 			warn_gssd();
-			err = -EACCES;
+			err = -ERR(EACCES);
 		}
 		if (err < 0)
 			goto out;
@@ -692,7 +692,7 @@ retry:
 		}
 		spin_unlock(&pipe->lock);
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto out_intr;
 		}
 		schedule();
@@ -725,7 +725,7 @@ gss_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	struct gss_cl_ctx *ctx;
 	uid_t id;
 	kuid_t uid;
-	ssize_t err = -EFBIG;
+	ssize_t err = -ERR(EFBIG);
 
 	if (mlen > MSG_BUF_MAXSIZE)
 		goto out;
@@ -747,7 +747,7 @@ gss_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 
 	uid = make_kuid(current_user_ns(), id);
 	if (!uid_valid(uid)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -756,7 +756,7 @@ gss_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 	if (ctx == NULL)
 		goto err;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	/* Find a matching upcall */
 	spin_lock(&pipe->lock);
 	gss_msg = __gss_find_upcall(pipe, uid, NULL);
@@ -780,12 +780,12 @@ gss_pipe_downcall(struct file *filp, const char __user *src, size_t mlen)
 		case -ENOMEM:
 		case -EINVAL:
 		case -ENOSYS:
-			gss_msg->msg.errno = -EAGAIN;
+			gss_msg->msg.errno = -ERR(EAGAIN);
 			break;
 		default:
 			printk(KERN_CRIT "%s: bad return from "
 				"gss_fill_context: %zd\n", __func__, err);
-			gss_msg->msg.errno = -EIO;
+			gss_msg->msg.errno = -ERR(EIO);
 		}
 		goto err_release_msg;
 	}
@@ -819,7 +819,7 @@ static int gss_pipe_open(struct inode *inode, int new_version)
 		wake_up(&pipe_version_waitqueue);
 	} else if (sn->pipe_version != new_version) {
 		/* Trying to open a pipe of a different version */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 	atomic_inc(&sn->pipe_users);
@@ -852,7 +852,7 @@ restart:
 
 		if (!list_empty(&gss_msg->msg.list))
 			continue;
-		gss_msg->msg.errno = -EPIPE;
+		gss_msg->msg.errno = -ERR(EPIPE);
 		refcount_inc(&gss_msg->count);
 		__gss_unhash_msg(gss_msg);
 		spin_unlock(&pipe->lock);
@@ -1042,7 +1042,7 @@ gss_create_new(const struct rpc_auth_create_args *args, struct rpc_clnt *clnt)
 	}
 	gss_auth->client = clnt;
 	gss_auth->net = get_net(rpc_net_ns(clnt));
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	gss_auth->mech = gss_mech_get_by_pseudoflavor(flavor);
 	if (!gss_auth->mech)
 		goto err_put_net;
@@ -1480,7 +1480,7 @@ gss_key_timeout(struct rpc_cred *rc)
 	rcu_read_lock();
 	ctx = rcu_dereference(gss_cred->gc_ctx);
 	if (!ctx || time_after(timeout, ctx->gc_expiry))
-		ret = -EACCES;
+		ret = -ERR(EACCES);
 	rcu_read_unlock();
 
 	return ret;
@@ -1588,14 +1588,14 @@ out:
 	return status;
 expired:
 	clear_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags);
-	status = -EKEYEXPIRED;
+	status = -ERR(EKEYEXPIRED);
 	goto out;
 marshal_failed:
-	status = -EMSGSIZE;
+	status = -ERR(EMSGSIZE);
 	goto out;
 bad_mic:
 	trace_rpcgss_get_mic(task, maj_stat);
-	status = -EIO;
+	status = -ERR(EIO);
 	goto out;
 }
 
@@ -1648,7 +1648,7 @@ gss_refresh(struct rpc_task *task)
 	int ret = 0;
 
 	if (gss_cred_is_negative_entry(cred))
-		return -EKEYEXPIRED;
+		return -ERR(EKEYEXPIRED);
 
 	if (!test_bit(RPCAUTH_CRED_NEW, &cred->cr_flags) &&
 			!test_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags)) {
@@ -1721,11 +1721,11 @@ out:
 	return status;
 
 validate_failed:
-	status = -EIO;
+	status = -ERR(EIO);
 	goto out;
 bad_mic:
 	trace_rpcgss_verify_mic(task, maj_stat);
-	status = -EACCES;
+	status = -ERR(EACCES);
 	goto out;
 }
 
@@ -1768,10 +1768,10 @@ gss_wrap_req_integ(struct rpc_cred *cred, struct gss_cl_ctx *ctx,
 		goto wrap_failed;
 	return 0;
 wrap_failed:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 bad_mic:
 	trace_rpcgss_get_mic(task, maj_stat);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static void
@@ -1819,7 +1819,7 @@ out_free:
 	rqstp->rq_enc_pages_num = i;
 	priv_release_snd_buf(rqstp);
 out:
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static noinline_for_stack int
@@ -1835,7 +1835,7 @@ gss_wrap_req_priv(struct rpc_cred *cred, struct gss_cl_ctx *ctx,
 	int		first;
 	struct kvec	*iov;
 
-	status = -EIO;
+	status = -ERR(EIO);
 	p = xdr_reserve_space(xdr, 2 * sizeof(*p));
 	if (!p)
 		goto wrap_failed;
@@ -1894,7 +1894,7 @@ wrap_failed:
 	return status;
 bad_wrap:
 	trace_rpcgss_wrap(task, maj_stat);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int gss_wrap_req(struct rpc_task *task, struct xdr_stream *xdr)
@@ -1905,7 +1905,7 @@ static int gss_wrap_req(struct rpc_task *task, struct xdr_stream *xdr)
 	struct gss_cl_ctx *ctx = gss_cred_get_ctx(cred);
 	int status;
 
-	status = -EIO;
+	status = -ERR(EIO);
 	if (ctx->gc_proc != RPC_GSS_PROC_DATA) {
 		/* The spec seems a little ambiguous here, but I think that not
 		 * wrapping context destruction requests makes the most sense.
@@ -1924,7 +1924,7 @@ static int gss_wrap_req(struct rpc_task *task, struct xdr_stream *xdr)
 		status = gss_wrap_req_priv(cred, ctx, task, xdr);
 		break;
 	default:
-		status = -EIO;
+		status = -ERR(EIO);
 	}
 out:
 	gss_put_ctx(ctx);
@@ -1981,7 +1981,7 @@ gss_unwrap_resp_integ(struct rpc_task *task, struct rpc_cred *cred,
 	struct xdr_netobj mic;
 	int ret;
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	mic.data = NULL;
 
 	/* opaque databody_integ<>; */
@@ -2082,13 +2082,13 @@ gss_unwrap_resp_priv(struct rpc_task *task, struct rpc_cred *cred,
 	return 0;
 unwrap_failed:
 	trace_rpcgss_unwrap_failed(task);
-	return -EIO;
+	return -ERR(EIO);
 bad_seqno:
 	trace_rpcgss_bad_seqno(task, rqstp->rq_seqno, be32_to_cpup(--p));
-	return -EIO;
+	return -ERR(EIO);
 bad_unwrap:
 	trace_rpcgss_unwrap(task, maj_stat);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static bool
@@ -2142,7 +2142,7 @@ gss_unwrap_resp(struct rpc_task *task, struct xdr_stream *xdr)
 	struct gss_cred *gss_cred = container_of(cred, struct gss_cred,
 			gc_base);
 	struct gss_cl_ctx *ctx = gss_cred_get_ctx(cred);
-	int status = -EIO;
+	int status = -ERR(EIO);
 
 	if (ctx->gc_proc != RPC_GSS_PROC_DATA)
 		goto out_decode;

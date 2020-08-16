@@ -80,9 +80,9 @@ int snd_emux_register(struct snd_emux *emu, struct snd_card *card, int index, ch
 	struct snd_sf_callback sf_cb;
 
 	if (snd_BUG_ON(!emu->hw || emu->max_voices <= 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!card || !name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	emu->card = card;
 	emu->name = kstrdup(name, GFP_KERNEL);
@@ -128,7 +128,7 @@ int snd_emux_free(struct snd_emux *emu)
 	unsigned long flags;
 
 	if (! emu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
 	if (emu->timer_active)

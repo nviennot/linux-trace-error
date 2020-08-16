@@ -34,7 +34,7 @@ static int hfsplus_ioctl_bless(struct file *file, int __user *user_flags)
 	u32 cnid = (unsigned long)dentry->d_fsdata;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&sbi->vh_mutex);
 
@@ -92,7 +92,7 @@ static int hfsplus_ioctl_setflags(struct file *file, int __user *user_flags)
 		goto out;
 
 	if (!inode_owner_or_capable(inode)) {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out_drop_write;
 	}
 
@@ -109,7 +109,7 @@ static int hfsplus_ioctl_setflags(struct file *file, int __user *user_flags)
 
 	/* don't silently ignore unsupported ext2 flags */
 	if (flags & ~(FS_IMMUTABLE_FL|FS_APPEND_FL|FS_NODUMP_FL)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out_unlock_inode;
 	}
 
@@ -149,6 +149,6 @@ long hfsplus_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case HFSPLUS_IOC_BLESS:
 		return hfsplus_ioctl_bless(file, argp);
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }

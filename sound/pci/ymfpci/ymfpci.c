@@ -72,14 +72,14 @@ static int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev,
 	int io_port = joystick_port[dev];
 
 	if (!io_port)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (chip->pci->device >= 0x0010) { /* YMF 744/754 */
 
 		if (io_port == 1) {
 			/* auto-detect */
 			if (!(io_port = pci_resource_start(chip->pci, 2)))
-				return -ENODEV;
+				return -ERR(ENODEV);
 		}
 	} else {
 		if (io_port == 1) {
@@ -93,7 +93,7 @@ static int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev,
 			if (!r) {
 				dev_err(chip->card->dev,
 					"no gameport ports available\n");
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 		}
 		switch (io_port) {
@@ -104,14 +104,14 @@ static int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev,
 		default:
 			dev_err(chip->card->dev,
 				"invalid joystick port %#x", io_port);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (!r && !(r = request_region(io_port, 1, "YMFPCI gameport"))) {
 		dev_err(chip->card->dev,
 			"joystick port %#x is in use.\n", io_port);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	chip->gameport = gp = gameport_allocate_port();
@@ -152,7 +152,7 @@ void snd_ymfpci_free_gameport(struct snd_ymfpci *chip)
 	}
 }
 #else
-static inline int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev, int l, int l2) { return -ENOSYS; }
+static inline int snd_ymfpci_create_gameport(struct snd_ymfpci *chip, int dev, int l, int l2) { return -ERR(ENOSYS); }
 void snd_ymfpci_free_gameport(struct snd_ymfpci *chip) { }
 #endif /* SUPPORT_JOYSTICK */
 
@@ -170,10 +170,10 @@ static int snd_card_ymfpci_probe(struct pci_dev *pci,
 	u16 legacy_ctrl, legacy_ctrl2, old_legacy_ctrl;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

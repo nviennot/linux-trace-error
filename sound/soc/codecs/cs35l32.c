@@ -163,7 +163,7 @@ static int cs35l32_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 				    CS35L32_ADSP_MASTER_MASK, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -217,7 +217,7 @@ static int cs35l32_component_set_sysclk(struct snd_soc_component *component,
 		val = CS35L32_MCLK_DIV2_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_update_bits(component, CS35L32_CLK_CTL,
@@ -420,7 +420,7 @@ static int cs35l32_i2c_probe(struct i2c_client *i2c_client,
 	devid |= (reg & 0xF0) >> 4;
 
 	if (devid != CS35L32_CHIP_ID) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c_client->dev,
 			"CS35L32 Device ID (%X). Expected %X\n",
 			devid, CS35L32_CHIP_ID);

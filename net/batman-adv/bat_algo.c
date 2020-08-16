@@ -63,7 +63,7 @@ int batadv_algo_register(struct batadv_algo_ops *bat_algo_ops)
 	if (bat_algo_ops_tmp) {
 		pr_info("Trying to register already registered routing algorithm: %s\n",
 			bat_algo_ops->name);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/* all algorithms must implement all ops (for now) */
@@ -75,7 +75,7 @@ int batadv_algo_register(struct batadv_algo_ops *bat_algo_ops)
 	    !bat_algo_ops->neigh.is_similar_or_better) {
 		pr_info("Routing algo '%s' does not implement required ops\n",
 			bat_algo_ops->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	INIT_HLIST_NODE(&bat_algo_ops->list);
@@ -103,7 +103,7 @@ int batadv_algo_select(struct batadv_priv *bat_priv, char *name)
 
 	bat_algo_ops = batadv_algo_get(name);
 	if (!bat_algo_ops)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bat_priv->algo_ops = bat_algo_ops;
 
@@ -145,7 +145,7 @@ static int batadv_param_set_ra(const char *val, const struct kernel_param *kp)
 	bat_algo_ops = batadv_algo_get(algo_name);
 	if (!bat_algo_ops) {
 		pr_err("Routing algorithm '%s' is not supported\n", algo_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return param_set_copystring(algo_name, kp);
@@ -182,7 +182,7 @@ static int batadv_algo_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family,
 			  NLM_F_MULTI, BATADV_CMD_GET_ROUTING_ALGOS);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_string(msg, BATADV_ATTR_ALGO_NAME, bat_algo_ops->name))
 		goto nla_put_failure;
@@ -192,7 +192,7 @@ static int batadv_algo_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**

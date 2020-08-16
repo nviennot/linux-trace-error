@@ -551,7 +551,7 @@ static int call_crda(const char *alpha2)
 
 	if (reg_crda_timeouts > REG_MAX_CRDA_TIMEOUTS) {
 		pr_debug("Exceeded CRDA call max attempts. Not calling CRDA\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!is_world_regdom((char *) alpha2))
@@ -574,7 +574,7 @@ static inline void cancel_crda_timeout_sync(void) {}
 static inline void reset_crda_timeouts(void) {}
 static inline int call_crda(const char *alpha2)
 {
-	return -ENODATA;
+	return -ERR(ENODATA);
 }
 #endif /* CONFIG_CFG80211_CRDA_SUPPORT */
 
@@ -912,7 +912,7 @@ static int __regdb_query_wmm(const struct fwdb_header *db,
 		}
 	}
 
-	return -ENODATA;
+	return -ERR(ENODATA);
 }
 
 int reg_query_regdb_wmm(char *alpha2, int freq, struct ieee80211_reg_rule *rule)
@@ -921,7 +921,7 @@ int reg_query_regdb_wmm(char *alpha2, int freq, struct ieee80211_reg_rule *rule)
 	const struct fwdb_country *country;
 
 	if (!regdb)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (IS_ERR(regdb))
 		return PTR_ERR(regdb);
@@ -934,7 +934,7 @@ int reg_query_regdb_wmm(char *alpha2, int freq, struct ieee80211_reg_rule *rule)
 		country++;
 	}
 
-	return -ENODATA;
+	return -ERR(ENODATA);
 }
 EXPORT_SYMBOL(reg_query_regdb_wmm);
 
@@ -1011,7 +1011,7 @@ static int query_regdb(const char *alpha2)
 		country++;
 	}
 
-	return -ENODATA;
+	return -ERR(ENODATA);
 }
 
 static void regdb_fw_cb(const struct firmware *fw, void *context)
@@ -1022,10 +1022,10 @@ static void regdb_fw_cb(const struct firmware *fw, void *context)
 
 	if (!fw) {
 		pr_info("failed to load regulatory.db\n");
-		set_error = -ENODATA;
+		set_error = -ERR(ENODATA);
 	} else if (!valid_regdb(fw->data, fw->size)) {
 		pr_info("loaded regulatory.db is malformed or signature is missing/invalid\n");
-		set_error = -EINVAL;
+		set_error = -ERR(EINVAL);
 	}
 
 	rtnl_lock();
@@ -1085,7 +1085,7 @@ int reg_reload_regdb(void)
 		return err;
 
 	if (!valid_regdb(fw->data, fw->size)) {
-		err = -ENODATA;
+		err = -ERR(ENODATA);
 		goto out;
 	}
 
@@ -1410,7 +1410,7 @@ static int reg_rules_intersect(const struct ieee80211_regdomain *rd1,
 	}
 
 	if (!is_valid_reg_rule(intersected_rule))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1583,7 +1583,7 @@ freq_reg_info_regd(u32 center_freq,
 	bool bw_fits = false;
 
 	if (!regd)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	for (i = 0; i < regd->n_reg_rules; i++) {
 		const struct ieee80211_reg_rule *rr;
@@ -1607,9 +1607,9 @@ freq_reg_info_regd(u32 center_freq,
 	}
 
 	if (!band_rule_found)
-		return ERR_PTR(-ERANGE);
+		return ERR_PTR(-ERR(ERANGE));
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static const struct ieee80211_reg_rule *
@@ -2567,7 +2567,7 @@ __reg_process_hint_country_ie(struct wiphy *wiphy,
 	}
 
 	if (unlikely(!is_an_alpha2(country_ie_request->alpha2)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (lr->initiator != NL80211_REGDOM_SET_BY_COUNTRY_IE)
 		return REG_REQ_OK;
@@ -2942,7 +2942,7 @@ int regulatory_hint_user(const char *alpha2,
 	struct regulatory_request *request;
 
 	if (WARN_ON(!alpha2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	request = kzalloc(sizeof(struct regulatory_request), GFP_KERNEL);
 	if (!request)
@@ -3012,7 +3012,7 @@ int regulatory_hint(struct wiphy *wiphy, const char *alpha2)
 	struct regulatory_request *request;
 
 	if (WARN_ON(!alpha2 || !wiphy))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wiphy->regulatory_flags &= ~REGULATORY_CUSTOM_REG;
 
@@ -3500,7 +3500,7 @@ static void print_regdomain_info(const struct ieee80211_regdomain *rd)
 static int reg_set_rd_core(const struct ieee80211_regdomain *rd)
 {
 	if (!is_world_regdom(rd->alpha2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	update_world_regdomain(rd);
 	return 0;
 }
@@ -3511,13 +3511,13 @@ static int reg_set_rd_user(const struct ieee80211_regdomain *rd,
 	const struct ieee80211_regdomain *intersected_rd = NULL;
 
 	if (!regdom_changes(rd->alpha2))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	if (!is_valid_rd(rd)) {
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
 		print_regdomain_info(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!user_request->intersect) {
@@ -3527,7 +3527,7 @@ static int reg_set_rd_user(const struct ieee80211_regdomain *rd,
 
 	intersected_rd = regdom_intersect(rd, get_cfg80211_regdom());
 	if (!intersected_rd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kfree(rd);
 	rd = NULL;
@@ -3545,25 +3545,25 @@ static int reg_set_rd_driver(const struct ieee80211_regdomain *rd,
 	struct wiphy *request_wiphy;
 
 	if (is_world_regdom(rd->alpha2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!regdom_changes(rd->alpha2))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	if (!is_valid_rd(rd)) {
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
 		print_regdomain_info(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	request_wiphy = wiphy_idx_to_wiphy(driver_request->wiphy_idx);
 	if (!request_wiphy)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!driver_request->intersect) {
 		if (request_wiphy->regd)
-			return -EALREADY;
+			return -ERR(EALREADY);
 
 		regd = reg_copy_regd(rd);
 		if (IS_ERR(regd))
@@ -3576,7 +3576,7 @@ static int reg_set_rd_driver(const struct ieee80211_regdomain *rd,
 
 	intersected_rd = regdom_intersect(rd, get_cfg80211_regdom());
 	if (!intersected_rd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We can trash what CRDA provided now.
@@ -3601,7 +3601,7 @@ static int reg_set_rd_country_ie(const struct ieee80211_regdomain *rd,
 
 	if (!is_alpha2_set(rd->alpha2) && !is_an_alpha2(rd->alpha2) &&
 	    !is_unknown_alpha2(rd->alpha2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Lets only bother proceeding on the same alpha2 if the current
@@ -3613,15 +3613,15 @@ static int reg_set_rd_country_ie(const struct ieee80211_regdomain *rd,
 		pr_err("Invalid regulatory domain detected: %c%c\n",
 		       rd->alpha2[0], rd->alpha2[1]);
 		print_regdomain_info(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	request_wiphy = wiphy_idx_to_wiphy(country_ie_request->wiphy_idx);
 	if (!request_wiphy)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (country_ie_request->intersect)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reset_regdomains(false, rd);
 	return 0;
@@ -3640,11 +3640,11 @@ int set_regdom(const struct ieee80211_regdomain *rd,
 	int r;
 
 	if (IS_ERR_OR_NULL(rd))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (!reg_is_valid_request(rd->alpha2)) {
 		kfree(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (regd_src == REGD_SOURCE_CRDA)
@@ -3671,7 +3671,7 @@ int set_regdom(const struct ieee80211_regdomain *rd,
 	default:
 		WARN(1, "invalid initiator %d\n", lr->initiator);
 		kfree(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (r) {
@@ -3690,7 +3690,7 @@ int set_regdom(const struct ieee80211_regdomain *rd,
 
 	/* This would make this whole thing pointless */
 	if (WARN_ON(!lr->intersect && rd != get_cfg80211_regdom()))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* update all wiphys now with the new established regulatory domain */
 	update_all_wiphy_regulatory(lr->initiator);
@@ -3712,15 +3712,15 @@ static int __regulatory_set_wiphy_regd(struct wiphy *wiphy,
 	struct cfg80211_registered_device *rdev;
 
 	if (WARN_ON(!wiphy || !rd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN(!(wiphy->regulatory_flags & REGULATORY_WIPHY_SELF_MANAGED),
 		 "wiphy should have REGULATORY_WIPHY_SELF_MANAGED\n"))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (WARN(!is_valid_rd(rd), "Invalid regulatory domain detected\n")) {
 		print_regdomain_info(rd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regd = reg_copy_regd(rd);
@@ -3859,7 +3859,7 @@ int cfg80211_get_unii(int freq)
 	if (freq > 6875 && freq <= 7125)
 		return 8;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 bool regulatory_indoor_allowed(void)
@@ -3961,7 +3961,7 @@ static int __init regulatory_init_db(void)
 	 * it's doomed to lead to crashes.
 	 */
 	if (IS_ERR_OR_NULL(reg_pdev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = load_builtin_regdb_keys();
 	if (err)

@@ -924,7 +924,7 @@ hfsc_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 	int err;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_HFSC_MAX, opt, hfsc_policy,
 					  NULL);
@@ -955,9 +955,9 @@ hfsc_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 		if (parentid) {
 			if (cl->cl_parent &&
 			    cl->cl_parent->cl_common.classid != parentid)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (cl->cl_parent == NULL && parentid != TC_H_ROOT)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		cur_time = psched_get_time();
 
@@ -1004,26 +1004,26 @@ hfsc_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 	}
 
 	if (parentid == TC_H_ROOT)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	parent = &q->root;
 	if (parentid) {
 		parent = hfsc_find_class(parentid, sch);
 		if (parent == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	if (classid == 0 || TC_H_MAJ(classid ^ sch->handle) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (hfsc_find_class(classid, sch))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (rsc == NULL && fsc == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cl = kzalloc(sizeof(struct hfsc_class), GFP_KERNEL);
 	if (cl == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_block_get(&cl->block, &cl->filter_list, sch, extack);
 	if (err) {
@@ -1096,7 +1096,7 @@ hfsc_delete_class(struct Qdisc *sch, unsigned long arg)
 	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
 	if (cl->level > 0 || cl->filter_cnt > 0 || cl == &q->root)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sch_tree_lock(sch);
 
@@ -1173,7 +1173,7 @@ hfsc_graft_class(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 	struct hfsc_class *cl = (struct hfsc_class *)arg;
 
 	if (cl->level > 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (new == NULL) {
 		new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
 					cl->cl_common.classid, NULL);
@@ -1310,7 +1310,7 @@ hfsc_dump_class(struct Qdisc *sch, unsigned long arg, struct sk_buff *skb,
 
  nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int
@@ -1392,7 +1392,7 @@ hfsc_init_qdisc(struct Qdisc *sch, struct nlattr *opt,
 	qdisc_watchdog_init(&q->watchdog, sch);
 
 	if (!opt || nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	qopt = nla_data(opt);
 
 	q->defcls = qopt->defcls;
@@ -1431,7 +1431,7 @@ hfsc_change_qdisc(struct Qdisc *sch, struct nlattr *opt,
 	struct tc_hfsc_qopt *qopt;
 
 	if (opt == NULL || nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	qopt = nla_data(opt);
 
 	sch_tree_lock(sch);

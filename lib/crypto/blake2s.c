@@ -111,7 +111,7 @@ static int __init mod_init(void)
 {
 	if (!IS_ENABLED(CONFIG_CRYPTO_MANAGER_DISABLE_TESTS) &&
 	    WARN_ON(!blake2s_selftest()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return 0;
 }
 

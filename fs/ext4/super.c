@@ -161,7 +161,7 @@ ext4_sb_bread(struct super_block *sb, sector_t block, int op_flags)
 	if (buffer_uptodate(bh))
 		return bh;
 	put_bh(bh);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static int ext4_verify_csum_type(struct super_block *sb,
@@ -1243,7 +1243,7 @@ static struct inode *ext4_nfs_get_inode(struct super_block *sb,
 		return ERR_CAST(inode);
 	if (generation && inode->i_generation != generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return inode;
@@ -1313,13 +1313,13 @@ static int ext4_set_context(struct inode *inode, const void *ctx, size_t len,
 	 * the filename "lost+found" itself.
 	 */
 	if (inode->i_ino == EXT4_ROOT_INO)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (WARN_ON_ONCE(IS_DAX(inode) && i_size_read(inode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ext4_test_inode_flag(inode, EXT4_INODE_DAX))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	res = ext4_convert_inline_data(inode);
 	if (res)
@@ -1853,7 +1853,7 @@ static int ext4_sb_read_encoding(const struct ext4_super_block *es,
 			break;
 
 	if (i >= ARRAY_SIZE(ext4_sb_encoding_map))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*encoding = &ext4_sb_encoding_map[i];
 	*flags = le16_to_cpu(es->s_encoding_flags);
@@ -2444,7 +2444,7 @@ static int ext4_setup_super(struct super_block *sb, struct ext4_super_block *es,
 	if (le32_to_cpu(es->s_rev_level) > EXT4_MAX_SUPP_REV) {
 		ext4_msg(sb, KERN_ERR, "revision level too high, "
 			 "forcing read-only mode");
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto done;
 	}
 	if (read_only)
@@ -3808,7 +3808,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 	strreplace(sb->s_id, '/', '!');
 
 	/* -EINVAL is default */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	blocksize = sb_min_blocksize(sb, EXT4_MIN_BLOCK_SIZE);
 	if (!blocksize) {
 		ext4_msg(sb, KERN_ERR, "unable to set blocksize");
@@ -4409,7 +4409,7 @@ static int ext4_fill_super(struct super_block *sb, void *data, int silent)
 		ext4_msg(sb, KERN_ERR, "inodes count not valid: %u vs %llu",
 			 le32_to_cpu(es->s_inodes_count),
 			 ((u64)sbi->s_groups_count * sbi->s_inodes_per_group));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto failed_mount;
 	}
 	db_count = (sbi->s_groups_count + EXT4_DESC_PER_BLOCK(sb) - 1) /
@@ -5103,7 +5103,7 @@ static int ext4_load_journal(struct super_block *sb,
 				ext4_msg(sb, KERN_ERR, "write access "
 					"unavailable, cannot proceed "
 					"(try mounting with noload)");
-				return -EROFS;
+				return -ERR(EROFS);
 			}
 			ext4_msg(sb, KERN_INFO, "write access will "
 			       "be enabled during recovery");
@@ -5113,15 +5113,15 @@ static int ext4_load_journal(struct super_block *sb,
 	if (journal_inum && journal_dev) {
 		ext4_msg(sb, KERN_ERR, "filesystem has both journal "
 		       "and inode journals!");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (journal_inum) {
 		if (!(journal = ext4_get_journal(sb, journal_inum)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (!(journal = ext4_get_dev_journal(sb, journal_dev)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (!(journal->j_flags & JBD2_BARRIER))
@@ -5489,7 +5489,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 		journal_ioprio = sbi->s_journal->j_task->io_context->ioprio;
 
 	if (!parse_options(data, sb, NULL, &journal_ioprio, 1)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto restore_opts;
 	}
 
@@ -5504,27 +5504,27 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 		if (test_opt2(sb, EXPLICIT_DELALLOC)) {
 			ext4_msg(sb, KERN_ERR, "can't mount with "
 				 "both data=journal and delalloc");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto restore_opts;
 		}
 		if (test_opt(sb, DIOREAD_NOLOCK)) {
 			ext4_msg(sb, KERN_ERR, "can't mount with "
 				 "both data=journal and dioread_nolock");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto restore_opts;
 		}
 	} else if (test_opt(sb, DATA_FLAGS) == EXT4_MOUNT_ORDERED_DATA) {
 		if (test_opt(sb, JOURNAL_ASYNC_COMMIT)) {
 			ext4_msg(sb, KERN_ERR, "can't mount with "
 				"journal_async_commit in data=ordered mode");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto restore_opts;
 		}
 	}
 
 	if ((sbi->s_mount_opt ^ old_opts.s_mount_opt) & EXT4_MOUNT_NO_MBCACHE) {
 		ext4_msg(sb, KERN_ERR, "can't enable nombcache during remount");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto restore_opts;
 	}
 
@@ -5546,7 +5546,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 
 	if ((bool)(*flags & SB_RDONLY) != sb_rdonly(sb)) {
 		if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED) {
-			err = -EROFS;
+			err = -ERR(EROFS);
 			goto restore_opts;
 		}
 
@@ -5581,7 +5581,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 			/* Make sure we can mount this feature set readwrite */
 			if (ext4_has_feature_readonly(sb) ||
 			    !ext4_feature_set_ok(sb, 0)) {
-				err = -EROFS;
+				err = -ERR(EROFS);
 				goto restore_opts;
 			}
 			/*
@@ -5612,7 +5612,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 				       "remount RDWR because of unprocessed "
 				       "orphan inode list.  Please "
 				       "umount/remount instead");
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto restore_opts;
 			}
 
@@ -5634,7 +5634,7 @@ static int ext4_remount(struct super_block *sb, int *flags, char *data)
 			if (ext4_has_feature_mmp(sb))
 				if (ext4_multi_mount_protect(sb,
 						le64_to_cpu(es->s_mmp_block))) {
-					err = -EROFS;
+					err = -ERR(EROFS);
 					goto restore_opts;
 				}
 			enable_quota = 1;
@@ -5915,11 +5915,11 @@ static int ext4_quota_on(struct super_block *sb, int type, int format_id,
 	int err;
 
 	if (!test_opt(sb, QUOTA))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Quotafile not on the same filesystem? */
 	if (path->dentry->d_sb != sb)
-		return -EXDEV;
+		return -ERR(EXDEV);
 	/* Journaling quota? */
 	if (EXT4_SB(sb)->s_qf_names[type]) {
 		/* Quotafile not in fs root? */
@@ -5996,7 +5996,7 @@ static int ext4_quota_enable(struct super_block *sb, int type, int format_id,
 	BUG_ON(!ext4_has_feature_quota(sb));
 
 	if (!qf_inums[type])
-		return -EPERM;
+		return -ERR(EPERM);
 
 	qf_inode = ext4_iget(sb, qf_inums[type], EXT4_IGET_SPECIAL);
 	if (IS_ERR(qf_inode)) {
@@ -6150,7 +6150,7 @@ static ssize_t ext4_quota_write(struct super_block *sb, int type,
 		ext4_msg(sb, KERN_WARNING, "Quota write (off=%llu, len=%llu)"
 			" cancelled because transaction is not started",
 			(unsigned long long)off, (unsigned long long)len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	/*
 	 * Since we account only one data block in transaction credits,
@@ -6160,7 +6160,7 @@ static ssize_t ext4_quota_write(struct super_block *sb, int type,
 		ext4_msg(sb, KERN_WARNING, "Quota write (off=%llu, len=%llu)"
 			" cancelled because not block aligned",
 			(unsigned long long)off, (unsigned long long)len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	do {

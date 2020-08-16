@@ -64,7 +64,7 @@ static int tegra20_spdif_hw_params(struct snd_pcm_substream *substream,
 		       TEGRA20_SPDIF_CTRL_BIT_MODE_16BIT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(spdif->regmap, TEGRA20_SPDIF_CTRL, mask, val);
@@ -92,7 +92,7 @@ static int tegra20_spdif_hw_params(struct snd_pcm_substream *substream,
 		spdifclock = 24576000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_rate(spdif->clk_spdif_out, spdifclock);
@@ -134,7 +134,7 @@ static int tegra20_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		tegra20_spdif_stop_playback(spdif);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -277,7 +277,7 @@ static int tegra20_spdif_platform_probe(struct platform_device *pdev)
 	dmareq = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!dmareq) {
 		dev_err(&pdev->dev, "No DMA resource\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	spdif->regmap = devm_regmap_init_mmio(&pdev->dev, regs,

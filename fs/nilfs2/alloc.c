@@ -406,7 +406,7 @@ static int nilfs_palloc_find_available_slot(unsigned char *bitmap,
 			return pos;
 	}
 
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -484,7 +484,7 @@ int nilfs_palloc_count_max_entries(struct inode *inode, u64 nused, u64 *nmaxp)
 		nmax += entries_per_desc_block;
 
 	if (nused > nmax)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	*nmaxp = nmax;
 	return 0;
@@ -566,7 +566,7 @@ int nilfs_palloc_prepare_alloc_entry(struct inode *inode,
 	}
 
 	/* no entries left */
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 
  out_desc:
 	kunmap(desc_bh->b_page);

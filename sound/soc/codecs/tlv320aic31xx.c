@@ -418,7 +418,7 @@ static int aic31xx_dapm_power_event(struct snd_soc_dapm_widget *w,
 	default:
 		dev_err(component->dev, "Unknown widget '%s' calling %s\n",
 			w->name, __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -839,7 +839,7 @@ static int aic31xx_setup_pll(struct snd_soc_component *component,
 
 	if (!aic31xx->sysclk || !aic31xx->p_div) {
 		dev_err(component->dev, "Master clock not supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mclk_p = aic31xx->sysclk / aic31xx->p_div;
 
@@ -869,7 +869,7 @@ static int aic31xx_setup_pll(struct snd_soc_component *component,
 			"%s: Sample rate (%u) and format not supported\n",
 			__func__, params_rate(params));
 		/* See bellow for details how fix this. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (bclk_score != 0) {
 		dev_warn(component->dev, "Can not produce exact bitclock");
@@ -962,7 +962,7 @@ static int aic31xx_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "%s: Unsupported width %d\n",
 			__func__, params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIC31XX_IFACE1,
@@ -1060,7 +1060,7 @@ static int aic31xx_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI master/slave interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* signal polarity */
@@ -1072,7 +1072,7 @@ static int aic31xx_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI clock signal polarity\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -1101,7 +1101,7 @@ static int aic31xx_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI interface format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIC31XX_IFACE1,
@@ -1134,7 +1134,7 @@ static int aic31xx_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if (freq/i > 20000000) {
 		dev_err(aic31xx->dev, "%s: Too high mclk frequency %u\n",
 			__func__, freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	aic31xx->p_div = i;
 
@@ -1144,7 +1144,7 @@ static int aic31xx_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if (i == ARRAY_SIZE(aic31xx_divs)) {
 		dev_err(aic31xx->dev, "%s: Unsupported frequency %d\n",
 			__func__, freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set clock on MCLK, BCLK, or GPIO1 as PLL input */

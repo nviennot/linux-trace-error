@@ -264,7 +264,7 @@ bebob_probe(struct fw_unit *unit, const struct ieee1394_device_id *entry)
 		    entry->vendor_id == VEN_MAUDIO2)
 			return snd_bebob_maudio_load_firmware(unit);
 		else
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 
 	/* Allocate this independent of sound card instance. */

@@ -26,7 +26,7 @@ static int cpu_mt_check(const struct xt_mtchk_param *par)
 	const struct xt_cpu_info *info = par->matchinfo;
 
 	if (info->invert & ~1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 

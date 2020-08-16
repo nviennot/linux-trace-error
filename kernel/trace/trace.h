@@ -1212,11 +1212,11 @@ struct ftrace_func_command;
 
 static inline __init int register_ftrace_command(struct ftrace_func_command *cmd)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline __init int unregister_ftrace_command(char *cmd_name)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void clear_ftrace_function_probes(struct trace_array *tr)
 {

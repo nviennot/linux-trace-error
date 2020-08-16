@@ -628,7 +628,7 @@ static int snd_sgio2audio_pcm_trigger(struct snd_pcm_substream *substream,
 		snd_sgio2audio_dma_stop(substream);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -796,7 +796,7 @@ static int snd_sgio2audio_create(struct snd_card *card,
 	/* check if a codec is attached to the interface */
 	/* (Audio or Audio/Video board present) */
 	if (!(readq(&mace->perif.audio.control) & AUDIO_CONTROL_CODEC_PRESENT))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL)
@@ -832,7 +832,7 @@ static int snd_sgio2audio_create(struct snd_card *card,
 			snd_sgio2audio_free(chip);
 			printk(KERN_ERR "sgio2audio: cannot allocate irq %d\n",
 			       snd_sgio2_isr_table[i].irq);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 

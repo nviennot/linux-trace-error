@@ -40,10 +40,10 @@ static int checksum_tg_check(const struct xt_tgchk_param *par)
 	if (einfo->operation & ~XT_CHECKSUM_OP_FILL) {
 		pr_info_ratelimited("unsupported CHECKSUM operation %x\n",
 				    einfo->operation);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!einfo->operation)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (par->family) {
 	case NFPROTO_IPV4:

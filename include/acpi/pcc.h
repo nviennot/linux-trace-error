@@ -18,7 +18,7 @@ extern void pcc_mbox_free_channel(struct mbox_chan *chan);
 static inline struct mbox_chan *pcc_mbox_request_channel(struct mbox_client *cl,
 							 int subspace_id)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 static inline void pcc_mbox_free_channel(struct mbox_chan *chan) { }
 #endif

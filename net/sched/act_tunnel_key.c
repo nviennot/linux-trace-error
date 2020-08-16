@@ -101,18 +101,18 @@ tunnel_key_copy_geneve_opt(const struct nlattr *nla, void *dst, int dst_len,
 	    !tb[TCA_TUNNEL_KEY_ENC_OPT_GENEVE_TYPE] ||
 	    !tb[TCA_TUNNEL_KEY_ENC_OPT_GENEVE_DATA]) {
 		NL_SET_ERR_MSG(extack, "Missing tunnel key geneve option class, type or data");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	data = nla_data(tb[TCA_TUNNEL_KEY_ENC_OPT_GENEVE_DATA]);
 	data_len = nla_len(tb[TCA_TUNNEL_KEY_ENC_OPT_GENEVE_DATA]);
 	if (data_len < 4) {
 		NL_SET_ERR_MSG(extack, "Tunnel key geneve option data is less than 4 bytes long");
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 	if (data_len % 4) {
 		NL_SET_ERR_MSG(extack, "Tunnel key geneve option data is not a multiple of 4 bytes long");
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	opt_len = sizeof(struct geneve_opt) + data_len;
@@ -149,7 +149,7 @@ tunnel_key_copy_vxlan_opt(const struct nlattr *nla, void *dst, int dst_len,
 
 	if (!tb[TCA_TUNNEL_KEY_ENC_OPT_VXLAN_GBP]) {
 		NL_SET_ERR_MSG(extack, "Missing tunnel key vxlan option gbp");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dst) {
@@ -176,24 +176,24 @@ tunnel_key_copy_erspan_opt(const struct nlattr *nla, void *dst, int dst_len,
 
 	if (!tb[TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_VER]) {
 		NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option ver");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ver = nla_get_u8(tb[TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_VER]);
 	if (ver == 1) {
 		if (!tb[TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_INDEX]) {
 			NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option index");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (ver == 2) {
 		if (!tb[TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_DIR] ||
 		    !tb[TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_HWID]) {
 			NL_SET_ERR_MSG(extack, "Missing tunnel key erspan option dir or hwid");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		NL_SET_ERR_MSG(extack, "Tunnel key erspan option ver is incorrect");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dst) {
@@ -230,7 +230,7 @@ static int tunnel_key_copy_opts(const struct nlattr *nla, u8 *dst,
 		case TCA_TUNNEL_KEY_ENC_OPTS_GENEVE:
 			if (type && type != TUNNEL_GENEVE_OPT) {
 				NL_SET_ERR_MSG(extack, "Duplicate type for geneve options");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			opt_len = tunnel_key_copy_geneve_opt(attr, dst,
 							     dst_len, extack);
@@ -239,7 +239,7 @@ static int tunnel_key_copy_opts(const struct nlattr *nla, u8 *dst,
 			opts_len += opt_len;
 			if (opts_len > IP_TUNNEL_OPTS_MAX) {
 				NL_SET_ERR_MSG(extack, "Tunnel options exceeds max size");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (dst) {
 				dst_len -= opt_len;
@@ -250,7 +250,7 @@ static int tunnel_key_copy_opts(const struct nlattr *nla, u8 *dst,
 		case TCA_TUNNEL_KEY_ENC_OPTS_VXLAN:
 			if (type) {
 				NL_SET_ERR_MSG(extack, "Duplicate type for vxlan options");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			opt_len = tunnel_key_copy_vxlan_opt(attr, dst,
 							    dst_len, extack);
@@ -262,7 +262,7 @@ static int tunnel_key_copy_opts(const struct nlattr *nla, u8 *dst,
 		case TCA_TUNNEL_KEY_ENC_OPTS_ERSPAN:
 			if (type) {
 				NL_SET_ERR_MSG(extack, "Duplicate type for erspan options");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			opt_len = tunnel_key_copy_erspan_opt(attr, dst,
 							     dst_len, extack);
@@ -276,12 +276,12 @@ static int tunnel_key_copy_opts(const struct nlattr *nla, u8 *dst,
 
 	if (!opts_len) {
 		NL_SET_ERR_MSG(extack, "Empty list of tunnel options");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rem > 0) {
 		NL_SET_ERR_MSG(extack, "Trailing data after parsing tunnel key options attributes");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return opts_len;
@@ -304,7 +304,7 @@ static int tunnel_key_opts_set(struct nlattr *nla, struct ip_tunnel_info *info,
 		return tunnel_key_copy_opts(nla, ip_tunnel_info_opts(info),
 					    opts_len, extack);
 #else
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 #endif
 	case TCA_TUNNEL_KEY_ENC_OPTS_VXLAN:
 #if IS_ENABLED(CONFIG_INET)
@@ -312,7 +312,7 @@ static int tunnel_key_opts_set(struct nlattr *nla, struct ip_tunnel_info *info,
 		return tunnel_key_copy_opts(nla, ip_tunnel_info_opts(info),
 					    opts_len, extack);
 #else
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 #endif
 	case TCA_TUNNEL_KEY_ENC_OPTS_ERSPAN:
 #if IS_ENABLED(CONFIG_INET)
@@ -320,11 +320,11 @@ static int tunnel_key_opts_set(struct nlattr *nla, struct ip_tunnel_info *info,
 		return tunnel_key_copy_opts(nla, ip_tunnel_info_opts(info),
 					    opts_len, extack);
 #else
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 #endif
 	default:
 		NL_SET_ERR_MSG(extack, "Cannot set tunnel options for unknown tunnel type");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -377,7 +377,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG(extack, "Tunnel requires attributes to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_TUNNEL_KEY_MAX, nla,
@@ -389,7 +389,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 
 	if (!tb[TCA_TUNNEL_KEY_PARMS]) {
 		NL_SET_ERR_MSG(extack, "Missing tunnel key parameters");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	parm = nla_data(tb[TCA_TUNNEL_KEY_PARMS]);
@@ -461,7 +461,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 						      key_id, 0);
 		} else {
 			NL_SET_ERR_MSG(extack, "Missing either ipv4 or ipv6 src and dst");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err_out;
 		}
 
@@ -489,7 +489,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 		break;
 	default:
 		NL_SET_ERR_MSG(extack, "Unknown tunnel key action");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_out;
 	}
 
@@ -505,7 +505,7 @@ static int tunnel_key_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		NL_SET_ERR_MSG(extack, "TC IDR already exists");
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto release_tun_meta;
 	}
 
@@ -575,7 +575,7 @@ static int tunnel_key_geneve_opts_dump(struct sk_buff *skb,
 
 	start = nla_nest_start_noflag(skb, TCA_TUNNEL_KEY_ENC_OPTS_GENEVE);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	while (len > 0) {
 		struct geneve_opt *opt = (struct geneve_opt *)src;
@@ -587,7 +587,7 @@ static int tunnel_key_geneve_opts_dump(struct sk_buff *skb,
 		    nla_put(skb, TCA_TUNNEL_KEY_ENC_OPT_GENEVE_DATA,
 			    opt->length * 4, opt + 1)) {
 			nla_nest_cancel(skb, start);
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 
 		len -= sizeof(struct geneve_opt) + opt->length * 4;
@@ -606,11 +606,11 @@ static int tunnel_key_vxlan_opts_dump(struct sk_buff *skb,
 
 	start = nla_nest_start_noflag(skb, TCA_TUNNEL_KEY_ENC_OPTS_VXLAN);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, TCA_TUNNEL_KEY_ENC_OPT_VXLAN_GBP, md->gbp)) {
 		nla_nest_cancel(skb, start);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	nla_nest_end(skb, start);
@@ -625,7 +625,7 @@ static int tunnel_key_erspan_opts_dump(struct sk_buff *skb,
 
 	start = nla_nest_start_noflag(skb, TCA_TUNNEL_KEY_ENC_OPTS_ERSPAN);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u8(skb, TCA_TUNNEL_KEY_ENC_OPT_ERSPAN_VER, md->version))
 		goto err;
@@ -645,21 +645,21 @@ static int tunnel_key_erspan_opts_dump(struct sk_buff *skb,
 	return 0;
 err:
 	nla_nest_cancel(skb, start);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int tunnel_key_opts_dump(struct sk_buff *skb,
 				const struct ip_tunnel_info *info)
 {
 	struct nlattr *start;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (!info->options_len)
 		return 0;
 
 	start = nla_nest_start_noflag(skb, TCA_TUNNEL_KEY_ENC_OPTS);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (info->key.tun_flags & TUNNEL_GENEVE_OPT) {
 		err = tunnel_key_geneve_opts_dump(skb, info);
@@ -708,7 +708,7 @@ static int tunnel_key_dump_addresses(struct sk_buff *skb,
 			return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int tunnel_key_dump(struct sk_buff *skb, struct tc_action *a,

@@ -252,7 +252,7 @@ static int pxa_ssp_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		sscr0 |= SSCR0_ACS;
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* The SSP clock must be disabled when changing SSP clock mode
@@ -322,7 +322,7 @@ static int pxa_ssp_set_pll(struct ssp_priv *priv, unsigned int freq)
 			break;
 		}
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pxa_ssp_write_reg(ssp, SSACD, ssacd);
@@ -396,7 +396,7 @@ static int pxa_ssp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -406,7 +406,7 @@ static int pxa_ssp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_IB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -416,7 +416,7 @@ static int pxa_ssp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Settings will be applied in hw_params() */
@@ -460,7 +460,7 @@ static int pxa_ssp_configure_dai_fmt(struct ssp_priv *priv)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (priv->dai_fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -476,7 +476,7 @@ static int pxa_ssp_configure_dai_fmt(struct ssp_priv *priv)
 		sspsp |= SSPSP_SCMODE(2) | SSPSP_SFRMP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (priv->dai_fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -495,7 +495,7 @@ static int pxa_ssp_configure_dai_fmt(struct ssp_priv *priv)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pxa_ssp_write_reg(ssp, SSCR0, sscr0);
@@ -617,7 +617,7 @@ static int pxa_ssp_hw_params(struct snd_pcm_substream *substream,
 			}
 
 			if (!m->rate)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			acds = m->acds;
 
@@ -658,7 +658,7 @@ static int pxa_ssp_hw_params(struct snd_pcm_substream *substream,
 			 * needed for that mode are only available on PXA3xx.
 			 */
 			if (ssp->type != PXA3xx_SSP)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			sspsp |= SSPSP_SFRMWDTH(width * 2);
 			sspsp |= SSPSP_SFRMDLY(width * 4);
@@ -688,7 +688,7 @@ static int pxa_ssp_hw_params(struct snd_pcm_substream *substream,
 	 */
 	if ((sscr0 & SSCR0_MOD) && !ttsa) {
 		dev_err(ssp->dev, "No TDM timeslot configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dump_registers(ssp);
@@ -759,7 +759,7 @@ static int pxa_ssp_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	dump_registers(ssp);
@@ -783,13 +783,13 @@ static int pxa_ssp_probe(struct snd_soc_dai *dai)
 		ssp_handle = of_parse_phandle(dev->of_node, "port", 0);
 		if (!ssp_handle) {
 			dev_err(dev, "unable to get 'port' phandle\n");
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto err_priv;
 		}
 
 		priv->ssp = pxa_ssp_request_of(ssp_handle, "SoC audio");
 		if (priv->ssp == NULL) {
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto err_priv;
 		}
 
@@ -804,7 +804,7 @@ static int pxa_ssp_probe(struct snd_soc_dai *dai)
 	} else {
 		priv->ssp = pxa_ssp_request(dai->id + 1, "SoC audio");
 		if (priv->ssp == NULL) {
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto err_priv;
 		}
 	}

@@ -49,14 +49,14 @@ static int cfdgml_receive(struct cflayer *layr, struct cfpkt *pkt)
 	if (cfpkt_extr_head(pkt, &cmd, 1) < 0) {
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if ((cmd & DGM_CMD_BIT) == 0) {
 		if (cfpkt_extr_head(pkt, &dgmhdr, 3) < 0) {
 			pr_err("Packet is erroneous!\n");
 			cfpkt_destroy(pkt);
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 		ret = layr->up->receive(layr->up, pkt);
 		return ret;
@@ -74,7 +74,7 @@ static int cfdgml_receive(struct cflayer *layr, struct cfpkt *pkt)
 	default:
 		cfpkt_destroy(pkt);
 		pr_info("Unknown datagram control %d (0x%x)\n", cmd, cmd);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 }
 
@@ -94,7 +94,7 @@ static int cfdgml_transmit(struct cflayer *layr, struct cfpkt *pkt)
 	/* STE Modem cannot handle more than 1500 bytes datagrams */
 	if (cfpkt_getlen(pkt) > DGM_MTU) {
 		cfpkt_destroy(pkt);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	cfpkt_add_head(pkt, &zero, 3);

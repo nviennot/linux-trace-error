@@ -324,7 +324,7 @@ static int rt715_mux_put(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Verb ID = 0x701h, nid = e->reg */
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
@@ -575,10 +575,10 @@ static int rt715_pcm_hw_params(struct snd_pcm_substream *substream,
 	stream = snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rt715->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dai->id) {
 	case RT715_AIF1:
@@ -593,7 +593,7 @@ static int rt715_pcm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI id %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream_config.frame_rate =  params_rate(params);
@@ -624,7 +624,7 @@ static int rt715_pcm_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported sample rate %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params_channels(params) <= 16) {
@@ -633,7 +633,7 @@ static int rt715_pcm_hw_params(struct snd_pcm_substream *substream,
 	} else {
 		dev_err(component->dev, "Unsupported channels %d\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -653,7 +653,7 @@ static int rt715_pcm_hw_params(struct snd_pcm_substream *substream,
 		val |= (0x4 << 4);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt715->regmap, RT715_MIC_ADC_FORMAT_H, val);
@@ -673,7 +673,7 @@ static int rt715_pcm_hw_free(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!rt715->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdw_stream_remove_slave(rt715->slave, stream->sdw_stream);
 	return 0;
@@ -752,7 +752,7 @@ int rt715_clock_config(struct device *dev)
 		value = 0x5;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt715->regmap, 0xe0, value);

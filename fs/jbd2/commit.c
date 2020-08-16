@@ -175,7 +175,7 @@ static int journal_wait_on_commit_record(journal_t *journal,
 	wait_on_buffer(bh);
 
 	if (unlikely(!buffer_uptodate(bh)))
-		ret = -EIO;
+		ret = -ERR(EIO);
 	put_bh(bh);            /* One for getblk() */
 
 	return ret;
@@ -809,7 +809,7 @@ start_journal_io:
 		cond_resched();
 
 		if (unlikely(!buffer_uptodate(bh)))
-			err = -EIO;
+			err = -ERR(EIO);
 		jbd2_unfile_log_bh(bh);
 		stats.run.rs_blocks_logged++;
 
@@ -852,7 +852,7 @@ start_journal_io:
 		cond_resched();
 
 		if (unlikely(!buffer_uptodate(bh)))
-			err = -EIO;
+			err = -ERR(EIO);
 
 		BUFFER_TRACE(bh, "ph5: control buffer writeout done: unfile");
 		clear_buffer_jwrite(bh);

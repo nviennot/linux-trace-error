@@ -918,7 +918,7 @@ static int vtime_state_fetch(struct vtime *vtime, int cpu)
 	 * kcpustat task again.
 	 */
 	if (vtime->cpu != cpu && vtime->cpu != -1)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/*
 	 * Two possible things here:
@@ -930,7 +930,7 @@ static int vtime_state_fetch(struct vtime *vtime, int cpu)
 	 * Case 1) is ok but 2) is not. So wait for a safe VTIME state.
 	 */
 	if (state == VTIME_INACTIVE)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return state;
 }

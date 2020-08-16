@@ -857,7 +857,7 @@ static int dax_writeback_one(struct xa_state *xas, struct dax_device *dax_dev,
 	 * wrong.
 	 */
 	if (WARN_ON(!xa_is_value(entry)))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (unlikely(dax_is_locked(entry))) {
 		void *old_entry = entry;
@@ -876,7 +876,7 @@ static int dax_writeback_one(struct xa_state *xas, struct dax_device *dax_dev,
 			goto put_unlocked;
 		if (WARN_ON_ONCE(dax_is_empty_entry(entry) ||
 					dax_is_zero_entry(entry))) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto put_unlocked;
 		}
 
@@ -947,7 +947,7 @@ int dax_writeback_mapping_range(struct address_space *mapping,
 	unsigned int scanned = 0;
 
 	if (WARN_ON_ONCE(inode->i_blkbits != PAGE_SHIFT))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!mapping->nrexceptional || wbc->sync_mode != WB_SYNC_ALL)
 		return 0;
@@ -1000,7 +1000,7 @@ static int dax_iomap_pfn(struct iomap *iomap, loff_t pos, size_t size,
 		rc = length;
 		goto out;
 	}
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (PFN_PHYS(length) < size)
 		goto out;
 	if (pfn_t_to_pfn(*pfnp) & (PHYS_PFN(size)-1))
@@ -1098,7 +1098,7 @@ dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 	}
 
 	if (WARN_ON_ONCE(iomap->type != IOMAP_MAPPED))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * Write can allocate block for an area which has a hole page mapped
@@ -1121,7 +1121,7 @@ dax_iomap_actor(struct inode *inode, loff_t pos, loff_t length, void *data,
 		void *kaddr;
 
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			break;
 		}
 
@@ -1292,7 +1292,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
 		goto unlock_entry;
 	}
 	if (WARN_ON_ONCE(iomap.offset + iomap.length < pos + PAGE_SIZE)) {
-		error = -EIO;	/* fs corruption? */
+		error = -ERR(EIO);	/* fs corruption? */
 		goto error_finish_iomap;
 	}
 
@@ -1310,7 +1310,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
 			break;
 		default:
 			WARN_ON_ONCE(1);
-			error = -EIO;
+			error = -ERR(EIO);
 			break;
 		}
 
@@ -1348,7 +1348,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
 		 */
 		if (sync) {
 			if (WARN_ON_ONCE(!pfnp)) {
-				error = -EIO;
+				error = -ERR(EIO);
 				goto error_finish_iomap;
 			}
 			*pfnp = pfn;
@@ -1371,7 +1371,7 @@ static vm_fault_t dax_iomap_pte_fault(struct vm_fault *vmf, pfn_t *pfnp,
 		/*FALLTHRU*/
 	default:
 		WARN_ON_ONCE(1);
-		error = -EIO;
+		error = -ERR(EIO);
 		break;
 	}
 

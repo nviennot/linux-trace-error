@@ -191,7 +191,7 @@ static int adau1701_reg_write(void *context, unsigned int reg,
 
 	size = adau1701_register_size(&client->dev, reg);
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -207,7 +207,7 @@ static int adau1701_reg_write(void *context, unsigned int reg,
 	else if (ret < 0)
 		return ret;
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 static int adau1701_reg_read(void *context, unsigned int reg,
@@ -222,7 +222,7 @@ static int adau1701_reg_read(void *context, unsigned int reg,
 
 	size = adau1701_register_size(&client->dev, reg);
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	send_buf[0] = reg >> 8;
 	send_buf[1] = reg & 0xff;
@@ -241,7 +241,7 @@ static int adau1701_reg_read(void *context, unsigned int reg,
 	if (ret < 0)
 		return ret;
 	else if (ret != ARRAY_SIZE(msgs))
-		return -EIO;
+		return -ERR(EIO);
 
 	*value = 0;
 
@@ -278,7 +278,7 @@ static int adau1701_safeload(struct sigmadsp *sigmadsp, unsigned int addr,
 		if (ret < 0)
 			return ret;
 		else if (ret != 7)
-			return -EIO;
+			return -ERR(EIO);
 
 		put_unaligned_le16(ADAU1701_SAFELOAD_ADDR(i), buf);
 		put_unaligned_le16(addr + i, buf + 2);
@@ -286,7 +286,7 @@ static int adau1701_safeload(struct sigmadsp *sigmadsp, unsigned int addr,
 		if (ret < 0)
 			return ret;
 		else if (ret != 4)
-			return -EIO;
+			return -ERR(EIO);
 	}
 
 	return regmap_update_bits(adau1701->regmap, ADAU1701_DSPCTRL,
@@ -379,7 +379,7 @@ static int adau1701_set_capture_pcm_format(struct snd_soc_component *component,
 		val = ADAU1701_SEROCTL_WORD_LEN_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (adau1701->dai_fmt == SND_SOC_DAIFMT_RIGHT_J) {
@@ -422,7 +422,7 @@ static int adau1701_set_playback_pcm_format(struct snd_soc_component *component,
 		val = ADAU1701_SERICTL_RIGHTJ_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau1701->regmap, ADAU1701_SERICTL,
@@ -462,7 +462,7 @@ static int adau1701_hw_params(struct snd_pcm_substream *substream,
 		val = ADAU1701_DSPCTRL_SR_48;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau1701->regmap, ADAU1701_DSPCTRL,
@@ -491,7 +491,7 @@ static int adau1701_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -513,7 +513,7 @@ static int adau1701_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		seroctl |= ADAU1701_SEROCTL_INV_BCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -530,7 +530,7 @@ static int adau1701_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		invert_lrclk = !invert_lrclk;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (invert_lrclk) {
@@ -604,7 +604,7 @@ static int adau1701_set_sysclk(struct snd_soc_component *component, int clk_id,
 		val = ADAU1701_OSCIPOW_OPD;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(adau1701->regmap, ADAU1701_OSCIPOW,
@@ -787,7 +787,7 @@ static int adau1701_i2c_probe(struct i2c_client *client,
 {
 	struct adau1701 *adau1701;
 	struct device *dev = &client->dev;
-	int gpio_nreset = -EINVAL;
+	int gpio_nreset = -ERR(EINVAL);
 	int gpio_pll_mode[2] = { -EINVAL, -EINVAL };
 	int ret, i;
 

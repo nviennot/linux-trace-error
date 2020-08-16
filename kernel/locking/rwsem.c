@@ -1113,7 +1113,7 @@ out_nolock:
 	raw_spin_unlock_irq(&sem->wait_lock);
 	__set_current_state(TASK_RUNNING);
 	lockevent_inc(rwsem_rlock_fail);
-	return ERR_PTR(-EINTR);
+	return ERR_PTR(-ERR(EINTR));
 }
 
 /*
@@ -1288,7 +1288,7 @@ out_nolock:
 	wake_up_q(&wake_q);
 	lockevent_inc(rwsem_wlock_fail);
 
-	return ERR_PTR(-EINTR);
+	return ERR_PTR(-ERR(EINTR));
 }
 
 /*
@@ -1349,7 +1349,7 @@ static inline int __down_read_killable(struct rw_semaphore *sem)
 {
 	if (!rwsem_read_trylock(sem)) {
 		if (IS_ERR(rwsem_down_read_slowpath(sem, TASK_KILLABLE)))
-			return -EINTR;
+			return -ERR(EINTR);
 		DEBUG_RWSEMS_WARN_ON(!is_rwsem_reader_owned(sem), sem);
 	} else {
 		rwsem_set_reader_owned(sem);
@@ -1398,7 +1398,7 @@ static inline int __down_write_killable(struct rw_semaphore *sem)
 	if (unlikely(!atomic_long_try_cmpxchg_acquire(&sem->count, &tmp,
 						      RWSEM_WRITER_LOCKED))) {
 		if (IS_ERR(rwsem_down_write_slowpath(sem, TASK_KILLABLE)))
-			return -EINTR;
+			return -ERR(EINTR);
 	} else {
 		rwsem_set_owner(sem);
 	}
@@ -1502,7 +1502,7 @@ int __sched down_read_killable(struct rw_semaphore *sem)
 
 	if (LOCK_CONTENDED_RETURN(sem, __down_read_trylock, __down_read_killable)) {
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 
 	return 0;
@@ -1544,7 +1544,7 @@ int __sched down_write_killable(struct rw_semaphore *sem)
 	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
 				  __down_write_killable)) {
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 
 	return 0;
@@ -1637,7 +1637,7 @@ int __sched down_write_killable_nested(struct rw_semaphore *sem, int subclass)
 	if (LOCK_CONTENDED_RETURN(sem, __down_write_trylock,
 				  __down_write_killable)) {
 		rwsem_release(&sem->dep_map, _RET_IP_);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 
 	return 0;

@@ -301,10 +301,10 @@ static int nr_setsockopt(struct socket *sock, int level, int optname,
 	unsigned long opt;
 
 	if (level != SOL_NETROM)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (optlen < sizeof(unsigned int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(opt, (unsigned int __user *)optval))
 		return -EFAULT;
@@ -312,36 +312,36 @@ static int nr_setsockopt(struct socket *sock, int level, int optname,
 	switch (optname) {
 	case NETROM_T1:
 		if (opt < 1 || opt > ULONG_MAX / HZ)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr->t1 = opt * HZ;
 		return 0;
 
 	case NETROM_T2:
 		if (opt < 1 || opt > ULONG_MAX / HZ)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr->t2 = opt * HZ;
 		return 0;
 
 	case NETROM_N2:
 		if (opt < 1 || opt > 31)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr->n2 = opt;
 		return 0;
 
 	case NETROM_T4:
 		if (opt < 1 || opt > ULONG_MAX / HZ)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr->t4 = opt * HZ;
 		return 0;
 
 	case NETROM_IDLE:
 		if (opt > ULONG_MAX / (60 * HZ))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr->idle = opt * 60 * HZ;
 		return 0;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 }
 
@@ -354,13 +354,13 @@ static int nr_getsockopt(struct socket *sock, int level, int optname,
 	int len;
 
 	if (level != SOL_NETROM)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case NETROM_T1:
@@ -384,7 +384,7 @@ static int nr_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	len = min_t(unsigned int, len, sizeof(int));
@@ -409,7 +409,7 @@ static int nr_listen(struct socket *sock, int backlog)
 	}
 	release_sock(sk);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static struct proto nr_proto = {
@@ -425,10 +425,10 @@ static int nr_create(struct net *net, struct socket *sock, int protocol,
 	struct nr_sock *nr;
 
 	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (sock->type != SOCK_SEQPACKET || protocol != 0)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sk = sk_alloc(net, PF_NETROM, GFP_ATOMIC, &nr_proto, kern);
 	if (sk  == NULL)
@@ -568,23 +568,23 @@ static int nr_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 	lock_sock(sk);
 	if (!sock_flag(sk, SOCK_ZAPPED)) {
 		release_sock(sk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (addr_len < sizeof(struct sockaddr_ax25) || addr_len > sizeof(struct full_sockaddr_ax25)) {
 		release_sock(sk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (addr_len < (addr->fsa_ax25.sax25_ndigis * sizeof(ax25_address) + sizeof(struct sockaddr_ax25))) {
 		release_sock(sk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (addr->fsa_ax25.sax25_family != AF_NETROM) {
 		release_sock(sk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if ((dev = nr_dev_get(&addr->fsa_ax25.sax25_call)) == NULL) {
 		release_sock(sk);
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	}
 
 	/*
@@ -594,7 +594,7 @@ static int nr_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 		if (!capable(CAP_NET_BIND_SERVICE)) {
 			dev_put(dev);
 			release_sock(sk);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		nr->user_addr   = addr->fsa_digipeater[0];
 		nr->source_addr = addr->fsa_ax25.sax25_call;
@@ -609,7 +609,7 @@ static int nr_bind(struct socket *sock, struct sockaddr *uaddr, int addr_len)
 			if (ax25_uid_policy && !capable(CAP_NET_BIND_SERVICE)) {
 				release_sock(sk);
 				dev_put(dev);
-				return -EPERM;
+				return -ERR(EPERM);
 			}
 			nr->user_addr   = *source;
 		}
@@ -646,12 +646,12 @@ static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	if (sk->sk_state == TCP_CLOSE && sock->state == SS_CONNECTING) {
 		sock->state = SS_UNCONNECTED;
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 		goto out_release;
 	}
 
 	if (sk->sk_state == TCP_ESTABLISHED) {
-		err = -EISCONN;	/* No reconnect on a seqpacket socket */
+		err = -ERR(EISCONN);	/* No reconnect on a seqpacket socket */
 		goto out_release;
 	}
 
@@ -659,18 +659,18 @@ static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
 	sock->state = SS_UNCONNECTED;
 
 	if (addr_len != sizeof(struct sockaddr_ax25) && addr_len != sizeof(struct full_sockaddr_ax25)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_release;
 	}
 	if (addr->sax25_family != AF_NETROM) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_release;
 	}
 	if (sock_flag(sk, SOCK_ZAPPED)) {	/* Must bind first - autobinding in this may or may not work */
 		sock_reset_flag(sk, SOCK_ZAPPED);
 
 		if ((dev = nr_dev_first()) == NULL) {
-			err = -ENETUNREACH;
+			err = -ERR(ENETUNREACH);
 			goto out_release;
 		}
 		source = (ax25_address *)dev->dev_addr;
@@ -682,7 +682,7 @@ static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
 		} else {
 			if (ax25_uid_policy && !capable(CAP_NET_ADMIN)) {
 				dev_put(dev);
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto out_release;
 			}
 			nr->user_addr   = *source;
@@ -718,7 +718,7 @@ static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	/* Now the loop */
 	if (sk->sk_state != TCP_ESTABLISHED && (flags & O_NONBLOCK)) {
-		err = -EINPROGRESS;
+		err = -ERR(EINPROGRESS);
 		goto out_release;
 	}
 
@@ -740,7 +740,7 @@ static int nr_connect(struct socket *sock, struct sockaddr *uaddr,
 				lock_sock(sk);
 				continue;
 			}
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			break;
 		}
 		finish_wait(sk_sleep(sk), &wait);
@@ -772,16 +772,16 @@ static int nr_accept(struct socket *sock, struct socket *newsock, int flags,
 	int err = 0;
 
 	if ((sk = sock->sk) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sk->sk_type != SOCK_SEQPACKET) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out_release;
 	}
 
 	if (sk->sk_state != TCP_LISTEN) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_release;
 	}
 
@@ -805,7 +805,7 @@ static int nr_accept(struct socket *sock, struct socket *newsock, int flags,
 			lock_sock(sk);
 			continue;
 		}
-		err = -ERESTARTSYS;
+		err = -ERR(ERESTARTSYS);
 		break;
 	}
 	finish_wait(sk_sleep(sk), &wait);
@@ -839,7 +839,7 @@ static int nr_getname(struct socket *sock, struct sockaddr *uaddr,
 	if (peer != 0) {
 		if (sk->sk_state != TCP_ESTABLISHED) {
 			release_sock(sk);
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		}
 		sax->fsa_ax25.sax25_family = AF_NETROM;
 		sax->fsa_ax25.sax25_ndigis = 1;
@@ -1041,42 +1041,42 @@ static int nr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	int size;
 
 	if (msg->msg_flags & ~(MSG_DONTWAIT|MSG_EOR|MSG_CMSG_COMPAT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sock_flag(sk, SOCK_ZAPPED)) {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		goto out;
 	}
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN) {
 		send_sig(SIGPIPE, current, 0);
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		goto out;
 	}
 
 	if (nr->device == NULL) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto out;
 	}
 
 	if (usax) {
 		if (msg->msg_namelen < sizeof(sax)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		sax = *usax;
 		if (ax25cmp(&nr->dest_addr, &sax.sax25_call) != 0) {
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 			goto out;
 		}
 		if (sax.sax25_family != AF_NETROM) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			goto out;
 		}
 		sax.sax25_family = AF_NETROM;
@@ -1086,7 +1086,7 @@ static int nr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 	/* Build a packet - the conventional user limit is 236 bytes. We can
 	   do ludicrously large NetROM frames but must not overflow */
 	if (len > 65536) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto out;
 	}
 
@@ -1126,7 +1126,7 @@ static int nr_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
 
 	if (sk->sk_state != TCP_ESTABLISHED) {
 		kfree_skb(skb);
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -1155,7 +1155,7 @@ static int nr_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 	lock_sock(sk);
 	if (sk->sk_state != TCP_ESTABLISHED) {
 		release_sock(sk);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	/* Now we can treat all alike */
@@ -1233,17 +1233,17 @@ static int nr_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
 	case SIOCSIFNETMASK:
 	case SIOCGIFMETRIC:
 	case SIOCSIFMETRIC:
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	case SIOCADDRT:
 	case SIOCDELRT:
 	case SIOCNRDECOBS:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		return nr_rt_ioctl(cmd, argp);
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -1387,7 +1387,7 @@ static int __init nr_proto_init(void)
 	if (nr_ndevs > 0x7fffffff/sizeof(struct net_device *)) {
 		pr_err("NET/ROM: %s - nr_ndevs parameter too large\n",
 		       __func__);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto unregister_proto;
 	}
 

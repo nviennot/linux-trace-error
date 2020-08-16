@@ -485,9 +485,9 @@ static int mangle_sdp_packet(struct sk_buff *skb, unsigned int protoff,
 
 	if (ct_sip_get_sdp_header(ct, *dptr, sdpoff, *datalen, type, term,
 				  &matchoff, &matchlen) <= 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return mangle_packet(skb, protoff, dataoff, dptr, datalen,
-			     matchoff, matchlen, buffer, buflen) ? 0 : -EINVAL;
+			     matchoff, matchlen, buffer, buflen) ? 0 : -ERR(EINVAL);
 }
 
 static unsigned int nf_nat_sdp_addr(struct sk_buff *skb, unsigned int protoff,

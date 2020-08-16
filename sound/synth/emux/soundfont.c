@@ -122,7 +122,7 @@ snd_soundfont_load(struct snd_sf_list *sflist, const void __user *data,
 
 	if (count < (long)sizeof(patch)) {
 		snd_printk(KERN_ERR "patch record too small %ld\n", count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (copy_from_user(&patch, data, sizeof(patch)))
 		return -EFAULT;
@@ -132,16 +132,16 @@ snd_soundfont_load(struct snd_sf_list *sflist, const void __user *data,
 
 	if (patch.key != SNDRV_OSS_SOUNDFONT_PATCH) {
 		snd_printk(KERN_ERR "The wrong kind of patch %x\n", patch.key);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (count < patch.len) {
 		snd_printk(KERN_ERR "Patch too short %ld, need %d\n",
 			   count, patch.len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (patch.len < 0) {
 		snd_printk(KERN_ERR "poor length %d\n", patch.len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (patch.type == SNDRV_SFNT_OPEN_PATCH) {
@@ -156,12 +156,12 @@ snd_soundfont_load(struct snd_sf_list *sflist, const void __user *data,
 	spin_lock_irqsave(&sflist->lock, flags);
 	if (sflist->open_client != client) {
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
 	lock_preset(sflist);
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	switch (patch.type) {
 	case SNDRV_SFNT_LOAD_INFO:
 		rc = load_info(sflist, data, count);
@@ -186,13 +186,13 @@ snd_soundfont_load(struct snd_sf_list *sflist, const void __user *data,
 		if (!sflist->currsf) {
 			snd_printk(KERN_ERR "soundfont: remove_info: "
 				   "patch not opened\n");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		} else {
 			int bank, instr;
 			bank = ((unsigned short)patch.optarg >> 8) & 0xff;
 			instr = (unsigned short)patch.optarg & 0xff;
 			if (! remove_info(sflist, sflist->currsf, bank, instr))
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 			else
 				rc = 0;
 		}
@@ -226,7 +226,7 @@ open_patch(struct snd_sf_list *sflist, const char __user *data,
 	spin_lock_irqsave(&sflist->lock, flags);
 	if (sflist->open_client >= 0 || sflist->currsf) {
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
@@ -326,7 +326,7 @@ probe_data(struct snd_sf_list *sflist, int sample_id)
 		if (find_sample(sflist->currsf, sample_id))
 			return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -417,12 +417,12 @@ load_map(struct snd_sf_list *sflist, const void __user *data, int count)
 
 	/* get the link info */
 	if (count < (int)sizeof(map))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&map, data, sizeof(map)))
 		return -EFAULT;
 
 	if (map.map_instr < 0 || map.map_instr >= SF_MAX_INSTRUMENTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	sf = newsf(sflist, SNDRV_SFNT_PAT_TYPE_MAP|SNDRV_SFNT_PAT_SHARED, NULL);
 	if (sf == NULL)
@@ -515,14 +515,14 @@ load_info(struct snd_sf_list *sflist, const void __user *data, long count)
 
 	/* patch must be opened */
 	if ((sf = sflist->currsf) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (is_special_type(sf->type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (count < (long)sizeof(hdr)) {
 		printk(KERN_ERR "Soundfont error: invalid patch zone length\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (copy_from_user((char*)&hdr, data, sizeof(hdr)))
 		return -EFAULT;
@@ -533,14 +533,14 @@ load_info(struct snd_sf_list *sflist, const void __user *data, long count)
 	if (hdr.nvoices <= 0 || hdr.nvoices >= 100) {
 		printk(KERN_ERR "Soundfont error: Illegal voice number %d\n",
 		       hdr.nvoices);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (count < (long)sizeof(struct soundfont_voice_info) * hdr.nvoices) {
 		printk(KERN_ERR "Soundfont Error: "
 		       "patch length(%ld) is smaller than nvoices(%d)\n",
 		       count, hdr.nvoices);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (hdr.write_mode) {
@@ -551,7 +551,7 @@ load_info(struct snd_sf_list *sflist, const void __user *data, long count)
 			if (!zone->mapped &&
 			    zone->bank == hdr.bank &&
 			    zone->instr == hdr.instr)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		break;
 	case SNDRV_SFNT_WR_REPLACE:
@@ -701,10 +701,10 @@ load_data(struct snd_sf_list *sflist, const void __user *data, long count)
 
 	/* patch must be opened */
 	if ((sf = sflist->currsf) == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (is_special_type(sf->type))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&sample_info, data, sizeof(sample_info)))
 		return -EFAULT;
@@ -712,14 +712,14 @@ load_data(struct snd_sf_list *sflist, const void __user *data, long count)
 	off = sizeof(sample_info);
 
 	if (sample_info.size != (count-off)/2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check for dup */
 	if (find_sample(sf, sample_info.sample)) {
 		/* if shared sample, skip this data */
 		if (sf->type & SNDRV_SFNT_PAT_SHARED)
 			return 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Allocate a new sample structure */
@@ -947,7 +947,7 @@ load_guspatch(struct snd_sf_list *sflist, const char __user *data,
 
 	if (count < (long)sizeof(patch)) {
 		snd_printk(KERN_ERR "patch record too small %ld\n", count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (copy_from_user(&patch, data, sizeof(patch)))
 		return -EFAULT;

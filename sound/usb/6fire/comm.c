@@ -99,7 +99,7 @@ static int usb6fire_comm_send_buffer(u8 *buffer, struct usb_device *dev)
 	if (ret < 0)
 		return ret;
 	else if (actual_len != buffer[1] + 2)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 

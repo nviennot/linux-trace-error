@@ -72,7 +72,7 @@ static struct cfpkt *rfm_append(struct cfrfml *rfml, char *seghead,
 				struct cfpkt *pkt, int *err)
 {
 	struct cfpkt *tmppkt;
-	*err = -EPROTO;
+	*err = -ERR(EPROTO);
 	/* n-th but not last segment */
 
 	if (cfpkt_extr_head(pkt, seghead, 6) < 0)
@@ -108,7 +108,7 @@ static int cfrfml_receive(struct cflayer *layr, struct cfpkt *pkt)
 	rfml = container_obj(layr);
 	spin_lock(&rfml->sync);
 
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 	if (cfpkt_extr_head(pkt, &tmp, 1) < 0)
 		goto out;
 	segmented = tmp & RFM_SEGMENTATION_BIT;
@@ -159,7 +159,7 @@ static int cfrfml_receive(struct cflayer *layr, struct cfpkt *pkt)
 		tmppkt = NULL;
 
 		/* Verify that length is correct */
-		err = -EPROTO;
+		err = -ERR(EPROTO);
 		if (rfml->pdu_size != cfpkt_getlen(pkt) - RFM_HEAD_SIZE + 1)
 			goto out;
 	}
@@ -187,7 +187,7 @@ out:
 
 	if (unlikely(err == -EAGAIN))
 		/* It is not possible to recover after drop of a fragment */
-		err = -EIO;
+		err = -ERR(EIO);
 
 	return err;
 }
@@ -225,7 +225,7 @@ static int cfrfml_transmit(struct cflayer *layr, struct cfpkt *pkt)
 	if (!cfsrvl_ready(&rfml->serv, &err))
 		goto out;
 
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 	if (cfpkt_getlen(pkt) <= RFM_HEAD_SIZE-1)
 		goto out;
 
@@ -239,7 +239,7 @@ static int cfrfml_transmit(struct cflayer *layr, struct cfpkt *pkt)
 	while (cfpkt_getlen(frontpkt) > rfml->fragment_size + RFM_HEAD_SIZE) {
 
 		seg = 1;
-		err = -EPROTO;
+		err = -ERR(EPROTO);
 
 		if (cfpkt_add_head(frontpkt, &seg, 1) < 0)
 			goto out;
@@ -264,14 +264,14 @@ static int cfrfml_transmit(struct cflayer *layr, struct cfpkt *pkt)
 		frontpkt = rearpkt;
 		rearpkt = NULL;
 
-		err = -EPROTO;
+		err = -ERR(EPROTO);
 		if (cfpkt_add_head(frontpkt, head, 6) < 0)
 			goto out;
 
 	}
 
 	seg = 0;
-	err = -EPROTO;
+	err = -ERR(EPROTO);
 
 	if (cfpkt_add_head(frontpkt, &seg, 1) < 0)
 		goto out;

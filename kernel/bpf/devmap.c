@@ -120,7 +120,7 @@ static int dev_map_init_map(struct bpf_dtab *dtab, union bpf_attr *attr)
 	    (valsize != offsetofend(struct bpf_devmap_val, ifindex) &&
 	     valsize != offsetofend(struct bpf_devmap_val, bpf_prog.fd)) ||
 	    attr->map_flags & ~DEV_CREATE_FLAG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Lookup returns a pointer straight to dev->ifindex, so make sure the
 	 * verifier prevents writes from the BPF side
@@ -134,7 +134,7 @@ static int dev_map_init_map(struct bpf_dtab *dtab, union bpf_attr *attr)
 		dtab->n_buckets = roundup_pow_of_two(dtab->map.max_entries);
 
 		if (!dtab->n_buckets) /* Overflow check */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		cost += (u64) sizeof(struct hlist_head) * dtab->n_buckets;
 	} else {
 		cost += (u64) dtab->map.max_entries * sizeof(struct bpf_dtab_netdev *);
@@ -143,7 +143,7 @@ static int dev_map_init_map(struct bpf_dtab *dtab, union bpf_attr *attr)
 	/* if map size is larger than memlock limit, reject it */
 	err = bpf_map_charge_init(&dtab->map.memory, cost);
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (attr->map_type == BPF_MAP_TYPE_DEVMAP_HASH) {
 		dtab->dev_index_head = dev_map_create_hash(dtab->n_buckets,
@@ -173,7 +173,7 @@ static struct bpf_map *dev_map_alloc(union bpf_attr *attr)
 	int err;
 
 	if (!capable(CAP_NET_ADMIN))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	dtab = kzalloc(sizeof(*dtab), GFP_USER);
 	if (!dtab)
@@ -267,7 +267,7 @@ static int dev_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 	}
 
 	if (index == dtab->map.max_entries - 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	*next = index + 1;
 	return 0;
 }
@@ -328,7 +328,7 @@ static int dev_map_hash_get_next_key(struct bpf_map *map, void *key,
 		}
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 bool dev_map_can_have_prog(struct bpf_map *map)
@@ -452,7 +452,7 @@ static inline int __xdp_enqueue(struct net_device *dev, struct xdp_buff *xdp,
 	int err;
 
 	if (!dev->netdev_ops->ndo_xdp_xmit)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	err = xdp_ok_fwd_dev(dev, xdp->data_end - xdp->data);
 	if (unlikely(err))
@@ -460,7 +460,7 @@ static inline int __xdp_enqueue(struct net_device *dev, struct xdp_buff *xdp,
 
 	xdpf = xdp_convert_buff_to_frame(xdp);
 	if (unlikely(!xdpf))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	return bq_enqueue(dev, xdpf, dev_rx);
 }
@@ -558,7 +558,7 @@ static int dev_map_delete_elem(struct bpf_map *map, void *key)
 	int k = *(u32 *)key;
 
 	if (k >= map->max_entries)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Use call_rcu() here to ensure any rcu critical sections have
 	 * completed as well as any flush operations because call_rcu
@@ -579,7 +579,7 @@ static int dev_map_hash_delete_elem(struct bpf_map *map, void *key)
 	struct bpf_dtab_netdev *old_dev;
 	int k = *(u32 *)key;
 	unsigned long flags;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	spin_lock_irqsave(&dtab->index_lock, flags);
 
@@ -639,7 +639,7 @@ err_put_dev:
 	dev_put(dev->dev);
 err_out:
 	kfree(dev);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static int __dev_map_update_elem(struct net *net, struct bpf_map *map,
@@ -651,11 +651,11 @@ static int __dev_map_update_elem(struct net *net, struct bpf_map *map,
 	u32 i = *(u32 *)key;
 
 	if (unlikely(map_flags > BPF_EXIST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(i >= dtab->map.max_entries))
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (unlikely(map_flags == BPF_NOEXIST))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* already verified value_size <= sizeof val */
 	memcpy(&val, value, map->value_size);
@@ -664,7 +664,7 @@ static int __dev_map_update_elem(struct net *net, struct bpf_map *map,
 		dev = NULL;
 		/* can not specify fd if ifindex is 0 */
 		if (val.bpf_prog.fd > 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		dev = __dev_map_alloc_node(net, dtab, &val, i);
 		if (IS_ERR(dev))
@@ -697,13 +697,13 @@ static int __dev_map_hash_update_elem(struct net *net, struct bpf_map *map,
 	struct bpf_devmap_val val = {};
 	u32 idx = *(u32 *)key;
 	unsigned long flags;
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 
 	/* already verified value_size <= sizeof val */
 	memcpy(&val, value, map->value_size);
 
 	if (unlikely(map_flags > BPF_EXIST || !val.ifindex))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&dtab->index_lock, flags);
 
@@ -723,7 +723,7 @@ static int __dev_map_hash_update_elem(struct net *net, struct bpf_map *map,
 		if (dtab->items >= dtab->map.max_entries) {
 			spin_unlock_irqrestore(&dtab->index_lock, flags);
 			call_rcu(&dev->rcu, __dev_map_entry_free);
-			return -E2BIG;
+			return -ERR(E2BIG);
 		}
 		dtab->items++;
 	}

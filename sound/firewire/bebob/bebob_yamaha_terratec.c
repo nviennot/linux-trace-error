@@ -44,7 +44,7 @@ clk_src_get(struct snd_bebob *bebob, unsigned int *id)
 		return err;
 
 	if (*id >= ARRAY_SIZE(clk_src_types))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }

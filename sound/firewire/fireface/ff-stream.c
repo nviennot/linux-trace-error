@@ -23,7 +23,7 @@ int snd_ff_stream_get_multiplier_mode(enum cip_sfc sfc,
 	};
 
 	if (sfc >= CIP_SFC_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*mode = modes[sfc];
 
@@ -133,7 +133,7 @@ int snd_ff_stream_reserve_duplex(struct snd_ff *ff, unsigned int rate,
 				break;
 		}
 		if (i >= CIP_SFC_COUNT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = snd_ff_stream_get_multiplier_mode(i, &mode);
 		if (err < 0)
@@ -207,7 +207,7 @@ int snd_ff_stream_start_duplex(struct snd_ff *ff, unsigned int rate)
 						CALLBACK_TIMEOUT_MS) ||
 		    !amdtp_stream_wait_callback(&ff->tx_stream,
 						CALLBACK_TIMEOUT_MS)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 
@@ -258,7 +258,7 @@ int snd_ff_stream_lock_try(struct snd_ff *ff)
 
 	/* user land lock this */
 	if (ff->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

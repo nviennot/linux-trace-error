@@ -377,7 +377,7 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
 	}
 
 	/* Proper page table entry exists, but no corresponding struct page */
-	return -EEXIST;
+	return -ERR(EEXIST);
 }
 
 /*
@@ -412,7 +412,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE((flags & (FOLL_PIN | FOLL_GET)) ==
 			 (FOLL_PIN | FOLL_GET)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 retry:
 	if (unlikely(pmd_bad(*pmd)))
 		return no_page_table(vma, flags);
@@ -636,7 +636,7 @@ retry_locked:
 			ret = 0;
 			split_huge_pmd(vma, pmd, address);
 			if (pmd_trans_unstable(pmd))
-				ret = -EBUSY;
+				ret = -ERR(EBUSY);
 		} else if (flags & FOLL_SPLIT) {
 			if (unlikely(!try_get_page(page))) {
 				spin_unlock(ptl);
@@ -867,7 +867,7 @@ static int faultin_page(struct task_struct *tsk, struct vm_area_struct *vma,
 
 	/* mlock all present pages, but do not fault in new pages */
 	if ((*flags & (FOLL_POPULATE | FOLL_MLOCK)) == FOLL_MLOCK)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (*flags & FOLL_WRITE)
 		fault_flags |= FAULT_FLAG_WRITE;
 	if (*flags & FOLL_REMOTE)
@@ -903,7 +903,7 @@ static int faultin_page(struct task_struct *tsk, struct vm_area_struct *vma,
 	if (ret & VM_FAULT_RETRY) {
 		if (locked && !(fault_flags & FAULT_FLAG_RETRY_NOWAIT))
 			*locked = 0;
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/*
@@ -1103,7 +1103,7 @@ retry:
 		 * potentially allocating memory.
 		 */
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto out;
 		}
 		cond_resched();
@@ -1236,7 +1236,7 @@ retry:
 
 	if ((fault_flags & FAULT_FLAG_KILLABLE) &&
 	    fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	ret = handle_mm_fault(vma, address, fault_flags);
 	major |= ret & VM_FAULT_MAJOR;
@@ -1350,7 +1350,7 @@ retry:
 
 		if (fatal_signal_pending(current)) {
 			if (!pages_done)
-				pages_done = -EINTR;
+				pages_done = -ERR(EINTR);
 			break;
 		}
 
@@ -1778,7 +1778,7 @@ static long __gup_longterm_locked(struct task_struct *tsk,
 
 	if (gup_flags & FOLL_LONGTERM) {
 		if (!pages)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!vmas_tmp) {
 			vmas_tmp = kcalloc(nr_pages,
@@ -1801,7 +1801,7 @@ static long __gup_longterm_locked(struct task_struct *tsk,
 		if (check_dax_vmas(vmas_tmp, rc)) {
 			for (i = 0; i < rc; i++)
 				put_page(pages[i]);
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 
@@ -1844,7 +1844,7 @@ static long __get_user_pages_remote(struct task_struct *tsk,
 	 */
 	if (gup_flags & FOLL_LONGTERM) {
 		if (WARN_ON_ONCE(locked))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * This will check the vmas (even if our vmas arg is NULL)
 		 * and return -ENOTSUPP if DAX isn't allowed in this case:
@@ -1931,7 +1931,7 @@ long get_user_pages_remote(struct task_struct *tsk, struct mm_struct *mm,
 	 * never directly by the caller, so enforce that with an assertion:
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_PIN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __get_user_pages_remote(tsk, mm, start, nr_pages, gup_flags,
 				       pages, vmas, locked);
@@ -1983,7 +1983,7 @@ long get_user_pages(unsigned long start, unsigned long nr_pages,
 	 * never directly by the caller, so enforce that with an assertion:
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_PIN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __gup_longterm_locked(current, current->mm, start, nr_pages,
 				     pages, vmas, gup_flags | FOLL_TOUCH);
@@ -2033,13 +2033,13 @@ long get_user_pages_locked(unsigned long start, unsigned long nr_pages,
 	 * disallow this option for now.
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_LONGTERM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * FOLL_PIN must only be set internally by the pin_user_pages*() APIs,
 	 * never directly by the caller, so enforce that:
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_PIN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __get_user_pages_locked(current, current->mm, start, nr_pages,
 				       pages, NULL, locked,
@@ -2076,7 +2076,7 @@ long get_user_pages_unlocked(unsigned long start, unsigned long nr_pages,
 	 * disallow this option for now.
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_LONGTERM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_read_lock(mm);
 	ret = __get_user_pages_locked(current, mm, start, nr_pages, pages, NULL,
@@ -2747,7 +2747,7 @@ static int internal_get_user_pages_fast(unsigned long start, int nr_pages,
 	if (WARN_ON_ONCE(gup_flags & ~(FOLL_WRITE | FOLL_LONGTERM |
 				       FOLL_FORCE | FOLL_PIN | FOLL_GET |
 				       FOLL_FAST_ONLY)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(gup_flags & FOLL_FAST_ONLY))
 		might_lock_read(&current->mm->mmap_lock);
@@ -2889,7 +2889,7 @@ int get_user_pages_fast(unsigned long start, int nr_pages,
 	 * never directly by the caller, so enforce that:
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_PIN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The caller may or may not have explicitly set FOLL_GET; either way is
@@ -2923,7 +2923,7 @@ int pin_user_pages_fast(unsigned long start, int nr_pages,
 {
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE(gup_flags & FOLL_GET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gup_flags |= FOLL_PIN;
 	return internal_get_user_pages_fast(start, nr_pages, gup_flags, pages);
@@ -2998,7 +2998,7 @@ long pin_user_pages_remote(struct task_struct *tsk, struct mm_struct *mm,
 {
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE(gup_flags & FOLL_GET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gup_flags |= FOLL_PIN;
 	return __get_user_pages_remote(tsk, mm, start, nr_pages, gup_flags,
@@ -3030,7 +3030,7 @@ long pin_user_pages(unsigned long start, unsigned long nr_pages,
 {
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE(gup_flags & FOLL_GET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gup_flags |= FOLL_PIN;
 	return __gup_longterm_locked(current, current->mm, start, nr_pages,
@@ -3048,7 +3048,7 @@ long pin_user_pages_unlocked(unsigned long start, unsigned long nr_pages,
 {
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE(gup_flags & FOLL_GET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gup_flags |= FOLL_PIN;
 	return get_user_pages_unlocked(start, nr_pages, pages, gup_flags);
@@ -3071,11 +3071,11 @@ long pin_user_pages_locked(unsigned long start, unsigned long nr_pages,
 	 * disallow this option for now.
 	 */
 	if (WARN_ON_ONCE(gup_flags & FOLL_LONGTERM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* FOLL_GET and FOLL_PIN are mutually exclusive. */
 	if (WARN_ON_ONCE(gup_flags & FOLL_GET))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gup_flags |= FOLL_PIN;
 	return __get_user_pages_locked(current, current->mm, start, nr_pages,

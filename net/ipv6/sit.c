@@ -308,7 +308,7 @@ static int ipip6_tunnel_get_prl(struct net_device *dev, struct ifreq *ifr)
 	int ret = 0;
 
 	if (dev == dev_to_sit_net(dev)->fb_tunnel_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&kprl, a, sizeof(kprl)))
 		return -EFAULT;
@@ -372,7 +372,7 @@ ipip6_tunnel_add_prl(struct ip_tunnel *t, struct ip_tunnel_prl *a, int chg)
 	int err = 0;
 
 	if (a->addr == htonl(INADDR_ANY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ASSERT_RTNL();
 
@@ -382,19 +382,19 @@ ipip6_tunnel_add_prl(struct ip_tunnel *t, struct ip_tunnel_prl *a, int chg)
 				p->flags = a->flags;
 				goto out;
 			}
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto out;
 		}
 	}
 
 	if (chg) {
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto out;
 	}
 
 	p = kzalloc(sizeof(struct ip_tunnel_prl_entry), GFP_KERNEL);
 	if (!p) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto out;
 	}
 
@@ -439,7 +439,7 @@ ipip6_tunnel_del_prl(struct ip_tunnel *t, struct ip_tunnel_prl *a)
 				goto out;
 			}
 		}
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 	} else {
 		x = rtnl_dereference(t->prl);
 		if (x) {
@@ -460,9 +460,9 @@ static int ipip6_tunnel_prl_ctl(struct net_device *dev, struct ifreq *ifr,
 	int err;
 
 	if (!ns_capable(t->net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (dev == dev_to_sit_net(dev)->fb_tunnel_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&prl, ifr->ifr_ifru.ifru_data, sizeof(prl)))
 		return -EFAULT;
@@ -560,7 +560,7 @@ static int ipip6_err(struct sk_buff *skb, u32 info)
 		break;
 	}
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 
 	sifindex = netif_is_l3_master(skb->dev) ? IPCB(skb)->iif : 0;
 	t = ipip6_tunnel_lookup(dev_net(skb->dev), skb->dev,
@@ -1169,11 +1169,11 @@ static int ipip6_tunnel_update_6rd(struct ip_tunnel *t,
 
 	if (ip6rd->relay_prefixlen > 32 ||
 	    ip6rd->prefixlen + (32 - ip6rd->relay_prefixlen) > 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ipv6_addr_prefix(&prefix, &ip6rd->prefix, ip6rd->prefixlen);
 	if (!ipv6_addr_equal(&prefix, &ip6rd->prefix))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ip6rd->relay_prefixlen)
 		relay_prefix = ip6rd->relay_prefix &
 			       htonl(0xffffffffUL <<
@@ -1181,7 +1181,7 @@ static int ipip6_tunnel_update_6rd(struct ip_tunnel *t,
 	else
 		relay_prefix = 0;
 	if (relay_prefix != ip6rd->relay_prefix)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t->ip6rd.prefix = prefix;
 	t->ip6rd.relay_prefix = relay_prefix;
@@ -1224,7 +1224,7 @@ ipip6_tunnel_6rdctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	int err;
 
 	if (!ns_capable(t->net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (copy_from_user(&ip6rd, ifr->ifr_ifru.ifru_data, sizeof(ip6rd)))
 		return -EFAULT;
 
@@ -1253,13 +1253,13 @@ static int
 __ipip6_tunnel_ioctl_validate(struct net *net, struct ip_tunnel_parm *p)
 {
 	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!ipip6_valid_ip_proto(p->iph.protocol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (p->iph.version != 4 ||
 	    p->iph.ihl != 5 || (p->iph.frag_off & htons(~IP_DF)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (p->iph.ttl)
 		p->iph.frag_off |= htons(IP_DF);
@@ -1291,7 +1291,7 @@ ipip6_tunnel_add(struct net_device *dev, struct ip_tunnel_parm *p)
 
 	t = ipip6_tunnel_locate(t->net, p, 1);
 	if (!t)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	return 0;
 }
 
@@ -1308,15 +1308,15 @@ ipip6_tunnel_change(struct net_device *dev, struct ip_tunnel_parm *p)
 	t = ipip6_tunnel_locate(t->net, p, 0);
 	if (dev == dev_to_sit_net(dev)->fb_tunnel_dev) {
 		if (!t)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	} else {
 		if (t) {
 			if (t->dev != dev)
-				return -EEXIST;
+				return -ERR(EEXIST);
 		} else {
 			if (((dev->flags & IFF_POINTOPOINT) && !p->iph.daddr) ||
 			    (!(dev->flags & IFF_POINTOPOINT) && p->iph.daddr))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			t = netdev_priv(dev);
 		}
 
@@ -1332,14 +1332,14 @@ ipip6_tunnel_del(struct net_device *dev, struct ip_tunnel_parm *p)
 	struct ip_tunnel *t = netdev_priv(dev);
 
 	if (!ns_capable(t->net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (dev == dev_to_sit_net(dev)->fb_tunnel_dev) {
 		t = ipip6_tunnel_locate(t->net, p, 0);
 		if (!t)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		if (t == netdev_priv(dev_to_sit_net(dev)->fb_tunnel_dev))
-			return -EPERM;
+			return -ERR(EPERM);
 		dev = t->dev;
 	}
 	unregister_netdevice(dev);
@@ -1359,7 +1359,7 @@ ipip6_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 	case SIOCDELTUNNEL:
 		return ipip6_tunnel_del(dev, p);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1387,7 +1387,7 @@ ipip6_tunnel_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		return ipip6_tunnel_6rdctl(dev, ifr, cmd);
 #endif
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1488,7 +1488,7 @@ static int ipip6_validate(struct nlattr *tb[], struct nlattr *data[],
 
 	proto = nla_get_u8(data[IFLA_IPTUN_PROTO]);
 	if (!ipip6_valid_ip_proto(proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1632,7 +1632,7 @@ static int ipip6_newlink(struct net *src_net, struct net_device *dev,
 	ipip6_netlink_parms(data, &nt->parms, &nt->fwmark);
 
 	if (ipip6_tunnel_locate(net, &nt->parms, 0))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	err = ipip6_tunnel_create(dev);
 	if (err < 0)
@@ -1670,7 +1670,7 @@ static int ipip6_changelink(struct net_device *dev, struct nlattr *tb[],
 	int err;
 
 	if (dev == sitn->fb_tunnel_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipip6_netlink_encap_parms(data, &ipencap)) {
 		err = ip_tunnel_encap_setup(t, &ipencap);
@@ -1682,13 +1682,13 @@ static int ipip6_changelink(struct net_device *dev, struct nlattr *tb[],
 
 	if (((dev->flags & IFF_POINTOPOINT) && !p.iph.daddr) ||
 	    (!(dev->flags & IFF_POINTOPOINT) && p.iph.daddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t = ipip6_tunnel_locate(net, &p, 0);
 
 	if (t) {
 		if (t->dev != dev)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else
 		t = netdev_priv(dev);
 
@@ -1786,7 +1786,7 @@ static int ipip6_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy ipip6_policy[IFLA_IPTUN_MAX + 1] = {

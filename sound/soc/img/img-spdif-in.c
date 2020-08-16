@@ -139,7 +139,7 @@ static int img_spdif_in_check_max_rate(struct img_spdif_in *spdif,
 	freq_t = clk_get_rate(spdif->clk_sys);
 
 	if (freq_t < min_freq)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*actual_freq = freq_t;
 
@@ -157,12 +157,12 @@ static int img_spdif_in_do_clkgen_calc(unsigned int rate, unsigned int *pnom,
 	 */
 
 	if (!rate)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ori = clk_rate / (rate * 64);
 
 	if (!ori)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nom = (4096 / ori) + 1;
 	do
@@ -200,7 +200,7 @@ static int img_spdif_in_do_clkgen_single(struct img_spdif_in *spdif,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	img_spdif_in_writel(spdif, reg, IMG_SPDIF_IN_CLKGEN);
@@ -246,7 +246,7 @@ static int img_spdif_in_do_clkgen_multi(struct img_spdif_in *spdif,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	trk_reg = spdif->trk << IMG_SPDIF_IN_ACLKGEN_TRK_SHIFT;
@@ -371,7 +371,7 @@ static int img_spdif_in_set_multi_freq(struct snd_kcontrol *kcontrol,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	spdif->multi_freq = false;
@@ -456,7 +456,7 @@ static int img_spdif_in_set_trk(struct snd_kcontrol *kcontrol,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	spdif->trk = ucontrol->value.integer.value[0];
@@ -513,7 +513,7 @@ static int img_spdif_in_set_lock_acquire(struct snd_kcontrol *kcontrol,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	spdif->lock_acquire = ucontrol->value.integer.value[0];
@@ -552,7 +552,7 @@ static int img_spdif_in_set_lock_release(struct snd_kcontrol *kcontrol,
 
 	if (spdif->active) {
 		spin_unlock_irqrestore(&spdif->lock, flags);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	spdif->lock_release = ucontrol->value.integer.value[0];
@@ -654,7 +654,7 @@ static int img_spdif_in_trigger(struct snd_pcm_substream *substream, int cmd,
 		spdif->active = false;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	spin_unlock_irqrestore(&spdif->lock, flags);
@@ -674,10 +674,10 @@ static int img_spdif_in_hw_params(struct snd_pcm_substream *substream,
 	format = params_format(params);
 
 	if (format != SNDRV_PCM_FORMAT_S32_LE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (channels != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return img_spdif_in_do_clkgen_single(spdif, rate);
 }

@@ -22,7 +22,7 @@ static int snd_seq_oss_synth_info_user(struct seq_oss_devinfo *dp, void __user *
 	if (copy_from_user(&info, arg, sizeof(info)))
 		return -EFAULT;
 	if (snd_seq_oss_synth_make_info(dp, info.device, &info) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_to_user(arg, &info, sizeof(info)))
 		return -EFAULT;
 	return 0;
@@ -35,7 +35,7 @@ static int snd_seq_oss_midi_info_user(struct seq_oss_devinfo *dp, void __user *a
 	if (copy_from_user(&info, arg, sizeof(info)))
 		return -EFAULT;
 	if (snd_seq_oss_midi_make_info(dp, info.device, &info) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_to_user(arg, &info, sizeof(info)))
 		return -EFAULT;
 	return 0;
@@ -78,7 +78,7 @@ snd_seq_oss_ioctl(struct seq_oss_devinfo *dp, unsigned int cmd, unsigned long ca
 
 	case SNDCTL_SEQ_PANIC:
 		snd_seq_oss_reset(dp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	case SNDCTL_SEQ_SYNC:
 		if (! is_write_mode(dp->file_mode) || dp->writeq == NULL)
@@ -86,7 +86,7 @@ snd_seq_oss_ioctl(struct seq_oss_devinfo *dp, unsigned int cmd, unsigned long ca
 		while (snd_seq_oss_writeq_sync(dp->writeq))
 			;
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		return 0;
 
 	case SNDCTL_SEQ_RESET:
@@ -170,7 +170,7 @@ snd_seq_oss_ioctl(struct seq_oss_devinfo *dp, unsigned int cmd, unsigned long ca
 
 	default:
 		if (! is_write_mode(dp->file_mode))
-			return -EIO;
+			return -ERR(EIO);
 		return snd_seq_oss_synth_ioctl(dp, 0, cmd, carg);
 	}
 	return 0;

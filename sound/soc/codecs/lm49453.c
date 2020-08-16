@@ -1128,7 +1128,7 @@ static int lm49453_hw_params(struct snd_pcm_substream *substream,
 		clk_div = 127;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, LM49453_P0_ADC_CLK_DIV_REG, clk_div);
@@ -1161,7 +1161,7 @@ static int lm49453_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 			  LM49453_AUDIO_PORT1_BASIC_SYNC_MS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -1179,7 +1179,7 @@ static int lm49453_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		clk_shift = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, LM49453_P0_AUDIO_PORT1_BASIC_REG,
@@ -1210,7 +1210,7 @@ static int lm49453_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		pll_clk = BIT(4);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, LM49453_P0_PMC_SETUP_REG, BIT(4), pll_clk);

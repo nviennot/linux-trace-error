@@ -2026,7 +2026,7 @@ vortex_adb_checkinout(vortex_t * vortex, int resmap[], int out, int restype)
 		}
 	} else {
 		if (resmap == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Checkin first resource of type restype. */
 		for (i = 0; i < qty; i++) {
 			if (resmap[restype] & (1 << i)) {
@@ -2123,7 +2123,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 		if ((dma =
 		     vortex_adb_checkinout(vortex, NULL, en,
 					   VORTEX_RESOURCE_DMA)) < 0)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	stream = &vortex->dma_adb[dma];
@@ -2145,7 +2145,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 							   VORTEX_RESOURCE_SRC)) < 0) {
 					memset(stream->resources, 0,
 					       sizeof(stream->resources));
-					return -EBUSY;
+					return -ERR(EBUSY);
 				}
 				if (stream->type != VORTEX_PCM_A3D) {
 					if ((mix[i] = vortex_adb_checkinout(vortex,
@@ -2155,7 +2155,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 						memset(stream->resources,
 						       0,
 						       sizeof(stream->resources));
-						return -EBUSY;
+						return -ERR(EBUSY);
 					}
 				}
 			}
@@ -2170,7 +2170,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 				       sizeof(stream->resources));
 				dev_err(vortex->card->dev,
 					"out of A3D sources. Sorry\n");
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 			/* (De)Initialize A3D hardware source. */
 			vortex_Vort3D_InitializeSource(&vortex->a3d[a3d], en,
@@ -2274,7 +2274,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 		int src[2], mix[2];
 
 		if (nr_ch < 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Get SRC and MIXER hardware resources. */
 		for (i = 0; i < nr_ch; i++) {
@@ -2285,7 +2285,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 			    < 0) {
 				memset(stream->resources, 0,
 				       sizeof(stream->resources));
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 			if ((src[i] =
 			     vortex_adb_checkinout(vortex,
@@ -2293,7 +2293,7 @@ vortex_adb_allocroute(vortex_t *vortex, int dma, int nr_ch, int dir,
 						   VORTEX_RESOURCE_SRC)) < 0) {
 				memset(stream->resources, 0,
 				       sizeof(stream->resources));
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 		}
 

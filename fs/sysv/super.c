@@ -417,7 +417,7 @@ static int sysv_fill_super(struct super_block *sb, void *data, int silent)
 	printk("oldfs: cannot read superblock\n");
 failed:
 	kfree(sbi);
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 Eunknown:
 	brelse(bh);
@@ -523,7 +523,7 @@ failed:
 		sb->s_id);
 	brelse(bh);
 	kfree(sbi);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Every kernel module contains stuff like this. */

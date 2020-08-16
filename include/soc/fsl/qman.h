@@ -432,7 +432,7 @@ static inline int qm_fqd_set_taildrop(struct qm_fqd *fqd, u32 val,
 	int td, oddbit = 0;
 
 	if (val > QM_FQD_TD_MAX)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	while (val > QM_FQD_TD_MANT_MAX) {
 		oddbit = val & 1;

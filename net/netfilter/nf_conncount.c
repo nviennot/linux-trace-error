@@ -116,10 +116,10 @@ find_or_evict(struct net *net, struct nf_conncount_list *list,
 	age = a - b;
 	if (conn->cpu == cpu || age >= 2) {
 		conn_free(list, conn);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 
-	return ERR_PTR(-EAGAIN);
+	return ERR_PTR(-ERR(EAGAIN));
 }
 
 static int __nf_conncount_add(struct net *net,
@@ -178,7 +178,7 @@ static int __nf_conncount_add(struct net *net,
 	}
 
 	if (WARN_ON_ONCE(list->count > INT_MAX))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	conn = kmem_cache_alloc(conncount_conn_cachep, GFP_ATOMIC);
 	if (conn == NULL)
@@ -522,7 +522,7 @@ struct nf_conncount_data *nf_conncount_init(struct net *net, unsigned int family
 	if (keylen % sizeof(u32) ||
 	    keylen / sizeof(u32) > MAX_KEYLEN ||
 	    keylen == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	net_get_random_once(&conncount_rnd, sizeof(conncount_rnd));
 

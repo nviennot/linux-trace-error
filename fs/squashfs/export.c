@@ -62,7 +62,7 @@ static struct dentry *squashfs_export_iget(struct super_block *sb,
 	unsigned int ino_num)
 {
 	long long ino;
-	struct dentry *dentry = ERR_PTR(-ENOENT);
+	struct dentry *dentry = ERR_PTR(-ERR(ENOENT));
 
 	TRACE("Entered squashfs_export_iget\n");
 
@@ -119,14 +119,14 @@ __le64 *squashfs_read_inode_lookup_table(struct super_block *sb,
 
 	/* there should always be at least one inode */
 	if (inodes == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* length bytes should not extend into the next table - this check
 	 * also traps instances where lookup_table_start is incorrectly larger
 	 * than the next table start
 	 */
 	if (lookup_table_start + length > next_table)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	table = squashfs_read_table(sb, lookup_table_start, length);
 
@@ -136,7 +136,7 @@ __le64 *squashfs_read_inode_lookup_table(struct super_block *sb,
 	 */
 	if (!IS_ERR(table) && le64_to_cpu(table[0]) >= lookup_table_start) {
 		kfree(table);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return table;

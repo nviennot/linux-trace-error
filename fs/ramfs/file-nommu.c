@@ -71,7 +71,7 @@ int ramfs_nommu_expand_for_mapping(struct inode *inode, size_t newsize)
 	/* make various checks */
 	order = get_order(newsize);
 	if (unlikely(order >= MAX_ORDER))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	ret = inode_newsize_ok(inode, newsize);
 	if (ret)
@@ -137,7 +137,7 @@ static int ramfs_nommu_resize(struct inode *inode, loff_t newsize, loff_t size)
 	 * shared mmap */
 	if (size == 0) {
 		if (unlikely(newsize >> 32))
-			return -EFBIG;
+			return -ERR(EFBIG);
 
 		return ramfs_nommu_expand_for_mapping(inode, newsize);
 	}
@@ -211,7 +211,7 @@ static unsigned long ramfs_nommu_get_unmapped_area(struct file *file,
 	lpages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	isize = i_size_read(inode);
 
-	ret = -ENOSYS;
+	ret = -ERR(ENOSYS);
 	maxpages = (isize + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	if (pgoff >= maxpages)
 		goto out;
@@ -256,7 +256,7 @@ out:
 static int ramfs_nommu_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	if (!(vma->vm_flags & (VM_SHARED | VM_MAYSHARE)))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	file_accessed(file);
 	vma->vm_ops = &generic_file_vm_ops;

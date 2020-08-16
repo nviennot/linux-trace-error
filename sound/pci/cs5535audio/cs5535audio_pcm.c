@@ -301,7 +301,7 @@ static int snd_cs5535audio_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	default:
 		dev_err(cs5535au->card->dev, "unhandled trigger\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&cs5535au->reg_lock);

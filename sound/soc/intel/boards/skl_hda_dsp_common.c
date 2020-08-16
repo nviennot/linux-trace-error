@@ -33,7 +33,7 @@ int skl_hda_hdmi_add_pcm(struct snd_soc_card *card, int device)
 		 ctx->dai_index);
 	pcm->codec_dai = snd_soc_card_get_codec_dai(card, dai_name);
 	if (!pcm->codec_dai)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pcm->device = device;
 	list_add_tail(&pcm->head, &ctx->hdmi_pcm_list);
@@ -168,7 +168,7 @@ int skl_hda_hdmi_jack_init(struct snd_soc_card *card)
 	}
 
 	if (!component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return hdac_hdmi_jack_port_init(component, &card->dapm);
 }

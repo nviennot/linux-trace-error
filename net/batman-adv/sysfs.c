@@ -340,7 +340,7 @@ static int batadv_store_bool_attr(char *buff, size_t count,
 	if (enabled < 0) {
 		batadv_info(net_dev, "%s: Invalid parameter received: %s\n",
 			    attr_name, buff);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (atomic_read(attr) == enabled)
@@ -388,19 +388,19 @@ static int batadv_store_uint_attr(const char *buff, size_t count,
 	if (ret) {
 		batadv_info(net_dev, "%s: Invalid parameter received: %s\n",
 			    attr_name, buff);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (uint_val < min) {
 		batadv_info(net_dev, "%s: Value is too small: %lu min: %u\n",
 			    attr_name, uint_val, min);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (uint_val > max) {
 		batadv_info(net_dev, "%s: Value is too big: %lu max: %u\n",
 			    attr_name, uint_val, max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (atomic_read(attr) == uint_val)
@@ -463,7 +463,7 @@ static ssize_t batadv_show_gw_mode(struct kobject *kobj, struct attribute *attr,
 	 */
 	if (!bat_priv->algo_ops->gw.get_best_gw_node ||
 	    !bat_priv->algo_ops->gw.is_eligible)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (atomic_read(&bat_priv->gw.mode)) {
 	case BATADV_GW_MODE_CLIENT:
@@ -499,7 +499,7 @@ static ssize_t batadv_store_gw_mode(struct kobject *kobj,
 	 */
 	if (!bat_priv->algo_ops->gw.get_best_gw_node ||
 	    !bat_priv->algo_ops->gw.is_eligible)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buff[count - 1] == '\n')
 		buff[count - 1] = '\0';
@@ -520,7 +520,7 @@ static ssize_t batadv_store_gw_mode(struct kobject *kobj,
 		batadv_info(net_dev,
 			    "Invalid parameter for 'gw mode' setting received: %s\n",
 			    buff);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (atomic_read(&bat_priv->gw.mode) == gw_mode_tmp)
@@ -575,7 +575,7 @@ static ssize_t batadv_show_gw_sel_class(struct kobject *kobj,
 	 */
 	if (!bat_priv->algo_ops->gw.get_best_gw_node ||
 	    !bat_priv->algo_ops->gw.is_eligible)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (bat_priv->algo_ops->gw.show_sel_class)
 		return bat_priv->algo_ops->gw.show_sel_class(bat_priv, buff);
@@ -597,7 +597,7 @@ static ssize_t batadv_store_gw_sel_class(struct kobject *kobj,
 	 */
 	if (!bat_priv->algo_ops->gw.get_best_gw_node ||
 	    !bat_priv->algo_ops->gw.is_eligible)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buff[count - 1] == '\n')
 		buff[count - 1] = '\0';
@@ -704,12 +704,12 @@ static ssize_t batadv_store_isolation_mark(struct kobject *kobj,
 		 * bitmask and not a prefix length
 		 */
 		if (kstrtou32(mask_ptr, 16, &mask) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* the mark can be entered in any base */
 	if (kstrtou32(buff, 0, &mark) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bat_priv->isolation_mark_mask = mask;
 	/* erase bits not covered by the mask */
@@ -1060,7 +1060,7 @@ static ssize_t batadv_store_mesh_iface(struct kobject *kobj,
 	if (strlen(buff) >= IFNAMSIZ) {
 		pr_err("Invalid parameter for 'mesh_iface' setting received: interface name too long '%s'\n",
 		       buff);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	store_work = kmalloc(sizeof(*store_work), GFP_KERNEL);
@@ -1142,7 +1142,7 @@ static ssize_t batadv_store_throughput_override(struct kobject *kobj,
 
 	hard_iface = batadv_hardif_get_by_netdev(net_dev);
 	if (!hard_iface)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buff[count - 1] == '\n')
 		buff[count - 1] = '\0';
@@ -1186,7 +1186,7 @@ static ssize_t batadv_show_throughput_override(struct kobject *kobj,
 
 	hard_iface = batadv_hardif_get_by_netdev(net_dev);
 	if (!hard_iface)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tp_override = atomic_read(&hard_iface->bat_v.throughput_override);
 

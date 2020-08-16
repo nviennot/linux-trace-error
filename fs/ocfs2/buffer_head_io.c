@@ -51,7 +51,7 @@ int ocfs2_write_block(struct ocfs2_super *osb, struct buffer_head *bh,
 	 * journalled writes are only ever done on system files which
 	 * can get modified during recovery even if read-only. */
 	if (ocfs2_is_hard_readonly(osb)) {
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -76,7 +76,7 @@ int ocfs2_write_block(struct ocfs2_super *osb, struct buffer_head *bh,
 		/* We don't need to remove the clustered uptodate
 		 * information for this bh as it's not marked locally
 		 * uptodate. */
-		ret = -EIO;
+		ret = -ERR(EIO);
 		mlog_errno(ret);
 	}
 
@@ -180,7 +180,7 @@ read_failure:
 			/* Status won't be cleared from here on out,
 			 * so we can safely record this and loop back
 			 * to cleanup the other buffers. */
-			status = -EIO;
+			status = -ERR(EIO);
 			goto read_failure;
 		}
 	}
@@ -210,14 +210,14 @@ int ocfs2_read_blocks(struct ocfs2_caching_info *ci, u64 block, int nr,
 	       (flags & OCFS2_BH_IGNORE_CACHE));
 
 	if (bhs == NULL) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
 
 	if (nr < 0) {
 		mlog(ML_ERROR, "asked to read %d blocks!\n", nr);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -371,7 +371,7 @@ read_failure:
 				 * remove the clustered uptodate information
 				 * for this bh as it's not marked locally
 				 * uptodate. */
-				status = -EIO;
+				status = -ERR(EIO);
 				clear_buffer_needs_validate(bh);
 				goto read_failure;
 			}
@@ -437,7 +437,7 @@ int ocfs2_write_super_or_backup(struct ocfs2_super *osb,
 	ocfs2_check_super_or_backup(osb->sb, bh->b_blocknr);
 
 	if (ocfs2_is_hard_readonly(osb) || ocfs2_is_soft_readonly(osb)) {
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -456,7 +456,7 @@ int ocfs2_write_super_or_backup(struct ocfs2_super *osb,
 	wait_on_buffer(bh);
 
 	if (!buffer_uptodate(bh)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		mlog_errno(ret);
 	}
 

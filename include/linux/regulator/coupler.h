@@ -77,28 +77,28 @@ static inline int regulator_check_consumers(struct regulator_dev *rdev,
 					    int *min_uV, int *max_uV,
 					    suspend_state_t state)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int regulator_check_voltage(struct regulator_dev *rdev,
 					  int *min_uV, int *max_uV)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int regulator_get_voltage_rdev(struct regulator_dev *rdev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int regulator_set_voltage_rdev(struct regulator_dev *rdev,
 					     int min_uV, int max_uV,
 					     suspend_state_t state)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int regulator_do_balance_voltage(struct regulator_dev *rdev,
 					       suspend_state_t state,
 					       bool skip_coupled)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

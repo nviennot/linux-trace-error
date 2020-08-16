@@ -37,20 +37,20 @@ static inline
 int ip6_mroute_setsockopt(struct sock *sock,
 			  int optname, char __user *optval, unsigned int optlen)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline
 int ip6_mroute_getsockopt(struct sock *sock,
 			  int optname, char __user *optval, int __user *optlen)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline
 int ip6mr_ioctl(struct sock *sk, int cmd, void __user *arg)
 {
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static inline int ip6_mr_init(void)

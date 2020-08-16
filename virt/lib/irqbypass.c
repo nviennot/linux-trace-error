@@ -88,18 +88,18 @@ int irq_bypass_register_producer(struct irq_bypass_producer *producer)
 	int ret;
 
 	if (!producer->token)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	might_sleep();
 
 	if (!try_module_get(THIS_MODULE))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&lock);
 
 	list_for_each_entry(tmp, &producers, node) {
 		if (tmp->token == producer->token) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out_err;
 		}
 	}
@@ -184,18 +184,18 @@ int irq_bypass_register_consumer(struct irq_bypass_consumer *consumer)
 
 	if (!consumer->token ||
 	    !consumer->add_producer || !consumer->del_producer)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	might_sleep();
 
 	if (!try_module_get(THIS_MODULE))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&lock);
 
 	list_for_each_entry(tmp, &consumers, node) {
 		if (tmp->token == consumer->token || tmp == consumer) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out_err;
 		}
 	}

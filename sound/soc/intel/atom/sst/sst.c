@@ -151,7 +151,7 @@ static int sst_save_dsp_context_v2(struct intel_sst_drv *sst)
 
 	if (ret < 0) {
 		dev_err(sst->dev, "not suspending FW!!, Err: %d\n", ret);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -186,7 +186,7 @@ int sst_driver_ops(struct intel_sst_drv *sst)
 		dev_err(sst->dev,
 			"SST Driver capabilities missing for dev_id: %x",
 			sst->dev_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	};
 }
 
@@ -210,7 +210,7 @@ static int sst_workqueue_init(struct intel_sst_drv *ctx)
 	ctx->post_msg_wq =
 		create_singlethread_workqueue("sst_post_msg_wq");
 	if (!ctx->post_msg_wq)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 
@@ -267,16 +267,16 @@ int sst_context_init(struct intel_sst_drv *ctx)
 	int ret = 0, i;
 
 	if (!ctx->pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ctx->pdata->probe_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(&ctx->info, ctx->pdata->probe_data, sizeof(ctx->info));
 
 	ret = sst_driver_ops(ctx);
 	if (ret != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sst_init_locks(ctx);
 	sst_set_fw_state_locked(ctx, SST_RESET);
@@ -290,7 +290,7 @@ int sst_context_init(struct intel_sst_drv *ctx)
 	ctx->use_lli = 0;
 
 	if (sst_workqueue_init(ctx))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctx->mailbox_recv_offset = ctx->pdata->ipc_info->mbox_recv_off;
 	ctx->ipc_reg.ipcx = SST_IPCX + ctx->pdata->ipc_info->ipc_offset;
@@ -407,7 +407,7 @@ static int intel_sst_runtime_suspend(struct device *dev)
 	}
 	/* save fw context */
 	if (ctx->ops->save_dsp_context(ctx))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Move the SST state to Reset */
 	sst_set_fw_state_locked(ctx, SST_RESET);
@@ -439,7 +439,7 @@ static int intel_sst_suspend(struct device *dev)
 
 		if (stream->status == STREAM_RUNNING) {
 			dev_err(dev, "stream %d is running, can't suspend, abort\n", i);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		if (ctx->pdata->streams_lost_on_suspend) {
@@ -457,7 +457,7 @@ static int intel_sst_suspend(struct device *dev)
 
 	/* tell DSP we are suspending */
 	if (ctx->ops->save_dsp_context(ctx))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* save the memories */
 	fw_save = kzalloc(sizeof(*fw_save), GFP_KERNEL);
@@ -543,7 +543,7 @@ static int intel_sst_resume(struct device *dev)
 	if (ret) {
 		dev_err(ctx->dev, "fw download failed %d\n", ret);
 		/* FW download failed due to timeout */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 
 	} else {
 		sst_set_fw_state_locked(ctx, SST_FW_RUNNING);

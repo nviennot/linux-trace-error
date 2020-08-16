@@ -45,7 +45,7 @@ static ssize_t mlog_mask_store(u64 mask, const char *buf, size_t count)
 		__mlog_clear_u64(mask, mlog_not_bits);
 		__mlog_clear_u64(mask, mlog_and_bits);
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }

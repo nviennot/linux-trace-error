@@ -40,7 +40,7 @@ static struct posix_acl *ocfs2_acl_from_xattr(const void *value, size_t size)
 	if (!value)
 		return NULL;
 	if (size < sizeof(struct posix_acl_entry))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	count = size / sizeof(struct posix_acl_entry);
 
@@ -128,7 +128,7 @@ static struct posix_acl *ocfs2_get_acl_nolock(struct inode *inode,
 		name_index = OCFS2_XATTR_INDEX_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	retval = ocfs2_xattr_get_nolock(inode, di_bh, name_index, "", NULL, 0);
@@ -227,7 +227,7 @@ static int ocfs2_set_acl(handle_t *handle,
 	int ret;
 
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (type) {
 	case ACL_TYPE_ACCESS:
@@ -236,10 +236,10 @@ static int ocfs2_set_acl(handle_t *handle,
 	case ACL_TYPE_DEFAULT:
 		name_index = OCFS2_XATTR_INDEX_POSIX_ACL_DEFAULT;
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
+			return acl ? -ERR(EACCES) : 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (acl) {
@@ -319,7 +319,7 @@ int ocfs2_acl_chmod(struct inode *inode, struct buffer_head *bh)
 	int ret;
 
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!(osb->s_mount_opt & OCFS2_MOUNT_POSIX_ACL))
 		return 0;

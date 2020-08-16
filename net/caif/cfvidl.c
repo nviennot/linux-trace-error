@@ -39,7 +39,7 @@ static int cfvidl_receive(struct cflayer *layr, struct cfpkt *pkt)
 	if (cfpkt_extr_head(pkt, &videoheader, 4) < 0) {
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	return layr->up->receive(layr->up, pkt);
 }

@@ -52,7 +52,7 @@ static const struct vm_operations_struct nfs_file_vm_ops;
 int nfs_check_flags(int flags)
 {
 	if ((flags & (O_APPEND | O_DIRECT)) == (O_APPEND | O_DIRECT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -495,7 +495,7 @@ static int nfs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	spin_unlock(&inode->i_lock);
 	if (blocks*512 < isize) {
 		pr_warn("swap activate: swapfile has holes\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*span = sis->pages;
@@ -656,7 +656,7 @@ out:
 
 out_swapfile:
 	printk(KERN_INFO "NFS: attempt to write to active swap file!\n");
-	return -ETXTBSY;
+	return -ERR(ETXTBSY);
 }
 EXPORT_SYMBOL_GPL(nfs_file_write);
 
@@ -773,7 +773,7 @@ out:
 int nfs_lock(struct file *filp, int cmd, struct file_lock *fl)
 {
 	struct inode *inode = filp->f_mapping->host;
-	int ret = -ENOLCK;
+	int ret = -ERR(ENOLCK);
 	int is_local = 0;
 
 	dprintk("NFS: lock(%pD2, t=%x, fl=%x, r=%lld:%lld)\n",
@@ -818,7 +818,7 @@ int nfs_flock(struct file *filp, int cmd, struct file_lock *fl)
 			filp, fl->fl_type, fl->fl_flags);
 
 	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	/*
 	 * The NFSv4 protocol doesn't support LOCK_MAND, which is not part of
@@ -827,7 +827,7 @@ int nfs_flock(struct file *filp, int cmd, struct file_lock *fl)
 	 * NFS code is not set up for it.
 	 */
 	if (fl->fl_type & LOCK_MAND)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (NFS_SERVER(inode)->flags & NFS_MOUNT_LOCAL_FLOCK)
 		is_local = 1;

@@ -245,7 +245,7 @@ static inline int dccp_listen_start(struct sock *sk, int backlog)
 	dp->dccps_role = DCCP_ROLE_LISTEN;
 	/* do not start to listen if feature negotiation setup fails */
 	if (dccp_feat_finalise_settings(dp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 	return inet_csk_listen_start(sk, backlog);
 }
 
@@ -273,9 +273,9 @@ int dccp_disconnect(struct sock *sk, int flags)
 		inet_csk_listen_stop(sk);
 	} else if (dccp_need_reset(old_state)) {
 		dccp_send_reset(sk, DCCP_RESET_CODE_ABORTED);
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 	} else if (old_state == DCCP_REQUESTING)
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 
 	dccp_clear_xmit_timers(sk);
 	ccid_hc_rx_delete(dp->dccps_hc_rx_ccid, sk);
@@ -367,7 +367,7 @@ EXPORT_SYMBOL_GPL(dccp_poll);
 
 int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 {
-	int rc = -ENOTCONN;
+	int rc = -ERR(ENOTCONN);
 
 	lock_sock(sk);
 
@@ -391,7 +391,7 @@ int dccp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 	}
 		break;
 	default:
-		rc = -ENOIOCTLCMD;
+		rc = -ERR(ENOIOCTLCMD);
 		break;
 	}
 out:
@@ -409,7 +409,7 @@ static int dccp_setsockopt_service(struct sock *sk, const __be32 service,
 
 	if (service == DCCP_SERVICE_INVALID_VALUE ||
 	    optlen > DCCP_SERVICE_LIST_MAX_LEN * sizeof(u32))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (optlen > sizeof(service)) {
 		sl = kmalloc(optlen, GFP_KERNEL);
@@ -442,7 +442,7 @@ static int dccp_setsockopt_cscov(struct sock *sk, int cscov, bool rx)
 	int i, rc;
 
 	if (cscov < 0 || cscov > 15)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Populate a list of permissible values, in the range cscov...15. This
 	 * is necessary since feature negotiation of single values only works if
@@ -455,7 +455,7 @@ static int dccp_setsockopt_cscov(struct sock *sk, int cscov, bool rx)
 
 	list = kmalloc(len, GFP_KERNEL);
 	if (list == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	for (i = 0; i < len; i++)
 		list[i] = cscov++;
@@ -479,7 +479,7 @@ static int dccp_setsockopt_ccid(struct sock *sk, int type,
 	int rc = 0;
 
 	if (optlen < 1 || optlen > DCCP_FEAT_MAX_SP_VALS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val = memdup_user(optval, optlen);
 	if (IS_ERR(val))
@@ -518,7 +518,7 @@ static int do_dccp_setsockopt(struct sock *sk, int level, int optname,
 	}
 
 	if (optlen < (int)sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
@@ -530,7 +530,7 @@ static int do_dccp_setsockopt(struct sock *sk, int level, int optname,
 	switch (optname) {
 	case DCCP_SOCKOPT_SERVER_TIMEWAIT:
 		if (dp->dccps_role != DCCP_ROLE_SERVER)
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 		else
 			dp->dccps_server_timewait = (val != 0);
 		break;
@@ -542,20 +542,20 @@ static int do_dccp_setsockopt(struct sock *sk, int level, int optname,
 		break;
 	case DCCP_SOCKOPT_QPOLICY_ID:
 		if (sk->sk_state != DCCP_CLOSED)
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 		else if (val < 0 || val >= DCCPQ_POLICY_MAX)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			dp->dccps_qpolicy = val;
 		break;
 	case DCCP_SOCKOPT_QPOLICY_TXQLEN:
 		if (val < 0)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			dp->dccps_tx_qlen = val;
 		break;
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 	release_sock(sk);
@@ -594,7 +594,7 @@ static int dccp_getsockopt_service(struct sock *sk, int len,
 {
 	const struct dccp_sock *dp = dccp_sk(sk);
 	const struct dccp_service_list *sl;
-	int err = -ENOENT, slen = 0, total_len = sizeof(u32);
+	int err = -ERR(ENOENT), slen = 0, total_len = sizeof(u32);
 
 	lock_sock(sk);
 	if ((sl = dp->dccps_service_list) != NULL) {
@@ -602,7 +602,7 @@ static int dccp_getsockopt_service(struct sock *sk, int len,
 		total_len += slen;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (total_len > len)
 		goto out;
 
@@ -626,7 +626,7 @@ static int do_dccp_getsockopt(struct sock *sk, int level, int optname,
 		return -EFAULT;
 
 	if (len < (int)sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dp = dccp_sk(sk);
 
@@ -645,12 +645,12 @@ static int do_dccp_getsockopt(struct sock *sk, int level, int optname,
 	case DCCP_SOCKOPT_TX_CCID:
 		val = ccid_get_current_tx_ccid(dp);
 		if (val < 0)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 		break;
 	case DCCP_SOCKOPT_RX_CCID:
 		val = ccid_get_current_rx_ccid(dp);
 		if (val < 0)
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 		break;
 	case DCCP_SOCKOPT_SERVER_TIMEWAIT:
 		val = dp->dccps_server_timewait;
@@ -674,7 +674,7 @@ static int do_dccp_getsockopt(struct sock *sk, int level, int optname,
 		return ccid_hc_tx_getsockopt(dp->dccps_hc_tx_ccid, sk, optname,
 					     len, (u32 __user *)optval, optlen);
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	len = sizeof(val);
@@ -727,23 +727,23 @@ static int dccp_msghdr_parse(struct msghdr *msg, struct sk_buff *skb)
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (cmsg->cmsg_level != SOL_DCCP)
 			continue;
 
 		if (cmsg->cmsg_type <= DCCP_SCM_QPOLICY_MAX &&
 		    !dccp_qpolicy_param_ok(skb->sk, cmsg->cmsg_type))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (cmsg->cmsg_type) {
 		case DCCP_SCM_PRIORITY:
 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(__u32)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			skb->priority = *(__u32 *)CMSG_DATA(cmsg);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -761,12 +761,12 @@ int dccp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	trace_dccp_probe(sk, len);
 
 	if (len > dp->dccps_mss_cache)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	lock_sock(sk);
 
 	if (dccp_qpolicy_full(sk)) {
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 		goto out_release;
 	}
 
@@ -789,7 +789,7 @@ int dccp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		goto out_release;
 
 	if (sk->sk_state == DCCP_CLOSED) {
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out_discard;
 	}
 
@@ -829,7 +829,7 @@ int dccp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len, int nonblock,
 	lock_sock(sk);
 
 	if (sk->sk_state == DCCP_LISTEN) {
-		len = -ENOTCONN;
+		len = -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -884,7 +884,7 @@ verify_sock_status:
 				/* This occurs when user tries to read
 				 * from never connected socket.
 				 */
-				len = -ENOTCONN;
+				len = -ERR(ENOTCONN);
 				break;
 			}
 			len = 0;
@@ -892,7 +892,7 @@ verify_sock_status:
 		}
 
 		if (!timeo) {
-			len = -EAGAIN;
+			len = -ERR(EAGAIN);
 			break;
 		}
 
@@ -936,7 +936,7 @@ int inet_dccp_listen(struct socket *sock, int backlog)
 
 	lock_sock(sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sock->state != SS_UNCONNECTED || sock->type != SOCK_DCCP)
 		goto out;
 
@@ -1140,7 +1140,7 @@ static int __init dccp_init(void)
 	rc = inet_hashinfo2_init_mod(&dccp_hashinfo);
 	if (rc)
 		goto out_free_percpu;
-	rc = -ENOBUFS;
+	rc = -ERR(ENOBUFS);
 	dccp_hashinfo.bind_bucket_cachep =
 		kmem_cache_create("dccp_bind_bucket",
 				  sizeof(struct inet_bind_bucket), 0,

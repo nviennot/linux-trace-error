@@ -77,18 +77,18 @@ static inline const void *of_device_get_match_data(const struct device *dev)
 static inline int of_device_modalias(struct device *dev,
 				     char *str, ssize_t len)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int of_device_request_module(struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int of_device_uevent_modalias(struct device *dev,
 				   struct kobj_uevent_env *env)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void of_device_node_put(struct device *dev) { }

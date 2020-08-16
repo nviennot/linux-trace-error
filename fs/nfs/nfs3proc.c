@@ -37,7 +37,7 @@ nfs3_rpc_wrapper(struct rpc_clnt *clnt, struct rpc_message *msg, int flags)
 		if (res != -EJUKEBOX)
 			break;
 		freezable_schedule_timeout_killable_unsafe(NFS_JUKEBOX_RETRY_TIME);
-		res = -ERESTARTSYS;
+		res = -ERR(ERESTARTSYS);
 	} while (!fatal_signal_pending(current));
 	return res;
 }
@@ -527,7 +527,7 @@ nfs3_proc_symlink(struct inode *dir, struct dentry *dentry, struct page *page,
 	int status = -ENOMEM;
 
 	if (len > NFS3_MAXPATHLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	dprintk("NFS call  symlink %pd\n", dentry);
 
@@ -726,7 +726,7 @@ nfs3_proc_mknod(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
 		data->arg.mknod.type = NF3SOCK;
 		break;
 	default:
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -829,7 +829,7 @@ static int nfs3_read_done(struct rpc_task *task, struct nfs_pgio_header *hdr)
 		return hdr->pgio_done_cb(task, hdr);
 
 	if (nfs3_async_handle_jukebox(task, inode))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (task->tk_status >= 0 && !server->read_hdrsize)
 		cmpxchg(&server->read_hdrsize, 0, hdr->res.replen);
@@ -861,7 +861,7 @@ static int nfs3_write_done(struct rpc_task *task, struct nfs_pgio_header *hdr)
 		return hdr->pgio_done_cb(task, hdr);
 
 	if (nfs3_async_handle_jukebox(task, inode))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	if (task->tk_status >= 0)
 		nfs_writeback_update_inode(hdr);
 	return 0;
@@ -885,7 +885,7 @@ static int nfs3_commit_done(struct rpc_task *task, struct nfs_commit_data *data)
 		return data->commit_done_cb(task, data);
 
 	if (nfs3_async_handle_jukebox(task, data->inode))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	nfs_refresh_inode(data->inode, data->res.fattr);
 	return 0;
 }

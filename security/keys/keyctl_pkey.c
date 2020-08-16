@@ -47,12 +47,12 @@ static int keyctl_pkey_params_parse(struct kernel_pkey_params *params)
 			continue;
 		token = match_token(p, param_keys, args);
 		if (token == Opt_err)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (__test_and_set_bit(token, &token_mask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		q = args[0].from;
 		if (!q[0])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (token) {
 		case Opt_enc:
@@ -64,7 +64,7 @@ static int keyctl_pkey_params_parse(struct kernel_pkey_params *params)
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -101,7 +101,7 @@ static int keyctl_pkey_params_get(key_serial_t id,
 	params->key = key_ref_to_ptr(key_ref);
 
 	if (!params->key->type->asym_query)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return 0;
 }
@@ -138,13 +138,13 @@ static int keyctl_pkey_params_get_2(const struct keyctl_pkey_params __user *_par
 	case KEYCTL_PKEY_DECRYPT:
 		if (uparams.in_len  > info.max_enc_size ||
 		    uparams.out_len > info.max_dec_size)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case KEYCTL_PKEY_SIGN:
 	case KEYCTL_PKEY_VERIFY:
 		if (uparams.in_len  > info.max_sig_size ||
 		    uparams.out_len > info.max_data_size)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		BUG();
@@ -217,7 +217,7 @@ long keyctl_pkey_e_d_s(int op,
 	if (ret < 0)
 		goto error_params;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!params.key->type->asym_eds_op)
 		goto error_params;
 
@@ -293,7 +293,7 @@ long keyctl_pkey_verify(const struct keyctl_pkey_params __user *_params,
 	if (ret < 0)
 		goto error_params;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!params.key->type->asym_verify_signature)
 		goto error_params;
 

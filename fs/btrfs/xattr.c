@@ -38,7 +38,7 @@ int btrfs_getxattr(struct inode *inode, const char *name,
 	di = btrfs_lookup_xattr(NULL, root, path, btrfs_ino(BTRFS_I(inode)),
 			name, strlen(name), 0);
 	if (!di) {
-		ret = -ENODATA;
+		ret = -ERR(ENODATA);
 		goto out;
 	} else if (IS_ERR(di)) {
 		ret = PTR_ERR(di);
@@ -54,7 +54,7 @@ int btrfs_getxattr(struct inode *inode, const char *name,
 
 	/* now get the data out of our dir_item */
 	if (btrfs_dir_data_len(leaf, di) > size) {
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		goto out;
 	}
 
@@ -89,7 +89,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 	ASSERT(trans);
 
 	if (name_len + size > BTRFS_MAX_XATTR_SIZE(root->fs_info))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -100,7 +100,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 		di = btrfs_lookup_xattr(trans, root, path,
 				btrfs_ino(BTRFS_I(inode)), name, name_len, -1);
 		if (!di && (flags & XATTR_REPLACE))
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 		else if (IS_ERR(di))
 			ret = PTR_ERR(di);
 		else if (di)
@@ -120,7 +120,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 		di = btrfs_lookup_xattr(NULL, root, path,
 				btrfs_ino(BTRFS_I(inode)), name, name_len, 0);
 		if (!di)
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 		else if (IS_ERR(di))
 			ret = PTR_ERR(di);
 		if (ret)
@@ -141,7 +141,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 		btrfs_assert_tree_locked(path->nodes[0]);
 		di = btrfs_match_dir_item_name(fs_info, path, name, name_len);
 		if (!di && !(flags & XATTR_REPLACE)) {
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			goto out;
 		}
 	} else if (ret == -EEXIST) {
@@ -153,7 +153,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 	}
 
 	if (di && (flags & XATTR_CREATE)) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -177,7 +177,7 @@ int btrfs_setxattr(struct btrfs_trans_handle *trans, struct inode *inode,
 		if (size > old_data_len) {
 			if (btrfs_leaf_free_space(leaf) <
 			    (size - old_data_len)) {
-				ret = -ENOSPC;
+				ret = -ERR(ENOSPC);
 				goto out;
 			}
 		}
@@ -327,7 +327,7 @@ ssize_t btrfs_listxattr(struct dentry *dentry, char *buffer, size_t size)
 				goto next;
 
 			if (!buffer || (name_len + 1) > size_left) {
-				ret = -ERANGE;
+				ret = -ERR(ERANGE);
 				goto err;
 			}
 

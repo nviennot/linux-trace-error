@@ -79,12 +79,12 @@ static struct bpf_map *xsk_map_alloc(union bpf_attr *attr)
 	u64 size;
 
 	if (!capable(CAP_NET_ADMIN))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	if (attr->max_entries == 0 || attr->key_size != 4 ||
 	    attr->value_size != 4 ||
 	    attr->map_flags & ~(BPF_F_NUMA_NODE | BPF_F_RDONLY | BPF_F_WRONLY))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	numa_node = bpf_map_attr_numa_node(attr);
 	size = struct_size(m, xsk_map, attr->max_entries);
@@ -127,7 +127,7 @@ static int xsk_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 	}
 
 	if (index == m->map.max_entries - 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	*next = index + 1;
 	return 0;
 }
@@ -156,7 +156,7 @@ static void *xsk_map_lookup_elem(struct bpf_map *map, void *key)
 
 static void *xsk_map_lookup_elem_sys_only(struct bpf_map *map, void *key)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static int xsk_map_update_elem(struct bpf_map *map, void *key, void *value,
@@ -170,9 +170,9 @@ static int xsk_map_update_elem(struct bpf_map *map, void *key, void *value,
 	int err;
 
 	if (unlikely(map_flags > BPF_EXIST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(i >= m->map.max_entries))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	sock = sockfd_lookup(fd, &err);
 	if (!sock)
@@ -180,14 +180,14 @@ static int xsk_map_update_elem(struct bpf_map *map, void *key, void *value,
 
 	if (sock->sk->sk_family != PF_XDP) {
 		sockfd_put(sock);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	xs = (struct xdp_sock *)sock->sk;
 
 	if (!xsk_is_setup_for_bpf_map(xs)) {
 		sockfd_put(sock);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	map_entry = &m->xsk_map[i];
@@ -203,10 +203,10 @@ static int xsk_map_update_elem(struct bpf_map *map, void *key, void *value,
 		err = 0;
 		goto out;
 	} else if (old_xs && map_flags == BPF_NOEXIST) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out;
 	} else if (!old_xs && map_flags == BPF_EXIST) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 	xsk_map_sock_add(xs, node);
@@ -231,7 +231,7 @@ static int xsk_map_delete_elem(struct bpf_map *map, void *key)
 	int k = *(u32 *)key;
 
 	if (k >= map->max_entries)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&m->lock);
 	map_entry = &m->xsk_map[k];

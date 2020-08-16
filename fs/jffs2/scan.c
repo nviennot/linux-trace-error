@@ -265,7 +265,7 @@ int jffs2_scan_medium(struct jffs2_sb_info *c)
 			pr_notice("Cowardly refusing to erase blocks on filesystem with no valid JFFS2 nodes\n");
 			pr_notice("empty_blocks %d, bad_blocks %d, c->nr_blocks %d\n",
 				  empty_blocks, bad_blocks, c->nr_blocks);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		spin_lock(&c->erase_completion_lock);
@@ -299,7 +299,7 @@ static int jffs2_fill_scan_buf(struct jffs2_sb_info *c, void *buf,
 	if (retlen < len) {
 		jffs2_dbg(1, "Read at 0x%x gave only 0x%zx bytes\n",
 			  ofs, retlen);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -902,7 +902,7 @@ scan_more:
 					  je16_to_cpu(node->nodetype), ofs);
 				c->flags |= JFFS2_SB_FLAG_RO;
 				if (!(jffs2_is_readonly(c)))
-					return -EROFS;
+					return -ERR(EROFS);
 				if ((err = jffs2_scan_dirty_space(c, jeb, PAD(je32_to_cpu(node->totlen)))))
 					return err;
 				ofs += PAD(je32_to_cpu(node->totlen));
@@ -911,7 +911,7 @@ scan_more:
 			case JFFS2_FEATURE_INCOMPAT:
 				pr_notice("Incompatible feature node (0x%04x) found at offset 0x%08x\n",
 					  je16_to_cpu(node->nodetype), ofs);
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			case JFFS2_FEATURE_RWCOMPAT_DELETE:
 				jffs2_dbg(1, "Unknown but compatible feature node (0x%04x) found at offset 0x%08x\n",

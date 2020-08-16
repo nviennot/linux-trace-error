@@ -95,7 +95,7 @@ static ssize_t freeze_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 		return error;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (n) {
 	case 0:
@@ -105,7 +105,7 @@ static ssize_t freeze_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 		error = freeze_super(sdp->sd_vfs);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (error) {
@@ -127,14 +127,14 @@ static ssize_t withdraw_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 	int error, val;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtoint(buf, 0, &val);
 	if (error)
 		return error;
 
 	if (val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gfs2_lm(sdp, "withdrawing from cluster at user's request\n");
 	gfs2_withdraw(sdp);
@@ -148,14 +148,14 @@ static ssize_t statfs_sync_store(struct gfs2_sbd *sdp, const char *buf,
 	int error, val;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtoint(buf, 0, &val);
 	if (error)
 		return error;
 
 	if (val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gfs2_statfs_sync(sdp->sd_vfs, 0);
 	return len;
@@ -167,14 +167,14 @@ static ssize_t quota_sync_store(struct gfs2_sbd *sdp, const char *buf,
 	int error, val;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtoint(buf, 0, &val);
 	if (error)
 		return error;
 
 	if (val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gfs2_quota_sync(sdp->sd_vfs, 0);
 	return len;
@@ -188,7 +188,7 @@ static ssize_t quota_refresh_user_store(struct gfs2_sbd *sdp, const char *buf,
 	u32 id;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtou32(buf, 0, &id);
 	if (error)
@@ -196,7 +196,7 @@ static ssize_t quota_refresh_user_store(struct gfs2_sbd *sdp, const char *buf,
 
 	qid = make_kqid(current_user_ns(), USRQUOTA, id);
 	if (!qid_valid(qid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = gfs2_quota_refresh(sdp, qid);
 	return error ? error : len;
@@ -210,7 +210,7 @@ static ssize_t quota_refresh_group_store(struct gfs2_sbd *sdp, const char *buf,
 	u32 id;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtou32(buf, 0, &id);
 	if (error)
@@ -218,7 +218,7 @@ static ssize_t quota_refresh_group_store(struct gfs2_sbd *sdp, const char *buf,
 
 	qid = make_kqid(current_user_ns(), GRPQUOTA, id);
 	if (!qid_valid(qid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = gfs2_quota_refresh(sdp, qid);
 	return error ? error : len;
@@ -235,12 +235,12 @@ static ssize_t demote_rq_store(struct gfs2_sbd *sdp, const char *buf, size_t len
 	int rv;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	rv = sscanf(buf, "%u:%llu %15s", &gltype, &glnum,
 		    mode);
 	if (rv != 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(mode, "EX") == 0)
 		glmode = LM_ST_UNLOCKED;
@@ -249,16 +249,16 @@ static ssize_t demote_rq_store(struct gfs2_sbd *sdp, const char *buf, size_t len
 	else if ((strcmp(mode, "PR") == 0) || (strcmp(mode, "SH") == 0))
 		glmode = LM_ST_SHARED;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (gltype > LM_TYPE_JOURNAL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (gltype == LM_TYPE_NONDISK && glnum == GFS2_FREEZE_LOCK)
 		glops = &gfs2_freeze_glops;
 	else
 		glops = gfs2_glops_list[gltype];
 	if (glops == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!test_and_set_bit(SDF_DEMOTE, &sdp->sd_flags))
 		fs_info(sdp, "demote interface used\n");
 	rv = gfs2_glock_get(sdp, glnum, glops, 0, &gl);
@@ -351,7 +351,7 @@ static ssize_t block_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 		smp_mb__after_atomic();
 		gfs2_glock_thaw(sdp);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return len;
 }
@@ -375,7 +375,7 @@ static ssize_t wdack_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 	    !strcmp(sdp->sd_lockstruct.ls_ops->lm_proto_name, "lock_dlm"))
 		complete(&sdp->sd_wdack);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return len;
 }
 
@@ -392,15 +392,15 @@ static ssize_t lkfirst_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 
 	rv = sscanf(buf, "%u", &first);
 	if (rv != 1 || first > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rv = wait_for_completion_killable(&sdp->sd_locking_init);
 	if (rv)
 		return rv;
 	spin_lock(&sdp->sd_jindex_spin);
-	rv = -EBUSY;
+	rv = -ERR(EBUSY);
 	if (test_bit(SDF_NOJOURNALID, &sdp->sd_flags) == 0)
 		goto out;
-	rv = -EINVAL;
+	rv = -ERR(EINVAL);
 	if (sdp->sd_args.ar_spectator)
 		goto out;
 	if (sdp->sd_lockstruct.ls_ops->lm_mount == NULL)
@@ -427,7 +427,7 @@ int gfs2_recover_set(struct gfs2_sbd *sdp, unsigned jid)
 	wait_for_completion(&sdp->sd_journal_ready);
 
 	spin_lock(&sdp->sd_jindex_spin);
-	rv = -EBUSY;
+	rv = -ERR(EBUSY);
 	/**
 	 * If we're a spectator, we use journal0, but it's not really ours.
 	 * So we need to wait for its recovery too. If we skip it we'd never
@@ -439,7 +439,7 @@ int gfs2_recover_set(struct gfs2_sbd *sdp, unsigned jid)
 		goto out;
 	if (sdp->sd_jdesc->jd_jid == jid && !sdp->sd_args.ar_spectator)
 		goto out;
-	rv = -ENOENT;
+	rv = -ERR(ENOENT);
 	list_for_each_entry(jd, &sdp->sd_jindex_list, jd_list) {
 		if (jd->jd_jid != jid && !sdp->sd_args.ar_spectator)
 			continue;
@@ -458,10 +458,10 @@ static ssize_t recover_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 
 	rv = sscanf(buf, "%u", &jid);
 	if (rv != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (test_bit(SDF_NORECOVERY, &sdp->sd_flags)) {
-		rv = -ESHUTDOWN;
+		rv = -ERR(ESHUTDOWN);
 		goto out;
 	}
 
@@ -494,20 +494,20 @@ static ssize_t jid_store(struct gfs2_sbd *sdp, const char *buf, size_t len)
 
 	rv = sscanf(buf, "%d", &jid);
 	if (rv != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rv = wait_for_completion_killable(&sdp->sd_locking_init);
 	if (rv)
 		return rv;
 	spin_lock(&sdp->sd_jindex_spin);
-	rv = -EINVAL;
+	rv = -ERR(EINVAL);
 	if (sdp->sd_lockstruct.ls_ops->lm_mount == NULL)
 		goto out;
-	rv = -EBUSY;
+	rv = -ERR(EBUSY);
 	if (test_bit(SDF_NOJOURNALID, &sdp->sd_flags) == 0)
 		goto out;
 	rv = 0;
 	if (sdp->sd_args.ar_spectator && jid > 0)
-		rv = jid = -EINVAL;
+		rv = jid = -ERR(EINVAL);
 	sdp->sd_lockstruct.ls_jid = jid;
 	clear_bit(SDF_NOJOURNALID, &sdp->sd_flags);
 	smp_mb__after_atomic();
@@ -561,10 +561,10 @@ static ssize_t quota_scale_store(struct gfs2_sbd *sdp, const char *buf,
 	unsigned int x, y;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (sscanf(buf, "%u %u", &x, &y) != 2 || !y)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&gt->gt_spin);
 	gt->gt_quota_scale_num = x;
@@ -581,14 +581,14 @@ static ssize_t tune_set(struct gfs2_sbd *sdp, unsigned int *field,
 	int error;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	error = kstrtouint(buf, 0, &x);
 	if (error)
 		return error;
 
 	if (check_zero && !x)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&gt->gt_spin);
 	*field = x;

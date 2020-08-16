@@ -318,11 +318,11 @@ static inline int strong_try_module_get(struct module *mod)
 {
 	BUG_ON(mod && mod->state == MODULE_STATE_UNFORMED);
 	if (mod && mod->state == MODULE_STATE_COMING)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (try_module_get(mod))
 		return 0;
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 }
 
 static inline void add_taint_module(struct module *mod, unsigned flag,
@@ -978,7 +978,7 @@ SYSCALL_DEFINE2(delete_module, const char __user *, name_user,
 	int ret, forced = 0;
 
 	if (!capable(CAP_SYS_MODULE) || modules_disabled)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (strncpy_from_user(name, name_user, MODULE_NAME_LEN-1) < 0)
 		return -EFAULT;
@@ -987,11 +987,11 @@ SYSCALL_DEFINE2(delete_module, const char __user *, name_user,
 	audit_log_kern_module(name);
 
 	if (mutex_lock_interruptible(&module_mutex) != 0)
-		return -EINTR;
+		return -ERR(EINTR);
 
 	mod = find_module(name);
 	if (!mod) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1005,7 +1005,7 @@ SYSCALL_DEFINE2(delete_module, const char __user *, name_user,
 	if (mod->state != MODULE_STATE_LIVE) {
 		/* FIXME: if (force), slam module count damn the torpedoes */
 		pr_debug("%s already dying\n", mod->name);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -1014,7 +1014,7 @@ SYSCALL_DEFINE2(delete_module, const char __user *, name_user,
 		forced = try_force_unload(flags);
 		if (!forced) {
 			/* This module can't be removed */
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 	}
@@ -1286,7 +1286,7 @@ static int try_to_force_load(struct module *mod, const char *reason)
 	add_taint_module(mod, TAINT_FORCED_MODULE, LOCKDEP_NOW_UNRELIABLE);
 	return 0;
 #else
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 #endif
 }
 
@@ -1424,7 +1424,7 @@ static int verify_namespace_is_imported(const struct load_info *info,
 			"%s: module uses symbol (%s) from namespace %s, but does not import it.\n",
 			mod->name, kernel_symbol_name(sym), namespace);
 #ifndef CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	}
 	return 0;
@@ -1455,7 +1455,7 @@ static const struct kernel_symbol *resolve_symbol(struct module *mod,
 		goto unlock;
 
 	if (!check_version(info, name, mod, crc)) {
-		sym = ERR_PTR(-EINVAL);
+		sym = ERR_PTR(-ERR(EINVAL));
 		goto getname;
 	}
 
@@ -1528,7 +1528,7 @@ static ssize_t module_sect_read(struct file *file, struct kobject *kobj,
 		container_of(battr, struct module_sect_attr, battr);
 
 	if (pos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return sprintf(buf, "0x%px\n",
 		       kallsyms_show_value(file->f_cred) ? (void *)sattr->address : NULL);
@@ -1828,7 +1828,7 @@ static int mod_sysfs_init(struct module *mod)
 
 	if (!module_sysfs_initialized) {
 		pr_err("%s: module sysfs not initialized\n", mod->name);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1836,7 +1836,7 @@ static int mod_sysfs_init(struct module *mod)
 	if (kobj) {
 		pr_err("%s: module is already loaded\n", mod->name);
 		kobject_put(kobj);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2053,7 +2053,7 @@ static int module_enforce_rwx_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
 
 	for (i = 0; i < hdr->e_shnum; i++) {
 		if ((sechdrs[i].sh_flags & shf_wx) == shf_wx)
-			return -ENOEXEC;
+			return -ERR(ENOEXEC);
 	}
 
 	return 0;
@@ -2261,7 +2261,7 @@ static int verify_exported_symbols(struct module *mod)
 				       " (owned by %s)\n",
 				       mod->name, kernel_symbol_name(s),
 				       module_name(owner));
-				return -ENOEXEC;
+				return -ERR(ENOEXEC);
 			}
 		}
 	}
@@ -2292,7 +2292,7 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
 			pr_debug("Common symbol: %s\n", name);
 			pr_warn("%s: please compile with -fno-common\n",
 			       mod->name);
-			ret = -ENOEXEC;
+			ret = -ERR(ENOEXEC);
 			break;
 
 		case SHN_ABS:
@@ -2317,7 +2317,7 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
 			if (!ksym && ELF_ST_BIND(sym[i].st_info) == STB_WEAK)
 				break;
 
-			ret = PTR_ERR(ksym) ?: -ENOENT;
+			ret = PTR_ERR(ksym) ?: -ERR(ENOENT);
 			pr_warn("%s: Unknown symbol %s (err %d)\n",
 				mod->name, name, ret);
 			break;
@@ -2831,7 +2831,7 @@ static inline void kmemleak_load_module(const struct module *mod,
 #ifdef CONFIG_MODULE_SIG
 static int module_sig_check(struct load_info *info, int flags)
 {
-	int err = -ENODATA;
+	int err = -ERR(ENODATA);
 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
 	const char *reason;
 	const void *mod = info->hdr;
@@ -2868,7 +2868,7 @@ static int module_sig_check(struct load_info *info, int flags)
 	decide:
 		if (is_module_sig_enforced()) {
 			pr_notice("%s: %s is rejected\n", info->name, reason);
-			return -EKEYREJECTED;
+			return -ERR(EKEYREJECTED);
 		}
 
 		return security_locked_down(LOCKDOWN_MODULE_SIGNATURE);
@@ -2892,18 +2892,18 @@ static int module_sig_check(struct load_info *info, int flags)
 static int elf_header_check(struct load_info *info)
 {
 	if (info->len < sizeof(*(info->hdr)))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	if (memcmp(info->hdr->e_ident, ELFMAG, SELFMAG) != 0
 	    || info->hdr->e_type != ET_REL
 	    || !elf_check_arch(info->hdr)
 	    || info->hdr->e_shentsize != sizeof(Elf_Shdr))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	if (info->hdr->e_shoff >= info->len
 	    || (info->hdr->e_shnum * sizeof(Elf_Shdr) >
 		info->len - info->hdr->e_shoff))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	return 0;
 }
@@ -2943,7 +2943,7 @@ static int check_modinfo_livepatch(struct module *mod, struct load_info *info)
 	if (get_modinfo(info, "livepatch")) {
 		pr_err("%s: module is marked as livepatch module, but livepatch support is disabled",
 		       mod->name);
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	return 0;
@@ -2967,7 +2967,7 @@ static int copy_module_from_user(const void __user *umod, unsigned long len,
 
 	info->len = len;
 	if (info->len < sizeof(*(info->hdr)))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	err = security_kernel_load_data(LOADING_MODULE);
 	if (err)
@@ -3003,7 +3003,7 @@ static int rewrite_section_headers(struct load_info *info, int flags)
 		if (shdr->sh_type != SHT_NOBITS
 		    && info->len < shdr->sh_offset + shdr->sh_size) {
 			pr_err("Module len %lu truncated\n", info->len);
-			return -ENOEXEC;
+			return -ERR(ENOEXEC);
 		}
 
 		/* Mark all sections sh_addr with their address in the
@@ -3060,14 +3060,14 @@ static int setup_load_info(struct load_info *info, int flags)
 	if (info->index.sym == 0) {
 		pr_warn("%s: module has no symbols (stripped?)\n",
 			info->name ?: "(missing .modinfo section or name field)");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	info->index.mod = find_sec(info, ".gnu.linkonce.this_module");
 	if (!info->index.mod) {
 		pr_warn("%s: No module found in object\n",
 			info->name ?: "(missing .modinfo section or name field)");
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 	/* This is temporary: point mod into copy of data. */
 	info->mod = (void *)info->hdr + info->sechdrs[info->index.mod].sh_offset;
@@ -3105,7 +3105,7 @@ static int check_modinfo(struct module *mod, struct load_info *info, int flags)
 	} else if (!same_magic(modmagic, vermagic, info->index.vers)) {
 		pr_err("%s: version magic '%s' should be '%s'\n",
 		       info->name, modmagic, vermagic);
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	if (!get_modinfo(info, "intree")) {
@@ -3173,7 +3173,7 @@ static int find_module_sections(struct module *mod, struct load_info *info)
 		 */
 		pr_warn("%s: has both .ctors and .init_array.\n",
 		       mod->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 
@@ -3665,7 +3665,7 @@ fail:
 static int may_init_module(void)
 {
 	if (!capable(CAP_SYS_MODULE) || modules_disabled)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -3695,7 +3695,7 @@ again:
 				goto out_unlocked;
 			goto again;
 		}
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out;
 	}
 	mod_update_bounds(mod);
@@ -3789,7 +3789,7 @@ static int load_module(struct load_info *info, const char __user *uargs,
 		goto free_copy;
 
 	if (blacklisted(info->name)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto free_copy;
 	}
 
@@ -3803,7 +3803,7 @@ static int load_module(struct load_info *info, const char __user *uargs,
 
 	/* Check module struct version now, before we try to use module. */
 	if (!check_modstruct_version(info, info->mod)) {
-		err = -ENOEXEC;
+		err = -ERR(ENOEXEC);
 		goto free_copy;
 	}
 
@@ -4002,7 +4002,7 @@ SYSCALL_DEFINE3(finit_module, int, fd, const char __user *, uargs, int, flags)
 
 	if (flags & ~(MODULE_INIT_IGNORE_MODVERSIONS
 		      |MODULE_INIT_IGNORE_VERMAGIC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = kernel_read_file_from_fd(fd, &hdr, &size, INT_MAX,
 				       READING_MODULE);
@@ -4149,7 +4149,7 @@ int lookup_module_symbol_name(unsigned long addr, char *symname)
 	}
 out:
 	preempt_enable();
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 int lookup_module_symbol_attrs(unsigned long addr, unsigned long *size,
@@ -4177,7 +4177,7 @@ int lookup_module_symbol_attrs(unsigned long addr, unsigned long *size,
 	}
 out:
 	preempt_enable();
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
@@ -4206,7 +4206,7 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 		symnum -= kallsyms->num_symtab;
 	}
 	preempt_enable();
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 /* Given a module and name of symbol, find and return the symbol's value */

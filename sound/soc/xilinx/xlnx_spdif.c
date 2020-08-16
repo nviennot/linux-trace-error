@@ -135,7 +135,7 @@ static int xlnx_spdif_hw_params(struct snd_pcm_substream *substream,
 		clk_cfg = 6;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = readl(ctx->base + XSPDIF_CONTROL_REG);
@@ -158,7 +158,7 @@ static int rx_stream_detect(struct snd_soc_dai *dai)
 					       jiffies);
 	if (!err) {
 		dev_err(dai->dev, "No streaming audio detected!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ctx->rx_chsts_updated = false;
 
@@ -189,7 +189,7 @@ static int xlnx_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		writel(val, ctx->base + XSPDIF_CONTROL_REG);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -276,7 +276,7 @@ static int xlnx_spdif_probe(struct platform_device *pdev)
 		res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 		if (!res) {
 			dev_err(dev, "No IRQ resource found\n");
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto clk_err;
 		}
 		ret = devm_request_irq(dev, res->start,
@@ -284,7 +284,7 @@ static int xlnx_spdif_probe(struct platform_device *pdev)
 				       0, "XLNX_SPDIF_RX", ctx);
 		if (ret) {
 			dev_err(dev, "spdif rx irq request failed\n");
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto clk_err;
 		}
 

@@ -79,7 +79,7 @@ hash_mac4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (skb_mac_header(skb) < skb->head ||
 	    (skb_mac_header(skb) + ETH_HLEN) > skb->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (opt->flags & IPSET_DIM_ONE_SRC)
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_source);
@@ -87,7 +87,7 @@ hash_mac4_kadt(struct ip_set *set, const struct sk_buff *skb,
 		ether_addr_copy(e.ether, eth_hdr(skb)->h_dest);
 
 	if (is_zero_ether_addr(e.ether))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
 }
 

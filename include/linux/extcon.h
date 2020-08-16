@@ -264,7 +264,7 @@ static inline int devm_extcon_register_notifier(struct device *dev,
 				struct extcon_dev *edev, unsigned int id,
 				struct notifier_block *nb)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline  void devm_extcon_unregister_notifier(struct device *dev,
@@ -273,18 +273,18 @@ static inline  void devm_extcon_unregister_notifier(struct device *dev,
 
 static inline struct extcon_dev *extcon_get_extcon_dev(const char *extcon_name)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct extcon_dev *extcon_find_edev_by_node(struct device_node *node)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct extcon_dev *extcon_get_edev_by_phandle(struct device *dev,
 				int index)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline const char *extcon_get_edev_name(struct extcon_dev *edev)
@@ -308,11 +308,11 @@ static inline int extcon_register_interest(struct extcon_specific_cable_nb *obj,
 				const char *extcon_name, const char *cable_name,
 				struct notifier_block *nb)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int extcon_unregister_interest(struct extcon_specific_cable_nb *obj)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* __LINUX_EXTCON_H__ */

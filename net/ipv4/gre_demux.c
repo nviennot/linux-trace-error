@@ -31,10 +31,10 @@ static const struct gre_protocol __rcu *gre_proto[GREPROTO_MAX] __read_mostly;
 int gre_add_protocol(const struct gre_protocol *proto, u8 version)
 {
 	if (version >= GREPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return (cmpxchg((const struct gre_protocol **)&gre_proto[version], NULL, proto) == NULL) ?
-		0 : -EBUSY;
+		0 : -ERR(EBUSY);
 }
 EXPORT_SYMBOL_GPL(gre_add_protocol);
 
@@ -43,10 +43,10 @@ int gre_del_protocol(const struct gre_protocol *proto, u8 version)
 	int ret;
 
 	if (version >= GREPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = (cmpxchg((const struct gre_protocol **)&gre_proto[version], proto, NULL) == proto) ?
-		0 : -EBUSY;
+		0 : -ERR(EBUSY);
 
 	if (ret)
 		return ret;
@@ -67,17 +67,17 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 	int hdr_len;
 
 	if (unlikely(!pskb_may_pull(skb, nhs + sizeof(struct gre_base_hdr))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	greh = (struct gre_base_hdr *)(skb->data + nhs);
 	if (unlikely(greh->flags & (GRE_VERSION | GRE_ROUTING)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tpi->flags = gre_flags_to_tnl_flags(greh->flags);
 	hdr_len = gre_calc_hlen(tpi->flags);
 
 	if (!pskb_may_pull(skb, nhs + hdr_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	greh = (struct gre_base_hdr *)(skb->data + nhs);
 	tpi->proto = greh->protocol;
@@ -89,7 +89,7 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 						 null_compute_pseudo);
 		} else if (csum_err) {
 			*csum_err = true;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		options++;
@@ -117,7 +117,7 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 		val = skb_header_pointer(skb, nhs + hdr_len,
 					 sizeof(_val), &_val);
 		if (!val)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		tpi->proto = proto;
 		if ((*val & 0xF0) != 0x40)
 			hdr_len += 4;
@@ -133,7 +133,7 @@ int gre_parse_header(struct sk_buff *skb, struct tnl_ptk_info *tpi,
 		struct erspan_base_hdr *ershdr;
 
 		if (!pskb_may_pull(skb, nhs + hdr_len + sizeof(*ershdr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ershdr = (struct erspan_base_hdr *)(skb->data + nhs + hdr_len);
 		tpi->key = cpu_to_be32(get_session_id(ershdr));
@@ -179,14 +179,14 @@ static int gre_err(struct sk_buff *skb, u32 info)
 	int err = 0;
 
 	if (ver >= GREPROTO_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	proto = rcu_dereference(gre_proto[ver]);
 	if (proto && proto->err_handler)
 		proto->err_handler(skb, info);
 	else
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 	rcu_read_unlock();
 
 	return err;
@@ -204,7 +204,7 @@ static int __init gre_init(void)
 
 	if (inet_add_protocol(&net_gre_protocol, IPPROTO_GRE) < 0) {
 		pr_err("can't add protocol\n");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	return 0;
 }

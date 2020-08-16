@@ -502,7 +502,7 @@ int ieee80211_ibss_csa_beacon(struct ieee80211_sub_if_data *sdata,
 				IEEE80211_PRIVACY(ifibss->privacy));
 
 	if (WARN_ON(!cbss)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1767,7 +1767,7 @@ int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
 
 	if (params->chandef.chan->freq_offset) {
 		/* this may work, but is untested */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	ret = cfg80211_chandef_dfs_required(local->hw.wiphy,
@@ -1778,7 +1778,7 @@ int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
 
 	if (ret > 0) {
 		if (!params->userspace_handles_dfs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		radar_detect_width = BIT(params->chandef.width);
 	}
 

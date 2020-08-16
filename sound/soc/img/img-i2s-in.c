@@ -175,7 +175,7 @@ static int img_i2s_in_trigger(struct snd_pcm_substream *substream, int cmd,
 		img_i2s_in_disable(i2s);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -205,7 +205,7 @@ static int img_i2s_in_check_rate(struct img_i2s_in *i2s,
 		dev_err(i2s->dev,
 			"Sys clock rate %u insufficient for sample rate %u\n",
 			cur_freq, sample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -245,13 +245,13 @@ static int img_i2s_in_hw_params(struct snd_pcm_substream *substream,
 		chan_control_set |= IMG_I2S_IN_CH_CTL_16PACK_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((channels < 2) ||
 	    (channels > (i2s->max_i2s_chan * 2)) ||
 	    (channels % 2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	control_set |= ((i2s_channels - 1) << IMG_I2S_IN_CTL_ACTIVE_CH_SHIFT);
 
@@ -320,7 +320,7 @@ static int img_i2s_in_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		blkp_set |= IMG_I2S_IN_CH_CTL_BLKP_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -330,14 +330,14 @@ static int img_i2s_in_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_LEFT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBM_CFM:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chan_control_mask = IMG_I2S_IN_CH_CTL_CLK_TRANS_MASK;
@@ -442,7 +442,7 @@ static int img_i2s_in_probe(struct platform_device *pdev)
 	if (of_property_read_u32(pdev->dev.of_node, "img,i2s-channels",
 			&i2s->max_i2s_chan)) {
 		dev_err(dev, "No img,i2s-channels property\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max_i2s_chan_pow_2 = 1 << get_count_order(i2s->max_i2s_chan);

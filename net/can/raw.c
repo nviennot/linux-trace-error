@@ -294,13 +294,13 @@ static int raw_notifier(struct notifier_block *nb,
 		ro->count   = 0;
 		release_sock(sk);
 
-		sk->sk_err = ENODEV;
+		sk->sk_err = ERR(ENODEV);
 		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
 		break;
 
 	case NETDEV_DOWN:
-		sk->sk_err = ENETDOWN;
+		sk->sk_err = ERR(ENETDOWN);
 		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
 		break;
@@ -397,9 +397,9 @@ static int raw_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 	int notify_enetdown = 0;
 
 	if (len < CAN_REQUIRED_SIZE(*addr, can_ifindex))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (addr->can_family != AF_CAN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -411,12 +411,12 @@ static int raw_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 
 		dev = dev_get_by_index(sock_net(sk), addr->can_ifindex);
 		if (!dev) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 		if (dev->type != ARPHRD_CAN) {
 			dev_put(dev);
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 		if (!(dev->flags & IFF_UP))
@@ -459,7 +459,7 @@ static int raw_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 	release_sock(sk);
 
 	if (notify_enetdown) {
-		sk->sk_err = ENETDOWN;
+		sk->sk_err = ERR(ENETDOWN);
 		if (!sock_flag(sk, SOCK_DEAD))
 			sk->sk_error_report(sk);
 	}
@@ -475,7 +475,7 @@ static int raw_getname(struct socket *sock, struct sockaddr *uaddr,
 	struct raw_sock *ro = raw_sk(sk);
 
 	if (peer)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(addr, 0, sizeof(*addr));
 	addr->can_family  = AF_CAN;
@@ -497,15 +497,15 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 	int err = 0;
 
 	if (level != SOL_CAN_RAW)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case CAN_RAW_FILTER:
 		if (optlen % sizeof(struct can_filter) != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (optlen > CAN_RAW_FILTER_MAX * sizeof(struct can_filter))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		count = optlen / sizeof(struct can_filter);
 
@@ -566,7 +566,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 
 	case CAN_RAW_ERR_FILTER:
 		if (optlen != sizeof(err_mask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&err_mask, optval, optlen))
 			return -EFAULT;
@@ -605,7 +605,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 
 	case CAN_RAW_LOOPBACK:
 		if (optlen != sizeof(ro->loopback))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&ro->loopback, optval, optlen))
 			return -EFAULT;
@@ -614,7 +614,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 
 	case CAN_RAW_RECV_OWN_MSGS:
 		if (optlen != sizeof(ro->recv_own_msgs))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&ro->recv_own_msgs, optval, optlen))
 			return -EFAULT;
@@ -623,7 +623,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 
 	case CAN_RAW_FD_FRAMES:
 		if (optlen != sizeof(ro->fd_frames))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&ro->fd_frames, optval, optlen))
 			return -EFAULT;
@@ -632,7 +632,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 
 	case CAN_RAW_JOIN_FILTERS:
 		if (optlen != sizeof(ro->join_filters))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (copy_from_user(&ro->join_filters, optval, optlen))
 			return -EFAULT;
@@ -640,7 +640,7 @@ static int raw_setsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 	return err;
 }
@@ -655,11 +655,11 @@ static int raw_getsockopt(struct socket *sock, int level, int optname,
 	int err = 0;
 
 	if (level != SOL_CAN_RAW)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_user(len, optlen))
 		return -EFAULT;
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case CAN_RAW_FILTER:
@@ -711,7 +711,7 @@ static int raw_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))
@@ -734,10 +734,10 @@ static int raw_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 		DECLARE_SOCKADDR(struct sockaddr_can *, addr, msg->msg_name);
 
 		if (msg->msg_namelen < CAN_REQUIRED_SIZE(*addr, can_ifindex))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (addr->can_family != AF_CAN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ifindex = addr->can_ifindex;
 	} else {
@@ -746,9 +746,9 @@ static int raw_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 
 	dev = dev_get_by_index(sock_net(sk), ifindex);
 	if (!dev)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (ro->fd_frames && dev->mtu == CANFD_MTU) {
 		if (unlikely(size != CANFD_MTU && size != CAN_MTU))
 			goto put_dev;
@@ -839,7 +839,7 @@ static int raw_sock_no_ioctlcmd(struct socket *sock, unsigned int cmd,
 				unsigned long arg)
 {
 	/* no ioctls for socket layer -> hand it down to NIC layer */
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static const struct proto_ops raw_ops = {

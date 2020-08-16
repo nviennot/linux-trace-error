@@ -65,7 +65,7 @@ static int exfat_allocate_bitmap(struct super_block *sb,
 		 * bitmap size is large
 		 */
 		if (need_map_size > map_size)
-			return -EIO;
+			return -ERR(EIO);
 	}
 	sbi->map_sectors = ((need_map_size - 1) >>
 			(sb->s_blocksize_bits)) + 1;
@@ -86,7 +86,7 @@ static int exfat_allocate_bitmap(struct super_block *sb,
 
 			kfree(sbi->vol_amap);
 			sbi->vol_amap = NULL;
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -107,7 +107,7 @@ int exfat_load_bitmap(struct super_block *sb)
 
 			ep = exfat_get_dentry(sb, &clu, i, &bh, NULL);
 			if (!ep)
-				return -EIO;
+				return -ERR(EIO);
 
 			type = exfat_get_entry_type(ep);
 			if (type == TYPE_UNUSED)
@@ -125,10 +125,10 @@ int exfat_load_bitmap(struct super_block *sb)
 		}
 
 		if (exfat_get_next_cluster(sb, &clu.dir))
-			return -EIO;
+			return -ERR(EIO);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 void exfat_free_bitmap(struct exfat_sb_info *sbi)

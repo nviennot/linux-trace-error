@@ -141,7 +141,7 @@ out_no_isolated:
 out_putpage:
 	put_page(page);
 out:
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /* It should be called on page which is PG_movable */
@@ -410,7 +410,7 @@ int migrate_page_move_mapping(struct address_space *mapping,
 	if (!mapping) {
 		/* Anonymous page without mapping */
 		if (page_count(page) != expected_count)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		/* No turning back from here */
 		newpage->index = page->index;
@@ -427,12 +427,12 @@ int migrate_page_move_mapping(struct address_space *mapping,
 	xas_lock_irq(&xas);
 	if (page_count(page) != expected_count || xas_load(&xas) != page) {
 		xas_unlock_irq(&xas);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (!page_ref_freeze(page, expected_count)) {
 		xas_unlock_irq(&xas);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	/*
@@ -530,12 +530,12 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
 	expected_count = 2 + page_has_private(page);
 	if (page_count(page) != expected_count || xas_load(&xas) != page) {
 		xas_unlock_irq(&xas);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (!page_ref_freeze(page, expected_count)) {
 		xas_unlock_irq(&xas);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	newpage->index = page->index;
@@ -767,11 +767,11 @@ static int __buffer_migrate_page(struct address_space *mapping,
 	/* Check whether page does not have extra refs before we do more work */
 	expected_count = expected_page_refs(mapping, page);
 	if (page_count(page) != expected_count)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	head = page_buffers(page);
 	if (!buffer_migrate_lock_buffers(head, mode))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (check_refs) {
 		bool busy;
@@ -790,7 +790,7 @@ recheck_buffers:
 		} while (bh != head);
 		if (busy) {
 			if (invalidated) {
-				rc = -EAGAIN;
+				rc = -ERR(EAGAIN);
 				goto unlock_buffers;
 			}
 			spin_unlock(&mapping->private_lock);
@@ -873,11 +873,11 @@ static int writeout(struct address_space *mapping, struct page *page)
 
 	if (!mapping->a_ops->writepage)
 		/* No write method for the address space */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!clear_page_dirty_for_io(page))
 		/* Someone else already triggered a write */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/*
 	 * A dirty page may imply that the underlying filesystem has
@@ -895,7 +895,7 @@ static int writeout(struct address_space *mapping, struct page *page)
 		/* unlocked. Relock */
 		lock_page(page);
 
-	return (rc < 0) ? -EIO : -EAGAIN;
+	return (rc < 0) ? -ERR(EIO) : -ERR(EAGAIN);
 }
 
 /*
@@ -911,7 +911,7 @@ static int fallback_migrate_page(struct address_space *mapping,
 		case MIGRATE_SYNC_NO_COPY:
 			break;
 		default:
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		return writeout(mapping, page);
 	}
@@ -922,7 +922,7 @@ static int fallback_migrate_page(struct address_space *mapping,
 	 */
 	if (page_has_private(page) &&
 	    !try_to_release_page(page, GFP_KERNEL))
-		return mode == MIGRATE_SYNC ? -EAGAIN : -EBUSY;
+		return mode == MIGRATE_SYNC ? -ERR(EAGAIN) : -ERR(EBUSY);
 
 	return migrate_page(mapping, newpage, page, mode);
 }
@@ -942,7 +942,7 @@ static int move_to_new_page(struct page *newpage, struct page *page,
 				enum migrate_mode mode)
 {
 	struct address_space *mapping;
-	int rc = -EAGAIN;
+	int rc = -ERR(EAGAIN);
 	bool is_lru = !__PageMovable(page);
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
@@ -1018,7 +1018,7 @@ out:
 static int __unmap_and_move(struct page *page, struct page *newpage,
 				int force, enum migrate_mode mode)
 {
-	int rc = -EAGAIN;
+	int rc = -ERR(EAGAIN);
 	int page_was_mapped = 0;
 	struct anon_vma *anon_vma = NULL;
 	bool is_lru = !__PageMovable(page);
@@ -1058,7 +1058,7 @@ static int __unmap_and_move(struct page *page, struct page *newpage,
 		case MIGRATE_SYNC_NO_COPY:
 			break;
 		default:
-			rc = -EBUSY;
+			rc = -ERR(EBUSY);
 			goto out_unlock;
 		}
 		if (!force)
@@ -1280,7 +1280,7 @@ static int unmap_and_move_huge_page(new_page_t get_new_page,
 				struct page *hpage, int force,
 				enum migrate_mode mode, int reason)
 {
-	int rc = -EAGAIN;
+	int rc = -ERR(EAGAIN);
 	int page_was_mapped = 0;
 	struct page *new_hpage;
 	struct anon_vma *anon_vma = NULL;
@@ -1295,7 +1295,7 @@ static int unmap_and_move_huge_page(new_page_t get_new_page,
 	 */
 	if (!hugepage_migration_supported(page_hstate(hpage))) {
 		putback_active_hugepage(hpage);
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	new_hpage = get_new_page(hpage, private);
@@ -1321,7 +1321,7 @@ static int unmap_and_move_huge_page(new_page_t get_new_page,
 	 * be called and we could leak usage counts for subpools.
 	 */
 	if (page_private(hpage) && !page_mapping(hpage)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -1558,7 +1558,7 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
 	if (IS_ERR(page))
 		goto out;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!page)
 		goto out;
 
@@ -1566,7 +1566,7 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
 	if (page_to_nid(page) == node)
 		goto out_putpage;
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (page_mapcount(page) > 1 && !migrate_all)
 		goto out_putpage;
 
@@ -1656,13 +1656,13 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
 			goto out_flush;
 		addr = (unsigned long)untagged_addr(p);
 
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		if (node < 0 || node >= MAX_NUMNODES)
 			goto out_flush;
 		if (!node_state(node, N_MEMORY))
 			goto out_flush;
 
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if (!node_isset(node, task_nodes))
 			goto out_flush;
 
@@ -1741,7 +1741,7 @@ static void do_pages_stat_array(struct mm_struct *mm, unsigned long nr_pages,
 		if (IS_ERR(page))
 			goto set_status;
 
-		err = page ? page_to_nid(page) : -ENOENT;
+		err = page ? page_to_nid(page) : -ERR(ENOENT);
 set_status:
 		*status = err;
 
@@ -1802,17 +1802,17 @@ static int kernel_move_pages(pid_t pid, unsigned long nr_pages,
 
 	/* Check flags */
 	if (flags & ~(MPOL_MF_MOVE|MPOL_MF_MOVE_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((flags & MPOL_MF_MOVE_ALL) && !capable(CAP_SYS_NICE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Find the mm_struct */
 	rcu_read_lock();
 	task = pid ? find_task_by_vpid(pid) : current;
 	if (!task) {
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 	get_task_struct(task);
 
@@ -1822,7 +1822,7 @@ static int kernel_move_pages(pid_t pid, unsigned long nr_pages,
 	 */
 	if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
 		rcu_read_unlock();
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out;
 	}
 	rcu_read_unlock();
@@ -1836,7 +1836,7 @@ static int kernel_move_pages(pid_t pid, unsigned long nr_pages,
 	put_task_struct(task);
 
 	if (!mm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nodes)
 		err = do_pages_move(mm, task_nodes, nr_pages, pages,
@@ -2681,16 +2681,16 @@ int migrate_vma_setup(struct migrate_vma *args)
 	args->end &= PAGE_MASK;
 	if (!args->vma || is_vm_hugetlb_page(args->vma) ||
 	    (args->vma->vm_flags & VM_SPECIAL) || vma_is_dax(args->vma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (nr_pages <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (args->start < args->vma->vm_start ||
 	    args->start >= args->vma->vm_end)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (args->end <= args->vma->vm_start || args->end > args->vma->vm_end)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!args->src || !args->dst)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(args->src, 0, sizeof(*args->src) * nr_pages);
 	args->cpages = 0;

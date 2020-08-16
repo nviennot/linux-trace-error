@@ -61,12 +61,12 @@ static int __vlan_tunnel_info_add(struct net_bridge_vlan_group *vg,
 	int err;
 
 	if (vlan->tinfo.tunnel_dst)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	metadata = __ip_tun_set_dst(0, 0, 0, 0, 0, TUNNEL_KEY,
 				    key, 0);
 	if (!metadata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	metadata->u.tun_info.mode |= IP_TUNNEL_INFO_TX | IP_TUNNEL_INFO_BRIDGE;
 	vlan->tinfo.tunnel_dst = metadata;
@@ -100,7 +100,7 @@ int nbp_vlan_tunnel_info_add(const struct net_bridge_port *port, u16 vid,
 	vg = nbp_vlan_group(port);
 	vlan = br_vlan_find(vg, vid);
 	if (!vlan)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __vlan_tunnel_info_add(vg, vlan, tun_id);
 }
@@ -118,7 +118,7 @@ int nbp_vlan_tunnel_info_delete(const struct net_bridge_port *port, u16 vid)
 	vg = nbp_vlan_group(port);
 	v = br_vlan_find(vg, vid);
 	if (!v)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	vlan_tunnel_info_del(vg, v);
 

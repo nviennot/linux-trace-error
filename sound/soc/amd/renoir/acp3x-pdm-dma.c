@@ -137,7 +137,7 @@ static int start_pdm_dma(void __iomem *acp_base)
 			return 0;
 		udelay(DELAY_US);
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int stop_pdm_dma(void __iomem *acp_base)
@@ -163,7 +163,7 @@ static int stop_pdm_dma(void __iomem *acp_base)
 			udelay(DELAY_US);
 		}
 		if (timeout == ACP_COUNTER)
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 	}
 	if (pdm_enable == ACP_PDM_ENABLE) {
 		pdm_enable = ACP_PDM_DISABLE;
@@ -213,7 +213,7 @@ static int acp_pdm_dma_open(struct snd_soc_component *component,
 	adata = dev_get_drvdata(component->dev);
 	pdm_data = kzalloc(sizeof(*pdm_data), GFP_KERNEL);
 	if (!pdm_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		runtime->hw = acp_pdm_hardware_capture;
@@ -245,7 +245,7 @@ static int acp_pdm_dma_hw_params(struct snd_soc_component *component,
 
 	rtd = substream->runtime->private_data;
 	if (!rtd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	size = params_buffer_bytes(params);
 	period_bytes = params_period_bytes(params);
 	rtd->dma_addr = substream->dma_buffer.addr;
@@ -327,7 +327,7 @@ static int acp_pdm_dai_hw_params(struct snd_pcm_substream *substream,
 		ch_mask = 0x00;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	rn_writel(ch_mask, rtd->acp_base + ACP_WOV_PDM_NO_OF_CHANNELS);
 	rn_writel(PDM_DECIMATION_FACTOR, rtd->acp_base +
@@ -362,7 +362,7 @@ static int acp_pdm_dai_trigger(struct snd_pcm_substream *substream,
 			ret = stop_pdm_dma(rtd->acp_base);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -405,14 +405,14 @@ static int acp_pdm_audio_probe(struct platform_device *pdev)
 
 	if (!pdev->dev.platform_data) {
 		dev_err(&pdev->dev, "platform_data not retrieved\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	irqflags = *((unsigned int *)(pdev->dev.platform_data));
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_MEM FAILED\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	adata = devm_kzalloc(&pdev->dev, sizeof(*adata), GFP_KERNEL);
@@ -427,7 +427,7 @@ static int acp_pdm_audio_probe(struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_IRQ FAILED\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	adata->pdm_irq = res->start;
@@ -440,13 +440,13 @@ static int acp_pdm_audio_probe(struct platform_device *pdev)
 	if (status) {
 		dev_err(&pdev->dev, "Fail to register acp pdm dai\n");
 
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	status = devm_request_irq(&pdev->dev, adata->pdm_irq, pdm_irq_handler,
 				  irqflags, "ACP_PDM_IRQ", adata);
 	if (status) {
 		dev_err(&pdev->dev, "ACP PDM IRQ request failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	pm_runtime_set_autosuspend_delay(&pdev->dev, ACP_SUSPEND_DELAY_MS);
 	pm_runtime_use_autosuspend(&pdev->dev);

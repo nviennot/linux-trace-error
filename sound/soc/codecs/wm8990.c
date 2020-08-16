@@ -904,7 +904,7 @@ static int wm8990_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio3 |= WM8990_AIF_MSTR1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	audio1 &= ~WM8990_AIF_FMT_MASK;
@@ -931,7 +931,7 @@ static int wm8990_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio1 |= WM8990_AIF_TMF_DSP | WM8990_AIF_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8990_AUDIO_INTERFACE_1, audio1);
@@ -962,7 +962,7 @@ static int wm8990_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 				    WM8990_BCLK_DIV_MASK, div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -3785,7 +3785,7 @@ int ieee80211_send_action_csa(struct ieee80211_sub_if_data *sdata,
 
 	if (sdata->vif.type != NL80211_IFTYPE_ADHOC &&
 	    sdata->vif.type != NL80211_IFTYPE_MESH_POINT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb = dev_alloc_skb(local->tx_headroom + hdr_len +
 			    5 + /* channel switch announcement element */
@@ -4161,14 +4161,14 @@ int ieee80211_check_combinations(struct ieee80211_sub_if_data *sdata,
 	lockdep_assert_held(&local->chanctx_mtx);
 
 	if (WARN_ON(hweight32(radar_detect) > 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(chandef && chanmode == IEEE80211_CHANCTX_SHARED &&
 		    !chandef->chan))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(iftype >= NUM_NL80211_IFTYPES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sdata->vif.type == NL80211_IFTYPE_AP ||
 	    sdata->vif.type == NL80211_IFTYPE_MESH_POINT) {
@@ -4183,7 +4183,7 @@ int ieee80211_check_combinations(struct ieee80211_sub_if_data *sdata,
 	/* Always allow software iftypes */
 	if (cfg80211_iftype_allowed(local->hw.wiphy, iftype, 0, 1)) {
 		if (radar_detect)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	}
 

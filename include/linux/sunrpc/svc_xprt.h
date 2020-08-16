@@ -110,7 +110,7 @@ static inline int register_xpt_user(struct svc_xprt *xpt, struct svc_xpt_user *u
 		 * already notified the xpt_users).
 		 */
 		spin_unlock(&xpt->xpt_lock);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 	list_add(&u->list, &xpt->xpt_users);
 	spin_unlock(&xpt->xpt_lock);

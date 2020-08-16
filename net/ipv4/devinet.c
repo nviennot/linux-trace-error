@@ -502,11 +502,11 @@ static int __inet_insert_ifa(struct in_ifaddr *ifa, struct nlmsghdr *nlh,
 		    inet_ifa_match(ifa1->ifa_address, ifa)) {
 			if (ifa1->ifa_local == ifa->ifa_local) {
 				inet_free_ifa(ifa);
-				return -EEXIST;
+				return -ERR(EEXIST);
 			}
 			if (ifa1->ifa_scope != ifa->ifa_scope) {
 				inet_free_ifa(ifa);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			ifa->ifa_flags |= IFA_F_SECONDARY;
 		}
@@ -568,7 +568,7 @@ static int inet_set_ifa(struct net_device *dev, struct in_ifaddr *ifa)
 
 	if (!in_dev) {
 		inet_free_ifa(ifa);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	ipv4_devconf_setall(in_dev);
 	neigh_parms_data_state_setall(in_dev->arp_parms);
@@ -637,7 +637,7 @@ static int ip_mc_autojoin_config(struct net *net, bool join,
 
 	return ret;
 #else
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 #endif
 }
 
@@ -651,7 +651,7 @@ static int inet_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct ifaddrmsg *ifm;
 	struct in_ifaddr *ifa;
 
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	ASSERT_RTNL();
 
@@ -663,7 +663,7 @@ static int inet_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	ifm = nlmsg_data(nlh);
 	in_dev = inetdev_by_index(net, ifm->ifa_index);
 	if (!in_dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto errout;
 	}
 
@@ -687,7 +687,7 @@ static int inet_rtm_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 		return 0;
 	}
 
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 errout:
 	return err;
 }
@@ -837,17 +837,17 @@ static struct in_ifaddr *rtm_to_ifaddr(struct net *net, struct nlmsghdr *nlh,
 		goto errout;
 
 	ifm = nlmsg_data(nlh);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (ifm->ifa_prefixlen > 32 || !tb[IFA_LOCAL])
 		goto errout;
 
 	dev = __dev_get_by_index(net, ifm->ifa_index);
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	if (!dev)
 		goto errout;
 
 	in_dev = __in_dev_get_rtnl(dev);
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	if (!in_dev)
 		goto errout;
 
@@ -893,7 +893,7 @@ static struct in_ifaddr *rtm_to_ifaddr(struct net *net, struct nlmsghdr *nlh,
 
 		ci = nla_data(tb[IFA_CACHEINFO]);
 		if (!ci->ifa_valid || ci->ifa_prefered > ci->ifa_valid) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout_free;
 		}
 		*pvalid_lft = ci->ifa_valid;
@@ -963,7 +963,7 @@ static int inet_rtm_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 		if (nlh->nlmsg_flags & NLM_F_EXCL ||
 		    !(nlh->nlmsg_flags & NLM_F_REPLACE))
-			return -EEXIST;
+			return -ERR(EEXIST);
 		ifa = ifa_existing;
 
 		if (ifa->ifa_rt_priority != new_metric) {
@@ -1044,7 +1044,7 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 		break;
 
 	case SIOCSIFFLAGS:
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto out;
 		break;
@@ -1052,21 +1052,21 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 	case SIOCSIFBRDADDR:	/* Set the broadcast address */
 	case SIOCSIFDSTADDR:	/* Set the destination address */
 	case SIOCSIFNETMASK: 	/* Set the netmask for the interface */
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto out;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (sin->sin_family != AF_INET)
 			goto out;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	rtnl_lock();
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	dev = __dev_get_by_name(net, ifr->ifr_name);
 	if (!dev)
 		goto done;
@@ -1105,7 +1105,7 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 		}
 	}
 
-	ret = -EADDRNOTAVAIL;
+	ret = -ERR(EADDRNOTAVAIL);
 	if (!ifa && cmd != SIOCSIFADDR && cmd != SIOCSIFFLAGS)
 		goto done;
 
@@ -1132,7 +1132,7 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 
 	case SIOCSIFFLAGS:
 		if (colon) {
-			ret = -EADDRNOTAVAIL;
+			ret = -ERR(EADDRNOTAVAIL);
 			if (!ifa)
 				break;
 			ret = 0;
@@ -1144,12 +1144,12 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 		break;
 
 	case SIOCSIFADDR:	/* Set interface address (and family) */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (inet_abc_len(sin->sin_addr.s_addr) < 0)
 			break;
 
 		if (!ifa) {
-			ret = -ENOBUFS;
+			ret = -ERR(ENOBUFS);
 			ifa = inet_alloc_ifa();
 			if (!ifa)
 				break;
@@ -1197,7 +1197,7 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 		ret = 0;
 		if (ifa->ifa_address == sin->sin_addr.s_addr)
 			break;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (inet_abc_len(sin->sin_addr.s_addr) < 0)
 			break;
 		ret = 0;
@@ -1211,7 +1211,7 @@ int devinet_ioctl(struct net *net, unsigned int cmd, struct ifreq *ifr)
 		/*
 		 *	The mask we set must be legal.
 		 */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (bad_mask(sin->sin_addr.s_addr, 0))
 			break;
 		ret = 0;
@@ -1656,7 +1656,7 @@ static int inet_fill_ifaddr(struct sk_buff *skb, struct in_ifaddr *ifa,
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->event, sizeof(*ifm),
 			args->flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ifm = nlmsg_data(nlh);
 	ifm->ifa_family = AF_INET;
@@ -1710,7 +1710,7 @@ static int inet_fill_ifaddr(struct sk_buff *skb, struct in_ifaddr *ifa,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int inet_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
@@ -1725,13 +1725,13 @@ static int inet_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ifm))) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for address dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ifm = nlmsg_data(nlh);
 	if (ifm->ifa_prefixlen || ifm->ifa_flags || ifm->ifa_scope) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid values in header for address dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fillargs->ifindex = ifm->ifa_index;
@@ -1763,7 +1763,7 @@ static int inet_valid_dump_ifaddr_req(const struct nlmsghdr *nlh,
 			*tgt_net = net;
 		} else {
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1832,7 +1832,7 @@ static int inet_dump_ifaddr(struct sk_buff *skb, struct netlink_callback *cb)
 		if (fillargs.ifindex) {
 			dev = __dev_get_by_index(tgt_net, fillargs.ifindex);
 			if (!dev) {
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto put_tgt_net;
 			}
 
@@ -1893,7 +1893,7 @@ static void rtmsg_ifa(int event, struct in_ifaddr *ifa, struct nlmsghdr *nlh,
 		.netnsid = -1,
 	};
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 	struct net *net;
 
 	net = dev_net(ifa->ifa_dev->dev);
@@ -1934,11 +1934,11 @@ static int inet_fill_link_af(struct sk_buff *skb, const struct net_device *dev,
 	int i;
 
 	if (!in_dev)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	nla = nla_reserve(skb, IFLA_INET_CONF, IPV4_DEVCONF_MAX * 4);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i < IPV4_DEVCONF_MAX; i++)
 		((u32 *) nla_data(nla))[i] = in_dev->cnf.data[i];
@@ -1957,7 +1957,7 @@ static int inet_validate_link_af(const struct net_device *dev,
 	int err, rem;
 
 	if (dev && !__in_dev_get_rcu(dev))
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	err = nla_parse_nested_deprecated(tb, IFLA_INET_MAX, nla,
 					  inet_af_policy, NULL);
@@ -1969,10 +1969,10 @@ static int inet_validate_link_af(const struct net_device *dev,
 			int cfgid = nla_type(a);
 
 			if (nla_len(a) < 4)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (cfgid <= 0 || cfgid > IPV4_DEVCONF_MAX)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -1986,7 +1986,7 @@ static int inet_set_link_af(struct net_device *dev, const struct nlattr *nla)
 	int rem;
 
 	if (!in_dev)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (nla_parse_nested_deprecated(tb, IFLA_INET_MAX, nla, NULL, NULL) < 0)
 		BUG();
@@ -2036,7 +2036,7 @@ static int inet_netconf_fill_devconf(struct sk_buff *skb, int ifindex,
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(struct netconfmsg),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (type == NETCONFA_ALL)
 		all = true;
@@ -2081,14 +2081,14 @@ out:
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 void inet_netconf_notify_devconf(struct net *net, int event, int type,
 				 int ifindex, struct ipv4_devconf *devconf)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(inet_netconf_msgsize_devconf(type), GFP_KERNEL);
 	if (!skb)
@@ -2126,7 +2126,7 @@ static int inet_netconf_valid_get_req(struct sk_buff *skb,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(struct netconfmsg))) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid header for netconf get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -2149,7 +2149,7 @@ static int inet_netconf_valid_get_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in netconf get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2173,7 +2173,7 @@ static int inet_netconf_get_devconf(struct sk_buff *in_skb,
 	if (err)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!tb[NETCONFA_IFINDEX])
 		goto errout;
 
@@ -2196,7 +2196,7 @@ static int inet_netconf_get_devconf(struct sk_buff *in_skb,
 		break;
 	}
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	skb = nlmsg_new(inet_netconf_msgsize_devconf(NETCONFA_ALL), GFP_KERNEL);
 	if (!skb)
 		goto errout;
@@ -2233,12 +2233,12 @@ static int inet_netconf_dump_devconf(struct sk_buff *skb,
 
 		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ncm))) {
 			NL_SET_ERR_MSG(extack, "ipv4: Invalid header for netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (nlmsg_attrlen(nlh, sizeof(*ncm))) {
 			NL_SET_ERR_MSG(extack, "ipv4: Invalid data after header in netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2582,7 +2582,7 @@ static int __devinet_sysctl_register(struct net *net, char *dev_name,
 free:
 	kfree(t);
 out:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static void __devinet_sysctl_unregister(struct net *net,
@@ -2604,7 +2604,7 @@ static int devinet_sysctl_register(struct in_device *idev)
 	int err;
 
 	if (!sysctl_dev_name_is_allowed(idev->dev->name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = neigh_sysctl_register(idev->dev, idev->arp_parms, NULL);
 	if (err)

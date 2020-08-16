@@ -73,7 +73,7 @@ int cfg80211_mgd_wext_siwfreq(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	freq = cfg80211_wext_freq(wextfreq);
 	if (freq < 0)
@@ -82,9 +82,9 @@ int cfg80211_mgd_wext_siwfreq(struct net_device *dev,
 	if (freq) {
 		chan = ieee80211_get_channel(wdev->wiphy, freq);
 		if (!chan)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (chan->flags & IEEE80211_CHAN_DISABLED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	wdev_lock(wdev);
@@ -122,7 +122,7 @@ int cfg80211_mgd_wext_giwfreq(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wdev_lock(wdev);
 	if (wdev->current_bss)
@@ -138,7 +138,7 @@ int cfg80211_mgd_wext_giwfreq(struct net_device *dev,
 	}
 
 	/* no channel if not joining */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int cfg80211_mgd_wext_siwessid(struct net_device *dev,
@@ -152,7 +152,7 @@ int cfg80211_mgd_wext_siwessid(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!data->flags)
 		len = 0;
@@ -206,7 +206,7 @@ int cfg80211_mgd_wext_giwessid(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data->flags = 0;
 
@@ -221,7 +221,7 @@ int cfg80211_mgd_wext_giwessid(struct net_device *dev,
 			data->flags = 1;
 			data->length = ie[1];
 			if (data->length > IW_ESSID_MAX_SIZE)
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			else
 				memcpy(ssid, ie + 2, data->length);
 		}
@@ -247,10 +247,10 @@ int cfg80211_mgd_wext_siwap(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ap_addr->sa_family != ARPHRD_ETHER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* automatic mode */
 	if (is_zero_ether_addr(bssid) || is_broadcast_ether_addr(bssid))
@@ -295,7 +295,7 @@ int cfg80211_mgd_wext_giwap(struct net_device *dev,
 
 	/* call only for station! */
 	if (WARN_ON(wdev->iftype != NL80211_IFTYPE_STATION))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ap_addr->sa_family = ARPHRD_ETHER;
 
@@ -319,7 +319,7 @@ int cfg80211_wext_siwgenie(struct net_device *dev,
 	int ie_len = data->length, err;
 
 	if (wdev->iftype != NL80211_IFTYPE_STATION)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!ie_len)
 		ie = NULL;
@@ -369,15 +369,15 @@ int cfg80211_wext_siwmlme(struct net_device *dev,
 	int err;
 
 	if (!wdev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	rdev = wiphy_to_rdev(wdev->wiphy);
 
 	if (wdev->iftype != NL80211_IFTYPE_STATION)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (mlme->addr.sa_family != ARPHRD_ETHER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wdev_lock(wdev);
 	switch (mlme->cmd) {
@@ -386,7 +386,7 @@ int cfg80211_wext_siwmlme(struct net_device *dev,
 		err = cfg80211_disconnect(rdev, dev, mlme->reason_code, true);
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		break;
 	}
 	wdev_unlock(wdev);

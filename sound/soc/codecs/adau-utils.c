@@ -40,7 +40,7 @@ int adau_calc_pll_cfg(unsigned int freq_in, unsigned int freq_out,
 			div = 0;
 		}
 		if (n > 0xffff || m > 0xffff || div > 3 || r > 8 || r < 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	regs[0] = m >> 8;

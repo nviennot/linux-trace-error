@@ -143,7 +143,7 @@ int ieee802154_register_hw(struct ieee802154_hw *hw)
 {
 	struct ieee802154_local *local = hw_to_local(hw);
 	struct net_device *dev;
-	int rc = -ENOSYS;
+	int rc = -ERR(ENOSYS);
 
 	local->workqueue =
 		create_singlethread_workqueue(wpan_phy_name(local->phy));

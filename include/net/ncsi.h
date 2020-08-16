@@ -39,12 +39,12 @@ void ncsi_unregister_dev(struct ncsi_dev *nd);
 #else /* !CONFIG_NET_NCSI */
 static inline int ncsi_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int ncsi_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
@@ -55,7 +55,7 @@ static inline struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
 
 static inline int ncsi_start_dev(struct ncsi_dev *nd)
 {
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 static void ncsi_stop_dev(struct ncsi_dev *nd)

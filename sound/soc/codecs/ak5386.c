@@ -89,7 +89,7 @@ static int ak5386_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	if (format != SND_SOC_DAIFMT_LEFT_J &&
 	    format != SND_SOC_DAIFMT_I2S) {
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -169,7 +169,7 @@ static int ak5386_probe(struct platform_device *pdev)
 	if (!priv)
 		return -ENOMEM;
 
-	priv->reset_gpio = -EINVAL;
+	priv->reset_gpio = -ERR(EINVAL);
 	dev_set_drvdata(dev, priv);
 
 	for (i = 0; i < ARRAY_SIZE(supply_names); i++)
@@ -188,7 +188,7 @@ static int ak5386_probe(struct platform_device *pdev)
 		if (devm_gpio_request_one(dev, priv->reset_gpio,
 					  GPIOF_OUT_INIT_LOW,
 					  "AK5386 Reset"))
-			priv->reset_gpio = -EINVAL;
+			priv->reset_gpio = -ERR(EINVAL);
 
 	return devm_snd_soc_register_component(dev, &soc_component_ak5386,
 				      &ak5386_dai, 1);

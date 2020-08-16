@@ -98,7 +98,7 @@ static inline void nd_terminate_link(void *name, size_t len, size_t maxlen)
 static inline bool
 retry_estale(const long error, const unsigned int flags)
 {
-	return error == -ESTALE && !(flags & LOOKUP_REVAL);
+	return error == -ERR(ESTALE) && !(flags & LOOKUP_REVAL);
 }
 
 #endif /* _LINUX_NAMEI_H */

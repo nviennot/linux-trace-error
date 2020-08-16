@@ -70,7 +70,7 @@ cifs_build_devname(char *nodename, const char *prepath)
 	/* skip over any preceding delimiters */
 	nodename += strspn(nodename, "\\");
 	if (!*nodename)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* get length of UNC and set pos to last char */
 	unclen = strlen(nodename);
@@ -148,7 +148,7 @@ char *cifs_compose_mount_options(const char *sb_mountdata,
 	int off, noff;
 
 	if (sb_mountdata == NULL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (ref) {
 		if (strlen(fullpath) - ref->path_consumed) {
@@ -315,7 +315,7 @@ static struct vfsmount *cifs_dfs_do_automount(struct dentry *mntpt)
 
 	cifs_sb = CIFS_SB(mntpt->d_sb);
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_DFS) {
-		mnt = ERR_PTR(-EREMOTE);
+		mnt = ERR_PTR(-ERR(EREMOTE));
 		goto cdda_exit;
 	}
 

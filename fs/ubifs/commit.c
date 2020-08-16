@@ -104,7 +104,7 @@ static int do_commit(struct ubifs_info *c)
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 
 	if (c->ro_error) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_up;
 	}
 
@@ -402,7 +402,7 @@ int ubifs_run_commit(struct ubifs_info *c)
 
 	spin_lock(&c->cs_lock);
 	if (c->cmt_state == COMMIT_BROKEN) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out;
 	}
 
@@ -428,7 +428,7 @@ int ubifs_run_commit(struct ubifs_info *c)
 	 * re-check it.
 	 */
 	if (c->cmt_state == COMMIT_BROKEN) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_cmt_unlock;
 	}
 
@@ -717,6 +717,6 @@ out_free:
 	}
 	ubifs_err(c, "failed, error %d", err);
 	if (err > 0)
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	return err;
 }

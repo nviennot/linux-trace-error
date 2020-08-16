@@ -29,7 +29,7 @@ static inline int crypto_ctr_encrypt_walk(struct skcipher_request *req,
 
 	/* avoid integer division due to variable blocksize parameter */
 	if (WARN_ON_ONCE(!is_power_of_2(blocksize)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = skcipher_walk_virt(&walk, req, false);
 

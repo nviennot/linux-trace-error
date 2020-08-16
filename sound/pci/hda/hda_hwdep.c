@@ -71,7 +71,7 @@ static int hda_hwdep_ioctl(struct snd_hwdep *hw, struct file *file,
 	case HDA_IOCTL_GET_WCAP:
 		return get_wcap_ioctl(codec, argp);
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 #ifdef CONFIG_COMPAT
@@ -86,7 +86,7 @@ static int hda_hwdep_open(struct snd_hwdep *hw, struct file *file)
 {
 #ifndef CONFIG_SND_DEBUG_VERBOSE
 	if (!capable(CAP_SYS_RAWIO))
-		return -EACCES;
+		return -ERR(EACCES);
 #endif
 	return 0;
 }

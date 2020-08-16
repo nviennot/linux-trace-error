@@ -97,7 +97,7 @@ static int erofs_map_blocks_flatmode(struct inode *inode,
 			  "internal error @ nid: %llu (size %llu), m_la 0x%llx",
 			  vi->nid, inode->i_size, map->m_la);
 		DBG_BUGON(1);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto err_out;
 	}
 

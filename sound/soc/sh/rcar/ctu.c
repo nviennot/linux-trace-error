@@ -313,7 +313,7 @@ int rsnd_ctu_probe(struct rsnd_priv *priv)
 
 	nr = of_get_child_count(node);
 	if (!nr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto rsnd_ctu_probe_done;
 	}
 

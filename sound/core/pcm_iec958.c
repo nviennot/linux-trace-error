@@ -15,7 +15,7 @@ static int create_iec958_consumer(uint rate, uint sample_width,
 	unsigned int fs, ws;
 
 	if (len < 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (rate) {
 	case 32000:
@@ -40,7 +40,7 @@ static int create_iec958_consumer(uint rate, uint sample_width,
 		fs = IEC958_AES3_CON_FS_192000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (len > 4) {
@@ -62,7 +62,7 @@ static int create_iec958_consumer(uint rate, uint sample_width,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

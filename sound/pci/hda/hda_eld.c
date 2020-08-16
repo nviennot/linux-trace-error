@@ -282,7 +282,7 @@ int snd_hdmi_parse_eld(struct hda_codec *codec, struct parsed_hdmi_eld *e,
 	return 0;
 
 out_fail:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int snd_hdmi_get_eld_size(struct hda_codec *codec, hda_nid_t nid)
@@ -311,7 +311,7 @@ int snd_hdmi_get_eld(struct hda_codec *codec, hda_nid_t nid,
 	}
 	if (size < ELD_FIXED_BYTES || size > ELD_MAX_SIZE) {
 		codec_info(codec, "HDMI: invalid ELD buf size %d\n", size);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	/* set ELD buffer */
@@ -323,7 +323,7 @@ int snd_hdmi_get_eld(struct hda_codec *codec, hda_nid_t nid,
 		 */
 		if (!(val & AC_ELDD_ELD_VALID)) {
 			codec_info(codec, "HDMI: invalid ELD data byte %d\n", i);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 		val &= AC_ELDD_ELD_DATA;
@@ -335,7 +335,7 @@ int snd_hdmi_get_eld(struct hda_codec *codec, hda_nid_t nid,
 		 */
 		if (!val && !i) {
 			codec_dbg(codec, "HDMI: 0 ELD data\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 		buf[i] = val;
@@ -642,7 +642,7 @@ int snd_hdmi_get_eld_ati(struct hda_codec *codec, hda_nid_t nid,
 
 	if (spkalloc <= 0) {
 		codec_info(codec, "HDMI ATI/AMD: no speaker allocation for ELD\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(buf, 0, ELD_FIXED_BYTES + ELD_MAX_MNL + ELD_MAX_SAD * 3);
@@ -725,7 +725,7 @@ int snd_hdmi_get_eld_ati(struct hda_codec *codec, hda_nid_t nid,
 
 	if (pos == ELD_FIXED_BYTES + sink_desc_len) {
 		codec_info(codec, "HDMI ATI/AMD: no audio descriptors for ELD\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*

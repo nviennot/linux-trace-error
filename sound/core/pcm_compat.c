@@ -240,7 +240,7 @@ static int snd_pcm_ioctl_hw_params_compat(struct snd_pcm_substream *substream,
 	int err;
 
 	if (! (runtime = substream->runtime))
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	data = kmalloc(sizeof(*data), GFP_KERNEL);
 	if (!data)
@@ -291,11 +291,11 @@ static int snd_pcm_ioctl_xferi_compat(struct snd_pcm_substream *substream,
 	int err;
 
 	if (! substream->runtime)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	if (substream->stream != dir)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (get_user(buf, &data32->buf) ||
 	    get_user(frames, &data32->frames))
@@ -337,14 +337,14 @@ static int snd_pcm_ioctl_xfern_compat(struct snd_pcm_substream *substream,
 	int err, ch, i;
 
 	if (! substream->runtime)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	if (substream->stream != dir)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (substream->runtime->status->state == SNDRV_PCM_STATE_OPEN)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if ((ch = substream->runtime->channels) > 128)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_user(buf, &data32->bufs) ||
 	    get_user(frames, &data32->frames))
 		return -EFAULT;
@@ -419,7 +419,7 @@ static int snd_pcm_ioctl_sync_ptr_x32(struct snd_pcm_substream *substream,
 	int err;
 
 	if (snd_BUG_ON(!runtime))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(sflags, &src->flags) ||
 	    get_user(scontrol.appl_ptr, &src->c.control.appl_ptr) ||
@@ -498,10 +498,10 @@ static long snd_pcm_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 
 	pcm_file = file->private_data;
 	if (! pcm_file)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	substream = pcm_file->substream;
 	if (! substream)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	/*
 	 * When PCM is used on 32bit mode, we need to disable
@@ -572,5 +572,5 @@ static long snd_pcm_ioctl_compat(struct file *file, unsigned int cmd, unsigned l
 #endif /* CONFIG_X86_X32 */
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }

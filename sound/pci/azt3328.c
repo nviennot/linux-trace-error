@@ -1077,12 +1077,12 @@ snd_azf3328_put_mixer_enum(struct snd_kcontrol *kcontrol,
 	if (reg.reg == IDX_MIXER_REC_SELECT) {
         	if (ucontrol->value.enumerated.item[0] > reg.enum_c - 1U ||
             	ucontrol->value.enumerated.item[1] > reg.enum_c - 1U)
-                	return -EINVAL;
+                	return -ERR(EINVAL);
         	val = (ucontrol->value.enumerated.item[0] << 8) |
         	      (ucontrol->value.enumerated.item[1] << 0);
 	} else {
         	if (ucontrol->value.enumerated.item[0] > reg.enum_c - 1U)
-                	return -EINVAL;
+                	return -ERR(EINVAL);
 		val &= ~((reg.enum_c - 1) << reg.lchan_shift);
         	val |= (ucontrol->value.enumerated.item[0] << reg.lchan_shift);
 	}
@@ -1177,7 +1177,7 @@ snd_azf3328_mixer_new(struct snd_azf3328 *chip)
 	int err;
 
 	if (snd_BUG_ON(!chip || !chip->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = chip->card;
 
@@ -1597,7 +1597,7 @@ snd_azf3328_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
                 break;
         default:
 		WARN(1, "FIXME: unknown trigger mode!\n");
-                return -EINVAL;
+                return -ERR(EINVAL);
 	}
 
 	return result;
@@ -1836,7 +1836,7 @@ snd_azf3328_gameport_free(struct snd_azf3328 *chip)
 }
 #else
 static inline int
-snd_azf3328_gameport(struct snd_azf3328 *chip, int dev) { return -ENOSYS; }
+snd_azf3328_gameport(struct snd_azf3328 *chip, int dev) { return -ERR(ENOSYS); }
 static inline void
 snd_azf3328_gameport_free(struct snd_azf3328 *chip) { }
 static inline void
@@ -2384,7 +2384,7 @@ snd_azf3328_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 24bit PCI busmaster DMA\n"
 		);
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto out_err;
 	}
 
@@ -2419,7 +2419,7 @@ snd_azf3328_create(struct snd_card *card,
 	if (request_irq(pci->irq, snd_azf3328_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_err;
 	}
 	chip->irq = pci->irq;
@@ -2481,12 +2481,12 @@ snd_azf3328_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 	int err;
 
 	if (dev >= SNDRV_CARDS) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 	if (!enable[dev]) {
 		dev++;
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 

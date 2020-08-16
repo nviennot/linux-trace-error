@@ -240,7 +240,7 @@ rpcrdma_convert_iovs(struct rpcrdma_xprt *r_xprt, struct xdr_buf *xdrbuf,
 			if (!*ppages)
 				*ppages = alloc_page(GFP_NOWAIT | __GFP_NOWARN);
 			if (!*ppages)
-				return -ENOBUFS;
+				return -ERR(ENOBUFS);
 		}
 		seg->mr_page = *ppages;
 		seg->mr_offset = (char *)page_base;
@@ -271,7 +271,7 @@ rpcrdma_convert_iovs(struct rpcrdma_xprt *r_xprt, struct xdr_buf *xdrbuf,
 
 out:
 	if (unlikely(n > RPCRDMA_MAX_SEGS))
-		return -EIO;
+		return -ERR(EIO);
 	return n;
 }
 
@@ -290,7 +290,7 @@ encode_rdma_segment(struct xdr_stream *xdr, struct rpcrdma_mr *mr)
 
 	p = xdr_reserve_space(xdr, 4 * sizeof(*p));
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	xdr_encode_rdma_segment(p, mr);
 	return 0;
@@ -304,7 +304,7 @@ encode_read_segment(struct xdr_stream *xdr, struct rpcrdma_mr *mr,
 
 	p = xdr_reserve_space(xdr, 6 * sizeof(*p));
 	if (unlikely(!p))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	*p++ = xdr_one;			/* Item present */
 	*p++ = cpu_to_be32(position);
@@ -334,7 +334,7 @@ out_getmr_err:
 	trace_xprtrdma_nomrs(req);
 	xprt_wait_for_buffer_space(&r_xprt->rx_xprt);
 	rpcrdma_mrs_refresh(r_xprt);
-	return ERR_PTR(-EAGAIN);
+	return ERR_PTR(-ERR(EAGAIN));
 }
 
 /* Register and XDR encode the Read list. Supports encoding a list of read
@@ -380,7 +380,7 @@ static int rpcrdma_encode_read_list(struct rpcrdma_xprt *r_xprt,
 			return PTR_ERR(seg);
 
 		if (encode_read_segment(xdr, mr, pos) < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		trace_xprtrdma_chunk_read(rqst->rq_task, pos, mr, nsegs);
 		r_xprt->rx_stats.read_chunk_count++;
@@ -389,7 +389,7 @@ static int rpcrdma_encode_read_list(struct rpcrdma_xprt *r_xprt,
 
 done:
 	if (xdr_stream_encode_item_absent(xdr) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	return 0;
 }
 
@@ -430,10 +430,10 @@ static int rpcrdma_encode_write_list(struct rpcrdma_xprt *r_xprt,
 		return nsegs;
 
 	if (xdr_stream_encode_item_present(xdr) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	segcount = xdr_reserve_space(xdr, sizeof(*segcount));
 	if (unlikely(!segcount))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	/* Actual value encoded below */
 
 	nchunks = 0;
@@ -443,7 +443,7 @@ static int rpcrdma_encode_write_list(struct rpcrdma_xprt *r_xprt,
 			return PTR_ERR(seg);
 
 		if (encode_rdma_segment(xdr, mr) < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		trace_xprtrdma_chunk_write(rqst->rq_task, mr, nsegs);
 		r_xprt->rx_stats.write_chunk_count++;
@@ -457,7 +457,7 @@ static int rpcrdma_encode_write_list(struct rpcrdma_xprt *r_xprt,
 
 done:
 	if (xdr_stream_encode_item_absent(xdr) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	return 0;
 }
 
@@ -486,7 +486,7 @@ static int rpcrdma_encode_reply_chunk(struct rpcrdma_xprt *r_xprt,
 
 	if (wtype != rpcrdma_replych) {
 		if (xdr_stream_encode_item_absent(xdr) < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		return 0;
 	}
 
@@ -496,10 +496,10 @@ static int rpcrdma_encode_reply_chunk(struct rpcrdma_xprt *r_xprt,
 		return nsegs;
 
 	if (xdr_stream_encode_item_present(xdr) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	segcount = xdr_reserve_space(xdr, sizeof(*segcount));
 	if (unlikely(!segcount))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	/* Actual value encoded below */
 
 	nchunks = 0;
@@ -509,7 +509,7 @@ static int rpcrdma_encode_reply_chunk(struct rpcrdma_xprt *r_xprt,
 			return PTR_ERR(seg);
 
 		if (encode_rdma_segment(xdr, mr) < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		trace_xprtrdma_chunk_reply(rqst->rq_task, mr, nsegs);
 		r_xprt->rx_stats.reply_chunk_count++;
@@ -802,7 +802,7 @@ inline int rpcrdma_prepare_send_sges(struct rpcrdma_xprt *r_xprt,
 {
 	int ret;
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	req->rl_sendctx = rpcrdma_sendctx_get_locked(r_xprt);
 	if (!req->rl_sendctx)
 		goto out_nosc;
@@ -816,7 +816,7 @@ inline int rpcrdma_prepare_send_sges(struct rpcrdma_xprt *r_xprt,
 
 	rpcrdma_prepare_hdr_sge(r_xprt, req, hdrlen);
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	switch (rtype) {
 	case rpcrdma_noch_pullup:
 		if (!rpcrdma_prepare_noch_pullup(r_xprt, req, xdr))
@@ -880,7 +880,7 @@ rpcrdma_marshal_req(struct rpcrdma_xprt *r_xprt, struct rpc_rqst *rqst)
 			rqst);
 
 	/* Fixed header fields */
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 	p = xdr_reserve_space(xdr, 4 * sizeof(*p));
 	if (!p)
 		goto out_err;
@@ -1174,7 +1174,7 @@ static int decode_rdma_segment(struct xdr_stream *xdr, u32 *length)
 
 	p = xdr_inline_decode(xdr, 4 * sizeof(*p));
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	handle = be32_to_cpup(p++);
 	*length = be32_to_cpup(p++);
@@ -1191,13 +1191,13 @@ static int decode_write_chunk(struct xdr_stream *xdr, u32 *length)
 
 	p = xdr_inline_decode(xdr, sizeof(*p));
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	*length = 0;
 	segcount = be32_to_cpup(p);
 	while (segcount--) {
 		if (decode_rdma_segment(xdr, &seglength))
-			return -EIO;
+			return -ERR(EIO);
 		*length += seglength;
 	}
 
@@ -1214,9 +1214,9 @@ static int decode_read_list(struct xdr_stream *xdr)
 
 	p = xdr_inline_decode(xdr, sizeof(*p));
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 	if (unlikely(*p != xdr_zero))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -1233,14 +1233,14 @@ static int decode_write_list(struct xdr_stream *xdr, u32 *length)
 	do {
 		p = xdr_inline_decode(xdr, sizeof(*p));
 		if (unlikely(!p))
-			return -EIO;
+			return -ERR(EIO);
 		if (*p == xdr_zero)
 			break;
 		if (!first)
-			return -EIO;
+			return -ERR(EIO);
 
 		if (decode_write_chunk(xdr, &chunklen))
-			return -EIO;
+			return -ERR(EIO);
 		*length += chunklen;
 		first = false;
 	} while (true);
@@ -1253,12 +1253,12 @@ static int decode_reply_chunk(struct xdr_stream *xdr, u32 *length)
 
 	p = xdr_inline_decode(xdr, sizeof(*p));
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	*length = 0;
 	if (*p != xdr_zero)
 		if (decode_write_chunk(xdr, length))
-			return -EIO;
+			return -ERR(EIO);
 	return 0;
 }
 
@@ -1272,15 +1272,15 @@ rpcrdma_decode_msg(struct rpcrdma_xprt *r_xprt, struct rpcrdma_rep *rep,
 
 	/* Decode the chunk lists */
 	if (decode_read_list(xdr))
-		return -EIO;
+		return -ERR(EIO);
 	if (decode_write_list(xdr, &writelist))
-		return -EIO;
+		return -ERR(EIO);
 	if (decode_reply_chunk(xdr, &replychunk))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* RDMA_MSG sanity checks */
 	if (unlikely(replychunk))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Build the RPC reply's Payload stream in rqst->rq_rcv_buf */
 	base = (char *)xdr_inline_decode(xdr, 0);
@@ -1300,17 +1300,17 @@ rpcrdma_decode_nomsg(struct rpcrdma_xprt *r_xprt, struct rpcrdma_rep *rep)
 
 	/* Decode the chunk lists */
 	if (decode_read_list(xdr))
-		return -EIO;
+		return -ERR(EIO);
 	if (decode_write_list(xdr, &writelist))
-		return -EIO;
+		return -ERR(EIO);
 	if (decode_reply_chunk(xdr, &replychunk))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* RDMA_NOMSG sanity checks */
 	if (unlikely(writelist))
-		return -EIO;
+		return -ERR(EIO);
 	if (unlikely(!replychunk))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Reply chunk buffer already is the reply vector */
 	r_xprt->rx_stats.total_rdma_reply += replychunk;
@@ -1326,7 +1326,7 @@ rpcrdma_decode_error(struct rpcrdma_xprt *r_xprt, struct rpcrdma_rep *rep,
 
 	p = xdr_inline_decode(xdr, sizeof(*p));
 	if (unlikely(!p))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (*p) {
 	case err_vers:
@@ -1349,7 +1349,7 @@ rpcrdma_decode_error(struct rpcrdma_xprt *r_xprt, struct rpcrdma_rep *rep,
 			be32_to_cpup(p), be32_to_cpu(rep->rr_xid));
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* Perform XID lookup, reconstruction of the RPC reply, and
@@ -1374,7 +1374,7 @@ void rpcrdma_complete_rqst(struct rpcrdma_rep *rep)
 		status = rpcrdma_decode_error(r_xprt, rep, rqst);
 		break;
 	default:
-		status = -EIO;
+		status = -ERR(EIO);
 	}
 	if (status < 0)
 		goto out_badheader;

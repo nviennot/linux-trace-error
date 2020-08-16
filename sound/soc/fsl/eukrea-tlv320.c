@@ -103,7 +103,7 @@ static int eukrea_tlv320_probe(struct platform_device *pdev)
 		if (!ssi_np) {
 			dev_err(&pdev->dev,
 				"ssi-controller missing or invalid.\n");
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto err;
 		}
 
@@ -185,7 +185,7 @@ static int eukrea_tlv320_probe(struct platform_device *pdev)
 			 */
 			dev_err(&pdev->dev,
 				"Missing or invalid audmux DT node.\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		} else {
 			/* Return happy.
 			 * We might run on a totally different machine.

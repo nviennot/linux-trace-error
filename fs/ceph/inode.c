@@ -2246,7 +2246,7 @@ int ceph_setattr(struct dentry *dentry, struct iattr *attr)
 	int err;
 
 	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	err = setattr_prepare(dentry, attr);
 	if (err != 0)
@@ -2254,11 +2254,11 @@ int ceph_setattr(struct dentry *dentry, struct iattr *attr)
 
 	if ((attr->ia_valid & ATTR_SIZE) &&
 	    attr->ia_size > max(inode->i_size, fsc->max_file_size))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	if ((attr->ia_valid & ATTR_SIZE) &&
 	    ceph_quota_is_max_bytes_exceeded(inode, attr->ia_size))
-		return -EDQUOT;
+		return -ERR(EDQUOT);
 
 	err = __ceph_setattr(inode, attr);
 
@@ -2305,9 +2305,9 @@ int __ceph_do_getattr(struct inode *inode, struct page *locked_page,
 		u64 inline_version = req->r_reply_info.targeti.inline_version;
 		if (inline_version == 0) {
 			/* the reply is supposed to contain inline data */
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		} else if (inline_version == CEPH_INLINE_NONE) {
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 		} else {
 			err = req->r_reply_info.targeti.inline_len;
 		}
@@ -2327,7 +2327,7 @@ int ceph_permission(struct inode *inode, int mask)
 	int err;
 
 	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	err = ceph_do_getattr(inode, CEPH_CAP_AUTH_SHARED, false);
 

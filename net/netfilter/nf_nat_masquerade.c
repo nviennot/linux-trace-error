@@ -147,7 +147,7 @@ nat_ipv6_dev_get_saddr(struct net *net, const struct net_device *dev,
 	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
 	if (!v6_ops)
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	return v6_ops->dev_get_saddr(net, dev, daddr, srcprefs, saddr);
 #else
@@ -284,7 +284,7 @@ int nf_nat_masquerade_inet_register_notifiers(void)
 
 	mutex_lock(&masq_mutex);
 	if (WARN_ON_ONCE(masq_refcnt == UINT_MAX)) {
-		ret = -EOVERFLOW;
+		ret = -ERR(EOVERFLOW);
 		goto out_unlock;
 	}
 

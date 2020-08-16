@@ -97,7 +97,7 @@ static int afs_deliver_vl_get_entry_by_name_u(struct afs_call *call)
 		__set_bit(AFS_VLDB_HAS_BAK, &entry->flags);
 
 	if (!(vlflags & (AFS_VLF_RWEXISTS | AFS_VLF_ROEXISTS | AFS_VLF_BACKEXISTS))) {
-		entry->error = -ENOMEDIUM;
+		entry->error = -ERR(ENOMEDIUM);
 		__set_bit(AFS_VLDB_QUERY_ERROR, &entry->flags);
 	}
 

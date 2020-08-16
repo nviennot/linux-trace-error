@@ -169,7 +169,7 @@ EXPORT_SYMBOL_GPL(task_handoff_unregister);
 
 int profile_event_register(enum profile_type type, struct notifier_block *n)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	switch (type) {
 	case PROFILE_TASK_EXIT:
@@ -188,7 +188,7 @@ EXPORT_SYMBOL_GPL(profile_event_register);
 
 int profile_event_unregister(enum profile_type type, struct notifier_block *n)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	switch (type) {
 	case PROFILE_TASK_EXIT:
@@ -509,7 +509,7 @@ static ssize_t write_profile(struct file *file, const char __user *buf,
 			return -EFAULT;
 
 		if (setup_profiling_timer(multiplier))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 #endif
 	profile_discard_flip_buffers();

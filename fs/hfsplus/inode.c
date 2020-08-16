@@ -217,7 +217,7 @@ static int hfsplus_file_open(struct inode *inode, struct file *file)
 	if (HFSPLUS_IS_RSRC(inode))
 		inode = HFSPLUS_I(inode)->rsrc_inode;
 	if (!(file->f_flags & O_LARGEFILE) && i_size_read(inode) > MAX_NON_LFS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	atomic_inc(&HFSPLUS_I(inode)->opencnt);
 	return 0;
 }
@@ -548,7 +548,7 @@ int hfsplus_cat_read_inode(struct inode *inode, struct hfs_find_data *fd)
 		HFSPLUS_I(inode)->create_date = file->create_date;
 	} else {
 		pr_err("bad catalog entry used to create inode\n");
-		res = -EIO;
+		res = -ERR(EIO);
 	}
 	return res;
 }
@@ -567,7 +567,7 @@ int hfsplus_cat_write_inode(struct inode *inode)
 
 	if (hfs_find_init(HFSPLUS_SB(main_inode->i_sb)->cat_tree, &fd))
 		/* panic? */
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hfsplus_find_cat(main_inode->i_sb, main_inode->i_ino, &fd))
 		/* panic? */

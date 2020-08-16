@@ -81,7 +81,7 @@ struct inode *udf_new_inode(struct inode *dir, umode_t mode)
 		return ERR_PTR(-ENOMEM);
 	}
 
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	block = udf_new_block(dir->i_sb, NULL,
 			      dinfo->i_location.partitionReferenceNum,
 			      start, &err);
@@ -132,7 +132,7 @@ struct inode *udf_new_inode(struct inode *dir, umode_t mode)
 	if (unlikely(insert_inode_locked(inode) < 0)) {
 		make_bad_inode(inode);
 		iput(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	mark_inode_dirty(inode);
 

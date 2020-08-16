@@ -92,7 +92,7 @@ static int soc_tplg_check_elem_count(struct soc_tplg *tplg, size_t elem_size,
 	if (end > tplg->fw->data + tplg->fw->size) {
 		dev_err(tplg->dev, "ASoC: %s overflow end of data\n",
 			elem_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check there is enough room in chunk for control.
@@ -101,7 +101,7 @@ static int soc_tplg_check_elem_count(struct soc_tplg *tplg, size_t elem_size,
 		dev_err(tplg->dev,
 			"ASoC: %s count %d of size %zu is bigger than chunk %zu\n",
 			elem_type, count, elem_size, bytes);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -199,7 +199,7 @@ static int tplc_chan_get_reg(struct soc_tplg *tplg,
 			return le32_to_cpu(chan[i].reg);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int tplc_chan_get_shift(struct soc_tplg *tplg,
@@ -212,7 +212,7 @@ static int tplc_chan_get_shift(struct soc_tplg *tplg,
 			return le32_to_cpu(chan[i].shift);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int get_widget_id(int tplg_type)
@@ -224,7 +224,7 @@ static int get_widget_id(int tplg_type)
 			return dapm_map[i].kid;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void soc_bind_err(struct soc_tplg *tplg,
@@ -256,7 +256,7 @@ static int soc_tplg_vendor_load(struct soc_tplg *tplg,
 	else {
 		dev_err(tplg->dev, "ASoC: no vendor load callback for ID %d\n",
 			hdr->vendor_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret < 0)
@@ -606,7 +606,7 @@ static int soc_tplg_kcontrol_bind_io(struct snd_soc_tplg_ctl_hdr *hdr,
 		if (sbe->put && sbe->get)
 			return 0;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* try and map vendor specific kcontrol handlers first */
@@ -644,7 +644,7 @@ static int soc_tplg_kcontrol_bind_io(struct snd_soc_tplg_ctl_hdr *hdr,
 		return 0;
 
 	/* nothing to bind */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* bind a widgets to it's evnt handlers */
@@ -666,7 +666,7 @@ int snd_soc_tplg_widget_bind_event(struct snd_soc_dapm_widget *w,
 	}
 
 	/* not found */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(snd_soc_tplg_widget_bind_event);
 
@@ -722,7 +722,7 @@ static int soc_tplg_create_tlv(struct soc_tplg *tplg,
 		default:
 			dev_dbg(tplg->dev, "Unsupported TLV type %d\n",
 					tplg_tlv->type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -748,7 +748,7 @@ static int soc_tplg_dbytes_create(struct soc_tplg *tplg, unsigned int count,
 			size, "mixer bytes")) {
 		dev_err(tplg->dev, "ASoC: Invalid count %d for byte control\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < count; i++) {
@@ -757,7 +757,7 @@ static int soc_tplg_dbytes_create(struct soc_tplg *tplg, unsigned int count,
 		/* validate kcontrol */
 		if (strnlen(be->hdr.name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sbe = kzalloc(sizeof(*sbe), GFP_KERNEL);
 		if (sbe == NULL)
@@ -829,7 +829,7 @@ static int soc_tplg_dmixer_create(struct soc_tplg *tplg, unsigned int count,
 
 		dev_err(tplg->dev, "ASoC: invalid count %d for controls\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < count; i++) {
@@ -838,7 +838,7 @@ static int soc_tplg_dmixer_create(struct soc_tplg *tplg, unsigned int count,
 		/* validate kcontrol */
 		if (strnlen(mc->hdr.name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sm = kzalloc(sizeof(*sm), GFP_KERNEL);
 		if (sm == NULL)
@@ -934,7 +934,7 @@ static int soc_tplg_denum_create_texts(struct soc_enum *se,
 
 		if (strnlen(ec->texts[i], SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			SNDRV_CTL_ELEM_ID_NAME_MAXLEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -970,7 +970,7 @@ static int soc_tplg_denum_create_values(struct soc_enum *se,
 	int i;
 
 	if (le32_to_cpu(ec->items) > sizeof(*ec->values))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	se->dobj.control.dvalues = kzalloc(le32_to_cpu(ec->items) *
 					   sizeof(u32),
@@ -1005,7 +1005,7 @@ static int soc_tplg_denum_create(struct soc_tplg *tplg, unsigned int count,
 
 		dev_err(tplg->dev, "ASoC: invalid count %d for enum controls\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < count; i++) {
@@ -1014,7 +1014,7 @@ static int soc_tplg_denum_create(struct soc_tplg *tplg, unsigned int count,
 		/* validate kcontrol */
 		if (strnlen(ec->hdr.name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		se = kzalloc((sizeof(*se)), GFP_KERNEL);
 		if (se == NULL)
@@ -1126,7 +1126,7 @@ static int soc_tplg_kcontrol_elems_load(struct soc_tplg *tplg,
 
 		if (le32_to_cpu(control_hdr->size) != sizeof(*control_hdr)) {
 			dev_err(tplg->dev, "ASoC: invalid control size\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (le32_to_cpu(control_hdr->ops.info)) {
@@ -1154,7 +1154,7 @@ static int soc_tplg_kcontrol_elems_load(struct soc_tplg *tplg,
 			break;
 		default:
 			soc_bind_err(tplg, control_hdr, i);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (ret < 0) {
 			dev_err(tplg->dev, "ASoC: invalid control\n");
@@ -1194,7 +1194,7 @@ static int soc_tplg_dapm_graph_elems_load(struct soc_tplg *tplg,
 
 		dev_err(tplg->dev, "ASoC: invalid count %d for DAPM routes\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(tplg->dev, "ASoC: adding %d DAPM routes for index %d\n", count,
@@ -1230,17 +1230,17 @@ static int soc_tplg_dapm_graph_elems_load(struct soc_tplg *tplg,
 		/* validate routes */
 		if (strnlen(elem->source, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			    SNDRV_CTL_ELEM_ID_NAME_MAXLEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (strnlen(elem->sink, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			    SNDRV_CTL_ELEM_ID_NAME_MAXLEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (strnlen(elem->control, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 			    SNDRV_CTL_ELEM_ID_NAME_MAXLEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -1581,10 +1581,10 @@ static int soc_tplg_dapm_widget_create(struct soc_tplg *tplg,
 
 	if (strnlen(w->name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 		SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (strnlen(w->sname, SNDRV_CTL_ELEM_ID_NAME_MAXLEN) ==
 		SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(tplg->dev, "ASoC: creating DAPM widget %s id %d\n",
 		w->name, w->id);
@@ -1676,7 +1676,7 @@ static int soc_tplg_dapm_widget_create(struct soc_tplg *tplg,
 		dev_err(tplg->dev, "ASoC: invalid widget control type %d:%d:%d\n",
 			control_hdr->ops.get, control_hdr->ops.put,
 			le32_to_cpu(control_hdr->ops.info));
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto hdr_err;
 	}
 
@@ -1735,7 +1735,7 @@ static int soc_tplg_dapm_widget_elems_load(struct soc_tplg *tplg,
 		widget = (struct snd_soc_tplg_dapm_widget *) tplg->pos;
 		if (le32_to_cpu(widget->size) != sizeof(*widget)) {
 			dev_err(tplg->dev, "ASoC: invalid widget size\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = soc_tplg_dapm_widget_create(tplg, widget);
@@ -2044,7 +2044,7 @@ static int pcm_new_ver(struct soc_tplg *tplg,
 
 	if (le32_to_cpu(src->size) != sizeof(*src_v4)) {
 		dev_err(tplg->dev, "ASoC: invalid PCM size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_warn(tplg->dev, "ASoC: old version of PCM\n");
@@ -2092,7 +2092,7 @@ static int soc_tplg_pcm_elems_load(struct soc_tplg *tplg,
 		|| size < sizeof(struct snd_soc_tplg_pcm_v4)) {
 		dev_err(tplg->dev, "ASoC: invalid size %d for PCM elems\n",
 			size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (soc_tplg_check_elem_count(tplg,
@@ -2101,7 +2101,7 @@ static int soc_tplg_pcm_elems_load(struct soc_tplg *tplg,
 				      "PCM DAI")) {
 		dev_err(tplg->dev, "ASoC: invalid count %d for PCM DAI elems\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < count; i++) {
@@ -2233,7 +2233,7 @@ static int link_new_ver(struct soc_tplg *tplg,
 	if (le32_to_cpu(src->size) !=
 	    sizeof(struct snd_soc_tplg_link_config_v4)) {
 		dev_err(tplg->dev, "ASoC: invalid physical link config size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_warn(tplg->dev, "ASoC: old version of physical link config\n");
@@ -2306,7 +2306,7 @@ static int soc_tplg_link_config(struct soc_tplg *tplg,
 
 	len = strnlen(cfg->name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN);
 	if (len == SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (len)
 		name = cfg->name;
 	else
@@ -2314,7 +2314,7 @@ static int soc_tplg_link_config(struct soc_tplg *tplg,
 
 	len = strnlen(cfg->stream_name, SNDRV_CTL_ELEM_ID_NAME_MAXLEN);
 	if (len == SNDRV_CTL_ELEM_ID_NAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (len)
 		stream_name = cfg->stream_name;
 	else
@@ -2325,7 +2325,7 @@ static int soc_tplg_link_config(struct soc_tplg *tplg,
 	if (!link) {
 		dev_err(tplg->dev, "ASoC: physical link %s (id %d) not exist\n",
 			name, cfg->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* hw format */
@@ -2374,7 +2374,7 @@ static int soc_tplg_link_elems_load(struct soc_tplg *tplg,
 		|| size < sizeof(struct snd_soc_tplg_link_config_v4)) {
 		dev_err(tplg->dev, "ASoC: invalid size %d for physical link elems\n",
 			size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (soc_tplg_check_elem_count(tplg,
@@ -2383,7 +2383,7 @@ static int soc_tplg_link_elems_load(struct soc_tplg *tplg,
 				      "physical link config")) {
 		dev_err(tplg->dev, "ASoC: invalid count %d for physical link elems\n",
 			count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* config physical DAI links */
@@ -2444,18 +2444,18 @@ static int soc_tplg_dai_config(struct soc_tplg *tplg,
 	if (!dai) {
 		dev_err(tplg->dev, "ASoC: physical DAI %s not registered\n",
 			d->dai_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (le32_to_cpu(d->dai_id) != dai->id) {
 		dev_err(tplg->dev, "ASoC: physical DAI %s id mismatch\n",
 			d->dai_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dai_drv = dai->driver;
 	if (!dai_drv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (d->playback) {
 		stream = &dai_drv->playback;
@@ -2508,7 +2508,7 @@ static int soc_tplg_dai_elems_load(struct soc_tplg *tplg,
 		dai = (struct snd_soc_tplg_dai *)tplg->pos;
 		if (le32_to_cpu(dai->size) != sizeof(*dai)) {
 			dev_err(tplg->dev, "ASoC: invalid physical DAI size\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = soc_tplg_dai_config(tplg, dai);
@@ -2548,7 +2548,7 @@ static int manifest_new_ver(struct soc_tplg *tplg,
 		dev_warn(tplg->dev, "ASoC: invalid manifest size %d\n",
 			 size);
 		if (size)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		src->size = cpu_to_le32(sizeof(*src_v4));
 	}
 
@@ -2617,7 +2617,7 @@ static int soc_valid_header(struct soc_tplg *tplg,
 			"ASoC: invalid header size for type %d at offset 0x%lx size 0x%zx.\n",
 			le32_to_cpu(hdr->type), soc_tplg_get_hdr_offset(tplg),
 			tplg->fw->size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* big endian firmware objects not supported atm */
@@ -2626,7 +2626,7 @@ static int soc_valid_header(struct soc_tplg *tplg,
 			"ASoC: pass %d big endian not supported header got %x at offset 0x%lx size 0x%zx.\n",
 			tplg->pass, hdr->magic,
 			soc_tplg_get_hdr_offset(tplg), tplg->fw->size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (le32_to_cpu(hdr->magic) != SND_SOC_TPLG_MAGIC) {
@@ -2634,7 +2634,7 @@ static int soc_valid_header(struct soc_tplg *tplg,
 			"ASoC: pass %d does not have a valid header got %x at offset 0x%lx size 0x%zx.\n",
 			tplg->pass, hdr->magic,
 			soc_tplg_get_hdr_offset(tplg), tplg->fw->size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Support ABI from version 4 */
@@ -2645,13 +2645,13 @@ static int soc_valid_header(struct soc_tplg *tplg,
 			tplg->pass, hdr->abi,
 			SND_SOC_TPLG_ABI_VERSION, soc_tplg_get_hdr_offset(tplg),
 			tplg->fw->size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (hdr->payload_size == 0) {
 		dev_err(tplg->dev, "ASoC: header has 0 size at offset 0x%lx.\n",
 			soc_tplg_get_hdr_offset(tplg));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 1;
@@ -2792,7 +2792,7 @@ int snd_soc_tplg_component_load(struct snd_soc_component *comp,
 
 	/* component needs to exist to keep and reference data while parsing */
 	if (!comp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* setup parsing context */
 	memset(&tplg, 0, sizeof(tplg));

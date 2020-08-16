@@ -205,13 +205,13 @@ int ima_parse_buf(void *bufstartp, void *bufendp, void **bufcurp,
 	if ((enforce_mask & ENFORCE_FIELDS) && i != maxfields) {
 		pr_err("%s: nr of fields mismatch: expected: %d, current: %d\n",
 		       bufname, maxfields, i);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((enforce_mask & ENFORCE_BUFEND) && bufp != bufendp) {
 		pr_err("%s: buf end mismatch: expected: %p, current: %p\n",
 		       bufname, bufendp, bufp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (curfields)
@@ -293,7 +293,7 @@ int ima_eventdigest_init(struct ima_event_data *event_data,
 
 			/* algo can change depending on available PCR banks */
 			if (!result && hash.hdr.algo != HASH_ALGO_SHA1)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			if (result < 0)
 				memset(&hash, 0, sizeof(hash));
@@ -305,7 +305,7 @@ int ima_eventdigest_init(struct ima_event_data *event_data,
 	}
 
 	if (!event_data->file)	/* missing info to re-calculate the digest */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode = file_inode(event_data->file);
 	hash.hdr.algo = ima_template_hash_algo_allowed(ima_hash_algo) ?
@@ -373,7 +373,7 @@ int ima_eventdigest_modsig_init(struct ima_event_data *event_data,
 			return rc;
 		else if (hash_algo == HASH_ALGO__LAST || cur_digestsize == 0)
 			/* There was some error collecting the digest. */
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return ima_eventdigest_init_common(cur_digest, cur_digestsize,

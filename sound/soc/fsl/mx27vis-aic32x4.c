@@ -72,7 +72,7 @@ static int mx27vis_amp_set(struct snd_kcontrol *kcontrol,
 	int max = mc->max;
 
 	if (value > max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (reg) {
 	case MX27VIS_AMP_GAIN:
@@ -167,7 +167,7 @@ static int mx27vis_aic32x4_probe(struct platform_device *pdev)
 
 	if (!pdata) {
 		dev_err(&pdev->dev, "No platform data supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mx27vis_amp_gain0_gpio = pdata->amp_gain0_gpio;

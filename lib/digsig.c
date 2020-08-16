@@ -68,7 +68,7 @@ static int digsig_verify_rsa(struct key *key,
 		    const char *sig, int siglen,
 		       const char *h, int hlen)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	unsigned long len;
 	unsigned long mlen, mblen;
 	unsigned nret, l;
@@ -86,7 +86,7 @@ static int digsig_verify_rsa(struct key *key,
 
 	if (!ukp) {
 		/* key was revoked before we acquired its semaphore */
-		err = -EKEYREVOKED;
+		err = -ERR(EKEYREVOKED);
 		goto err1;
 	}
 
@@ -121,7 +121,7 @@ static int digsig_verify_rsa(struct key *key,
 	mlen = DIV_ROUND_UP(mblen, 8);
 
 	if (mlen == 0) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -147,13 +147,13 @@ static int digsig_verify_rsa(struct key *key,
 		goto err;
 
 	if (mpi_get_nlimbs(res) * BYTES_PER_MPI_LIMB > mlen) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
 	p = mpi_get_buffer(res, &l, NULL);
 	if (!p) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -167,7 +167,7 @@ static int digsig_verify_rsa(struct key *key,
 	m = pkcs_1_v1_5_decode_emsa(out1, len, mblen, &len);
 
 	if (!m || len != hlen || memcmp(m, h, hlen))
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 err:
 	mpi_free(in);
@@ -207,10 +207,10 @@ int digsig_verify(struct key *keyring, const char *sig, int siglen,
 	char name[20];
 
 	if (siglen < sizeof(*sh) + 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sh->algo != PUBKEY_ALGO_RSA)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	sprintf(name, "%llX", __be64_to_cpup((uint64_t *)sh->keyid));
 
@@ -252,7 +252,7 @@ int digsig_verify(struct key *keyring, const char *sig, int siglen,
 err:
 	key_put(key);
 
-	return err ? -EINVAL : 0;
+	return err ? -ERR(EINVAL) : 0;
 }
 EXPORT_SYMBOL_GPL(digsig_verify);
 

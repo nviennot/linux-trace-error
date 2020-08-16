@@ -126,7 +126,7 @@ static int stm32_adfsdm_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 	if (size != sizeof(str_freq)) {
 		dev_err(dai->dev, "%s: Failed to set SPI clock\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -228,7 +228,7 @@ static int stm32_adfsdm_trigger(struct snd_soc_component *component,
 		return stm32_dfsdm_release_buff_cb(priv->iio_ch->indio_dev);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int stm32_adfsdm_pcm_open(struct snd_soc_component *component,

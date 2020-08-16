@@ -188,7 +188,7 @@ static int klp_find_object_symbol(const char *objname, const char *name,
 	}
 
 	*addr = 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int klp_resolve_symbols(Elf64_Shdr *sechdrs, const char *strtab,
@@ -223,7 +223,7 @@ static int klp_resolve_symbols(Elf64_Shdr *sechdrs, const char *strtab,
 		if (sym->st_shndx != SHN_LIVEPATCH) {
 			pr_err("symbol %s is not marked as a livepatch symbol\n",
 			       strtab + sym->st_name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* Format: .klp.sym.sym_objname.sym_name,sympos */
@@ -233,7 +233,7 @@ static int klp_resolve_symbols(Elf64_Shdr *sechdrs, const char *strtab,
 		if (cnt != 3) {
 			pr_err("symbol %s has an incorrectly formatted name\n",
 			       strtab + sym->st_name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		sym_vmlinux = !strcmp(sym_objname, "vmlinux");
@@ -247,7 +247,7 @@ static int klp_resolve_symbols(Elf64_Shdr *sechdrs, const char *strtab,
 		if (!sec_vmlinux && sym_vmlinux) {
 			pr_err("invalid access to vmlinux symbol '%s' from module-specific livepatch relocation section",
 			       sym_name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* klp_find_object_symbol() treats a NULL objname as vmlinux */
@@ -304,7 +304,7 @@ int klp_apply_section_relocs(struct module *pmod, Elf_Shdr *sechdrs,
 	if (cnt != 1) {
 		pr_err("section %s has an incorrectly formatted name\n",
 		       shstrtab + sec->sh_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (strcmp(objname ? objname : "vmlinux", sec_objname))
@@ -347,7 +347,7 @@ static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
 
 	if (patch->enabled == enabled) {
 		/* already in requested state */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -363,7 +363,7 @@ static ssize_t enabled_store(struct kobject *kobj, struct kobj_attribute *attr,
 	else if (!enabled)
 		ret = __klp_disable_patch(patch);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 out:
 	mutex_unlock(&klp_mutex);
@@ -411,7 +411,7 @@ static ssize_t force_store(struct kobject *kobj, struct kobj_attribute *attr,
 	patch = container_of(kobj, struct klp_patch, kobj);
 	if (patch != klp_transition_patch) {
 		mutex_unlock(&klp_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	klp_force_transition();
@@ -719,17 +719,17 @@ void klp_free_replaced_patches_async(struct klp_patch *new_patch)
 static int klp_init_func(struct klp_object *obj, struct klp_func *func)
 {
 	if (!func->old_name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * NOPs get the address later. The patched module must be loaded,
 	 * see klp_init_object_loaded().
 	 */
 	if (!func->new_func && !func->nop)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strlen(func->old_name) >= KSYM_NAME_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	INIT_LIST_HEAD(&func->stack_node);
 	func->patched = false;
@@ -799,7 +799,7 @@ static int klp_init_object_loaded(struct klp_patch *patch,
 		if (!ret) {
 			pr_err("kallsyms size lookup failed for '%s'\n",
 			       func->old_name);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		if (func->nop)
@@ -810,7 +810,7 @@ static int klp_init_object_loaded(struct klp_patch *patch,
 		if (!ret) {
 			pr_err("kallsyms size lookup failed for '%s' replacement\n",
 			       func->old_name);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -824,7 +824,7 @@ static int klp_init_object(struct klp_patch *patch, struct klp_object *obj)
 	const char *name;
 
 	if (klp_is_module(obj) && strlen(obj->name) >= MODULE_NAME_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	obj->patched = false;
 	obj->mod = NULL;
@@ -869,7 +869,7 @@ static int klp_init_patch_early(struct klp_patch *patch)
 	struct klp_func *func;
 
 	if (!patch->objs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	INIT_LIST_HEAD(&patch->list);
 	INIT_LIST_HEAD(&patch->obj_list);
@@ -881,7 +881,7 @@ static int klp_init_patch_early(struct klp_patch *patch)
 
 	klp_for_each_object_static(patch, obj) {
 		if (!obj->funcs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		klp_init_object_early(patch, obj);
 
@@ -891,7 +891,7 @@ static int klp_init_patch_early(struct klp_patch *patch)
 	}
 
 	if (!try_module_get(patch->mod))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -927,10 +927,10 @@ static int __klp_disable_patch(struct klp_patch *patch)
 	struct klp_object *obj;
 
 	if (WARN_ON(!patch->enabled))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (klp_transition_patch)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	klp_init_transition(patch, KLP_UNPATCHED);
 
@@ -960,10 +960,10 @@ static int __klp_enable_patch(struct klp_patch *patch)
 	int ret;
 
 	if (klp_transition_patch)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (WARN_ON(patch->enabled))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_notice("enabling patch '%s'\n", patch->mod->name);
 
@@ -1027,16 +1027,16 @@ int klp_enable_patch(struct klp_patch *patch)
 	int ret;
 
 	if (!patch || !patch->mod)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!is_livepatch_module(patch->mod)) {
 		pr_err("module %s is not marked as a livepatch module\n",
 		       patch->mod->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!klp_initialized())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!klp_have_reliable_stack()) {
 		pr_warn("This architecture doesn't have support for the livepatch consistency model.\n");
@@ -1049,7 +1049,7 @@ int klp_enable_patch(struct klp_patch *patch)
 		pr_err("Livepatch patch (%s) is not compatible with the already installed livepatches.\n",
 			patch->mod->name);
 		mutex_unlock(&klp_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = klp_init_patch_early(patch);
@@ -1172,11 +1172,11 @@ int klp_module_coming(struct module *mod)
 	struct klp_object *obj;
 
 	if (WARN_ON(mod->state != MODULE_STATE_COMING))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!strcmp(mod->name, "vmlinux")) {
 		pr_err("vmlinux.ko: invalid module name");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&klp_mutex);

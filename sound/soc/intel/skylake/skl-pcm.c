@@ -132,7 +132,7 @@ int skl_pcm_host_dma_prepare(struct device *dev, struct skl_pipe_params *params)
 	hstream = snd_hdac_get_stream(bus, params->stream,
 					params->host_dma_id + 1);
 	if (!hstream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stream = stream_to_hdac_ext_stream(hstream);
 	snd_hdac_ext_stream_decouple(bus, stream, true);
@@ -180,7 +180,7 @@ int skl_pcm_link_dma_prepare(struct device *dev, struct skl_pipe_params *params)
 	hstream = snd_hdac_get_stream(bus, params->stream,
 					params->link_dma_id + 1);
 	if (!hstream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stream = stream_to_hdac_ext_stream(hstream);
 	snd_hdac_ext_stream_decouple(bus, stream, true);
@@ -223,7 +223,7 @@ static int skl_pcm_open(struct snd_pcm_substream *substream,
 	stream = snd_hdac_ext_stream_assign(bus, substream,
 					skl_get_host_stream_type(bus));
 	if (stream == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	skl_set_pcm_constrains(bus, runtime);
 
@@ -252,7 +252,7 @@ static int skl_pcm_open(struct snd_pcm_substream *substream,
 
 	mconfig = skl_tplg_fe_get_cpr_module(dai, substream->stream);
 	if (!mconfig)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skl_tplg_d0i3_get(skl, mconfig->d0i3_caps);
 
@@ -425,7 +425,7 @@ static int skl_decoupled_trigger(struct snd_pcm_substream *substream,
 	hstr = hdac_stream(stream);
 
 	if (!hstr->prepared)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -441,7 +441,7 @@ static int skl_decoupled_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_irqsave(&bus->reg_lock, cookie);
@@ -470,7 +470,7 @@ static int skl_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
 
 	mconfig = skl_tplg_fe_get_cpr_module(dai, substream->stream);
 	if (!mconfig)
-		return -EIO;
+		return -ERR(EIO);
 
 	w = snd_soc_dai_get_widget(dai, substream->stream);
 
@@ -531,7 +531,7 @@ static int skl_pcm_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -553,13 +553,13 @@ static int skl_link_hw_params(struct snd_pcm_substream *substream,
 	link_dev = snd_hdac_ext_stream_assign(bus, substream,
 					HDAC_EXT_STREAM_TYPE_LINK);
 	if (!link_dev)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	snd_soc_dai_set_dma_data(dai, substream, (void *)link_dev);
 
 	link = snd_hdac_ext_bus_get_link(bus, codec_dai->component->name);
 	if (!link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stream_tag = hdac_stream(link_dev)->stream_tag;
 
@@ -625,7 +625,7 @@ static int skl_link_pcm_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -646,7 +646,7 @@ static int skl_link_hw_free(struct snd_pcm_substream *substream,
 
 	link = snd_hdac_ext_bus_get_link(bus, asoc_rtd_to_codec(rtd, 0)->component->name);
 	if (!link)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		stream_tag = hdac_stream(link_dev)->stream_tag;
@@ -1099,7 +1099,7 @@ static int skl_coupled_trigger(struct snd_pcm_substream *substream,
 	dev_dbg(bus->dev, "In %s cmd=%d\n", __func__, cmd);
 
 	if (!hstr->prepared)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -1115,7 +1115,7 @@ static int skl_coupled_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_group_for_each_entry(s, substream) {
@@ -1309,13 +1309,13 @@ static int skl_get_module_info(struct skl_dev *skl,
 	guid_t *uuid_mod, *uuid_tplg;
 	struct skl_module *skl_module;
 	struct uuid_module *module;
-	int i, ret = -EIO;
+	int i, ret = -ERR(EIO);
 
 	uuid_mod = (guid_t *)mconfig->guid;
 
 	if (list_empty(&skl->uuid_list)) {
 		dev_err(skl->dev, "Module list is empty\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	list_for_each_entry(module, &skl->uuid_list, list) {
@@ -1332,7 +1332,7 @@ static int skl_get_module_info(struct skl_dev *skl,
 		return ret;
 
 	uuid_mod = &module->uuid;
-	ret = -EIO;
+	ret = -ERR(EIO);
 	for (i = 0; i < skl->nr_modules; i++) {
 		skl_module = skl->modules[i];
 		uuid_tplg = &skl_module->uuid;
@@ -1412,7 +1412,7 @@ static int skl_platform_soc_probe(struct snd_soc_component *component)
 		/* load the firmwares, since all is set */
 		ops = skl_get_dsp_ops(skl->pci->device);
 		if (!ops)
-			return -EIO;
+			return -ERR(EIO);
 
 		/*
 		 * Disable dynamic clock and power gating during firmware

@@ -569,12 +569,12 @@ static int snd_mtpav_get_ISA(struct mtpav *mcard)
 {
 	if ((mcard->res_port = request_region(port, 3, "MotuMTPAV MIDI")) == NULL) {
 		snd_printk(KERN_ERR "MTVAP port 0x%lx is busy\n", port);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	mcard->port = port;
 	if (request_irq(irq, snd_mtpav_irqh, 0, "MOTU MTPAV", mcard)) {
 		snd_printk(KERN_ERR "MTVAP IRQ %d busy\n", irq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	mcard->irq = irq;
 	return 0;
@@ -753,7 +753,7 @@ static int __init alsa_card_mtpav_init(void)
 		if (platform_get_drvdata(device))
 			return 0;
 		platform_device_unregister(device);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	} else
 		err = PTR_ERR(device);
 	platform_driver_unregister(&snd_mtpav_driver);

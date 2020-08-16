@@ -156,7 +156,7 @@ int omfs_allocate_range(struct super_block *sb,
 			bit += run;
 		}
 	}
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	goto out;
 
 found:

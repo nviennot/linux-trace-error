@@ -501,7 +501,7 @@ static ssize_t hugetlb_cgroup_write(struct kernfs_open_file *of,
 	bool rsvd = false;
 
 	if (hugetlb_cgroup_is_root(h_cg)) /* Can't set limit on root */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = strstrip(buf);
 	ret = page_counter_memparse(buf, max, &nr_pages);
@@ -523,7 +523,7 @@ static ssize_t hugetlb_cgroup_write(struct kernfs_open_file *of,
 		mutex_unlock(&hugetlb_limit_mutex);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret ?: nbytes;
@@ -565,7 +565,7 @@ static ssize_t hugetlb_cgroup_reset(struct kernfs_open_file *of,
 		rsvd_counter->failcnt = 0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret ?: nbytes;

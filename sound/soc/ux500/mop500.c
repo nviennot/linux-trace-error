@@ -85,7 +85,7 @@ static int mop500_of_probe(struct platform_device *pdev,
 		for (i = 0; i < 2; i++)
 			of_node_put(msp_np[i]);
 		of_node_put(codec_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < 2; i++) {

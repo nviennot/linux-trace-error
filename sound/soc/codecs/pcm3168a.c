@@ -307,7 +307,7 @@ static int pcm3168a_set_dai_sysclk(struct snd_soc_dai *dai,
 	int ret;
 
 	if (freq > PCM3168A_MAX_SYSCLK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_set_rate(pcm3168a->scki, freq);
 	if (ret)
@@ -371,7 +371,7 @@ static int pcm3168a_set_dai_fmt(struct snd_soc_dai *dai, unsigned int format)
 		break;
 	default:
 		dev_err(component->dev, "unsupported dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -383,14 +383,14 @@ static int pcm3168a_set_dai_fmt(struct snd_soc_dai *dai, unsigned int format)
 		break;
 	default:
 		dev_err(component->dev, "unsupported master/slave mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dai->id == PCM3168A_DAI_DAC) {
@@ -425,14 +425,14 @@ static int pcm3168a_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		dev_err(component->dev,
 			"Bad tdm mask tx: 0x%08x rx: 0x%08x slots %d\n",
 			tx_mask, rx_mask, slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (slot_width &&
 	    (slot_width != 16 && slot_width != 24 && slot_width != 32 )) {
 		dev_err(component->dev, "Unsupported slot_width %d\n",
 			slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	io_params->tdm_slots = slots;
@@ -487,7 +487,7 @@ static int pcm3168a_hw_params(struct snd_pcm_substream *substream,
 
 	if (i == max_ratio) {
 		dev_err(component->dev, "unsupported sysclk ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (io_params->slot_width)
@@ -499,21 +499,21 @@ static int pcm3168a_hw_params(struct snd_pcm_substream *substream,
 	case 16:
 		if (master_mode || (fmt != PCM3168A_FMT_RIGHT_J)) {
 			dev_err(component->dev, "16-bit slots are supported only for slave mode using right justified\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		fmt = PCM3168A_FMT_RIGHT_J_16;
 		break;
 	case 24:
 		if (master_mode || (fmt & PCM3168A_FMT_DSP_MASK)) {
 			dev_err(component->dev, "24-bit slots not supported in master mode, or slave mode using DSP\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 32:
 		break;
 	default:
 		dev_err(component->dev, "unsupported frame size: %d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (io_params->tdm_slots)
@@ -542,7 +542,7 @@ static int pcm3168a_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(component->dev,
 				"TDM is supported under DSP/I2S/Left_J only\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

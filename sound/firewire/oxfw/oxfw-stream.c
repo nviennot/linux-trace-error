@@ -81,7 +81,7 @@ static int set_stream_format(struct snd_oxfw *oxfw, struct amdtp_stream *s,
 			break;
 	}
 	if (i == SND_OXFW_STREAM_FORMAT_ENTRIES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* If assumed, just change rate. */
 	if (oxfw->assumed)
@@ -142,7 +142,7 @@ static int check_connection_used_by_others(struct snd_oxfw *oxfw,
 			"Connection established by others: %cPCR[%d]\n",
 			(conn->direction == CMP_OUTPUT) ? 'o' : 'i',
 			conn->pcr_index);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	return err;
@@ -228,11 +228,11 @@ static int keep_resources(struct snd_oxfw *oxfw, struct amdtp_stream *stream)
 			break;
 	}
 	if (i == SND_OXFW_STREAM_FORMAT_ENTRIES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	// The stream should have one pcm channels at least.
 	if (formation.pcm == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = amdtp_am824_set_parameters(stream, formation.rate, formation.pcm,
 					 formation.midi * 8, false);
@@ -326,7 +326,7 @@ int snd_oxfw_stream_start_duplex(struct snd_oxfw *oxfw)
 	int err;
 
 	if (oxfw->substreams_count == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (amdtp_streaming_error(&oxfw->rx_stream) ||
 	    amdtp_streaming_error(&oxfw->tx_stream)) {
@@ -362,14 +362,14 @@ int snd_oxfw_stream_start_duplex(struct snd_oxfw *oxfw)
 		// Wait first packet.
 		if (!amdtp_stream_wait_callback(&oxfw->rx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 
 		if (oxfw->has_output) {
 			if (!amdtp_stream_wait_callback(&oxfw->tx_stream,
 							CALLBACK_TIMEOUT)) {
-				err = -ETIMEDOUT;
+				err = -ERR(ETIMEDOUT);
 				goto error;
 			}
 		}
@@ -484,7 +484,7 @@ int snd_oxfw_stream_get_current_formation(struct snd_oxfw *oxfw,
 	if (err < 0)
 		goto end;
 	if (len < 3) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end;
 	}
 
@@ -513,7 +513,7 @@ int snd_oxfw_stream_parse_format(u8 *format,
 	 *  Level 1:	AM824 Compound  (0x40)
 	 */
 	if ((format[0] != 0x90) || (format[1] != 0x40))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* check the sampling rate */
 	for (i = 0; i < ARRAY_SIZE(avc_stream_rate_table); i++) {
@@ -521,7 +521,7 @@ int snd_oxfw_stream_parse_format(u8 *format,
 			break;
 	}
 	if (i == ARRAY_SIZE(avc_stream_rate_table))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	formation->rate = oxfw_rate_table[i];
 
@@ -565,13 +565,13 @@ int snd_oxfw_stream_parse_format(u8 *format,
 		/* Don't care */
 		case 0xff:
 		default:
-			return -ENXIO;	/* not supported */
+			return -ERR(ENXIO);	/* not supported */
 		}
 	}
 
 	if (formation->pcm  > AM824_MAX_CHANNELS_FOR_PCM ||
 	    formation->midi > AM824_MAX_CHANNELS_FOR_MIDI)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	return 0;
 }
@@ -674,7 +674,7 @@ static int fill_stream_formats(struct snd_oxfw *oxfw,
 	while (eid < SND_OXFW_STREAM_FORMAT_ENTRIES) {
 		/* The format is too short. */
 		if (len < 3) {
-			err = -EIO;
+			err = -ERR(EIO);
 			break;
 		}
 
@@ -728,7 +728,7 @@ int snd_oxfw_stream_discover(struct snd_oxfw *oxfw)
 			err);
 		goto end;
 	} else if ((plugs[0] == 0) && (plugs[1] == 0)) {
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto end;
 	}
 
@@ -805,7 +805,7 @@ int snd_oxfw_stream_lock_try(struct snd_oxfw *oxfw)
 
 	/* user land lock this */
 	if (oxfw->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

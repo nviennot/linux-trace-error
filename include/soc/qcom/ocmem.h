@@ -45,14 +45,14 @@ void ocmem_free(struct ocmem *ocmem, enum ocmem_client client,
 
 static inline struct ocmem *of_get_ocmem(struct device *dev)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct ocmem_buf *ocmem_allocate(struct ocmem *ocmem,
 					       enum ocmem_client client,
 					       unsigned long size)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void ocmem_free(struct ocmem *ocmem, enum ocmem_client client,

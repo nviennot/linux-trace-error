@@ -96,7 +96,7 @@ static int tcf_skbmod_init(struct net *net, struct nlattr *nla,
 	int ret = 0, err;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_SKBMOD_MAX, nla,
 					  skbmod_policy, NULL);
@@ -104,7 +104,7 @@ static int tcf_skbmod_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[TCA_SKBMOD_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[TCA_SKBMOD_DMAC]) {
 		daddr = nla_data(tb[TCA_SKBMOD_DMAC]);
@@ -138,7 +138,7 @@ static int tcf_skbmod_init(struct net *net, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!exists) {
@@ -152,7 +152,7 @@ static int tcf_skbmod_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
 	if (err < 0)

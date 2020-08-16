@@ -43,7 +43,7 @@ static int ebt_nflog_tg_check(const struct xt_tgchk_param *par)
 	struct ebt_nflog_info *info = par->targinfo;
 
 	if (info->flags & ~EBT_NFLOG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info->prefix[EBT_NFLOG_PREFIX_SIZE - 1] = '\0';
 	return 0;
 }

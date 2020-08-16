@@ -1518,13 +1518,13 @@ static inline void afs_check_dir_conflict(struct afs_operation *op,
 static inline int afs_io_error(struct afs_call *call, enum afs_io_error where)
 {
 	trace_afs_io_error(call->debug_id, -EIO, where);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static inline int afs_bad(struct afs_vnode *vnode, enum afs_file_error where)
 {
 	trace_afs_file_error(vnode, -EIO, where);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*****************************************************************************/

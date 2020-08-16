@@ -209,7 +209,7 @@ __xfs_ag_resv_init(
 		break;
 	default:
 		ASSERT(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	error = xfs_mod_fdblocks(mp, -(int64_t)hidden_space, true);
 	if (error) {

@@ -667,7 +667,7 @@ int rds_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 			if (nonblock) {
 				bool reaped = rds_recvmsg_zcookie(rs, msg);
 
-				ret = reaped ?  0 : -EAGAIN;
+				ret = reaped ?  0 : -ERR(EAGAIN);
 				break;
 			}
 
@@ -682,7 +682,7 @@ int rds_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
 
 			ret = timeo;
 			if (ret == 0)
-				ret = -ETIMEDOUT;
+				ret = -ERR(ETIMEDOUT);
 			break;
 		}
 

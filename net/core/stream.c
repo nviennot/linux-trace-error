@@ -64,9 +64,9 @@ int sk_stream_wait_connect(struct sock *sk, long *timeo_p)
 		if (err)
 			return err;
 		if ((1 << sk->sk_state) & ~(TCPF_SYN_SENT | TCPF_SYN_RECV))
-			return -EPIPE;
+			return -ERR(EPIPE);
 		if (!*timeo_p)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		if (signal_pending(tsk))
 			return sock_intr_errno(*timeo_p);
 
@@ -163,7 +163,7 @@ out:
 	return err;
 
 do_error:
-	err = -EPIPE;
+	err = -ERR(EPIPE);
 	goto out;
 do_eagain:
 	/* Make sure that whenever EAGAIN is returned, EPOLLOUT event can
@@ -172,7 +172,7 @@ do_eagain:
 	 * only calls tcp_new_space() if SOCK_NOSPACE is set.
 	 */
 	set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	goto out;
 do_interrupted:
 	err = sock_intr_errno(*timeo_p);
@@ -183,7 +183,7 @@ EXPORT_SYMBOL(sk_stream_wait_memory);
 int sk_stream_error(struct sock *sk, int flags, int err)
 {
 	if (err == -EPIPE)
-		err = sock_error(sk) ? : -EPIPE;
+		err = sock_error(sk) ? : -ERR(EPIPE);
 	if (err == -EPIPE && !(flags & MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
 	return err;

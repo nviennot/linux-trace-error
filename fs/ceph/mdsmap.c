@@ -387,7 +387,7 @@ out_err:
 	ceph_mdsmap_destroy(m);
 	return ERR_PTR(err);
 bad:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	goto corrupt;
 }
 

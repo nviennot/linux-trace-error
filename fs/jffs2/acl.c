@@ -64,17 +64,17 @@ static struct posix_acl *jffs2_acl_from_medium(void *value, size_t size)
 	if (!value)
 		return NULL;
 	if (size < sizeof(struct jffs2_acl_header))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	ver = je32_to_cpu(header->a_version);
 	if (ver != JFFS2_ACL_VERSION) {
 		JFFS2_WARNING("Invalid ACL version. (=%u)\n", ver);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	value += sizeof(struct jffs2_acl_header);
 	count = jffs2_acl_count(size);
 	if (count < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (count == 0)
 		return NULL;
 
@@ -122,7 +122,7 @@ static struct posix_acl *jffs2_acl_from_medium(void *value, size_t size)
 	return acl;
  fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static void *jffs2_acl_to_medium(const struct posix_acl *acl, size_t *size)
@@ -170,7 +170,7 @@ static void *jffs2_acl_to_medium(const struct posix_acl *acl, size_t *size)
 	return header;
  fail:
 	kfree(header);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 struct posix_acl *jffs2_get_acl(struct inode *inode, int type)
@@ -254,10 +254,10 @@ int jffs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 	case ACL_TYPE_DEFAULT:
 		xprefix = JFFS2_XPREFIX_ACL_DEFAULT;
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
+			return acl ? -ERR(EACCES) : 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	rc = __jffs2_set_acl(inode, xprefix, acl);
 	if (!rc)

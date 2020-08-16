@@ -46,16 +46,16 @@ static int log_tg_check(const struct xt_tgchk_param *par)
 	const struct xt_log_info *loginfo = par->targinfo;
 
 	if (par->family != NFPROTO_IPV4 && par->family != NFPROTO_IPV6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (loginfo->level >= 8) {
 		pr_debug("level %u >= 8\n", loginfo->level);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (loginfo->prefix[sizeof(loginfo->prefix)-1] != '\0') {
 		pr_debug("prefix is not null-terminated\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return nf_logger_find_get(par->family, NF_LOG_TYPE_LOG);

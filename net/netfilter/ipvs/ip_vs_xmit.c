@@ -1054,7 +1054,7 @@ ipvs_gue_encap(struct net *net, struct sk_buff *skb,
 		data += GUE_LEN_PRIV;
 
 		if (csum_start < hdrlen)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		csum_start -= hdrlen;
 		pd = data;

@@ -429,7 +429,7 @@ static int __btrfs_add_delayed_item(struct btrfs_delayed_node *delayed_node,
 		} else if (cmp > 0) {
 			p = &(*p)->rb_left;
 		} else {
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -640,7 +640,7 @@ static int btrfs_delayed_inode_reserve_metadata(
 		 * ENOSPC instead so that btrfs_dirty_inode knows what to do.
 		 */
 		if (ret == -EAGAIN) {
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			btrfs_qgroup_free_meta_prealloc(root, num_bytes);
 		}
 		if (!ret) {
@@ -889,7 +889,7 @@ static int btrfs_batch_delete_items(struct btrfs_trans_handle *trans,
 	i = path->slots[0];
 	last_item = btrfs_header_nritems(leaf) - 1;
 	if (i > last_item)
-		return -ENOENT;	/* FIXME: Is errno suitable? */
+		return -ERR(ENOENT);	/* FIXME: Is errno suitable? */
 
 	next = item;
 	INIT_LIST_HEAD(&head);
@@ -1035,7 +1035,7 @@ static int __btrfs_update_delayed_inode(struct btrfs_trans_handle *trans,
 	memalloc_nofs_restore(nofs_flag);
 	if (ret > 0) {
 		btrfs_release_path(path);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	} else if (ret < 0) {
 		return ret;
 	}
@@ -1151,7 +1151,7 @@ static int __btrfs_run_delayed_items(struct btrfs_trans_handle *trans, int nr)
 	bool count = (nr > 0);
 
 	if (TRANS_ABORTED(trans))
-		return -EIO;
+		return -ERR(EIO);
 
 	path = btrfs_alloc_path();
 	if (!path)
@@ -1569,7 +1569,7 @@ int btrfs_inode_delayed_dir_index_count(struct btrfs_inode *inode)
 	struct btrfs_delayed_node *delayed_node = btrfs_get_delayed_node(inode);
 
 	if (!delayed_node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * Since we have held i_mutex of this directory, it is impossible that
@@ -1578,7 +1578,7 @@ int btrfs_inode_delayed_dir_index_count(struct btrfs_inode *inode)
 	 */
 	if (!delayed_node->index_cnt) {
 		btrfs_release_delayed_node(delayed_node);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	inode->index_cnt = delayed_node->index_cnt;
@@ -1777,13 +1777,13 @@ int btrfs_fill_inode(struct inode *inode, u32 *rdev)
 
 	delayed_node = btrfs_get_delayed_node(BTRFS_I(inode));
 	if (!delayed_node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	mutex_lock(&delayed_node->mutex);
 	if (!test_bit(BTRFS_DELAYED_NODE_INODE_DIRTY, &delayed_node->flags)) {
 		mutex_unlock(&delayed_node->mutex);
 		btrfs_release_delayed_node(delayed_node);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	inode_item = &delayed_node->inode_item;
@@ -1869,7 +1869,7 @@ int btrfs_delayed_delete_inode_ref(struct btrfs_inode *inode)
 	 * delayed inode refs
 	 */
 	if (test_bit(BTRFS_FS_LOG_RECOVERING, &fs_info->flags))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	delayed_node = btrfs_get_or_create_delayed_node(inode);
 	if (IS_ERR(delayed_node))

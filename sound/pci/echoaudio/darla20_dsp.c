@@ -34,7 +34,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != DARLA20))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -90,7 +90,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	u8 clock_state, spdif_status;
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (rate) {
 	case 44100:

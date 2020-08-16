@@ -78,7 +78,7 @@ static int nop_set_flag(struct trace_array *tr, u32 old_flags, u32 bit, int set)
 		printk(KERN_DEBUG "nop_test_refuse flag set to %d: we refuse."
 			" Now cat trace_options to see the result\n",
 			set);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

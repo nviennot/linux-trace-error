@@ -415,7 +415,7 @@ static int skl_ipc_set_reply_error_code(struct sst_generic_ipc *ipc, u32 reply)
 		dev_err(ipc->dev, "ipc FW reply: %d FW Error Code: %u\n",
 				reply,
 				ipc->dsp->fw_ops.get_fw_errcode(ipc->dsp));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (skl_err_map[i].err < 0)

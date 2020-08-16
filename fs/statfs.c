@@ -55,7 +55,7 @@ static int statfs_by_dentry(struct dentry *dentry, struct kstatfs *buf)
 	int retval;
 
 	if (!dentry->d_sb->s_op->statfs)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	memset(buf, 0, sizeof(*buf));
 	retval = security_sb_statfs(dentry);
@@ -113,7 +113,7 @@ retry:
 int fd_statfs(int fd, struct kstatfs *st)
 {
 	struct fd f = fdget_raw(fd);
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 	if (f.file) {
 		error = vfs_statfs(&f.file->f_path, st);
 		fdput(f);
@@ -132,17 +132,17 @@ static int do_statfs_native(struct kstatfs *st, struct statfs __user *p)
 			if ((st->f_blocks | st->f_bfree | st->f_bavail |
 			     st->f_bsize | st->f_frsize) &
 			    0xffffffff00000000ULL)
-				return -EOVERFLOW;
+				return -ERR(EOVERFLOW);
 			/*
 			 * f_files and f_ffree may be -1; it's okay to stuff
 			 * that into 32 bits
 			 */
 			if (st->f_files != -1 &&
 			    (st->f_files & 0xffffffff00000000ULL))
-				return -EOVERFLOW;
+				return -ERR(EOVERFLOW);
 			if (st->f_ffree != -1 &&
 			    (st->f_ffree & 0xffffffff00000000ULL))
-				return -EOVERFLOW;
+				return -ERR(EOVERFLOW);
 		}
 
 		buf.f_type = st->f_type;
@@ -201,7 +201,7 @@ SYSCALL_DEFINE3(statfs64, const char __user *, pathname, size_t, sz, struct stat
 	struct kstatfs st;
 	int error;
 	if (sz != sizeof(*buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	error = user_statfs(pathname, &st);
 	if (!error)
 		error = do_statfs64(&st, buf);
@@ -223,7 +223,7 @@ SYSCALL_DEFINE3(fstatfs64, unsigned int, fd, size_t, sz, struct statfs64 __user 
 	int error;
 
 	if (sz != sizeof(*buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = fd_statfs(fd, &st);
 	if (!error)
@@ -236,7 +236,7 @@ static int vfs_ustat(dev_t dev, struct kstatfs *sbuf)
 	struct super_block *s = user_get_super(dev);
 	int err;
 	if (!s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = statfs_by_dentry(s->s_root, sbuf);
 	drop_super(s);
@@ -265,15 +265,15 @@ static int put_compat_statfs(struct compat_statfs __user *ubuf, struct kstatfs *
 	if (sizeof ubuf->f_blocks == 4) {
 		if ((kbuf->f_blocks | kbuf->f_bfree | kbuf->f_bavail |
 		     kbuf->f_bsize | kbuf->f_frsize) & 0xffffffff00000000ULL)
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 		/* f_files and f_ffree may be -1; it's okay
 		 * to stuff that into 32 bits */
 		if (kbuf->f_files != 0xffffffffffffffffULL
 		 && (kbuf->f_files & 0xffffffff00000000ULL))
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 		if (kbuf->f_ffree != 0xffffffffffffffffULL
 		 && (kbuf->f_ffree & 0xffffffff00000000ULL))
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 	}
 	memset(&buf, 0, sizeof(struct compat_statfs));
 	buf.f_type = kbuf->f_type;
@@ -320,7 +320,7 @@ static int put_compat_statfs64(struct compat_statfs64 __user *ubuf, struct kstat
 	struct compat_statfs64 buf;
 
 	if ((kbuf->f_bsize | kbuf->f_frsize) & 0xffffffff00000000ULL)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	memset(&buf, 0, sizeof(struct compat_statfs64));
 	buf.f_type = kbuf->f_type;
@@ -346,7 +346,7 @@ int kcompat_sys_statfs64(const char __user * pathname, compat_size_t sz, struct 
 	int error;
 
 	if (sz != sizeof(*buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = user_statfs(pathname, &tmp);
 	if (!error)
@@ -365,7 +365,7 @@ int kcompat_sys_fstatfs64(unsigned int fd, compat_size_t sz, struct compat_statf
 	int error;
 
 	if (sz != sizeof(*buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = fd_statfs(fd, &tmp);
 	if (!error)

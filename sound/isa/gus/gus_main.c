@@ -168,31 +168,31 @@ int snd_gus_create(struct snd_card *card,
 	if ((gus->gf1.res_port1 = request_region(port, 16, "GUS GF1 (Adlib/SB)")) == NULL) {
 		snd_printk(KERN_ERR "gus: can't grab SB port 0x%lx\n", port);
 		snd_gus_free(gus);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if ((gus->gf1.res_port2 = request_region(port + 0x100, 12, "GUS GF1 (Synth)")) == NULL) {
 		snd_printk(KERN_ERR "gus: can't grab synth port 0x%lx\n", port + 0x100);
 		snd_gus_free(gus);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (irq >= 0 && request_irq(irq, snd_gus_interrupt, 0, "GUS GF1", (void *) gus)) {
 		snd_printk(KERN_ERR "gus: can't grab irq %d\n", irq);
 		snd_gus_free(gus);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	gus->gf1.irq = irq;
 	card->sync_irq = irq;
 	if (request_dma(dma1, "GUS - 1")) {
 		snd_printk(KERN_ERR "gus: can't grab DMA1 %d\n", dma1);
 		snd_gus_free(gus);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	gus->gf1.dma1 = dma1;
 	if (dma2 >= 0 && dma1 != dma2) {
 		if (request_dma(dma2, "GUS - 2")) {
 			snd_printk(KERN_ERR "gus: can't grab DMA2 %d\n", dma2);
 			snd_gus_free(gus);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		gus->gf1.dma2 = dma2;
 	} else {
@@ -273,10 +273,10 @@ static int snd_gus_init_dma_irq(struct snd_gus_card * gus, int latches)
 		{6, 1, 0, 2, 0, 3, 4, 5};
 
 	if (snd_BUG_ON(!gus))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = gus->card;
 	if (snd_BUG_ON(!card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gus->mix_cntrl_reg &= 0xf8;
 	gus->mix_cntrl_reg |= 0x01;	/* disable MIC, LINE IN, enable LINE OUT */
@@ -294,14 +294,14 @@ static int snd_gus_init_dma_irq(struct snd_gus_card * gus, int latches)
 
 	if ((dma1 & 7) == 0 || (dma2 & 7) == 0) {
 		snd_printk(KERN_ERR "Error! DMA isn't defined.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	irq = gus->gf1.irq;
 	irq = abs(irq);
 	irq = irqs[irq & 0x0f];
 	if (irq == 0) {
 		snd_printk(KERN_ERR "Error! IRQ isn't defined.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	irq |= 0x40;
 #if 0

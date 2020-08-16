@@ -580,7 +580,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 				compress_force = false;
 				no_compress++;
 			} else {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -640,7 +640,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			if (ret) {
 				goto out;
 			} else if (intarg == 0) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			info->thread_pool_size = intarg;
@@ -673,7 +673,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 			break;
 #else
 			btrfs_err(info, "support for ACL not compiled in!");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 #endif
 		case Opt_noacl:
@@ -720,7 +720,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 				btrfs_set_and_info(info, DISCARD_ASYNC,
 						   "turning on async discard");
 			} else {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			break;
@@ -744,7 +744,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 				btrfs_set_and_info(info, FREE_SPACE_TREE,
 						   "enabling free space tree");
 			} else {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			break;
@@ -828,7 +828,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 		case Opt_check_integrity_print_mask:
 			btrfs_err(info,
 				  "support for check_integrity* not compiled in!");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 #endif
 		case Opt_fatal_errors:
@@ -839,7 +839,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 				btrfs_clear_opt(info->mount_opt,
 					      PANIC_ON_FATAL_ERROR);
 			else {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			break;
@@ -883,7 +883,7 @@ int btrfs_parse_options(struct btrfs_fs_info *info, char *options,
 #endif
 		case Opt_err:
 			btrfs_err(info, "unrecognized mount option '%s'", p);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		default:
 			break;
@@ -896,14 +896,14 @@ check:
 	if (btrfs_test_opt(info, NOLOGREPLAY) && !(new_flags & SB_RDONLY)) {
 		btrfs_err(info,
 			  "nologreplay must be used with ro mount option");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 out:
 	if (btrfs_fs_compat_ro(info, FREE_SPACE_TREE) &&
 	    !btrfs_test_opt(info, FREE_SPACE_TREE) &&
 	    !btrfs_test_opt(info, CLEAR_CACHE)) {
 		btrfs_err(info, "cannot disable free space tree");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	}
 	if (!ret && btrfs_test_opt(info, SPACE_CACHE))
@@ -1080,7 +1080,7 @@ char *btrfs_get_subvol_name_from_objectid(struct btrfs_fs_info *fs_info,
 			if (ret < 0) {
 				goto err;
 			} else if (ret > 0) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				goto err;
 			}
 		}
@@ -1093,7 +1093,7 @@ char *btrfs_get_subvol_name_from_objectid(struct btrfs_fs_info *fs_info,
 		len = btrfs_root_ref_name_len(path->nodes[0], root_ref);
 		ptr -= len + 1;
 		if (ptr < name) {
-			ret = -ENAMETOOLONG;
+			ret = -ERR(ENAMETOOLONG);
 			goto err;
 		}
 		read_extent_buffer(path->nodes[0], ptr + 1,
@@ -1127,7 +1127,7 @@ char *btrfs_get_subvol_name_from_objectid(struct btrfs_fs_info *fs_info,
 				if (ret < 0) {
 					goto err;
 				} else if (ret > 0) {
-					ret = -ENOENT;
+					ret = -ERR(ENOENT);
 					goto err;
 				}
 			}
@@ -1142,7 +1142,7 @@ char *btrfs_get_subvol_name_from_objectid(struct btrfs_fs_info *fs_info,
 						       inode_ref);
 			ptr -= len + 1;
 			if (ptr < name) {
-				ret = -ENAMETOOLONG;
+				ret = -ERR(ENAMETOOLONG);
 				goto err;
 			}
 			read_extent_buffer(path->nodes[0], ptr + 1,
@@ -1468,7 +1468,7 @@ static struct dentry *mount_subvol(const char *subvol_name, u64 subvol_objectid,
 		if (!is_subvolume_inode(root_inode)) {
 			btrfs_err(fs_info, "'%s' is not a valid subvolume",
 			       subvol_name);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		if (subvol_objectid && root_objectid != subvol_objectid) {
 			/*
@@ -1479,7 +1479,7 @@ static struct dentry *mount_subvol(const char *subvol_name, u64 subvol_objectid,
 			btrfs_err(fs_info,
 				  "subvol '%s' does not match subvolid %llu",
 				  subvol_name, subvol_objectid);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		if (ret) {
 			dput(root);
@@ -1566,7 +1566,7 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
 		goto error_fs_info;
 
 	if (!(flags & SB_RDONLY) && fs_devices->rw_devices == 0) {
-		error = -EACCES;
+		error = -ERR(EACCES);
 		goto error_close_devices;
 	}
 
@@ -1582,7 +1582,7 @@ static struct dentry *btrfs_mount_root(struct file_system_type *fs_type,
 		btrfs_close_devices(fs_devices);
 		btrfs_free_fs_info(fs_info);
 		if ((flags ^ s->s_flags) & SB_RDONLY)
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 	} else {
 		snprintf(s->s_id, sizeof(s->s_id), "%pg", bdev);
 		btrfs_sb(s)->bdev_holder = fs_type;
@@ -1827,25 +1827,25 @@ static int btrfs_remount(struct super_block *sb, int *flags, char *data)
 		if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state)) {
 			btrfs_err(fs_info,
 				"Remounting read-write after error is not allowed");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto restore;
 		}
 		if (fs_info->fs_devices->rw_devices == 0) {
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 			goto restore;
 		}
 
 		if (!btrfs_check_rw_degradable(fs_info, NULL)) {
 			btrfs_warn(fs_info,
 		"too many missing devices, writable remount is not allowed");
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 			goto restore;
 		}
 
 		if (btrfs_super_log_root(fs_info->super_copy) != 0) {
 			btrfs_warn(fs_info,
 		"mount required to replay tree-log, cannot remount read-write");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto restore;
 		}
 
@@ -2219,10 +2219,10 @@ static long btrfs_control_ioctl(struct file *file, unsigned int cmd,
 {
 	struct btrfs_ioctl_vol_args *vol;
 	struct btrfs_device *device = NULL;
-	int ret = -ENOTTY;
+	int ret = -ERR(ENOTTY);
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	vol = memdup_user((void __user *)arg, sizeof(*vol));
 	if (IS_ERR(vol))

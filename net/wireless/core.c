@@ -98,7 +98,7 @@ static int cfg80211_dev_check_name(struct cfg80211_registered_device *rdev,
 	ASSERT_RTNL();
 
 	if (strlen(newname) > NL80211_WIPHY_NAME_MAXLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* prohibit calling the thing phy%d when %d is not its number */
 	sscanf(newname, PHY_NAME "%d%n", &wiphy_idx, &taken);
@@ -112,13 +112,13 @@ static int cfg80211_dev_check_name(struct cfg80211_registered_device *rdev,
 		 * without leading zeroes. taken == strlen(newname) here
 		 */
 		if (taken == strlen(PHY_NAME) + digits)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Ensure another device does not already have this name. */
 	list_for_each_entry(rdev2, &cfg80211_rdev_list, list)
 		if (strcmp(newname, wiphy_name(&rdev2->wiphy)) == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	return 0;
 }
@@ -159,7 +159,7 @@ int cfg80211_switch_netns(struct cfg80211_registered_device *rdev,
 	int err = 0;
 
 	if (!(rdev->wiphy.flags & WIPHY_FLAG_NETNS_OK))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	list_for_each_entry(wdev, &rdev->wiphy.wdev_list, list) {
 		if (!wdev->netdev)
@@ -558,11 +558,11 @@ static int wiphy_verify_combinations(struct wiphy *wiphy)
 		 * however we make an exception for DFS.
 		 */
 		if (WARN_ON((c->max_interfaces < 2) && !c->radar_detect_widths))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Need at least one channel */
 		if (WARN_ON(!c->num_different_channels))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Put a sane limit on maximum number of different
@@ -570,40 +570,40 @@ static int wiphy_verify_combinations(struct wiphy *wiphy)
 		 */
 		if (WARN_ON(c->num_different_channels >
 				CFG80211_MAX_NUM_DIFFERENT_CHANNELS))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* DFS only works on one channel. */
 		if (WARN_ON(c->radar_detect_widths &&
 			    (c->num_different_channels > 1)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (WARN_ON(!c->n_limits))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		for (j = 0; j < c->n_limits; j++) {
 			u16 types = c->limits[j].types;
 
 			/* interface types shouldn't overlap */
 			if (WARN_ON(types & all_iftypes))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			all_iftypes |= types;
 
 			if (WARN_ON(!c->limits[j].max))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* Shouldn't list software iftypes in combinations! */
 			if (WARN_ON(wiphy->software_iftypes & types))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* Only a single P2P_DEVICE can be allowed */
 			if (WARN_ON(types & BIT(NL80211_IFTYPE_P2P_DEVICE) &&
 				    c->limits[j].max > 1))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* Only a single NAN can be allowed */
 			if (WARN_ON(types & BIT(NL80211_IFTYPE_NAN) &&
 				    c->limits[j].max > 1))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/*
 			 * This isn't well-defined right now. If you have an
@@ -617,7 +617,7 @@ static int wiphy_verify_combinations(struct wiphy *wiphy)
 			 */
 			if (WARN_ON(types & BIT(NL80211_IFTYPE_ADHOC) &&
 				    c->beacon_int_min_gcd)) {
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			cnt += c->limits[j].max;
@@ -626,17 +626,17 @@ static int wiphy_verify_combinations(struct wiphy *wiphy)
 			 * in a combination.
 			 */
 			if (WARN_ON((wiphy->interface_modes & types) != types))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 #ifndef CONFIG_WIRELESS_WDS
 		if (WARN_ON(all_iftypes & BIT(NL80211_IFTYPE_WDS)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 #endif
 
 		/* You can't even choose that many! */
 		if (WARN_ON(cnt < c->max_interfaces))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -656,50 +656,50 @@ int wiphy_register(struct wiphy *wiphy)
 	if (WARN_ON(wiphy->wowlan &&
 		    (wiphy->wowlan->flags & WIPHY_WOWLAN_GTK_REKEY_FAILURE) &&
 		    !(wiphy->wowlan->flags & WIPHY_WOWLAN_SUPPORTS_GTK_REKEY)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN_ON(wiphy->wowlan &&
 		    !wiphy->wowlan->flags && !wiphy->wowlan->n_patterns &&
 		    !wiphy->wowlan->tcp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	if (WARN_ON((wiphy->features & NL80211_FEATURE_TDLS_CHANNEL_SWITCH) &&
 		    (!rdev->ops->tdls_channel_switch ||
 		     !rdev->ops->tdls_cancel_channel_switch)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON((wiphy->interface_modes & BIT(NL80211_IFTYPE_NAN)) &&
 		    (!rdev->ops->start_nan || !rdev->ops->stop_nan ||
 		     !rdev->ops->add_nan_func || !rdev->ops->del_nan_func ||
 		     !(wiphy->nan_supported_bands & BIT(NL80211_BAND_2GHZ)))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifndef CONFIG_WIRELESS_WDS
 	if (WARN_ON(wiphy->interface_modes & BIT(NL80211_IFTYPE_WDS)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	if (WARN_ON(wiphy->pmsr_capa && !wiphy->pmsr_capa->ftm.supported))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wiphy->pmsr_capa && wiphy->pmsr_capa->ftm.supported) {
 		if (WARN_ON(!wiphy->pmsr_capa->ftm.asap &&
 			    !wiphy->pmsr_capa->ftm.non_asap))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON(!wiphy->pmsr_capa->ftm.preambles ||
 			    !wiphy->pmsr_capa->ftm.bandwidths))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON(wiphy->pmsr_capa->ftm.preambles &
 				~(BIT(NL80211_PREAMBLE_LEGACY) |
 				  BIT(NL80211_PREAMBLE_HT) |
 				  BIT(NL80211_PREAMBLE_VHT) |
 				  BIT(NL80211_PREAMBLE_HE) |
 				  BIT(NL80211_PREAMBLE_DMG))))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON((wiphy->pmsr_capa->ftm.trigger_based ||
 			     wiphy->pmsr_capa->ftm.non_trigger_based) &&
 			    !(wiphy->pmsr_capa->ftm.preambles &
 			      BIT(NL80211_PREAMBLE_HE))))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON(wiphy->pmsr_capa->ftm.bandwidths &
 				~(BIT(NL80211_CHAN_WIDTH_20_NOHT) |
 				  BIT(NL80211_CHAN_WIDTH_20) |
@@ -709,7 +709,7 @@ int wiphy_register(struct wiphy *wiphy)
 				  BIT(NL80211_CHAN_WIDTH_160) |
 				  BIT(NL80211_CHAN_WIDTH_5) |
 				  BIT(NL80211_CHAN_WIDTH_10))))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/*
@@ -733,7 +733,7 @@ int wiphy_register(struct wiphy *wiphy)
 					 REGULATORY_STRICT_REG |
 					 REGULATORY_COUNTRY_IE_FOLLOW_POWER |
 					 REGULATORY_COUNTRY_IE_IGNORE))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy->coalesce &&
 		    (!wiphy->coalesce->n_rules ||
@@ -741,41 +741,41 @@ int wiphy_register(struct wiphy *wiphy)
 		    (!wiphy->coalesce->pattern_min_len ||
 		     wiphy->coalesce->pattern_min_len >
 			wiphy->coalesce->pattern_max_len)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy->ap_sme_capa &&
 		    !(wiphy->flags & WIPHY_FLAG_HAVE_AP_SME)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy->addresses && !wiphy->n_addresses))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy->addresses &&
 		    !is_zero_ether_addr(wiphy->perm_addr) &&
 		    memcmp(wiphy->perm_addr, wiphy->addresses[0].addr,
 			   ETH_ALEN)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy->max_acl_mac_addrs &&
 		    (!(wiphy->flags & WIPHY_FLAG_HAVE_AP_SME) ||
 		     !rdev->ops->set_mac_acl)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* assure only valid behaviours are flagged by driver
 	 * hence subtract 2 as bit 0 is invalid.
 	 */
 	if (WARN_ON(wiphy->bss_select_support &&
 		    (wiphy->bss_select_support & ~(BIT(__NL80211_BSS_SELECT_ATTR_AFTER_LAST) - 2))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(wiphy_ext_feature_isset(&rdev->wiphy,
 					    NL80211_EXT_FEATURE_4WAY_HANDSHAKE_STA_1X) &&
 		    (!rdev->ops->set_pmk || !rdev->ops->del_pmk)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(!(rdev->wiphy.flags & WIPHY_FLAG_SUPPORTS_FW_ROAM) &&
 		    rdev->ops->update_connect_params))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wiphy->addresses)
 		memcpy(wiphy->perm_addr, wiphy->addresses[0].addr, ETH_ALEN);
@@ -801,19 +801,19 @@ int wiphy_register(struct wiphy *wiphy)
 
 		sband->band = band;
 		if (WARN_ON(!sband->n_channels))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * on 60GHz band, there are no legacy rates, so
 		 * n_bitrates is 0
 		 */
 		if (WARN_ON(band != NL80211_BAND_60GHZ &&
 			    !sband->n_bitrates))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (WARN_ON(band == NL80211_BAND_6GHZ &&
 			    (sband->ht_cap.ht_supported ||
 			     sband->vht_cap.vht_supported)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*
 		 * Since cfg80211_disable_40mhz_24ghz is global, we can
@@ -833,7 +833,7 @@ int wiphy_register(struct wiphy *wiphy)
 		 * have more than 32 legacy rates.
 		 */
 		if (WARN_ON(sband->n_bitrates > 32))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		for (i = 0; i < sband->n_channels; i++) {
 			sband->channels[i].orig_flags =
@@ -844,7 +844,7 @@ int wiphy_register(struct wiphy *wiphy)
 			sband->channels[i].band = band;
 
 			if (WARN_ON(sband->channels[i].freq_offset >= 1000))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 		for (i = 0; i < sband->n_iftype_data; i++) {
@@ -853,13 +853,13 @@ int wiphy_register(struct wiphy *wiphy)
 			iftd = &sband->iftype_data[i];
 
 			if (WARN_ON(!iftd->types_mask))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (WARN_ON(types & iftd->types_mask))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* at least one piece of information must be present */
 			if (WARN_ON(!iftd->he_cap.has_he))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			types |= iftd->types_mask;
 
@@ -871,14 +871,14 @@ int wiphy_register(struct wiphy *wiphy)
 		}
 
 		if (WARN_ON(!have_he && band == NL80211_BAND_6GHZ))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		have_band = true;
 	}
 
 	if (!have_band) {
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < rdev->wiphy.n_vendor_commands; i++) {
@@ -888,10 +888,10 @@ int wiphy_register(struct wiphy *wiphy)
 		 * we have at least one of doit/dumpit.
 		 */
 		if (WARN_ON(!rdev->wiphy.vendor_commands[i].policy))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON(!rdev->wiphy.vendor_commands[i].doit &&
 			    !rdev->wiphy.vendor_commands[i].dumpit))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 #ifdef CONFIG_PM
@@ -899,7 +899,7 @@ int wiphy_register(struct wiphy *wiphy)
 		    (!rdev->wiphy.wowlan->pattern_min_len ||
 		     rdev->wiphy.wowlan->pattern_min_len >
 				rdev->wiphy.wowlan->pattern_max_len)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	/* check and set up bitrates */
@@ -1432,10 +1432,10 @@ static int cfg80211_netdev_notifier_call(struct notifier_block *nb,
 	case NETDEV_PRE_UP:
 		if (!cfg80211_iftype_allowed(wdev->wiphy, wdev->iftype,
 					     wdev->use_4addr, 0))
-			return notifier_from_errno(-EOPNOTSUPP);
+			return notifier_from_errno(-ERR(EOPNOTSUPP));
 
 		if (rfkill_blocked(rdev->rfkill))
-			return notifier_from_errno(-ERFKILL);
+			return notifier_from_errno(-ERR(ERFKILL));
 		break;
 	default:
 		return NOTIFY_DONE;

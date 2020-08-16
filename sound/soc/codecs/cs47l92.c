@@ -65,7 +65,7 @@ static int cs47l92_put_demux(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (ucontrol->value.enumerated.item[0] > e->items - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mux = ucontrol->value.enumerated.item[0];
 
@@ -1679,7 +1679,7 @@ static int cs47l92_set_fll(struct snd_soc_component *component, int fll_id,
 		return madera_fllhj_set_refclk(&cs47l92->fll[1], source, fref,
 					       fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1845,7 +1845,7 @@ static int cs47l92_open(struct snd_soc_component *component,
 		dev_err(madera->dev,
 			"No suitable compressed stream for DAI '%s'\n",
 			asoc_rtd_to_codec(rtd, 0)->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return wm_adsp_compr_open(&priv->adsp[n_adsp], stream);

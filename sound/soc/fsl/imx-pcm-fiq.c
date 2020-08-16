@@ -138,7 +138,7 @@ static int snd_imx_pcm_trigger(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -62,7 +62,7 @@ snd_emux_init_seq(struct snd_emux *emu, struct snd_card *card, int index)
 						   "%s WaveTable", emu->name);
 	if (emu->client < 0) {
 		snd_printk(KERN_ERR "can't create client\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (emu->num_ports < 0) {
@@ -243,7 +243,7 @@ snd_emux_event_input(struct snd_seq_event *ev, int direct, void *private_data,
 
 	port = private_data;
 	if (snd_BUG_ON(!port || !ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_midi_process_event(&emux_ops, ev, &port->chset);
 
@@ -310,10 +310,10 @@ snd_emux_use(void *private_data, struct snd_seq_port_subscribe *info)
 
 	p = private_data;
 	if (snd_BUG_ON(!p))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&emu->register_mutex);
 	snd_emux_init_port(p);
@@ -333,10 +333,10 @@ snd_emux_unuse(void *private_data, struct snd_seq_port_subscribe *info)
 
 	p = private_data;
 	if (snd_BUG_ON(!p))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	emu = p->emu;
 	if (snd_BUG_ON(!emu))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&emu->register_mutex);
 	snd_emux_sounds_off_all(p);

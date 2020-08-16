@@ -230,14 +230,14 @@ rfkill_alloc(const char *name,
 	     const struct rfkill_ops *ops,
 	     void *ops_data)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline int __must_check rfkill_register(struct rfkill *rfkill)
 {
 	if (rfkill == ERR_PTR(-ENODEV))
 		return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void rfkill_pause_polling(struct rfkill *rfkill)

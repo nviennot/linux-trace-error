@@ -316,12 +316,12 @@ start_voice(struct snd_emux_voice *vp)
 	hw = vp->hw;
 	ch = vp->ch;
 	if (snd_BUG_ON(ch < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	chan = vp->chan;
 
 	emem = (struct snd_emu10k1_memblk *)vp->block;
 	if (emem == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	emem->map_locked++;
 	if (snd_emu10k1_memblk_map(hw, emem) < 0) {
 		/* dev_err(hw->card->devK, "emu: cannot map!\n"); */

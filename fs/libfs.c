@@ -66,7 +66,7 @@ EXPORT_SYMBOL(simple_dentry_operations);
 struct dentry *simple_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
 	if (dentry->d_name.len > NAME_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	if (!dentry->d_sb->s_d_op)
 		d_set_d_op(dentry, &simple_dentry_operations);
 	d_add(dentry, NULL);
@@ -143,7 +143,7 @@ loff_t dcache_dir_lseek(struct file *file, loff_t offset, int whence)
 				break;
 			/* fall through */
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (offset != file->f_pos) {
 		struct dentry *cursor = file->private_data;
@@ -221,7 +221,7 @@ EXPORT_SYMBOL(dcache_readdir);
 
 ssize_t generic_read_dir(struct file *filp, char __user *buf, size_t siz, loff_t *ppos)
 {
-	return -EISDIR;
+	return -ERR(EISDIR);
 }
 EXPORT_SYMBOL(generic_read_dir);
 
@@ -436,7 +436,7 @@ EXPORT_SYMBOL(simple_unlink);
 int simple_rmdir(struct inode *dir, struct dentry *dentry)
 {
 	if (!simple_empty(dentry))
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	drop_nlink(d_inode(dentry));
 	simple_unlink(dir, dentry);
@@ -453,10 +453,10 @@ int simple_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int they_are_dirs = d_is_dir(old_dentry);
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!simple_empty(new_dentry))
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	if (d_really_is_positive(new_dentry)) {
 		simple_unlink(new_dir, new_dentry);
@@ -719,7 +719,7 @@ ssize_t simple_read_from_buffer(void __user *to, size_t count, loff_t *ppos,
 	size_t ret;
 
 	if (pos < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos >= available || !count)
 		return 0;
 	if (count > available - pos)
@@ -754,7 +754,7 @@ ssize_t simple_write_to_buffer(void *to, size_t available, loff_t *ppos,
 	size_t res;
 
 	if (pos < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos >= available || !count)
 		return 0;
 	if (count > available - pos)
@@ -788,7 +788,7 @@ ssize_t memory_read_from_buffer(void *to, size_t count, loff_t *ppos,
 	loff_t pos = *ppos;
 
 	if (pos < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos >= available)
 		return 0;
 	if (count > available - pos)
@@ -828,7 +828,7 @@ char *simple_transaction_get(struct file *file, const char __user *buf, size_t s
 	static DEFINE_SPINLOCK(simple_transaction_lock);
 
 	if (size > SIMPLE_TRANSACTION_LIMIT - 1)
-		return ERR_PTR(-EFBIG);
+		return ERR_PTR(-ERR(EFBIG));
 
 	ar = (struct simple_transaction_argresp *)get_zeroed_page(GFP_KERNEL);
 	if (!ar)
@@ -840,7 +840,7 @@ char *simple_transaction_get(struct file *file, const char __user *buf, size_t s
 	if (file->private_data) {
 		spin_unlock(&simple_transaction_lock);
 		free_page((unsigned long)ar);
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 	}
 
 	file->private_data = ar;
@@ -925,7 +925,7 @@ ssize_t simple_attr_read(struct file *file, char __user *buf,
 	attr = file->private_data;
 
 	if (!attr->get)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	ret = mutex_lock_interruptible(&attr->mutex);
 	if (ret)
@@ -963,7 +963,7 @@ ssize_t simple_attr_write(struct file *file, const char __user *buf,
 
 	attr = file->private_data;
 	if (!attr->set)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	ret = mutex_lock_interruptible(&attr->mutex);
 	if (ret)
@@ -1136,11 +1136,11 @@ int generic_check_addressable(unsigned blocksize_bits, u64 num_blocks)
 		return 0;
 
 	if ((blocksize_bits < 9) || (blocksize_bits > PAGE_SHIFT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((last_fs_block > (sector_t)(~0ULL) >> (blocksize_bits - 9)) ||
 	    (last_fs_page > (pgoff_t)(~0ULL))) {
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 	return 0;
 }
@@ -1190,7 +1190,7 @@ ssize_t noop_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 	 * inode->a_ops so that open/fcntl know that direct I/O is
 	 * generally supported.
 	 */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(noop_direct_IO);
 
@@ -1258,7 +1258,7 @@ int
 simple_nosetlease(struct file *filp, long arg, struct file_lock **flp,
 		  void **priv)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(simple_nosetlease);
 
@@ -1293,7 +1293,7 @@ EXPORT_SYMBOL(simple_symlink_inode_operations);
  */
 static struct dentry *empty_dir_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static int empty_dir_getattr(const struct path *path, struct kstat *stat,
@@ -1306,12 +1306,12 @@ static int empty_dir_getattr(const struct path *path, struct kstat *stat,
 
 static int empty_dir_setattr(struct dentry *dentry, struct iattr *attr)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 static ssize_t empty_dir_listxattr(struct dentry *dentry, char *list, size_t size)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static const struct inode_operations empty_dir_inode_operations = {

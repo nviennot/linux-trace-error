@@ -137,7 +137,7 @@ bitmap_port_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!ip_set_get_ip_port(skb, opt->family,
 				opt->flags & IPSET_DIM_ONE_SRC, &__port))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	port = ntohs(__port);
 

@@ -1441,7 +1441,7 @@ EXPORT_SYMBOL(path_has_submounts);
 int d_set_mounted(struct dentry *dentry)
 {
 	struct dentry *p;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	write_seqlock(&rename_lock);
 	for (p = dentry->d_parent; !IS_ROOT(p); p = p->d_parent) {
 		/* Need exclusion wrt. d_invalidate() */
@@ -1454,7 +1454,7 @@ int d_set_mounted(struct dentry *dentry)
 	}
 	spin_lock(&dentry->d_lock);
 	if (!d_unlinked(dentry)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		if (!d_mountpoint(dentry)) {
 			dentry->d_flags |= DCACHE_MOUNTED;
 			ret = 0;
@@ -2067,7 +2067,7 @@ static struct dentry *__d_obtain_alias(struct inode *inode, bool disconnected)
 	struct dentry *res;
 
 	if (!inode)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 
@@ -2969,7 +2969,7 @@ static int __d_unalias(struct inode *inode,
 {
 	struct mutex *m1 = NULL;
 	struct rw_semaphore *m2 = NULL;
-	int ret = -ESTALE;
+	int ret = -ERR(ESTALE);
 
 	/* If alias and dentry share a parent, then no extra locks required */
 	if (alias->d_parent == dentry->d_parent)
@@ -3037,7 +3037,7 @@ struct dentry *d_splice_alias(struct inode *inode, struct dentry *dentry)
 			if (unlikely(d_ancestor(new, dentry))) {
 				write_sequnlock(&rename_lock);
 				dput(new);
-				new = ERR_PTR(-ELOOP);
+				new = ERR_PTR(-ERR(ELOOP));
 				pr_warn_ratelimited(
 					"VFS: Lookup of '%s' in %s %s"
 					" would have caused loop\n",

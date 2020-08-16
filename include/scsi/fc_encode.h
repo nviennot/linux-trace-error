@@ -184,7 +184,7 @@ static inline int fc_ct_ns_fill(struct fc_lport *lport,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*r_ctl = FC_RCTL_DD_UNSOL_CTL;
 	*fh_type = FC_TYPE_CT;
@@ -478,7 +478,7 @@ static inline int fc_ct_ms_fill(struct fc_lport *lport,
 		put_unaligned_be64(lport->wwpn, &ct->payload.dhba.hbaid.id);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*r_ctl = FC_RCTL_DD_UNSOL_CTL;
 	*fh_type = FC_TYPE_CT;
@@ -499,7 +499,7 @@ static inline int fc_ct_fill(struct fc_lport *lport,
 		      unsigned int op, enum fc_rctl *r_ctl,
 		      enum fc_fh_type *fh_type, u32 *did)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	switch (fc_id) {
 	case FC_FID_MGMT_SERV:
@@ -717,7 +717,7 @@ static inline int fc_els_fill(struct fc_lport *lport,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*r_ctl = FC_RCTL_ELS_REQ;

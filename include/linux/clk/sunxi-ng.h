@@ -15,12 +15,12 @@ int sunxi_ccu_get_mmc_timing_mode(struct clk *clk);
 static inline int sunxi_ccu_set_mmc_timing_mode(struct clk *clk,
 						bool new_mode)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int sunxi_ccu_get_mmc_timing_mode(struct clk *clk)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 

@@ -387,7 +387,7 @@ static int emu8k_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 			stop_voice(rec, ch);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

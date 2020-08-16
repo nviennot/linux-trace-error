@@ -644,7 +644,7 @@ static int nlattr_to_dccp(struct nlattr *cda[], struct nf_conn *ct)
 	    !tb[CTA_PROTOINFO_DCCP_ROLE] ||
 	    nla_get_u8(tb[CTA_PROTOINFO_DCCP_ROLE]) > CT_DCCP_ROLE_MAX ||
 	    nla_get_u8(tb[CTA_PROTOINFO_DCCP_STATE]) >= CT_DCCP_IGNORE) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&ct->lock);
@@ -708,7 +708,7 @@ dccp_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
 	return 0;
 
 nla_put_failure:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static const struct nla_policy

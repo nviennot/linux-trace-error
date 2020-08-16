@@ -123,7 +123,7 @@ static int lowpan_validate(struct nlattr *tb[], struct nlattr *data[],
 {
 	if (tb[IFLA_ADDRESS]) {
 		if (nla_len(tb[IFLA_ADDRESS]) != IEEE802154_ADDR_LEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -140,19 +140,19 @@ static int lowpan_newlink(struct net *src_net, struct net_device *ldev,
 	pr_debug("adding new link\n");
 
 	if (!tb[IFLA_LINK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* find and hold wpan device */
 	wdev = dev_get_by_index(dev_net(ldev), nla_get_u32(tb[IFLA_LINK]));
 	if (!wdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (wdev->type != ARPHRD_IEEE802154) {
 		dev_put(wdev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wdev->ieee802154_ptr->lowpan_dev) {
 		dev_put(wdev);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	lowpan_802154_dev(ldev)->wdev = wdev;

@@ -64,19 +64,19 @@ static int from_dlm_errno(int err)
 {
 	switch (err) {
 	case -DLM_ERRNO_EDEADLK:
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 	case -DLM_ERRNO_EBADR:
-		return -EBADR;
+		return -ERR(EBADR);
 	case -DLM_ERRNO_EBADSLT:
-		return -EBADSLT;
+		return -ERR(EBADSLT);
 	case -DLM_ERRNO_EPROTO:
-		return -EPROTO;
+		return -ERR(EPROTO);
 	case -DLM_ERRNO_EOPNOTSUPP:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	case -DLM_ERRNO_ETIMEDOUT:
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	case -DLM_ERRNO_EINPROGRESS:
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 	}
 	return err;
 }

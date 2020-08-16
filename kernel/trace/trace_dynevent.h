@@ -69,7 +69,7 @@ static inline
 int dyn_event_init(struct dyn_event *ev, struct dyn_event_operations *ops)
 {
 	if (!ev || !ops)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	INIT_LIST_HEAD(&ev->list);
 	ev->ops = ops;
@@ -81,7 +81,7 @@ static inline int dyn_event_add(struct dyn_event *ev)
 	lockdep_assert_held(&event_mutex);
 
 	if (!ev || !ev->ops)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_add_tail(&ev->list, &dyn_event_list);
 	return 0;

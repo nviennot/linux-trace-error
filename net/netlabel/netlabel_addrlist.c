@@ -152,7 +152,7 @@ int netlbl_af4list_add(struct netlbl_af4list *entry, struct list_head *head)
 	iter = netlbl_af4list_search(entry->addr, head);
 	if (iter != NULL &&
 	    iter->addr == entry->addr && iter->mask == entry->mask)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* in order to speed up address searches through the list (the common
 	 * case) we need to keep the list in order based on the size of the
@@ -190,7 +190,7 @@ int netlbl_af6list_add(struct netlbl_af6list *entry, struct list_head *head)
 	if (iter != NULL &&
 	    ipv6_addr_equal(&iter->addr, &entry->addr) &&
 	    ipv6_addr_equal(&iter->mask, &entry->mask))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* in order to speed up address searches through the list (the common
 	 * case) we need to keep the list in order based on the size of the

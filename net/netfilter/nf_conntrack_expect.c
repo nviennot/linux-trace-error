@@ -424,7 +424,7 @@ static inline int __nf_ct_expect_check(struct nf_conntrack_expect *expect,
 	int ret = 0;
 
 	if (!master_help) {
-		ret = -ESHUTDOWN;
+		ret = -ERR(ESHUTDOWN);
 		goto out;
 	}
 	h = nf_ct_expect_dst_hash(net, &expect->tuple);
@@ -433,12 +433,12 @@ static inline int __nf_ct_expect_check(struct nf_conntrack_expect *expect,
 		    expect_matches(i, expect)) {
 			if (i->class != expect->class ||
 			    i->master != expect->master)
-				return -EALREADY;
+				return -ERR(EALREADY);
 
 			if (nf_ct_remove_expect(i))
 				break;
 		} else if (expect_clash(i, expect)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 	}
@@ -452,7 +452,7 @@ static inline int __nf_ct_expect_check(struct nf_conntrack_expect *expect,
 			evict_oldest_expect(master, expect);
 			if (master_help->expecting[expect->class]
 						>= p->max_expected) {
-				ret = -EMFILE;
+				ret = -ERR(EMFILE);
 				goto out;
 			}
 		}
@@ -460,7 +460,7 @@ static inline int __nf_ct_expect_check(struct nf_conntrack_expect *expect,
 
 	if (net->ct.expect_count >= nf_ct_expect_max) {
 		net_warn_ratelimited("nf_conntrack: expectation table full\n");
-		ret = -EMFILE;
+		ret = -ERR(EMFILE);
 	}
 out:
 	return ret;

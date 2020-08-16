@@ -245,7 +245,7 @@ static int cgw_chk_csum_parms(s8 fr, s8 to, s8 re, struct rtcanmsg *r)
 	    re >= -dlen && re < dlen)
 		return 0;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static inline int calc_idx(int idx, int rx_len)
@@ -551,7 +551,7 @@ static int cgw_put_job(struct sk_buff *skb, struct cgw_job *gwj, int type,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*rtcan), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtcan = nlmsg_data(nlh);
 	rtcan->can_family = AF_CAN;
@@ -680,7 +680,7 @@ static int cgw_put_job(struct sk_buff *skb, struct cgw_job *gwj, int type,
 
 cancel:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* Dump information about all CAN gateway jobs, in response to RTM_GETROUTE */
@@ -749,7 +749,7 @@ static int cgw_parse_attr(struct nlmsghdr *nlh, struct cf_mod *mod,
 		*limhops = nla_get_u8(tb[CGW_LIM_HOPS]);
 
 		if (*limhops < 1 || *limhops > max_hops)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* check for AND/OR/XOR/SET modifications */
@@ -962,7 +962,7 @@ static int cgw_parse_attr(struct nlmsghdr *nlh, struct cf_mod *mod,
 			nla_memcpy(&ccgw->filter, tb[CGW_FILTER],
 				   sizeof(struct can_filter));
 
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 
 		/* specifying two interfaces is mandatory */
 		if (!tb[CGW_SRC_IF] || !tb[CGW_DST_IF])
@@ -997,18 +997,18 @@ static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
 	int err = 0;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (nlmsg_len(nlh) < sizeof(*r))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	r = nlmsg_data(nlh);
 	if (r->can_family != AF_CAN)
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 
 	/* so far we only support CAN -> CAN routings */
 	if (r->gwtype != CGW_TYPE_CAN_CAN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = cgw_parse_attr(nlh, &mod, CGW_TYPE_CAN_CAN, &ccgw, &limhops);
 	if (err < 0)
@@ -1024,7 +1024,7 @@ static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
 
 			/* interfaces & filters must be identical */
 			if (memcmp(&gwj->ccgw, &ccgw, sizeof(ccgw)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* update modifications with disabled softirq & quit */
 			local_bh_disable();
@@ -1036,7 +1036,7 @@ static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
 
 	/* ifindex == 0 is not allowed for job creation */
 	if (!ccgw.src_idx || !ccgw.dst_idx)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	gwj = kmem_cache_alloc(cgw_cache, GFP_KERNEL);
 	if (!gwj)
@@ -1053,7 +1053,7 @@ static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
 	memcpy(&gwj->mod, &mod, sizeof(mod));
 	memcpy(&gwj->ccgw, &ccgw, sizeof(ccgw));
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 
 	gwj->src.dev = __dev_get_by_index(net, gwj->ccgw.src_idx);
 
@@ -1110,18 +1110,18 @@ static int cgw_remove_job(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int err = 0;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (nlmsg_len(nlh) < sizeof(*r))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	r = nlmsg_data(nlh);
 	if (r->can_family != AF_CAN)
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 
 	/* so far we only support CAN -> CAN routings */
 	if (r->gwtype != CGW_TYPE_CAN_CAN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = cgw_parse_attr(nlh, &mod, CGW_TYPE_CAN_CAN, &ccgw, &limhops);
 	if (err < 0)
@@ -1133,7 +1133,7 @@ static int cgw_remove_job(struct sk_buff *skb, struct nlmsghdr *nlh,
 		return 0;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	ASSERT_RTNL();
 

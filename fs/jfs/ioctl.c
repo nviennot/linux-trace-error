@@ -77,7 +77,7 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return err;
 
 		if (!inode_owner_or_capable(inode)) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			goto setflags_out;
 		}
 		if (get_user(flags, (int __user *) arg)) {
@@ -91,7 +91,7 @@ long jfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		/* Is it quota file? Do not allow user to mess with it */
 		if (IS_NOQUOTA(inode)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			goto setflags_out;
 		}
 
@@ -127,11 +127,11 @@ setflags_out:
 		s64 ret = 0;
 
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (!blk_queue_discard(q)) {
 			jfs_warn("FITRIM not supported on device");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 
 		if (copy_from_user(&range, (struct fstrim_range __user *)arg,
@@ -153,7 +153,7 @@ setflags_out:
 	}
 
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 

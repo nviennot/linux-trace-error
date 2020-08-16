@@ -110,7 +110,7 @@ static int avtab_insert(struct avtab *h, struct avtab_key *key, struct avtab_dat
 	u16 specified = key->specified & ~(AVTAB_ENABLED|AVTAB_ENABLED_OLD);
 
 	if (!h)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hvalue = avtab_hash(key, h->mask);
 	for (prev = NULL, cur = h->htable[hvalue];
@@ -123,7 +123,7 @@ static int avtab_insert(struct avtab *h, struct avtab_key *key, struct avtab_dat
 			/* extended perms may not be unique */
 			if (specified & AVTAB_XPERMS)
 				break;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 		if (key->source_type < cur->key.source_type)
 			break;
@@ -410,7 +410,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 		items2 = le32_to_cpu(buf32[0]);
 		if (items2 > ARRAY_SIZE(buf32)) {
 			pr_err("SELinux: avtab: entry overflow\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		}
 		rc = next_entry(buf32, fp, sizeof(u32)*items2);
@@ -424,19 +424,19 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 		key.source_type = (u16)val;
 		if (key.source_type != val) {
 			pr_err("SELinux: avtab: truncated source type\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		val = le32_to_cpu(buf32[items++]);
 		key.target_type = (u16)val;
 		if (key.target_type != val) {
 			pr_err("SELinux: avtab: truncated target type\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		val = le32_to_cpu(buf32[items++]);
 		key.target_class = (u16)val;
 		if (key.target_class != val) {
 			pr_err("SELinux: avtab: truncated target class\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		val = le32_to_cpu(buf32[items++]);
@@ -444,16 +444,16 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 
 		if (!(val & (AVTAB_AV | AVTAB_TYPE))) {
 			pr_err("SELinux: avtab: null entry\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if ((val & AVTAB_AV) &&
 		    (val & AVTAB_TYPE)) {
 			pr_err("SELinux: avtab: entry has both access vectors and types\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (val & AVTAB_XPERMS) {
 			pr_err("SELinux: avtab: entry has extended permissions\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		for (i = 0; i < ARRAY_SIZE(spec_order); i++) {
@@ -469,7 +469,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 		if (items != items2) {
 			pr_err("SELinux: avtab: entry only had %d items, expected %d\n",
 			       items2, items);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 	}
@@ -490,7 +490,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 	    !policydb_type_isvalid(pol, key.target_type) ||
 	    !policydb_class_isvalid(pol, key.target_class)) {
 		pr_err("SELinux: avtab: invalid type or class\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	set = 0;
@@ -500,7 +500,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 	}
 	if (!set || set > 1) {
 		pr_err("SELinux:  avtab:  more than one specifier\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((vers < POLICYDB_VERSION_XPERMS_IOCTL) &&
@@ -508,7 +508,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 		pr_err("SELinux:  avtab:  policy version %u does not "
 				"support extended permissions rules and one "
 				"was specified\n", vers);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (key.specified & AVTAB_XPERMS) {
 		memset(&xperms, 0, sizeof(struct avtab_extended_perms));
 		rc = next_entry(&xperms.specified, fp, sizeof(u8));
@@ -540,7 +540,7 @@ int avtab_read_item(struct avtab *a, void *fp, struct policydb *pol,
 	if ((key.specified & AVTAB_TYPE) &&
 	    !policydb_type_isvalid(pol, datum.u.data)) {
 		pr_err("SELinux: avtab: invalid type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return insertf(a, &key, &datum, p);
 }
@@ -566,7 +566,7 @@ int avtab_read(struct avtab *a, void *fp, struct policydb *pol)
 	nel = le32_to_cpu(buf[0]);
 	if (!nel) {
 		pr_err("SELinux: avtab: table is empty\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto bad;
 	}
 

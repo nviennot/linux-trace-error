@@ -26,12 +26,12 @@ static int em_nbyte_change(struct net *net, void *data, int data_len,
 
 	if (data_len < sizeof(*nbyte) ||
 	    data_len < (sizeof(*nbyte) + nbyte->len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	em->datalen = sizeof(*nbyte) + nbyte->len;
 	em->data = (unsigned long)kmemdup(data, em->datalen, GFP_KERNEL);
 	if (em->data == 0UL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	return 0;
 }

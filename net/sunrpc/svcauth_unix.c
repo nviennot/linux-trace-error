@@ -195,19 +195,19 @@ static int ip_map_parse(struct cache_detail *cd,
 	time64_t expiry;
 
 	if (mesg[mlen-1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mesg[mlen-1] = 0;
 
 	/* class */
 	len = qword_get(&mesg, class, sizeof(class));
-	if (len <= 0) return -EINVAL;
+	if (len <= 0) return -ERR(EINVAL);
 
 	/* ip address */
 	len = qword_get(&mesg, buf, mlen);
-	if (len <= 0) return -EINVAL;
+	if (len <= 0) return -ERR(EINVAL);
 
 	if (rpc_pton(cd->net, buf, len, &address.sa, sizeof(address)) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (address.sa.sa_family) {
 	case AF_INET:
 		/* Form a mapped IPv4 address in sin6 */
@@ -221,21 +221,21 @@ static int ip_map_parse(struct cache_detail *cd,
 		break;
 #endif
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	expiry = get_expiry(&mesg);
 	if (expiry ==0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* domainname, or empty for NEGATIVE */
 	len = qword_get(&mesg, buf, mlen);
-	if (len < 0) return -EINVAL;
+	if (len < 0) return -ERR(EINVAL);
 
 	if (len) {
 		dom = unix_domain_find(buf);
 		if (dom == NULL)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	} else
 		dom = NULL;
 
@@ -496,22 +496,22 @@ static int unix_gid_parse(struct cache_detail *cd,
 	struct unix_gid ug, *ugp;
 
 	if (mesg[mlen - 1] != '\n')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mesg[mlen-1] = 0;
 
 	rv = get_int(&mesg, &id);
 	if (rv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	uid = make_kuid(current_user_ns(), id);
 	ug.uid = uid;
 
 	expiry = get_expiry(&mesg);
 	if (expiry == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rv = get_int(&mesg, &gids);
 	if (rv || gids < 0 || gids > 8192)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ug.gi = groups_alloc(gids);
 	if (!ug.gi)
@@ -521,7 +521,7 @@ static int unix_gid_parse(struct cache_detail *cd,
 		int gid;
 		kgid_t kgid;
 		rv = get_int(&mesg, &gid);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (rv)
 			goto out;
 		kgid = make_kgid(current_user_ns(), gid);
@@ -647,19 +647,19 @@ static struct group_info *unix_gid_find(kuid_t uid, struct svc_rqst *rqstp)
 
 	ug = unix_gid_lookup(sn->unix_gid_cache, uid);
 	if (!ug)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	ret = cache_check(sn->unix_gid_cache, &ug->h, &rqstp->rq_chandle);
 	switch (ret) {
 	case -ENOENT:
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	case -ETIMEDOUT:
-		return ERR_PTR(-ESHUTDOWN);
+		return ERR_PTR(-ERR(ESHUTDOWN));
 	case 0:
 		gi = get_group_info(ug->gi);
 		cache_put(&ug->h, sn->unix_gid_cache);
 		return gi;
 	default:
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	}
 }
 

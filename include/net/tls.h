@@ -688,7 +688,7 @@ static inline void tls_device_cleanup(void) {}
 static inline int
 tls_set_device_offload(struct sock *sk, struct tls_context *ctx)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void tls_device_free_resources_tx(struct sock *sk) {}
@@ -696,7 +696,7 @@ static inline void tls_device_free_resources_tx(struct sock *sk) {}
 static inline int
 tls_set_device_offload_rx(struct sock *sk, struct tls_context *ctx)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void tls_device_offload_cleanup_rx(struct sock *sk) {}

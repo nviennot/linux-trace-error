@@ -156,9 +156,9 @@ snd_emu8000_detect(struct snd_emu8000 *emu)
 		return -ENODEV;
 		*/
 	if ((EMU8000_HWCF1_READ(emu) & 0x007e) != 0x0058)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if ((EMU8000_HWCF2_READ(emu) & 0x0003) != 0x0003)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	snd_printdd("EMU8000 [0x%lx]: Synth chip found\n",
                     emu->port1);
@@ -653,7 +653,7 @@ snd_emu8000_load_chorus_fx(struct snd_emu8000 *emu, int mode, const void __user 
 	struct soundfont_chorus_fx rec;
 	if (mode < SNDRV_EMU8000_CHORUS_PREDEFINED || mode >= SNDRV_EMU8000_CHORUS_NUMBERS) {
 		snd_printk(KERN_WARNING "invalid chorus mode %d for uploading\n", mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (len < (long)sizeof(rec) || copy_from_user(&rec, buf, sizeof(rec)))
 		return -EFAULT;
@@ -781,7 +781,7 @@ snd_emu8000_load_reverb_fx(struct snd_emu8000 *emu, int mode, const void __user 
 
 	if (mode < SNDRV_EMU8000_REVERB_PREDEFINED || mode >= SNDRV_EMU8000_REVERB_NUMBERS) {
 		snd_printk(KERN_WARNING "invalid reverb mode %d for uploading\n", mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (len < (long)sizeof(rec) || copy_from_user(&rec, buf, sizeof(rec)))
 		return -EFAULT;
@@ -1023,7 +1023,7 @@ snd_emu8000_create_mixer(struct snd_card *card, struct snd_emu8000 *emu)
 	int i, err = 0;
 
 	if (snd_BUG_ON(!emu || !card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_init(&emu->control_lock);
 
@@ -1098,7 +1098,7 @@ snd_emu8000_new(struct snd_card *card, int index, long port, int seq_ports,
 	    !(hw->res_port3 = request_region(hw->port3, 4, "Emu8000-3"))) {
 		snd_printk(KERN_ERR "sbawe: can't grab ports 0x%lx, 0x%lx, 0x%lx\n", hw->port1, hw->port2, hw->port3);
 		snd_emu8000_free(hw);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	hw->mem_size = 0;
 	hw->card = card;
@@ -1112,7 +1112,7 @@ snd_emu8000_new(struct snd_card *card, int index, long port, int seq_ports,
 
 	if (snd_emu8000_detect(hw) < 0) {
 		snd_emu8000_free(hw);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	snd_emu8000_init_hw(hw);

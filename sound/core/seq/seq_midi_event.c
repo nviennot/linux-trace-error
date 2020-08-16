@@ -293,7 +293,7 @@ long snd_midi_event_decode(struct snd_midi_event *dev, unsigned char *buf, long 
 	unsigned int cmd, type;
 
 	if (ev->type == SNDRV_SEQ_EVENT_NONE)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	for (type = 0; type < ARRAY_SIZE(status_event); type++) {
 		if (ev->type == status_event[type].event)
@@ -303,7 +303,7 @@ long snd_midi_event_decode(struct snd_midi_event *dev, unsigned char *buf, long 
 		if (ev->type == extra_event[type].event)
 			return extra_event[type].decode(dev, buf, count, ev);
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 
       __found:
 	if (type >= ST_SPECIAL)

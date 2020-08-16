@@ -118,7 +118,7 @@ static int usb6fire_control_set_rate(struct control_runtime *rt, int rate)
 	struct comm_runtime *comm_rt = rt->chip->comm;
 
 	if (rate < 0 || rate >= CONTROL_N_RATES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = usb_set_interface(device, 1, rates_altsetting[rate]);
 	if (ret < 0)
@@ -169,7 +169,7 @@ static int usb6fire_control_streaming_update(struct control_runtime *rt)
 			(rt->usb_streaming ? 0x01 : 0x00) |
 			(rt->digital_thru_switch ? 0x08 : 0x00));
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int usb6fire_control_output_vol_info(struct snd_kcontrol *kcontrol,
@@ -192,7 +192,7 @@ static int usb6fire_control_output_vol_put(struct snd_kcontrol *kcontrol,
 	if (ch > 4) {
 		dev_err(&rt->chip->dev->dev,
 			"Invalid channel in volume control.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rt->output_vol[ch] != ucontrol->value.integer.value[0]) {
@@ -221,7 +221,7 @@ static int usb6fire_control_output_vol_get(struct snd_kcontrol *kcontrol,
 	if (ch > 4) {
 		dev_err(&rt->chip->dev->dev,
 			"Invalid channel in volume control.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ucontrol->value.integer.value[0] = rt->output_vol[ch];
@@ -240,7 +240,7 @@ static int usb6fire_control_output_mute_put(struct snd_kcontrol *kcontrol,
 	if (ch > 4) {
 		dev_err(&rt->chip->dev->dev,
 			"Invalid channel in volume control.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt->output_mute &= ~(3 << ch);
@@ -266,7 +266,7 @@ static int usb6fire_control_output_mute_get(struct snd_kcontrol *kcontrol,
 	if (ch > 4) {
 		dev_err(&rt->chip->dev->dev,
 			"Invalid channel in volume control.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ucontrol->value.integer.value[0] = 1 & value;

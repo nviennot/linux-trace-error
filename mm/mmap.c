@@ -199,7 +199,7 @@ SYSCALL_DEFINE1(brk, unsigned long, brk)
 	LIST_HEAD(uf);
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	origbrk = mm->brk;
 
@@ -1323,7 +1323,7 @@ static inline int mlock_future_check(struct mm_struct *mm,
 		lock_limit = rlimit(RLIMIT_MEMLOCK);
 		lock_limit >>= PAGE_SHIFT;
 		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	}
 	return 0;
 }
@@ -1375,7 +1375,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 	*populate = 0;
 
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Does the application expect PROT_READ to imply PROT_EXEC?
@@ -1401,7 +1401,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 
 	/* offset overflow? */
 	if ((pgoff + (len >> PAGE_SHIFT)) < pgoff)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Too many mappings? */
 	if (mm->map_count > sysctl_max_map_count)
@@ -1418,7 +1418,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 		struct vm_area_struct *vma = find_vma(mm, addr);
 
 		if (vma && vma->vm_start < addr + len)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	if (prot == PROT_EXEC) {
@@ -1436,17 +1436,17 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 
 	if (flags & MAP_LOCKED)
 		if (!can_do_mlock())
-			return -EPERM;
+			return -ERR(EPERM);
 
 	if (mlock_future_check(mm, vm_flags, len))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (file) {
 		struct inode *inode = file_inode(file);
 		unsigned long flags_mask;
 
 		if (!file_mmap_ok(file, inode, pgoff, len))
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 
 		flags_mask = LEGACY_MAP_MASK | file->f_op->mmap_supported_flags;
 
@@ -1463,12 +1463,12 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 			fallthrough;
 		case MAP_SHARED_VALIDATE:
 			if (flags & ~flags_mask)
-				return -EOPNOTSUPP;
+				return -ERR(EOPNOTSUPP);
 			if (prot & PROT_WRITE) {
 				if (!(file->f_mode & FMODE_WRITE))
-					return -EACCES;
+					return -ERR(EACCES);
 				if (IS_SWAPFILE(file->f_mapping->host))
-					return -ETXTBSY;
+					return -ERR(ETXTBSY);
 			}
 
 			/*
@@ -1476,13 +1476,13 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 			 * file..
 			 */
 			if (IS_APPEND(inode) && (file->f_mode & FMODE_WRITE))
-				return -EACCES;
+				return -ERR(EACCES);
 
 			/*
 			 * Make sure there are no mandatory locks on the file.
 			 */
 			if (locks_verify_locked(file))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 
 			vm_flags |= VM_SHARED | VM_MAYSHARE;
 			if (!(file->f_mode & FMODE_WRITE))
@@ -1490,27 +1490,27 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 			fallthrough;
 		case MAP_PRIVATE:
 			if (!(file->f_mode & FMODE_READ))
-				return -EACCES;
+				return -ERR(EACCES);
 			if (path_noexec(&file->f_path)) {
 				if (vm_flags & VM_EXEC)
-					return -EPERM;
+					return -ERR(EPERM);
 				vm_flags &= ~VM_MAYEXEC;
 			}
 
 			if (!file->f_op->mmap)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		switch (flags & MAP_TYPE) {
 		case MAP_SHARED:
 			if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			/*
 			 * Ignore pgoff.
 			 */
@@ -1524,7 +1524,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
 			pgoff = addr >> PAGE_SHIFT;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1561,10 +1561,10 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 		audit_mmap_fd(fd, flags);
 		file = fget(fd);
 		if (!file)
-			return -EBADF;
+			return -ERR(EBADF);
 		if (is_file_hugepages(file))
 			len = ALIGN(len, huge_page_size(hstate_file(file)));
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		if (unlikely(flags & MAP_HUGETLB && !is_file_hugepages(file)))
 			goto out_fput;
 	} else if (flags & MAP_HUGETLB) {
@@ -1573,7 +1573,7 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
 
 		hs = hstate_sizelog((flags >> MAP_HUGE_SHIFT) & MAP_HUGE_MASK);
 		if (!hs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		len = ALIGN(len, huge_page_size(hs));
 		/*
@@ -1623,7 +1623,7 @@ SYSCALL_DEFINE1(old_mmap, struct mmap_arg_struct __user *, arg)
 	if (copy_from_user(&a, arg, sizeof(a)))
 		return -EFAULT;
 	if (offset_in_page(a.offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ksys_mmap_pgoff(a.addr, a.len, a.prot, a.flags, a.fd,
 			       a.offset >> PAGE_SHIFT);
@@ -2222,7 +2222,7 @@ get_unmapped_area(struct file *file, unsigned long addr, unsigned long len,
 	if (addr > TASK_SIZE - len)
 		return -ENOMEM;
 	if (offset_in_page(addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = security_mmap_addr(addr);
 	return error ? error : addr;
@@ -2434,7 +2434,7 @@ int expand_downwards(struct vm_area_struct *vma,
 
 	address &= PAGE_MASK;
 	if (address < mmap_min_addr)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Enforce stack_guard_gap */
 	prev = vma->vm_prev;
@@ -2747,12 +2747,12 @@ int __do_munmap(struct mm_struct *mm, unsigned long start, size_t len,
 	struct vm_area_struct *vma, *prev, *last;
 
 	if ((offset_in_page(start)) || start > TASK_SIZE || len > TASK_SIZE-start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = PAGE_ALIGN(len);
 	end = start + len;
 	if (len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * arch_unmap() might do unmaps itself.  It must be called
@@ -2863,7 +2863,7 @@ static int __vm_munmap(unsigned long start, size_t len, bool downgrade)
 	LIST_HEAD(uf);
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	ret = __do_munmap(mm, start, len, &uf, downgrade);
 	/*
@@ -2905,7 +2905,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
 	unsigned long populate = 0;
-	unsigned long ret = -EINVAL;
+	unsigned long ret = -ERR(EINVAL);
 	struct file *file;
 
 	pr_warn_once("%s (%d) uses deprecated remap_file_pages() syscall. See Documentation/vm/remap_file_pages.rst.\n",
@@ -2924,7 +2924,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
 		return ret;
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	vma = find_vma(mm, start);
 
@@ -3010,7 +3010,7 @@ static int do_brk_flags(unsigned long addr, unsigned long len, unsigned long fla
 
 	/* Until we need other flags, refuse anything except VM_EXEC. */
 	if ((flags & (~VM_EXEC)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	flags |= VM_DATA_DEFAULT_FLAGS | VM_ACCOUNT | mm->def_flags;
 
 	mapped_addr = get_unmapped_area(NULL, addr, len, 0, MAP_FIXED);
@@ -3087,7 +3087,7 @@ int vm_brk_flags(unsigned long addr, unsigned long request, unsigned long flags)
 		return 0;
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	ret = do_brk_flags(addr, len, flags, &uf);
 	populate = ((mm->def_flags & VM_LOCKED) != 0);
@@ -3594,7 +3594,7 @@ int mm_take_all_locks(struct mm_struct *mm)
 
 out_unlock:
 	mm_drop_all_locks(mm);
-	return -EINTR;
+	return -ERR(EINTR);
 }
 
 static void vm_unlock_anon_vma(struct anon_vma *anon_vma)

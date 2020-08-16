@@ -315,11 +315,11 @@ static int check_flags(const struct bpf_sk_storage_data *old_sdata,
 {
 	if (old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_NOEXIST)
 		/* elem already exists */
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (!old_sdata && (map_flags & ~BPF_F_LOCK) == BPF_EXIST)
 		/* elem doesn't exist, cannot update it */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -359,7 +359,7 @@ static int sk_storage_alloc(struct sock *sk,
 				  NULL, sk_storage);
 	if (unlikely(prev_sk_storage)) {
 		selem_unlink_map(first_selem);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto uncharge;
 
 		/* Note that even first_selem was linked to smap's
@@ -400,7 +400,7 @@ static struct bpf_sk_storage_data *sk_storage_update(struct sock *sk,
 	if (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST) ||
 	    /* BPF_F_LOCK can only be used in a value with spin_lock */
 	    unlikely((map_flags & BPF_F_LOCK) && !map_value_has_spin_lock(map)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	smap = (struct bpf_sk_storage_map *)map;
 	sk_storage = rcu_dereference(sk->sk_bpf_storage);
@@ -449,7 +449,7 @@ static struct bpf_sk_storage_data *sk_storage_update(struct sock *sk,
 		 * unlikely.  Return instead of retry to keep things
 		 * simple.
 		 */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto unlock_err;
 	}
 
@@ -505,7 +505,7 @@ static int sk_storage_delete(struct sock *sk, struct bpf_map *map)
 
 	sdata = sk_storage_lookup(sk, map, false);
 	if (!sdata)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	selem_unlink(SELEM(sdata));
 
@@ -623,13 +623,13 @@ static int bpf_sk_storage_map_alloc_check(union bpf_attr *attr)
 	    attr->key_size != sizeof(int) || !attr->value_size ||
 	    /* Enforce BTF for userspace sk dumping */
 	    !attr->btf_key_type_id || !attr->btf_value_type_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!bpf_capable())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (attr->value_size > MAX_VALUE_SIZE)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	return 0;
 }
@@ -682,7 +682,7 @@ static struct bpf_map *bpf_sk_storage_map_alloc(union bpf_attr *attr)
 static int notsupp_get_next_key(struct bpf_map *map, void *key,
 				void *next_key)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int bpf_sk_storage_map_check_btf(const struct bpf_map *map,
@@ -693,11 +693,11 @@ static int bpf_sk_storage_map_check_btf(const struct bpf_map *map,
 	u32 int_data;
 
 	if (BTF_INFO_KIND(key_type->info) != BTF_KIND_INT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	int_data = *(u32 *)(key_type + 1);
 	if (BTF_INT_BITS(int_data) != 32 || BTF_INT_OFFSET(int_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -979,7 +979,7 @@ bpf_sk_storage_diag_alloc(const struct nlattr *nla_stgs)
 	 * the map_alloc_check() side also does.
 	 */
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	nla_for_each_nested(nla, nla_stgs, rem) {
 		if (nla_type(nla) == SK_DIAG_BPF_STORAGE_REQ_MAP_FD)
@@ -1006,12 +1006,12 @@ bpf_sk_storage_diag_alloc(const struct nlattr *nla_stgs)
 		}
 		if (map->map_type != BPF_MAP_TYPE_SK_STORAGE) {
 			bpf_map_put(map);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_free;
 		}
 		if (diag_check_dup(diag, map)) {
 			bpf_map_put(map);
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto err_free;
 		}
 		diag->maps[diag->nr_maps++] = map;
@@ -1035,7 +1035,7 @@ static int diag_get(struct bpf_sk_storage_data *sdata, struct sk_buff *skb)
 
 	nla_stg = nla_nest_start(skb, SK_DIAG_BPF_STORAGE);
 	if (!nla_stg)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	smap = rcu_dereference(sdata->smap);
 	if (nla_put_u32(skb, SK_DIAG_BPF_STORAGE_MAP_ID, smap->map.id))
@@ -1058,7 +1058,7 @@ static int diag_get(struct bpf_sk_storage_data *sdata, struct sk_buff *skb)
 
 errout:
 	nla_nest_cancel(skb, nla_stg);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int bpf_sk_storage_diag_put_all(struct sock *sk, struct sk_buff *skb,
@@ -1085,7 +1085,7 @@ static int bpf_sk_storage_diag_put_all(struct sock *sk, struct sk_buff *skb,
 	nla_stgs = nla_nest_start(skb, stg_array_type);
 	if (!nla_stgs)
 		/* Continue to learn diag_size */
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 
 	saved_len = skb->len;
 	hlist_for_each_entry_rcu(selem, &sk_storage->list, snode) {
@@ -1094,7 +1094,7 @@ static int bpf_sk_storage_diag_put_all(struct sock *sk, struct sk_buff *skb,
 
 		if (nla_stgs && diag_get(SDATA(selem), skb))
 			/* Continue to learn diag_size */
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 	}
 
 	rcu_read_unlock();
@@ -1146,7 +1146,7 @@ int bpf_sk_storage_diag_put(struct bpf_sk_storage_diag *diag,
 	nla_stgs = nla_nest_start(skb, stg_array_type);
 	if (!nla_stgs)
 		/* Continue to learn diag_size */
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 
 	saved_len = skb->len;
 	for (i = 0; i < diag->nr_maps; i++) {
@@ -1161,7 +1161,7 @@ int bpf_sk_storage_diag_put(struct bpf_sk_storage_diag *diag,
 
 		if (nla_stgs && diag_get(sdata, skb))
 			/* Continue to learn diag_size */
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 	}
 	rcu_read_unlock();
 

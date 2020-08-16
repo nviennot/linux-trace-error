@@ -141,7 +141,7 @@ static int tipc_udp_msg2addr(struct tipc_bearer *b, struct tipc_media_addr *a,
 
 	ua = (struct udp_media_addr *) (msg + TIPC_MEDIA_ADDR_OFFSET);
 	if (msg[TIPC_MEDIA_TYPE_OFFSET] != TIPC_MEDIA_TYPE_UDP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tipc_udp_media_addr_set(a, ua);
 	return 0;
 }
@@ -240,7 +240,7 @@ static int tipc_udp_send_msg(struct net *net, struct sk_buff *skb,
 	skb_set_inner_protocol(skb, htons(ETH_P_TIPC));
 	ub = rcu_dereference(b->media_ptr);
 	if (!ub) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -297,7 +297,7 @@ static int tipc_udp_rcast_add(struct tipc_bearer *b,
 
 	ub = rcu_dereference_rtnl(b->media_ptr);
 	if (!ub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	rcast = kmalloc(sizeof(*rcast), GFP_ATOMIC);
 	if (!rcast)
@@ -425,7 +425,7 @@ static int __tipc_nl_add_udp_addr(struct sk_buff *skb,
 		ip4.sin_port = addr->port;
 		ip4.sin_addr.s_addr = addr->ipv4.s_addr;
 		if (nla_put(skb, nla_t, sizeof(ip4), &ip4))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 #if IS_ENABLED(CONFIG_IPV6)
 	} else if (ntohs(addr->proto) == ETH_P_IPV6) {
@@ -436,7 +436,7 @@ static int __tipc_nl_add_udp_addr(struct sk_buff *skb,
 		ip6.sin6_port  = addr->port;
 		memcpy(&ip6.sin6_addr, &addr->ipv6, sizeof(struct in6_addr));
 		if (nla_put(skb, nla_t, sizeof(ip6), &ip6))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 #endif
 	}
 
@@ -462,7 +462,7 @@ int tipc_udp_nl_dump_remoteip(struct sk_buff *skb, struct netlink_callback *cb)
 		char *bname;
 
 		if (!attrs[TIPC_NLA_BEARER])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = nla_parse_nested_deprecated(battrs, TIPC_NLA_BEARER_MAX,
 						  attrs[TIPC_NLA_BEARER],
@@ -471,7 +471,7 @@ int tipc_udp_nl_dump_remoteip(struct sk_buff *skb, struct netlink_callback *cb)
 			return err;
 
 		if (!battrs[TIPC_NLA_BEARER_NAME])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		bname = nla_data(battrs[TIPC_NLA_BEARER_NAME]);
 
@@ -479,7 +479,7 @@ int tipc_udp_nl_dump_remoteip(struct sk_buff *skb, struct netlink_callback *cb)
 		b = tipc_bearer_find(net, bname);
 		if (!b) {
 			rtnl_unlock();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		bid = b->identity;
 	} else {
@@ -490,14 +490,14 @@ int tipc_udp_nl_dump_remoteip(struct sk_buff *skb, struct netlink_callback *cb)
 		b = rtnl_dereference(tn->bearer_list[bid]);
 		if (!b) {
 			rtnl_unlock();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	ub = rtnl_dereference(b->media_ptr);
 	if (!ub) {
 		rtnl_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i = 0;
@@ -538,7 +538,7 @@ int tipc_udp_nl_add_bearer_data(struct tipc_nl_msg *msg, struct tipc_bearer *b)
 
 	ub = rtnl_dereference(b->media_ptr);
 	if (!ub)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	nest = nla_nest_start_noflag(msg->skb, TIPC_NLA_BEARER_UDP_OPTS);
 	if (!nest)
@@ -560,7 +560,7 @@ int tipc_udp_nl_add_bearer_data(struct tipc_nl_msg *msg, struct tipc_bearer *b)
 	return 0;
 msg_full:
 	nla_nest_cancel(msg->skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -599,7 +599,7 @@ static int tipc_parse_udp_addr(struct nlattr *nla, struct udp_media_addr *addr,
 			atype = ipv6_addr_type(&ip6->sin6_addr);
 			if (__ipv6_addr_needs_scope_id(atype) &&
 			    !ip6->sin6_scope_id) {
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			*scope_id = ip6->sin6_scope_id ? : 0;
@@ -608,7 +608,7 @@ static int tipc_parse_udp_addr(struct nlattr *nla, struct udp_media_addr *addr,
 		return 0;
 #endif
 	}
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 }
 
 int tipc_udp_nl_bearer_add(struct tipc_bearer *b, struct nlattr *attr)
@@ -619,10 +619,10 @@ int tipc_udp_nl_bearer_add(struct tipc_bearer *b, struct nlattr *attr)
 	struct udp_media_addr *dst;
 
 	if (nla_parse_nested_deprecated(opts, TIPC_NLA_UDP_MAX, attr, tipc_nl_udp_policy, NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!opts[TIPC_NLA_UDP_REMOTE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tipc_parse_udp_addr(opts[TIPC_NLA_UDP_REMOTE], &addr, NULL);
 	if (err)
@@ -631,7 +631,7 @@ int tipc_udp_nl_bearer_add(struct tipc_bearer *b, struct nlattr *attr)
 	dst = (struct udp_media_addr *)&b->bcast_addr.value;
 	if (tipc_udp_is_mcast_addr(dst)) {
 		pr_err("Can't add remote ip to TIPC UDP multicast bearer\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tipc_udp_is_known_peer(b, &addr))
@@ -652,7 +652,7 @@ int tipc_udp_nl_bearer_add(struct tipc_bearer *b, struct nlattr *attr)
 static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 			   struct nlattr *attrs[])
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct udp_bearer *ub;
 	struct udp_media_addr remote = {0};
 	struct udp_media_addr local = {0};
@@ -676,7 +676,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 
 	if (!opts[TIPC_NLA_UDP_LOCAL] || !opts[TIPC_NLA_UDP_REMOTE]) {
 		pr_err("Invalid UDP bearer configuration");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -690,7 +690,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 		goto err;
 
 	if (remote.proto != local.proto) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -704,7 +704,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 	}
 	if (!tipc_own_id(net)) {
 		pr_warn("Failed to set node id, please configure manually\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -718,7 +718,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 
 		dev = __ip_dev_find(net, local.ipv4.s_addr, false);
 		if (!dev) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto err;
 		}
 		udp_conf.family = AF_INET;
@@ -732,7 +732,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 		ub->ifindex = dev->ifindex;
 		if (tipc_mtu_bad(dev, sizeof(struct iphdr) +
 				      sizeof(struct udphdr))) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err;
 		}
 		b->mtu = b->media->mtu;
@@ -748,7 +748,7 @@ static int tipc_udp_enable(struct net *net, struct tipc_bearer *b,
 		b->mtu = 1280;
 #endif
 	} else {
-		err = -EAFNOSUPPORT;
+		err = -ERR(EAFNOSUPPORT);
 		goto err;
 	}
 	udp_conf.local_udp_port = local.port;

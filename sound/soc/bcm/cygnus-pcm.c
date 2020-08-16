@@ -279,7 +279,7 @@ static int configure_ringbuf_regs(struct snd_pcm_substream *substream)
 			*p_rbuf = RINGBUF_REG_PLAYBACK(6);
 			break;
 		default:
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 		}
 	} else {
 		p_rbuf = &aio->capture_rb_regs;
@@ -295,7 +295,7 @@ static int configure_ringbuf_regs(struct snd_pcm_substream *substream)
 			*p_rbuf = RINGBUF_REG_CAPTURE(4);
 			break;
 		default:
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 		}
 	}
 
@@ -392,7 +392,7 @@ static int cygnus_pcm_trigger(struct snd_soc_component *component,
 		disable_intr(substream);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -588,7 +588,7 @@ static int cygnus_pcm_open(struct snd_soc_component *component,
 
 	aio = cygnus_dai_get_dma_data(substream);
 	if (!aio)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev_dbg(asoc_rtd_to_cpu(rtd, 0)->dev, "%s port %d\n", __func__, aio->portnum);
 

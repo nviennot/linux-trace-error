@@ -697,7 +697,7 @@ static int configure_aif_clock(struct snd_soc_component *component, int aif)
 		rate = wm8995->fll[1].out;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rate >= 13500000) {
@@ -1430,7 +1430,7 @@ static int wm8995_aif_mute(struct snd_soc_dai *dai, int mute)
 		mute_reg = WM8995_AIF2_DAC_FILTERS_1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, mute_reg, WM8995_AIF1DAC1_MUTE_MASK,
@@ -1455,7 +1455,7 @@ static int wm8995_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aif = 0;
@@ -1476,7 +1476,7 @@ static int wm8995_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1490,7 +1490,7 @@ static int wm8995_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif |= WM8995_AIF1_BCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -1510,11 +1510,11 @@ static int wm8995_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif |= WM8995_AIF1_LRCLK_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8995_AIF1_CONTROL_1,
@@ -1584,7 +1584,7 @@ static int wm8995_hw_params(struct snd_pcm_substream *substream,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_rate = snd_soc_params_to_bclk(params);
@@ -1607,7 +1607,7 @@ static int wm8995_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported word length %u\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* try to find a suitable sample rate */
@@ -1617,7 +1617,7 @@ static int wm8995_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(srs)) {
 		dev_err(dai->dev, "Sample rate %d is not supported\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	rate_val = i << WM8995_AIF1_SR_SHIFT;
 
@@ -1697,7 +1697,7 @@ static int wm8995_set_tristate(struct snd_soc_dai *codec_dai, int tristate)
 		mask = WM8995_AIF3_TRI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tristate)
@@ -1735,7 +1735,7 @@ static int wm8995_get_fll_config(struct fll_div *fll,
 		freq_in /= 2;
 
 		if (fll->clk_ref_div > 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	pr_debug("CLK_REF_DIV=%d, Fref=%dHz\n", fll->clk_ref_div, freq_in);
 
@@ -1744,7 +1744,7 @@ static int wm8995_get_fll_config(struct fll_div *fll,
 	while (freq_out * (fll->outdiv + 1) < 90000000) {
 		fll->outdiv++;
 		if (fll->outdiv > 63)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	freq_out *= fll->outdiv + 1;
 	pr_debug("OUTDIV=%d, Fvco=%dHz\n", fll->outdiv, freq_out);
@@ -1820,14 +1820,14 @@ static int wm8995_set_fll(struct snd_soc_dai *dai, int id,
 		id = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (src) {
 	case 0:
 		/* Allow no source specification when stopping */
 		if (freq_out)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WM8995_FLL_SRC_MCLK1:
 	case WM8995_FLL_SRC_MCLK2:
@@ -1835,7 +1835,7 @@ static int wm8995_set_fll(struct snd_soc_dai *dai, int id,
 	case WM8995_FLL_SRC_BCLK:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Are we changing anything? */
@@ -1917,7 +1917,7 @@ static int wm8995_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		/* AIF3 shares clocking with AIF1/2 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
@@ -1944,7 +1944,7 @@ static int wm8995_set_dai_sysclk(struct snd_soc_dai *dai,
 	case WM8995_SYSCLK_OPCLK:
 	default:
 		dev_err(dai->dev, "Unknown clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	configure_clock(component);
@@ -2048,7 +2048,7 @@ static int wm8995_probe(struct snd_soc_component *component)
 
 	if (ret != 0x8995) {
 		dev_err(component->dev, "Invalid device ID: %#x\n", ret);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_reg_enable;
 	}
 

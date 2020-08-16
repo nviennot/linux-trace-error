@@ -25,7 +25,7 @@ bool __weak copy_from_kernel_nofault_allowed(const void *unsafe_src,
 long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
 {
 	if (!copy_from_kernel_nofault_allowed(src, size))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	pagefault_disable();
 	copy_from_kernel_nofault_loop(dst, src, size, u64, Efault);
@@ -69,7 +69,7 @@ long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr, long count)
 	if (unlikely(count <= 0))
 		return 0;
 	if (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	pagefault_disable();
 	do {
@@ -108,7 +108,7 @@ long copy_from_kernel_nofault(void *dst, const void *src, size_t size)
 	mm_segment_t old_fs = get_fs();
 
 	if (!copy_from_kernel_nofault_allowed(src, size))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	set_fs(KERNEL_DS);
 	pagefault_disable();
@@ -176,7 +176,7 @@ long strncpy_from_kernel_nofault(char *dst, const void *unsafe_addr, long count)
 	if (unlikely(count <= 0))
 		return 0;
 	if (!copy_from_kernel_nofault_allowed(unsafe_addr, count))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	set_fs(KERNEL_DS);
 	pagefault_disable();

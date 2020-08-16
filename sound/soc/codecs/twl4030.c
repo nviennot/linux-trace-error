@@ -78,7 +78,7 @@ static unsigned int twl4030_read(struct snd_soc_component *component, unsigned i
 	u8 value = 0;
 
 	if (reg >= TWL4030_CACHEREGNUM)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (reg) {
 	case TWL4030_REG_EAR_CTL:
@@ -960,7 +960,7 @@ static int snd_soc_put_twl4030_opmode_enum_double(struct snd_kcontrol *kcontrol,
 	if (twl4030->configured) {
 		dev_err(component->dev,
 			"operation mode cannot be changed on-the-fly\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return snd_soc_put_enum_double(kcontrol, ucontrol);
@@ -1705,7 +1705,7 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 		    ((format & TWL4030_AIF_FORMAT) == TWL4030_AIF_FORMAT_TDM))
 			twl4030_tdm_enable(component, substream->stream, 1);
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (twl4030->configured)
@@ -1751,7 +1751,7 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "%s: unknown rate %d\n", __func__,
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* sample size */
@@ -1768,7 +1768,7 @@ static int twl4030_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "%s: unsupported bits/sample %d\n",
 			__func__, params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (format != old_format || mode != old_mode) {
@@ -1817,14 +1817,14 @@ static int twl4030_set_dai_sysclk(struct snd_soc_dai *codec_dai, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported HFCLKIN: %u\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((freq / 1000) != twl4030->sysclk) {
 		dev_err(component->dev,
 			"Mismatch in HFCLKIN: %u (configured: %u)\n",
 			freq, twl4030->sysclk * 1000);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1851,7 +1851,7 @@ static int twl4030_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		format |= TWL4030_CLK256FS_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -1864,7 +1864,7 @@ static int twl4030_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		format |= TWL4030_AIF_FORMAT_TDM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (format != old_format) {
@@ -1933,7 +1933,7 @@ static int twl4030_voice_startup(struct snd_pcm_substream *substream,
 		dev_err(component->dev,
 			"%s: HFCLKIN is %u KHz, voice interface needs 26MHz\n",
 			__func__, twl4030->sysclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If the codec mode is not option2, the voice PCM interface is not
@@ -1945,7 +1945,7 @@ static int twl4030_voice_startup(struct snd_pcm_substream *substream,
 	if (mode != TWL4030_OPTION_2) {
 		dev_err(component->dev, "%s: the codec mode is not option2\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1986,7 +1986,7 @@ static int twl4030_voice_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "%s: unknown rate %d\n", __func__,
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mode != old_mode) {
@@ -2016,13 +2016,13 @@ static int twl4030_voice_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		dev_err(component->dev,
 			"%s: HFCLKIN is %u KHz, voice interface needs 26MHz\n",
 			__func__, freq / 1000);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if ((freq / 1000) != twl4030->sysclk) {
 		dev_err(component->dev,
 			"Mismatch in HFCLKIN: %u (configured: %u)\n",
 			freq, twl4030->sysclk * 1000);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2047,7 +2047,7 @@ static int twl4030_voice_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		format |= TWL4030_VIF_SLAVE_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -2059,7 +2059,7 @@ static int twl4030_voice_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		format |= TWL4030_VIF_FORMAT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (format != old_format) {

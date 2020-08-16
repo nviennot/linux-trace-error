@@ -61,12 +61,12 @@ static int policy_validate_match_data(struct nlattr **tb, u8 mrev)
 {
 	if (mrev != 0) {
 		pr_err("only policy match revision 0 supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nla_get_u32(tb[TCA_EM_IPT_HOOK]) != NF_INET_PRE_ROUTING) {
 		pr_err("policy can only be matched on NF_INET_PRE_ROUTING");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -76,7 +76,7 @@ static int addrtype_validate_match_data(struct nlattr **tb, u8 mrev)
 {
 	if (mrev != 1) {
 		pr_err("only addrtype match revision 1 supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -109,7 +109,7 @@ static struct xt_match *get_xt_match(struct nlattr **tb)
 
 	if (!m->match_name) {
 		pr_err("Unsupported xt match");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (tb[TCA_EM_IPT_MATCH_REVISION])
@@ -139,7 +139,7 @@ static int em_ipt_change(struct net *net, void *data, int data_len,
 
 	if (!tb[TCA_EM_IPT_HOOK] || !tb[TCA_EM_IPT_MATCH_NAME] ||
 	    !tb[TCA_EM_IPT_MATCH_DATA] || !tb[TCA_EM_IPT_NFPROTO])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nfproto = nla_get_u8(tb[TCA_EM_IPT_NFPROTO]);
 	switch (nfproto) {
@@ -147,7 +147,7 @@ static int em_ipt_change(struct net *net, void *data, int data_len,
 	case NFPROTO_IPV6:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	match = get_xt_match(tb);
@@ -252,17 +252,17 @@ static int em_ipt_dump(struct sk_buff *skb, struct tcf_ematch *em)
 	struct em_ipt_match *im = (void *)em->data;
 
 	if (nla_put_string(skb, TCA_EM_IPT_MATCH_NAME, im->match->name) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u32(skb, TCA_EM_IPT_HOOK, im->hook) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u8(skb, TCA_EM_IPT_MATCH_REVISION, im->match->revision) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u8(skb, TCA_EM_IPT_NFPROTO, im->nfproto) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put(skb, TCA_EM_IPT_MATCH_DATA,
 		    im->match->usersize ?: im->match->matchsize,
 		    im->match_data) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

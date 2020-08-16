@@ -90,12 +90,12 @@ set_match_v0_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_info_ratelimited("Cannot find set identified by id %u to match\n",
 				    info->match_set.index);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (info->match_set.u.flags[IPSET_DIM_MAX - 1] != 0) {
 		pr_info_ratelimited("set match dimension is over the limit!\n");
 		ip_set_nfnl_put(par->net, info->match_set.index);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	/* Fill out compatibility data */
@@ -141,12 +141,12 @@ set_match_v1_checkentry(const struct xt_mtchk_param *par)
 	if (index == IPSET_INVALID_ID) {
 		pr_info_ratelimited("Cannot find set identified by id %u to match\n",
 				    info->match_set.index);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (info->match_set.dim > IPSET_DIM_MAX) {
 		pr_info_ratelimited("set match dimension is over the limit!\n");
 		ip_set_nfnl_put(par->net, info->match_set.index);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	return 0;
@@ -239,7 +239,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -250,7 +250,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 					    info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(par->net, info->add_set.index);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	if (info->add_set.u.flags[IPSET_DIM_MAX - 1] != 0 ||
@@ -260,7 +260,7 @@ set_target_v0_checkentry(const struct xt_tgchk_param *par)
 			ip_set_nfnl_put(par->net, info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->del_set.index);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	/* Fill out compatibility data */
@@ -314,7 +314,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -325,7 +325,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 					    info->del_set.index);
 			if (info->add_set.index != IPSET_INVALID_ID)
 				ip_set_nfnl_put(par->net, info->add_set.index);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	if (info->add_set.dim > IPSET_DIM_MAX ||
@@ -335,7 +335,7 @@ set_target_v1_checkentry(const struct xt_tgchk_param *par)
 			ip_set_nfnl_put(par->net, info->add_set.index);
 		if (info->del_set.index != IPSET_INVALID_ID)
 			ip_set_nfnl_put(par->net, info->del_set.index);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	return 0;
@@ -443,7 +443,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find add_set index %u as target\n",
 					    info->add_set.index);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
@@ -453,7 +453,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find del_set index %u as target\n",
 					    info->del_set.index);
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto cleanup_add;
 		}
 	}
@@ -461,7 +461,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 	if (info->map_set.index != IPSET_INVALID_ID) {
 		if (strncmp(par->table, "mangle", 7)) {
 			pr_info_ratelimited("--map-set only usable from mangle table\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto cleanup_del;
 		}
 		if (((info->flags & IPSET_FLAG_MAP_SKBPRIO) |
@@ -470,7 +470,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 					 1 << NF_INET_LOCAL_OUT |
 					 1 << NF_INET_POST_ROUTING))) {
 			pr_info_ratelimited("mapping of prio or/and queue is allowed only from OUTPUT/FORWARD/POSTROUTING chains\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto cleanup_del;
 		}
 		index = ip_set_nfnl_get_byindex(par->net,
@@ -478,7 +478,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 		if (index == IPSET_INVALID_ID) {
 			pr_info_ratelimited("Cannot find map_set index %u as target\n",
 					    info->map_set.index);
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto cleanup_del;
 		}
 	}
@@ -487,7 +487,7 @@ set_target_v3_checkentry(const struct xt_tgchk_param *par)
 	    info->del_set.dim > IPSET_DIM_MAX ||
 	    info->map_set.dim > IPSET_DIM_MAX) {
 		pr_info_ratelimited("SET target dimension over the limit!\n");
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		goto cleanup_mark;
 	}
 

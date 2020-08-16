@@ -34,13 +34,13 @@ extern int fixed_phy_set_link_update(struct phy_device *phydev,
 static inline int fixed_phy_add(unsigned int irq, int phy_id,
 				struct fixed_phy_status *status)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline struct phy_device *fixed_phy_register(unsigned int irq,
 						struct fixed_phy_status *status,
 						struct device_node *np)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct phy_device *
@@ -48,7 +48,7 @@ fixed_phy_register_with_gpiod(unsigned int irq,
 			      struct fixed_phy_status *status,
 			      struct gpio_desc *gpiod)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void fixed_phy_unregister(struct phy_device *phydev)
@@ -58,11 +58,11 @@ static inline int fixed_phy_set_link_update(struct phy_device *phydev,
 			int (*link_update)(struct net_device *,
 					   struct fixed_phy_status *))
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int fixed_phy_change_carrier(struct net_device *dev, bool new_carrier)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_FIXED_PHY */
 

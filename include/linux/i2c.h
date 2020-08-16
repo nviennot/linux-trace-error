@@ -973,7 +973,7 @@ static inline int of_i2c_get_board_info(struct device *dev,
 					struct device_node *node,
 					struct i2c_board_info *info)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif /* CONFIG_OF */
@@ -1001,7 +1001,7 @@ static inline u32 i2c_acpi_find_bus_speed(struct device *dev)
 static inline struct i2c_client *i2c_acpi_new_device(struct device *dev,
 					int index, struct i2c_board_info *info)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 static inline struct i2c_adapter *i2c_acpi_find_adapter_by_handle(acpi_handle handle)
 {

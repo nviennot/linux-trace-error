@@ -48,7 +48,7 @@ static int make_idx_node(struct ubifs_info *c, struct ubifs_idx_node *idx,
 			if (zbr->znode)
 				ubifs_dump_znode(c, zbr->znode);
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	ubifs_prepare_node(c, idx, len, 0);
@@ -458,7 +458,7 @@ static int layout_in_empty_space(struct ubifs_info *c)
 		if (lnum == -1) {
 			if (c->ileb_nxt >= c->ileb_cnt) {
 				ubifs_err(c, "out of space");
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 			}
 			lnum = c->ilebs[c->ileb_nxt++];
 			buf_offs = 0;
@@ -701,7 +701,7 @@ static int alloc_idx_lebs(struct ubifs_info *c, int cnt)
 		dbg_cmt("LEB %d", lnum);
 	}
 	if (dbg_is_chk_index(c) && !(prandom_u32() & 7))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return 0;
 }
 
@@ -881,7 +881,7 @@ static int write_index(struct ubifs_info *c)
 				if (zbr->znode)
 					ubifs_dump_znode(c, zbr->znode);
 
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		len = ubifs_idx_node_sz(c, znode->child_cnt);
@@ -916,7 +916,7 @@ static int write_index(struct ubifs_info *c)
 		if (lnum != znode->lnum || offs != znode->offs ||
 		    len != znode->len) {
 			ubifs_err(c, "inconsistent znode posn");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* Grab some stuff from znode while we still can */
@@ -1014,7 +1014,7 @@ static int write_index(struct ubifs_info *c)
 	if (lnum != c->dbg->new_ihead_lnum ||
 	    buf_offs != c->dbg->new_ihead_offs) {
 		ubifs_err(c, "inconsistent ihead");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	c->ihead_lnum = lnum;

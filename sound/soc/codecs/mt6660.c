@@ -340,7 +340,7 @@ static int mt6660_component_aif_hw_params(struct snd_pcm_substream *substream,
 	dev_dbg(dai->dev, "word_len: %d, aud_bit: %d\n", word_len, aud_bit);
 	if (word_len > 32 || word_len < 16) {
 		dev_err(dai->dev, "not supported word length\n");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 	switch (aud_bit) {
 	case 16:
@@ -357,7 +357,7 @@ static int mt6660_component_aif_hw_params(struct snd_pcm_substream *substream,
 		reg_data = 0;
 		break;
 	default:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 	ret = snd_soc_component_update_bits(dai->component,
 		MT6660_REG_SERIAL_CFG1, 0xc0, (reg_data << 6));
@@ -422,7 +422,7 @@ static int _mt6660_chip_id_check(struct mt6660_chip *chip)
 	val &= 0x0ff0;
 	if (val != 0x00e0 && val != 0x01e0) {
 		dev_err(chip->dev, "%s id(%x) not match\n", __func__, val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

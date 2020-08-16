@@ -240,7 +240,7 @@ EXPORT_SYMBOL_GPL(nfs_dreq_bytes_left);
  */
 static ssize_t nfs_direct_wait(struct nfs_direct_req *dreq)
 {
-	ssize_t result = -EIOCBQUEUED;
+	ssize_t result = -ERR(EIOCBQUEUED);
 
 	/* Async requests don't wait here */
 	if (dreq->iocb)
@@ -350,7 +350,7 @@ static ssize_t nfs_direct_read_schedule_iovec(struct nfs_direct_req *dreq,
 {
 	struct nfs_pageio_descriptor desc;
 	struct inode *inode = dreq->inode;
-	ssize_t result = -EINVAL;
+	ssize_t result = -ERR(EINVAL);
 	size_t requested_bytes = 0;
 	size_t rsize = max_t(size_t, NFS_SERVER(inode)->rsize, PAGE_SIZE);
 
@@ -412,7 +412,7 @@ static ssize_t nfs_direct_read_schedule_iovec(struct nfs_direct_req *dreq,
 	if (requested_bytes == 0) {
 		inode_dio_end(inode);
 		nfs_direct_req_release(dreq);
-		return result < 0 ? result : -EIO;
+		return result < 0 ? result : -ERR(EIO);
 	}
 
 	if (put_dreq(dreq))
@@ -568,7 +568,7 @@ static void nfs_direct_write_reschedule(struct nfs_direct_req *dreq)
 			if (desc.pg_error < 0)
 				dreq->error = desc.pg_error;
 			else
-				dreq->error = -EIO;
+				dreq->error = -ERR(EIO);
 			spin_unlock(&cinfo.inode->i_lock);
 		}
 		nfs_release_request(req);
@@ -866,7 +866,7 @@ static ssize_t nfs_direct_write_schedule_iovec(struct nfs_direct_req *dreq,
 	if (requested_bytes == 0) {
 		inode_dio_end(inode);
 		nfs_direct_req_release(dreq);
-		return result < 0 ? result : -EIO;
+		return result < 0 ? result : -ERR(EIO);
 	}
 
 	if (put_dreq(dreq))
@@ -896,7 +896,7 @@ static ssize_t nfs_direct_write_schedule_iovec(struct nfs_direct_req *dreq,
  */
 ssize_t nfs_file_direct_write(struct kiocb *iocb, struct iov_iter *iter)
 {
-	ssize_t result = -EINVAL, requested;
+	ssize_t result = -ERR(EINVAL), requested;
 	size_t count;
 	struct file *file = iocb->ki_filp;
 	struct address_space *mapping = file->f_mapping;

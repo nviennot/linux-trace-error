@@ -666,11 +666,11 @@ static int svc_rdma_xdr_decode_req(struct xdr_buf *rq_arg,
 
 out_short:
 	trace_svcrdma_decode_short_err(rq_arg->len);
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 out_version:
 	trace_svcrdma_decode_badvers_err(rdma_argp);
-	return -EPROTONOSUPPORT;
+	return -ERR(EPROTONOSUPPORT);
 
 out_drop:
 	trace_svcrdma_decode_drop_err(rdma_argp);
@@ -678,11 +678,11 @@ out_drop:
 
 out_proc:
 	trace_svcrdma_decode_badproc_err(rdma_argp);
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 out_inval:
 	trace_svcrdma_decode_parse_err(rdma_argp);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void rdma_read_complete(struct svc_rqst *rqstp,

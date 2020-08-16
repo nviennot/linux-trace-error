@@ -226,7 +226,7 @@ p9_fd_poll(struct p9_client *client, struct poll_table_struct *pt, int *err)
 
 	if (!ts) {
 		if (err)
-			*err = -EREMOTEIO;
+			*err = -ERR(EREMOTEIO);
 		return EPOLLERR;
 	}
 
@@ -254,7 +254,7 @@ static int p9_fd_read(struct p9_client *client, void *v, int len)
 		ts = client->trans;
 
 	if (!ts)
-		return -EREMOTEIO;
+		return -ERR(EREMOTEIO);
 
 	if (!(ts->rd->f_flags & O_NONBLOCK))
 		p9_debug(P9_DEBUG_ERROR, "blocking read ...\n");
@@ -323,7 +323,7 @@ static void p9_read_work(struct work_struct *work)
 			p9_debug(P9_DEBUG_ERROR,
 				 "requested packet size too big: %d\n",
 				 m->rc.size);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 
@@ -335,7 +335,7 @@ static void p9_read_work(struct work_struct *work)
 		if (!m->rreq || (m->rreq->status != REQ_STATUS_SENT)) {
 			p9_debug(P9_DEBUG_ERROR, "Unexpected packet tag %d\n",
 				 m->rc.tag);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 
@@ -344,7 +344,7 @@ static void p9_read_work(struct work_struct *work)
 				 "No recv fcall for tag %d (req %p), disconnecting!\n",
 				 m->rc.tag, m->rreq);
 			m->rreq = NULL;
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 		m->rc.sdata = m->rreq->rc.sdata;
@@ -371,7 +371,7 @@ static void p9_read_work(struct work_struct *work)
 			p9_debug(P9_DEBUG_ERROR,
 				 "Request tag %d errored out while we were reading the reply\n",
 				 m->rc.tag);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 		spin_unlock(&m->client->lock);
@@ -420,7 +420,7 @@ static int p9_fd_write(struct p9_client *client, void *v, int len)
 		ts = client->trans;
 
 	if (!ts)
-		return -EREMOTEIO;
+		return -ERR(EREMOTEIO);
 
 	if (!(ts->wr->f_flags & O_NONBLOCK))
 		p9_debug(P9_DEBUG_ERROR, "blocking write ...\n");
@@ -485,7 +485,7 @@ static void p9_write_work(struct work_struct *work)
 	if (err < 0)
 		goto error;
 	else if (err == 0) {
-		err = -EREMOTEIO;
+		err = -ERR(EREMOTEIO);
 		goto error;
 	}
 
@@ -615,7 +615,7 @@ static void p9_conn_create(struct p9_client *client)
 static void p9_poll_mux(struct p9_conn *m)
 {
 	__poll_t n;
-	int err = -ECONNRESET;
+	int err = -ERR(ECONNRESET);
 
 	if (m->err < 0)
 		return;
@@ -837,7 +837,7 @@ out_put_rd:
 	fput(ts->rd);
 out_free_ts:
 	kfree(ts);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int p9_socket_open(struct p9_client *client, struct socket *csocket)
@@ -935,10 +935,10 @@ static inline int valid_ipaddr4(const char *buf)
 
 	rc = sscanf(buf, "%d.%d.%d.%d", &in[0], &in[1], &in[2], &in[3]);
 	if (rc != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (count = 0; count < 4; count++) {
 		if (in[count] > 255)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -946,7 +946,7 @@ static inline int valid_ipaddr4(const char *buf)
 static int p9_bind_privport(struct socket *sock)
 {
 	struct sockaddr_in cl;
-	int port, err = -EINVAL;
+	int port, err = -ERR(EINVAL);
 
 	memset(&cl, 0, sizeof(cl));
 	cl.sin_family = AF_INET;
@@ -974,7 +974,7 @@ p9_fd_create_tcp(struct p9_client *client, const char *addr, char *args)
 		return err;
 
 	if (addr == NULL || valid_ipaddr4(addr) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	csocket = NULL;
 
@@ -1024,12 +1024,12 @@ p9_fd_create_unix(struct p9_client *client, const char *addr, char *args)
 	csocket = NULL;
 
 	if (addr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strlen(addr) >= UNIX_PATH_MAX) {
 		pr_err("%s (%d): address too long: %s\n",
 		       __func__, task_pid_nr(current), addr);
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	}
 
 	sun_server.sun_family = PF_UNIX;
@@ -1066,7 +1066,7 @@ p9_fd_create(struct p9_client *client, const char *addr, char *args)
 
 	if (opts.rfd == ~0 || opts.wfd == ~0) {
 		pr_err("Insufficient options for proto=fd\n");
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	err = p9_fd_open(client, opts.rfd, opts.wfd);

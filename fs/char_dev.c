@@ -82,7 +82,7 @@ static int find_dynamic_major(void)
 			return i;
 	}
 
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /*
@@ -104,13 +104,13 @@ __register_chrdev_region(unsigned int major, unsigned int baseminor,
 	if (major >= CHRDEV_MAJOR_MAX) {
 		pr_err("CHRDEV \"%s\" major requested (%u) is greater than the maximum (%u)\n",
 		       name, major, CHRDEV_MAJOR_MAX-1);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (minorct > MINORMASK + 1 - baseminor) {
 		pr_err("CHRDEV \"%s\" minor range requested (%u-%u) is out of range of maximum range (%u-%u) for a single major\n",
 			name, baseminor, baseminor + minorct - 1, 0, MINORMASK);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	cd = kzalloc(sizeof(struct char_device_struct), GFP_KERNEL);
@@ -129,7 +129,7 @@ __register_chrdev_region(unsigned int major, unsigned int baseminor,
 		major = ret;
 	}
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	i = major_to_index(major);
 	for (curr = chrdevs[i]; curr; prev = curr, curr = curr->next) {
 		if (curr->major < major)
@@ -385,7 +385,7 @@ static int chrdev_open(struct inode *inode, struct file *filp)
 		spin_unlock(&cdev_lock);
 		kobj = kobj_lookup(cdev_map, inode->i_rdev, &idx);
 		if (!kobj)
-			return -ENXIO;
+			return -ERR(ENXIO);
 		new = container_of(kobj, struct cdev, kobj);
 		spin_lock(&cdev_lock);
 		/* Check i_cdev again in case somebody beat us to it while
@@ -396,15 +396,15 @@ static int chrdev_open(struct inode *inode, struct file *filp)
 			list_add(&inode->i_devices, &p->list);
 			new = NULL;
 		} else if (!cdev_get(p))
-			ret = -ENXIO;
+			ret = -ERR(ENXIO);
 	} else if (!cdev_get(p))
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 	spin_unlock(&cdev_lock);
 	cdev_put(new);
 	if (ret)
 		return ret;
 
-	ret = -ENXIO;
+	ret = -ERR(ENXIO);
 	fops = fops_get(p->ops);
 	if (!fops)
 		goto out_cdev_put;
@@ -484,7 +484,7 @@ int cdev_add(struct cdev *p, dev_t dev, unsigned count)
 	p->count = count;
 
 	if (WARN_ON(dev == WHITEOUT_DEV))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	error = kobj_map(cdev_map, dev, count, NULL,
 			 exact_match, exact_lock, p);

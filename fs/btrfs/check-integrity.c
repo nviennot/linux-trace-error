@@ -1549,7 +1549,7 @@ static int btrfsic_map_block(struct btrfsic_state *state, u64 bytenr, u32 len,
 
 	kfree(multi);
 	if (NULL == block_ctx_out->dev) {
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		pr_info("btrfsic: error, cannot lookup dev (#1)!\n");
 	}
 

@@ -182,10 +182,10 @@ int aa_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 	switch (field) {
 	case AUDIT_SUBJ_ROLE:
 		if (op != Audit_equal && op != Audit_not_equal)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rule = kzalloc(sizeof(struct aa_audit_rule), GFP_KERNEL);
@@ -231,7 +231,7 @@ int aa_audit_rule_match(u32 sid, u32 field, u32 op, void *vrule)
 	label = aa_secid_to_label(sid);
 
 	if (!label)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (aa_label_is_subset(label, rule->label))
 		found = 1;

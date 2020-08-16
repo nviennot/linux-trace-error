@@ -71,7 +71,7 @@ int smc_cdc_get_free_slot(struct smc_connection *conn,
 		if (!rc)
 			smc_wr_tx_put_slot(link,
 					   (struct smc_wr_tx_pend_priv *)pend);
-		rc = -EPIPE;
+		rc = -ERR(EPIPE);
 	}
 	return rc;
 }
@@ -161,7 +161,7 @@ again:
 		smc_wr_tx_put_slot(link,
 				   (struct smc_wr_tx_pend_priv *)pend);
 		if (again)
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 		again = true;
 		goto again;
 	}
@@ -175,7 +175,7 @@ int smc_cdc_get_slot_and_msg_send(struct smc_connection *conn)
 	int rc;
 
 	if (!conn->lgr || (conn->lgr->is_smcd && conn->lgr->peer_shutdown))
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	if (conn->lgr->is_smcd) {
 		spin_lock_bh(&conn->send_lock);
@@ -359,7 +359,7 @@ static void smc_cdc_msg_recv_action(struct smc_sock *smc,
 	}
 
 	if (conn->local_rx_ctrl.conn_state_flags.peer_conn_abort) {
-		smc->sk.sk_err = ECONNRESET;
+		smc->sk.sk_err = ERR(ECONNRESET);
 		conn->local_tx_ctrl.conn_state_flags.peer_conn_abort = 1;
 	}
 	if (smc_cdc_rxed_any_close_or_senddone(conn)) {

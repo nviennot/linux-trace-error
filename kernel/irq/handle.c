@@ -221,7 +221,7 @@ irqreturn_t handle_irq_event(struct irq_desc *desc)
 int __init set_handle_irq(void (*handle_irq)(struct pt_regs *))
 {
 	if (handle_arch_irq)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	handle_arch_irq = handle_irq;
 	return 0;

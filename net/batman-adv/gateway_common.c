@@ -179,7 +179,7 @@ ssize_t batadv_gw_bandwidth_set(struct net_device *net_dev, char *buff,
 
 	ret = batadv_parse_gw_bandwidth(net_dev, buff, &down_new, &up_new);
 	if (!ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!down_new)
 		down_new = 1;

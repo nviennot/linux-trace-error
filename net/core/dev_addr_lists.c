@@ -50,7 +50,7 @@ static int __hw_addr_add_ex(struct netdev_hw_addr_list *list,
 	struct netdev_hw_addr *ha;
 
 	if (addr_len > MAX_ADDR_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(ha, &list->list, list) {
 		if (ha->type == addr_type &&
@@ -64,7 +64,7 @@ static int __hw_addr_add_ex(struct netdev_hw_addr_list *list,
 			}
 			if (sync) {
 				if (ha->synced && sync_count)
-					return -EEXIST;
+					return -ERR(EEXIST);
 				else
 					ha->synced++;
 			}
@@ -90,10 +90,10 @@ static int __hw_addr_del_entry(struct netdev_hw_addr_list *list,
 			       bool sync)
 {
 	if (global && !ha->global_use)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (sync && !ha->synced)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (global)
 		ha->global_use = false;
@@ -120,7 +120,7 @@ static int __hw_addr_del_ex(struct netdev_hw_addr_list *list,
 		    (ha->type == addr_type || !addr_type))
 			return __hw_addr_del_entry(list, ha, global, sync);
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int __hw_addr_del(struct netdev_hw_addr_list *list,
@@ -531,7 +531,7 @@ int dev_addr_del(struct net_device *dev, const unsigned char *addr,
 			      struct netdev_hw_addr, list);
 	if (!memcmp(ha->addr, addr, dev->addr_len) &&
 	    ha->type == addr_type && ha->refcount == 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = __hw_addr_del(&dev->dev_addrs, addr, dev->addr_len,
 			    addr_type);
@@ -559,7 +559,7 @@ int dev_uc_add_excl(struct net_device *dev, const unsigned char *addr)
 	list_for_each_entry(ha, &dev->uc.list, list) {
 		if (!memcmp(ha->addr, addr, dev->addr_len) &&
 		    ha->type == NETDEV_HW_ADDR_T_UNICAST) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto out;
 		}
 	}
@@ -635,7 +635,7 @@ int dev_uc_sync(struct net_device *to, struct net_device *from)
 	int err = 0;
 
 	if (to->addr_len != from->addr_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netif_addr_lock_nested(to);
 	err = __hw_addr_sync(&to->uc, &from->uc, to->addr_len);
@@ -665,7 +665,7 @@ int dev_uc_sync_multiple(struct net_device *to, struct net_device *from)
 	int err = 0;
 
 	if (to->addr_len != from->addr_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netif_addr_lock_nested(to);
 	err = __hw_addr_sync_multiple(&to->uc, &from->uc, to->addr_len);
@@ -752,7 +752,7 @@ int dev_mc_add_excl(struct net_device *dev, const unsigned char *addr)
 	list_for_each_entry(ha, &dev->mc.list, list) {
 		if (!memcmp(ha->addr, addr, dev->addr_len) &&
 		    ha->type == NETDEV_HW_ADDR_T_MULTICAST) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto out;
 		}
 	}
@@ -865,7 +865,7 @@ int dev_mc_sync(struct net_device *to, struct net_device *from)
 	int err = 0;
 
 	if (to->addr_len != from->addr_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netif_addr_lock_nested(to);
 	err = __hw_addr_sync(&to->mc, &from->mc, to->addr_len);
@@ -895,7 +895,7 @@ int dev_mc_sync_multiple(struct net_device *to, struct net_device *from)
 	int err = 0;
 
 	if (to->addr_len != from->addr_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netif_addr_lock_nested(to);
 	err = __hw_addr_sync_multiple(&to->mc, &from->mc, to->addr_len);

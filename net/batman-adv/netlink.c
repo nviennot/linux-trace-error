@@ -205,7 +205,7 @@ static int batadv_netlink_set_mesh_ap_isolation(struct nlattr *attr,
 
 	vlan = batadv_softif_vlan_get(bat_priv, BATADV_NO_FLAGS);
 	if (!vlan)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	atomic_set(&vlan->ap_isolation, !!nla_get_u8(attr));
 	batadv_softif_vlan_put(vlan);
@@ -236,7 +236,7 @@ static int batadv_netlink_mesh_fill(struct sk_buff *msg,
 
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family, flags, cmd);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (nla_put_string(msg, BATADV_ATTR_VERSION, BATADV_SOURCE_VERSION) ||
 	    nla_put_string(msg, BATADV_ATTR_ALGO_NAME,
@@ -369,7 +369,7 @@ nla_put_failure:
 		batadv_hardif_put(primary_if);
 
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -630,7 +630,7 @@ static int
 batadv_netlink_tp_meter_put(struct sk_buff *msg, u32 cookie)
 {
 	if (nla_put_u32(msg, BATADV_ATTR_TPMETER_COOKIE, cookie))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	return 0;
 }
@@ -661,7 +661,7 @@ int batadv_netlink_tpmeter_notify(struct batadv_priv *bat_priv, const u8 *dst,
 	hdr = genlmsg_put(msg, 0, 0, &batadv_netlink_family, 0,
 			  BATADV_CMD_TP_METER);
 	if (!hdr) {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 		goto err_genlmsg;
 	}
 
@@ -691,7 +691,7 @@ int batadv_netlink_tpmeter_notify(struct batadv_priv *bat_priv, const u8 *dst,
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 
 err_genlmsg:
 	nlmsg_free(msg);
@@ -717,10 +717,10 @@ batadv_netlink_tp_meter_start(struct sk_buff *skb, struct genl_info *info)
 	int ret;
 
 	if (!info->attrs[BATADV_ATTR_ORIG_ADDRESS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->attrs[BATADV_ATTR_TPMETER_TEST_TIME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dst = nla_data(info->attrs[BATADV_ATTR_ORIG_ADDRESS]);
 
@@ -736,7 +736,7 @@ batadv_netlink_tp_meter_start(struct sk_buff *skb, struct genl_info *info)
 			       &batadv_netlink_family, 0,
 			       BATADV_CMD_TP_METER);
 	if (!msg_head) {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 		goto out;
 	}
 
@@ -770,7 +770,7 @@ batadv_netlink_tp_meter_cancel(struct sk_buff *skb, struct genl_info *info)
 	int ret = 0;
 
 	if (!info->attrs[BATADV_ATTR_ORIG_ADDRESS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dst = nla_data(info->attrs[BATADV_ATTR_ORIG_ADDRESS]);
 
@@ -804,7 +804,7 @@ static int batadv_netlink_hardif_fill(struct sk_buff *msg,
 
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family, flags, cmd);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (cb)
 		genl_dump_check_consistent(cb, hdr);
@@ -841,7 +841,7 @@ static int batadv_netlink_hardif_fill(struct sk_buff *msg,
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -965,15 +965,15 @@ batadv_netlink_dump_hardif(struct sk_buff *msg, struct netlink_callback *cb)
 	ifindex = batadv_netlink_get_ifindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!batadv_softif_is_valid(soft_iface)) {
 		dev_put(soft_iface);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	bat_priv = netdev_priv(soft_iface);
@@ -1028,7 +1028,7 @@ static int batadv_netlink_vlan_fill(struct sk_buff *msg,
 
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family, flags, cmd);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (nla_put_u32(msg, BATADV_ATTR_MESH_IFINDEX,
 			bat_priv->soft_iface->ifindex))
@@ -1046,7 +1046,7 @@ static int batadv_netlink_vlan_fill(struct sk_buff *msg,
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -1149,13 +1149,13 @@ batadv_get_softif_from_info(struct net *net, struct genl_info *info)
 	int ifindex;
 
 	if (!info->attrs[BATADV_ATTR_MESH_IFINDEX])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ifindex = nla_get_u32(info->attrs[BATADV_ATTR_MESH_IFINDEX]);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (!batadv_softif_is_valid(soft_iface))
 		goto err_put_softif;
@@ -1165,7 +1165,7 @@ batadv_get_softif_from_info(struct net *net, struct genl_info *info)
 err_put_softif:
 	dev_put(soft_iface);
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /**
@@ -1186,13 +1186,13 @@ batadv_get_hardif_from_info(struct batadv_priv *bat_priv, struct net *net,
 	unsigned int hardif_index;
 
 	if (!info->attrs[BATADV_ATTR_HARD_IFINDEX])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	hardif_index = nla_get_u32(info->attrs[BATADV_ATTR_HARD_IFINDEX]);
 
 	hard_dev = dev_get_by_index(net, hardif_index);
 	if (!hard_dev)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	hard_iface = batadv_hardif_get_by_netdev(hard_dev);
 	if (!hard_iface)
@@ -1211,7 +1211,7 @@ err_put_hardif:
 err_put_harddev:
 	dev_put(hard_dev);
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /**
@@ -1231,13 +1231,13 @@ batadv_get_vlan_from_info(struct batadv_priv *bat_priv, struct net *net,
 	u16 vid;
 
 	if (!info->attrs[BATADV_ATTR_VLANID])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	vid = nla_get_u16(info->attrs[BATADV_ATTR_VLANID]);
 
 	vlan = batadv_softif_vlan_get(bat_priv, vid | BATADV_VLAN_HAS_TAG);
 	if (!vlan)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	return vlan;
 }
@@ -1264,12 +1264,12 @@ static int batadv_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
 
 	user_ptr1_flags = BATADV_FLAG_NEED_HARDIF | BATADV_FLAG_NEED_VLAN;
 	if (WARN_ON(hweight8(ops->internal_flags & user_ptr1_flags) > 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mesh_dep_flags = BATADV_FLAG_NEED_HARDIF | BATADV_FLAG_NEED_VLAN;
 	if (WARN_ON((ops->internal_flags & mesh_dep_flags) &&
 		    (~ops->internal_flags & BATADV_FLAG_NEED_MESH)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ops->internal_flags & BATADV_FLAG_NEED_MESH) {
 		soft_iface = batadv_get_softif_from_info(net, info);

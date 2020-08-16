@@ -99,7 +99,7 @@ proc_dodebug(struct ctl_table *table, int write, void *buffer, size_t *lenp,
 			goto done;
 
 		if (left > sizeof(tmpbuf) - 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(tmpbuf, p, left);
 		tmpbuf[left] = '\0';
 
@@ -107,7 +107,7 @@ proc_dodebug(struct ctl_table *table, int write, void *buffer, size_t *lenp,
 		if (s) {
 			left -= (s - tmpbuf);
 			if (left && !isspace(*s))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			while (left && isspace(*s))
 				left--, s++;
 		} else

@@ -60,7 +60,7 @@ select_encryption_mode(const union fscrypt_policy *policy,
 
 	WARN_ONCE(1, "fscrypt: filesystem tried to load encryption info for inode %lu, which is not encryptable (file type %d)\n",
 		  inode->i_ino, (inode->i_mode & S_IFMT));
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /* Create a symmetric cipher object for the given encryption mode and key */
@@ -77,7 +77,7 @@ struct crypto_skcipher *fscrypt_allocate_skcipher(struct fscrypt_mode *mode,
 			fscrypt_warn(inode,
 				     "Missing crypto API support for %s (API name: \"%s\")",
 				     mode->friendly_name, mode->cipher_str);
-			return ERR_PTR(-ENOPKG);
+			return ERR_PTR(-ERR(ENOPKG));
 		}
 		fscrypt_err(inode, "Error allocating '%s' transform: %ld",
 			    mode->cipher_str, PTR_ERR(tfm));
@@ -94,7 +94,7 @@ struct crypto_skcipher *fscrypt_allocate_skcipher(struct fscrypt_mode *mode,
 			mode->friendly_name, crypto_skcipher_driver_name(tfm));
 	}
 	if (WARN_ON(crypto_skcipher_ivsize(tfm) != mode->ivsize)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_free_tfm;
 	}
 	crypto_skcipher_set_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
@@ -139,7 +139,7 @@ static int setup_per_mode_enc_key(struct fscrypt_info *ci,
 	int err;
 
 	if (WARN_ON(mode_num > __FSCRYPT_MODE_MAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* pairs with smp_store_release() below */
 	tfm = READ_ONCE(tfms[mode_num]);
@@ -325,7 +325,7 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
 		break;
 	default:
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	key = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
@@ -348,7 +348,7 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
 
 	/* Has the secret been removed (via FS_IOC_REMOVE_ENCRYPTION_KEY)? */
 	if (!is_master_key_secret_present(&mk->mk_secret)) {
-		err = -ENOKEY;
+		err = -ERR(ENOKEY);
 		goto out_release_key;
 	}
 
@@ -364,7 +364,7 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
 			     master_key_spec_type(&mk_spec),
 			     master_key_spec_len(&mk_spec), (u8 *)&mk_spec.u,
 			     mk->mk_secret.size, ci->ci_mode->keysize);
-		err = -ENOKEY;
+		err = -ERR(ENOKEY);
 		goto out_release_key;
 	}
 
@@ -377,7 +377,7 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
 		break;
 	default:
 		WARN_ON(1);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 	if (err)
@@ -475,7 +475,7 @@ int fscrypt_get_encryption_info(struct inode *inode)
 	       FS_KEY_DERIVATION_NONCE_SIZE);
 
 	if (!fscrypt_supported_policy(&crypt_info->ci_policy, inode)) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto out;
 	}
 

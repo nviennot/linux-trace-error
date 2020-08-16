@@ -195,7 +195,7 @@ int asn1_ber_decoder(const struct asn1_decoder *decoder,
 	unsigned char jump_stack[NR_JUMP_STACK];
 
 	if (datalen > 65535)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 next_op:
 	pr_debug("next_op: pc=\e[32m%zu\e[m/%zu dp=\e[33m%zu\e[m/%zu C=%d J=%d\n",
@@ -373,7 +373,7 @@ next_op:
 		if (unlikely(jsp != 0 || csp != 0)) {
 			pr_err("ASN.1 decoder error: Stacks not empty at completion (%u, %u)\n",
 			       jsp, csp);
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 		}
 		return 0;
 
@@ -471,7 +471,7 @@ next_op:
 	/* Shouldn't reach here */
 	pr_err("ASN.1 decoder error: Found reserved opcode (%u) pc=%zu\n",
 	       op, pc);
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 
 data_overrun_error:
 	errmsg = "Data overrun error";
@@ -514,7 +514,7 @@ long_tag_not_supported:
 error:
 	pr_debug("\nASN1: %s [m=%zu d=%zu ot=%02x t=%02x l=%zu]\n",
 		 errmsg, pc, dp, optag, tag, len);
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 }
 EXPORT_SYMBOL_GPL(asn1_ber_decoder);
 

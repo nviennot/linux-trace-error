@@ -144,10 +144,10 @@ int snd_gf1_new_mixer(struct snd_gus_card * gus)
 	int err;
 
 	if (snd_BUG_ON(!gus))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = gus->card;
 	if (snd_BUG_ON(!card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (gus->ics_flag)
 		snd_component_add(card, "ICS2101");

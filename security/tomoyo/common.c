@@ -622,9 +622,9 @@ static int tomoyo_set_mode(char *name, const char *value,
 			break;
 		}
 		if (i == TOMOYO_MAX_MAC_INDEX + TOMOYO_MAX_MAC_CATEGORY_INDEX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (strstr(value, "use_default")) {
 		config = TOMOYO_CONFIG_USE_DEFAULT;
@@ -683,14 +683,14 @@ static int tomoyo_write_profile(struct tomoyo_io_buffer *head)
 		return 0;
 	i = simple_strtoul(data, &cp, 10);
 	if (*cp != '-')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	data = cp + 1;
 	profile = tomoyo_assign_profile(head->w.ns, i);
 	if (!profile)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	cp = strchr(data, '=');
 	if (!cp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*cp++ = '\0';
 	if (!strcmp(data, "COMMENT")) {
 		static DEFINE_SPINLOCK(lock);
@@ -867,11 +867,11 @@ static int tomoyo_update_manager_entry(const char *manager,
 		.is_delete = is_delete,
 		.list = &tomoyo_kernel_namespace.policy_list[TOMOYO_ID_MANAGER],
 	};
-	int error = is_delete ? -ENOENT : -ENOMEM;
+	int error = is_delete ? -ERR(ENOENT) : -ENOMEM;
 
 	if (!tomoyo_correct_domain(manager) &&
 	    !tomoyo_correct_word(manager))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	e.manager = tomoyo_get_name(manager);
 	if (e.manager) {
 		error = tomoyo_update_policy(&e.head, sizeof(e), &param,
@@ -1060,7 +1060,7 @@ static bool tomoyo_same_task_acl(const struct tomoyo_acl_info *a,
  */
 static int tomoyo_write_task(struct tomoyo_acl_param *param)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	if (tomoyo_str_starts(&param->data, "manual_domain_transition ")) {
 		struct tomoyo_task_acl e = {
@@ -1094,7 +1094,7 @@ static int tomoyo_delete_domain(char *domainname)
 	name.name = domainname;
 	tomoyo_fill_path_info(&name);
 	if (mutex_lock_interruptible(&tomoyo_policy_lock))
-		return -EINTR;
+		return -ERR(EINTR);
 	/* Is there an active domain? */
 	list_for_each_entry_rcu(domain, &tomoyo_domain_list, list,
 				srcu_read_lock_held(&tomoyo_ss)) {
@@ -1151,7 +1151,7 @@ static int tomoyo_write_domain2(struct tomoyo_policy_namespace *ns,
 			continue;
 		return tomoyo_callback[i].write(&param);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* String table for domain flags. */
@@ -1192,7 +1192,7 @@ static int tomoyo_write_domain(struct tomoyo_io_buffer *head)
 		return ret;
 	}
 	if (!domain)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ns = domain->ns;
 	if (sscanf(data, "use_profile %u", &idx) == 1
 	    && idx < TOMOYO_MAX_PROFILES) {
@@ -1781,7 +1781,7 @@ static int tomoyo_write_exception(struct tomoyo_io_buffer *head)
 				(head->w.ns, &head->w.ns->acl_group[group],
 				 data, is_delete);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -2079,7 +2079,7 @@ int tomoyo_supervisor(struct tomoyo_request_info *r, const char *fmt, ...)
 		tomoyo_update_stat(r->mode);
 	switch (r->mode) {
 	case TOMOYO_CONFIG_ENFORCING:
-		error = -EPERM;
+		error = -ERR(EPERM);
 		if (atomic_read(&tomoyo_query_observers))
 			break;
 		goto out;
@@ -2275,7 +2275,7 @@ static int tomoyo_write_answer(struct tomoyo_io_buffer *head)
 	}
 	spin_unlock(&tomoyo_query_list_lock);
 	if (sscanf(data, "A%u=%u", &serial, &answer) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock(&tomoyo_query_list_lock);
 	list_for_each(tmp, &tomoyo_query_list) {
 		struct tomoyo_query *ptr = list_entry(tmp, typeof(*ptr), list);
@@ -2586,9 +2586,9 @@ ssize_t tomoyo_read_control(struct tomoyo_io_buffer *head, char __user *buffer,
 	int idx;
 
 	if (!head->read)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mutex_lock_interruptible(&head->io_sem))
-		return -EINTR;
+		return -ERR(EINTR);
 	head->read_user_buf = buffer;
 	head->read_user_buf_avail = buffer_len;
 	idx = tomoyo_read_lock();
@@ -2637,7 +2637,7 @@ static int tomoyo_parse_policy(struct tomoyo_io_buffer *head, char *line)
 			head->w.ns = &tomoyo_kernel_namespace;
 		/* Don't allow updating if namespace is invalid. */
 		if (!head->w.ns)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 	/* Do the update. */
 	return head->write(head);
@@ -2661,9 +2661,9 @@ ssize_t tomoyo_write_control(struct tomoyo_io_buffer *head,
 	int idx;
 
 	if (!head->write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mutex_lock_interruptible(&head->io_sem))
-		return -EINTR;
+		return -ERR(EINTR);
 	head->read_user_buf_avail = 0;
 	idx = tomoyo_read_lock();
 	/* Read a line and dispatch it to the policy handler. */
@@ -2719,13 +2719,13 @@ ssize_t tomoyo_write_control(struct tomoyo_io_buffer *head,
 			/* fall through */
 		default:
 			if (!tomoyo_manager()) {
-				error = -EPERM;
+				error = -ERR(EPERM);
 				goto out;
 			}
 		}
 		switch (tomoyo_parse_policy(head, cp0)) {
 		case -EPERM:
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto out;
 		case 0:
 			switch (head->type) {

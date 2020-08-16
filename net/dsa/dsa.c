@@ -103,9 +103,9 @@ const struct dsa_device_ops *dsa_tag_driver_get(int tag_protocol)
 
 	if (found) {
 		if (!try_module_get(dsa_tag_driver->owner))
-			ops = ERR_PTR(-ENOPROTOOPT);
+			ops = ERR_PTR(-ERR(ENOPROTOOPT));
 	} else {
-		ops = ERR_PTR(-ENOPROTOOPT);
+		ops = ERR_PTR(-ERR(ENOPROTOOPT));
 	}
 
 	mutex_unlock(&dsa_tag_drivers_lock);
@@ -337,7 +337,7 @@ int dsa_devlink_param_get(struct devlink *dl, u32 id,
 	ds = dl_priv->ds;
 
 	if (!ds->ops->devlink_param_get)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->devlink_param_get(ds, id, ctx);
 }
@@ -353,7 +353,7 @@ int dsa_devlink_param_set(struct devlink *dl, u32 id,
 	ds = dl_priv->ds;
 
 	if (!ds->ops->devlink_param_set)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->devlink_param_set(ds, id, ctx);
 }
@@ -415,7 +415,7 @@ EXPORT_SYMBOL_GPL(dsa_devlink_resource_occ_get_unregister);
 struct dsa_port *dsa_port_from_netdev(struct net_device *netdev)
 {
 	if (!netdev || !dsa_slave_dev_check(netdev))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	return dsa_slave_to_port(netdev);
 }

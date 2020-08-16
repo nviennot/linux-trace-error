@@ -114,18 +114,18 @@ static int kcmp_epoll_target(struct task_struct *task1,
 
 	filp = get_file_raw_ptr(task1, idx1);
 	if (!filp)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	files = get_files_struct(task2);
 	if (!files)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	spin_lock(&files->file_lock);
 	filp_epoll = fcheck_files(files, slot.efd);
 	if (filp_epoll)
 		get_file(filp_epoll);
 	else
-		filp_tgt = ERR_PTR(-EBADF);
+		filp_tgt = ERR_PTR(-ERR(EBADF));
 	spin_unlock(&files->file_lock);
 	put_files_struct(files);
 
@@ -145,7 +145,7 @@ static int kcmp_epoll_target(struct task_struct *task1,
 			     unsigned long idx1,
 			     struct kcmp_epoll_slot __user *uslot)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -179,7 +179,7 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
 		goto err;
 	if (!ptrace_may_access(task1, PTRACE_MODE_READ_REALCREDS) ||
 	    !ptrace_may_access(task2, PTRACE_MODE_READ_REALCREDS)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto err_unlock;
 	}
 
@@ -193,7 +193,7 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
 		if (filp1 && filp2)
 			ret = kcmp_ptr(filp1, filp2, KCMP_FILE);
 		else
-			ret = -EBADF;
+			ret = -ERR(EBADF);
 		break;
 	}
 	case KCMP_VM:
@@ -217,14 +217,14 @@ SYSCALL_DEFINE5(kcmp, pid_t, pid1, pid_t, pid2, int, type,
 			       task2->sysvsem.undo_list,
 			       KCMP_SYSVSEM);
 #else
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 #endif
 		break;
 	case KCMP_EPOLL_TFD:
 		ret = kcmp_epoll_target(task1, task2, idx1, (void *)idx2);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -239,7 +239,7 @@ err:
 
 err_no_task:
 	rcu_read_unlock();
-	return -ESRCH;
+	return -ERR(ESRCH);
 }
 
 static __init int kcmp_cookies_init(void)

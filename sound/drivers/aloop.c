@@ -340,7 +340,7 @@ static int loopback_check_format(struct loopback_cable *cable, int stream)
 	if (!check)
 		return 0;
 	if (stream == SNDRV_PCM_STREAM_CAPTURE) {
-		return -EIO;
+		return -ERR(EIO);
 	} else {
 		snd_pcm_stop(cable->streams[SNDRV_PCM_STREAM_CAPTURE]->
 					substream, SNDRV_PCM_STATE_DRAINING);
@@ -427,7 +427,7 @@ static int loopback_trigger(struct snd_pcm_substream *substream, int cmd)
 			loopback_active_notify(dpcm);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return err;
 }
@@ -469,7 +469,7 @@ static int loopback_prepare(struct snd_pcm_substream *substream)
 						runtime->channels) / 8;
 	bps = salign * runtime->rate;
 	if (bps <= 0 || salign <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dpcm->buf_pos = 0;
 	dpcm->pcm_buffer_size = frames_to_bytes(runtime, runtime->buffer_size);
@@ -702,7 +702,7 @@ static int loopback_snd_timer_check_resolution(struct snd_pcm_runtime *runtime,
 			cable->snd_timer.id.device,
 			cable->snd_timer.id.subdevice,
 			period_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1829,7 +1829,7 @@ static int __init alsa_card_loopback_init(void)
 		printk(KERN_ERR "aloop: No loopback enabled\n");
 #endif
 		loopback_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

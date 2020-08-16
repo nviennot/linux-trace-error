@@ -1067,7 +1067,7 @@ static int da9055_hw_params(struct snd_pcm_substream *substream,
 		aif_ctrl = DA9055_AIF_WORD_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set AIF format */
@@ -1116,7 +1116,7 @@ static int da9055_hw_params(struct snd_pcm_substream *substream,
 		sysclk		= 3072000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (da9055->mclk_rate) {
@@ -1172,13 +1172,13 @@ static int da9055_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		aif_clk_mode = DA9055_AIF_CLK_EN_SLAVE_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Don't allow change of mode if PLL is enabled */
 	if ((snd_soc_component_read32(component, DA9055_PLL_CTRL) & DA9055_PLL_EN) &&
 	    (da9055->master != mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	da9055->master = mode;
 
@@ -1197,7 +1197,7 @@ static int da9055_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		aif_ctrl = DA9055_AIF_FORMAT_DSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* By default only 32 BCLK per WCLK is supported */
@@ -1256,12 +1256,12 @@ static int da9055_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		default:
 			dev_err(codec_dai->dev, "Unsupported MCLK value %d\n",
 				freq);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(codec_dai->dev, "Unknown clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1315,7 +1315,7 @@ static int da9055_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	return 0;
 pll_err:
 	dev_err(codec_dai->dev, "Error in setting up PLL\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* DAI operations */

@@ -107,7 +107,7 @@ static int __btrfs_add_inode_defrag(struct btrfs_inode *inode,
 				entry->transid = defrag->transid;
 			if (defrag->last_offset > entry->last_offset)
 				entry->last_offset = defrag->last_offset;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	set_bit(BTRFS_INODE_IN_DEFRAG, &inode->runtime_flags);
@@ -866,7 +866,7 @@ next_slot:
 		if (start > key.offset && end < extent_end) {
 			BUG_ON(del_nr > 0);
 			if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-				ret = -EOPNOTSUPP;
+				ret = -ERR(EOPNOTSUPP);
 				break;
 			}
 
@@ -921,7 +921,7 @@ next_slot:
 		 */
 		if (start <= key.offset && end < extent_end) {
 			if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-				ret = -EOPNOTSUPP;
+				ret = -ERR(EOPNOTSUPP);
 				break;
 			}
 
@@ -947,7 +947,7 @@ next_slot:
 		if (start > key.offset && end >= extent_end) {
 			BUG_ON(del_nr > 0);
 			if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-				ret = -EOPNOTSUPP;
+				ret = -ERR(EOPNOTSUPP);
 				break;
 			}
 
@@ -1172,20 +1172,20 @@ again:
 	btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
 	if (key.objectid != ino ||
 	    key.type != BTRFS_EXTENT_DATA_KEY) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		btrfs_abort_transaction(trans, ret);
 		goto out;
 	}
 	fi = btrfs_item_ptr(leaf, path->slots[0],
 			    struct btrfs_file_extent_item);
 	if (btrfs_file_extent_type(leaf, fi) != BTRFS_FILE_EXTENT_PREALLOC) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		btrfs_abort_transaction(trans, ret);
 		goto out;
 	}
 	extent_end = key.offset + btrfs_file_extent_num_bytes(leaf, fi);
 	if (key.offset > start || extent_end < end) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		btrfs_abort_transaction(trans, ret);
 		goto out;
 	}
@@ -1296,7 +1296,7 @@ again:
 			key.offset = start;
 		} else {
 			if (start != key.offset) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				btrfs_abort_transaction(trans, ret);
 				goto out;
 			}
@@ -1391,11 +1391,11 @@ static int prepare_uptodate_page(struct inode *inode,
 		lock_page(page);
 		if (!PageUptodate(page)) {
 			unlock_page(page);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (page->mapping != inode->i_mapping) {
 			unlock_page(page);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 	}
 	return 0;
@@ -1500,7 +1500,7 @@ lock_and_cleanup_extent_if_need(struct btrfs_inode *inode, struct page **pages,
 			btrfs_start_ordered_extent(&inode->vfs_inode,
 					ordered, 1);
 			btrfs_put_ordered_extent(ordered);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		if (ordered)
 			btrfs_put_ordered_extent(ordered);
@@ -1542,7 +1542,7 @@ static noinline int check_can_nocow(struct btrfs_inode *inode, loff_t pos,
 	int ret;
 
 	if (!nowait && !btrfs_drew_try_write_lock(&root->snapshot_lock))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	lockstart = round_down(pos, fs_info->sectorsize);
 	lockend = round_up(pos + *write_bytes,
@@ -1553,13 +1553,13 @@ static noinline int check_can_nocow(struct btrfs_inode *inode, loff_t pos,
 		struct btrfs_ordered_extent *ordered;
 
 		if (!try_lock_extent(&inode->io_tree, lockstart, lockend))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		ordered = btrfs_lookup_ordered_range(inode, lockstart,
 						     num_bytes);
 		if (ordered) {
 			btrfs_put_ordered_extent(ordered);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out_unlock;
 		}
 	} else {
@@ -1902,11 +1902,11 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
 
 	if (!(iocb->ki_flags & IOCB_DIRECT) &&
 	    (iocb->ki_flags & IOCB_NOWAIT))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!inode_trylock(inode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		inode_lock(inode);
 	}
@@ -1931,7 +1931,7 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
 		    check_can_nocow(BTRFS_I(inode), pos, &nocow_bytes,
 				    true) <= 0) {
 			inode_unlock(inode);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		/*
 		 * There are holes in the range or parts of the range that must
@@ -1940,7 +1940,7 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
 		 */
 		if (nocow_bytes < count) {
 			inode_unlock(inode);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 	}
 
@@ -1959,7 +1959,7 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
 	 */
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state)) {
 		inode_unlock(inode);
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out;
 	}
 
@@ -2250,7 +2250,7 @@ out:
 	err = file_check_and_advance_wb_err(file);
 	if (!ret)
 		ret = err;
-	return ret > 0 ? -EIO : ret;
+	return ret > 0 ? -ERR(EIO) : ret;
 }
 
 static const struct vm_operations_struct btrfs_file_vm_ops = {
@@ -2264,7 +2264,7 @@ static int btrfs_file_mmap(struct file	*filp, struct vm_area_struct *vma)
 	struct address_space *mapping = filp->f_mapping;
 
 	if (!mapping->a_ops->readpage)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	file_accessed(filp);
 	vma->vm_ops = &btrfs_file_vm_ops;
@@ -2328,7 +2328,7 @@ static int fill_holes(struct btrfs_trans_handle *trans,
 		 * something has gone horribly wrong.
 		 */
 		if (ret == 0)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		return ret;
 	}
 
@@ -2563,7 +2563,7 @@ int btrfs_punch_hole_range(struct inode *inode, struct btrfs_path *path,
 	int ret = 0;
 
 	if (end <= start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rsv = btrfs_alloc_block_rsv(fs_info, BTRFS_BLOCK_RSV_TEMP);
 	if (!rsv) {
@@ -3233,7 +3233,7 @@ static long btrfs_fallocate(struct file *file, int mode,
 	/* Make sure we aren't being give some crap mode */
 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
 		     FALLOC_FL_ZERO_RANGE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (mode & FALLOC_FL_PUNCH_HOLE)
 		return btrfs_punch_hole(inode, offset, len);
@@ -3422,7 +3422,7 @@ static loff_t find_desired_extent(struct inode *inode, loff_t offset,
 	int ret = 0;
 
 	if (i_size == 0 || offset >= i_size)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/*
 	 * offset can be negative, in this case we start finding DATA/HOLE from
@@ -3469,7 +3469,7 @@ static loff_t find_desired_extent(struct inode *inode, loff_t offset,
 		offset = ret;
 	} else {
 		if (whence == SEEK_DATA && start >= i_size)
-			offset = -ENXIO;
+			offset = -ERR(ENXIO);
 		else
 			offset = min_t(loff_t, start, i_size);
 	}

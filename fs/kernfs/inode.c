@@ -119,7 +119,7 @@ int kernfs_iop_setattr(struct dentry *dentry, struct iattr *iattr)
 	int error;
 
 	if (!kn)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kernfs_mutex);
 	error = setattr_prepare(dentry, iattr);
@@ -277,7 +277,7 @@ int kernfs_iop_permission(struct inode *inode, int mask)
 	struct kernfs_node *kn;
 
 	if (mask & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	kn = inode->i_private;
 
@@ -293,7 +293,7 @@ int kernfs_xattr_get(struct kernfs_node *kn, const char *name,
 {
 	struct kernfs_iattrs *attrs = kernfs_iattrs_noalloc(kn);
 	if (!attrs)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	return simple_xattr_get(&attrs->xattrs, name, value, size);
 }
@@ -340,12 +340,12 @@ static int kernfs_vfs_user_xattr_add(struct kernfs_node *kn,
 	int ret;
 
 	if (atomic_inc_return(nr) > KERNFS_MAX_USER_XATTRS) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto dec_count_out;
 	}
 
 	if (atomic_add_return(size, sz) > KERNFS_USER_XATTR_SIZE_LIMIT) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto dec_size_out;
 	}
 
@@ -394,7 +394,7 @@ static int kernfs_vfs_user_xattr_set(const struct xattr_handler *handler,
 	struct kernfs_iattrs *attrs;
 
 	if (!(kernfs_root(kn)->flags & KERNFS_ROOT_SUPPORT_USER_XATTR))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	attrs = kernfs_iattrs(kn);
 	if (!attrs)

@@ -261,7 +261,7 @@ static int mesh_plink_frame_tx(struct ieee80211_sub_if_data *sdata,
 
 		sband = ieee80211_get_sband(sdata);
 		if (!sband) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto free;
 		}
 		band = sband->band;
@@ -301,7 +301,7 @@ static int mesh_plink_frame_tx(struct ieee80211_sub_if_data *sdata,
 		ie_len += 2;	/* reason code */
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto free;
 	}
 
@@ -491,7 +491,7 @@ static int mesh_allocate_aid(struct ieee80211_sub_if_data *sdata)
 	kfree(aid_map);
 
 	if (aid > IEEE80211_MAX_AID)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	return aid;
 }

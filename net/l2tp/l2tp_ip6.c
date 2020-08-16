@@ -284,23 +284,23 @@ static int l2tp_ip6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	int err;
 
 	if (addr->l2tp_family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (addr_len < sizeof(*addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	addr_type = ipv6_addr_type(&addr->l2tp_addr);
 
 	/* l2tp_ip6 sockets are IPv6 only */
 	if (addr_type == IPV6_ADDR_MAPPED)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	/* L2TP is point-point, not multicast */
 	if (addr_type & IPV6_ADDR_MULTICAST)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	lock_sock(sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!sock_flag(sk, SOCK_ZAPPED))
 		goto out_unlock;
 
@@ -324,7 +324,7 @@ static int l2tp_ip6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 			if (!bound_dev_if)
 				goto out_unlock_rcu;
 
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			dev = dev_get_by_index_rcu(sock_net(sk), bound_dev_if);
 			if (!dev)
 				goto out_unlock_rcu;
@@ -334,7 +334,7 @@ static int l2tp_ip6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 		 * unspecified and mapped address have a v4 equivalent.
 		 */
 		v4addr = LOOPBACK4_IPV6;
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		if (!ipv6_chk_addr(sock_net(sk), &addr->l2tp_addr, dev, 0))
 			goto out_unlock_rcu;
 	}
@@ -344,7 +344,7 @@ static int l2tp_ip6_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	if (__l2tp_ip6_bind_lookup(net, &addr->l2tp_addr, NULL, bound_dev_if,
 				   addr->l2tp_conn_id)) {
 		write_unlock_bh(&l2tp_ip6_lock);
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		goto out_unlock;
 	}
 
@@ -382,26 +382,26 @@ static int l2tp_ip6_connect(struct sock *sk, struct sockaddr *uaddr,
 	int rc;
 
 	if (addr_len < sizeof(*lsa))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin6_family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	addr_type = ipv6_addr_type(&usin->sin6_addr);
 	if (addr_type & IPV6_ADDR_MULTICAST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr_type & IPV6_ADDR_MAPPED) {
 		daddr = &usin->sin6_addr;
 		if (ipv4_is_multicast(daddr->s6_addr32[3]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	lock_sock(sk);
 
 	 /* Must bind first - autobinding does not work */
 	if (sock_flag(sk, SOCK_ZAPPED)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_sk;
 	}
 
@@ -444,7 +444,7 @@ static int l2tp_ip6_getname(struct socket *sock, struct sockaddr *uaddr,
 	lsa->l2tp_unused = 0;
 	if (peer) {
 		if (!lsk->peer_conn_id)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		lsa->l2tp_conn_id = lsk->peer_conn_id;
 		lsa->l2tp_addr = sk->sk_v6_daddr;
 		if (np->sndflow)
@@ -522,11 +522,11 @@ static int l2tp_ip6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	   better check is made in ip6_append_data().
 	 */
 	if (len > INT_MAX)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/* Mirror BSD error message compatibility */
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 *	Get and verify the address.
@@ -540,10 +540,10 @@ static int l2tp_ip6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	if (lsa) {
 		if (addr_len < SIN6_LEN_RFC2133)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (lsa->l2tp_family && lsa->l2tp_family != AF_INET6)
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 
 		daddr = &lsa->l2tp_addr;
 		if (np->sndflow) {
@@ -551,7 +551,7 @@ static int l2tp_ip6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			if (fl6.flowlabel&IPV6_FLOWLABEL_MASK) {
 				flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 				if (IS_ERR(flowlabel))
-					return -EINVAL;
+					return -ERR(EINVAL);
 			}
 		}
 
@@ -569,7 +569,7 @@ static int l2tp_ip6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			fl6.flowi6_oif = lsa->l2tp_scope_id;
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 
 		daddr = &sk->sk_v6_daddr;
 		fl6.flowlabel = np->flow_label;
@@ -592,7 +592,7 @@ static int l2tp_ip6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		if ((fl6.flowlabel & IPV6_FLOWLABEL_MASK) && !flowlabel) {
 			flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 			if (IS_ERR(flowlabel))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		if (!(opt->opt_nflen|opt->opt_flen))
 			opt = NULL;
@@ -678,7 +678,7 @@ static int l2tp_ip6_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 	struct ipv6_pinfo *np = inet6_sk(sk);
 	DECLARE_SOCKADDR(struct sockaddr_l2tpip6 *, lsa, msg->msg_name);
 	size_t copied = 0;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	struct sk_buff *skb;
 
 	if (flags & MSG_OOB)

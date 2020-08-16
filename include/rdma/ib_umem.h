@@ -87,18 +87,18 @@ static inline struct ib_umem *ib_umem_get(struct ib_device *device,
 					  unsigned long addr, size_t size,
 					  int access)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline void ib_umem_release(struct ib_umem *umem) { }
 static inline int ib_umem_page_count(struct ib_umem *umem) { return 0; }
 static inline int ib_umem_copy_from(void *dst, struct ib_umem *umem, size_t offset,
 		      		    size_t length) {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int ib_umem_find_best_pgsz(struct ib_umem *umem,
 					 unsigned long pgsz_bitmap,
 					 unsigned long virt) {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #endif /* CONFIG_INFINIBAND_USER_MEM */

@@ -107,7 +107,7 @@ static void *nft_rhash_get(const struct net *net, const struct nft_set *set,
 	if (he != NULL)
 		return he;
 
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static bool nft_rhash_update(struct nft_set *set, const u32 *key,
@@ -174,7 +174,7 @@ static int nft_rhash_insert(const struct net *net, const struct nft_set *set,
 		return PTR_ERR(prev);
 	if (prev) {
 		*ext = &prev->ext;
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	return 0;
 }
@@ -454,7 +454,7 @@ static void *nft_hash_get(const struct net *net, const struct nft_set *set,
 		    nft_set_elem_active(&he->ext, genmask))
 			return he;
 	}
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static bool nft_hash_lookup_fast(const struct net *net,
@@ -512,7 +512,7 @@ static int nft_hash_insert(const struct net *net, const struct nft_set *set,
 			    nft_set_ext_key(&he->ext), set->klen) &&
 		    nft_set_elem_active(&he->ext, genmask)) {
 			*ext = &he->ext;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	hlist_add_head_rcu(&this->node, &priv->table[hash]);

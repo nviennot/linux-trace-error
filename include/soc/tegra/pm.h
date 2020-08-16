@@ -41,7 +41,7 @@ static inline void tegra_resume(void)
 
 static inline int tegra30_pm_secondary_cpu_suspend(unsigned long arg)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void tegra_pm_clear_cpu_in_lp2(void)
@@ -54,12 +54,12 @@ static inline void tegra_pm_set_cpu_in_lp2(void)
 
 static inline int tegra_pm_enter_lp2(void)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int tegra_pm_park_secondary_cpu(unsigned long cpu)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif /* CONFIG_PM_SLEEP */
 

@@ -175,7 +175,7 @@ int btrfs_delayed_refs_rsv_refill(struct btrfs_fs_info *fs_info,
 	struct btrfs_block_rsv *block_rsv = &fs_info->delayed_refs_rsv;
 	u64 limit = btrfs_calc_insert_metadata_size(fs_info, 1);
 	u64 num_bytes = 0;
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 
 	spin_lock(&block_rsv->lock);
 	if (block_rsv->reserved < block_rsv->size) {
@@ -405,7 +405,7 @@ int btrfs_delayed_ref_lock(struct btrfs_delayed_ref_root *delayed_refs,
 	if (RB_EMPTY_NODE(&head->href_node)) {
 		mutex_unlock(&head->mutex);
 		btrfs_put_delayed_ref_head(head);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	btrfs_put_delayed_ref_head(head);
 	return 0;

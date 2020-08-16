@@ -274,7 +274,7 @@ static int cs35l34_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	int slot, slot_num;
 
 	if (slot_width != 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->tdm_mode = true;
 	/* scan rx_mask for aud slot */
@@ -515,7 +515,7 @@ static int cs35l34_get_mclk_coeff(int mclk, int srate)
 			cs35l34_mclk_coeffs[i].srate == srate)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs35l34_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
@@ -533,7 +533,7 @@ static int cs35l34_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 				    0x80, 0x00);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -632,7 +632,7 @@ static int cs35l34_dai_set_sysclk(struct snd_soc_dai *dai,
 	default:
 		dev_err(component->dev, "ERROR: Invalid Frequency %d\n", freq);
 		cs35l34->mclk_int = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(cs35l34->regmap, CS35L34_MCLK_CTL,
 			CS35L34_MCLK_DIV | CS35L34_MCLK_RATE_MASK, value);
@@ -706,7 +706,7 @@ static int cs35l34_boost_inductor(struct cs35l34_private *cs35l34,
 	default:
 		dev_err(component->dev, "%s Invalid Inductor Value %d uH\n",
 			__func__, inductor);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -814,7 +814,7 @@ static int cs35l34_handle_of_data(struct i2c_client *i2c_client,
 		if (val > 8000 || (val < 3300 && val > 0)) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Voltage %d mV\n", val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (val == 0)
 			pdata->boost_vtge = 0; /* Use VP */
@@ -829,14 +829,14 @@ static int cs35l34_handle_of_data(struct i2c_client *i2c_client,
 		pdata->boost_ind = val;
 	} else {
 		dev_err(&i2c_client->dev, "Inductor not specified.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_property_read_u32(np, "cirrus,boost-peak-milliamp", &val) >= 0) {
 		if (val > 3840 || val < 1200) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Peak Current %d mA\n", val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		pdata->boost_peak = ((val - 1200)/80) + 1;
 	}
@@ -1078,7 +1078,7 @@ static int cs35l34_i2c_probe(struct i2c_client *i2c_client,
 		dev_err(&i2c_client->dev,
 			"CS35l34 Device ID (%X). Expected ID %X\n",
 			devid, CS35L34_CHIP_ID);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err_regulator;
 	}
 

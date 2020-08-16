@@ -313,7 +313,7 @@ static inline struct devfreq *devfreq_add_device(struct device *dev,
 					const char *governor_name,
 					void *data)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline int devfreq_remove_device(struct devfreq *devfreq)
@@ -326,7 +326,7 @@ static inline struct devfreq *devm_devfreq_add_device(struct device *dev,
 					const char *governor_name,
 					void *data)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline void devm_devfreq_remove_device(struct device *dev,
@@ -350,25 +350,25 @@ static inline void devfreq_resume(void) {}
 static inline struct dev_pm_opp *devfreq_recommended_opp(struct device *dev,
 					unsigned long *freq, u32 flags)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int devfreq_register_opp_notifier(struct device *dev,
 					struct devfreq *devfreq)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devfreq_unregister_opp_notifier(struct device *dev,
 					struct devfreq *devfreq)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devm_devfreq_register_opp_notifier(struct device *dev,
 					struct devfreq *devfreq)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void devm_devfreq_unregister_opp_notifier(struct device *dev,
@@ -408,12 +408,12 @@ static inline void devm_devfreq_unregister_notifier(struct device *dev,
 static inline struct devfreq *devfreq_get_devfreq_by_phandle(struct device *dev,
 					int index)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline int devfreq_update_stats(struct devfreq *df)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_PM_DEVFREQ */
 

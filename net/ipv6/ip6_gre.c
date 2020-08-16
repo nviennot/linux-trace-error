@@ -431,13 +431,13 @@ static int ip6gre_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 
 	if (gre_parse_header(skb, &tpi, NULL, htons(ETH_P_IPV6),
 			     offset) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ipv6h = (const struct ipv6hdr *)skb->data;
 	t = ip6gre_tunnel_lookup(skb->dev, &ipv6h->daddr, &ipv6h->saddr,
 				 tpi.key, tpi.proto);
 	if (!t)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (type) {
 	case ICMPV6_DEST_UNREACH:
@@ -738,7 +738,7 @@ static netdev_tx_t __gre6_xmit(struct sk_buff *skb,
 		if (unlikely(!tun_info ||
 			     !(tun_info->mode & IP_TUNNEL_INFO_TX) ||
 			     ip_tunnel_info_af(tun_info) != AF_INET6))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		key = &tun_info->key;
 		memset(fl6, 0, sizeof(*fl6));
@@ -924,7 +924,7 @@ static netdev_tx_t ip6erspan_tunnel_xmit(struct sk_buff *skb,
 	int encap_limit = -1;
 	__u8 dsfield = false;
 	struct flowi6 fl6;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	__be16 proto;
 	__u32 mtu;
 	int nhoff;
@@ -1256,7 +1256,7 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 
 	case SIOCADDTUNNEL:
 	case SIOCCHGTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto done;
 
@@ -1264,7 +1264,7 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 		if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 			goto done;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if ((p.i_flags|p.o_flags)&(GRE_VERSION|GRE_ROUTING))
 			goto done;
 
@@ -1279,7 +1279,7 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 		if (dev != ign->fb_tunnel_dev && cmd == SIOCCHGTUNNEL) {
 			if (t) {
 				if (t->dev != dev) {
-					err = -EEXIST;
+					err = -ERR(EEXIST);
 					break;
 				}
 			} else {
@@ -1301,11 +1301,11 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 			if (copy_to_user(ifr->ifr_ifru.ifru_data, &p, sizeof(p)))
 				err = -EFAULT;
 		} else
-			err = (cmd == SIOCADDTUNNEL ? -ENOBUFS : -ENOENT);
+			err = (cmd == SIOCADDTUNNEL ? -ERR(ENOBUFS) : -ERR(ENOENT));
 		break;
 
 	case SIOCDELTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto done;
 
@@ -1313,12 +1313,12 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 			err = -EFAULT;
 			if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 				goto done;
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			ip6gre_tnl_parm_from_user(&p1, &p);
 			t = ip6gre_tunnel_locate(net, &p1, 0);
 			if (!t)
 				goto done;
-			err = -EPERM;
+			err = -ERR(EPERM);
 			if (t == netdev_priv(ign->fb_tunnel_dev))
 				goto done;
 			dev = t->dev;
@@ -1328,7 +1328,7 @@ static int ip6gre_tunnel_ioctl(struct net_device *dev,
 		break;
 
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 done:
@@ -1631,7 +1631,7 @@ static int ip6gre_tunnel_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (data[IFLA_GRE_OFLAGS])
 		flags |= nla_get_be16(data[IFLA_GRE_OFLAGS]);
 	if (flags & (GRE_VERSION|GRE_ROUTING))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1643,9 +1643,9 @@ static int ip6gre_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 
 	if (tb[IFLA_ADDRESS]) {
 		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 	}
 
 	if (!data)
@@ -1654,7 +1654,7 @@ static int ip6gre_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (data[IFLA_GRE_REMOTE]) {
 		daddr = nla_get_in6_addr(data[IFLA_GRE_REMOTE]);
 		if (ipv6_addr_any(&daddr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 out:
@@ -1681,23 +1681,23 @@ static int ip6erspan_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 		flags |= nla_get_be16(data[IFLA_GRE_IFLAGS]);
 	if (!data[IFLA_GRE_COLLECT_METADATA] &&
 	    flags != (GRE_SEQ | GRE_KEY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ERSPAN Session ID only has 10-bit. Since we reuse
 	 * 32-bit key field as ID, check it's range.
 	 */
 	if (data[IFLA_GRE_IKEY] &&
 	    (ntohl(nla_get_be32(data[IFLA_GRE_IKEY])) & ~ID_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (data[IFLA_GRE_OKEY] &&
 	    (ntohl(nla_get_be32(data[IFLA_GRE_OKEY])) & ~ID_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (data[IFLA_GRE_ERSPAN_VER]) {
 		ver = nla_get_u8(data[IFLA_GRE_ERSPAN_VER]);
 		if (ver != 1 && ver != 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (ver == 1) {
@@ -1705,21 +1705,21 @@ static int ip6erspan_tap_validate(struct nlattr *tb[], struct nlattr *data[],
 			u32 index = nla_get_u32(data[IFLA_GRE_ERSPAN_INDEX]);
 
 			if (index & ~INDEX_MASK)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	} else if (ver == 2) {
 		if (data[IFLA_GRE_ERSPAN_DIR]) {
 			u16 dir = nla_get_u8(data[IFLA_GRE_ERSPAN_DIR]);
 
 			if (dir & ~(DIR_MASK >> DIR_OFFSET))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 		if (data[IFLA_GRE_ERSPAN_HWID]) {
 			u16 hwid = nla_get_u16(data[IFLA_GRE_ERSPAN_HWID]);
 
 			if (hwid & ~(HWID_MASK >> HWID_OFFSET))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -1987,10 +1987,10 @@ static int ip6gre_newlink(struct net *src_net, struct net_device *dev,
 
 	if (nt->parms.collect_md) {
 		if (rtnl_dereference(ign->collect_md_tun))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		if (ip6gre_tunnel_find(net, &nt->parms, dev->type))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	err = ip6gre_newlink_common(src_net, dev, tb, data, extack);
@@ -2013,7 +2013,7 @@ ip6gre_changelink_common(struct net_device *dev, struct nlattr *tb[],
 	struct ip_tunnel_encap ipencap;
 
 	if (dev == ign->fb_tunnel_dev)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (ip6gre_netlink_encap_parms(data, &ipencap)) {
 		int err = ip6_tnl_encap_setup(nt, &ipencap);
@@ -2028,7 +2028,7 @@ ip6gre_changelink_common(struct net_device *dev, struct nlattr *tb[],
 
 	if (t) {
 		if (t->dev != dev)
-			return ERR_PTR(-EEXIST);
+			return ERR_PTR(-ERR(EEXIST));
 	} else {
 		t = nt;
 	}
@@ -2165,7 +2165,7 @@ static int ip6gre_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy ip6gre_policy[IFLA_GRE_MAX + 1] = {
@@ -2221,10 +2221,10 @@ static int ip6erspan_newlink(struct net *src_net, struct net_device *dev,
 
 	if (nt->parms.collect_md) {
 		if (rtnl_dereference(ign->collect_md_tun_erspan))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		if (ip6gre_tunnel_find(net, &nt->parms, dev->type))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	err = ip6gre_newlink_common(src_net, dev, tb, data, extack);

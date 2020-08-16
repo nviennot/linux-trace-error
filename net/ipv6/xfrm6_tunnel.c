@@ -273,10 +273,10 @@ static int xfrm6_tunnel_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 static int xfrm6_tunnel_init_state(struct xfrm_state *x)
 {
 	if (x->props.mode != XFRM_MODE_TUNNEL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (x->encap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	x->props.header_len = sizeof(struct ipv6hdr);
 

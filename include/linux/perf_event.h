@@ -1303,7 +1303,7 @@ static inline int perf_is_paranoid(void)
 static inline int perf_allow_kernel(struct perf_event_attr *attr)
 {
 	if (sysctl_perf_event_paranoid > 1 && !perfmon_capable())
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return security_perf_event_open(attr, PERF_SECURITY_KERNEL);
 }
@@ -1311,7 +1311,7 @@ static inline int perf_allow_kernel(struct perf_event_attr *attr)
 static inline int perf_allow_cpu(struct perf_event_attr *attr)
 {
 	if (sysctl_perf_event_paranoid > 0 && !perfmon_capable())
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return security_perf_event_open(attr, PERF_SECURITY_CPU);
 }
@@ -1319,7 +1319,7 @@ static inline int perf_allow_cpu(struct perf_event_attr *attr)
 static inline int perf_allow_tracepoint(struct perf_event_attr *attr)
 {
 	if (sysctl_perf_event_paranoid > -1 && !perfmon_capable())
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return security_perf_event_open(attr, PERF_SECURITY_TRACEPOINT);
 }
@@ -1418,7 +1418,7 @@ perf_aux_output_end(struct perf_output_handle *handle, unsigned long size)
 									{ }
 static inline int
 perf_aux_output_skip(struct perf_output_handle *handle,
-		     unsigned long size)				{ return -EINVAL; }
+		     unsigned long size)				{ return -ERR(EINVAL); }
 static inline void *
 perf_get_aux(struct perf_output_handle *handle)				{ return NULL; }
 static inline void
@@ -1433,26 +1433,26 @@ static inline int perf_event_init_task(struct task_struct *child)	{ return 0; }
 static inline void perf_event_exit_task(struct task_struct *child)	{ }
 static inline void perf_event_free_task(struct task_struct *task)	{ }
 static inline void perf_event_delayed_put(struct task_struct *task)	{ }
-static inline struct file *perf_event_get(unsigned int fd)	{ return ERR_PTR(-EINVAL); }
+static inline struct file *perf_event_get(unsigned int fd)	{ return ERR_PTR(-ERR(EINVAL)); }
 static inline const struct perf_event *perf_get_event(struct file *file)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline const struct perf_event_attr *perf_event_attrs(struct perf_event *event)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline int perf_event_read_local(struct perf_event *event, u64 *value,
 					u64 *enabled, u64 *running)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void perf_event_print_debug(void)				{ }
-static inline int perf_event_task_disable(void)				{ return -EINVAL; }
-static inline int perf_event_task_enable(void)				{ return -EINVAL; }
+static inline int perf_event_task_disable(void)				{ return -ERR(EINVAL); }
+static inline int perf_event_task_enable(void)				{ return -ERR(EINVAL); }
 static inline int perf_event_refresh(struct perf_event *event, int refresh)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void
@@ -1490,7 +1490,7 @@ static inline void perf_event_task_tick(void)				{ }
 static inline int perf_event_release_kernel(struct perf_event *event)	{ return 0; }
 static inline int perf_event_period(struct perf_event *event, u64 value)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline u64 perf_event_pause(struct perf_event *event, bool reset)
 {

@@ -36,10 +36,10 @@ int zlib_inflate_blob(void *gunzip_buf, unsigned int sz,
 		if (rc == Z_STREAM_END)
 			rc = sz - strm->avail_out;
 		else
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		zlib_inflateEnd(strm);
 	} else
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 
 	kfree(strm->workspace);
 gunzip_nomem2:

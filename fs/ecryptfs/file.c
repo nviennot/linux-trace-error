@@ -160,7 +160,7 @@ static int read_or_initialize_metadata(struct dentry *dentry)
 			goto out;
 	}
 
-	rc = -EIO;
+	rc = -ERR(EIO);
 out:
 	mutex_unlock(&crypt_stat->cs_mutex);
 	return rc;
@@ -175,7 +175,7 @@ static int ecryptfs_mmap(struct file *file, struct vm_area_struct *vma)
 	 * allows recursive mounting, this will need to be extended.
 	 */
 	if (!lower_file->f_op->mmap)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return generic_file_mmap(file, vma);
 }
 
@@ -225,7 +225,7 @@ static int ecryptfs_open(struct inode *inode, struct file *file)
 	}
 	if ((ecryptfs_inode_to_private(inode)->lower_file->f_flags & O_ACCMODE)
 	    == O_RDONLY && (file->f_flags & O_ACCMODE) != O_RDONLY) {
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		printk(KERN_WARNING "%s: Lower file is RO; eCryptfs "
 		       "file must hence be opened RO\n", __func__);
 		goto out_put;
@@ -347,7 +347,7 @@ static long
 ecryptfs_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct file *lower_file = ecryptfs_file_to_lower(file);
-	long rc = -ENOTTY;
+	long rc = -ERR(ENOTTY);
 
 	if (!lower_file->f_op->unlocked_ioctl)
 		return rc;
@@ -372,7 +372,7 @@ static long
 ecryptfs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct file *lower_file = ecryptfs_file_to_lower(file);
-	long rc = -ENOIOCTLCMD;
+	long rc = -ERR(ENOIOCTLCMD);
 
 	if (!lower_file->f_op->compat_ioctl)
 		return rc;

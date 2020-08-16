@@ -351,10 +351,10 @@ static int fl6_renew(struct ip6_flowlabel *fl, unsigned long linger, unsigned lo
 {
 	linger = check_linger(linger);
 	if (!linger)
-		return -EPERM;
+		return -ERR(EPERM);
 	expires = check_linger(expires);
 	if (!expires)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	spin_lock_bh(&ip6_fl_lock);
 	fl->lastuse = jiffies;
@@ -379,7 +379,7 @@ fl_create(struct net *net, struct sock *sk, struct in6_flowlabel_req *freq,
 	int err;
 
 	olen = optlen - CMSG_ALIGN(sizeof(*freq));
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (olen > 64 * 1024)
 		goto done;
 
@@ -412,7 +412,7 @@ fl_create(struct net *net, struct sock *sk, struct in6_flowlabel_req *freq,
 		err = ip6_datagram_send_ctl(net, sk, &msg, &flowi6, &ipc6);
 		if (err)
 			goto done;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (fl->opt->opt_flen)
 			goto done;
 		if (fl->opt->opt_nflen == 0) {
@@ -430,7 +430,7 @@ fl_create(struct net *net, struct sock *sk, struct in6_flowlabel_req *freq,
 	addr_type = ipv6_addr_type(&freq->flr_dst);
 	if ((addr_type & IPV6_ADDR_MAPPED) ||
 	    addr_type == IPV6_ADDR_ANY) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 	fl->dst = freq->flr_dst;
@@ -446,7 +446,7 @@ fl_create(struct net *net, struct sock *sk, struct in6_flowlabel_req *freq,
 		fl->owner.uid = current_euid();
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 	if (fl_shared_exclusive(fl) || fl->opt)
@@ -481,7 +481,7 @@ static int mem_check(struct sock *sk)
 	    ((count >= FL_MAX_PER_SOCK ||
 	      (count > 0 && room < FL_MAX_SIZE/2) || room < FL_MAX_SIZE/4) &&
 	     !capable(CAP_NET_ADMIN)))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	return 0;
 }
@@ -530,7 +530,7 @@ int ipv6_flowlabel_opt_get(struct sock *sk, struct in6_flowlabel_req *freq,
 	}
 	rcu_read_unlock_bh();
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
@@ -546,7 +546,7 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 
 
 	if (optlen < sizeof(freq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&freq, optval, sizeof(freq)))
 		return -EFAULT;
@@ -555,9 +555,9 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 	case IPV6_FL_A_PUT:
 		if (freq.flr_flags & IPV6_FL_F_REFLECT) {
 			if (sk->sk_protocol != IPPROTO_TCP)
-				return -ENOPROTOOPT;
+				return -ERR(ENOPROTOOPT);
 			if (!np->repflow)
-				return -ESRCH;
+				return -ERR(ESRCH);
 			np->flow_label = 0;
 			np->repflow = 0;
 			return 0;
@@ -578,7 +578,7 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 			}
 		}
 		spin_unlock_bh(&ip6_sk_fl_lock);
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	case IPV6_FL_A_RENEW:
 		rcu_read_lock_bh();
@@ -600,29 +600,29 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 				return err;
 			}
 		}
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	case IPV6_FL_A_GET:
 		if (freq.flr_flags & IPV6_FL_F_REFLECT) {
 			struct net *net = sock_net(sk);
 			if (net->ipv6.sysctl.flowlabel_consistency) {
 				net_info_ratelimited("Can not set IPV6_FL_F_REFLECT if flowlabel_consistency sysctl is enable\n");
-				return -EPERM;
+				return -ERR(EPERM);
 			}
 
 			if (sk->sk_protocol != IPPROTO_TCP)
-				return -ENOPROTOOPT;
+				return -ERR(ENOPROTOOPT);
 
 			np->repflow = 1;
 			return 0;
 		}
 
 		if (freq.flr_label & ~IPV6_FLOWLABEL_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (net->ipv6.sysctl.flowlabel_state_ranges &&
 		    (freq.flr_label & IPV6_FLOWLABEL_STATELESS_FLAG))
-			return -ERANGE;
+			return -ERR(ERANGE);
 
 		fl = fl_create(net, sk, &freq, optval, optlen, &err);
 		if (!fl)
@@ -630,7 +630,7 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 		sfl1 = kmalloc(sizeof(*sfl1), GFP_KERNEL);
 
 		if (freq.flr_label) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			rcu_read_lock_bh();
 			for_each_sk_fl_rcu(np, sfl) {
 				if (sfl->fl->label == freq.flr_label) {
@@ -650,10 +650,10 @@ int ipv6_flowlabel_opt(struct sock *sk, char __user *optval, int optlen)
 				fl1 = fl_lookup(net, freq.flr_label);
 			if (fl1) {
 recheck:
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 				if (freq.flr_flags&IPV6_FL_F_EXCL)
 					goto release;
-				err = -EPERM;
+				err = -ERR(EPERM);
 				if (fl1->share == IPV6_FL_S_EXCL ||
 				    fl1->share != fl->share ||
 				    ((fl1->share == IPV6_FL_S_PROCESS) &&
@@ -678,7 +678,7 @@ release:
 				goto done;
 			}
 		}
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		if (!(freq.flr_flags&IPV6_FL_F_CREATE))
 			goto done;
 
@@ -705,7 +705,7 @@ release:
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 done:

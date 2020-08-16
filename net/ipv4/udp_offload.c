@@ -19,7 +19,7 @@ static struct sk_buff *__skb_udp_tunnel_segment(struct sk_buff *skb,
 {
 	int tnl_hlen = skb_inner_mac_header(skb) - skb_transport_header(skb);
 	bool remcsum, need_csum, offload_csum, gso_partial;
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	struct udphdr *uh = udp_hdr(skb);
 	u16 mac_offset = skb->mac_header;
 	__be16 protocol = skb->protocol;
@@ -152,7 +152,7 @@ struct sk_buff *skb_udp_tunnel_segment(struct sk_buff *skb,
 	__be16 protocol = skb->protocol;
 	const struct net_offload **offloads;
 	const struct net_offload *ops;
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	struct sk_buff *(*gso_inner_segment)(struct sk_buff *skb,
 					     netdev_features_t features);
 
@@ -215,7 +215,7 @@ struct sk_buff *__udp_gso_segment(struct sk_buff *gso_skb,
 
 	mss = skb_shinfo(gso_skb)->gso_size;
 	if (gso_skb->len <= sizeof(*uh) + mss)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	skb_pull(gso_skb, sizeof(*uh));
 
@@ -305,7 +305,7 @@ EXPORT_SYMBOL_GPL(__udp_gso_segment);
 static struct sk_buff *udp4_ufo_fragment(struct sk_buff *skb,
 					 netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	unsigned int mss;
 	__wsum csum;
 	struct udphdr *uh;
@@ -551,7 +551,7 @@ int udp_gro_complete(struct sk_buff *skb, int nhoff,
 {
 	__be16 newlen = htons(skb->len - nhoff);
 	struct udphdr *uh = (struct udphdr *)(skb->data + nhoff);
-	int err = -ENOSYS;
+	int err = -ERR(ENOSYS);
 	struct sock *sk;
 
 	uh->len = newlen;

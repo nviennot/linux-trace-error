@@ -861,7 +861,7 @@ out:
 	nf_conntrack_double_unlock(hash, reply_hash);
 	NF_CT_STAT_INC(net, insert_failed);
 	local_bh_enable();
-	return -EEXIST;
+	return -ERR(EEXIST);
 }
 EXPORT_SYMBOL_GPL(nf_conntrack_hash_check_insert);
 
@@ -1979,14 +1979,14 @@ int nf_ct_port_nlattr_to_tuple(struct nlattr *tb[],
 {
 	if (flags & CTA_FILTER_FLAG(CTA_PROTO_SRC_PORT)) {
 		if (!tb[CTA_PROTO_SRC_PORT])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		t->src.u.tcp.port = nla_get_be16(tb[CTA_PROTO_SRC_PORT]);
 	}
 
 	if (flags & CTA_FILTER_FLAG(CTA_PROTO_DST_PORT)) {
 		if (!tb[CTA_PROTO_DST_PORT])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		t->dst.u.tcp.port = nla_get_be16(tb[CTA_PROTO_DST_PORT]);
 	}
@@ -2493,7 +2493,7 @@ int nf_conntrack_hash_resize(unsigned int hashsize)
 	struct nf_conn *ct;
 
 	if (!hashsize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hash = nf_ct_alloc_hashtable(&hashsize, 1);
 	if (!hash)
@@ -2547,7 +2547,7 @@ int nf_conntrack_set_hashsize(const char *val, const struct kernel_param *kp)
 	int rc;
 
 	if (current->nsproxy->net_ns != &init_net)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* On boot, we can set this without any fancy locking. */
 	if (!nf_conntrack_hash)

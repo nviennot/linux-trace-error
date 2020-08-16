@@ -62,7 +62,7 @@ int check_journal_clean(struct gfs2_sbd *sdp, struct gfs2_jdesc *jd,
 		if (verbose)
 			fs_err(sdp, "Error %d locking journal for spectator "
 			       "mount.\n", error);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	error = gfs2_jdesc_check(jd);
 	if (error) {
@@ -79,7 +79,7 @@ int check_journal_clean(struct gfs2_sbd *sdp, struct gfs2_jdesc *jd,
 		goto out_unlock;
 	}
 	if (!(head.lh_flags & GFS2_LOG_HEAD_UNMOUNT)) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		if (verbose)
 			fs_err(sdp, "jid=%u: Journal is dirty, so the first "
 			       "mounter must not be a spectator.\n",
@@ -122,7 +122,7 @@ static void signal_our_withdraw(struct gfs2_sbd *sdp)
 
 	if (sdp->sd_lockstruct.ls_ops->lm_lock == NULL) { /* lock_nolock */
 		if (!ret)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		clear_bit(SDF_WITHDRAW_RECOVERY, &sdp->sd_flags);
 		goto skip_recovery;
 	}

@@ -392,7 +392,7 @@ static int __init rbtree_test_init(void)
 
 	kfree(nodes);
 
-	return -EAGAIN; /* Fail will directly unload the module */
+	return -ERR(EAGAIN); /* Fail will directly unload the module */
 }
 
 static void __exit rbtree_test_exit(void)

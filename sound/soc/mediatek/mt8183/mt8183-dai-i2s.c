@@ -89,7 +89,7 @@ static int get_i2s_id_by_name(struct mtk_base_afe *afe,
 	else if (strncmp(name, "I2S5", 4) == 0)
 		return MT8183_DAI_I2S_5;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static struct mtk_afe_i2s_priv *get_i2s_priv_by_name(struct mtk_base_afe *afe,
@@ -125,7 +125,7 @@ static int mt8183_i2s_hd_get(struct snd_kcontrol *kcontrol,
 
 	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ucontrol->value.integer.value[0] = i2s_priv->low_jitter_en;
@@ -143,7 +143,7 @@ static int mt8183_i2s_hd_set(struct snd_kcontrol *kcontrol,
 	int hd_en;
 
 	if (ucontrol->value.enumerated.item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hd_en = ucontrol->value.integer.value[0];
 
@@ -154,7 +154,7 @@ static int mt8183_i2s_hd_set(struct snd_kcontrol *kcontrol,
 
 	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i2s_priv->low_jitter_en = hd_en;
@@ -313,7 +313,7 @@ static int mtk_mclk_en_event(struct snd_soc_dapm_widget *w,
 
 	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -767,7 +767,7 @@ static int mtk_dai_i2s_config(struct mtk_base_afe *afe,
 	default:
 		dev_warn(afe->dev, "%s(), id %d not support\n",
 			 __func__, i2s_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set share i2s */
@@ -797,12 +797,12 @@ static int mtk_dai_i2s_set_sysclk(struct snd_soc_dai *dai,
 
 	if (!i2s_priv) {
 		dev_warn(afe->dev, "%s(), i2s_priv == NULL", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dir != SND_SOC_CLOCK_OUT) {
 		dev_warn(afe->dev, "%s(), dir != SND_SOC_CLOCK_OUT", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_info(afe->dev, "%s(), freq %d\n", __func__, freq);
@@ -812,13 +812,13 @@ static int mtk_dai_i2s_set_sysclk(struct snd_soc_dai *dai,
 
 	if (freq > apll_rate) {
 		dev_warn(afe->dev, "%s(), freq > apll rate", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (apll_rate % freq != 0) {
 		dev_warn(afe->dev, "%s(), APLL cannot generate freq Hz",
 			 __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	i2s_priv->mclk_rate = freq;
@@ -831,7 +831,7 @@ static int mtk_dai_i2s_set_sysclk(struct snd_soc_dai *dai,
 		if (!share_i2s_priv) {
 			dev_warn(afe->dev, "%s(), share_i2s_priv == NULL",
 				 __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		share_i2s_priv->mclk_rate = i2s_priv->mclk_rate;

@@ -25,7 +25,7 @@ int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
 static inline int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
 					      struct snd_soc_component *comp)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

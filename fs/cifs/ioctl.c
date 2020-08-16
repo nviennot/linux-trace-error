@@ -68,7 +68,7 @@ static long cifs_ioctl_query_info(unsigned int xid, struct file *filep,
 				xid, tcon, cifs_sb, utf16_path,
 				filep->private_data ? 0 : 1, p);
 	else
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 
  ici_exit:
 	if (utf16_path != &root_path)
@@ -88,7 +88,7 @@ static long cifs_ioctl_copychunk(unsigned int xid, struct file *dst_file,
 	/* the destination must be opened for writing */
 	if (!(dst_file->f_mode & FMODE_WRITE)) {
 		cifs_dbg(FYI, "file target not open for write\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check if target volume is readonly and take reference */
@@ -100,18 +100,18 @@ static long cifs_ioctl_copychunk(unsigned int xid, struct file *dst_file,
 
 	src_file = fdget(srcfd);
 	if (!src_file.file) {
-		rc = -EBADF;
+		rc = -ERR(EBADF);
 		goto out_drop_write;
 	}
 
 	if (src_file.file->f_op->unlocked_ioctl != cifs_ioctl) {
-		rc = -EBADF;
+		rc = -ERR(EBADF);
 		cifs_dbg(VFS, "src file seems to be from a different filesystem type\n");
 		goto out_fput;
 	}
 
 	src_inode = file_inode(src_file.file);
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (S_ISDIR(src_inode->i_mode))
 		goto out_fput;
 
@@ -165,7 +165,7 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 {
 	struct inode *inode = file_inode(filep);
 	struct smb3_key_debug_info pkey_inf;
-	int rc = -ENOTTY; /* strange error - but the precedent */
+	int rc = -ERR(ENOTTY); /* strange error - but the precedent */
 	unsigned int xid;
 	struct cifsFileInfo *pSMBFile = filep->private_data;
 	struct cifs_tcon *tcon;
@@ -251,7 +251,7 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 				rc = tcon->ses->server->ops->set_integrity(xid,
 						tcon, pSMBFile);
 			else
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 			break;
 		case CIFS_IOC_GET_MNT_INFO:
 			if (pSMBFile == NULL)
@@ -263,7 +263,7 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 			if (pSMBFile == NULL)
 				break;
 			if (arg == 0) {
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 				goto cifs_ioc_exit;
 			}
 			tcon = tlink_tcon(pSMBFile->tlink);
@@ -271,19 +271,19 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 				rc = tcon->ses->server->ops->enum_snapshots(xid, tcon,
 						pSMBFile, (void __user *)arg);
 			else
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 			break;
 		case CIFS_DUMP_KEY:
 			if (pSMBFile == NULL)
 				break;
 			if (!capable(CAP_SYS_ADMIN)) {
-				rc = -EACCES;
+				rc = -ERR(EACCES);
 				break;
 			}
 
 			tcon = tlink_tcon(pSMBFile->tlink);
 			if (!smb3_encryption_required(tcon)) {
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 				break;
 			}
 			pkey_inf.cipher_type =
@@ -304,7 +304,7 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 		case CIFS_IOC_NOTIFY:
 			if (!S_ISDIR(inode->i_mode)) {
 				/* Notify can only be done on directories */
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 				break;
 			}
 			cifs_sb = CIFS_SB(inode->i_sb);
@@ -319,7 +319,7 @@ long cifs_ioctl(struct file *filep, unsigned int command, unsigned long arg)
 						filep, (void __user *)arg);
 				cifs_dbg(FYI, "ioctl notify rc %d\n", rc);
 			} else
-				rc = -EOPNOTSUPP;
+				rc = -ERR(EOPNOTSUPP);
 			cifs_put_tlink(tlink);
 			break;
 		default:

@@ -135,7 +135,7 @@ static int tcp_v6_pre_connect(struct sock *sk, struct sockaddr *uaddr,
 	 * of the bound specified by user in addr_len.
 	 */
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock_owned_by_me(sk);
 
@@ -159,10 +159,10 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 	struct inet_timewait_death_row *tcp_death_row = &sock_net(sk)->ipv4.tcp_death_row;
 
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin6_family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	memset(&fl6, 0, sizeof(fl6));
 
@@ -173,7 +173,7 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 			struct ip6_flowlabel *flowlabel;
 			flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 			if (IS_ERR(flowlabel))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			fl6_sock_release(flowlabel);
 		}
 	}
@@ -193,7 +193,7 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 	addr_type = ipv6_addr_type(&usin->sin6_addr);
 
 	if (addr_type & IPV6_ADDR_MULTICAST)
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 
 	if (addr_type&IPV6_ADDR_LINKLOCAL) {
 		if (addr_len >= sizeof(struct sockaddr_in6) &&
@@ -202,14 +202,14 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 			 * must coincide.
 			 */
 			if (!sk_dev_equal_l3scope(sk, usin->sin6_scope_id))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			sk->sk_bound_dev_if = usin->sin6_scope_id;
 		}
 
 		/* Connect to link-local address requires an interface */
 		if (!sk->sk_bound_dev_if)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (tp->rx_opt.ts_recent_stamp &&
@@ -231,7 +231,7 @@ static int tcp_v6_connect(struct sock *sk, struct sockaddr *uaddr,
 		struct sockaddr_in sin;
 
 		if (__ipv6_only_sock(sk))
-			return -ENETUNREACH;
+			return -ERR(ENETUNREACH);
 
 		sin.sin_family = AF_INET;
 		sin.sin_port = usin->sin6_port;
@@ -384,7 +384,7 @@ static int tcp_v6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 	if (!sk) {
 		__ICMP6_INC_STATS(net, __in6_dev_get(skb->dev),
 				  ICMP6_MIB_INERRORS);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (sk->sk_state == TCP_TIME_WAIT) {
@@ -575,20 +575,20 @@ static int tcp_v6_parse_md5_keys(struct sock *sk, int optname,
 	u8 prefixlen;
 
 	if (optlen < sizeof(cmd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&cmd, optval, sizeof(cmd)))
 		return -EFAULT;
 
 	if (sin6->sin6_family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (optname == TCP_MD5SIG_EXT &&
 	    cmd.tcpm_flags & TCP_MD5SIG_FLAG_PREFIX) {
 		prefixlen = cmd.tcpm_prefixlen;
 		if (prefixlen > 128 || (ipv6_addr_v4mapped(&sin6->sin6_addr) &&
 					prefixlen > 32))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		prefixlen = ipv6_addr_v4mapped(&sin6->sin6_addr) ? 32 : 128;
 	}
@@ -607,7 +607,7 @@ static int tcp_v6_parse_md5_keys(struct sock *sk, int optname,
 		 * right now device MUST be an L3 master
 		 */
 		if (!dev || !l3index)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (!cmd.tcpm_keylen) {
@@ -620,7 +620,7 @@ static int tcp_v6_parse_md5_keys(struct sock *sk, int optname,
 	}
 
 	if (cmd.tcpm_keylen > TCP_MD5SIG_MAXKEYLEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv6_addr_v4mapped(&sin6->sin6_addr))
 		return tcp_md5_do_add(sk, (union tcp_md5_addr *)&sin6->sin6_addr.s6_addr32[3],

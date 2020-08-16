@@ -171,7 +171,7 @@ static int __init alsa_card_virmidi_init(void)
 		printk(KERN_ERR "Card-VirMIDI soundcard not found or device busy\n");
 #endif
 		snd_virmidi_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

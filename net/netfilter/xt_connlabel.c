@@ -56,7 +56,7 @@ static int connlabel_mt_check(const struct xt_mtchk_param *par)
 	if (info->options & ~options) {
 		pr_info_ratelimited("Unknown options in mask %x\n",
 				    info->options);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = nf_ct_netns_get(par->net, par->family);

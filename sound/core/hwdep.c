@@ -44,7 +44,7 @@ static loff_t snd_hwdep_llseek(struct file * file, loff_t offset, int orig)
 	struct snd_hwdep *hw = file->private_data;
 	if (hw->ops.llseek)
 		return hw->ops.llseek(hw, file, offset, orig);
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static ssize_t snd_hwdep_read(struct file * file, char __user *buf,
@@ -53,7 +53,7 @@ static ssize_t snd_hwdep_read(struct file * file, char __user *buf,
 	struct snd_hwdep *hw = file->private_data;
 	if (hw->ops.read)
 		return hw->ops.read(hw, buf, count, offset);
-	return -ENXIO;	
+	return -ERR(ENXIO);	
 }
 
 static ssize_t snd_hwdep_write(struct file * file, const char __user *buf,
@@ -62,7 +62,7 @@ static ssize_t snd_hwdep_write(struct file * file, const char __user *buf,
 	struct snd_hwdep *hw = file->private_data;
 	if (hw->ops.write)
 		return hw->ops.write(hw, buf, count, offset);
-	return -ENXIO;	
+	return -ERR(ENXIO);	
 }
 
 static int snd_hwdep_open(struct inode *inode, struct file * file)
@@ -81,9 +81,9 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 					       SNDRV_OSS_DEVICE_TYPE_DMFM);
 #endif
 	} else
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (hw == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!try_module_get(hw->card->module)) {
 		snd_card_unref(hw->card);
@@ -95,7 +95,7 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 	mutex_lock(&hw->open_mutex);
 	while (1) {
 		if (hw->exclusive && hw->used > 0) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			break;
 		}
 		if (!hw->ops.open) {
@@ -107,7 +107,7 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 			break;
 		if (err == -EAGAIN) {
 			if (file->f_flags & O_NONBLOCK) {
-				err = -EBUSY;
+				err = -ERR(EBUSY);
 				break;
 			}
 		} else
@@ -117,11 +117,11 @@ static int snd_hwdep_open(struct inode *inode, struct file * file)
 		schedule();
 		mutex_lock(&hw->open_mutex);
 		if (hw->card->shutdown) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			break;
 		}
 		if (signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			break;
 		}
 	}
@@ -192,7 +192,7 @@ static int snd_hwdep_dsp_status(struct snd_hwdep *hw,
 	int err;
 	
 	if (! hw->ops.dsp_status)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	memset(&info, 0, sizeof(info));
 	info.dsp_loaded = hw->dsp_loaded;
 	if ((err = hw->ops.dsp_status(hw, &info)) < 0)
@@ -209,15 +209,15 @@ static int snd_hwdep_dsp_load(struct snd_hwdep *hw,
 	int err;
 	
 	if (! hw->ops.dsp_load)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	memset(&info, 0, sizeof(info));
 	if (copy_from_user(&info, _info, sizeof(info)))
 		return -EFAULT;
 	if (info.index >= 32)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* check whether the dsp was already loaded */
 	if (hw->dsp_loaded & (1u << info.index))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	err = hw->ops.dsp_load(hw, &info);
 	if (err < 0)
 		return err;
@@ -242,7 +242,7 @@ static long snd_hwdep_ioctl(struct file * file, unsigned int cmd,
 	}
 	if (hw->ops.ioctl)
 		return hw->ops.ioctl(hw, file, cmd, arg);
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 static int snd_hwdep_mmap(struct file * file, struct vm_area_struct * vma)
@@ -250,7 +250,7 @@ static int snd_hwdep_mmap(struct file * file, struct vm_area_struct * vma)
 	struct snd_hwdep *hw = file->private_data;
 	if (hw->ops.mmap)
 		return hw->ops.mmap(hw, file, vma);
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static int snd_hwdep_control_ioctl(struct snd_card *card,
@@ -298,12 +298,12 @@ static int snd_hwdep_control_ioctl(struct snd_card *card,
 			if (hwdep)
 				err = snd_hwdep_info(hwdep, info);
 			else
-				err = -ENXIO;
+				err = -ERR(ENXIO);
 			mutex_unlock(&register_mutex);
 			return err;
 		}
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 #ifdef CONFIG_COMPAT
@@ -360,7 +360,7 @@ int snd_hwdep_new(struct snd_card *card, char *id, int device,
 	};
 
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (rhwdep)
 		*rhwdep = NULL;
 	hwdep = kzalloc(sizeof(*hwdep), GFP_KERNEL);
@@ -413,7 +413,7 @@ static int snd_hwdep_dev_register(struct snd_device *device)
 	mutex_lock(&register_mutex);
 	if (snd_hwdep_search(card, hwdep->device)) {
 		mutex_unlock(&register_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	list_add_tail(&hwdep->list, &snd_hwdep_devices);
 	err = snd_register_device(SNDRV_DEVICE_TYPE_HWDEP,
@@ -451,11 +451,11 @@ static int snd_hwdep_dev_disconnect(struct snd_device *device)
 	struct snd_hwdep *hwdep = device->device_data;
 
 	if (snd_BUG_ON(!hwdep))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	mutex_lock(&register_mutex);
 	if (snd_hwdep_search(hwdep->card, hwdep->device) != hwdep) {
 		mutex_unlock(&register_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mutex_lock(&hwdep->open_mutex);
 	wake_up(&hwdep->open_wait);

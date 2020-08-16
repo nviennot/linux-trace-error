@@ -48,7 +48,7 @@ int hex2bin(u8 *dst, const char *src, size_t count)
 		int lo = hex_to_bin(*src++);
 
 		if ((hi < 0) || (lo < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		*dst++ = (hi << 4) | lo;
 	}

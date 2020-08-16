@@ -62,19 +62,19 @@ static int nft_osf_init(const struct nft_ctx *ctx,
 	u8 ttl;
 
 	if (!tb[NFTA_OSF_DREG])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_OSF_TTL]) {
 		ttl = nla_get_u8(tb[NFTA_OSF_TTL]);
 		if (ttl > 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		priv->ttl = ttl;
 	}
 
 	if (tb[NFTA_OSF_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFTA_OSF_FLAGS]));
 		if (flags != NFT_OSF_F_VERSION)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		priv->flags = flags;
 	}
 

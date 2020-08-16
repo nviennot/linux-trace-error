@@ -29,7 +29,7 @@ ssize_t afs_listxattr(struct dentry *dentry, char *buffer, size_t size)
 	if (size == 0)
 		return sizeof(afs_xattr_list);
 	if (size < sizeof(afs_xattr_list))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	memcpy(buffer, afs_xattr_list, sizeof(afs_xattr_list));
 	return sizeof(afs_xattr_list);
 }
@@ -85,7 +85,7 @@ static int afs_xattr_get_acl(const struct xattr_handler *handler,
 			if (acl->size <= size)
 				memcpy(buffer, acl->data, acl->size);
 			else
-				op->error = -ERANGE;
+				op->error = -ERR(ERANGE);
 		}
 	}
 
@@ -128,7 +128,7 @@ static int afs_xattr_set_acl(const struct xattr_handler *handler,
 	struct afs_vnode *vnode = AFS_FS_I(inode);
 
 	if (flags == XATTR_CREATE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	op = afs_alloc_operation(NULL, vnode->volume);
 	if (IS_ERR(op))
@@ -182,7 +182,7 @@ static int afs_xattr_get_yfs(const struct xattr_handler *handler,
 	else if (strcmp(name, "vol_acl") == 0)
 		which = 3;
 	else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	yacl = kzalloc(sizeof(struct yfs_acl), GFP_KERNEL);
 	if (!yacl)
@@ -224,7 +224,7 @@ static int afs_xattr_get_yfs(const struct xattr_handler *handler,
 			dsize = yacl->vol_acl->size;
 			break;
 		default:
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto error_yacl;
 		}
 
@@ -233,7 +233,7 @@ static int afs_xattr_get_yfs(const struct xattr_handler *handler,
 			if (dsize <= size)
 				memcpy(buffer, data, dsize);
 			else
-				ret = -ERANGE;
+				ret = -ERR(ERANGE);
 		}
 	}
 
@@ -262,7 +262,7 @@ static int afs_xattr_set_yfs(const struct xattr_handler *handler,
 
 	if (flags == XATTR_CREATE ||
 	    strcmp(name, "acl") != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	op = afs_alloc_operation(NULL, vnode->volume);
 	if (IS_ERR(op))
@@ -298,7 +298,7 @@ static int afs_xattr_get_cell(const struct xattr_handler *handler,
 	if (size == 0)
 		return namelen;
 	if (namelen > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	memcpy(buffer, cell->name, namelen);
 	return namelen;
 }
@@ -337,7 +337,7 @@ static int afs_xattr_get_fid(const struct xattr_handler *handler,
 	if (size == 0)
 		return len;
 	if (len > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	memcpy(buffer, text, len);
 	return len;
 }
@@ -363,7 +363,7 @@ static int afs_xattr_get_volume(const struct xattr_handler *handler,
 	if (size == 0)
 		return namelen;
 	if (namelen > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	memcpy(buffer, volname, namelen);
 	return namelen;
 }

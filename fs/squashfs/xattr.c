@@ -38,7 +38,7 @@ ssize_t squashfs_listxattr(struct dentry *d, char *buffer,
 
 	/* check that the file system has xattrs */
 	if (msblk->xattr_id_table == NULL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* loop reading each xattr name */
 	while (count--) {
@@ -60,7 +60,7 @@ ssize_t squashfs_listxattr(struct dentry *d, char *buffer,
 
 			if (buffer) {
 				if (prefix_size + name_size + 1 > rest) {
-					err = -ERANGE;
+					err = -ERR(ERANGE);
 					goto failed;
 				}
 				memcpy(buffer, prefix, prefix_size);
@@ -171,7 +171,7 @@ static int squashfs_xattr_get(struct inode *inode, int name_index,
 			vsize = le32_to_cpu(val.vsize);
 			if (buffer) {
 				if (vsize > buffer_size) {
-					err = -ERANGE;
+					err = -ERR(ERANGE);
 					goto failed;
 				}
 				err = squashfs_read_metadata(sb, buffer, &start,
@@ -192,7 +192,7 @@ static int squashfs_xattr_get(struct inode *inode, int name_index,
 		if (err < 0)
 			goto failed;
 	}
-	err = count ? vsize : -ENODATA;
+	err = count ? vsize : -ERR(ENODATA);
 
 failed:
 	kfree(target);

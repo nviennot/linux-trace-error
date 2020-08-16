@@ -123,7 +123,7 @@ xfs_validate_sb_read(
 			xfs_warn(mp,
 "Filesystem can only be safely mounted read only.");
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	if (xfs_sb_has_incompat_feature(sbp, XFS_SB_FEAT_INCOMPAT_UNKNOWN)) {
@@ -133,7 +133,7 @@ xfs_validate_sb_read(
 					XFS_SB_FEAT_INCOMPAT_UNKNOWN));
 		xfs_warn(mp,
 "Filesystem cannot be safely mounted by this kernel.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -261,7 +261,7 @@ xfs_validate_sb_common(
 			xfs_warn(mp,
 "Inode block alignment (%u) must match chunk size (%u) for sparse inodes.",
 				 sbp->sb_inoalignmt, align);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -270,7 +270,7 @@ xfs_validate_sb_common(
 		xfs_warn(mp,
 		"filesystem is marked as having an external log; "
 		"specify logdev on the mount command line.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unlikely(
@@ -278,7 +278,7 @@ xfs_validate_sb_common(
 		xfs_warn(mp,
 		"filesystem is marked as having an internal log; "
 		"do not specify logdev on the mount command line.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Compute agcount for this number of dblocks and agblocks */
@@ -390,7 +390,7 @@ xfs_validate_sb_common(
 		"File system with blocksize %d bytes. "
 		"Only pagesize (%ld) or less will currently work.",
 				sbp->sb_blocksize, PAGE_SIZE);
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	/*
@@ -405,14 +405,14 @@ xfs_validate_sb_common(
 	default:
 		xfs_warn(mp, "inode size of %d bytes not supported",
 				sbp->sb_inodesize);
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	if (xfs_sb_validate_fsb_count(sbp, sbp->sb_dblocks) ||
 	    xfs_sb_validate_fsb_count(sbp, sbp->sb_rblocks)) {
 		xfs_warn(mp,
 		"file system too large to be mounted on this system.");
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 
 	/*

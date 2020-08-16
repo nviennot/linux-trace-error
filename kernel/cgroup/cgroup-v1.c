@@ -99,7 +99,7 @@ int cgroup_transfer_tasks(struct cgroup *to, struct cgroup *from)
 	int ret;
 
 	if (cgroup_on_dfl(to))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = cgroup_migrate_vet_dst(to);
 	if (ret)
@@ -495,7 +495,7 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	task = cgroup_procs_write_start(buf, threadgroup, &locked);
 	ret = PTR_ERR_OR_ZERO(task);
@@ -511,7 +511,7 @@ static ssize_t __cgroup1_procs_write(struct kernfs_open_file *of,
 	if (!uid_eq(cred->euid, GLOBAL_ROOT_UID) &&
 	    !uid_eq(cred->euid, tcred->uid) &&
 	    !uid_eq(cred->euid, tcred->suid))
-		ret = -EACCES;
+		ret = -ERR(EACCES);
 	put_cred(tcred);
 	if (ret)
 		goto out_finish;
@@ -547,7 +547,7 @@ static ssize_t cgroup_release_agent_write(struct kernfs_open_file *of,
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	spin_lock(&release_agent_path_lock);
 	strlcpy(cgrp->root->release_agent_path, strstrip(buf),
 		sizeof(cgrp->root->release_agent_path));
@@ -693,7 +693,7 @@ int cgroupstats_build(struct cgroupstats *stats, struct dentry *dentry)
 	/* it should be kernfs_node belonging to cgroupfs and is a directory */
 	if (dentry->d_sb->s_type != &cgroup_fs_type || !kn ||
 	    kernfs_type(kn) != KERNFS_DIR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&cgroup_mutex);
 
@@ -707,7 +707,7 @@ int cgroupstats_build(struct cgroupstats *stats, struct dentry *dentry)
 	if (!cgrp || cgroup_is_dead(cgrp)) {
 		rcu_read_unlock();
 		mutex_unlock(&cgroup_mutex);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	rcu_read_unlock();
 
@@ -821,9 +821,9 @@ static int cgroup1_rename(struct kernfs_node *kn, struct kernfs_node *new_parent
 	int ret;
 
 	if (kernfs_type(kn) != KERNFS_DIR)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 	if (kn->parent != new_parent)
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * We're gonna grab cgroup_mutex which nests outside kernfs
@@ -953,7 +953,7 @@ int cgroup1_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	case Opt_name:
 		/* blocked by boot param? */
 		if (cgroup_no_v1_named)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		/* Can't specify an empty name */
 		if (!param->size)
 			return invalfc(fc, "Empty name");
@@ -1059,13 +1059,13 @@ int cgroup1_reconfigure(struct fs_context *fc)
 	    (ctx->name && strcmp(ctx->name, root->name))) {
 		errorfc(fc, "option or name mismatch, new: 0x%x \"%s\", old: 0x%x \"%s\"",
 		       ctx->flags, ctx->name ?: "", root->flags, root->name);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
 	/* remounting is not allowed for populated hierarchies */
 	if (!list_empty(&root->cgrp.self.children)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -1158,7 +1158,7 @@ static int cgroup1_root_to_use(struct fs_context *fc)
 		    (ctx->subsys_mask != root->subsys_mask)) {
 			if (!name_match)
 				continue;
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		if (root->flags ^ ctx->flags)
@@ -1178,7 +1178,7 @@ static int cgroup1_root_to_use(struct fs_context *fc)
 
 	/* Hierarchies may only be created in the initial cgroup namespace. */
 	if (ctx->ns != &init_cgroup_ns)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	root = kzalloc(sizeof(*root), GFP_KERNEL);
 	if (!root)
@@ -1200,7 +1200,7 @@ int cgroup1_get_tree(struct fs_context *fc)
 
 	/* Check if the caller has permission to mount. */
 	if (!ns_capable(ctx->ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	cgroup_lock_and_drain_offline(&cgrp_dfl_root.cgrp);
 

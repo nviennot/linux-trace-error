@@ -100,7 +100,7 @@ static int sof_wm8804_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(rtd->card->dev,
 			"unsupported samplerate %d\n", samplerate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (samplerate % 16000)

@@ -140,7 +140,7 @@ static inline int __fat_get_block(struct inode *inode, sector_t iblock,
 	if (iblock != MSDOS_I(inode)->mmu_private >> sb->s_blocksize_bits) {
 		fat_fs_error(sb, "corrupted file size (i_pos %lld, %lld)",
 			MSDOS_I(inode)->i_pos, MSDOS_I(inode)->mmu_private);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	last_block = inode->i_blocks >> (sb->s_blocksize_bits - 9);
@@ -170,7 +170,7 @@ static inline int __fat_get_block(struct inode *inode, sector_t iblock,
 			     "invalid FAT chain (i_pos %lld, last_block %llu)",
 			     MSDOS_I(inode)->i_pos,
 			     (unsigned long long)last_block);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	BUG_ON(*max_blocks != mapped_blocks);
@@ -500,13 +500,13 @@ static int fat_validate_dir(struct inode *dir)
 	if (dir->i_nlink < 2) {
 		/* Directory should have "."/".." entries at least. */
 		fat_fs_error(sb, "corrupted directory (invalid entries)");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (MSDOS_I(dir)->i_start == 0 ||
 	    MSDOS_I(dir)->i_start == MSDOS_SB(sb)->root_cluster) {
 		/* Directory should point valid cluster. */
 		fat_fs_error(sb, "corrupted directory (invalid i_start)");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -867,7 +867,7 @@ retry:
 	if (!bh) {
 		fat_msg(sb, KERN_ERR, "unable to read inode block "
 		       "for updating (i_pos %lld)", i_pos);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	spin_lock(&sbi->inode_hash_lock);
 	if (i_pos != MSDOS_I(inode)->i_pos) {
@@ -1210,41 +1210,41 @@ static int parse_options(struct super_block *sb, char *options, int is_vfat,
 			break;
 		case Opt_uid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->fs_uid = make_kuid(current_user_ns(), option);
 			if (!uid_valid(opts->fs_uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_gid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->fs_gid = make_kgid(current_user_ns(), option);
 			if (!gid_valid(opts->fs_gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_umask:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->fs_fmask = opts->fs_dmask = option;
 			break;
 		case Opt_dmask:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->fs_dmask = option;
 			break;
 		case Opt_fmask:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->fs_fmask = option;
 			break;
 		case Opt_allow_utime:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->allow_utime = option & (S_IWGRP | S_IWOTH);
 			break;
 		case Opt_codepage:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->codepage = option;
 			break;
 		case Opt_flush:
@@ -1252,14 +1252,14 @@ static int parse_options(struct super_block *sb, char *options, int is_vfat,
 			break;
 		case Opt_time_offset:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			/*
 			 * GMT+-12 zones may have DST corrections so at least
 			 * 13 hours difference is needed. Make the limit 24
 			 * just in case someone invents something unusual.
 			 */
 			if (option < -24 * 60 || option > 24 * 60)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->tz_set = 1;
 			opts->time_offset = option;
 			break;
@@ -1355,7 +1355,7 @@ static int parse_options(struct super_block *sb, char *options, int is_vfat,
 				       "Unrecognized mount option \"%s\" "
 				       "or missing value", p);
 			}
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1456,7 +1456,7 @@ static bool fat_bpb_is_zero(struct fat_boot_sector *b)
 static int fat_read_bpb(struct super_block *sb, struct fat_boot_sector *b,
 	int silent, struct fat_bios_param_block *bpb)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	/* Read in BPB ... */
 	memset(bpb, 0, sizeof(*bpb));
@@ -1538,7 +1538,7 @@ static int fat_read_static_bpb(struct super_block *sb,
 	static const char *notdos1x = "This doesn't look like a DOS 1.x volume";
 
 	struct fat_floppy_defaults *fdefaults = NULL;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	sector_t bd_sects;
 	unsigned i;
 
@@ -1645,7 +1645,7 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 
 	setup(sb); /* flavour-specific stuff that needs options */
 
-	error = -EIO;
+	error = -ERR(EIO);
 	sb_min_blocksize(sb, 512);
 	bh = sb_bread(sb, 0);
 	if (bh == NULL) {
@@ -1668,7 +1668,7 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 	logical_sector_size = bpb.fat_sector_size;
 	sbi->sec_per_clus = bpb.fat_sec_per_clus;
 
-	error = -EIO;
+	error = -ERR(EIO);
 	if (logical_sector_size < sb->s_blocksize) {
 		fat_msg(sb, KERN_ERR, "logical sector size too small for device"
 		       " (logical sector size = %u)", logical_sector_size);
@@ -1824,7 +1824,7 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 	 * == (0x0FFFFF | media), for FAT32
 	 */
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	sprintf(buf, "cp%d", sbi->options.codepage);
 	sbi->nls_disk = load_nls(buf);
 	if (!sbi->nls_disk) {
@@ -1886,7 +1886,7 @@ int fat_fill_super(struct super_block *sb, void *data, int silent, int isvfat,
 	return 0;
 
 out_invalid:
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!silent)
 		fat_msg(sb, KERN_INFO, "Can't find a valid FAT filesystem");
 

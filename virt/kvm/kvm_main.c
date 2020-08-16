@@ -129,11 +129,11 @@ static long kvm_vcpu_compat_ioctl(struct file *file, unsigned int ioctl,
  *   passed to a compat task, let the ioctls fail.
  */
 static long kvm_no_compat_ioctl(struct file *file, unsigned int ioctl,
-				unsigned long arg) { return -EINVAL; }
+				unsigned long arg) { return -ERR(EINVAL); }
 
 static int kvm_no_compat_open(struct inode *inode, struct file *file)
 {
-	return is_compat_task() ? -ENODEV : 0;
+	return is_compat_task() ? -ERR(ENODEV) : 0;
 }
 #define KVM_COMPAT(c)	.compat_ioctl	= kvm_no_compat_ioctl,	\
 			.open		= kvm_no_compat_open
@@ -1053,7 +1053,7 @@ static int check_memory_region_flags(const struct kvm_userspace_memory_region *m
 #endif
 
 	if (mem->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1187,7 +1187,7 @@ static int kvm_delete_memslot(struct kvm *kvm,
 	int r;
 
 	if (!old->npages)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&new, 0, sizeof(new));
 	new.id = old->id;
@@ -1226,18 +1226,18 @@ int __kvm_set_memory_region(struct kvm *kvm,
 
 	/* General sanity checks */
 	if (mem->memory_size & (PAGE_SIZE - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mem->guest_phys_addr & (PAGE_SIZE - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* We can read the guest memory with __xxx_user() later on. */
 	if ((mem->userspace_addr & (PAGE_SIZE - 1)) ||
 	     !access_ok((void __user *)(unsigned long)mem->userspace_addr,
 			mem->memory_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_MEM_SLOTS_NUM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mem->guest_phys_addr + mem->memory_size < mem->guest_phys_addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Make a full copy of the old memslot, the pointer will become stale
@@ -1264,7 +1264,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
 	new.userspace_addr = mem->userspace_addr;
 
 	if (new.npages > KVM_MEM_MAX_NR_PAGES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!old.npages) {
 		change = KVM_MR_CREATE;
@@ -1274,7 +1274,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
 		if ((new.userspace_addr != old.userspace_addr) ||
 		    (new.npages != old.npages) ||
 		    ((new.flags ^ old.flags) & KVM_MEM_READONLY))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (new.base_gfn != old.base_gfn)
 			change = KVM_MR_MOVE;
@@ -1295,7 +1295,7 @@ int __kvm_set_memory_region(struct kvm *kvm,
 				continue;
 			if (!((new.base_gfn + new.npages <= tmp->base_gfn) ||
 			      (new.base_gfn >= tmp->base_gfn + tmp->npages)))
-				return -EEXIST;
+				return -ERR(EEXIST);
 		}
 	}
 
@@ -1342,7 +1342,7 @@ static int kvm_vm_ioctl_set_memory_region(struct kvm *kvm,
 					  struct kvm_userspace_memory_region *mem)
 {
 	if ((u16)mem->slot >= KVM_USER_MEM_SLOTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return kvm_set_memory_region(kvm, mem);
 }
@@ -1369,12 +1369,12 @@ int kvm_get_dirty_log(struct kvm *kvm, struct kvm_dirty_log *log,
 	as_id = log->slot >> 16;
 	id = (u16)log->slot;
 	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_USER_MEM_SLOTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slots = __kvm_memslots(kvm, as_id);
 	*memslot = id_to_memslot(slots, id);
 	if (!(*memslot) || !(*memslot)->dirty_bitmap)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kvm_arch_sync_dirty_log(kvm, *memslot);
 
@@ -1427,12 +1427,12 @@ static int kvm_get_dirty_log_protect(struct kvm *kvm, struct kvm_dirty_log *log)
 	as_id = log->slot >> 16;
 	id = (u16)log->slot;
 	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_USER_MEM_SLOTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slots = __kvm_memslots(kvm, as_id);
 	memslot = id_to_memslot(slots, id);
 	if (!memslot || !memslot->dirty_bitmap)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dirty_bitmap = memslot->dirty_bitmap;
 
@@ -1535,15 +1535,15 @@ static int kvm_clear_dirty_log_protect(struct kvm *kvm,
 	as_id = log->slot >> 16;
 	id = (u16)log->slot;
 	if (as_id >= KVM_ADDRESS_SPACE_NUM || id >= KVM_USER_MEM_SLOTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (log->first_page & 63)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slots = __kvm_memslots(kvm, as_id);
 	memslot = id_to_memslot(slots, id);
 	if (!memslot || !memslot->dirty_bitmap)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dirty_bitmap = memslot->dirty_bitmap;
 
@@ -1552,7 +1552,7 @@ static int kvm_clear_dirty_log_protect(struct kvm *kvm,
 	if (log->first_page > memslot->npages ||
 	    log->num_pages > memslot->npages - log->first_page ||
 	    (log->num_pages < memslot->npages - log->first_page && (log->num_pages & 63)))
-	    return -EINVAL;
+	    return -ERR(EINVAL);
 
 	kvm_arch_sync_dirty_log(kvm, memslot);
 
@@ -1733,7 +1733,7 @@ static inline int check_user_page_hwpoison(unsigned long addr)
 	int rc, flags = FOLL_HWPOISON | FOLL_WRITE;
 
 	rc = get_user_pages(addr, 1, flags, NULL, NULL);
-	return rc == -EHWPOISON;
+	return rc == -ERR(EHWPOISON);
 }
 
 /*
@@ -1834,7 +1834,7 @@ static int hva_to_pfn_remapped(struct vm_area_struct *vma,
 				     (write_fault ? FAULT_FLAG_WRITE : 0),
 				     &unlocked);
 		if (unlocked)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		if (r)
 			return r;
 
@@ -2070,23 +2070,23 @@ static int __kvm_map_gfn(struct kvm_memslots *slots, gfn_t gfn,
 	u64 gen = slots->generation;
 
 	if (!map)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cache) {
 		if (!cache->pfn || cache->gfn != gfn ||
 			cache->generation != gen) {
 			if (atomic)
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 			kvm_cache_gfn_to_pfn(slot, gfn, cache, gen);
 		}
 		pfn = cache->pfn;
 	} else {
 		if (atomic)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		pfn = gfn_to_pfn_memslot(slot, gfn);
 	}
 	if (is_error_noslot_pfn(pfn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pfn_valid(pfn)) {
 		page = pfn_to_page(pfn);
@@ -2098,7 +2098,7 @@ static int __kvm_map_gfn(struct kvm_memslots *slots, gfn_t gfn,
 	} else if (!atomic) {
 		hva = memremap(pfn_to_hpa(pfn), PAGE_SIZE, MEMREMAP_WB);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	}
 
@@ -2441,7 +2441,7 @@ static int __kvm_gfn_to_hva_cache_init(struct kvm_memslots *slots,
 
 	if (start_gfn > end_gfn) {
 		ghc->hva = KVM_HVA_ERR_BAD;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -2665,7 +2665,7 @@ static void shrink_halt_poll_ns(struct kvm_vcpu *vcpu)
 
 static int kvm_vcpu_check_block(struct kvm_vcpu *vcpu)
 {
-	int ret = -EINTR;
+	int ret = -ERR(EINTR);
 	int idx = srcu_read_lock(&vcpu->kvm->srcu);
 
 	if (kvm_arch_vcpu_runnable(vcpu)) {
@@ -3026,12 +3026,12 @@ static int kvm_vm_ioctl_create_vcpu(struct kvm *kvm, u32 id)
 	struct page *page;
 
 	if (id >= KVM_MAX_VCPU_ID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kvm->lock);
 	if (kvm->created_vcpus == KVM_MAX_VCPUS) {
 		mutex_unlock(&kvm->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	kvm->created_vcpus++;
@@ -3063,7 +3063,7 @@ static int kvm_vm_ioctl_create_vcpu(struct kvm *kvm, u32 id)
 
 	mutex_lock(&kvm->lock);
 	if (kvm_get_vcpu_by_id(kvm, id)) {
-		r = -EEXIST;
+		r = -ERR(EEXIST);
 		goto unlock_vcpu_destroy;
 	}
 
@@ -3127,10 +3127,10 @@ static long kvm_vcpu_ioctl(struct file *filp,
 	struct kvm_sregs *kvm_sregs = NULL;
 
 	if (vcpu->kvm->mm != current->mm)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (unlikely(_IOC_TYPE(ioctl) != KVMIO))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Some architectures have vcpu ioctls that are asynchronous to vcpu
@@ -3141,11 +3141,11 @@ static long kvm_vcpu_ioctl(struct file *filp,
 		return r;
 
 	if (mutex_lock_killable(&vcpu->mutex))
-		return -EINTR;
+		return -ERR(EINTR);
 	switch (ioctl) {
 	case KVM_RUN: {
 		struct pid *oldpid;
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		if (arg)
 			goto out;
 		oldpid = rcu_access_pointer(vcpu->pid);
@@ -3278,7 +3278,7 @@ out_free1:
 			if (copy_from_user(&kvm_sigmask, argp,
 					   sizeof(kvm_sigmask)))
 				goto out;
-			r = -EINVAL;
+			r = -ERR(EINVAL);
 			if (kvm_sigmask.len != sizeof(sigset))
 				goto out;
 			r = -EFAULT;
@@ -3333,7 +3333,7 @@ static long kvm_vcpu_compat_ioctl(struct file *filp,
 	int r;
 
 	if (vcpu->kvm->mm != current->mm)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (ioctl) {
 	case KVM_SET_SIGNAL_MASK: {
@@ -3346,7 +3346,7 @@ static long kvm_vcpu_compat_ioctl(struct file *filp,
 			if (copy_from_user(&kvm_sigmask, argp,
 					   sizeof(kvm_sigmask)))
 				goto out;
-			r = -EINVAL;
+			r = -ERR(EINVAL);
 			if (kvm_sigmask.len != sizeof(compat_sigset_t))
 				goto out;
 			r = -EFAULT;
@@ -3374,7 +3374,7 @@ static int kvm_device_mmap(struct file *filp, struct vm_area_struct *vma)
 	if (dev->ops->mmap)
 		return dev->ops->mmap(dev, vma);
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int kvm_device_ioctl_attr(struct kvm_device *dev,
@@ -3385,7 +3385,7 @@ static int kvm_device_ioctl_attr(struct kvm_device *dev,
 	struct kvm_device_attr attr;
 
 	if (!accessor)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (copy_from_user(&attr, (void __user *)arg, sizeof(attr)))
 		return -EFAULT;
@@ -3399,7 +3399,7 @@ static long kvm_device_ioctl(struct file *filp, unsigned int ioctl,
 	struct kvm_device *dev = filp->private_data;
 
 	if (dev->kvm->mm != current->mm)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (ioctl) {
 	case KVM_SET_DEVICE_ATTR:
@@ -3412,7 +3412,7 @@ static long kvm_device_ioctl(struct file *filp, unsigned int ioctl,
 		if (dev->ops->ioctl)
 			return dev->ops->ioctl(dev, ioctl, arg);
 
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -3457,10 +3457,10 @@ static const struct kvm_device_ops *kvm_device_ops_table[KVM_DEV_TYPE_MAX] = {
 int kvm_register_device_ops(const struct kvm_device_ops *ops, u32 type)
 {
 	if (type >= ARRAY_SIZE(kvm_device_ops_table))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (kvm_device_ops_table[type] != NULL)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	kvm_device_ops_table[type] = ops;
 	return 0;
@@ -3482,12 +3482,12 @@ static int kvm_ioctl_create_device(struct kvm *kvm,
 	int ret;
 
 	if (cd->type >= ARRAY_SIZE(kvm_device_ops_table))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	type = array_index_nospec(cd->type, ARRAY_SIZE(kvm_device_ops_table));
 	ops = kvm_device_ops_table[type];
 	if (ops == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (test)
 		return 0;
@@ -3575,7 +3575,7 @@ static long kvm_vm_ioctl_check_extension_generic(struct kvm *kvm, long arg)
 int __attribute__((weak)) kvm_vm_ioctl_enable_cap(struct kvm *kvm,
 						  struct kvm_enable_cap *cap)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int kvm_vm_ioctl_enable_cap_generic(struct kvm *kvm,
@@ -3590,14 +3590,14 @@ static int kvm_vm_ioctl_enable_cap_generic(struct kvm *kvm,
 			allowed_options = KVM_DIRTY_LOG_MANUAL_CAPS;
 
 		if (cap->flags || (cap->args[0] & ~allowed_options))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		kvm->manual_dirty_log_protect = cap->args[0];
 		return 0;
 	}
 #endif
 	case KVM_CAP_HALT_POLL: {
 		if (cap->flags || cap->args[0] != (unsigned int)cap->args[0])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		kvm->max_halt_poll_ns = cap->args[0];
 		return 0;
@@ -3615,7 +3615,7 @@ static long kvm_vm_ioctl(struct file *filp,
 	int r;
 
 	if (kvm->mm != current->mm)
-		return -EIO;
+		return -ERR(EIO);
 	switch (ioctl) {
 	case KVM_CREATE_VCPU:
 		r = kvm_vm_ioctl_create_vcpu(kvm, arg);
@@ -3742,7 +3742,7 @@ static long kvm_vm_ioctl(struct file *filp,
 		r = -EFAULT;
 		if (copy_from_user(&routing, argp, sizeof(routing)))
 			goto out;
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		if (!kvm_arch_can_set_irq_routing(kvm))
 			goto out;
 		if (routing.nr > KVM_MAX_IRQ_ROUTES)
@@ -3810,7 +3810,7 @@ static long kvm_vm_compat_ioctl(struct file *filp,
 	int r;
 
 	if (kvm->mm != current->mm)
-		return -EIO;
+		return -ERR(EIO);
 	switch (ioctl) {
 	case KVM_GET_DIRTY_LOG: {
 		struct compat_kvm_dirty_log compat_log;
@@ -3890,7 +3890,7 @@ put_kvm:
 static long kvm_dev_ioctl(struct file *filp,
 			  unsigned int ioctl, unsigned long arg)
 {
-	long r = -EINVAL;
+	long r = -ERR(EINVAL);
 
 	switch (ioctl) {
 	case KVM_GET_API_VERSION:
@@ -3918,7 +3918,7 @@ static long kvm_dev_ioctl(struct file *filp,
 	case KVM_TRACE_ENABLE:
 	case KVM_TRACE_PAUSE:
 	case KVM_TRACE_DISABLE:
-		r = -EOPNOTSUPP;
+		r = -ERR(EOPNOTSUPP);
 		break;
 	default:
 		return kvm_arch_dev_ioctl(filp, ioctl, arg);
@@ -4015,7 +4015,7 @@ static int hardware_enable_all(void)
 
 		if (atomic_read(&hardware_enable_failed)) {
 			hardware_disable_all_nolock();
-			r = -EBUSY;
+			r = -ERR(EBUSY);
 		}
 	}
 
@@ -4100,7 +4100,7 @@ static int kvm_io_bus_get_first_dev(struct kvm_io_bus *bus,
 	range = bsearch(&key, bus->range, bus->dev_count,
 			sizeof(struct kvm_io_range), kvm_io_bus_sort_cmp);
 	if (range == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	off = range - bus->range;
 
@@ -4117,7 +4117,7 @@ static int __kvm_io_bus_write(struct kvm_vcpu *vcpu, struct kvm_io_bus *bus,
 
 	idx = kvm_io_bus_get_first_dev(bus, range->addr, range->len);
 	if (idx < 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	while (idx < bus->dev_count &&
 		kvm_io_bus_cmp(range, &bus->range[idx]) == 0) {
@@ -4127,7 +4127,7 @@ static int __kvm_io_bus_write(struct kvm_vcpu *vcpu, struct kvm_io_bus *bus,
 		idx++;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* kvm_io_bus_write - called under kvm->slots_lock */
@@ -4188,7 +4188,7 @@ static int __kvm_io_bus_read(struct kvm_vcpu *vcpu, struct kvm_io_bus *bus,
 
 	idx = kvm_io_bus_get_first_dev(bus, range->addr, range->len);
 	if (idx < 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	while (idx < bus->dev_count &&
 		kvm_io_bus_cmp(range, &bus->range[idx]) == 0) {
@@ -4198,7 +4198,7 @@ static int __kvm_io_bus_read(struct kvm_vcpu *vcpu, struct kvm_io_bus *bus,
 		idx++;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* kvm_io_bus_read - called under kvm->slots_lock */
@@ -4235,7 +4235,7 @@ int kvm_io_bus_register_dev(struct kvm *kvm, enum kvm_bus bus_idx, gpa_t addr,
 
 	/* exclude ioeventfd which is limited by maximum fd */
 	if (bus->dev_count - bus->ioeventfd_count > NR_IOBUS_DEVS - 1)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	new_bus = kmalloc(struct_size(bus, range, bus->dev_count + 1),
 			  GFP_KERNEL_ACCOUNT);
@@ -4341,7 +4341,7 @@ static int kvm_debugfs_open(struct inode *inode, struct file *file,
 	 * directory we test against the users count.
 	 */
 	if (!refcount_inc_not_zero(&stat_data->kvm->users_count))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (simple_attr_open(inode, file, get,
 		    KVM_DBGFS_GET_MODE(stat_data->dbgfs_item) & 0222
@@ -4428,7 +4428,7 @@ static int kvm_stat_data_clear(void *data, u64 val)
 	struct kvm_stat_data *stat_data = (struct kvm_stat_data *)data;
 
 	if (val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (stat_data->dbgfs_item->kind) {
 	case KVM_STAT_VM:
@@ -4482,7 +4482,7 @@ static int vm_stat_clear(void *_offset, u64 val)
 	struct kvm *kvm;
 
 	if (val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kvm_lock);
 	list_for_each_entry(kvm, &vm_list, vm_list) {
@@ -4517,7 +4517,7 @@ static int vcpu_stat_clear(void *_offset, u64 val)
 	struct kvm *kvm;
 
 	if (val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kvm_lock);
 	list_for_each_entry(kvm, &vm_list, vm_list) {

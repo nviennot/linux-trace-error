@@ -29,7 +29,7 @@ void autofs_catatonic_mode(struct autofs_sb_info *sbi)
 	sbi->queues = NULL;	/* Erase all wait queues */
 	while (wq) {
 		nwq = wq->next;
-		wq->status = -ENOENT; /* Magic is gone - report failure */
+		wq->status = -ERR(ENOENT); /* Magic is gone - report failure */
 		kfree(wq->name.name);
 		wq->name.name = NULL;
 		wq->wait_ctr--;
@@ -72,7 +72,7 @@ static int autofs_write(struct autofs_sb_info *sbi,
 	}
 
 	/* if 'wr' returned 0 (impossible) we assume -EIO (safe) */
-	return bytes == 0 ? 0 : wr < 0 ? wr : -EIO;
+	return bytes == 0 ? 0 : wr < 0 ? wr : -ERR(EIO);
 }
 
 static void autofs_notify_daemon(struct autofs_sb_info *sbi,
@@ -253,7 +253,7 @@ static int validate_request(struct autofs_wait_queue **wait,
 	struct autofs_info *ino;
 
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* Wait in progress, continue; */
 	wq = autofs_find_wait(sbi, qstr);
@@ -285,10 +285,10 @@ static int validate_request(struct autofs_wait_queue **wait,
 			mutex_unlock(&sbi->wq_mutex);
 			schedule_timeout_interruptible(HZ/10);
 			if (mutex_lock_interruptible(&sbi->wq_mutex))
-				return -EINTR;
+				return -ERR(EINTR);
 
 			if (sbi->flags & AUTOFS_SBI_CATATONIC)
-				return -ENOENT;
+				return -ERR(ENOENT);
 
 			wq = autofs_find_wait(sbi, qstr);
 			if (wq) {
@@ -357,7 +357,7 @@ int autofs_wait(struct autofs_sb_info *sbi,
 
 	/* In catatonic mode, we don't wait for nobody */
 	if (sbi->flags & AUTOFS_SBI_CATATONIC)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * Try translating pids to the namespace of the daemon.
@@ -367,7 +367,7 @@ int autofs_wait(struct autofs_sb_info *sbi,
 	pid = task_pid_nr_ns(current, ns_of_pid(sbi->oz_pgrp));
 	tgid = task_tgid_nr_ns(current, ns_of_pid(sbi->oz_pgrp));
 	if (pid == 0 || tgid == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (d_really_is_negative(dentry)) {
 		/*
@@ -379,9 +379,9 @@ int autofs_wait(struct autofs_sb_info *sbi,
 		 * in the root of the autofs file system may be negative.
 		 */
 		if (autofs_type_trigger(sbi->type))
-			return -ENOENT;
+			return -ERR(ENOENT);
 		else if (!IS_ROOT(dentry->d_parent))
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 
 	name = kmalloc(NAME_MAX + 1, GFP_KERNEL);
@@ -395,7 +395,7 @@ int autofs_wait(struct autofs_sb_info *sbi,
 		qstr.len = autofs_getpath(sbi, dentry, name);
 		if (!qstr.len) {
 			kfree(name);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	qstr.name = name;
@@ -403,7 +403,7 @@ int autofs_wait(struct autofs_sb_info *sbi,
 
 	if (mutex_lock_interruptible(&sbi->wq_mutex)) {
 		kfree(qstr.name);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 
 	ret = validate_request(&wq, sbi, &qstr, path, notify);
@@ -436,7 +436,7 @@ int autofs_wait(struct autofs_sb_info *sbi,
 		wq->gid = current_gid();
 		wq->pid = pid;
 		wq->tgid = tgid;
-		wq->status = -EINTR; /* Status return if interrupted */
+		wq->status = -ERR(EINTR); /* Status return if interrupted */
 		wq->wait_ctr = 2;
 
 		if (sbi->version < 5) {
@@ -536,7 +536,7 @@ int autofs_wait_release(struct autofs_sb_info *sbi,
 
 	if (!wq) {
 		mutex_unlock(&sbi->wq_mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*wql = wq->next;	/* Unlink from chain */

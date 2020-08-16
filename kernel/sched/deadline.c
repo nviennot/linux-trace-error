@@ -2486,7 +2486,7 @@ int sched_dl_global_validate(void)
 
 		raw_spin_lock_irqsave(&dl_b->lock, flags);
 		if (new_bw < dl_b->total_bw)
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 		raw_spin_unlock_irqrestore(&dl_b->lock, flags);
 
 		rcu_read_unlock_sched();
@@ -2729,7 +2729,7 @@ int dl_task_can_attach(struct task_struct *p, const struct cpumask *cs_cpus_allo
 	cpus = dl_bw_cpus(dest_cpu);
 	overflow = __dl_overflow(dl_b, cpus, 0, p->dl.dl_bw);
 	if (overflow) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else {
 		/*
 		 * We reserve space for this task in the destination

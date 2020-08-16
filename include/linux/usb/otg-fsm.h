@@ -217,7 +217,7 @@ struct otg_fsm_ops {
 static inline int otg_chrg_vbus(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->chrg_vbus)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	fsm->ops->chrg_vbus(fsm, on);
 	return 0;
 }
@@ -225,7 +225,7 @@ static inline int otg_chrg_vbus(struct otg_fsm *fsm, int on)
 static inline int otg_drv_vbus(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->drv_vbus)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (fsm->drv_vbus != on) {
 		fsm->drv_vbus = on;
 		fsm->ops->drv_vbus(fsm, on);
@@ -236,7 +236,7 @@ static inline int otg_drv_vbus(struct otg_fsm *fsm, int on)
 static inline int otg_loc_conn(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->loc_conn)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (fsm->loc_conn != on) {
 		fsm->loc_conn = on;
 		fsm->ops->loc_conn(fsm, on);
@@ -247,7 +247,7 @@ static inline int otg_loc_conn(struct otg_fsm *fsm, int on)
 static inline int otg_loc_sof(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->loc_sof)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (fsm->loc_sof != on) {
 		fsm->loc_sof = on;
 		fsm->ops->loc_sof(fsm, on);
@@ -258,7 +258,7 @@ static inline int otg_loc_sof(struct otg_fsm *fsm, int on)
 static inline int otg_start_pulse(struct otg_fsm *fsm)
 {
 	if (!fsm->ops->start_pulse)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!fsm->data_pulse) {
 		fsm->data_pulse = 1;
 		fsm->ops->start_pulse(fsm);
@@ -269,7 +269,7 @@ static inline int otg_start_pulse(struct otg_fsm *fsm)
 static inline int otg_start_adp_prb(struct otg_fsm *fsm)
 {
 	if (!fsm->ops->start_adp_prb)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!fsm->adp_prb) {
 		fsm->adp_sns = 0;
 		fsm->adp_prb = 1;
@@ -281,7 +281,7 @@ static inline int otg_start_adp_prb(struct otg_fsm *fsm)
 static inline int otg_start_adp_sns(struct otg_fsm *fsm)
 {
 	if (!fsm->ops->start_adp_sns)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!fsm->adp_sns) {
 		fsm->adp_sns = 1;
 		fsm->ops->start_adp_sns(fsm);
@@ -292,7 +292,7 @@ static inline int otg_start_adp_sns(struct otg_fsm *fsm)
 static inline int otg_add_timer(struct otg_fsm *fsm, enum otg_fsm_timer timer)
 {
 	if (!fsm->ops->add_timer)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	fsm->ops->add_timer(fsm, timer);
 	return 0;
 }
@@ -300,7 +300,7 @@ static inline int otg_add_timer(struct otg_fsm *fsm, enum otg_fsm_timer timer)
 static inline int otg_del_timer(struct otg_fsm *fsm, enum otg_fsm_timer timer)
 {
 	if (!fsm->ops->del_timer)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	fsm->ops->del_timer(fsm, timer);
 	return 0;
 }
@@ -308,14 +308,14 @@ static inline int otg_del_timer(struct otg_fsm *fsm, enum otg_fsm_timer timer)
 static inline int otg_start_host(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->start_host)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return fsm->ops->start_host(fsm, on);
 }
 
 static inline int otg_start_gadget(struct otg_fsm *fsm, int on)
 {
 	if (!fsm->ops->start_gadget)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return fsm->ops->start_gadget(fsm, on);
 }
 

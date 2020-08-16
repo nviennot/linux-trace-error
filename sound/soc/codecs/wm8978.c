@@ -461,7 +461,7 @@ static int wm8978_enum_mclk(unsigned int f_out, unsigned int f_mclk,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -477,7 +477,7 @@ static int wm8978_configure_pll(struct snd_soc_component *component)
 	unsigned int f2;
 
 	if (!f_mclk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (f_opclk) {
 		unsigned int opclk_div;
@@ -494,7 +494,7 @@ static int wm8978_configure_pll(struct snd_soc_component *component)
 		 * f_mclk * 3 / 16 <= f_opclk < f_mclk * 13 / 4.
 		 */
 		if (16 * f_opclk < 3 * f_mclk || 4 * f_opclk >= 13 * f_mclk)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (4 * f_opclk < 3 * f_mclk)
 			/* Have to use OPCLKDIV */
@@ -525,7 +525,7 @@ static int wm8978_configure_pll(struct snd_soc_component *component)
 
 		wm8978->mclk_idx = idx;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	f2 = wm8978->f_pllout * 4;
@@ -589,11 +589,11 @@ static int wm8978_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		break;
 	case WM8978_BCLKDIV:
 		if (div & ~0x1c)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		snd_soc_component_update_bits(component, WM8978_CLOCKING, 0x1c, div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "%s: ID %d, value %u\n", __func__, div_id, div);
@@ -667,7 +667,7 @@ static int wm8978_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		clk &= ~1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -684,7 +684,7 @@ static int wm8978_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface |= 0x18;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -701,7 +701,7 @@ static int wm8978_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		iface |= 0x80;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8978_AUDIO_INTERFACE, iface);
@@ -730,7 +730,7 @@ static int wm8978_hw_params(struct snd_pcm_substream *substream,
 	int i, best = 0;
 
 	if (!wm8978->f_mclk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* bit size */
 	switch (params_width(params)) {
@@ -788,7 +788,7 @@ static int wm8978_hw_params(struct snd_pcm_substream *substream,
 	if (wm8978->mclk_idx < 0) {
 		/* Either MCLK is used directly, or OPCLK is used */
 		if (f_sel < wm8978->f_256fs || f_sel > 12 * wm8978->f_256fs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		for (i = 0; i < ARRAY_SIZE(mclk_numerator); i++) {
 			diff = abs(wm8978->f_256fs * 3 -

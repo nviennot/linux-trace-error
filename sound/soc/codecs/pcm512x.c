@@ -239,7 +239,7 @@ static int pcm512x_overclock_pll_put(struct snd_kcontrol *kcontrol,
 	case SND_SOC_BIAS_STANDBY:
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pcm512x->overclock_pll = ucontrol->value.integer.value[0];
@@ -267,7 +267,7 @@ static int pcm512x_overclock_dsp_put(struct snd_kcontrol *kcontrol,
 	case SND_SOC_BIAS_STANDBY:
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pcm512x->overclock_dsp = ucontrol->value.integer.value[0];
@@ -295,7 +295,7 @@ static int pcm512x_overclock_dac_put(struct snd_kcontrol *kcontrol,
 	case SND_SOC_BIAS_STANDBY:
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pcm512x->overclock_dac = ucontrol->value.integer.value[0];
@@ -569,7 +569,7 @@ static int pcm512x_hw_rule_rate(struct snd_pcm_hw_params *params,
 		ranges[1].max = 384000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_interval_ranges(hw_param_interval(params, rule->var),
@@ -659,7 +659,7 @@ static int pcm512x_dai_startup(struct snd_pcm_substream *substream,
 		return pcm512x_dai_startup_slave(substream, dai);
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -826,11 +826,11 @@ fallback:
 		P = 1;
 	else if (P > 15) {
 		dev_err(dev, "Need a slower clock as pll-input\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (pllin_rate / P < 6667000) {
 		dev_err(dev, "Need a faster clock as pll-input\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	K = DIV_ROUND_CLOSEST_ULL(10000ULL * pll_rate * P, pllin_rate);
 	if (K < 40000)
@@ -915,7 +915,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 
 		if (lrclk_div == 0) {
 			dev_err(dev, "No LRCLK?\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -933,7 +933,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 		}
 		if (ret == 0) {
 			dev_err(dev, "No BCLK?\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		bclk_rate = ret;
 
@@ -941,7 +941,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 
 		sck_rate = pcm512x_find_sck(dai, bclk_rate);
 		if (!sck_rate)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		pll_rate = 4 * sck_rate;
 
 		ret = pcm512x_find_pll_coeff(dai, pllin_rate, pll_rate);
@@ -990,7 +990,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 
 	if (bclk_div > 128) {
 		dev_err(dev, "Failed to find BCLK divider\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* the actual rate */
@@ -1039,7 +1039,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 		}
 		if (!dac_mul) {
 			dev_err(dev, "Failed to find DAC rate\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dac_rate = dac_mul * osr_rate;
@@ -1060,13 +1060,13 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 	osr_div = DIV_ROUND_CLOSEST(dac_rate, osr_rate);
 	if (osr_div > 128) {
 		dev_err(dev, "Failed to find OSR divider\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dac_div = DIV_ROUND_CLOSEST(dacsrc_rate, dac_rate);
 	if (dac_div > 128) {
 		dev_err(dev, "Failed to find DAC divider\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dac_rate = dacsrc_rate / dac_div;
 
@@ -1077,7 +1077,7 @@ static int pcm512x_set_dividers(struct snd_soc_dai *dai,
 		ncp_div = DIV_ROUND_UP(dac_rate, 2048000);
 		if (ncp_div > 128) {
 			dev_err(dev, "Failed to find NCP divider\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1192,7 +1192,7 @@ static int pcm512x_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Bad frame size: %d\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (pcm512x->fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1226,7 +1226,7 @@ static int pcm512x_hw_params(struct snd_pcm_substream *substream,
 		master_mode = PCM512x_RBCK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(pcm512x->regmap, PCM512x_I2S_1,
@@ -1387,7 +1387,7 @@ static int pcm512x_set_bclk_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 	struct pcm512x_priv *pcm512x = snd_soc_component_get_drvdata(component);
 
 	if (ratio > 256)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pcm512x->bclk_ratio = ratio;
 
@@ -1597,7 +1597,7 @@ int pcm512x_probe(struct device *dev, struct regmap *regmap)
 		if (of_property_read_u32(np, "pll-in", &val) >= 0) {
 			if (val > 6) {
 				dev_err(dev, "Invalid pll-in\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto err_clk;
 			}
 			pcm512x->pll_in = val;
@@ -1606,7 +1606,7 @@ int pcm512x_probe(struct device *dev, struct regmap *regmap)
 		if (of_property_read_u32(np, "pll-out", &val) >= 0) {
 			if (val > 6) {
 				dev_err(dev, "Invalid pll-out\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto err_clk;
 			}
 			pcm512x->pll_out = val;
@@ -1615,12 +1615,12 @@ int pcm512x_probe(struct device *dev, struct regmap *regmap)
 		if (!pcm512x->pll_in != !pcm512x->pll_out) {
 			dev_err(dev,
 				"Error: both pll-in and pll-out, or none\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err_clk;
 		}
 		if (pcm512x->pll_in && pcm512x->pll_in == pcm512x->pll_out) {
 			dev_err(dev, "Error: pll-in == pll-out\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err_clk;
 		}
 	}

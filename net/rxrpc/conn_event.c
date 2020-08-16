@@ -248,7 +248,7 @@ static int rxrpc_abort_connection(struct rxrpc_connection *conn,
 		trace_rxrpc_tx_fail(conn->debug_id, serial, ret,
 				    rxrpc_tx_point_conn_abort);
 		_debug("sendmsg failed: %d", ret);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	trace_rxrpc_tx_packet(conn->debug_id, &whdr, rxrpc_tx_point_conn_abort);
@@ -290,7 +290,7 @@ static int rxrpc_process_event(struct rxrpc_connection *conn,
 
 	if (conn->state >= RXRPC_CONN_REMOTELY_ABORTED) {
 		_leave(" = -ECONNABORTED [%u]", conn->state);
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 	}
 
 	_enter("{%d},{%u,%%%u},", conn->debug_id, sp->hdr.type, sp->hdr.serial);
@@ -311,16 +311,16 @@ static int rxrpc_process_event(struct rxrpc_connection *conn,
 				  &wtmp, sizeof(wtmp)) < 0) {
 			trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 					      tracepoint_string("bad_abort"));
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 		abort_code = ntohl(wtmp);
 		_proto("Rx ABORT %%%u { ac=%d }", sp->hdr.serial, abort_code);
 
-		conn->error = -ECONNABORTED;
+		conn->error = -ERR(ECONNABORTED);
 		conn->abort_code = abort_code;
 		conn->state = RXRPC_CONN_REMOTELY_ABORTED;
 		rxrpc_abort_calls(conn, RXRPC_CALL_REMOTELY_ABORTED, sp->hdr.serial);
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 
 	case RXRPC_PACKET_TYPE_CHALLENGE:
 		return conn->security->respond_to_challenge(conn, skb,
@@ -360,7 +360,7 @@ static int rxrpc_process_event(struct rxrpc_connection *conn,
 	default:
 		trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 				      tracepoint_string("bad_conn_pkt"));
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 }
 

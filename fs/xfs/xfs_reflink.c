@@ -259,7 +259,7 @@ xfs_reflink_convert_cow_locked(
 		if (got.br_state == XFS_EXT_NORM)
 			continue;
 		if (WARN_ON_ONCE(isnullstartblock(got.br_startblock)))
-			return -EIO;
+			return -ERR(EIO);
 
 		xfs_trim_extent(&got, offset_fsb, count_fsb);
 		if (!got.br_blockcount)
@@ -423,7 +423,7 @@ xfs_reflink_allocate_cow(
 	 * satisfied?  Bail out!
 	 */
 	if (nimaps == 0)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 convert:
 	xfs_trim_extent(cmap, offset_fsb, count_fsb);
 	/*
@@ -978,7 +978,7 @@ xfs_reflink_ag_has_free_space(
 	pag = xfs_perag_get(mp, agno);
 	if (xfs_ag_resv_critical(pag, XFS_AG_RESV_RMAPBT) ||
 	    xfs_ag_resv_critical(pag, XFS_AG_RESV_METADATA))
-		error = -ENOSPC;
+		error = -ERR(ENOSPC);
 	xfs_perag_put(pag);
 	return error;
 }
@@ -1159,7 +1159,7 @@ xfs_reflink_remap_blocks(
 			break;
 
 		if (fatal_signal_pending(current)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			break;
 		}
 
@@ -1328,7 +1328,7 @@ xfs_reflink_remap_prep(
 				XFS_MMAPLOCK_EXCL);
 
 	/* Check file eligibility and prepare for block sharing. */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	/* Don't reflink realtime inodes */
 	if (XFS_IS_REALTIME_INODE(src) || XFS_IS_REALTIME_INODE(dest))
 		goto out_unlock;

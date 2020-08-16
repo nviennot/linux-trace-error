@@ -77,7 +77,7 @@ static int gfs2_get_block_noalloc(struct inode *inode, sector_t lblock,
 	if (error)
 		return error;
 	if (!buffer_mapped(bh_result))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -485,7 +485,7 @@ static int __gfs2_readpage(void *file, struct page *page)
 	}
 
 	if (unlikely(gfs2_withdrawn(sdp)))
-		return -EIO;
+		return -ERR(EIO);
 
 	return error;
 }

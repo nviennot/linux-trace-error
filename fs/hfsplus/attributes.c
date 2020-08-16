@@ -15,7 +15,7 @@ static struct kmem_cache *hfsplus_attr_tree_cachep;
 int __init hfsplus_create_attr_tree_cache(void)
 {
 	if (hfsplus_attr_tree_cachep)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	hfsplus_attr_tree_cachep =
 		kmem_cache_create("hfsplus_attr_cache",
@@ -143,7 +143,7 @@ int hfsplus_find_attr(struct super_block *sb, u32 cnid,
 
 	if (!HFSPLUS_SB(sb)->attr_tree) {
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (name) {
@@ -206,7 +206,7 @@ int hfsplus_create_attr(struct inode *inode,
 
 	if (!HFSPLUS_SB(sb)->attr_tree) {
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	entry_ptr = hfsplus_alloc_attr_entry();
@@ -228,7 +228,7 @@ int hfsplus_create_attr(struct inode *inode,
 		if (err)
 			goto failed_create_attr;
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failed_create_attr;
 	}
 
@@ -238,14 +238,14 @@ int hfsplus_create_attr(struct inode *inode,
 					inode->i_ino,
 					value, size);
 	if (entry_size == HFSPLUS_INVALID_ATTR_RECORD) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failed_create_attr;
 	}
 
 	err = hfs_brec_find(&fd, hfs_find_rec_by_key);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto failed_create_attr;
 	}
 
@@ -274,7 +274,7 @@ static int __hfsplus_delete_attr(struct inode *inode, u32 cnid,
 			offsetof(struct hfsplus_attr_key, cnid),
 			sizeof(__be32));
 	if (cnid != be32_to_cpu(found_cnid))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hfs_bnode_read(fd->bnode, &record_type,
 			fd->entryoffset, sizeof(record_type));
@@ -286,10 +286,10 @@ static int __hfsplus_delete_attr(struct inode *inode, u32 cnid,
 	case HFSPLUS_ATTR_FORK_DATA:
 	case HFSPLUS_ATTR_EXTENTS:
 		pr_err("only inline data xattr are supported\n");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	default:
 		pr_err("invalid extended attribute record\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Avoid btree corruption */
@@ -315,7 +315,7 @@ int hfsplus_delete_attr(struct inode *inode, const char *name)
 
 	if (!HFSPLUS_SB(sb)->attr_tree) {
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = hfs_find_init(HFSPLUS_SB(sb)->attr_tree, &fd);
@@ -334,7 +334,7 @@ int hfsplus_delete_attr(struct inode *inode, const char *name)
 			goto out;
 	} else {
 		pr_err("invalid extended attribute name\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -360,7 +360,7 @@ int hfsplus_delete_all_attrs(struct inode *dir, u32 cnid)
 
 	if (!HFSPLUS_SB(dir->i_sb)->attr_tree) {
 		pr_err("attributes file doesn't exist\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = hfs_find_init(HFSPLUS_SB(dir->i_sb)->attr_tree, &fd);

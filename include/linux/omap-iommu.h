@@ -24,12 +24,12 @@ static inline void omap_iommu_restore_ctx(struct device *dev) {}
 
 static inline int omap_iommu_domain_deactivate(struct iommu_domain *domain)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int omap_iommu_domain_activate(struct iommu_domain *domain)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

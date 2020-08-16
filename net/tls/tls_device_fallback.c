@@ -244,7 +244,7 @@ static int fill_sg_in(struct scatterlist *sg_in,
 	record = tls_get_record(ctx, tcp_seq, rcd_sn);
 	if (!record) {
 		spin_unlock_irqrestore(&ctx->lock, flags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*sync_size = tcp_seq - tls_record_start_seq(record);
@@ -264,7 +264,7 @@ static int fill_sg_in(struct scatterlist *sg_in,
 		 */
 		if (!is_start_marker)
 			*sync_size = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	remaining = *sync_size;
@@ -284,7 +284,7 @@ static int fill_sg_in(struct scatterlist *sg_in,
 
 	spin_unlock_irqrestore(&ctx->lock, flags);
 	if (skb_to_sgvec(skb, &sg_in[i], tcp_payload_offset, payload_len) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

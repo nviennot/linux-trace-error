@@ -52,9 +52,9 @@ static int key_get_type_from_user(char *type,
 	if (ret < 0)
 		return ret;
 	if (ret == 0 || ret >= len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (type[0] == '.')
-		return -EPERM;
+		return -ERR(EPERM);
 	type[len - 1] = '\0';
 	return 0;
 }
@@ -82,7 +82,7 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 	void *payload;
 	long ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (plen > 1024 * 1024 - 1)
 		goto error;
 
@@ -103,7 +103,7 @@ SYSCALL_DEFINE5(add_key, const char __user *, _type,
 			description = NULL;
 		} else if ((description[0] == '.') &&
 			   (strncmp(type, "keyring", 7) == 0)) {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto error2;
 		}
 	}
@@ -299,7 +299,7 @@ long keyctl_join_session_keyring(const char __user *_name)
 			goto error;
 		}
 
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		if (name[0] == '.')
 			goto error_name;
 	}
@@ -330,7 +330,7 @@ long keyctl_update_key(key_serial_t id,
 	void *payload;
 	long ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (plen > PAGE_SIZE)
 		goto error;
 
@@ -397,7 +397,7 @@ long keyctl_revoke_key(key_serial_t id)
 	key = key_ref_to_ptr(key_ref);
 	ret = 0;
 	if (test_bit(KEY_FLAG_KEEP, &key->flags))
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	else
 		key_revoke(key);
 
@@ -447,7 +447,7 @@ invalidate:
 	key = key_ref_to_ptr(key_ref);
 	ret = 0;
 	if (test_bit(KEY_FLAG_KEEP, &key->flags))
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	else
 		key_invalidate(key);
 error_put:
@@ -492,7 +492,7 @@ long keyctl_keyring_clear(key_serial_t ringid)
 clear:
 	keyring = key_ref_to_ptr(keyring_ref);
 	if (test_bit(KEY_FLAG_KEEP, &keyring->flags))
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	else
 		ret = keyring_clear(keyring);
 error_put:
@@ -571,7 +571,7 @@ long keyctl_keyring_unlink(key_serial_t id, key_serial_t ringid)
 	key = key_ref_to_ptr(key_ref);
 	if (test_bit(KEY_FLAG_KEEP, &keyring->flags) &&
 	    test_bit(KEY_FLAG_KEEP, &key->flags))
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	else
 		ret = key_unlink(keyring, key);
 
@@ -599,7 +599,7 @@ long keyctl_keyring_move(key_serial_t id, key_serial_t from_ringid,
 	long ret;
 
 	if (flags & ~KEYCTL_MOVE_EXCL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	key_ref = lookup_user_key(id, KEY_LOOKUP_CREATE, KEY_NEED_LINK);
 	if (IS_ERR(key_ref))
@@ -766,7 +766,7 @@ long keyctl_keyring_search(key_serial_t ringid,
 
 		/* treat lack or presence of a negative key the same */
 		if (ret == -EAGAIN)
-			ret = -ENOKEY;
+			ret = -ERR(ENOKEY);
 		goto error5;
 	}
 
@@ -833,7 +833,7 @@ long keyctl_read_key(key_serial_t keyid, char __user *buffer, size_t buflen)
 	/* find the key first */
 	key_ref = lookup_user_key(keyid, 0, KEY_DEFER_PERM_CHECK);
 	if (IS_ERR(key_ref)) {
-		ret = -ENOKEY;
+		ret = -ERR(ENOKEY);
 		goto out;
 	}
 
@@ -855,14 +855,14 @@ long keyctl_read_key(key_serial_t keyid, char __user *buffer, size_t buflen)
 	 *   dangling off an instantiation key
 	 */
 	if (!is_key_possessed(key_ref)) {
-		ret = -EACCES;
+		ret = -ERR(EACCES);
 		goto key_put_out;
 	}
 
 	/* the key is probably readable - now try to read it */
 can_read_key:
 	if (!key->type->read) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto key_put_out;
 	}
 
@@ -957,7 +957,7 @@ long keyctl_chown_key(key_serial_t id, uid_t user, gid_t group)
 
 	uid = make_kuid(current_user_ns(), user);
 	gid = make_kgid(current_user_ns(), group);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if ((user != (uid_t) -1) && !uid_valid(uid))
 		goto error;
 	if ((group != (gid_t) -1) && !gid_valid(gid))
@@ -977,7 +977,7 @@ long keyctl_chown_key(key_serial_t id, uid_t user, gid_t group)
 	key = key_ref_to_ptr(key_ref);
 
 	/* make the changes with the locks held to prevent chown/chown races */
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 	down_write(&key->sem);
 
 	if (!capable(CAP_SYS_ADMIN)) {
@@ -1053,7 +1053,7 @@ error:
 quota_overrun:
 	spin_unlock(&newowner->lock);
 	zapowner = newowner;
-	ret = -EDQUOT;
+	ret = -ERR(EDQUOT);
 	goto error_put;
 }
 
@@ -1070,7 +1070,7 @@ long keyctl_setperm_key(key_serial_t id, key_perm_t perm)
 	key_ref_t key_ref;
 	long ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (perm & ~(KEY_POS_ALL | KEY_USR_ALL | KEY_GRP_ALL | KEY_OTH_ALL))
 		goto error;
 
@@ -1084,7 +1084,7 @@ long keyctl_setperm_key(key_serial_t id, key_perm_t perm)
 	key = key_ref_to_ptr(key_ref);
 
 	/* make the changes with the locks held to prevent chown/chmod races */
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 	down_write(&key->sem);
 
 	/* if we're not the sysadmin, we can only change a key that we own */
@@ -1126,7 +1126,7 @@ static long get_instantiation_keyring(key_serial_t ringid,
 	}
 
 	if (ringid == KEY_SPEC_REQKEY_AUTH_KEY)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* otherwise specify the destination keyring recorded in the
 	 * authorisation key (any KEY_SPEC_*_KEYRING) */
@@ -1135,7 +1135,7 @@ static long get_instantiation_keyring(key_serial_t ringid,
 		return 0;
 	}
 
-	return -ENOKEY;
+	return -ERR(ENOKEY);
 }
 
 /*
@@ -1180,13 +1180,13 @@ long keyctl_instantiate_key_common(key_serial_t id,
 	if (!plen)
 		from = NULL;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (plen > 1024 * 1024 - 1)
 		goto error;
 
 	/* the appropriate instantiation authorisation key must have been
 	 * assumed before calling this */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	instkey = cred->request_key_auth;
 	if (!instkey)
 		goto error;
@@ -1309,7 +1309,7 @@ long keyctl_instantiate_key_iov(key_serial_t id,
  */
 long keyctl_negate_key(key_serial_t id, unsigned timeout, key_serial_t ringid)
 {
-	return keyctl_reject_key(id, timeout, ENOKEY, ringid);
+	return keyctl_reject_key(id, timeout, ERR(ENOKEY), ringid);
 }
 
 /*
@@ -1344,11 +1344,11 @@ long keyctl_reject_key(key_serial_t id, unsigned timeout, unsigned error,
 	    error == ERESTARTNOINTR ||
 	    error == ERESTARTNOHAND ||
 	    error == ERESTART_RESTARTBLOCK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* the appropriate instantiation authorisation key must have been
 	 * assumed before calling this */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	instkey = cred->request_key_auth;
 	if (!instkey)
 		goto error;
@@ -1422,7 +1422,7 @@ long keyctl_set_reqkey_keyring(int reqkey_defl)
 	case KEY_REQKEY_DEFL_NO_CHANGE:
 	case KEY_REQKEY_DEFL_GROUP_KEYRING:
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -1480,7 +1480,7 @@ okay:
 	key = key_ref_to_ptr(key_ref);
 	ret = 0;
 	if (test_bit(KEY_FLAG_KEEP, &key->flags)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	} else {
 		key_set_timeout(key, timeout);
 		notify_key(key, NOTIFY_KEY_SETATTR, 0);
@@ -1514,7 +1514,7 @@ long keyctl_assume_authority(key_serial_t id)
 	long ret;
 
 	/* special key IDs aren't permitted */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (id < 0)
 		goto error;
 
@@ -1649,7 +1649,7 @@ long keyctl_session_to_parent(void)
 	rcu_read_lock();
 	write_lock_irq(&tasklist_lock);
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	oldwork = NULL;
 	parent = rcu_dereference_protected(me->real_parent,
 					   lockdep_is_held(&tasklist_lock));
@@ -1733,7 +1733,7 @@ long keyctl_restrict_keyring(key_serial_t id, const char __user *_type,
 	if (IS_ERR(key_ref))
 		return PTR_ERR(key_ref);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (_type) {
 		if (!_restriction)
 			goto error;
@@ -1775,7 +1775,7 @@ long keyctl_watch_key(key_serial_t id, int watch_queue_fd, int watch_id)
 	long ret;
 
 	if (watch_id < -1 || watch_id > 0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	key_ref = lookup_user_key(id, KEY_LOOKUP_CREATE, KEY_NEED_VIEW);
 	if (IS_ERR(key_ref))
@@ -1821,7 +1821,7 @@ long keyctl_watch_key(key_serial_t id, int watch_queue_fd, int watch_id)
 		if (ret == 0)
 			watch = NULL;
 	} else {
-		ret = -EBADSLT;
+		ret = -ERR(EBADSLT);
 		if (key->watchers) {
 			down_write(&key->sem);
 			ret = remove_watch_from_object(key->watchers,
@@ -1981,7 +1981,7 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 
 	case KEYCTL_PKEY_QUERY:
 		if (arg3 != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return keyctl_pkey_query((key_serial_t)arg2,
 					 (const char __user *)arg4,
 					 (struct keyctl_pkey_query __user *)arg5);
@@ -2016,6 +2016,6 @@ SYSCALL_DEFINE5(keyctl, int, option, unsigned long, arg2, unsigned long, arg3,
 		return keyctl_watch_key((key_serial_t)arg2, (int)arg3, (int)arg4);
 
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }

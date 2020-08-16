@@ -499,10 +499,10 @@ static int sfb_change(struct Qdisc *sch, struct nlattr *opt,
 		err = nla_parse_nested_deprecated(tb, TCA_SFB_MAX, opt,
 						  sfb_policy, NULL);
 		if (err < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (tb[TCA_SFB_PARMS] == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ctl = nla_data(tb[TCA_SFB_PARMS]);
 	}
@@ -588,7 +588,7 @@ static int sfb_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int sfb_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
@@ -611,7 +611,7 @@ static int sfb_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
 static int sfb_dump_class(struct Qdisc *sch, unsigned long cl,
 			  struct sk_buff *skb, struct tcmsg *tcm)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static int sfb_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
@@ -646,12 +646,12 @@ static int sfb_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 			    struct nlattr **tca, unsigned long *arg,
 			    struct netlink_ext_ack *extack)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static int sfb_delete(struct Qdisc *sch, unsigned long cl)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static void sfb_walk(struct Qdisc *sch, struct qdisc_walker *walker)

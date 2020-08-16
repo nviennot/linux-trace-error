@@ -480,28 +480,28 @@ static int ntfs_remount(struct super_block *sb, int *flags, char *opt)
 		if (NVolErrors(vol)) {
 			ntfs_error(sb, "Volume has errors and is read-only%s",
 					es);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (vol->vol_flags & VOLUME_IS_DIRTY) {
 			ntfs_error(sb, "Volume is dirty and read-only%s", es);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (vol->vol_flags & VOLUME_MODIFIED_BY_CHKDSK) {
 			ntfs_error(sb, "Volume has been modified by chkdsk "
 					"and is read-only%s", es);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (vol->vol_flags & VOLUME_MUST_MOUNT_RO_MASK) {
 			ntfs_error(sb, "Volume has unsupported flags set "
 					"(0x%x) and is read-only%s",
 					(unsigned)le16_to_cpu(vol->vol_flags),
 					es);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (ntfs_set_volume_flags(vol, VOLUME_IS_DIRTY)) {
 			ntfs_error(sb, "Failed to set dirty bit in volume "
 					"information flags%s", es);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 #if 0
 		// TODO: Enable this code once we start modifying anything that
@@ -520,19 +520,19 @@ static int ntfs_remount(struct super_block *sb, int *flags, char *opt)
 			ntfs_error(sb, "Failed to empty journal $LogFile%s",
 					es);
 			NVolSetErrors(vol);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (!ntfs_mark_quotas_out_of_date(vol)) {
 			ntfs_error(sb, "Failed to mark quotas out of date%s",
 					es);
 			NVolSetErrors(vol);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (!ntfs_stamp_usnjrnl(vol)) {
 			ntfs_error(sb, "Failed to stamp transaction log "
 					"($UsnJrnl)%s", es);
 			NVolSetErrors(vol);
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 	} else if (!sb_rdonly(sb) && (*flags & SB_RDONLY)) {
 		/* Remounting read-only. */
@@ -548,7 +548,7 @@ static int ntfs_remount(struct super_block *sb, int *flags, char *opt)
 	// TODO: Deal with *flags.
 
 	if (!parse_options(vol, opt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ntfs_debug("Done.");
 	return 0;
@@ -1295,7 +1295,7 @@ static int check_windows_hibernation_status(ntfs_volume *vol)
 		if (!IS_ERR(vi))
 			iput(vi);
 		ntfs_error(vol->sb, "Failed to load hiberfil.sys.");
-		return IS_ERR(vi) ? PTR_ERR(vi) : -EIO;
+		return IS_ERR(vi) ? PTR_ERR(vi) : -ERR(EIO);
 	}
 	if (unlikely(i_size_read(vi) < NTFS_HIBERFIL_HEADER_SIZE)) {
 		ntfs_debug("hiberfil.sys is smaller than 4kiB (0x%llx).  "
@@ -3013,7 +3013,7 @@ err_out_now:
 	kfree(vol);
 	ntfs_debug("Failed, returning -EINVAL.");
 	lockdep_on();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*

@@ -141,7 +141,7 @@ static int strset_get_id(const struct nlattr *nest, u32 *val,
 	if (ret < 0)
 		return ret;
 	if (!tb[ETHTOOL_A_STRINGSET_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*val = nla_get_u32(tb[ETHTOOL_A_STRINGSET_ID]);
 	return 0;
@@ -176,7 +176,7 @@ static int strset_parse_request(struct ethnl_req_info *req_base,
 		if (WARN_ONCE(nla_type(attr) != ETHTOOL_A_STRINGSETS_STRINGSET,
 			      "unexpected attrtype %u in ETHTOOL_A_STRSET_STRINGSETS\n",
 			      nla_type(attr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = strset_get_id(attr, &id, extack);
 		if (ret < 0)
@@ -184,7 +184,7 @@ static int strset_parse_request(struct ethnl_req_info *req_base,
 		if (ret >= ETH_SS_COUNT) {
 			NL_SET_ERR_MSG_ATTR(extack, attr,
 					    "unknown string set id");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 
 		req_info->req_ids |= (1U << id);
@@ -219,7 +219,7 @@ static int strset_prepare_set(struct strset_info *info, struct net_device *dev,
 	else if (ops->get_sset_count && ops->get_strings)
 		ret = ops->get_sset_count(dev, id);
 	else
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	if (ret <= 0) {
 		info->count = 0;
 		return 0;
@@ -262,7 +262,7 @@ static int strset_prepare_data(const struct ethnl_req_info *req_base,
 			    data->sets[i].per_dev) {
 				if (info)
 					GENL_SET_ERR_MSG(info, "requested per device strings without dev");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 		return 0;
@@ -350,7 +350,7 @@ static int strset_fill_string(struct sk_buff *skb,
 
 	string_attr = nla_nest_start(skb, ETHTOOL_A_STRINGS_STRING);
 	if (!string_attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u32(skb, ETHTOOL_A_STRING_INDEX, idx) ||
 	    ethnl_put_strz(skb, ETHTOOL_A_STRING_VALUE, value))
 		goto nla_put_failure;
@@ -359,7 +359,7 @@ static int strset_fill_string(struct sk_buff *skb,
 	return 0;
 nla_put_failure:
 	nla_nest_cancel(skb, string_attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* fill one string set into reply */
@@ -372,12 +372,12 @@ static int strset_fill_set(struct sk_buff *skb,
 	unsigned int i;
 
 	if (!set_info->per_dev && !set_info->strings)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (set_info->count == 0)
 		return 0;
 	stringset_attr = nla_nest_start(skb, ETHTOOL_A_STRINGSETS_STRINGSET);
 	if (!stringset_attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, ETHTOOL_A_STRINGSET_ID, id) ||
 	    nla_put_u32(skb, ETHTOOL_A_STRINGSET_COUNT, set_info->count))
@@ -399,7 +399,7 @@ static int strset_fill_set(struct sk_buff *skb,
 
 nla_put_failure:
 	nla_nest_cancel(skb, stringset_attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int strset_fill_reply(struct sk_buff *skb,
@@ -414,7 +414,7 @@ static int strset_fill_reply(struct sk_buff *skb,
 
 	nest = nla_nest_start(skb, ETHTOOL_A_STRSET_STRINGSETS);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i < ETH_SS_COUNT; i++) {
 		if (strset_include(req_info, data, i)) {

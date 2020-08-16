@@ -510,7 +510,7 @@ static int eqmode_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.enumerated.item[0] != 0
 	    && ucontrol->value.enumerated.item[0] != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reg_eq = snd_soc_component_read32(component, WM8983_EQ1_LOW_SHELF);
 	switch ((reg_eq & WM8983_EQ3DMODE) >> WM8983_EQ3DMODE_SHIFT) {
@@ -587,7 +587,7 @@ static int wm8983_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8983_AUDIO_INTERFACE,
@@ -602,7 +602,7 @@ static int wm8983_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8983_CLOCK_GEN_CONTROL,
@@ -613,7 +613,7 @@ static int wm8983_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_DSP_A:
 	case SND_SOC_DAIFMT_DSP_B:
 		dev_err(dai->dev, "DSP A/B modes are not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	default:
 		break;
 	}
@@ -633,7 +633,7 @@ static int wm8983_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown polarity configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8983_AUDIO_INTERFACE,
@@ -679,7 +679,7 @@ static int wm8983_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported word length %u\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8983_AUDIO_INTERFACE,
@@ -714,7 +714,7 @@ static int wm8983_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(fs_ratios)) {
 		dev_err(dai->dev, "Unable to configure MCLK ratio %u/%u\n",
 			wm8983->sysclk, params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "MCLK ratio = %dfs\n", fs_ratios[i].ratio);
@@ -730,7 +730,7 @@ static int wm8983_hw_params(struct snd_pcm_substream *substream,
 
 	if (i == ARRAY_SIZE(bclk_divs)) {
 		dev_err(dai->dev, "No matching BCLK divider found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "BCLK div = %d\n", i);
@@ -764,7 +764,7 @@ static int pll_factors(struct pll_div *pll_div, unsigned int target,
 	if (Ndiv < 6 || Ndiv > 12) {
 		printk(KERN_ERR "%s: WM8983 N value is not within"
 		       " the recommended range: %lu\n", __func__, Ndiv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	pll_div->n = Ndiv;
 
@@ -837,7 +837,7 @@ static int wm8983_set_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Unknown clock source: %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8983->sysclk = freq;

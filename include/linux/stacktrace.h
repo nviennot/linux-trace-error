@@ -86,7 +86,7 @@ static inline int stack_trace_save_tsk_reliable(struct task_struct *tsk,
 						unsigned long *store,
 						unsigned int size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif
 

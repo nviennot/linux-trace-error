@@ -123,7 +123,7 @@ static int insert_retry(struct rhashtable *ht, struct test_obj *obj,
 		err = rhashtable_insert_fast(ht, &obj->node, params);
 		if (err == -ENOMEM && enomem_retry) {
 			enomem_retries++;
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		}
 	} while (err == -EBUSY);
 
@@ -153,16 +153,16 @@ static int __init test_rht_lookup(struct rhashtable *ht, struct test_obj *array,
 
 		if (expected && !obj) {
 			pr_warn("Test failed: Could not find key %u\n", key.id);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		} else if (!expected && obj) {
 			pr_warn("Test failed: Unexpected entry found for key %u\n",
 				key.id);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		} else if (expected && obj) {
 			if (obj->value.id != i) {
 				pr_warn("Test failed: Lookup value mismatch %u!=%u\n",
 					obj->value.id, i);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -540,7 +540,7 @@ static int __init test_insert_dup(struct test_obj_rhl *rhl_test_objects,
 
 	rhlt = kmalloc(sizeof(*rhlt), GFP_KERNEL);
 	if (WARN_ON(!rhlt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = rhltable_init(rhlt, &test_rht_params_dup);
 	if (WARN_ON(err)) {
@@ -736,7 +736,7 @@ static int __init test_rht_init(void)
 		if (time < 0) {
 			vfree(objs);
 			pr_warn("Test failed: return code %lld\n", time);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		total_time += time;
@@ -775,7 +775,7 @@ static int __init test_rht_init(void)
 			err);
 		vfree(tdata);
 		vfree(objs);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < tcount; i++) {
 		tdata[i].id = i;

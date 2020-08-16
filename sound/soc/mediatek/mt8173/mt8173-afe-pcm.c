@@ -190,7 +190,7 @@ static int mt8173_afe_i2s_fs(unsigned int sample_rate)
 		if (mt8173_afe_i2s_rates[i].rate == sample_rate)
 			return mt8173_afe_i2s_rates[i].regvalue;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int mt8173_afe_set_i2s(struct mtk_base_afe *afe, unsigned int rate)
@@ -199,7 +199,7 @@ static int mt8173_afe_set_i2s(struct mtk_base_afe *afe, unsigned int rate)
 	int fs = mt8173_afe_i2s_fs(rate);
 
 	if (fs < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* from external ADC */
 	regmap_update_bits(afe->regmap, AFE_ADDA_TOP_CON0, 0x1, 0x1);
@@ -475,7 +475,7 @@ static int mt8173_afe_hdmi_trigger(struct snd_pcm_substream *substream, int cmd,
 				   AUD_TCON0_PDN_HDMI | AUD_TCON0_PDN_SPDF);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -501,7 +501,7 @@ static int mt8173_memif_fs(struct snd_pcm_substream *substream,
 			fs = 2;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		fs = mt8173_afe_i2s_fs(rate);
@@ -1073,7 +1073,7 @@ static int mt8173_afe_pcm_dev_probe(struct platform_device *pdev)
 
 	irq_id = platform_get_irq(pdev, 0);
 	if (irq_id <= 0)
-		return irq_id < 0 ? irq_id : -ENXIO;
+		return irq_id < 0 ? irq_id : -ERR(ENXIO);
 	ret = devm_request_irq(afe->dev, irq_id, mt8173_afe_irq_handler,
 			       0, "Afe_ISR_Handle", (void *)afe);
 	if (ret) {

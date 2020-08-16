@@ -292,7 +292,7 @@ static int cs42l51_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -304,7 +304,7 @@ static int cs42l51_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Unknown master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -404,7 +404,7 @@ static int cs42l51_hw_params(struct snd_pcm_substream *substream,
 	if (i == nr_ratios) {
 		/* We did not find a matching ratio */
 		dev_err(component->dev, "could not find matching ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	intf_ctl = snd_soc_component_read32(component, CS42L51_INTF_CTL);
@@ -461,13 +461,13 @@ static int cs42l51_hw_params(struct snd_pcm_substream *substream,
 			break;
 		default:
 			dev_err(component->dev, "unknown format\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		intf_ctl |= CS42L51_INTF_CTL_DAC_FORMAT(fmt);
 		break;
 	default:
 		dev_err(component->dev, "unknown format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ratios[i].mclk)
@@ -743,7 +743,7 @@ int cs42l51_probe(struct device *dev, struct regmap *regmap)
 	if ((val != CS42L51_MK_CHIP_REV(CS42L51_CHIP_ID, CS42L51_CHIP_REV_A)) &&
 	    (val != CS42L51_MK_CHIP_REV(CS42L51_CHIP_ID, CS42L51_CHIP_REV_B))) {
 		dev_err(dev, "Invalid chip id: %x\n", val);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto error;
 	}
 	dev_info(dev, "Cirrus Logic CS42L51, Revision: %02X\n",

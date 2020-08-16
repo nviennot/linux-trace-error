@@ -165,7 +165,7 @@ static int sprd_pcm_request_dma_channel(struct snd_soc_component *component,
 
 	if (channels > SPRD_PCM_CHANNEL_MAX) {
 		dev_err(dev, "invalid dma channel number:%d\n", channels);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < channels; i++) {
@@ -177,7 +177,7 @@ static int sprd_pcm_request_dma_channel(struct snd_soc_component *component,
 			dev_err(dev, "failed to request dma channel:%s\n",
 				dma_params->chan_name[i]);
 			sprd_pcm_release_dma_channel(substream);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -374,7 +374,7 @@ static int sprd_pcm_trigger(struct snd_soc_component *component,
 
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;

@@ -100,7 +100,7 @@ static inline void ima_post_path_mknod(struct dentry *dentry)
 
 static inline int ima_file_hash(struct file *file, char *buf, size_t buf_size)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void ima_kexec_cmdline(const void *buf, int size) {}

@@ -73,7 +73,7 @@ static int pagecache_write(struct inode *inode, const void *buf, size_t count,
 			   loff_t pos)
 {
 	if (pos + count > inode->i_sb->s_maxbytes)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	while (count) {
 		size_t n = min_t(size_t, count,
@@ -97,7 +97,7 @@ static int pagecache_write(struct inode *inode, const void *buf, size_t count,
 		if (res < 0)
 			return res;
 		if (res != n)
-			return -EIO;
+			return -ERR(EIO);
 
 		buf += n;
 		pos += n;
@@ -124,10 +124,10 @@ static int f2fs_begin_enable_verity(struct file *filp)
 	int err;
 
 	if (f2fs_verity_in_progress(inode))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (f2fs_is_atomic_file(inode) || f2fs_is_volatile_file(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * Since the file was opened readonly, we have to initialize the quotas
@@ -201,7 +201,7 @@ static int f2fs_get_verity_descriptor(struct inode *inode, void *buf,
 		return res;
 	if (res != sizeof(dloc) || dloc.version != cpu_to_le32(1)) {
 		f2fs_warn(F2FS_I_SB(inode), "unknown verity xattr format");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	size = le32_to_cpu(dloc.size);
 	pos = le64_to_cpu(dloc.pos);
@@ -214,7 +214,7 @@ static int f2fs_get_verity_descriptor(struct inode *inode, void *buf,
 	}
 	if (buf_size) {
 		if (size > buf_size)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		res = pagecache_read(inode, buf, size, pos);
 		if (res)
 			return res;

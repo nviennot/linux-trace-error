@@ -109,7 +109,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int
@@ -211,7 +211,7 @@ mtype_list(const struct ip_set *set,
 
 	adt = nla_nest_start(skb, IPSET_ATTR_ADT);
 	if (!adt)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	/* Extensions may be replaced */
 	rcu_read_lock();
 	for (; cb->args[IPSET_CB_ARG0] < map->elements;
@@ -230,7 +230,7 @@ mtype_list(const struct ip_set *set,
 		if (!nested) {
 			if (id == first) {
 				nla_nest_cancel(skb, adt);
-				ret = -EMSGSIZE;
+				ret = -ERR(EMSGSIZE);
 				goto out;
 			}
 
@@ -253,7 +253,7 @@ nla_put_failure:
 	nla_nest_cancel(skb, nested);
 	if (unlikely(id == first)) {
 		cb->args[IPSET_CB_ARG0] = 0;
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 	}
 	nla_nest_end(skb, adt);
 out:

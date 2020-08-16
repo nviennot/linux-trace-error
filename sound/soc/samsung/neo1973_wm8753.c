@@ -126,9 +126,9 @@ static int neo1973_voice_hw_params(struct snd_pcm_substream *substream,
 	iis_clkrate = s3c24xx_i2s_get_clockrate();
 
 	if (params_rate(params) != 8000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (params_channels(params) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pcmdiv = WM8753_PCM_DIV_6; /* 2.048 MHz */
 
@@ -339,7 +339,7 @@ static int __init neo1973_init(void)
 	int ret;
 
 	if (!machine_is_neo1973_gta02())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (machine_is_neo1973_gta02()) {
 		neo1973.name = "neo1973gta02";

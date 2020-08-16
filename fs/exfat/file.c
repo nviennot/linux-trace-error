@@ -68,7 +68,7 @@ static int exfat_sanitize_mode(const struct exfat_sb_info *sbi,
 
 	/* Of the r and x bits, all (subject to umask) must be present.*/
 	if ((perm & 0555) != (i_mode & 0555))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (exfat_mode_can_hold_ro(inode)) {
 		/*
@@ -76,14 +76,14 @@ static int exfat_sanitize_mode(const struct exfat_sb_info *sbi,
 		 * be present.
 		 */
 		if ((perm & 0222) && ((perm & 0222) != (0222 & ~mask)))
-			return -EPERM;
+			return -ERR(EPERM);
 	} else {
 		/*
 		 * If exfat_mode_can_hold_ro(inode) is false, can't change
 		 * w bits.
 		 */
 		if ((perm & 0222) != (0222 & ~mask))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	*mode_ptr &= S_IFMT | perm;
@@ -104,7 +104,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 
 	/* check if the given file ID is opened */
 	if (ei->type != TYPE_FILE && ei->type != TYPE_DIR)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	exfat_set_vol_flags(sb, VOL_DIRTY);
 
@@ -133,7 +133,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 			while (num_clusters > 0) {
 				last_clu = clu.dir;
 				if (exfat_get_next_cluster(sb, &(clu.dir)))
-					return -EIO;
+					return -ERR(EIO);
 
 				num_clusters--;
 				clu.size--;
@@ -158,7 +158,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 		es = exfat_get_dentry_set(sb, &(ei->dir), ei->entry,
 				ES_ALL_ENTRIES);
 		if (!es)
-			return -EIO;
+			return -ERR(EIO);
 		ep = exfat_get_dentry_cached(es, 0);
 		ep2 = exfat_get_dentry_cached(es, 1);
 
@@ -195,7 +195,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 	if (ei->flags == ALLOC_FAT_CHAIN && last_clu != EXFAT_FREE_CLUSTER &&
 			last_clu != EXFAT_EOF_CLUSTER) {
 		if (exfat_ent_set(sb, last_clu, EXFAT_EOF_CLUSTER))
-			return -EIO;
+			return -ERR(EIO);
 	}
 
 	/* invalidate cache and free the clusters */
@@ -215,7 +215,7 @@ int __exfat_truncate(struct inode *inode, loff_t new_size)
 
 	/* free the clusters */
 	if (exfat_free_cluster(inode, &clu))
-		return -EIO;
+		return -ERR(EIO);
 
 	exfat_set_vol_flags(sb, VOL_CLEAN);
 
@@ -315,7 +315,7 @@ int exfat_setattr(struct dentry *dentry, struct iattr *attr)
 	     !gid_eq(attr->ia_gid, sbi->options.fs_gid)) ||
 	    ((attr->ia_valid & ATTR_MODE) &&
 	     (attr->ia_mode & ~(S_IFREG | S_IFLNK | S_IFDIR | 0777)))) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto out;
 	}
 

@@ -71,7 +71,7 @@ static int cfg80211_conn_scan(struct wireless_dev *wdev)
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (rdev->scan_req || rdev->scan_msg)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (wdev->conn->params.channel)
 		n_channels = 1;
@@ -91,7 +91,7 @@ static int cfg80211_conn_scan(struct wireless_dev *wdev)
 
 		if (!sband) {
 			kfree(request);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		request->channels[0] = wdev->conn->params.channel;
 		request->rates[band] = (1 << sband->n_bitrates) - 1;
@@ -161,12 +161,12 @@ static int cfg80211_conn_do_work(struct wireless_dev *wdev,
 	switch (wdev->conn->state) {
 	case CFG80211_CONN_SCANNING:
 		/* didn't find it during scan ... */
-		return -ENOENT;
+		return -ERR(ENOENT);
 	case CFG80211_CONN_SCAN_AGAIN:
 		return cfg80211_conn_scan(wdev);
 	case CFG80211_CONN_AUTHENTICATE_NEXT:
 		if (WARN_ON(!rdev->ops->auth))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		wdev->conn->state = CFG80211_CONN_AUTHENTICATING;
 		return cfg80211_mlme_auth(rdev, wdev->netdev,
 					  params->channel, params->auth_type,
@@ -177,10 +177,10 @@ static int cfg80211_conn_do_work(struct wireless_dev *wdev,
 					  params->key_idx, NULL, 0);
 	case CFG80211_CONN_AUTH_FAILED_TIMEOUT:
 		*treason = NL80211_TIMEOUT_AUTH;
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	case CFG80211_CONN_ASSOCIATE_NEXT:
 		if (WARN_ON(!rdev->ops->assoc))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		wdev->conn->state = CFG80211_CONN_ASSOCIATING;
 		if (wdev->conn->prev_bssid_valid)
 			req.prev_bssid = wdev->conn->prev_bssid;
@@ -210,7 +210,7 @@ static int cfg80211_conn_do_work(struct wireless_dev *wdev,
 		cfg80211_mlme_deauth(rdev, wdev->netdev, params->bssid,
 				     NULL, 0,
 				     WLAN_REASON_DEAUTH_LEAVING, false);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	case CFG80211_CONN_DEAUTH:
 		cfg80211_mlme_deauth(rdev, wdev->netdev, params->bssid,
 				     NULL, 0,
@@ -520,7 +520,7 @@ static int cfg80211_sme_connect(struct wireless_dev *wdev,
 	int err;
 
 	if (!rdev->ops->auth || !rdev->ops->assoc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (wdev->current_bss) {
 		cfg80211_unhold_bss(wdev->current_bss);
@@ -531,7 +531,7 @@ static int cfg80211_sme_connect(struct wireless_dev *wdev,
 	}
 
 	if (WARN_ON(wdev->conn))
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 
 	wdev->conn = kzalloc(sizeof(*wdev->conn), GFP_KERNEL);
 	if (!wdev->conn)
@@ -611,7 +611,7 @@ static int cfg80211_sme_disconnect(struct wireless_dev *wdev, u16 reason)
 		return 0;
 
 	if (!rdev->ops->deauth)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (wdev->conn->state == CFG80211_CONN_SCANNING ||
 	    wdev->conn->state == CFG80211_CONN_SCAN_AGAIN) {
@@ -1188,7 +1188,7 @@ int cfg80211_connect(struct cfg80211_registered_device *rdev,
 	if (wdev->ssid_len &&
 	    (wdev->ssid_len != connect->ssid_len ||
 	     memcmp(wdev->ssid, connect->ssid, wdev->ssid_len)))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	/*
 	 * If connected, reject (re-)association unless prev_bssid
@@ -1196,9 +1196,9 @@ int cfg80211_connect(struct cfg80211_registered_device *rdev,
 	 */
 	if (wdev->current_bss) {
 		if (!prev_bssid)
-			return -EALREADY;
+			return -ERR(EALREADY);
 		if (!ether_addr_equal(prev_bssid, wdev->current_bss->pub.bssid))
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 	}
 
 	/*
@@ -1207,7 +1207,7 @@ int cfg80211_connect(struct cfg80211_registered_device *rdev,
 	 * it would make the code much more complex.
 	 */
 	if (wdev->connect_keys)
-		return -EINPROGRESS;
+		return -ERR(EINPROGRESS);
 
 	cfg80211_oper_and_ht_capa(&connect->ht_capa_mask,
 				  rdev->wiphy.ht_capa_mod_mask);
@@ -1244,7 +1244,7 @@ int cfg80211_connect(struct cfg80211_registered_device *rdev,
 		connect->crypto.wep_tx_key = connkeys->def;
 	} else {
 		if (WARN_ON(connkeys))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	wdev->connect_keys = connkeys;

@@ -111,7 +111,7 @@ static int ca_midi_input_open(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 	
 	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= CA_MIDI_MODE_INPUT;
 	midi->substream_input = substream;
@@ -131,7 +131,7 @@ static int ca_midi_output_open(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 
 	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= CA_MIDI_MODE_OUTPUT;
 	midi->substream_output = substream;
@@ -151,7 +151,7 @@ static int ca_midi_input_close(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 
 	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->interrupt_disable(midi,midi->rx_enable);
 	midi->midi_mode &= ~CA_MIDI_MODE_INPUT;
@@ -171,7 +171,7 @@ static int ca_midi_output_close(struct snd_rawmidi_substream *substream)
 	unsigned long flags;
 
 	if (snd_BUG_ON(!midi->dev_id))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	
 	spin_lock_irqsave(&midi->open_lock, flags);
 

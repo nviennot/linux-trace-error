@@ -31,7 +31,7 @@ struct posix_acl *btrfs_get_acl(struct inode *inode, int type)
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	size = btrfs_getxattr(inode, name, NULL, 0);
@@ -65,11 +65,11 @@ static int __btrfs_set_acl(struct btrfs_trans_handle *trans,
 		break;
 	case ACL_TYPE_DEFAULT:
 		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EINVAL : 0;
+			return acl ? -ERR(EINVAL) : 0;
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (acl) {

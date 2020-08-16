@@ -102,23 +102,23 @@ static inline bool br_vlan_enabled(const struct net_device *dev)
 
 static inline int br_vlan_get_pvid(const struct net_device *dev, u16 *p_pvid)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int br_vlan_get_proto(const struct net_device *dev, u16 *p_proto)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int br_vlan_get_pvid_rcu(const struct net_device *dev, u16 *p_pvid)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int br_vlan_get_info(const struct net_device *dev, u16 vid,
 				   struct bridge_vlan_info *p_vinfo)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

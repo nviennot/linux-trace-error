@@ -41,7 +41,7 @@ static int ocfs2_dentry_revalidate(struct dentry *dentry, unsigned int flags)
 	struct ocfs2_super *osb;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	inode = d_inode(dentry);
 	osb = OCFS2_SB(dentry->d_sb);

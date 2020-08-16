@@ -160,38 +160,38 @@ xlog_recover_icreate_commit_pass2(
 	icl = (struct xfs_icreate_log *)item->ri_buf[0].i_addr;
 	if (icl->icl_type != XFS_LI_ICREATE) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad type");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (icl->icl_size != 1) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad icl size");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	agno = be32_to_cpu(icl->icl_ag);
 	if (agno >= mp->m_sb.sb_agcount) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad agno");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	agbno = be32_to_cpu(icl->icl_agbno);
 	if (!agbno || agbno == NULLAGBLOCK || agbno >= mp->m_sb.sb_agblocks) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad agbno");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	isize = be32_to_cpu(icl->icl_isize);
 	if (isize != mp->m_sb.sb_inodesize) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad isize");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	count = be32_to_cpu(icl->icl_count);
 	if (!count) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad count");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	length = be32_to_cpu(icl->icl_length);
 	if (!length || length >= mp->m_sb.sb_agblocks) {
 		xfs_warn(log->l_mp, "xlog_recover_do_icreate_trans: bad length");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -202,7 +202,7 @@ xlog_recover_icreate_commit_pass2(
 	    length != igeo->ialloc_min_blks) {
 		xfs_warn(log->l_mp,
 			 "%s: unsupported chunk length", __FUNCTION__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* verify inode count is consistent with extent length */
@@ -210,7 +210,7 @@ xlog_recover_icreate_commit_pass2(
 		xfs_warn(log->l_mp,
 			 "%s: inconsistent inode count and chunk length",
 			 __FUNCTION__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*

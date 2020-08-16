@@ -743,7 +743,7 @@ static int __init irq_timings_test_next_index(struct timings_intervals *ti)
 	if (index != i) {
 		pr_err("Expected (%d) and computed (%d) next indexes differ\n",
 		       i, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -780,7 +780,7 @@ static int __init irq_timings_test_irqs(struct timings_intervals *ti)
 
 	s = idr_find(&irqt_stats, irq);
 	if (!s) {
-		ret = -EIDRM;
+		ret = -ERR(EIDRM);
 		goto out;
 	}
 
@@ -855,7 +855,7 @@ static int __init irq_timings_test_irqts(struct irq_timings *irqts,
 	 */
 	pr_debug("---> Checking timings array count (%d) is right\n", count);
 	if (WARN_ON(irqts->count != count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Test the macro allowing to browse all the irqts.
@@ -869,7 +869,7 @@ static int __init irq_timings_test_irqts(struct irq_timings *irqts,
 			 i, ts, ots, irq, oirq);
 
 		if (WARN_ON(ts != ots || irq != oirq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ots++; oirq++;
 	}
@@ -880,7 +880,7 @@ static int __init irq_timings_test_irqts(struct irq_timings *irqts,
 	 */
 	pr_debug("---> Checking timings array is empty after browsing it\n");
 	if (WARN_ON(irqts->count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

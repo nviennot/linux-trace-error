@@ -559,10 +559,10 @@ static int ieee80211_start_roc_work(struct ieee80211_local *local,
 
 	if (channel->freq_offset)
 		/* this may work, but is untested */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (local->use_chanctx && !local->ops->remain_on_channel)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	roc = kzalloc(sizeof(*roc), GFP_KERNEL);
 	if (!roc)
@@ -711,7 +711,7 @@ static int ieee80211_cancel_roc(struct ieee80211_local *local,
 	int ret;
 
 	if (!cookie)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	flush_work(&local->hw_roc_start);
 
@@ -728,7 +728,7 @@ static int ieee80211_cancel_roc(struct ieee80211_local *local,
 
 	if (!found) {
 		mutex_unlock(&local->mtx);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	if (!found->started) {
@@ -831,7 +831,7 @@ int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		sta = sta_info_get_bss(sdata, mgmt->da);
 		rcu_read_unlock();
 		if (!sta)
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 		break;
 	case NL80211_IFTYPE_STATION:
 	case NL80211_IFTYPE_P2P_CLIENT:
@@ -849,14 +849,14 @@ int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		break;
 	case NL80211_IFTYPE_NAN:
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* configurations requiring offchan cannot work if no channel has been
 	 * specified
 	 */
 	if (need_offchan && !params->chan)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&local->mtx);
 
@@ -872,7 +872,7 @@ int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 				       (params->chan !=
 					chanctx_conf->def.chan);
 		} else if (!params->chan) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			rcu_read_unlock();
 			goto out_unlock;
 		} else {
@@ -882,7 +882,7 @@ int ieee80211_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	}
 
 	if (need_offchan && !params->offchan) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_unlock;
 	}
 

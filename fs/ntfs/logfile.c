@@ -345,12 +345,12 @@ static int ntfs_check_and_load_restart_page(struct inode *vi,
 	/* Check the restart page header for consistency. */
 	if (!ntfs_check_restart_page_header(vi, rp, pos)) {
 		/* Error output already done inside the function. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* Check the restart area for consistency. */
 	if (!ntfs_check_restart_area(vi, rp)) {
 		/* Error output already done inside the function. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ra = (RESTART_AREA*)((u8*)rp + le16_to_cpu(rp->restart_area_offset));
 	/*
@@ -390,7 +390,7 @@ static int ntfs_check_and_load_restart_page(struct inode *vi,
 						"page (index %lu).", idx);
 				err = PTR_ERR(page);
 				if (err != -EIO && err != -ENOMEM)
-					err = -EIO;
+					err = -ERR(EIO);
 				goto err_out;
 			}
 			size = min_t(int, to_read, PAGE_SIZE);
@@ -418,7 +418,7 @@ static int ntfs_check_and_load_restart_page(struct inode *vi,
 				NTFS_BLOCK_SIZE - sizeof(u16)) {
 			ntfs_error(vi->i_sb, "Multi sector transfer error "
 					"detected in $LogFile restart page.");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 	}
@@ -431,7 +431,7 @@ static int ntfs_check_and_load_restart_page(struct inode *vi,
 	if (ntfs_is_rstr_record(rp->magic) &&
 			ra->client_in_use_list != LOGFILE_NO_CLIENT) {
 		if (!ntfs_check_log_client_array(vi, trp)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 	}
@@ -839,7 +839,7 @@ rl_err:
 	ntfs_error(sb, "Runlist is corrupt.  Unmount and run chkdsk.");
 dirty_err:
 	NVolSetErrors(vol);
-	err = -EIO;
+	err = -ERR(EIO);
 err:
 	up_write(&log_ni->runlist.lock);
 	ntfs_error(sb, "Failed to fill $LogFile with 0xff bytes (error %d).",

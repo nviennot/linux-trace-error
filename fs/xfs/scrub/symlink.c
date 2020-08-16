@@ -41,7 +41,7 @@ xchk_symlink(
 	int			error = 0;
 
 	if (!S_ISLNK(VFS_I(ip)->i_mode))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 	len = ip->i_d.di_size;
 

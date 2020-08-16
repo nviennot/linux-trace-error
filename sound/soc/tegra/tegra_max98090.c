@@ -229,7 +229,7 @@ static int tegra_max98090_probe(struct platform_device *pdev)
 	if (!tegra_max98090_dai.codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,audio-codec' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tegra_max98090_dai.cpus->of_node = of_parse_phandle(np,
@@ -237,7 +237,7 @@ static int tegra_max98090_probe(struct platform_device *pdev)
 	if (!tegra_max98090_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,i2s-controller' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tegra_max98090_dai.platforms->of_node = tegra_max98090_dai.cpus->of_node;

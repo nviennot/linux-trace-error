@@ -359,7 +359,7 @@ ip_set_enomatch(int ret, u32 flags, enum ipset_adt adt, struct ip_set *set)
 	return adt == IPSET_TEST &&
 	       (set->type->features & IPSET_TYPE_NOMATCH) &&
 	       ((flags >> 16) & IPSET_FLAG_NOMATCH) &&
-	       (ret > 0 || ret == -ENOTEMPTY);
+	       (ret > 0 || ret == -ERR(ENOTEMPTY));
 }
 
 /* Check the NLA_F_NET_BYTEORDER flag */
@@ -394,7 +394,7 @@ static inline int nla_put_ipaddr4(struct sk_buff *skb, int type, __be32 ipaddr)
 	int ret;
 
 	if (!__nested)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	ret = nla_put_in_addr(skb, IPSET_ATTR_IPADDR_IPV4, ipaddr);
 	if (!ret)
 		nla_nest_end(skb, __nested);
@@ -408,7 +408,7 @@ static inline int nla_put_ipaddr6(struct sk_buff *skb, int type,
 	int ret;
 
 	if (!__nested)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	ret = nla_put_in6_addr(skb, IPSET_ATTR_IPADDR_IPV6, ipaddrptr);
 	if (!ret)
 		nla_nest_end(skb, __nested);

@@ -285,7 +285,7 @@ int snd_trident_free_pages(struct snd_trident *trident,
 	int page;
 
 	if (snd_BUG_ON(!trident || !blk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hdr = trident->tlb.memhdr;
 	mutex_lock(&hdr->block_mutex);

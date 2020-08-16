@@ -63,10 +63,10 @@ ftrace_push_return_trace(unsigned long ret, unsigned long func,
 	int index;
 
 	if (unlikely(ftrace_graph_is_dead()))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!current->ret_stack)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * We must make sure the ret_stack is tested before we read
@@ -77,7 +77,7 @@ ftrace_push_return_trace(unsigned long ret, unsigned long func,
 	/* The return trace stack is full */
 	if (current->curr_ret_stack == FTRACE_RETFUNC_DEPTH - 1) {
 		atomic_inc(&current->trace_overrun);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	calltime = trace_clock_local();
@@ -123,7 +123,7 @@ int function_graph_enter(unsigned long ret, unsigned long func,
 	 */
 	if (ftrace_direct_func_count &&
 	    ftrace_find_rec_direct(ret - MCOUNT_INSN_SIZE))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	trace.func = func;
 	trace.depth = ++current->curr_ret_depth;
 
@@ -139,7 +139,7 @@ int function_graph_enter(unsigned long ret, unsigned long func,
 	current->curr_ret_stack--;
  out:
 	current->curr_ret_depth--;
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /* Retrieve a function return address to the trace stack on thread info.*/
@@ -390,7 +390,7 @@ static int alloc_retstack_tasklist(struct ftrace_ret_stack **ret_stack_list)
 	read_lock(&tasklist_lock);
 	do_each_thread(g, t) {
 		if (start == end) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto unlock;
 		}
 
@@ -603,7 +603,7 @@ int register_ftrace_graph(struct fgraph_ops *gops)
 
 	/* we currently allow only one tracer registered at a time */
 	if (ftrace_graph_active) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 

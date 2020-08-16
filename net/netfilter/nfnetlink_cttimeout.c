@@ -88,7 +88,7 @@ static int cttimeout_new_timeout(struct net *net, struct sock *ctnl,
 	    !cda[CTA_TIMEOUT_L3PROTO] ||
 	    !cda[CTA_TIMEOUT_L4PROTO] ||
 	    !cda[CTA_TIMEOUT_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(cda[CTA_TIMEOUT_NAME]);
 	l3num = ntohs(nla_get_be16(cda[CTA_TIMEOUT_L3PROTO]));
@@ -99,7 +99,7 @@ static int cttimeout_new_timeout(struct net *net, struct sock *ctnl,
 			continue;
 
 		if (nlh->nlmsg_flags & NLM_F_EXCL)
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		matching = timeout;
 		break;
@@ -112,21 +112,21 @@ static int cttimeout_new_timeout(struct net *net, struct sock *ctnl,
 			 */
 			if (matching->timeout.l3num != l3num ||
 			    matching->timeout.l4proto->l4proto != l4num)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			return ctnl_timeout_parse_policy(&matching->timeout.data,
 							 matching->timeout.l4proto,
 							 net, cda[CTA_TIMEOUT_DATA]);
 		}
 
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	/* This protocol is not supportted, skip. */
 	if (l4proto->l4proto != l4num) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto err_proto_put;
 	}
 
@@ -244,7 +244,7 @@ static int cttimeout_get_timeout(struct net *net, struct sock *ctnl,
 				 const struct nlattr * const cda[],
 				 struct netlink_ext_ack *extack)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	char *name;
 	struct ctnl_timeout *cur;
 
@@ -256,7 +256,7 @@ static int cttimeout_get_timeout(struct net *net, struct sock *ctnl,
 	}
 
 	if (!cda[CTA_TIMEOUT_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name = nla_data(cda[CTA_TIMEOUT_NAME]);
 
 	list_for_each_entry(cur, &net->nfct_timeout_list, head) {
@@ -285,7 +285,7 @@ static int cttimeout_get_timeout(struct net *net, struct sock *ctnl,
 			ret = 0;
 
 		/* this avoids a loop in nfnetlink. */
-		return ret == -EAGAIN ? -ENOBUFS : ret;
+		return ret == -ERR(EAGAIN) ? -ERR(ENOBUFS) : ret;
 	}
 	return ret;
 }
@@ -304,7 +304,7 @@ static int ctnl_timeout_try_del(struct net *net, struct ctnl_timeout *timeout)
 		nf_ct_untimeout(net, &timeout->timeout);
 		kfree_rcu(timeout, rcu_head);
 	} else {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	}
 	return ret;
 }
@@ -316,7 +316,7 @@ static int cttimeout_del_timeout(struct net *net, struct sock *ctnl,
 				 struct netlink_ext_ack *extack)
 {
 	struct ctnl_timeout *cur, *tmp;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	char *name;
 
 	if (!cda[CTA_TIMEOUT_NAME]) {
@@ -354,14 +354,14 @@ static int cttimeout_default_set(struct net *net, struct sock *ctnl,
 	if (!cda[CTA_TIMEOUT_L3PROTO] ||
 	    !cda[CTA_TIMEOUT_L4PROTO] ||
 	    !cda[CTA_TIMEOUT_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 	l4proto = nf_ct_l4proto_find(l4num);
 
 	/* This protocol is not supported, skip. */
 	if (l4proto->l4proto != l4num) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto err;
 	}
 
@@ -434,13 +434,13 @@ static int cttimeout_default_get(struct net *net, struct sock *ctnl,
 	__u8 l4num;
 
 	if (!cda[CTA_TIMEOUT_L3PROTO] || !cda[CTA_TIMEOUT_L4PROTO])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	l3num = ntohs(nla_get_be16(cda[CTA_TIMEOUT_L3PROTO]));
 	l4num = nla_get_u8(cda[CTA_TIMEOUT_L4PROTO]);
 	l4proto = nf_ct_l4proto_find(l4num);
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (l4proto->l4proto != l4num)
 		goto err;
 
@@ -505,7 +505,7 @@ static int cttimeout_default_get(struct net *net, struct sock *ctnl,
 		ret = 0;
 
 	/* this avoids a loop in nfnetlink. */
-	return ret == -EAGAIN ? -ENOBUFS : ret;
+	return ret == -ERR(EAGAIN) ? -ERR(ENOBUFS) : ret;
 err:
 	return err;
 }

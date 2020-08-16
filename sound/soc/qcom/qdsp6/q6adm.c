@@ -218,7 +218,7 @@ static struct q6copp *q6adm_alloc_copp(struct q6adm *adm, int port_idx)
 				  MAX_COPPS_PER_PORT);
 
 	if (idx > MAX_COPPS_PER_PORT)
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 
 	c = kzalloc(sizeof(*c), GFP_ATOMIC);
 	if (!c)
@@ -247,7 +247,7 @@ static int q6adm_apr_send_copp_pkt(struct q6adm *adm, struct q6copp *copp,
 	ret = apr_send_pkt(adm->apr, pkt);
 	if (ret < 0) {
 		dev_err(dev, "Failed to send APR packet\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -264,11 +264,11 @@ static int q6adm_apr_send_copp_pkt(struct q6adm *adm, struct q6copp *copp,
 
 	if (!ret) {
 		dev_err(dev, "ADM copp cmd timedout\n");
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	} else if (copp->result.status > 0) {
 		dev_err(dev, "DSP returned error[%d]\n",
 			copp->result.status);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 err:
@@ -391,7 +391,7 @@ struct q6copp *q6adm_open(struct device *dev, int port_id, int path, int rate,
 
 	if (port_id < 0) {
 		dev_err(dev, "Invalid port_id 0x%x\n", port_id);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	copp = q6adm_find_matching_copp(adm, port_id, topology, perf_mode,
@@ -441,7 +441,7 @@ EXPORT_SYMBOL_GPL(q6adm_open);
 int q6adm_get_copp_id(struct q6copp *copp)
 {
 	if (!copp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return copp->copp_idx;
 }
@@ -512,14 +512,14 @@ int q6adm_matrix_map(struct device *dev, int path,
 			dev_err(dev, "Invalid port_id 0x%x\n",
 				payload_map.port_id[i]);
 			kfree(pkt);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		copp_idx = payload_map.copp_idx[i];
 
 		copp = q6adm_find_copp(adm, port_idx, copp_idx);
 		if (!copp) {
 			kfree(pkt);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		copps_list[i] = copp->id;
@@ -542,12 +542,12 @@ int q6adm_matrix_map(struct device *dev, int path,
 	if (!ret) {
 		dev_err(dev, "routing for stream %d failed\n",
 		       payload_map.session_id);
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 		goto fail_cmd;
 	} else if (adm->result.status > 0) {
 		dev_err(dev, "DSP returned error[%d]\n",
 			adm->result.status);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail_cmd;
 	}
 

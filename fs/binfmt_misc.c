@@ -135,7 +135,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
 	struct file *interp_file = NULL;
 	int retval;
 
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 	if (!enabled)
 		return retval;
 
@@ -149,7 +149,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
 		return retval;
 
 	/* Need to be able to load the file after exec */
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
 		goto ret;
 
@@ -279,7 +279,7 @@ static Node *create_entry(const char __user *buffer, size_t count)
 	pr_debug("register: received %zu bytes\n", count);
 
 	/* some sanity checks */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if ((count < 11) || (count > MAX_REGISTER_LENGTH))
 		goto out;
 
@@ -467,7 +467,7 @@ efault:
 	return ERR_PTR(-EFAULT);
 einval:
 	kfree(e);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 /*
@@ -479,7 +479,7 @@ static int parse_command(const char __user *buffer, size_t count)
 	char s[4];
 
 	if (count > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(s, buffer, count))
 		return -EFAULT;
 	if (!count)
@@ -492,7 +492,7 @@ static int parse_command(const char __user *buffer, size_t count)
 		return 2;
 	if (count == 2 && s[0] == '-' && s[1] == '1')
 		return 3;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* generic stuff */
@@ -659,7 +659,7 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
 	if (IS_ERR(dentry))
 		goto out;
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (d_really_is_positive(dentry))
 		goto out2;
 

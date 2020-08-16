@@ -122,10 +122,10 @@ static int se6x_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		++dev;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	err = oxygen_pci_probe(pci, index[dev], id[dev], THIS_MODULE,
 			       se6x_ids, se6x_get_model);

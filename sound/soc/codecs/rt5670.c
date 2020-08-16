@@ -810,7 +810,7 @@ int rt5670_sel_asrc_clk_src(struct snd_soc_component *component,
 	unsigned int asrc3_mask = 0, asrc3_value = 0;
 
 	if (clk_src > RT5670_CLK_SEL_SYS3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (filter_mask & RT5670_DA_STEREO_FILTER) {
 		asrc2_mask |= RT5670_DA_STO_CLK_SEL_MASK;
@@ -2305,12 +2305,12 @@ static int rt5670_hw_params(struct snd_pcm_substream *substream,
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting %d for DAI %d\n",
 			rt5670->lrck[dai->id], dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	bclk_ms = frame_size > 32;
 	rt5670->bclk[dai->id] = rt5670->lrck[dai->id] * (32 << bclk_ms);
@@ -2333,7 +2333,7 @@ static int rt5670_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5670_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2355,7 +2355,7 @@ static int rt5670_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2376,7 +2376,7 @@ static int rt5670_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5670->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2386,7 +2386,7 @@ static int rt5670_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5670_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2402,7 +2402,7 @@ static int rt5670_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5670_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2418,7 +2418,7 @@ static int rt5670_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2441,7 +2441,7 @@ static int rt5670_set_codec_sysclk(struct snd_soc_component *component, int clk_
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5670_GLB_CLK,
 		RT5670_SCLK_SRC_MASK, reg_val);
@@ -2496,12 +2496,12 @@ static int rt5670_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 			break;
 		default:
 			dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -2549,7 +2549,7 @@ static int rt5670_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slot_width) {
@@ -2565,7 +2565,7 @@ static int rt5670_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5670_TDM_CTRL_1, 0x7c00, val);
@@ -2672,7 +2672,7 @@ static int rt5670_probe(struct snd_soc_component *component)
 	default:
 		dev_err(component->dev,
 			"The driver is for RT5670 RT5671 or RT5672 only\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	rt5670->component = component;
 
@@ -3016,7 +3016,7 @@ static int rt5670_i2c_probe(struct i2c_client *i2c,
 	if (val != RT5670_DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5670/72\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt5670->regmap, RT5670_RESET, 0);

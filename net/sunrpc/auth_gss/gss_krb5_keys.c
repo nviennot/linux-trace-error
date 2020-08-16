@@ -148,7 +148,7 @@ u32 krb5_derive_key(const struct gss_krb5_enctype *gk5e,
 	unsigned char *inblockdata, *outblockdata, *rawkey;
 	struct xdr_netobj inblock, outblock;
 	struct crypto_sync_skcipher *cipher;
-	u32 ret = EINVAL;
+	u32 ret = ERR(EINVAL);
 
 	blocksize = gk5e->blocksize;
 	keybytes = gk5e->keybytes;
@@ -260,7 +260,7 @@ u32 gss_krb5_des3_make_key(const struct gss_krb5_enctype *gk5e,
 			   struct xdr_netobj *key)
 {
 	int i;
-	u32 ret = EINVAL;
+	u32 ret = ERR(EINVAL);
 
 	if (key->len != 24) {
 		dprintk("%s: key->len is %d\n", __func__, key->len);
@@ -299,7 +299,7 @@ u32 gss_krb5_aes_make_key(const struct gss_krb5_enctype *gk5e,
 			  struct xdr_netobj *randombits,
 			  struct xdr_netobj *key)
 {
-	u32 ret = EINVAL;
+	u32 ret = ERR(EINVAL);
 
 	if (key->len != 16 && key->len != 32) {
 		dprintk("%s: key->len is %d\n", __func__, key->len);

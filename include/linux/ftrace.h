@@ -292,16 +292,16 @@ unsigned long ftrace_find_rec_direct(unsigned long ip);
 # define ftrace_direct_func_count 0
 static inline int register_ftrace_direct(unsigned long ip, unsigned long addr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline int unregister_ftrace_direct(unsigned long ip, unsigned long addr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline int modify_ftrace_direct(unsigned long ip,
 				       unsigned long old_addr, unsigned long new_addr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline struct ftrace_direct_func *ftrace_find_direct_func(unsigned long addr)
 {
@@ -312,7 +312,7 @@ static inline int ftrace_modify_direct_caller(struct ftrace_func_entry *entry,
 					      unsigned long old_addr,
 					      unsigned long new_addr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline unsigned long ftrace_find_rec_direct(unsigned long ip)
 {
@@ -699,7 +699,7 @@ extern int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
 static inline int ftrace_modify_call(struct dyn_ftrace *rec, unsigned long old_addr,
 				     unsigned long addr)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -744,11 +744,11 @@ static inline unsigned long ftrace_location(unsigned long ip)
 #define ftrace_ops_set_global_filter(ops) do { } while (0)
 
 static inline ssize_t ftrace_filter_write(struct file *file, const char __user *ubuf,
-			    size_t cnt, loff_t *ppos) { return -ENODEV; }
+			    size_t cnt, loff_t *ppos) { return -ERR(ENODEV); }
 static inline ssize_t ftrace_notrace_write(struct file *file, const char __user *ubuf,
-			     size_t cnt, loff_t *ppos) { return -ENODEV; }
+			     size_t cnt, loff_t *ppos) { return -ERR(ENODEV); }
 static inline int
-ftrace_regex_release(struct inode *inode, struct file *file) { return -ENODEV; }
+ftrace_regex_release(struct inode *inode, struct file *file) { return -ERR(ENODEV); }
 
 static inline bool is_ftrace_trampoline(unsigned long addr)
 {

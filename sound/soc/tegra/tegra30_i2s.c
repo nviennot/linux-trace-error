@@ -72,7 +72,7 @@ static int tegra30_i2s_set_fmt(struct snd_soc_dai *dai,
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= TEGRA30_I2S_CTRL_MASTER_ENABLE;
@@ -83,7 +83,7 @@ static int tegra30_i2s_set_fmt(struct snd_soc_dai *dai,
 	case SND_SOC_DAIFMT_CBM_CFM:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= TEGRA30_I2S_CTRL_FRAME_FORMAT_MASK |
@@ -110,7 +110,7 @@ static int tegra30_i2s_set_fmt(struct snd_soc_dai *dai,
 		val |= TEGRA30_I2S_CTRL_LRCK_L_LOW;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pm_runtime_get_sync(dai->dev);
@@ -131,7 +131,7 @@ static int tegra30_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct tegra30_ahub_cif_conf cif_conf;
 
 	if (params_channels(params) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mask = TEGRA30_I2S_CTRL_BIT_SIZE_MASK;
 	switch (params_format(params)) {
@@ -140,7 +140,7 @@ static int tegra30_i2s_hw_params(struct snd_pcm_substream *substream,
 		sample_size = 16;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, TEGRA30_I2S_CTRL, mask, val);
@@ -152,7 +152,7 @@ static int tegra30_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	bitcnt = (i2sclock / (2 * srate)) - 1;
 	if (bitcnt < 0 || bitcnt > TEGRA30_I2S_TIMING_CHANNEL_BIT_COUNT_MASK_US)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_set_rate(i2s->clk_i2s, i2sclock);
 	if (ret) {
@@ -248,7 +248,7 @@ static int tegra30_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 			tegra30_i2s_stop_capture(i2s);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -410,7 +410,7 @@ static int tegra30_i2s_platform_probe(struct platform_device *pdev)
 	match = of_match_device(tegra30_i2s_of_match, &pdev->dev);
 	if (!match) {
 		dev_err(&pdev->dev, "Error: No device match found\n");
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 	i2s->soc_data = (struct tegra30_i2s_soc_data *)match->data;

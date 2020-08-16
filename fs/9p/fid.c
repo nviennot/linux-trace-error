@@ -132,7 +132,7 @@ static struct p9_fid *v9fs_fid_lookup_with_uid(struct dentry *dentry,
 	if (!fid) {
 		/* the user is not attached to the fs yet */
 		if (access == V9FS_ACCESS_SINGLE)
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 
 		if (v9fs_proto_dotu(v9ses) || v9fs_proto_dotl(v9ses))
 				uname = NULL;
@@ -192,7 +192,7 @@ fid_out:
 		if (d_unhashed(dentry)) {
 			spin_unlock(&dentry->d_lock);
 			p9_client_clunk(fid);
-			fid = ERR_PTR(-ENOENT);
+			fid = ERR_PTR(-ERR(ENOENT));
 		} else {
 			__add_fid(dentry, fid);
 			spin_unlock(&dentry->d_lock);

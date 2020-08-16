@@ -136,7 +136,7 @@ static int plug_init(struct Qdisc *sch, struct nlattr *opt,
 		struct tc_plug_qopt *ctl = nla_data(opt);
 
 		if (nla_len(opt) < sizeof(*ctl))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		q->limit = ctl->limit;
 	}
@@ -162,11 +162,11 @@ static int plug_change(struct Qdisc *sch, struct nlattr *opt,
 	struct tc_plug_qopt *msg;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg = nla_data(opt);
 	if (nla_len(opt) < sizeof(*msg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (msg->action) {
 	case TCQ_PLUG_BUFFER:
@@ -199,7 +199,7 @@ static int plug_change(struct Qdisc *sch, struct nlattr *opt,
 		q->limit = msg->limit;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

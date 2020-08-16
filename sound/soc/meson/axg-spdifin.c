@@ -440,7 +440,7 @@ axg_spdifin_get_dai_drv(struct device *dev, struct axg_spdifin *priv)
 			snd_pcm_rate_to_rate_bit(priv->conf->mode_rates[i]);
 
 		if (rb == SNDRV_PCM_RATE_KNOT)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		drv->capture.rates |= rb;
 	}
@@ -464,7 +464,7 @@ static int axg_spdifin_probe(struct platform_device *pdev)
 	priv->conf = of_device_get_match_data(dev);
 	if (!priv->conf) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regs = devm_platform_ioremap_resource(pdev, 0);

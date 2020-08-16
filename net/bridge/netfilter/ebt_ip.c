@@ -108,37 +108,37 @@ static int ebt_ip_mt_check(const struct xt_mtchk_param *par)
 
 	if (e->ethproto != htons(ETH_P_IP) ||
 	   e->invflags & EBT_IPROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->bitmask & ~EBT_IP_MASK || info->invflags & ~EBT_IP_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->bitmask & (EBT_IP_DPORT | EBT_IP_SPORT)) {
 		if (info->invflags & EBT_IP_PROTO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (info->protocol != IPPROTO_TCP &&
 		    info->protocol != IPPROTO_UDP &&
 		    info->protocol != IPPROTO_UDPLITE &&
 		    info->protocol != IPPROTO_SCTP &&
 		    info->protocol != IPPROTO_DCCP)
-			 return -EINVAL;
+			 return -ERR(EINVAL);
 	}
 	if (info->bitmask & EBT_IP_DPORT && info->dport[0] > info->dport[1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->bitmask & EBT_IP_SPORT && info->sport[0] > info->sport[1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->bitmask & EBT_IP_ICMP) {
 		if ((info->invflags & EBT_IP_PROTO) ||
 		    info->protocol != IPPROTO_ICMP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (info->icmp_type[0] > info->icmp_type[1] ||
 		    info->icmp_code[0] > info->icmp_code[1])
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (info->bitmask & EBT_IP_IGMP) {
 		if ((info->invflags & EBT_IP_PROTO) ||
 		    info->protocol != IPPROTO_IGMP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (info->igmp_type[0] > info->igmp_type[1])
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }

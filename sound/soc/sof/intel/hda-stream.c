@@ -41,7 +41,7 @@ static int hda_setup_bdle(struct snd_sof_dev *sdev,
 
 		if (stream->frags >= HDA_DSP_MAX_BDL_ENTRIES) {
 			dev_err(sdev->dev, "error: stream frags exceeded\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		addr = snd_sgbuf_get_addr(dmab, offset);
@@ -135,7 +135,7 @@ int hda_dsp_stream_spib_config(struct snd_sof_dev *sdev,
 
 	if (!sdev->bar[HDA_DSP_SPIB_BAR]) {
 		dev_err(sdev->dev, "error: address of spib capability is NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask = (1 << hstream->index);
@@ -238,7 +238,7 @@ int hda_dsp_stream_put(struct snd_sof_dev *sdev, int direction, int stream_tag)
 
 	if (!found) {
 		dev_dbg(sdev->dev, "stream_tag %d not opened!\n", stream_tag);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -316,7 +316,7 @@ int hda_dsp_stream_trigger(struct snd_sof_dev *sdev,
 		break;
 	default:
 		dev_err(sdev->dev, "error: unknown command: %d\n", cmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -341,7 +341,7 @@ int hda_dsp_stream_hw_params(struct snd_sof_dev *sdev,
 
 	if (!stream) {
 		dev_err(sdev->dev, "error: no stream available\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* decouple host and link DMA */
@@ -351,7 +351,7 @@ int hda_dsp_stream_hw_params(struct snd_sof_dev *sdev,
 
 	if (!dmab) {
 		dev_err(sdev->dev, "error: no dma buffer allocated!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* clear stream status */
@@ -389,7 +389,7 @@ int hda_dsp_stream_hw_params(struct snd_sof_dev *sdev,
 	} while (--timeout);
 	if (timeout == 0) {
 		dev_err(sdev->dev, "error: stream reset failed\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	timeout = HDA_DSP_STREAM_RESET_TIMEOUT;
@@ -406,7 +406,7 @@ int hda_dsp_stream_hw_params(struct snd_sof_dev *sdev,
 	} while (--timeout);
 	if (timeout == 0) {
 		dev_err(sdev->dev, "error: timeout waiting for stream reset\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	if (hstream->posbuf)
@@ -697,13 +697,13 @@ int hda_dsp_stream_init(struct snd_sof_dev *sdev)
 	if (num_playback >= SOF_HDA_PLAYBACK_STREAMS) {
 		dev_err(sdev->dev, "error: too many playback streams %d\n",
 			num_playback);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (num_capture >= SOF_HDA_CAPTURE_STREAMS) {
 		dev_err(sdev->dev, "error: too many capture streams %d\n",
 			num_playback);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*

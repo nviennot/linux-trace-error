@@ -1515,7 +1515,7 @@ static int snd_trident_trigger(struct snd_pcm_substream *substream,
 		go = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	what = whati = capture_flag = spdif_flag = 0;
 	spin_lock(&trident->reg_lock);
@@ -1814,7 +1814,7 @@ static int snd_trident_playback_open(struct snd_pcm_substream *substream)
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
 	if (voice == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	snd_trident_pcm_mixer_build(trident, voice, substream);
 	voice->substream = substream;
 	runtime->private_data = voice;
@@ -1863,7 +1863,7 @@ static int snd_trident_spdif_open(struct snd_pcm_substream *substream)
 	
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
 	if (voice == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	voice->spdif = 1;
 	voice->substream = substream;
 	spin_lock_irq(&trident->reg_lock);
@@ -1942,7 +1942,7 @@ static int snd_trident_capture_open(struct snd_pcm_substream *substream)
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
 	if (voice == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	voice->capture = 1;
 	voice->substream = substream;
 	runtime->private_data = voice;
@@ -1986,7 +1986,7 @@ static int snd_trident_foldback_open(struct snd_pcm_substream *substream)
 
 	voice = snd_trident_alloc_voice(trident, SNDRV_TRIDENT_VOICE_TYPE_PCM, 0, 0);
 	if (voice == NULL)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	voice->foldback_chan = substream->number;
 	voice->substream = substream;
 	runtime->private_data = voice;
@@ -2871,7 +2871,7 @@ static int snd_trident_pcm_mixer_build(struct snd_trident *trident,
 	struct snd_trident_pcm_mixer *tmix;
 
 	if (snd_BUG_ON(!trident || !voice || !substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tmix = &trident->pcm_mixer[substream->number];
 	tmix->voice = voice;
 	tmix->vol = T4D_DEFAULT_PCM_VOL;
@@ -2887,7 +2887,7 @@ static int snd_trident_pcm_mixer_free(struct snd_trident *trident, struct snd_tr
 	struct snd_trident_pcm_mixer *tmix;
 
 	if (snd_BUG_ON(!trident || !substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tmix = &trident->pcm_mixer[substream->number];
 	tmix->voice = NULL;
 	snd_trident_notify_pcm_change(trident, tmix, substream->number, 0);
@@ -2935,7 +2935,7 @@ static int snd_trident_mixer(struct snd_trident *trident, int pcm_spdif_device)
 				goto __out;
 			if (retries-- > 0)
 				goto __again;
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 		goto __out;
 	}
@@ -3161,7 +3161,7 @@ static inline void snd_trident_free_gameport(struct snd_trident *chip)
 	}
 }
 #else
-int snd_trident_create_gameport(struct snd_trident *chip) { return -ENOSYS; }
+int snd_trident_create_gameport(struct snd_trident *chip) { return -ERR(ENOSYS); }
 static inline void snd_trident_free_gameport(struct snd_trident *chip) { }
 #endif /* CONFIG_GAMEPORT */
 
@@ -3376,7 +3376,7 @@ static int snd_trident_4d_dx_init(struct snd_trident *trident)
 		do_delay(trident);
 	} while (time_after_eq(end_time, jiffies));
 	dev_err(trident->card->dev, "AC'97 codec ready error\n");
-	return -EIO;
+	return -ERR(EIO);
 
  __dx_ok:
 	snd_trident_stop_all_voices(trident);
@@ -3415,7 +3415,7 @@ static int snd_trident_4d_nx_init(struct snd_trident *trident)
 	} while (time_after_eq(end_time, jiffies));
 	dev_err(trident->card->dev, "AC'97 codec ready error [0x%x]\n",
 		inl(TRID_REG(trident, NX_ACR0_AC97_COM_STAT)));
-	return -EIO;
+	return -ERR(EIO);
 
  __nx_ok:
 	/* DAC on */
@@ -3502,7 +3502,7 @@ int snd_trident_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 30bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	
 	trident = kzalloc(sizeof(*trident), GFP_KERNEL);
@@ -3540,7 +3540,7 @@ int snd_trident_create(struct snd_card *card,
 			KBUILD_MODNAME, trident)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_trident_free(trident);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	trident->irq = pci->irq;
 	card->sync_irq = trident->irq;

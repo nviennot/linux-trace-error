@@ -33,7 +33,7 @@ int xfrm4_tunnel_register(struct xfrm_tunnel *handler, unsigned short family)
 	struct xfrm_tunnel __rcu **pprev;
 	struct xfrm_tunnel *t;
 
-	int ret = -EEXIST;
+	int ret = -ERR(EEXIST);
 	int priority = handler->priority;
 
 	mutex_lock(&tunnel4_mutex);
@@ -64,7 +64,7 @@ int xfrm4_tunnel_deregister(struct xfrm_tunnel *handler, unsigned short family)
 {
 	struct xfrm_tunnel __rcu **pprev;
 	struct xfrm_tunnel *t;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	mutex_lock(&tunnel4_mutex);
 
@@ -158,7 +158,7 @@ static int tunnel4_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 #if IS_ENABLED(CONFIG_IPV6)
@@ -170,7 +170,7 @@ static int tunnel64_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 
@@ -183,7 +183,7 @@ static int tunnelmpls4_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 
@@ -235,7 +235,7 @@ static int __init tunnel4_init(void)
 
 err:
 	pr_err("%s: can't add protocol\n", __func__);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void __exit tunnel4_fini(void)

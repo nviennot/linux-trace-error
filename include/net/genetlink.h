@@ -283,7 +283,7 @@ static inline int genlmsg_multicast_netns(const struct genl_family *family,
 					  u32 portid, unsigned int group, gfp_t flags)
 {
 	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	group = family->mcgrp_offset + group;
 	return nlmsg_multicast(net->genl_sock, skb, portid, group, flags);
 }
@@ -403,7 +403,7 @@ static inline int genl_set_err(const struct genl_family *family,
 			       u32 group, int code)
 {
 	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	group = family->mcgrp_offset + group;
 	return netlink_set_err(net->genl_sock, portid, group, code);
 }
@@ -412,7 +412,7 @@ static inline int genl_has_listeners(const struct genl_family *family,
 				     struct net *net, unsigned int group)
 {
 	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	group = family->mcgrp_offset + group;
 	return netlink_has_listeners(net->genl_sock, group);
 }

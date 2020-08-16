@@ -224,7 +224,7 @@ snd_seq_oss_timer_ioctl(struct seq_oss_timer *timer, unsigned int cmd, int __use
 		if (get_user(value, arg))
 			return -EFAULT;
 		if (value)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		value = ((timer->oss_tempo * timer->oss_timebase) + 30) / 60;
 		return put_user(value, arg) ? -EFAULT : 0;
 	}

@@ -266,12 +266,12 @@ static int ip_tun_parse_opts_geneve(struct nlattr *attr,
 	if (!tb[LWTUNNEL_IP_OPT_GENEVE_CLASS] ||
 	    !tb[LWTUNNEL_IP_OPT_GENEVE_TYPE] ||
 	    !tb[LWTUNNEL_IP_OPT_GENEVE_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	attr = tb[LWTUNNEL_IP_OPT_GENEVE_DATA];
 	data_len = nla_len(attr);
 	if (data_len % 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info) {
 		struct geneve_opt *opt = ip_tunnel_info_opts(info) + opts_len;
@@ -301,7 +301,7 @@ static int ip_tun_parse_opts_vxlan(struct nlattr *attr,
 		return err;
 
 	if (!tb[LWTUNNEL_IP_OPT_VXLAN_GBP])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info) {
 		struct vxlan_metadata *md =
@@ -329,18 +329,18 @@ static int ip_tun_parse_opts_erspan(struct nlattr *attr,
 		return err;
 
 	if (!tb[LWTUNNEL_IP_OPT_ERSPAN_VER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ver = nla_get_u8(tb[LWTUNNEL_IP_OPT_ERSPAN_VER]);
 	if (ver == 1) {
 		if (!tb[LWTUNNEL_IP_OPT_ERSPAN_INDEX])
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (ver == 2) {
 		if (!tb[LWTUNNEL_IP_OPT_ERSPAN_DIR] ||
 		    !tb[LWTUNNEL_IP_OPT_ERSPAN_HWID])
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (info) {
@@ -382,19 +382,19 @@ static int ip_tun_parse_opts(struct nlattr *attr, struct ip_tunnel_info *info,
 		switch (nla_type(nla)) {
 		case LWTUNNEL_IP_OPTS_GENEVE:
 			if (type && type != TUNNEL_GENEVE_OPT)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt_len = ip_tun_parse_opts_geneve(nla, info, opts_len,
 							   extack);
 			if (opt_len < 0)
 				return opt_len;
 			opts_len += opt_len;
 			if (opts_len > IP_TUNNEL_OPTS_MAX)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			type = TUNNEL_GENEVE_OPT;
 			break;
 		case LWTUNNEL_IP_OPTS_VXLAN:
 			if (type)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt_len = ip_tun_parse_opts_vxlan(nla, info, opts_len,
 							  extack);
 			if (opt_len < 0)
@@ -404,7 +404,7 @@ static int ip_tun_parse_opts(struct nlattr *attr, struct ip_tunnel_info *info,
 			break;
 		case LWTUNNEL_IP_OPTS_ERSPAN:
 			if (type)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt_len = ip_tun_parse_opts_erspan(nla, info, opts_len,
 							   extack);
 			if (opt_len < 0)
@@ -413,7 +413,7 @@ static int ip_tun_parse_opts(struct nlattr *attr, struct ip_tunnel_info *info,
 			type = TUNNEL_ERSPAN_OPT;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

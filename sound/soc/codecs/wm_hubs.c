@@ -633,7 +633,7 @@ static int lineout_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Unknown line output");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*flag = SND_SOC_DAPM_EVENT_ON(event);
@@ -657,7 +657,7 @@ static int micbias_event(struct snd_soc_dapm_widget *w,
 			msleep(hubs->micb2_delay);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

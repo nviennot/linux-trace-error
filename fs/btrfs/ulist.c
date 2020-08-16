@@ -156,7 +156,7 @@ static int ulist_rbtree_insert(struct ulist *ulist, struct ulist_node *ins)
 		else if (cur->val > ins->val)
 			p = &(*p)->rb_left;
 		else
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 	rb_link_node(&ins->rb_node, parent, p);
 	rb_insert_color(&ins->rb_node, &ulist->root);

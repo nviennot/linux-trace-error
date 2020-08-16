@@ -19,7 +19,7 @@ static int ieee80211_set_ringparam(struct net_device *dev,
 	struct ieee80211_local *local = wiphy_priv(dev->ieee80211_ptr->wiphy);
 
 	if (rp->rx_mini_pending != 0 || rp->rx_jumbo_pending != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return drv_set_ringparam(local, rp->tx_pending, rp->rx_pending);
 }
@@ -57,7 +57,7 @@ static int ieee80211_get_sset_count(struct net_device *dev, int sset)
 	rv += drv_get_et_sset_count(sdata, sset);
 
 	if (rv == 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return rv;
 }
 

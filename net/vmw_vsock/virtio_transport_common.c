@@ -414,7 +414,7 @@ virtio_transport_dgram_dequeue(struct vsock_sock *vsk,
 			       struct msghdr *msg,
 			       size_t len, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_dequeue);
 
@@ -610,7 +610,7 @@ EXPORT_SYMBOL_GPL(virtio_transport_stream_allow);
 int virtio_transport_dgram_bind(struct vsock_sock *vsk,
 				struct sockaddr_vm *addr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_bind);
 
@@ -654,7 +654,7 @@ virtio_transport_dgram_enqueue(struct vsock_sock *vsk,
 			       struct msghdr *msg,
 			       size_t dgram_len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 EXPORT_SYMBOL_GPL(virtio_transport_dgram_enqueue);
 
@@ -727,7 +727,7 @@ static int virtio_transport_reset_no_sock(const struct virtio_transport *t,
 
 	if (!t) {
 		virtio_transport_free_pkt(reply);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	return t->send_pkt(reply);
@@ -864,12 +864,12 @@ virtio_transport_recv_connecting(struct sock *sk,
 	case VIRTIO_VSOCK_OP_INVALID:
 		break;
 	case VIRTIO_VSOCK_OP_RST:
-		skerr = ECONNRESET;
+		skerr = ERR(ECONNRESET);
 		err = 0;
 		goto destroy;
 	default:
-		skerr = EPROTO;
-		err = -EINVAL;
+		skerr = ERR(EPROTO);
+		err = -ERR(EINVAL);
 		goto destroy;
 	}
 	return 0;
@@ -964,7 +964,7 @@ virtio_transport_recv_connected(struct sock *sk,
 		virtio_transport_do_close(vsk, true);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -1034,7 +1034,7 @@ virtio_transport_recv_listen(struct sock *sk, struct virtio_vsock_pkt *pkt,
 
 	if (le16_to_cpu(pkt->hdr.op) != VIRTIO_VSOCK_OP_REQUEST) {
 		virtio_transport_reset_no_sock(t, pkt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sk_acceptq_is_full(sk)) {

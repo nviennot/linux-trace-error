@@ -651,7 +651,7 @@ xfs_ialloc_ag_alloc(
 	if (igeo->maxicount &&
 	    percpu_counter_read_positive(&args.mp->m_icount) + newlen >
 							igeo->maxicount)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	args.minlen = args.maxlen = igeo->ialloc_blks;
 	/*
 	 * First try to allocate inodes contiguous with the last-allocated
@@ -1844,7 +1844,7 @@ nextag:
 			agno = 0;
 		if (agno == start_agno) {
 			*inop = NULLFSINO;
-			return noroom ? -ENOSPC : 0;
+			return noroom ? -ERR(ENOSPC) : 0;
 		}
 	}
 
@@ -2208,7 +2208,7 @@ xfs_difree(
 		xfs_warn(mp, "%s: agno >= mp->m_sb.sb_agcount (%d >= %d).",
 			__func__, agno, mp->m_sb.sb_agcount);
 		ASSERT(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	agino = XFS_INO_TO_AGINO(mp, inode);
 	if (inode != XFS_AGINO_TO_INO(mp, agno, agino))  {
@@ -2216,14 +2216,14 @@ xfs_difree(
 			__func__, (unsigned long long)inode,
 			(unsigned long long)XFS_AGINO_TO_INO(mp, agno, agino));
 		ASSERT(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	agbno = XFS_AGINO_TO_AGBNO(mp, agino);
 	if (agbno >= mp->m_sb.sb_agblocks)  {
 		xfs_warn(mp, "%s: agbno >= mp->m_sb.sb_agblocks (%d >= %d).",
 			__func__, agbno, mp->m_sb.sb_agblocks);
 		ASSERT(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/*
 	 * Get the allocation group header.
@@ -2294,7 +2294,7 @@ xfs_imap_lookup(
 		if (i)
 			error = xfs_inobt_get_rec(cur, &rec, &i);
 		if (!error && i == 0)
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 	}
 
 	xfs_trans_brelse(tp, agbp);
@@ -2305,12 +2305,12 @@ xfs_imap_lookup(
 	/* check that the returned record contains the required inode */
 	if (rec.ir_startino > agino ||
 	    rec.ir_startino + M_IGEO(mp)->ialloc_inos <= agino)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* for untrusted inodes check it is allocated first */
 	if ((flags & XFS_IGET_UNTRUSTED) &&
 	    (rec.ir_free & XFS_INOBT_MASK(agino - rec.ir_startino)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*chunk_agbno = XFS_AGINO_TO_AGBNO(mp, rec.ir_startino);
 	*offset_agbno = agbno - *chunk_agbno;
@@ -2353,7 +2353,7 @@ xfs_imap(
 		 * as they can be invalid without implying corruption.
 		 */
 		if (flags & XFS_IGET_UNTRUSTED)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (agno >= mp->m_sb.sb_agcount) {
 			xfs_alert(mp,
 				"%s: agno (%d) >= mp->m_sb.sb_agcount (%d)",
@@ -2373,7 +2373,7 @@ xfs_imap(
 		}
 		xfs_stack_trace();
 #endif /* DEBUG */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -2446,7 +2446,7 @@ out_map:
 			__func__, (unsigned long long) imap->im_blkno,
 			(unsigned long long) imap->im_len,
 			XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

@@ -113,7 +113,7 @@ int ieee80211_rate_control_register(const struct rate_control_ops *ops)
 	struct rate_control_alg *alg;
 
 	if (!ops->name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&rate_ctrl_mutex);
 	list_for_each_entry(alg, &rate_ctrl_algs, list) {
@@ -121,7 +121,7 @@ int ieee80211_rate_control_register(const struct rate_control_ops *ops)
 			/* don't register an algorithm twice */
 			WARN_ON(1);
 			mutex_unlock(&rate_ctrl_mutex);
-			return -EALREADY;
+			return -ERR(EALREADY);
 		}
 	}
 
@@ -921,7 +921,7 @@ int rate_control_set_rates(struct ieee80211_hw *hw,
 
 	sband = ieee80211_get_sband(sta->sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rate_control_apply_mask_ratetbl(sta, sband, rates);
 	/*
 	 * mac80211 guarantees that this function will not be called
@@ -950,11 +950,11 @@ int ieee80211_init_rate_ctrl_alg(struct ieee80211_local *local,
 	ASSERT_RTNL();
 
 	if (local->open_count)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (ieee80211_hw_check(&local->hw, HAS_RATE_CONTROL)) {
 		if (WARN_ON(!local->ops->set_rts_threshold))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	}
 
@@ -962,7 +962,7 @@ int ieee80211_init_rate_ctrl_alg(struct ieee80211_local *local,
 	if (!ref) {
 		wiphy_warn(local->hw.wiphy,
 			   "Failed to select rate control algorithm\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	WARN_ON(local->rate_ctrl);

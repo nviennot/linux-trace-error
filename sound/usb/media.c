@@ -172,7 +172,7 @@ static int snd_media_mixer_init(struct snd_usb_audio *chip)
 	int ret;
 
 	if (!mdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ctl_intf = chip->ctl_intf_media_devnode;
 	if (!ctl_intf) {

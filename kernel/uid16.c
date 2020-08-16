@@ -143,7 +143,7 @@ static int groups16_from_user(struct group_info *group_info,
 
 		kgid = make_kgid(user_ns, low2highgid(group));
 		if (!gid_valid(kgid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		group_info->gid[i] = kgid;
 	}
@@ -157,12 +157,12 @@ SYSCALL_DEFINE2(getgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
 	int i;
 
 	if (gidsetsize < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	i = cred->group_info->ngroups;
 	if (gidsetsize) {
 		if (i > gidsetsize) {
-			i = -EINVAL;
+			i = -ERR(EINVAL);
 			goto out;
 		}
 		if (groups16_to_user(grouplist, cred->group_info)) {
@@ -180,9 +180,9 @@ SYSCALL_DEFINE2(setgroups16, int, gidsetsize, old_gid_t __user *, grouplist)
 	int retval;
 
 	if (!may_setgroups())
-		return -EPERM;
+		return -ERR(EPERM);
 	if ((unsigned)gidsetsize > NGROUPS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	group_info = groups_alloc(gidsetsize);
 	if (!group_info)

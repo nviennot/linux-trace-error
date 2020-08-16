@@ -89,7 +89,7 @@ static int parse_reply_info_quota(void **p, void *end,
 	*p = end;
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -164,7 +164,7 @@ static int parse_reply_info_in(void **p, void *end,
 		if (struct_v >= 2) {
 			ceph_decode_32_safe(p, end, info->dir_pin, bad);
 		} else {
-			info->dir_pin = -ENODATA;
+			info->dir_pin = -ERR(ENODATA);
 		}
 
 		/* snapshot birth time, remains zero for v<=2 */
@@ -213,12 +213,12 @@ static int parse_reply_info_in(void **p, void *end,
 			ceph_decode_64_safe(p, end, info->change_attr, bad);
 		}
 
-		info->dir_pin = -ENODATA;
+		info->dir_pin = -ERR(ENODATA);
 		/* info->snap_btime remains zero */
 	}
 	return 0;
 bad:
-	err = -EIO;
+	err = -ERR(EIO);
 out_bad:
 	return err;
 }
@@ -250,7 +250,7 @@ static int parse_reply_info_dir(void **p, void *end,
 		*p = end;
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int parse_reply_info_lease(void **p, void *end,
@@ -278,7 +278,7 @@ static int parse_reply_info_lease(void **p, void *end,
 		*p = end;
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -321,7 +321,7 @@ static int parse_reply_info_trace(void **p, void *end,
 	return 0;
 
 bad:
-	err = -EIO;
+	err = -ERR(EIO);
 out_bad:
 	pr_err("problem parsing mds trace %d\n", err);
 	return err;
@@ -391,7 +391,7 @@ done:
 	return 0;
 
 bad:
-	err = -EIO;
+	err = -ERR(EIO);
 out_bad:
 	pr_err("problem parsing dir contents %d\n", err);
 	return err;
@@ -413,7 +413,7 @@ static int parse_reply_info_filelock(void **p, void *end,
 	*p = end;
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 
@@ -450,7 +450,7 @@ static int ceph_parse_deleg_inos(void **p, void *end,
 	}
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 u64 ceph_get_deleg_ino(struct ceph_mds_session *s)
@@ -487,7 +487,7 @@ static int ceph_parse_deleg_inos(void **p, void *end,
 		ceph_decode_skip_n(p, end, sets * 2 * sizeof(__le64), bad);
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 u64 ceph_get_deleg_ino(struct ceph_mds_session *s)
@@ -541,7 +541,7 @@ static int parse_reply_info_create(void **p, void *end,
 	*p = end;
 	return 0;
 bad:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -560,7 +560,7 @@ static int parse_reply_info_extra(void **p, void *end,
 	else if (op == CEPH_MDS_OP_CREATE)
 		return parse_reply_info_create(p, end, info, features, s);
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 /*
@@ -607,7 +607,7 @@ static int parse_reply_info(struct ceph_mds_session *s, struct ceph_msg *msg,
 	return 0;
 
 bad:
-	err = -EIO;
+	err = -ERR(EIO);
 out_bad:
 	pr_err("mds parse_reply err %d\n", err);
 	return err;
@@ -689,7 +689,7 @@ static int __verify_registered_session(struct ceph_mds_client *mdsc,
 {
 	if (s->s_mds >= mdsc->max_sessions ||
 	    mdsc->sessions[s->s_mds] != s)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return 0;
 }
 
@@ -703,7 +703,7 @@ static struct ceph_mds_session *register_session(struct ceph_mds_client *mdsc,
 	struct ceph_mds_session *s;
 
 	if (mds >= mdsc->mdsmap->possible_max_rank)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	s = kzalloc(sizeof(*s), GFP_NOFS);
 	if (!s)
@@ -2261,7 +2261,7 @@ char *ceph_mdsc_build_path(struct dentry *dentry, int *plen, u64 *pbase,
 	u64 base;
 
 	if (!dentry)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	path = __getname();
 	if (!path)
@@ -2685,12 +2685,12 @@ static void __do_request(struct ceph_mds_client *mdsc,
 	if (req->r_timeout &&
 	    time_after_eq(jiffies, req->r_started + req->r_timeout)) {
 		dout("do_request timed out\n");
-		err = -ETIMEDOUT;
+		err = -ERR(ETIMEDOUT);
 		goto finish;
 	}
 	if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_SHUTDOWN) {
 		dout("do_request forced umount\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto finish;
 	}
 	if (READ_ONCE(mdsc->fsc->mount_state) == CEPH_MOUNT_MOUNTING) {
@@ -2707,7 +2707,7 @@ static void __do_request(struct ceph_mds_client *mdsc,
 		if (!(mdsc->fsc->mount_options->flags &
 		      CEPH_MOUNT_OPT_MOUNTWAIT) &&
 		    !ceph_mdsmap_is_cluster_available(mdsc->mdsmap)) {
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			goto finish;
 		}
 	}
@@ -2718,7 +2718,7 @@ static void __do_request(struct ceph_mds_client *mdsc,
 	if (mds < 0 ||
 	    ceph_mdsmap_get_state(mdsc->mdsmap, mds) < CEPH_MDS_STATE_ACTIVE) {
 		if (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) {
-			err = -EJUKEBOX;
+			err = -ERR(EJUKEBOX);
 			goto finish;
 		}
 		dout("do_request no mds or not active, waiting for map\n");
@@ -2742,7 +2742,7 @@ static void __do_request(struct ceph_mds_client *mdsc,
 	if (session->s_state != CEPH_MDS_SESSION_OPEN &&
 	    session->s_state != CEPH_MDS_SESSION_HUNG) {
 		if (session->s_state == CEPH_MDS_SESSION_REJECTED) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			goto out_session;
 		}
 		/*
@@ -2751,7 +2751,7 @@ static void __do_request(struct ceph_mds_client *mdsc,
 		 * let the caller retry a sync request in that case.
 		 */
 		if (test_bit(CEPH_MDS_R_ASYNC, &req->r_req_flags)) {
-			err = -EJUKEBOX;
+			err = -ERR(EJUKEBOX);
 			goto out_session;
 		}
 		if (session->s_state == CEPH_MDS_SESSION_NEW ||
@@ -2896,7 +2896,7 @@ static int ceph_mdsc_wait_request(struct ceph_mds_client *mdsc,
 		if (timeleft > 0)
 			err = 0;
 		else if (!timeleft)
-			err = -ETIMEDOUT;  /* timed out */
+			err = -ERR(ETIMEDOUT);  /* timed out */
 		else
 			err = timeleft;  /* killed */
 	}
@@ -3182,7 +3182,7 @@ static void handle_forward(struct ceph_mds_client *mdsc,
 	u64 tid = le64_to_cpu(msg->hdr.tid);
 	u32 next_mds;
 	u32 fwd_seq;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	void *p = msg->front.iov_base;
 	void *end = p + msg->front.iov_len;
 
@@ -3462,7 +3462,7 @@ static int send_reconnect_partial(struct ceph_reconnect_state *recon_state)
 	int err = -ENOMEM;
 
 	if (!recon_state->allow_multi)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* can't handle message that contains both caps and realm */
 	BUG_ON(!recon_state->nr_caps == !recon_state->nr_realms);
@@ -3884,7 +3884,7 @@ static void send_mds_reconnect(struct ceph_mds_client *mdsc,
 		}
 		if (total_len > RECONNECT_MAX_SIZE) {
 			if (!recon_state.allow_multi) {
-				err = -ENOSPC;
+				err = -ERR(ENOSPC);
 				goto fail;
 			}
 			if (recon_state.nr_caps) {
@@ -4696,7 +4696,7 @@ void ceph_mdsc_handle_fsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
 	u32 num_fs;
 	u32 mount_fscid = (u32)-1;
 	u8 struct_v, struct_cv;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	ceph_decode_need(&p, end, sizeof(u32), bad);
 	epoch = ceph_decode_32(&p);
@@ -4747,7 +4747,7 @@ void ceph_mdsc_handle_fsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
 				   0, true);
 		ceph_monc_renew_subs(&fsc->client->monc);
 	} else {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto err_out;
 	}
 	return;
@@ -4772,7 +4772,7 @@ void ceph_mdsc_handle_mdsmap(struct ceph_mds_client *mdsc, struct ceph_msg *msg)
 	void *end = p + msg->front.iov_len;
 	struct ceph_mdsmap *newmap, *oldmap;
 	struct ceph_fsid fsid;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	ceph_decode_need(&p, end, sizeof(fsid)+2*sizeof(u32), bad);
 	ceph_decode_copy(&p, &fsid, sizeof(fsid));

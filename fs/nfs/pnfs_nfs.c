@@ -839,7 +839,7 @@ static int _nfs4_pnfs_v3_ds_connect(struct nfs_server *mds_srv,
 				 unsigned int timeo,
 				 unsigned int retrans)
 {
-	struct nfs_client *clp = ERR_PTR(-EIO);
+	struct nfs_client *clp = ERR_PTR(-ERR(EIO));
 	struct nfs4_pnfs_ds_addr *da;
 	int status = 0;
 
@@ -893,7 +893,7 @@ static int _nfs4_pnfs_v4_ds_connect(struct nfs_server *mds_srv,
 				 unsigned int retrans,
 				 u32 minor_version)
 {
-	struct nfs_client *clp = ERR_PTR(-EIO);
+	struct nfs_client *clp = ERR_PTR(-ERR(EIO));
 	struct nfs4_pnfs_ds_addr *da;
 	int status = 0;
 
@@ -941,7 +941,7 @@ static int _nfs4_pnfs_v4_ds_connect(struct nfs_server *mds_srv,
 					mds_srv->nfs_client->cl_lease_time);
 			if (status) {
 				nfs_put_client(clp);
-				clp = ERR_PTR(-EIO);
+				clp = ERR_PTR(-ERR(EIO));
 				continue;
 			}
 
@@ -983,7 +983,7 @@ again:
 		} else {
 			dprintk("%s: unsupported DS version %d\n", __func__,
 				version);
-			err = -EPROTONOSUPPORT;
+			err = -ERR(EPROTONOSUPPORT);
 		}
 
 		nfs4_clear_ds_conn_bit(ds);
@@ -1003,7 +1003,7 @@ again:
 		if (!ds->ds_clp || !nfs_client_init_is_complete(ds->ds_clp)) {
 			WARN_ON_ONCE(ds->ds_clp ||
 				!nfs4_test_deviceid_unavailable(devid));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		err = nfs_client_init_status(ds->ds_clp);
 	}

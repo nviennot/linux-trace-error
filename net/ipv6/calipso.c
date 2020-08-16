@@ -203,7 +203,7 @@ static int calipso_cache_check(const unsigned char *key,
 	u32 hash;
 
 	if (!calipso_cache_enabled)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hash = calipso_map_cache_hash(key, key_len);
 	bkt = hash & (CALIPSO_CACHE_BUCKETS - 1);
@@ -240,7 +240,7 @@ static int calipso_cache_check(const unsigned char *key,
 	}
 	spin_unlock_bh(&calipso_cache[bkt].lock);
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /**
@@ -261,7 +261,7 @@ static int calipso_cache_check(const unsigned char *key,
 static int calipso_cache_add(const unsigned char *calipso_ptr,
 			     const struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -EPERM;
+	int ret_val = -ERR(EPERM);
 	u32 bkt;
 	struct calipso_map_cache_entry *entry = NULL;
 	struct calipso_map_cache_entry *old_entry = NULL;
@@ -345,7 +345,7 @@ static struct calipso_doi *calipso_doi_search(u32 doi)
 static int calipso_doi_add(struct calipso_doi *doi_def,
 			   struct netlbl_audit *audit_info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	u32 doi;
 	u32 doi_type;
 	struct audit_buffer *audit_buf;
@@ -361,7 +361,7 @@ static int calipso_doi_add(struct calipso_doi *doi_def,
 	spin_lock(&calipso_doi_list_lock);
 	if (calipso_doi_search(doi_def->doi)) {
 		spin_unlock(&calipso_doi_list_lock);
-		ret_val = -EEXIST;
+		ret_val = -ERR(EEXIST);
 		goto doi_add_return;
 	}
 	list_add_tail_rcu(&doi_def->list, &calipso_doi_list);
@@ -441,12 +441,12 @@ static int calipso_doi_remove(u32 doi, struct netlbl_audit *audit_info)
 	doi_def = calipso_doi_search(doi);
 	if (!doi_def) {
 		spin_unlock(&calipso_doi_list_lock);
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 		goto doi_remove_return;
 	}
 	if (!refcount_dec_and_test(&doi_def->refcount)) {
 		spin_unlock(&calipso_doi_list_lock);
-		ret_val = -EBUSY;
+		ret_val = -ERR(EBUSY);
 		goto doi_remove_return;
 	}
 	list_del_rcu(&doi_def->list);
@@ -533,7 +533,7 @@ static int calipso_doi_walk(u32 *skip_cnt,
 					    void *arg),
 			    void *cb_arg)
 {
-	int ret_val = -ENOENT;
+	int ret_val = -ERR(ENOENT);
 	u32 doi_cnt = 0;
 	struct calipso_doi *iter_doi;
 
@@ -624,7 +624,7 @@ static int calipso_map_cat_hton(const struct calipso_doi *doi_def,
 		if (spot < 0)
 			break;
 		if (spot >= net_clen_bits)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		netlbl_bitmap_setbit(net_cat, spot, 1);
 
 		if (spot > net_spot_max)
@@ -674,7 +674,7 @@ static int calipso_map_cat_ntoh(const struct calipso_doi *doi_def,
 			return ret_val;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -692,7 +692,7 @@ static int calipso_pad_write(unsigned char *buf, unsigned int offset,
 			     unsigned int count)
 {
 	if (WARN_ON_ONCE(count >= 8))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (count) {
 	case 0:
@@ -737,10 +737,10 @@ static int calipso_genopt(unsigned char *buf, u32 start, u32 buf_len,
 	/* CALIPSO has 4n + 2 alignment */
 	pad = padding[start & 3];
 	if (buf_len <= start + pad + CALIPSO_HDR_LEN)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if ((secattr->flags & NETLBL_SECATTR_MLS_LVL) == 0)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	len = CALIPSO_HDR_LEN;
 
@@ -815,14 +815,14 @@ static int calipso_tlv_len(struct ipv6_opt_hdr *opt, unsigned int offset)
 	unsigned int opt_len = ipv6_optlen(opt), tlv_len;
 
 	if (offset < sizeof(*opt) || offset >= opt_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (tlv[offset] == IPV6_TLV_PAD1)
 		return 1;
 	if (offset + 1 >= opt_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tlv_len = tlv[offset + 1] + 2;
 	if (offset + tlv_len > opt_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return tlv_len;
 }
 
@@ -850,7 +850,7 @@ static int calipso_tlv_len(struct ipv6_opt_hdr *opt, unsigned int offset)
 static int calipso_opt_find(struct ipv6_opt_hdr *hop, unsigned int *start,
 			    unsigned int *end)
 {
-	int ret_val = -ENOENT, tlv_len;
+	int ret_val = -ERR(ENOENT), tlv_len;
 	unsigned int opt_len, offset, offset_s = 0, offset_e = 0;
 	unsigned char *opt = (unsigned char *)hop;
 
@@ -1018,12 +1018,12 @@ static int calipso_opt_del(struct ipv6_opt_hdr *hop,
 static int calipso_opt_getattr(const unsigned char *calipso,
 			       struct netlbl_lsm_secattr *secattr)
 {
-	int ret_val = -ENOMSG;
+	int ret_val = -ERR(ENOMSG);
 	u32 doi, len = calipso[1], cat_len = calipso[6] * 4;
 	struct calipso_doi *doi_def;
 
 	if (cat_len + 8 > len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (calipso_cache_check(calipso + 2, calipso[1], secattr) == 0)
 		return 0;
@@ -1077,7 +1077,7 @@ static int calipso_sock_getattr(struct sock *sk,
 				struct netlbl_lsm_secattr *secattr)
 {
 	struct ipv6_opt_hdr *hop;
-	int opt_len, len, ret_val = -ENOMSG, offset;
+	int opt_len, len, ret_val = -ERR(ENOMSG), offset;
 	unsigned char *opt;
 	struct ipv6_txoptions *txopts = txopt_get(inet6_sk(sk));
 
@@ -1097,7 +1097,7 @@ static int calipso_sock_getattr(struct sock *sk,
 		switch (opt[offset]) {
 		case IPV6_TLV_CALIPSO:
 			if (len < CALIPSO_HDR_LEN)
-				ret_val = -EINVAL;
+				ret_val = -ERR(EINVAL);
 			else
 				ret_val = calipso_opt_getattr(&opt[offset],
 							      secattr);

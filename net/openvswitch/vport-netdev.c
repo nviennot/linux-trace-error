@@ -80,7 +80,7 @@ struct vport *ovs_netdev_link(struct vport *vport, const char *name)
 
 	vport->dev = dev_get_by_name(ovs_dp_get_net(vport->dp), name);
 	if (!vport->dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto error_free_vport;
 	}
 
@@ -88,7 +88,7 @@ struct vport *ovs_netdev_link(struct vport *vport, const char *name)
 	    (vport->dev->type != ARPHRD_ETHER &&
 	     vport->dev->type != ARPHRD_NONE) ||
 	    ovs_is_internal_dev(vport->dev)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error_put;
 	}
 

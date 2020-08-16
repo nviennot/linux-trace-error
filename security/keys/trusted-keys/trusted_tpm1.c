@@ -101,7 +101,7 @@ static int TSS_rawhmac(unsigned char *digest, const unsigned char *key,
 			break;
 		data = va_arg(argp, unsigned char *);
 		if (data == NULL) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
@@ -132,7 +132,7 @@ int TSS_authhmac(unsigned char *digest, const unsigned char *key,
 	va_list argp;
 
 	if (!chip)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	sdesc = init_sdesc(hashalg);
 	if (IS_ERR(sdesc)) {
@@ -151,7 +151,7 @@ int TSS_authhmac(unsigned char *digest, const unsigned char *key,
 			break;
 		data = va_arg(argp, unsigned char *);
 		if (!data) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		ret = crypto_shash_update(&sdesc->shash, data, dlen);
@@ -196,7 +196,7 @@ int TSS_checkhmac1(unsigned char *buffer,
 	int ret;
 
 	if (!chip)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	bufsize = LOAD32(buffer, TPM_SIZE_OFFSET);
 	tag = LOAD16(buffer, 0);
@@ -205,7 +205,7 @@ int TSS_checkhmac1(unsigned char *buffer,
 	if (tag == TPM_TAG_RSP_COMMAND)
 		return 0;
 	if (tag != TPM_TAG_RSP_AUTH1_COMMAND)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	authdata = buffer + bufsize - SHA1_DIGEST_SIZE;
 	continueflag = authdata - 1;
 	enonce = continueflag - TPM_NONCE_SIZE;
@@ -249,7 +249,7 @@ int TSS_checkhmac1(unsigned char *buffer,
 		goto out;
 
 	if (memcmp(testhmac, authdata, SHA1_DIGEST_SIZE))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 out:
 	kzfree(sdesc);
 	return ret;
@@ -294,7 +294,7 @@ static int TSS_checkhmac2(unsigned char *buffer,
 	if (tag == TPM_TAG_RSP_COMMAND)
 		return 0;
 	if (tag != TPM_TAG_RSP_AUTH2_COMMAND)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	authdata1 = buffer + bufsize - (SHA1_DIGEST_SIZE + 1
 			+ SHA1_DIGEST_SIZE + SHA1_DIGEST_SIZE);
 	authdata2 = buffer + bufsize - (SHA1_DIGEST_SIZE);
@@ -342,7 +342,7 @@ static int TSS_checkhmac2(unsigned char *buffer,
 	if (ret < 0)
 		goto out;
 	if (memcmp(testhmac1, authdata1, SHA1_DIGEST_SIZE)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	ret = TSS_rawhmac(testhmac2, key2, keylen2, SHA1_DIGEST_SIZE,
@@ -351,7 +351,7 @@ static int TSS_checkhmac2(unsigned char *buffer,
 	if (ret < 0)
 		goto out;
 	if (memcmp(testhmac2, authdata2, SHA1_DIGEST_SIZE))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 out:
 	kzfree(sdesc);
 	return ret;
@@ -366,14 +366,14 @@ int trusted_tpm_send(unsigned char *cmd, size_t buflen)
 	int rc;
 
 	if (!chip)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dump_tpm_buf(cmd);
 	rc = tpm_send(chip, cmd, buflen);
 	dump_tpm_buf(cmd);
 	if (rc > 0)
 		/* Can't return positive return codes values to keyctl */
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 	return rc;
 }
 EXPORT_SYMBOL_GPL(trusted_tpm_send);
@@ -387,9 +387,9 @@ EXPORT_SYMBOL_GPL(trusted_tpm_send);
 static int pcrlock(const int pcrnum)
 {
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
-	return tpm_pcr_extend(chip, pcrnum, digests) ? -EINVAL : 0;
+	return tpm_pcr_extend(chip, pcrnum, digests) ? -ERR(EINVAL) : 0;
 }
 
 /*
@@ -432,7 +432,7 @@ int oiap(struct tpm_buf *tb, uint32_t *handle, unsigned char *nonce)
 	int ret;
 
 	if (!chip)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	tpm_buf_reset(tb, TPM_TAG_RQU_COMMAND, TPM_ORD_OIAP);
 	ret = trusted_tpm_send(tb->data, MAX_BUF_SIZE);
@@ -753,56 +753,56 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
 			continue;
 		token = match_token(p, key_tokens, args);
 		if (test_and_set_bit(token, &token_mask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (token) {
 		case Opt_pcrinfo:
 			opt->pcrinfo_len = strlen(args[0].from) / 2;
 			if (opt->pcrinfo_len > MAX_PCRINFO_SIZE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			res = hex2bin(opt->pcrinfo, args[0].from,
 				      opt->pcrinfo_len);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_keyhandle:
 			res = kstrtoul(args[0].from, 16, &handle);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt->keytype = SEAL_keytype;
 			opt->keyhandle = handle;
 			break;
 		case Opt_keyauth:
 			if (strlen(args[0].from) != 2 * SHA1_DIGEST_SIZE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			res = hex2bin(opt->keyauth, args[0].from,
 				      SHA1_DIGEST_SIZE);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_blobauth:
 			if (strlen(args[0].from) != 2 * SHA1_DIGEST_SIZE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			res = hex2bin(opt->blobauth, args[0].from,
 				      SHA1_DIGEST_SIZE);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_migratable:
 			if (*args[0].from == '0')
 				pay->migratable = 0;
 			else
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_pcrlock:
 			res = kstrtoul(args[0].from, 10, &lock);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt->pcrlock = lock;
 			break;
 		case Opt_hash:
 			if (test_bit(Opt_policydigest, &token_mask))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			for (i = 0; i < HASH_ALGO__LAST; i++) {
 				if (!strcmp(args[0].from, hash_algo_name[i])) {
 					opt->hash = i;
@@ -810,32 +810,32 @@ static int getoptions(char *c, struct trusted_key_payload *pay,
 				}
 			}
 			if (i == HASH_ALGO__LAST)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if  (!tpm2 && i != HASH_ALGO_SHA1) {
 				pr_info("trusted_key: TPM 1.x only supports SHA-1.\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		case Opt_policydigest:
 			digest_len = hash_digest_size[opt->hash];
 			if (!tpm2 || strlen(args[0].from) != (2 * digest_len))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			res = hex2bin(opt->policydigest, args[0].from,
 				      digest_len);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt->policydigest_len = digest_len;
 			break;
 		case Opt_policyhandle:
 			if (!tpm2)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			res = kstrtoul(args[0].from, 16, &handle);
 			if (res < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opt->policyhandle = handle;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -852,24 +852,24 @@ static int datablob_parse(char *datablob, struct trusted_key_payload *p,
 {
 	substring_t args[MAX_OPT_ARGS];
 	long keylen;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int key_cmd;
 	char *c;
 
 	/* main command */
 	c = strsep(&datablob, " \t");
 	if (!c)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	key_cmd = match_token(c, key_tokens, args);
 	switch (key_cmd) {
 	case Opt_new:
 		/* first argument is key size */
 		c = strsep(&datablob, " \t");
 		if (!c)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ret = kstrtol(c, 10, &keylen);
 		if (ret < 0 || keylen < MIN_KEY_SIZE || keylen > MAX_KEY_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p->key_len = keylen;
 		ret = getoptions(datablob, p, o);
 		if (ret < 0)
@@ -880,13 +880,13 @@ static int datablob_parse(char *datablob, struct trusted_key_payload *p,
 		/* first argument is sealed blob */
 		c = strsep(&datablob, " \t");
 		if (!c)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p->blob_len = strlen(c) / 2;
 		if (p->blob_len > MAX_BLOB_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ret = hex2bin(p->blob, c, p->blob_len);
 		if (ret < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ret = getoptions(datablob, p, o);
 		if (ret < 0)
 			return ret;
@@ -900,7 +900,7 @@ static int datablob_parse(char *datablob, struct trusted_key_payload *p,
 		ret = Opt_update;
 		break;
 	case Opt_err:
-		return -EINVAL;
+		return -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -966,7 +966,7 @@ static int trusted_instantiate(struct key *key,
 		return tpm2;
 
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	datablob = kmalloc(datalen + 1, GFP_KERNEL);
 	if (!datablob)
@@ -992,7 +992,7 @@ static int trusted_instantiate(struct key *key,
 	}
 
 	if (!options->keyhandle) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1025,7 +1025,7 @@ static int trusted_instantiate(struct key *key,
 			pr_info("trusted_key: key_seal failed (%d)\n", ret);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (!ret && options->pcrlock)
@@ -1061,12 +1061,12 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 	int ret = 0;
 
 	if (key_is_negative(key))
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 	p = key->payload.data[0];
 	if (!p->migratable)
-		return -EPERM;
+		return -ERR(EPERM);
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	datablob = kmalloc(datalen + 1, GFP_KERNEL);
 	if (!datablob)
@@ -1086,13 +1086,13 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
 	datablob[datalen] = '\0';
 	ret = datablob_parse(datablob, new_p, new_o);
 	if (ret != Opt_update) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		kzfree(new_p);
 		goto out;
 	}
 
 	if (!new_o->keyhandle) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		kzfree(new_p);
 		goto out;
 	}
@@ -1139,7 +1139,7 @@ static long trusted_read(const struct key *key, char *buffer,
 
 	p = dereference_key_locked(key);
 	if (!p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (buffer && buflen >= 2 * p->blob_len) {
 		bufp = buffer;

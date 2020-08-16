@@ -262,7 +262,7 @@ xfs_trans_read_buf_map(
 		 */
 		if (XFS_FORCED_SHUTDOWN(mp)) {
 			trace_xfs_trans_read_buf_shut(bp, _RET_IP_);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/*
@@ -319,7 +319,7 @@ xfs_trans_read_buf_map(
 	if (XFS_FORCED_SHUTDOWN(mp)) {
 		xfs_buf_relse(bp);
 		trace_xfs_trans_read_buf_shut(bp, _RET_IP_);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (tp) {

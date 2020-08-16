@@ -78,7 +78,7 @@ static int decode_pnfs_stateid(struct xdr_stream *xdr, nfs4_stateid *stateid)
 
 	p = xdr_inline_decode(xdr, NFS4_STATEID_SIZE);
 	if (unlikely(p == NULL))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	stateid->type = NFS4_PNFS_DS_STATEID_TYPE;
 	memcpy(stateid->data, p, NFS4_STATEID_SIZE);
 	dprintk("%s: stateid id= [%x%x%x%x]\n", __func__,
@@ -92,7 +92,7 @@ static int decode_deviceid(struct xdr_stream *xdr, struct nfs4_deviceid *devid)
 
 	p = xdr_inline_decode(xdr, NFS4_DEVICEID4_SIZE);
 	if (unlikely(!p))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	memcpy(devid, p, NFS4_DEVICEID4_SIZE);
 	nfs4_print_deviceid(devid);
 	return 0;
@@ -104,17 +104,17 @@ static int decode_nfs_fh(struct xdr_stream *xdr, struct nfs_fh *fh)
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(!p))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	fh->size = be32_to_cpup(p++);
 	if (fh->size > sizeof(struct nfs_fh)) {
 		printk(KERN_ERR "NFS flexfiles: Too big fh received %d\n",
 		       fh->size);
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	}
 	/* fh.data */
 	p = xdr_inline_decode(xdr, fh->size);
 	if (unlikely(!p))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	memcpy(&fh->data, p, fh->size);
 	dprintk("%s: fh len %d\n", __func__, fh->size);
 
@@ -138,20 +138,20 @@ decode_name(struct xdr_stream *xdr, u32 *id)
 	/* opaque_length(4)*/
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(!p))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	len = be32_to_cpup(p++);
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dprintk("%s: len %u\n", __func__, len);
 
 	/* opaque body */
 	p = xdr_inline_decode(xdr, len);
 	if (unlikely(!p))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (!nfs_map_string_to_numeric((char *)p, len, id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -381,7 +381,7 @@ ff_layout_alloc_lseg(struct pnfs_layout_hdr *lh,
 	xdr_set_scratch_buffer(&stream, page_address(scratch), PAGE_SIZE);
 
 	/* stripe unit and mirror_array_cnt */
-	rc = -EIO;
+	rc = -ERR(EIO);
 	p = xdr_inline_decode(&stream, 8 + 4);
 	if (!p)
 		goto out_err_free;
@@ -413,7 +413,7 @@ ff_layout_alloc_lseg(struct pnfs_layout_hdr *lh,
 		u32 ds_count, fh_count, id;
 		int j;
 
-		rc = -EIO;
+		rc = -ERR(EIO);
 		p = xdr_inline_decode(&stream, 4);
 		if (!p)
 			goto out_err_free;
@@ -437,7 +437,7 @@ ff_layout_alloc_lseg(struct pnfs_layout_hdr *lh,
 			goto out_err_free;
 
 		/* efficiency */
-		rc = -EIO;
+		rc = -ERR(EIO);
 		p = xdr_inline_decode(&stream, 4);
 		if (!p)
 			goto out_err_free;
@@ -449,7 +449,7 @@ ff_layout_alloc_lseg(struct pnfs_layout_hdr *lh,
 			goto out_err_free;
 
 		/* fh */
-		rc = -EIO;
+		rc = -ERR(EIO);
 		p = xdr_inline_decode(&stream, 4);
 		if (!p)
 			goto out_err_free;
@@ -932,7 +932,7 @@ retry:
 	return;
 out_eagain:
 	pnfs_generic_pg_cleanup(pgio);
-	pgio->pg_error = -EAGAIN;
+	pgio->pg_error = -ERR(EAGAIN);
 	return;
 out_mds:
 	trace_pnfs_mds_fallback_pg_init_write(pgio->pg_inode,
@@ -943,7 +943,7 @@ out_mds:
 	pgio->pg_lseg = NULL;
 	pgio->pg_maxretrans = 0;
 	nfs_pageio_reset_write_mds(pgio);
-	pgio->pg_error = -EAGAIN;
+	pgio->pg_error = -ERR(EAGAIN);
 }
 
 static unsigned int
@@ -1123,7 +1123,7 @@ reset:
 		return -NFS4ERR_RESET_TO_MDS;
 	}
 	task->tk_status = 0;
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /* Retry all errors through either pNFS or MDS except for -EJUKEBOX */
@@ -1157,7 +1157,7 @@ out_retry:
 	task->tk_status = 0;
 	rpc_restart_call_prepare(task);
 	rpc_delay(task, NFS_JUKEBOX_RETRY_TIME);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int ff_layout_async_handle_error(struct rpc_task *task,
@@ -1287,7 +1287,7 @@ out_layouterror:
 	hdr->pgio_mirror_idx = new_idx;
 out_eagain:
 	rpc_restart_call_prepare(task);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static bool
@@ -1346,7 +1346,7 @@ static int ff_layout_read_prepare_common(struct rpc_task *task,
 {
 	if (unlikely(test_bit(NFS_CONTEXT_BAD, &hdr->args.context->flags))) {
 		rpc_exit(task, -EIO);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ff_layout_read_record_layoutstats_start(task, hdr);
@@ -1449,7 +1449,7 @@ static int ff_layout_write_done_cb(struct rpc_task *task,
 		set_bit(NFS_IOHDR_RESEND_MDS, &hdr->flags);
 		return task->tk_status;
 	case -EAGAIN:
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (hdr->res.verf->committed == NFS_FILE_SYNC ||
@@ -1487,13 +1487,13 @@ static int ff_layout_commit_done_cb(struct rpc_task *task,
 	switch (err) {
 	case -NFS4ERR_RESET_TO_PNFS:
 		pnfs_generic_prepare_to_resend_writes(data);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case -NFS4ERR_RESET_TO_MDS:
 		pnfs_generic_prepare_to_resend_writes(data);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case -EAGAIN:
 		rpc_restart_call_prepare(task);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	ff_layout_set_layoutcommit(data->inode, data->lseg, data->lwb);
@@ -1529,7 +1529,7 @@ static int ff_layout_write_prepare_common(struct rpc_task *task,
 {
 	if (unlikely(test_bit(NFS_CONTEXT_BAD, &hdr->args.context->flags))) {
 		rpc_exit(task, -EIO);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ff_layout_write_record_layoutstats_start(task, hdr);
@@ -1917,7 +1917,7 @@ static int ff_layout_initiate_commit(struct nfs_commit_data *data, int how)
 out_err:
 	pnfs_generic_prepare_to_resend_writes(data);
 	pnfs_generic_commit_release(data);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int
@@ -1981,7 +1981,7 @@ static int ff_layout_encode_ioerr(struct xdr_stream *xdr,
 
 	start = xdr_reserve_space(xdr, 4);
 	if (unlikely(!start))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	*start = cpu_to_be32(ff_args->num_errors);
 	/* This assume we always return _ALL_ layouts */
@@ -2435,7 +2435,7 @@ ff_layout_prepare_layoutstats(struct nfs42_layoutstat_args *args)
 	if (!args->num_dev) {
 		kfree(args->devinfo);
 		args->devinfo = NULL;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	return 0;

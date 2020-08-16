@@ -117,7 +117,7 @@ int dlm_rem_lkb_callback(struct dlm_ls *ls, struct dlm_lkb *lkb,
 	*resid = 0;
 
 	if (!lkb->lkb_callbacks[0].seq) {
-		rv = -ENOENT;
+		rv = -ERR(ENOENT);
 		goto out;
 	}
 

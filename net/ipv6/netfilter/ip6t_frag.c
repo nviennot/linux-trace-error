@@ -105,7 +105,7 @@ static int frag_mt6_check(const struct xt_mtchk_param *par)
 
 	if (fraginfo->invflags & ~IP6T_FRAG_INV_MASK) {
 		pr_debug("unknown flags %X\n", fraginfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

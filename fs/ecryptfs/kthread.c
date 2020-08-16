@@ -95,7 +95,7 @@ void ecryptfs_destroy_kthread(void)
 	list_for_each_entry_safe(req, tmp, &ecryptfs_kthread_ctl.req_list,
 				 kthread_ctl_list) {
 		list_del(&req->kthread_ctl_list);
-		*req->lower_file = ERR_PTR(-EIO);
+		*req->lower_file = ERR_PTR(-ERR(EIO));
 		complete(&req->done);
 	}
 	mutex_unlock(&ecryptfs_kthread_ctl.mux);
@@ -140,7 +140,7 @@ int ecryptfs_privileged_open(struct file **lower_file,
 	}
 	mutex_lock(&ecryptfs_kthread_ctl.mux);
 	if (ecryptfs_kthread_ctl.flags & ECRYPTFS_KTHREAD_ZOMBIE) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		mutex_unlock(&ecryptfs_kthread_ctl.mux);
 		printk(KERN_ERR "%s: We are in the middle of shutting down; "
 		       "aborting privileged request to open lower file\n",

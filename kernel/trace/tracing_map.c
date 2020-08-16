@@ -201,7 +201,7 @@ tracing_map_cmp_fn_t tracing_map_cmp_num(int field_size,
 static int tracing_map_add_field(struct tracing_map *map,
 				 tracing_map_cmp_fn_t cmp_fn)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (map->n_fields < TRACING_MAP_FIELDS_MAX) {
 		ret = map->n_fields;
@@ -242,7 +242,7 @@ int tracing_map_add_sum_field(struct tracing_map *map)
  */
 int tracing_map_add_var(struct tracing_map *map)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (map->n_vars < TRACING_MAP_VARS_MAX)
 		ret = map->n_vars++;
@@ -767,7 +767,7 @@ struct tracing_map *tracing_map_create(unsigned int map_bits,
 
 	if (map_bits < TRACING_MAP_BITS_MIN ||
 	    map_bits > TRACING_MAP_BITS_MAX)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	map = kzalloc(sizeof(*map), GFP_KERNEL);
 	if (!map)
@@ -823,7 +823,7 @@ int tracing_map_init(struct tracing_map *map)
 	int err;
 
 	if (map->n_fields < 2)
-		return -EINVAL; /* need at least 1 key and 1 val */
+		return -ERR(EINVAL); /* need at least 1 key and 1 val */
 
 	err = tracing_map_alloc_elts(map);
 	if (err)

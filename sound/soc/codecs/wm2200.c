@@ -1577,7 +1577,7 @@ static int wm2200_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(component->dev, "Unsupported DAI format %d\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1596,7 +1596,7 @@ static int wm2200_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(component->dev, "Unsupported master mode %d\n",
 			fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1613,7 +1613,7 @@ static int wm2200_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		lrclk |= WM2200_AIF1TX_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM2200_AUDIO_IF_1_1, WM2200_AIF1_BCLK_MSTR |
@@ -1716,7 +1716,7 @@ static int wm2200_hw_params(struct snd_pcm_substream *substream,
 
 	if (!wm2200->sysclk) {
 		dev_err(component->dev, "SYSCLK has no rate set\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(wm2200_sr_code); i++)
@@ -1725,7 +1725,7 @@ static int wm2200_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(wm2200_sr_code)) {
 		dev_err(component->dev, "Unsupported sample rate: %dHz\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	sr_code = i;
 
@@ -1744,7 +1744,7 @@ static int wm2200_hw_params(struct snd_pcm_substream *substream,
 		dev_err(component->dev,
 			"No valid BCLK for %dHz found from %dHz SYSCLK\n",
 			bclk, wm2200->sysclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk = i;
@@ -1795,7 +1795,7 @@ static int wm2200_set_sysclk(struct snd_soc_component *component, int clk_id,
 
 	default:
 		dev_err(component->dev, "Unknown clock %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (source) {
@@ -1806,7 +1806,7 @@ static int wm2200_set_sysclk(struct snd_soc_component *component, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -1816,7 +1816,7 @@ static int wm2200_set_sysclk(struct snd_soc_component *component, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock rate: %d\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* TODO: Check if MCLKs are in use and enable/disable pulls to
@@ -1872,7 +1872,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1888,7 +1888,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 64) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * div;
@@ -1906,7 +1906,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fll_div->n = target / (fratio * Fref);
@@ -1959,7 +1959,7 @@ static int wm2200_set_fll(struct snd_soc_component *component, int fll_id, int s
 		break;
 	default:
 		dev_err(component->dev, "Invalid FLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = fll_factors(&factors, Fref, Fout);
@@ -2041,7 +2041,7 @@ static int wm2200_set_fll(struct snd_soc_component *component, int fll_id, int s
 	if (i == timeout) {
 		dev_err(component->dev, "FLL lock timed out\n");
 		pm_runtime_put(component->dev);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	wm2200->fll_src = source;
@@ -2290,7 +2290,7 @@ static int wm2200_i2c_probe(struct i2c_client *i2c,
 
 	default:
 		dev_err(&i2c->dev, "Device is not a WM2200, ID is %x\n", reg);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_reset;
 	}
 

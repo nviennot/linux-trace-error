@@ -59,7 +59,7 @@ krb5_encrypt(
 	void * out,
 	int length)
 {
-	u32 ret = -EINVAL;
+	u32 ret = -ERR(EINVAL);
 	struct scatterlist sg[1];
 	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = {0};
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
@@ -98,7 +98,7 @@ krb5_decrypt(
      void * out,
      int length)
 {
-	u32 ret = -EINVAL;
+	u32 ret = -ERR(EINVAL);
 	struct scatterlist sg[1];
 	u8 local_iv[GSS_KRB5_MAX_BLOCKSIZE] = {0};
 	SYNC_SKCIPHER_REQUEST_ON_STACK(req, tfm);
@@ -151,7 +151,7 @@ arcfour_hmac_md5_usage_to_salt(unsigned int usage, u8 salt[4])
 		ms_usage = 13;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	salt[0] = (ms_usage >> 0) & 0xff;
 	salt[1] = (ms_usage >> 8) & 0xff;

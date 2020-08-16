@@ -127,7 +127,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
 
 	cpu_stop_init_done(&done, 1);
 	if (!cpu_stop_queue_work(cpu, &work))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	/*
 	 * In case @cpu == smp_proccessor_id() we can avoid a sleep+wakeup
 	 * cycle by doing a preemption:
@@ -263,7 +263,7 @@ retry:
 	raw_spin_lock_nested(&stopper2->lock, SINGLE_DEPTH_NESTING);
 
 	if (!stopper1->enabled || !stopper2->enabled) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto unlock;
 	}
 
@@ -278,7 +278,7 @@ retry:
 	 * queue_stop_cpus_work() does everything under preempt_disable().
 	 */
 	if (unlikely(stop_cpus_in_progress)) {
-		err = -EDEADLK;
+		err = -ERR(EDEADLK);
 		goto unlock;
 	}
 
@@ -340,7 +340,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
 	if (cpu1 > cpu2)
 		swap(cpu1, cpu2);
 	if (cpu_stop_queue_two_works(cpu1, &work1, cpu2, &work2))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	wait_for_completion(&done.completion);
 	return done.ret;
@@ -409,7 +409,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
 
 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
 	if (!queue_stop_cpus_work(cpumask, fn, arg, &done))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	wait_for_completion(&done.completion);
 	return done.ret;
 }

@@ -845,14 +845,14 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		if (!!codec->name == !!codec->of_node) {
 			dev_err(card->dev, "ASoC: Neither/both codec name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* Codec DAI name must be specified */
 		if (!codec->dai_name) {
 			dev_err(card->dev, "ASoC: codec_dai_name not set for %s\n",
 				link->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*
@@ -877,7 +877,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Neither/both platform name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*
@@ -902,7 +902,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Neither/both cpu name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*
@@ -926,7 +926,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Neither cpu_dai_name nor cpu_name/of_node are set for %s\n",
 				link->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1161,7 +1161,7 @@ static int soc_probe_component(struct snd_soc_card *card,
 			dev_err(component->dev,
 				"Trying to bind component to card \"%s\" but is already bound to card \"%s\"\n",
 				card->name, component->card->name);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		return 0;
 	}
@@ -1967,7 +1967,7 @@ static int soc_probe(struct platform_device *pdev)
 	 * we should not be here in that case so ret error
 	 */
 	if (!card)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_warn(&pdev->dev,
 		 "ASoC: machine %s should use snd_soc_register_card()\n",
@@ -2164,7 +2164,7 @@ EXPORT_SYMBOL_GPL(snd_soc_add_dai_controls);
 int snd_soc_register_card(struct snd_soc_card *card)
 {
 	if (!card->name || !card->dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_set_drvdata(card->dev, card);
 
@@ -2630,7 +2630,7 @@ int snd_soc_of_parse_card_name(struct snd_soc_card *card,
 
 	if (!card->dev) {
 		pr_err("card->dev is not set before calling %s\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	np = card->dev->of_node;
@@ -2671,19 +2671,19 @@ int snd_soc_of_parse_audio_simple_widgets(struct snd_soc_card *card,
 	if (num_widgets < 0) {
 		dev_err(card->dev,
 			"ASoC: Property '%s' does not exist\n",	propname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (num_widgets & 1) {
 		dev_err(card->dev,
 			"ASoC: Property '%s' length is not even\n", propname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	num_widgets /= 2;
 	if (!num_widgets) {
 		dev_err(card->dev, "ASoC: Property '%s's length is zero\n",
 			propname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	widgets = devm_kcalloc(card->dev, num_widgets, sizeof(*widgets),
@@ -2701,7 +2701,7 @@ int snd_soc_of_parse_audio_simple_widgets(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d read error:%d\n",
 				propname, 2 * i, ret);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		for (j = 0; j < ARRAY_SIZE(simple_widgets); j++) {
@@ -2716,7 +2716,7 @@ int snd_soc_of_parse_audio_simple_widgets(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: DAPM widget '%s' is not supported\n",
 				template);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = of_property_read_string_index(np, propname,
@@ -2726,7 +2726,7 @@ int snd_soc_of_parse_audio_simple_widgets(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d read error:%d\n",
 				propname, (2 * i) + 1, ret);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		widgets[i].name = wname;
@@ -2826,13 +2826,13 @@ int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
 		dev_err(card->dev,
 			"ASoC: Property '%s' does not exist or its length is not even\n",
 			propname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	num_routes /= 2;
 	if (!num_routes) {
 		dev_err(card->dev, "ASoC: Property '%s's length is zero\n",
 			propname);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	routes = devm_kcalloc(card->dev, num_routes, sizeof(*routes),
@@ -2840,7 +2840,7 @@ int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
 	if (!routes) {
 		dev_err(card->dev,
 			"ASoC: Could not allocate DAPM route table\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < num_routes; i++) {
@@ -2850,7 +2850,7 @@ int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d could not be read: %d\n",
 				propname, 2 * i, ret);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ret = of_property_read_string_index(np, propname,
 			(2 * i) + 1, &routes[i].source);
@@ -2858,7 +2858,7 @@ int snd_soc_of_parse_audio_routing(struct snd_soc_card *card,
 			dev_err(card->dev,
 				"ASoC: Property '%s' index %d could not be read: %d\n",
 				propname, (2 * i) + 1, ret);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -3000,7 +3000,7 @@ int snd_soc_get_dai_id(struct device_node *ep)
 	 * Thus counting HDMI DT port/endpoint doesn't work.
 	 * Then, it should have .of_xlate_dai_id
 	 */
-	ret = -ENOTSUPP;
+	ret = -ERR(ENOTSUPP);
 	mutex_lock(&client_mutex);
 	component = soc_find_component(&dlc);
 	if (component)
@@ -3045,7 +3045,7 @@ int snd_soc_get_dai_name(struct of_phandle_args *args,
 			}
 
 			if (id < 0 || id >= pos->num_dai) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				continue;
 			}
 

@@ -163,7 +163,7 @@ int nf_xfrm_me_harder(struct net *net, struct sk_buff *skb, unsigned int family)
 	if (dst->xfrm)
 		dst = ((struct xfrm_dst *)dst)->route;
 	if (!dst_hold_safe(dst))
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	if (sk && !net_eq(net, sock_net(sk)))
 		sk = NULL;
@@ -959,7 +959,7 @@ nfnetlink_parse_nat(const struct nlattr *nat,
 		err = nf_nat_ipv6_nlattr_to_range(tb, range);
 		break;
 	default:
-		err = -EPROTONOSUPPORT;
+		err = -ERR(EPROTONOSUPPORT);
 		break;
 	}
 
@@ -985,7 +985,7 @@ nfnetlink_parse_nat_setup(struct nf_conn *ct,
 	 * via ctnetlink.
 	 */
 	if (WARN_ON_ONCE(nf_nat_initialized(ct, manip)))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* No NAT information has been passed, allocate the null-binding */
 	if (attr == NULL)
@@ -1003,7 +1003,7 @@ nfnetlink_parse_nat_setup(struct nf_conn *ct,
 			  enum nf_nat_manip_type manip,
 			  const struct nlattr *attr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -1023,7 +1023,7 @@ int nf_nat_register_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
 	int i, ret;
 
 	if (WARN_ON_ONCE(pf >= ARRAY_SIZE(nat_net->nat_proto_net)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nat_proto_net = &nat_net->nat_proto_net[pf];
 
@@ -1035,7 +1035,7 @@ int nf_nat_register_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
 	}
 
 	if (WARN_ON_ONCE(i == ops_count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&nf_nat_proto_mutex);
 	if (!nat_proto_net->nat_hook_ops) {
@@ -1076,7 +1076,7 @@ int nf_nat_register_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
 	priv = nat_ops[hooknum].priv;
 	if (WARN_ON_ONCE(!priv)) {
 		mutex_unlock(&nf_nat_proto_mutex);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	ret = nf_hook_entries_insert_raw(&priv->entries, ops);

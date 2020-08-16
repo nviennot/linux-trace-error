@@ -118,7 +118,7 @@ static int afs_probe_cell_name(struct dentry *dentry)
 	/* Names prefixed with a dot are R/W mounts. */
 	if (name[0] == '.') {
 		if (len == 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		name++;
 		len--;
 	}
@@ -132,7 +132,7 @@ static int afs_probe_cell_name(struct dentry *dentry)
 	ret = dns_query(net->net, "afsdb", name, len, "srv=1",
 			NULL, NULL, false);
 	if (ret == -ENODATA)
-		ret = -EDESTADDRREQ;
+		ret = -ERR(EDESTADDRREQ);
 	return ret;
 }
 
@@ -144,7 +144,7 @@ struct inode *afs_try_auto_mntpt(struct dentry *dentry, struct inode *dir)
 {
 	struct afs_vnode *vnode = AFS_FS_I(dir);
 	struct inode *inode;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	_enter("%p{%pd}, {%llx:%llu}",
 	       dentry, dentry, vnode->fid.vid, vnode->fid.vnode);
@@ -167,7 +167,7 @@ struct inode *afs_try_auto_mntpt(struct dentry *dentry, struct inode *dir)
 
 out:
 	_leave("= %d", ret);
-	return ret == -ENOENT ? NULL : ERR_PTR(ret);
+	return ret == -ERR(ENOENT) ? NULL : ERR_PTR(ret);
 }
 
 /*
@@ -184,7 +184,7 @@ static struct dentry *afs_lookup_atcell(struct dentry *dentry)
 	int len;
 
 	if (!net->ws_cell)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	ret = ERR_PTR(-ENOMEM);
 	name = kmalloc(AFS_MAXCELLNAME + 1, GFP_KERNEL);
@@ -203,7 +203,7 @@ static struct dentry *afs_lookup_atcell(struct dentry *dentry)
 	done_seqretry(&net->cells_lock, seq);
 	rcu_read_unlock();
 
-	ret = ERR_PTR(-ENOENT);
+	ret = ERR_PTR(-ERR(ENOENT));
 	if (!cell)
 		goto out_n;
 
@@ -230,11 +230,11 @@ static struct dentry *afs_dynroot_lookup(struct inode *dir, struct dentry *dentr
 	ASSERTCMP(d_inode(dentry), ==, NULL);
 
 	if (flags & LOOKUP_CREATE)
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	if (dentry->d_name.len >= AFSNAMEMAX) {
 		_leave(" = -ENAMETOOLONG");
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	}
 
 	if (dentry->d_name.len == 5 &&

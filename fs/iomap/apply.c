@@ -47,9 +47,9 @@ iomap_apply(struct inode *inode, loff_t pos, loff_t length, unsigned flags,
 	if (ret)
 		return ret;
 	if (WARN_ON(iomap.offset > pos))
-		return -EIO;
+		return -ERR(EIO);
 	if (WARN_ON(iomap.length == 0))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_iomap_apply_dstmap(inode, &iomap);
 	if (srcmap.type != IOMAP_HOLE)

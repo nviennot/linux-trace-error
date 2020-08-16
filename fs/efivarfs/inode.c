@@ -74,7 +74,7 @@ static int efivarfs_create(struct inode *dir, struct dentry *dentry,
 	bool is_removable = false;
 
 	if (!efivarfs_valid_name(dentry->d_name.name, dentry->d_name.len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	var = kzalloc(sizeof(struct efivar_entry), GFP_KERNEL);
 	if (!var)
@@ -124,7 +124,7 @@ static int efivarfs_unlink(struct inode *dir, struct dentry *dentry)
 	struct efivar_entry *var = d_inode(dentry)->i_private;
 
 	if (efivar_entry_delete(var))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	drop_nlink(d_inode(dentry));
 	dput(dentry);

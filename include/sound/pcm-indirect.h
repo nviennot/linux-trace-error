@@ -44,7 +44,7 @@ snd_pcm_indirect_playback_transfer(struct snd_pcm_substream *substream,
 		if (diff < -(snd_pcm_sframes_t) (runtime->boundary / 2))
 			diff += runtime->boundary;
 		if (diff < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rec->sw_ready += (int)frames_to_bytes(runtime, diff);
 		rec->appl_ptr = appl_ptr;
 	}
@@ -112,7 +112,7 @@ snd_pcm_indirect_capture_transfer(struct snd_pcm_substream *substream,
 		if (diff < -(snd_pcm_sframes_t) (runtime->boundary / 2))
 			diff += runtime->boundary;
 		if (diff < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		rec->sw_ready -= frames_to_bytes(runtime, diff);
 		rec->appl_ptr = appl_ptr;
 	}

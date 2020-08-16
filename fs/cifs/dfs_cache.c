@@ -81,7 +81,7 @@ static DECLARE_DELAYED_WORK(refresh_task, refresh_cache_worker);
 static int get_normalized_path(const char *path, char **npath)
 {
 	if (!path || strlen(path) < 3 || (*path != '\\' && *path != '/'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (*path == '\\') {
 		*npath = (char *)path;
@@ -196,7 +196,7 @@ static ssize_t dfscache_proc_write(struct file *file, const char __user *buffer,
 		return rc;
 
 	if (c != '0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_dbg(FYI, "clearing dfs cache\n");
 
@@ -333,7 +333,7 @@ static inline char *get_tgt_name(const struct cache_entry *ce)
 {
 	struct cache_dfs_tgt *t = ce->tgthint;
 
-	return t ? t->name : ERR_PTR(-ENOENT);
+	return t ? t->name : ERR_PTR(-ERR(ENOENT));
 }
 
 /* Return expire time out of a new entry's TTL */
@@ -516,7 +516,7 @@ static struct cache_entry *lookup_cache_entry(const char *path,
 	}
 
 	if (!found)
-		ce = ERR_PTR(-ENOENT);
+		ce = ERR_PTR(-ERR(ENOENT));
 	if (hash)
 		*hash = h;
 
@@ -604,9 +604,9 @@ static int get_dfs_referral(const unsigned int xid, struct cifs_ses *ses,
 	cifs_dbg(FYI, "%s: get an DFS referral for %s\n", __func__, path);
 
 	if (!ses || !ses->server || !ses->server->ops->get_dfs_refer)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (unlikely(!nls_codepage))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*refs = NULL;
 	*numrefs = 0;
@@ -996,7 +996,7 @@ int dfs_cache_noreq_update_tgthint(const char *path,
 	struct cache_dfs_tgt *t;
 
 	if (!it)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = get_normalized_path(path, &npath);
 	if (rc)
@@ -1053,7 +1053,7 @@ int dfs_cache_get_tgt_referral(const char *path,
 	struct cache_entry *ce;
 
 	if (!it || !ref)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = get_normalized_path(path, &npath);
 	if (rc)
@@ -1154,7 +1154,7 @@ int dfs_cache_add_vol(char *mntdata, struct smb_vol *vol, const char *fullpath)
 	struct vol_info *vi;
 
 	if (!vol || !fullpath || !mntdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_dbg(FYI, "%s: fullpath: %s\n", __func__, fullpath);
 
@@ -1199,7 +1199,7 @@ static struct vol_info *find_vol(const char *fullpath)
 		if (!strcasecmp(vi->fullpath, fullpath))
 			return vi;
 	}
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 /**
@@ -1215,7 +1215,7 @@ int dfs_cache_update_vol(const char *fullpath, struct TCP_Server_Info *server)
 	struct vol_info *vi;
 
 	if (!fullpath || !server)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_dbg(FYI, "%s: fullpath: %s\n", __func__, fullpath);
 
@@ -1278,15 +1278,15 @@ int dfs_cache_get_tgt_share(const struct dfs_cache_tgt_iterator *it,
 	char *s, sep;
 
 	if (!it || !share || !share_len || !prefix || !prefix_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sep = it->it_name[0];
 	if (sep != '\\' && sep != '/')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s = strchr(it->it_name + 1, sep);
 	if (!s)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s = strchrnul(s + 1, sep);
 
@@ -1339,11 +1339,11 @@ static char *get_dfs_root(const char *path)
 
 	s = strchr(path + 1, '\\');
 	if (!s)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	s = strchr(s + 1, '\\');
 	if (!s)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	npath = kstrndup(path, s - path, GFP_KERNEL);
 	if (!npath)
@@ -1432,7 +1432,7 @@ static struct cifs_ses *find_root_ses(struct vol_info *vi,
 
 	server = get_tcp_server(&vol);
 	if (!server) {
-		ses = ERR_PTR(-EHOSTDOWN);
+		ses = ERR_PTR(-ERR(EHOSTDOWN));
 		goto out;
 	}
 

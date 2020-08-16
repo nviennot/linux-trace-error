@@ -30,10 +30,10 @@ static struct sk_buff *tcp4_gso_segment(struct sk_buff *skb,
 					netdev_features_t features)
 {
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_TCPV4))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (!pskb_may_pull(skb, sizeof(struct tcphdr)))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (unlikely(skb->ip_summed != CHECKSUM_PARTIAL)) {
 		const struct iphdr *iph = ip_hdr(skb);
@@ -54,7 +54,7 @@ static struct sk_buff *tcp4_gso_segment(struct sk_buff *skb,
 struct sk_buff *tcp_gso_segment(struct sk_buff *skb,
 				netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	unsigned int sum_truesize = 0;
 	struct tcphdr *th;
 	unsigned int thlen;

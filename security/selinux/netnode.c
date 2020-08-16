@@ -217,7 +217,7 @@ static int sel_netnode_sid_slow(void *addr, u16 family, u32 *sid)
 		break;
 	default:
 		BUG();
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	if (ret == 0 && new) {
 		new->nsec.family = family;

@@ -52,7 +52,7 @@ static int atm_send_aal0(struct atm_vcc *vcc, struct sk_buff *skb)
 	    ((vcc->vpi << ATM_HDR_VPI_SHIFT) |
 	     (vcc->vci << ATM_HDR_VCI_SHIFT))) {
 		kfree_skb(skb);
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	}
 	return vcc->dev->ops->send(vcc, skb);
 }

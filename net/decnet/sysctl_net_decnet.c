@@ -152,7 +152,7 @@ static int dn_node_address_handler(struct ctl_table *table, int write,
 		strip_it(addr);
 
 		if (parse_addr(&dnaddr, addr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		dn_dev_devices_off();
 
@@ -192,7 +192,7 @@ static int dn_def_dev_handler(struct ctl_table *table, int write,
 
 	if (write) {
 		if (*lenp > 16)
-			return -E2BIG;
+			return -ERR(E2BIG);
 
 		memcpy(devname, buffer, *lenp);
 		devname[*lenp] = 0;
@@ -200,16 +200,16 @@ static int dn_def_dev_handler(struct ctl_table *table, int write,
 
 		dev = dev_get_by_name(&init_net, devname);
 		if (dev == NULL)
-			return -ENODEV;
+			return -ERR(ENODEV);
 
 		if (dev->dn_ptr == NULL) {
 			dev_put(dev);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		if (dn_dev_set_default(dev, 1)) {
 			dev_put(dev);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		*ppos += *lenp;
 

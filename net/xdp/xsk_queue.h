@@ -278,7 +278,7 @@ static inline bool xskq_prod_is_full(struct xsk_queue *q)
 static inline int xskq_prod_reserve(struct xsk_queue *q)
 {
 	if (xskq_prod_is_full(q))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* A, matches D */
 	q->cached_prod++;
@@ -290,7 +290,7 @@ static inline int xskq_prod_reserve_addr(struct xsk_queue *q, u64 addr)
 	struct xdp_umem_ring *ring = (struct xdp_umem_ring *)q->ring;
 
 	if (xskq_prod_is_full(q))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* A, matches D */
 	ring->desc[q->cached_prod++ & q->ring_mask] = addr;
@@ -304,7 +304,7 @@ static inline int xskq_prod_reserve_desc(struct xsk_queue *q,
 	u32 idx;
 
 	if (xskq_prod_is_full(q))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* A, matches D */
 	idx = q->cached_prod++ & q->ring_mask;

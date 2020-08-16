@@ -595,7 +595,7 @@ static int snd_sonicvibes_trigger(struct sonicvibes * sonic, int what, int cmd)
 			snd_sonicvibes_out1(sonic, SV_IREG_PC_ENABLE, sonic->enable);
 		}
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 	spin_unlock(&sonic->reg_lock);
 	return result;
@@ -856,7 +856,7 @@ static int snd_sonicvibes_pcm(struct sonicvibes *sonic, int device)
 	if ((err = snd_pcm_new(sonic->card, "s3_86c617", device, 1, 1, &pcm)) < 0)
 		return err;
 	if (snd_BUG_ON(!pcm))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_sonicvibes_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_sonicvibes_capture_ops);
@@ -909,7 +909,7 @@ static int snd_sonicvibes_put_mux(struct snd_kcontrol *kcontrol, struct snd_ctl_
 	
 	if (ucontrol->value.enumerated.item[0] >= 7 ||
 	    ucontrol->value.enumerated.item[1] >= 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	left = (ucontrol->value.enumerated.item[0] + 1) << 5;
 	right = (ucontrol->value.enumerated.item[1] + 1) << 5;
 	spin_lock_irq(&sonic->reg_lock);
@@ -1089,7 +1089,7 @@ static int snd_sonicvibes_mixer(struct sonicvibes *sonic)
 	int err;
 
 	if (snd_BUG_ON(!sonic || !sonic->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = sonic->card;
 	strcpy(card->mixername, "S3 SonicVibes");
 
@@ -1187,7 +1187,7 @@ static void snd_sonicvibes_free_gameport(struct sonicvibes *sonic)
 	}
 }
 #else
-static inline int snd_sonicvibes_create_gameport(struct sonicvibes *sonic) { return -ENOSYS; }
+static inline int snd_sonicvibes_create_gameport(struct sonicvibes *sonic) { return -ERR(ENOSYS); }
 static inline void snd_sonicvibes_free_gameport(struct sonicvibes *sonic) { }
 #endif
 
@@ -1235,7 +1235,7 @@ static int snd_sonicvibes_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 24bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-                return -ENXIO;
+                return -ERR(ENXIO);
         }
 
 	sonic = kzalloc(sizeof(*sonic), GFP_KERNEL);
@@ -1264,7 +1264,7 @@ static int snd_sonicvibes_create(struct snd_card *card,
 			KBUILD_MODNAME, sonic)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_sonicvibes_free(sonic);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	sonic->irq = pci->irq;
 	card->sync_irq = sonic->irq;
@@ -1296,14 +1296,14 @@ static int snd_sonicvibes_create(struct snd_card *card,
 		dev_err(card->dev,
 			"unable to grab DDMA-A port at 0x%x-0x%x\n",
 			dmaa, dmaa + 0x10 - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if ((sonic->res_dmac = request_region(dmac, 0x10, "S3 SonicVibes DDMA-C")) == NULL) {
 		snd_sonicvibes_free(sonic);
 		dev_err(card->dev,
 			"unable to grab DDMA-C port at 0x%x-0x%x\n",
 			dmac, dmac + 0x10 - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	pci_read_config_dword(pci, 0x40, &sonic->dmaa_port);
@@ -1424,10 +1424,10 @@ static int snd_sonic_probe(struct pci_dev *pci,
 	int idx, err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
  
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
@@ -1438,7 +1438,7 @@ static int snd_sonic_probe(struct pci_dev *pci,
 		if (pci_resource_start(pci, idx) == 0 ||
 		    !(pci_resource_flags(pci, idx) & IORESOURCE_IO)) {
 			snd_card_free(card);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	if ((err = snd_sonicvibes_create(card, pci,

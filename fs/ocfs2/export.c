@@ -45,7 +45,7 @@ static struct dentry *ocfs2_get_dentry(struct super_block *sb,
 	trace_ocfs2_get_dentry_begin(sb, handle, (unsigned long long)blkno);
 
 	if (blkno == 0) {
-		result = ERR_PTR(-ESTALE);
+		result = ERR_PTR(-ERR(ESTALE));
 		goto bail;
 	}
 
@@ -75,7 +75,7 @@ static struct dentry *ocfs2_get_dentry(struct super_block *sb,
 			 * as an inode, we return -ESTALE to be
 			 * nice
 			 */
-			status = -ESTALE;
+			status = -ERR(ESTALE);
 		} else
 			mlog(ML_ERROR, "test inode bit failed %d\n", status);
 		goto unlock_nfs_sync;
@@ -84,7 +84,7 @@ static struct dentry *ocfs2_get_dentry(struct super_block *sb,
 	trace_ocfs2_get_dentry_test_bit(status, set);
 	/* If the inode allocator bit is clear, this inode must be stale */
 	if (!set) {
-		status = -ESTALE;
+		status = -ERR(ESTALE);
 		goto unlock_nfs_sync;
 	}
 
@@ -115,7 +115,7 @@ check_gen:
 						  handle->ih_generation,
 						  inode->i_generation);
 		iput(inode);
-		result = ERR_PTR(-ESTALE);
+		result = ERR_PTR(-ERR(ESTALE));
 		goto bail;
 	}
 
@@ -156,14 +156,14 @@ static struct dentry *ocfs2_get_parent(struct dentry *child)
 
 	status = ocfs2_lookup_ino_from_name(dir, "..", 2, &blkno);
 	if (status < 0) {
-		parent = ERR_PTR(-ENOENT);
+		parent = ERR_PTR(-ERR(ENOENT));
 		goto bail_unlock;
 	}
 
 	status = ocfs2_test_inode_bit(OCFS2_SB(dir->i_sb), blkno, &set);
 	if (status < 0) {
 		if (status == -EINVAL) {
-			status = -ESTALE;
+			status = -ERR(ESTALE);
 		} else
 			mlog(ML_ERROR, "test inode bit failed %d\n", status);
 		parent = ERR_PTR(status);
@@ -172,7 +172,7 @@ static struct dentry *ocfs2_get_parent(struct dentry *child)
 
 	trace_ocfs2_get_dentry_test_bit(status, set);
 	if (!set) {
-		status = -ESTALE;
+		status = -ERR(ESTALE);
 		parent = ERR_PTR(status);
 		goto bail_unlock;
 	}

@@ -54,7 +54,7 @@ int __fscache_register_netfs(struct fscache_netfs *netfs)
 already_registered:
 	fscache_cookie_put(candidate, fscache_cookie_put_dup_netfs);
 	_leave(" = -EEXIST");
-	return -EEXIST;
+	return -ERR(EEXIST);
 }
 EXPORT_SYMBOL(__fscache_register_netfs);
 

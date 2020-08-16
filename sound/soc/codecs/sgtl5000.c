@@ -670,7 +670,7 @@ static int avc_put_threshold(struct snd_kcontrol *kcontrol,
 
 	db = (int)ucontrol->value.integer.value[0];
 	if (db < 0 || db > 96)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	reg = avc_thr_db2reg[db];
 	snd_soc_component_write(component, SGTL5000_DAP_AVC_THRESHOLD, reg);
 
@@ -813,7 +813,7 @@ static int sgtl5000_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		sgtl5000->master = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* setting i2s data format */
@@ -837,7 +837,7 @@ static int sgtl5000_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		i2sctl |= SGTL5000_I2S_LRALIGN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sgtl5000->fmt = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
@@ -850,7 +850,7 @@ static int sgtl5000_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		i2sctl |= SGTL5000_I2S_SCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, SGTL5000_CHIP_I2S_CTRL, i2sctl);
@@ -870,7 +870,7 @@ static int sgtl5000_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		sgtl5000->sysclk = freq;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -926,7 +926,7 @@ static int sgtl5000_set_clock(struct snd_soc_component *component, int frame_rat
 		clk_ctl |= SGTL5000_RATE_MODE_DIV_1 << SGTL5000_RATE_MODE_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set the sys_fs according to frame rate */
@@ -946,7 +946,7 @@ static int sgtl5000_set_clock(struct snd_soc_component *component, int frame_rat
 	default:
 		dev_err(component->dev, "frame rate %d not supported\n",
 			frame_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -978,7 +978,7 @@ static int sgtl5000_set_clock(struct snd_soc_component *component, int frame_rat
 			dev_err(component->dev, "%d ratio is not supported. "
 				"SYS_MCLK needs to be 256, 384 or 512 * fs\n",
 				sgtl5000->sysclk / frame_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1079,7 +1079,7 @@ static int sgtl5000_pcm_hw_params(struct snd_pcm_substream *substream,
 	switch (params_width(params)) {
 	case 16:
 		if (sgtl5000->fmt == SND_SOC_DAIFMT_RIGHT_J)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		i2s_ctl |= SGTL5000_I2S_DLEN_16 << SGTL5000_I2S_DLEN_SHIFT;
 		i2s_ctl |= SGTL5000_I2S_SCLKFREQ_32FS <<
 		    SGTL5000_I2S_SCLKFREQ_SHIFT;
@@ -1096,13 +1096,13 @@ static int sgtl5000_pcm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	case 32:
 		if (sgtl5000->fmt == SND_SOC_DAIFMT_RIGHT_J)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		i2s_ctl |= SGTL5000_I2S_DLEN_32 << SGTL5000_I2S_DLEN_SHIFT;
 		i2s_ctl |= SGTL5000_I2S_SCLKFREQ_64FS <<
 		    SGTL5000_I2S_SCLKFREQ_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, SGTL5000_CHIP_I2S_CTRL,
@@ -1312,7 +1312,7 @@ static int sgtl5000_set_power_regs(struct snd_soc_component *component)
 	if (vdda <= 0 || vddio <= 0 || vddd < 0) {
 		dev_err(component->dev, "regulator voltage not set correctly\n");
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* according to datasheet, maximum voltage of supplies */
@@ -1321,7 +1321,7 @@ static int sgtl5000_set_power_regs(struct snd_soc_component *component)
 			"exceed max voltage vdda %dmV vddio %dmV vddd %dmV\n",
 			vdda, vddio, vddd);
 
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* reset value */
@@ -1637,7 +1637,7 @@ static int sgtl5000_i2c_probe(struct i2c_client *client,
 	    SGTL5000_PARTID_PART_ID) {
 		dev_err(&client->dev,
 			"Device with ID register %x is not a sgtl5000\n", reg);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto disable_clk;
 	}
 

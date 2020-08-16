@@ -30,12 +30,12 @@ static int __init setup_elfcorehdr(char *arg)
 {
 	char *end;
 	if (!arg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	elfcorehdr_addr = memparse(arg, &end);
 	if (*end == '@') {
 		elfcorehdr_size = elfcorehdr_addr;
 		elfcorehdr_addr = memparse(end + 1, &end);
 	}
-	return end > arg ? 0 : -EINVAL;
+	return end > arg ? 0 : -ERR(EINVAL);
 }
 early_param("elfcorehdr", setup_elfcorehdr);

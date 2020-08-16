@@ -273,7 +273,7 @@ xfs_rmap_find_left_neighbor_helper(
 
 	*info->irec = *rec;
 	*info->stat = 1;
-	return -ECANCELED;
+	return -ERR(ECANCELED);
 }
 
 /*
@@ -350,7 +350,7 @@ xfs_rmap_lookup_le_range_helper(
 
 	*info->irec = *rec;
 	*info->stat = 1;
-	return -ECANCELED;
+	return -ERR(ECANCELED);
 }
 
 /*
@@ -2379,7 +2379,7 @@ xfs_rmap_finish_one(
 
 	if (XFS_TEST_ERROR(false, mp,
 			XFS_ERRTAG_RMAP_FINISH_ONE))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * If we haven't gotten a cursor or the cursor AG doesn't match
@@ -2708,7 +2708,7 @@ xfs_rmap_has_other_keys_helper(
 	if (rks->owner == rec->rm_owner && rks->offset == rec->rm_offset &&
 	    ((rks->flags & rec->rm_flags) & XFS_RMAP_KEY_FLAGS) == rks->flags)
 		return 0;
-	return -ECANCELED;
+	return -ERR(ECANCELED);
 }
 
 /*

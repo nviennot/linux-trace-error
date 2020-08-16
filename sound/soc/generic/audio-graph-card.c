@@ -39,7 +39,7 @@ static int graph_outdrv_event(struct snd_soc_dapm_widget *w,
 		gpiod_set_value_cansleep(priv->pa_gpio, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -106,7 +106,7 @@ static int graph_get_dai_id(struct device_node *ep)
 	of_node_put(node);
 
 	if (id < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return id;
 }
@@ -646,7 +646,7 @@ static int graph_probe(struct platform_device *pdev)
 	memset(&li, 0, sizeof(li));
 	graph_get_dais_count(priv, &li);
 	if (!li.link || !li.dais)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = asoc_simple_init_priv(priv, &li);
 	if (ret < 0)

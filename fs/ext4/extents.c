@@ -2658,7 +2658,7 @@ ext4_ext_rm_leaf(handle_t *handle, struct inode *inode,
 						  credits, revoke_credits);
 		if (err) {
 			if (err > 0)
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 			goto out;
 		}
 
@@ -4504,7 +4504,7 @@ static long ext4_zero_range(struct file *file, loff_t offset,
 	end = round_down((offset + len), 1 << blkbits);
 
 	if (start < offset || end > offset + len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	partial_begin = offset & ((1 << blkbits) - 1);
 	partial_end = (offset + len) & ((1 << blkbits) - 1);
 
@@ -4521,7 +4521,7 @@ static long ext4_zero_range(struct file *file, loff_t offset,
 	 * Indirect files do not support unwritten extents
 	 */
 	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_mutex;
 	}
 
@@ -4647,13 +4647,13 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 	 */
 	if (IS_ENCRYPTED(inode) &&
 	    (mode & (FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_INSERT_RANGE)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Return error if mode is not supported */
 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE |
 		     FALLOC_FL_COLLAPSE_RANGE | FALLOC_FL_ZERO_RANGE |
 		     FALLOC_FL_INSERT_RANGE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (mode & FALLOC_FL_PUNCH_HOLE)
 		return ext4_punch_hole(inode, offset, len);
@@ -4683,7 +4683,7 @@ long ext4_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
 	 * We only support preallocation for extent-based files only
 	 */
 	if (!(ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -4833,7 +4833,7 @@ static int ext4_iomap_xattr_fiemap(struct inode *inode, struct iomap *iomap)
 		iomap_type = IOMAP_MAPPED;
 	} else {
 		/* no in-inode or external block for xattr, so return -ENOENT */
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -4854,7 +4854,7 @@ static int ext4_iomap_xattr_begin(struct inode *inode, loff_t offset,
 
 	error = ext4_iomap_xattr_fiemap(inode, iomap);
 	if (error == 0 && (offset >= iomap->length))
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 	return error;
 }
 
@@ -4872,9 +4872,9 @@ static int ext4_fiemap_check_ranges(struct inode *inode, u64 start, u64 *len)
 		maxbytes = EXT4_SB(inode->i_sb)->s_bitmap_maxbytes;
 
 	if (*len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (start > maxbytes)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	/*
 	 * Shrink request scope to what the fs can actually handle.
@@ -5125,13 +5125,13 @@ ext4_ext_shift_extents(struct inode *inode, handle_t *handle,
 
 		if ((start == ex_start && shift > ex_start) ||
 		    (shift > start - ex_end)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
 		if (shift > EXT_MAX_BLOCKS -
 		    (stop + ext4_ext_get_actual_len(extent))) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -5221,11 +5221,11 @@ static int ext4_collapse_range(struct inode *inode, loff_t offset, loff_t len)
 	 * system does not support collapse range.
 	 */
 	if (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Collapse range works only on fs cluster size aligned regions. */
 	if (!IS_ALIGNED(offset | len, EXT4_CLUSTER_SIZE(sb)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	trace_ext4_collapse_range(inode, offset, len);
 
@@ -5245,13 +5245,13 @@ static int ext4_collapse_range(struct inode *inode, loff_t offset, loff_t len)
 	 * it is effectively a truncate operation
 	 */
 	if (offset + len >= inode->i_size) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_mutex;
 	}
 
 	/* Currently just for extent based files */
 	if (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_mutex;
 	}
 
@@ -5367,11 +5367,11 @@ static int ext4_insert_range(struct inode *inode, loff_t offset, loff_t len)
 	 * system does not support insert range.
 	 */
 	if (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Insert range works only on fs cluster size aligned regions. */
 	if (!IS_ALIGNED(offset | len, EXT4_CLUSTER_SIZE(sb)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	trace_ext4_insert_range(inode, offset, len);
 
@@ -5388,19 +5388,19 @@ static int ext4_insert_range(struct inode *inode, loff_t offset, loff_t len)
 	inode_lock(inode);
 	/* Currently just for extent based files */
 	if (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_mutex;
 	}
 
 	/* Check whether the maximum file size would be exceeded */
 	if (len > inode->i_sb->s_maxbytes - inode->i_size) {
-		ret = -EFBIG;
+		ret = -ERR(EFBIG);
 		goto out_mutex;
 	}
 
 	/* Offset must be less than i_size */
 	if (offset >= inode->i_size) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_mutex;
 	}
 

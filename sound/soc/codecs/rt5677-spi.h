@@ -17,15 +17,15 @@ void rt5677_spi_hotword_detected(void);
 #else
 static inline int rt5677_spi_read(u32 addr, void *rxbuf, size_t len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int rt5677_spi_write(u32 addr, const void *txbuf, size_t len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int rt5677_spi_write_firmware(u32 addr, const struct firmware *fw)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void rt5677_spi_hotword_detected(void){}
 #endif

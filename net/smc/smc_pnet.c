@@ -97,7 +97,7 @@ static int smc_pnet_remove_by_pnetid(struct net *net, char *pnet_name)
 	struct smc_ib_device *ibdev;
 	struct smcd_dev *smcd_dev;
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 	int ibport;
 
 	/* get pnettable for namespace */
@@ -178,7 +178,7 @@ static int smc_pnet_add_by_ndev(struct net_device *ndev)
 	struct smc_pnettable *pnettable;
 	struct net *net = dev_net(ndev);
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* get pnettable for namespace */
 	sn = net_generic(net, smc_net_id);
@@ -210,7 +210,7 @@ static int smc_pnet_remove_by_ndev(struct net_device *ndev)
 	struct smc_pnettable *pnettable;
 	struct net *net = dev_net(ndev);
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* get pnettable for namespace */
 	sn = net_generic(net, smc_net_id);
@@ -345,7 +345,7 @@ static int smc_pnet_add_eth(struct smc_pnettable *pnettable, struct net *net,
 	/* check if (base) netdev already has a pnetid. If there is one, we do
 	 * not want to add a pnet table entry
 	 */
-	rc = -EEXIST;
+	rc = -ERR(EEXIST);
 	ndev = dev_get_by_name(net, eth_name);	/* dev_hold() */
 	if (ndev) {
 		base_ndev = pnet_find_base_ndev(ndev);
@@ -364,7 +364,7 @@ static int smc_pnet_add_eth(struct smc_pnettable *pnettable, struct net *net,
 	strncpy(new_pe->eth_name, eth_name, IFNAMSIZ);
 	new_pe->ndev = ndev;
 
-	rc = -EEXIST;
+	rc = -ERR(EEXIST);
 	new_netdev = true;
 	write_lock(&pnettable->lock);
 	list_for_each_entry(tmp_pe, &pnettable->pnetlist, list) {
@@ -428,7 +428,7 @@ static int smc_pnet_add_ib(struct smc_pnettable *pnettable, char *ib_name,
 	 * add a pnet table entry in that case.
 	 */
 	if (!ibdev_applied || !smcddev_applied)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* add a new ib entry to the pnet table if there isn't one */
 	new_pe = kzalloc(sizeof(*new_pe), GFP_KERNEL);
@@ -455,7 +455,7 @@ static int smc_pnet_add_ib(struct smc_pnettable *pnettable, char *ib_name,
 		write_unlock(&pnettable->lock);
 		kfree(new_pe);
 	}
-	return (new_ibdev) ? 0 : -EEXIST;
+	return (new_ibdev) ? 0 : -ERR(EEXIST);
 }
 
 /* Append a pnetid to the end of the pnet table if not already on this list.
@@ -475,7 +475,7 @@ static int smc_pnet_enter(struct net *net, struct nlattr *tb[])
 	sn = net_generic(net, smc_net_id);
 	pnettable = &sn->pnettable;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (!tb[SMC_PNETID_NAME])
 		goto error;
 	string = (char *)nla_data(tb[SMC_PNETID_NAME]);
@@ -493,9 +493,9 @@ static int smc_pnet_enter(struct net *net, struct nlattr *tb[])
 
 	/* if this is not the initial namespace, stop here */
 	if (net != &init_net)
-		return new_netdev ? 0 : -EEXIST;
+		return new_netdev ? 0 : -ERR(EEXIST);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (tb[SMC_PNETID_IBNAME]) {
 		string = (char *)nla_data(tb[SMC_PNETID_IBNAME]);
 		string = strim(string);
@@ -510,7 +510,7 @@ static int smc_pnet_enter(struct net *net, struct nlattr *tb[])
 		else if (rc != -EEXIST)
 			goto error;
 	}
-	return (new_netdev || new_ibdev) ? 0 : -EEXIST;
+	return (new_netdev || new_ibdev) ? 0 : -ERR(EEXIST);
 
 error:
 	return rc;
@@ -555,7 +555,7 @@ static int smc_pnet_del(struct sk_buff *skb, struct genl_info *info)
 	struct net *net = genl_info_net(info);
 
 	if (!info->attrs[SMC_PNETID_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return smc_pnet_remove_by_pnetid(net,
 				(char *)nla_data(info->attrs[SMC_PNETID_NAME]));
 }
@@ -578,7 +578,7 @@ static int smc_pnet_dumpinfo(struct sk_buff *skb,
 		return -ENOMEM;
 	if (smc_pnet_set_nla(skb, pnetelem) < 0) {
 		genlmsg_cancel(skb, hdr);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	genlmsg_end(skb, hdr);
 	return 0;
@@ -636,7 +636,7 @@ static int smc_pnet_get(struct sk_buff *skb, struct genl_info *info)
 	void *hdr;
 
 	if (!info->attrs[SMC_PNETID_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!msg)
@@ -650,7 +650,7 @@ static int smc_pnet_get(struct sk_buff *skb, struct genl_info *info)
 			NLM_F_MULTI);
 	if (!hdr) {
 		nlmsg_free(msg);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	return genlmsg_reply(msg, info);
 }
@@ -798,7 +798,7 @@ static int smc_pnet_find_ndev_pnetid_by_table(struct net_device *ndev,
 	struct net *net = dev_net(ndev);
 	struct smc_pnetentry *pnetelem;
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* get pnettable for namespace */
 	sn = net_generic(net, smc_net_id);
@@ -985,7 +985,7 @@ int smc_pnetid_by_table_ib(struct smc_ib_device *smcibdev, u8 ib_port)
 	struct smc_pnettable *pnettable;
 	struct smc_pnetentry *tmp_pe;
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* get pnettable for init namespace */
 	sn = net_generic(&init_net, smc_net_id);
@@ -1014,7 +1014,7 @@ int smc_pnetid_by_table_smcd(struct smcd_dev *smcddev)
 	struct smc_pnettable *pnettable;
 	struct smc_pnetentry *tmp_pe;
 	struct smc_net *sn;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	/* get pnettable for init namespace */
 	sn = net_generic(&init_net, smc_net_id);

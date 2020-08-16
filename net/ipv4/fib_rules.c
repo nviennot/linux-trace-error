@@ -97,7 +97,7 @@ int __fib_lookup(struct net *net, struct flowi4 *flp,
 #endif
 
 	if (err == -ESRCH)
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 
 	return err;
 }
@@ -106,7 +106,7 @@ EXPORT_SYMBOL_GPL(__fib_lookup);
 static int fib4_rule_action(struct fib_rule *rule, struct flowi *flp,
 			    int flags, struct fib_lookup_arg *arg)
 {
-	int err = -EAGAIN;
+	int err = -ERR(EAGAIN);
 	struct fib_table *tbl;
 	u32 tb_id;
 
@@ -115,14 +115,14 @@ static int fib4_rule_action(struct fib_rule *rule, struct flowi *flp,
 		break;
 
 	case FR_ACT_UNREACHABLE:
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 
 	case FR_ACT_PROHIBIT:
-		return -EACCES;
+		return -ERR(EACCES);
 
 	case FR_ACT_BLACKHOLE:
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rcu_read_lock();
@@ -222,7 +222,7 @@ static int fib4_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 			       struct netlink_ext_ack *extack)
 {
 	struct net *net = sock_net(skb->sk);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct fib4_rule *rule4 = (struct fib4_rule *) rule;
 
 	if (frh->tos & ~IPTOS_TOS_MASK) {
@@ -241,7 +241,7 @@ static int fib4_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 
 			table = fib_empty_table(net);
 			if (!table) {
-				err = -ENOBUFS;
+				err = -ERR(ENOBUFS);
 				goto errout;
 			}
 
@@ -352,7 +352,7 @@ static int fib4_rule_fill(struct fib_rule *rule, struct sk_buff *skb,
 	return 0;
 
 nla_put_failure:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static size_t fib4_rule_nlmsg_payload(struct fib_rule *rule)

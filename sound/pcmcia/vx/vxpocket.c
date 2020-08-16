@@ -242,7 +242,7 @@ static int vxpocket_config(struct pcmcia_device *link)
 	free_irq(link->irq, link->priv);
 failed_preirq:
 	pcmcia_disable_device(link);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #ifdef CONFIG_PM
@@ -295,10 +295,10 @@ static int vxpocket_probe(struct pcmcia_device *p_dev)
 	}
 	if (i >= SNDRV_CARDS) {
 		snd_printk(KERN_ERR "vxpocket: too many cards found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (! enable[i])
-		return -ENODEV; /* disabled explicitly */
+		return -ERR(ENODEV); /* disabled explicitly */
 
 	/* ok, create a card instance */
 	err = snd_card_new(&p_dev->dev, index[i], id[i], THIS_MODULE,

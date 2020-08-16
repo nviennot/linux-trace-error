@@ -49,7 +49,7 @@ static __inline__ int scm_check_creds(struct ucred *creds)
 	kgid_t gid = make_kgid(cred->user_ns, creds->gid);
 
 	if (!uid_valid(uid) || !gid_valid(gid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((creds->pid == task_tgid_vnr(current) ||
 	     ns_capable(task_active_pid_ns(current)->user_ns, CAP_SYS_ADMIN)) &&
@@ -59,7 +59,7 @@ static __inline__ int scm_check_creds(struct ucred *creds)
 	      gid_eq(gid, cred->sgid)) || ns_capable(cred->user_ns, CAP_SETGID))) {
 	       return 0;
 	}
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
@@ -75,7 +75,7 @@ static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
 		return 0;
 
 	if (num > SCM_MAX_FD)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!fpl)
 	{
@@ -90,7 +90,7 @@ static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
 	fpp = &fpl->fp[fpl->count];
 
 	if (fpl->count + num > fpl->max)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 *	Verify the descriptors and increment the usage count.
@@ -102,7 +102,7 @@ static int scm_fp_copy(struct cmsghdr *cmsg, struct scm_fp_list **fplp)
 		struct file *file;
 
 		if (fd < 0 || !(file = fget_raw(fd)))
-			return -EBADF;
+			return -ERR(EBADF);
 		*fpp++ = file;
 		fpl->count++;
 	}
@@ -134,7 +134,7 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 	int err;
 
 	for_each_cmsghdr(cmsg, msg) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 		/* Verify that cmsg_len is at least sizeof(struct cmsghdr) */
 		/* The first check was omitted in <= 2.2.5. The reasoning was
@@ -174,7 +174,7 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 			p->creds.pid = creds.pid;
 			if (!p->pid || pid_vnr(p->pid) != creds.pid) {
 				struct pid *pid;
-				err = -ESRCH;
+				err = -ERR(ESRCH);
 				pid = find_get_pid(creds.pid);
 				if (!pid)
 					goto error;
@@ -182,7 +182,7 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
 				p->pid = pid;
 			}
 
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			uid = make_kuid(current_user_ns(), creds.uid);
 			gid = make_kgid(current_user_ns(), creds.gid);
 			if (!uid_valid(uid) || !gid_valid(gid))

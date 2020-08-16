@@ -212,7 +212,7 @@ static int tx_wait_done(struct snd_sof_ipc *ipc, struct snd_sof_ipc_msg *msg,
 		dev_err(sdev->dev, "error: ipc timed out for 0x%x size %d\n",
 			hdr->cmd, hdr->size);
 		snd_sof_handle_fw_exception(ipc->sdev);
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	} else {
 		ret = msg->reply_error;
 		if (ret < 0) {
@@ -240,7 +240,7 @@ static int sof_ipc_tx_message_unlocked(struct snd_sof_ipc *ipc, u32 header,
 	int ret;
 
 	if (ipc->disable_ipc_tx)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * The spin-lock is also still needed to protect message objects against
@@ -320,7 +320,7 @@ int sof_ipc_tx_message_no_pm(struct snd_sof_ipc *ipc, u32 header,
 
 	if (msg_bytes > SOF_IPC_MSG_MAX_SIZE ||
 	    reply_bytes > SOF_IPC_MSG_MAX_SIZE)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* Serialise IPC TX */
 	mutex_lock(&ipc->tx_mutex);
@@ -559,7 +559,7 @@ static int sof_get_ctrl_copy_params(enum sof_ipc_ctrl_type ctrl_type,
 		sparams->dst = (u8 *)dst->data->data;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* calculate payload size and number of messages */
@@ -705,7 +705,7 @@ int snd_sof_ipc_set_get_comp_data(struct snd_sof_control *scontrol,
 		sparams.elems = cdata->data->size;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cdata->rhdr.hdr.size = sparams.msg_bytes + sparams.hdr_bytes;
@@ -732,7 +732,7 @@ int snd_sof_ipc_set_get_comp_data(struct snd_sof_control *scontrol,
 	/* large messages is only supported from ABI 3.3.0 onwards */
 	if (v->abi_version < SOF_ABI_VER(3, 3, 0)) {
 		dev_err(sdev->dev, "error: incompatible FW ABI version\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = sof_set_get_large_ctrl_data(sdev, cdata, &sparams, send);
@@ -778,7 +778,7 @@ int snd_sof_ipc_valid(struct snd_sof_dev *sdev)
 
 	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, v->abi_version)) {
 		dev_err(sdev->dev, "error: incompatible FW ABI version\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (v->abi_version > SOF_ABI_VERSION) {
@@ -786,7 +786,7 @@ int snd_sof_ipc_valid(struct snd_sof_dev *sdev)
 			dev_warn(sdev->dev, "warn: FW ABI is more recent than kernel\n");
 		} else {
 			dev_err(sdev->dev, "error: FW ABI is more recent than kernel\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

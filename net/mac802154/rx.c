@@ -138,7 +138,7 @@ ieee802154_parse_frame_start(struct sk_buff *skb, struct ieee802154_hdr *hdr)
 
 	hlen = ieee802154_hdr_pull(skb, hdr);
 	if (hlen < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb->mac_len = hlen;
 

@@ -50,7 +50,7 @@ static int skl_get_clk_type(u32 index)
 		return SKL_SCLK_FS;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -67,7 +67,7 @@ static int skl_get_vbus_id(u32 index, u8 clk_type)
 		return index - SKL_SCLKFS_OFS;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -116,7 +116,7 @@ static int skl_send_clk_dma_control(struct skl_dev *skl,
 	int ret;
 
 	if (!rcfg)
-		return -EIO;
+		return -ERR(EIO);
 
 	ipc = &rcfg->dma_ctl_ipc;
 	fmt_cfg = (struct nhlt_fmt_cfg *)rcfg->config;
@@ -191,7 +191,7 @@ static int skl_clk_change_status(struct skl_clk *clkdev,
 	rcfg = skl_get_rate_cfg(clkdev->pdata->ssp_clks[clkdev->id].rate_cfg,
 						clkdev->rate);
 	if (!rcfg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return skl_send_clk_dma_control(clkdev->pdata->pvt_data, rcfg,
 					vbus_id, clk_type, enable);
@@ -219,12 +219,12 @@ static int skl_clk_set_rate(struct clk_hw *hw, unsigned long rate,
 	int clk_type;
 
 	if (!rate)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcfg = skl_get_rate_cfg(clkdev->pdata->ssp_clks[clkdev->id].rate_cfg,
 							rate);
 	if (!rcfg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	clk_type = skl_get_clk_type(clkdev->id);
 	if (clk_type < 0)
@@ -361,7 +361,7 @@ static int skl_clk_dev_probe(struct platform_device *pdev)
 	parent_clks = clk_pdata->parent_clks;
 	clks = clk_pdata->ssp_clks;
 	if (!parent_clks || !clks)
-		return -EIO;
+		return -ERR(EIO);
 
 	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
 	if (!data)

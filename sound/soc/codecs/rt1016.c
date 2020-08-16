@@ -314,14 +314,14 @@ static int rt1016_hw_params(struct snd_pcm_substream *substream,
 	pre_div = rl6231_get_clk_info(rt1016->sysclk, rt1016->lrck);
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_ms = frame_size > 32;
@@ -348,7 +348,7 @@ static int rt1016_hw_params(struct snd_pcm_substream *substream,
 		val_len = RT1016_I2S_DL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT1016_I2S_CTRL,
@@ -376,7 +376,7 @@ static int rt1016_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT1016_I2S_MS_S;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -386,7 +386,7 @@ static int rt1016_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT1016_I2S_BCLK_POL_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -406,7 +406,7 @@ static int rt1016_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT1016_I2S_CTRL,
@@ -436,7 +436,7 @@ static int rt1016_set_component_sysclk(struct snd_soc_component *component,
 
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt1016->sysclk = freq;
@@ -485,7 +485,7 @@ static int rt1016_set_component_pll(struct snd_soc_component *component,
 
 	default:
 		dev_err(component->dev, "Unknown PLL Source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out * 4, &pll_code);
@@ -656,7 +656,7 @@ static int rt1016_i2c_probe(struct i2c_client *i2c,
 	if (val != RT1016_DEVICE_ID_VAL) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt1016\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt1016->regmap, RT1016_RESET, 0);

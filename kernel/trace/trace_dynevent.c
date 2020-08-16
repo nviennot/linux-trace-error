@@ -22,7 +22,7 @@ int dyn_event_register(struct dyn_event_operations *ops)
 {
 	if (!ops || !ops->create || !ops->show || !ops->is_busy ||
 	    !ops->free || !ops->match)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	INIT_LIST_HEAD(&ops->list);
 	mutex_lock(&dyn_event_ops_mutex);
@@ -35,16 +35,16 @@ int dyn_event_release(int argc, char **argv, struct dyn_event_operations *type)
 {
 	struct dyn_event *pos, *n;
 	char *system = NULL, *event, *p;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (argv[0][0] == '-') {
 		if (argv[0][1] != ':')
-			return -EINVAL;
+			return -ERR(EINVAL);
 		event = &argv[0][2];
 	} else {
 		event = strchr(argv[0], ':');
 		if (!event)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		event++;
 	}
 	argc--; argv++;
@@ -56,7 +56,7 @@ int dyn_event_release(int argc, char **argv, struct dyn_event_operations *type)
 		*p = '\0';
 	}
 	if (event[0] == '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&event_mutex);
 	for_each_dyn_event_safe(pos, n) {
@@ -78,7 +78,7 @@ int dyn_event_release(int argc, char **argv, struct dyn_event_operations *type)
 static int create_dyn_event(int argc, char **argv)
 {
 	struct dyn_event_operations *ops;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	if (argv[0][0] == '-' || argv[0][0] == '!')
 		return dyn_event_release(argc, argv, NULL);
@@ -91,7 +91,7 @@ static int create_dyn_event(int argc, char **argv)
 	}
 	mutex_unlock(&dyn_event_ops_mutex);
 	if (ret == -ECANCELED)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	return ret;
 }
@@ -153,7 +153,7 @@ int dyn_events_release_all(struct dyn_event_operations *type)
 		if (type && ev->ops != type)
 			continue;
 		if (ev->ops->is_busy(ev)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 	}
@@ -257,7 +257,7 @@ int dynevent_arg_add(struct dynevent_cmd *cmd,
 	ret = seq_buf_printf(&cmd->seq, " %s%c", arg->str, arg->separator);
 	if (ret) {
 		pr_err("String is too long: %s%c\n", arg->str, arg->separator);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	return ret;
@@ -306,7 +306,7 @@ int dynevent_arg_pair_add(struct dynevent_cmd *cmd,
 		pr_err("field string is too long: %s%c%s%c\n", arg_pair->lhs,
 		       arg_pair->operator, arg_pair->rhs,
 		       arg_pair->separator);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	return ret;
@@ -329,7 +329,7 @@ int dynevent_str_add(struct dynevent_cmd *cmd, const char *str)
 	ret = seq_buf_puts(&cmd->seq, str);
 	if (ret) {
 		pr_err("String is too long: %s\n", str);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 
 	return ret;

@@ -81,7 +81,7 @@ static int nft_socket_init(const struct nft_ctx *ctx,
 	unsigned int len;
 
 	if (!tb[NFTA_SOCKET_DREG] || !tb[NFTA_SOCKET_KEY])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch(ctx->family) {
 	case NFPROTO_IPV4:
@@ -91,7 +91,7 @@ static int nft_socket_init(const struct nft_ctx *ctx,
 	case NFPROTO_INET:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->key = ntohl(nla_get_u32(tb[NFTA_SOCKET_KEY]));
@@ -103,7 +103,7 @@ static int nft_socket_init(const struct nft_ctx *ctx,
 		len = sizeof(u32);
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->dreg = nft_parse_register(tb[NFTA_SOCKET_DREG]);

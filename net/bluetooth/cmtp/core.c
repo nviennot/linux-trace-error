@@ -336,10 +336,10 @@ int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
 	BT_DBG("");
 
 	if (!l2cap_is_socket(sock))
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	session = kzalloc(sizeof(struct cmtp_session), GFP_KERNEL);
 	if (!session)
@@ -349,7 +349,7 @@ int cmtp_add_connection(struct cmtp_connadd_req *req, struct socket *sock)
 
 	s = __cmtp_get_session(&l2cap_pi(sock->sk)->chan->dst);
 	if (s && s->state == BT_CONNECTED) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto failed;
 	}
 
@@ -420,7 +420,7 @@ int cmtp_del_connection(struct cmtp_conndel_req *req)
 	BT_DBG("");
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_read(&cmtp_session_sem);
 
@@ -438,7 +438,7 @@ int cmtp_del_connection(struct cmtp_conndel_req *req)
 		 */
 		wake_up_interruptible(sk_sleep(session->sock->sk));
 	} else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	up_read(&cmtp_session_sem);
 	return err;
@@ -485,7 +485,7 @@ int cmtp_get_conninfo(struct cmtp_conninfo *ci)
 	if (session)
 		__cmtp_copy_session(session, ci);
 	else
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 
 	up_read(&cmtp_session_sem);
 	return err;

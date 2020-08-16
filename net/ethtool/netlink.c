@@ -45,7 +45,7 @@ int ethnl_parse_header_dev_get(struct ethnl_req_info *req_info,
 
 	if (!header) {
 		NL_SET_ERR_MSG(extack, "request header missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ret = nla_parse_nested(tb, ETHTOOL_A_HEADER_MAX, header,
 			       ethnl_header_policy, extack);
@@ -57,7 +57,7 @@ int ethnl_parse_header_dev_get(struct ethnl_req_info *req_info,
 			NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_HEADER_FLAGS],
 					    "unrecognized request flags");
 			nl_set_extack_cookie_u32(extack, ETHTOOL_FLAG_ALL);
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	}
 
@@ -70,7 +70,7 @@ int ethnl_parse_header_dev_get(struct ethnl_req_info *req_info,
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[ETHTOOL_A_HEADER_DEV_INDEX],
 					    "no device matches ifindex");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		/* if both ifindex and ifname are passed, they must match */
 		if (devname_attr &&
@@ -78,25 +78,25 @@ int ethnl_parse_header_dev_get(struct ethnl_req_info *req_info,
 			dev_put(dev);
 			NL_SET_ERR_MSG_ATTR(extack, header,
 					    "ifindex and name do not match");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	} else if (devname_attr) {
 		dev = dev_get_by_name(net, nla_data(devname_attr));
 		if (!dev) {
 			NL_SET_ERR_MSG_ATTR(extack, devname_attr,
 					    "no device matches name");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	} else if (require_dev) {
 		NL_SET_ERR_MSG_ATTR(extack, header,
 				    "neither ifindex nor name specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev && !netif_device_present(dev)) {
 		dev_put(dev);
 		NL_SET_ERR_MSG(extack, "device not present");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	req_info->dev = dev;
@@ -123,7 +123,7 @@ int ethnl_fill_reply_header(struct sk_buff *skb, struct net_device *dev,
 		return 0;
 	nest = nla_nest_start(skb, attrtype);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, ETHTOOL_A_HEADER_DEV_INDEX, (u32)dev->ifindex) ||
 	    nla_put_string(skb, ETHTOOL_A_HEADER_DEV_NAME, dev->name))
@@ -137,7 +137,7 @@ int ethnl_fill_reply_header(struct sk_buff *skb, struct net_device *dev,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -318,7 +318,7 @@ static int ethnl_default_doit(struct sk_buff *skb, struct genl_info *info)
 
 	ops = ethnl_default_requests[cmd];
 	if (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", cmd))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	req_info = kzalloc(ops->req_info_size, GFP_KERNEL);
 	if (!req_info)
 		return -ENOMEM;
@@ -385,7 +385,7 @@ static int ethnl_default_dump_one(struct sk_buff *skb, struct net_device *dev,
 	ehdr = genlmsg_put(skb, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			   &ethtool_genl_family, 0, ctx->ops->reply_cmd);
 	if (!ehdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ethnl_init_reply_data(ctx->reply_data, ctx->ops, dev);
 	rtnl_lock();
@@ -486,7 +486,7 @@ static int ethnl_default_start(struct netlink_callback *cb)
 	ghdr = nlmsg_data(cb->nlh);
 	ops = ethnl_default_requests[ghdr->cmd];
 	if (WARN_ONCE(!ops, "cmd %u has no ethnl_request_ops\n", ghdr->cmd))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	req_info = kzalloc(ops->req_info_size, GFP_KERNEL);
 	if (!req_info)
 		return -ENOMEM;

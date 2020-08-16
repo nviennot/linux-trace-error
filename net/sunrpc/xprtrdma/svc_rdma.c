@@ -85,7 +85,7 @@ static int read_reset_stat(struct ctl_table *table, int write,
 	atomic_t *stat = (atomic_t *)table->data;
 
 	if (!stat)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (write)
 		atomic_set(stat, 0);

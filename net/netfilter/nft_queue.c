@@ -90,16 +90,16 @@ static int nft_queue_init(const struct nft_ctx *ctx,
 		priv->queues_total = 1;
 
 	if (priv->queues_total == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	maxid = priv->queues_total - 1 + priv->queuenum;
 	if (maxid > U16_MAX)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (tb[NFTA_QUEUE_FLAGS]) {
 		priv->flags = ntohs(nla_get_be16(tb[NFTA_QUEUE_FLAGS]));
 		if (priv->flags & ~NFT_QUEUE_FLAG_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -119,9 +119,9 @@ static int nft_queue_sreg_init(const struct nft_ctx *ctx,
 	if (tb[NFTA_QUEUE_FLAGS]) {
 		priv->flags = ntohs(nla_get_be16(tb[NFTA_QUEUE_FLAGS]));
 		if (priv->flags & ~NFT_QUEUE_FLAG_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (priv->flags & NFT_QUEUE_FLAG_CPU_FANOUT)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	}
 
 	return 0;
@@ -179,7 +179,7 @@ nft_queue_select_ops(const struct nft_ctx *ctx,
 		     const struct nlattr * const tb[])
 {
 	if (tb[NFTA_QUEUE_NUM] && tb[NFTA_QUEUE_SREG_QNUM])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	init_hashrandom(&jhash_initval);
 
@@ -189,7 +189,7 @@ nft_queue_select_ops(const struct nft_ctx *ctx,
 	if (tb[NFTA_QUEUE_SREG_QNUM])
 		return &nft_queue_sreg_ops;
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct nft_expr_type nft_queue_type __read_mostly = {

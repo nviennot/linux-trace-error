@@ -282,7 +282,7 @@ static bool tomoyo_merge_unix_acl(struct tomoyo_acl_info *a,
 int tomoyo_write_inet_network(struct tomoyo_acl_param *param)
 {
 	struct tomoyo_inet_acl e = { .head.type = TOMOYO_TYPE_INET_ACL };
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	u8 type;
 	const char *protocol = tomoyo_read_token(param);
 	const char *operation = tomoyo_read_token(param);
@@ -294,7 +294,7 @@ int tomoyo_write_inet_network(struct tomoyo_acl_param *param)
 		if (tomoyo_permstr(operation, tomoyo_socket_keyword[type]))
 			e.perm |= 1 << type;
 	if (e.protocol == TOMOYO_SOCK_MAX || !e.perm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (param->data[0] == '@') {
 		param->data++;
 		e.address.group =
@@ -339,9 +339,9 @@ int tomoyo_write_unix_network(struct tomoyo_acl_param *param)
 		if (tomoyo_permstr(operation, tomoyo_socket_keyword[type]))
 			e.perm |= 1 << type;
 	if (e.protocol == TOMOYO_SOCK_MAX || !e.perm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!tomoyo_parse_name_union(param, &e.name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	error = tomoyo_update_domain(&e.head, sizeof(e), param,
 				     tomoyo_same_unix_acl,
 				     tomoyo_merge_unix_acl);

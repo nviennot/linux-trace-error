@@ -433,7 +433,7 @@ vmci_transport_notify_pkt_recv_pre_block(
 
 	/* Notify our peer that we are waiting for data to read. */
 	if (!send_waiting_read(sk, target)) {
-		err = -EHOSTUNREACH;
+		err = -ERR(EHOSTUNREACH);
 		return err;
 	}
 #ifdef VSOCK_OPTIMIZATION_FLOW_CONTROL
@@ -522,7 +522,7 @@ vmci_transport_notify_pkt_send_pre_block(
 {
 	/* Notify our peer that we are waiting for room to write. */
 	if (!send_waiting_write(sk, 1))
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	return 0;
 }

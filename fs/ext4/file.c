@@ -56,7 +56,7 @@ static ssize_t ext4_dio_read_iter(struct kiocb *iocb, struct iov_iter *to)
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!inode_trylock_shared(inode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		inode_lock_shared(inode);
 	}
@@ -90,7 +90,7 @@ static ssize_t ext4_dax_read_iter(struct kiocb *iocb, struct iov_iter *to)
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!inode_trylock_shared(inode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		inode_lock_shared(inode);
 	}
@@ -116,7 +116,7 @@ static ssize_t ext4_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
 	struct inode *inode = file_inode(iocb->ki_filp);
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!iov_iter_count(to))
 		return 0; /* skip atime */
@@ -217,7 +217,7 @@ static ssize_t ext4_generic_write_checks(struct kiocb *iocb,
 	ssize_t ret;
 
 	if (unlikely(IS_IMMUTABLE(inode)))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = generic_write_checks(iocb, from);
 	if (ret <= 0)
@@ -231,7 +231,7 @@ static ssize_t ext4_generic_write_checks(struct kiocb *iocb,
 		struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 
 		if (iocb->ki_pos >= sbi->s_bitmap_maxbytes)
-			return -EFBIG;
+			return -ERR(EFBIG);
 		iov_iter_truncate(from, sbi->s_bitmap_maxbytes - iocb->ki_pos);
 	}
 
@@ -259,7 +259,7 @@ static ssize_t ext4_buffered_write_iter(struct kiocb *iocb,
 	struct inode *inode = file_inode(iocb->ki_filp);
 
 	if (iocb->ki_flags & IOCB_NOWAIT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode_lock(inode);
 	ret = ext4_write_checks(iocb, from);
@@ -477,10 +477,10 @@ static ssize_t ext4_dio_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (ilock_shared) {
 			if (!inode_trylock_shared(inode))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		} else {
 			if (!inode_trylock(inode))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		}
 	} else {
 		if (ilock_shared)
@@ -504,7 +504,7 @@ static ssize_t ext4_dio_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 	/* if we're going to block and IOCB_NOWAIT is set, return -EAGAIN */
 	if ((iocb->ki_flags & IOCB_NOWAIT) && (unaligned_io || extend)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -596,7 +596,7 @@ ext4_dax_write_iter(struct kiocb *iocb, struct iov_iter *from)
 
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!inode_trylock(inode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		inode_lock(inode);
 	}
@@ -643,7 +643,7 @@ ext4_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	struct inode *inode = file_inode(iocb->ki_filp);
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 #ifdef CONFIG_FS_DAX
 	if (IS_DAX(inode))
@@ -743,14 +743,14 @@ static int ext4_file_mmap(struct file *file, struct vm_area_struct *vma)
 	struct dax_device *dax_dev = sbi->s_daxdev;
 
 	if (unlikely(ext4_forced_shutdown(sbi)))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * We don't support synchronous mappings for non-DAX files and
 	 * for DAX files if underneath dax_device is not synchronous.
 	 */
 	if (!daxdev_mapping_supported(vma, dax_dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	file_accessed(file);
 	if (IS_DAX(file_inode(file))) {
@@ -815,7 +815,7 @@ static int ext4_file_open(struct inode * inode, struct file * filp)
 	int ret;
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	ret = ext4_sample_last_mounted(inode->i_sb, filp->f_path.mnt);
 	if (ret)

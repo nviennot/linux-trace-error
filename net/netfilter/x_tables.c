@@ -177,10 +177,10 @@ EXPORT_SYMBOL(xt_unregister_matches);
 struct xt_match *xt_find_match(u8 af, const char *name, u8 revision)
 {
 	struct xt_match *m;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (strnlen(name, XT_EXTENSION_MAXNAMELEN) == XT_EXTENSION_MAXNAMELEN)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	mutex_lock(&xt[af].mutex);
 	list_for_each_entry(m, &xt[af].match, list) {
@@ -191,7 +191,7 @@ struct xt_match *xt_find_match(u8 af, const char *name, u8 revision)
 					return m;
 				}
 			} else
-				err = -EPROTOTYPE; /* Found something. */
+				err = -ERR(EPROTOTYPE); /* Found something. */
 		}
 	}
 	mutex_unlock(&xt[af].mutex);
@@ -210,7 +210,7 @@ xt_request_find_match(uint8_t nfproto, const char *name, uint8_t revision)
 	struct xt_match *match;
 
 	if (strnlen(name, XT_EXTENSION_MAXNAMELEN) == XT_EXTENSION_MAXNAMELEN)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	match = xt_find_match(nfproto, name, revision);
 	if (IS_ERR(match)) {
@@ -226,10 +226,10 @@ EXPORT_SYMBOL_GPL(xt_request_find_match);
 static struct xt_target *xt_find_target(u8 af, const char *name, u8 revision)
 {
 	struct xt_target *t;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (strnlen(name, XT_EXTENSION_MAXNAMELEN) == XT_EXTENSION_MAXNAMELEN)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	mutex_lock(&xt[af].mutex);
 	list_for_each_entry(t, &xt[af].target, list) {
@@ -240,7 +240,7 @@ static struct xt_target *xt_find_target(u8 af, const char *name, u8 revision)
 					return t;
 				}
 			} else
-				err = -EPROTOTYPE; /* Found something. */
+				err = -ERR(EPROTOTYPE); /* Found something. */
 		}
 	}
 	mutex_unlock(&xt[af].mutex);
@@ -257,7 +257,7 @@ struct xt_target *xt_request_find_target(u8 af, const char *name, u8 revision)
 	struct xt_target *target;
 
 	if (strnlen(name, XT_EXTENSION_MAXNAMELEN) == XT_EXTENSION_MAXNAMELEN)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	target = xt_find_target(af, name, revision);
 	if (IS_ERR(target)) {
@@ -380,13 +380,13 @@ int xt_find_revision(u8 af, const char *name, u8 revision, int target,
 
 	/* Nothing at all?  Return 0 to try loading module. */
 	if (best == -1) {
-		*err = -ENOENT;
+		*err = -ERR(ENOENT);
 		return 0;
 	}
 
 	*err = best;
 	if (!have_rev)
-		*err = -EPROTONOSUPPORT;
+		*err = -ERR(EPROTONOSUPPORT);
 	return 1;
 }
 EXPORT_SYMBOL_GPL(xt_find_revision);
@@ -441,15 +441,15 @@ textify_hooks(char *buf, size_t size, unsigned int mask, uint8_t nfproto)
 int xt_check_proc_name(const char *name, unsigned int size)
 {
 	if (name[0] == '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strnlen(name, size) == size)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (strcmp(name, ".") == 0 ||
 	    strcmp(name, "..") == 0 ||
 	    strchr(name, '/'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -470,14 +470,14 @@ int xt_check_match(struct xt_mtchk_param *par,
 				   xt_prefix[par->family], par->match->name,
 				   par->match->revision,
 				   XT_ALIGN(par->match->matchsize), size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->match->table != NULL &&
 	    strcmp(par->match->table, par->table) != 0) {
 		pr_info_ratelimited("%s_tables: %s match: only valid in %s table, not %s\n",
 				    xt_prefix[par->family], par->match->name,
 				    par->match->table, par->table);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->match->hooks && (par->hook_mask & ~par->match->hooks) != 0) {
 		char used[64], allow[64];
@@ -489,13 +489,13 @@ int xt_check_match(struct xt_mtchk_param *par,
 				    textify_hooks(allow, sizeof(allow),
 						  par->match->hooks,
 						  par->family));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->match->proto && (par->match->proto != proto || inv_proto)) {
 		pr_info_ratelimited("%s_tables: %s match: only valid for protocol %u\n",
 				    xt_prefix[par->family], par->match->name,
 				    par->match->proto);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->match->checkentry != NULL) {
 		ret = par->match->checkentry(par);
@@ -503,7 +503,7 @@ int xt_check_match(struct xt_mtchk_param *par,
 			return ret;
 		else if (ret > 0)
 			/* Flag up potential errors. */
-			return -EIO;
+			return -ERR(EIO);
 	}
 	return 0;
 }
@@ -532,16 +532,16 @@ static int xt_check_entry_match(const char *match, const char *target,
 	pos = (struct xt_entry_match *)match;
 	do {
 		if ((unsigned long)pos % alignment)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (length < (int)sizeof(struct xt_entry_match))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (pos->u.match_size < sizeof(struct xt_entry_match))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (pos->u.match_size > length)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		length -= pos->u.match_size;
 		pos = ((void *)((char *)(pos) + (pos)->u.match_size));
@@ -575,9 +575,9 @@ int xt_check_table_hooks(const struct xt_table_info *info, unsigned int valid_ho
 			continue;
 
 		if (info->hook_entry[i] == 0xFFFFFFFF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (info->underflow[i] == 0xFFFFFFFF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (check_hooks) {
 			if (max_uflow > info->underflow[i])
@@ -604,7 +604,7 @@ int xt_check_table_hooks(const struct xt_table_info *info, unsigned int valid_ho
 	return 0;
 error:
 	pr_err_ratelimited("%s at hook %d\n", err, i);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(xt_check_table_hooks);
 
@@ -650,7 +650,7 @@ int xt_compat_add_offset(u_int8_t af, unsigned int offset, int delta)
 		return -ENOMEM;
 
 	if (xp->cur >= xp->number)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (xp->cur)
 		delta += xp->compat_tab[xp->cur - 1].delta;
@@ -699,10 +699,10 @@ int xt_compat_init_offsets(u8 af, unsigned int number)
 	WARN_ON(!mutex_is_locked(&xt[af].compat_mutex));
 
 	if (!number || number > (INT_MAX / sizeof(struct compat_delta)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(xt[af].compat_tab))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mem = sizeof(struct compat_delta) * number;
 	if (mem > XT_MAX_TABLE_SIZE)
@@ -807,32 +807,32 @@ int xt_compat_check_entry_offsets(const void *base, const char *elems,
 	const char *e = base;
 
 	if (target_offset < size_of_base_struct)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (target_offset + sizeof(*t) > next_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t = (void *)(e + target_offset);
 	if (t->u.target_size < sizeof(*t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (target_offset + t->u.target_size > next_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(t->u.user.name, XT_STANDARD_TARGET) == 0) {
 		const struct compat_xt_standard_target *st = (const void *)t;
 
 		if (COMPAT_XT_ALIGN(target_offset + sizeof(*st)) != next_offset)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!verdict_ok(st->verdict))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (strcmp(t->u.user.name, XT_ERROR_TARGET) == 0) {
 		const struct compat_xt_error_target *et = (const void *)t;
 
 		if (!error_tg_ok(t->u.target_size, sizeof(*et),
 				 et->errorname, sizeof(et->errorname)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* compat_xt_entry match has less strict alignment requirements,
@@ -901,32 +901,32 @@ int xt_check_entry_offsets(const void *base,
 
 	/* target start is within the ip/ip6/arpt_entry struct */
 	if (target_offset < size_of_base_struct)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (target_offset + sizeof(*t) > next_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t = (void *)(e + target_offset);
 	if (t->u.target_size < sizeof(*t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (target_offset + t->u.target_size > next_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strcmp(t->u.user.name, XT_STANDARD_TARGET) == 0) {
 		const struct xt_standard_target *st = (const void *)t;
 
 		if (XT_ALIGN(target_offset + sizeof(*st)) != next_offset)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!verdict_ok(st->verdict))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else if (strcmp(t->u.user.name, XT_ERROR_TARGET) == 0) {
 		const struct xt_error_target *et = (const void *)t;
 
 		if (!error_tg_ok(t->u.target_size, sizeof(*et),
 				 et->errorname, sizeof(et->errorname)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return xt_check_entry_match(elems, base + target_offset,
@@ -988,14 +988,14 @@ int xt_check_target(struct xt_tgchk_param *par,
 				   xt_prefix[par->family], par->target->name,
 				   par->target->revision,
 				   XT_ALIGN(par->target->targetsize), size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->target->table != NULL &&
 	    strcmp(par->target->table, par->table) != 0) {
 		pr_info_ratelimited("%s_tables: %s target: only valid in %s table, not %s\n",
 				    xt_prefix[par->family], par->target->name,
 				    par->target->table, par->table);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->target->hooks && (par->hook_mask & ~par->target->hooks) != 0) {
 		char used[64], allow[64];
@@ -1007,13 +1007,13 @@ int xt_check_target(struct xt_tgchk_param *par,
 				    textify_hooks(allow, sizeof(allow),
 						  par->target->hooks,
 						  par->family));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->target->proto && (par->target->proto != proto || inv_proto)) {
 		pr_info_ratelimited("%s_tables: %s target: only valid for protocol %u\n",
 				    xt_prefix[par->family], par->target->name,
 				    par->target->proto);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (par->target->checkentry != NULL) {
 		ret = par->target->checkentry(par);
@@ -1021,7 +1021,7 @@ int xt_check_target(struct xt_tgchk_param *par,
 			return ret;
 		else if (ret > 0)
 			/* Flag up potential errors. */
-			return -EIO;
+			return -ERR(EIO);
 	}
 	return 0;
 }
@@ -1060,7 +1060,7 @@ void *xt_copy_counters_from_user(const void __user *user, unsigned int len,
 		struct compat_xt_counters_info compat_tmp;
 
 		if (len <= sizeof(compat_tmp))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		len -= sizeof(compat_tmp);
 		if (copy_from_user(&compat_tmp, user, sizeof(compat_tmp)) != 0)
@@ -1073,7 +1073,7 @@ void *xt_copy_counters_from_user(const void __user *user, unsigned int len,
 #endif
 	{
 		if (len <= sizeof(*info))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		len -= sizeof(*info);
 		if (copy_from_user(info, user, sizeof(*info)) != 0)
@@ -1087,7 +1087,7 @@ void *xt_copy_counters_from_user(const void __user *user, unsigned int len,
 	size *= info->num_counters;
 
 	if (size != (u64)len)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	mem = vmalloc(len);
 	if (!mem)
@@ -1243,7 +1243,7 @@ struct xt_table *xt_find_table_lock(struct net *net, u_int8_t af,
 	module_put(found->me);
  out:
 	mutex_unlock(&xt[af].mutex);
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 EXPORT_SYMBOL_GPL(xt_find_table_lock);
 
@@ -1374,7 +1374,7 @@ xt_replace_table(struct xt_table *table,
 		pr_debug("num_counters != table->private->number (%u/%u)\n",
 			 num_counters, private->number);
 		local_bh_enable();
-		*error = -EAGAIN;
+		*error = -ERR(EAGAIN);
 		return NULL;
 	}
 
@@ -1435,7 +1435,7 @@ struct xt_table *xt_register_table(struct net *net,
 	/* Don't autoload: we'd eat our tail... */
 	list_for_each_entry(t, &net->xt.tables[table->af], list) {
 		if (strcmp(t->name, table->name) == 0) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto unlock;
 		}
 	}
@@ -1697,7 +1697,7 @@ xt_hook_ops_alloc(const struct xt_table *table, nf_hookfn *fn)
 	struct nf_hook_ops *ops;
 
 	if (!num_hooks)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ops = kcalloc(num_hooks, sizeof(*ops), GFP_KERNEL);
 	if (ops == NULL)
@@ -1728,7 +1728,7 @@ int xt_proto_init(struct net *net, u_int8_t af)
 #endif
 
 	if (af >= ARRAY_SIZE(xt_prefix))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 
 #ifdef CONFIG_PROC_FS

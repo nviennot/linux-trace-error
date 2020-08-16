@@ -106,7 +106,7 @@ static int __omfs_write_inode(struct inode *inode, int wait)
 	struct buffer_head *bh, *bh2;
 	u64 ctime;
 	int i;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 	int sync_failed = 0;
 
 	/* get current inode since we may have written sibling ptrs etc. */
@@ -162,7 +162,7 @@ static int __omfs_write_inode(struct inode *inode, int wait)
 		}
 		brelse(bh2);
 	}
-	ret = (sync_failed) ? -EIO : 0;
+	ret = (sync_failed) ? -ERR(EIO) : 0;
 out_brelse:
 	brelse(bh);
 out:
@@ -260,7 +260,7 @@ fail_bh:
 	brelse(bh);
 iget_failed:
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static void omfs_put_super(struct super_block *sb)
@@ -461,7 +461,7 @@ static int omfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct omfs_root_block *omfs_rb;
 	struct omfs_sb_info *sbi;
 	struct inode *root;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	sbi = kzalloc(sizeof(struct omfs_sb_info), GFP_KERNEL);
 	if (!sbi)

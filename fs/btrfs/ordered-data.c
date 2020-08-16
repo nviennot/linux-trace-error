@@ -685,7 +685,7 @@ int btrfs_wait_ordered_range(struct inode *inode, u64 start, u64 len)
 		 * the range to complete.
 		 */
 		if (test_bit(BTRFS_ORDERED_IOERR, &ordered->flags))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		btrfs_put_ordered_extent(ordered);
 		if (end == 0 || end == start)
 			break;

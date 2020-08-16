@@ -69,7 +69,7 @@ static int synproxy_tg4_check(const struct xt_tgchk_param *par)
 
 	if (e->ip.proto != IPPROTO_TCP ||
 	    e->ip.invflags & XT_INV_PROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nf_ct_netns_get(par->net, par->family);
 	if (err)

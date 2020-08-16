@@ -1690,19 +1690,19 @@ int ip_mc_validate_source(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 
 	/* Primary sanity checks. */
 	if (!in_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv4_is_multicast(saddr) || ipv4_is_lbcast(saddr) ||
 	    skb->protocol != htons(ETH_P_IP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv4_is_loopback(saddr) && !IN_DEV_ROUTE_LOCALNET(in_dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv4_is_zeronet(saddr)) {
 		if (!ipv4_is_local_multicast(daddr) &&
 		    ip_hdr(skb)->protocol != IPPROTO_IGMP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		err = fib_validate_source(skb, saddr, 0, tos, 0, dev,
 					  in_dev, itag);
@@ -1732,7 +1732,7 @@ static int ip_route_input_mc(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	rth = rt_dst_alloc(dev_net(dev)->loopback_dev, flags, RTN_MULTICAST,
 			   IN_DEV_CONF_GET(in_dev, NOPOLICY), false);
 	if (!rth)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 #ifdef CONFIG_IP_ROUTE_CLASSID
 	rth->dst.tclassid = itag;
@@ -1795,7 +1795,7 @@ static int __mkroute_input(struct sk_buff *skb,
 	out_dev = __in_dev_get_rcu(dev);
 	if (!out_dev) {
 		net_crit_ratelimited("Bug in ip_route_input_slow(). Please report.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = fib_validate_source(skb, saddr, daddr, tos, FIB_RES_OIF(*res),
@@ -1828,7 +1828,7 @@ static int __mkroute_input(struct sk_buff *skb,
 		 */
 		if (out_dev == in_dev &&
 		    IN_DEV_PROXY_ARP_PVLAN(in_dev) == 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto cleanup;
 		}
 	}
@@ -1849,7 +1849,7 @@ static int __mkroute_input(struct sk_buff *skb,
 			   IN_DEV_CONF_GET(in_dev, NOPOLICY),
 			   IN_DEV_CONF_GET(out_dev, NOXFRM));
 	if (!rth) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto cleanup;
 	}
 
@@ -2029,7 +2029,7 @@ int ip_route_use_hint(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	struct in_device *in_dev = __in_dev_get_rcu(dev);
 	struct rtable *rt = skb_rtable(hint);
 	struct net *net = dev_net(dev);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	u32 tag = 0;
 
 	if (ipv4_is_multicast(saddr) || ipv4_is_lbcast(saddr))
@@ -2079,7 +2079,7 @@ static int ip_route_input_slow(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	struct flow_keys *flkeys = NULL, _flkeys;
 	struct net    *net = dev_net(dev);
 	struct ip_tunnel_info *tun_info;
-	int		err = -EINVAL;
+	int		err = -ERR(EINVAL);
 	unsigned int	flags = 0;
 	u32		itag = 0;
 	struct rtable	*rth;
@@ -2154,7 +2154,7 @@ static int ip_route_input_slow(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	err = fib_lookup(net, &fl4, res, 0);
 	if (err != 0) {
 		if (!IN_DEV_FORWARD(in_dev))
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 		goto no_route;
 	}
 
@@ -2176,7 +2176,7 @@ static int ip_route_input_slow(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	}
 
 	if (!IN_DEV_FORWARD(in_dev)) {
-		err = -EHOSTUNREACH;
+		err = -ERR(EHOSTUNREACH);
 		goto no_route;
 	}
 	if (res->type != RTN_UNICAST)
@@ -2268,11 +2268,11 @@ martian_destination:
 #endif
 
 e_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	goto out;
 
 e_nobufs:
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	goto out;
 
 martian_source:
@@ -2313,7 +2313,7 @@ int ip_route_input_rcu(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	if (ipv4_is_multicast(daddr)) {
 		struct in_device *in_dev = __in_dev_get_rcu(dev);
 		int our = 0;
-		int err = -EINVAL;
+		int err = -ERR(EINVAL);
 
 		if (!in_dev)
 			return err;
@@ -2361,20 +2361,20 @@ static struct rtable *__mkroute_output(const struct fib_result *res,
 
 	in_dev = __in_dev_get_rcu(dev_out);
 	if (!in_dev)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (likely(!IN_DEV_ROUTE_LOCALNET(in_dev)))
 		if (ipv4_is_loopback(fl4->saddr) &&
 		    !(dev_out->flags & IFF_LOOPBACK) &&
 		    !netif_is_l3_master(dev_out))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 	if (ipv4_is_lbcast(fl4->daddr))
 		type = RTN_BROADCAST;
 	else if (ipv4_is_multicast(fl4->daddr))
 		type = RTN_MULTICAST;
 	else if (ipv4_is_zeronet(fl4->daddr))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (dev_out->flags & IFF_LOOPBACK)
 		flags |= RTCF_LOCAL;
@@ -2441,7 +2441,7 @@ add:
 			   IN_DEV_CONF_GET(in_dev, NOPOLICY),
 			   IN_DEV_CONF_GET(in_dev, NOXFRM));
 	if (!rth)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	rth->rt_iif = orig_oif;
 
@@ -2513,11 +2513,11 @@ struct rtable *ip_route_output_key_hash_rcu(struct net *net, struct flowi4 *fl4,
 		if (ipv4_is_multicast(fl4->saddr) ||
 		    ipv4_is_lbcast(fl4->saddr) ||
 		    ipv4_is_zeronet(fl4->saddr)) {
-			rth = ERR_PTR(-EINVAL);
+			rth = ERR_PTR(-ERR(EINVAL));
 			goto out;
 		}
 
-		rth = ERR_PTR(-ENETUNREACH);
+		rth = ERR_PTR(-ERR(ENETUNREACH));
 
 		/* I removed check for oif == dev_out->oif here.
 		   It was wrong for two reasons:
@@ -2564,13 +2564,13 @@ struct rtable *ip_route_output_key_hash_rcu(struct net *net, struct flowi4 *fl4,
 
 	if (fl4->flowi4_oif) {
 		dev_out = dev_get_by_index_rcu(net, fl4->flowi4_oif);
-		rth = ERR_PTR(-ENODEV);
+		rth = ERR_PTR(-ERR(ENODEV));
 		if (!dev_out)
 			goto out;
 
 		/* RACE: Check return value of inet_select_addr instead. */
 		if (!(dev_out->flags & IFF_UP) || !__in_dev_get_rcu(dev_out)) {
-			rth = ERR_PTR(-ENETUNREACH);
+			rth = ERR_PTR(-ERR(ENETUNREACH));
 			goto out;
 		}
 		if (ipv4_is_local_multicast(fl4->daddr) ||
@@ -2801,12 +2801,12 @@ struct rtable *ip_route_output_tunnel(struct sk_buff *skb,
 	rt = ip_route_output_key(net, &fl4);
 	if (IS_ERR(rt)) {
 		netdev_dbg(dev, "no route to %pI4\n", &fl4.daddr);
-		return ERR_PTR(-ENETUNREACH);
+		return ERR_PTR(-ERR(ENETUNREACH));
 	}
 	if (rt->dst.dev == dev) { /* is this necessary? */
 		netdev_dbg(dev, "circular route to %pI4\n", &fl4.daddr);
 		ip_rt_put(rt);
-		return ERR_PTR(-ELOOP);
+		return ERR_PTR(-ERR(ELOOP));
 	}
 #ifdef CONFIG_DST_CACHE
 	if (use_cache)
@@ -2831,7 +2831,7 @@ static int rt_fill_info(struct net *net, __be32 dst, __be32 src,
 
 	nlh = nlmsg_put(skb, portid, seq, RTM_NEWROUTE, sizeof(*r), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	r = nlmsg_data(nlh);
 	r->rtm_family	 = AF_INET;
@@ -2949,7 +2949,7 @@ static int rt_fill_info(struct net *net, __be32 dst, __be32 src,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int fnhe_dump_bucket(struct net *net, struct sk_buff *skb,
@@ -3099,7 +3099,7 @@ static int inet_rtm_valid_getroute_req(struct sk_buff *skb,
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG(extack,
 			       "ipv4: Invalid header for route get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -3112,14 +3112,14 @@ static int inet_rtm_valid_getroute_req(struct sk_buff *skb,
 	    rtm->rtm_table || rtm->rtm_protocol ||
 	    rtm->rtm_scope || rtm->rtm_type) {
 		NL_SET_ERR_MSG(extack, "ipv4: Invalid values in header for route get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rtm->rtm_flags & ~(RTM_F_NOTIFY |
 			       RTM_F_LOOKUP_TABLE |
 			       RTM_F_FIB_MATCH)) {
 		NL_SET_ERR_MSG(extack, "ipv4: Unsupported rtm_flags for route get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*rtm), tb, RTA_MAX,
@@ -3130,7 +3130,7 @@ static int inet_rtm_valid_getroute_req(struct sk_buff *skb,
 	if ((tb[RTA_SRC] && !rtm->rtm_src_len) ||
 	    (tb[RTA_DST] && !rtm->rtm_dst_len)) {
 		NL_SET_ERR_MSG(extack, "ipv4: rtm_src_len and rtm_dst_len must be 32 for IPv4");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i <= RTA_MAX; i++) {
@@ -3150,7 +3150,7 @@ static int inet_rtm_valid_getroute_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "ipv4: Unsupported attribute in route get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -3206,7 +3206,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	skb = inet_rtm_getroute_build_skb(src, dst, ip_proto, sport, dport);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	fl4.daddr = dst;
 	fl4.saddr = src;
@@ -3227,7 +3227,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 		dev = dev_get_by_index_rcu(net, iif);
 		if (!dev) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto errout_rcu;
 		}
 
@@ -3272,7 +3272,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		if (!res.fi) {
 			err = fib_props[res.type].error;
 			if (!err)
-				err = -EHOSTUNREACH;
+				err = -ERR(EHOSTUNREACH);
 			goto errout_rcu;
 		}
 		fri.fi = res.fi;
@@ -3344,7 +3344,7 @@ static int ipv4_sysctl_rtcache_flush(struct ctl_table *__ctl, int write,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct ctl_table ipv4_route_table[] = {

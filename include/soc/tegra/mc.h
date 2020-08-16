@@ -103,17 +103,17 @@ int tegra_gart_resume(struct gart_device *gart);
 static inline struct gart_device *
 tegra_gart_probe(struct device *dev, struct tegra_mc *mc)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline int tegra_gart_suspend(struct gart_device *gart)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int tegra_gart_resume(struct gart_device *gart)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

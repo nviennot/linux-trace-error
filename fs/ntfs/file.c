@@ -49,7 +49,7 @@ static int ntfs_file_open(struct inode *vi, struct file *filp)
 {
 	if (sizeof(unsigned long) < 8) {
 		if (i_size_read(vi) > MAX_LFS_FILESIZE)
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 	}
 	return generic_file_open(vi, filp);
 }
@@ -143,7 +143,7 @@ static int ntfs_attr_extend_initialized(ntfs_inode *ni, const s64 new_init_size)
 			CASE_SENSITIVE, 0, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	m = ctx->mrec;
@@ -187,7 +187,7 @@ do_non_resident_extend:
 				CASE_SENSITIVE, 0, NULL, 0, ctx);
 		if (unlikely(err)) {
 			if (err == -ENOENT)
-				err = -EIO;
+				err = -ERR(EIO);
 			goto err_out;
 		}
 		m = ctx->mrec;
@@ -220,7 +220,7 @@ do_non_resident_extend:
 		}
 		if (unlikely(PageError(page))) {
 			put_page(page);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto init_err_out;
 		}
 		/*
@@ -284,7 +284,7 @@ do_non_resident_extend:
 			CASE_SENSITIVE, 0, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto init_err_out;
 	}
 	m = ctx->mrec;
@@ -348,7 +348,7 @@ static ssize_t ntfs_prepare_file_for_write(struct kiocb *iocb,
 		 * non-resident so that the content can always be encrypted.
 		 */
 		ntfs_debug("Denying write access to encrypted file.");
-		err = -EACCES;
+		err = -ERR(EACCES);
 		goto out;
 	}
 	if (NInoCompressed(ni)) {
@@ -362,7 +362,7 @@ static ssize_t ntfs_prepare_file_for_write(struct kiocb *iocb,
 		 */
 		ntfs_error(vi->i_sb, "Writing to compressed files is not "
 				"implemented yet.  Sorry.");
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 	base_ni = ni;
@@ -903,7 +903,7 @@ retry_remap:
 					goto rl_not_mapped_enoent;
 				}
 			} else
-				err = -EIO;
+				err = -ERR(EIO);
 			/* Failed to map the buffer, even after retrying. */
 			bh->b_blocknr = -1;
 			ntfs_error(vol->sb, "Failed to write to inode 0x%lx, "
@@ -991,7 +991,7 @@ rl_not_mapped_enoent:
 		if (IS_ERR(rl)) {
 			err = PTR_ERR(rl);
 			if (err != -ENOMEM)
-				err = -EIO;
+				err = -ERR(EIO);
 			if (ntfs_cluster_free_from_rl(vol, rl2)) {
 				ntfs_error(vol->sb, "Failed to release "
 						"allocated cluster in error "
@@ -1027,7 +1027,7 @@ rl_not_mapped_enoent:
 				CASE_SENSITIVE, bh_cpos, NULL, 0, ctx);
 		if (unlikely(err)) {
 			if (err == -ENOENT)
-				err = -EIO;
+				err = -ERR(EIO);
 			break;
 		}
 		m = ctx->mrec;
@@ -1061,7 +1061,7 @@ rl_not_mapped_enoent:
 				highest_vcn);
 		if (unlikely(mp_size <= 0)) {
 			if (!(err = mp_size))
-				err = -EIO;
+				err = -ERR(EIO);
 			ntfs_debug("Failed to get size for mapping pairs "
 					"array, error code %i.", err);
 			break;
@@ -1091,7 +1091,7 @@ rl_not_mapped_enoent:
 					"record for the extended attribute "
 					"record.  This case is not "
 					"implemented yet.");
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break ;
 		}
 		status.mp_rebuilt = 1;
@@ -1108,7 +1108,7 @@ rl_not_mapped_enoent:
 					"the mapping pairs failed with error "
 					"code %i.", vi->i_ino,
 					(unsigned)le32_to_cpu(ni->type), err);
-			err = -EIO;
+			err = -ERR(EIO);
 			break;
 		}
 		/* Update the highest_vcn but only if it was not set. */
@@ -1208,7 +1208,7 @@ rl_not_mapped_enoent:
 						blocksize);
 			}
 		} else /* if (unlikely(!buffer_uptodate(bh))) */
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 	if (likely(!err)) {
 		/* Clear buffer_new on all buffers. */
@@ -1466,7 +1466,7 @@ static inline int ntfs_commit_pages_after_non_resident_write(
 			CASE_SENSITIVE, 0, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	a = ctx->attr;
@@ -1592,7 +1592,7 @@ static int ntfs_commit_pages_after_write(struct page **pages,
 			CASE_SENSITIVE, 0, NULL, 0, ctx);
 	if (unlikely(err)) {
 		if (err == -ENOENT)
-			err = -EIO;
+			err = -ERR(EIO);
 		goto err_out;
 	}
 	a = ctx->attr;
@@ -1758,7 +1758,7 @@ static ssize_t ntfs_perform_write(struct file *file, struct iov_iter *i,
 		err = ntfs_truncate(vi);
 		if (err || NInoTruncateFailed(ni)) {
 			if (!err)
-				err = -EIO;
+				err = -ERR(EIO);
 			ntfs_error(vol->sb, "Cannot perform write to inode "
 					"0x%lx, attribute type 0x%x, because "
 					"ntfs_truncate() failed (error code "
@@ -1802,7 +1802,7 @@ static ssize_t ntfs_perform_write(struct file *file, struct iov_iter *i,
 					if (lcn == LCN_ENOMEM)
 						status = -ENOMEM;
 					else {
-						status = -EIO;
+						status = -ERR(EIO);
 						ntfs_error(vol->sb, "Cannot "
 							"perform write to "
 							"inode 0x%lx, "
@@ -1901,7 +1901,7 @@ again:
 		written += copied;
 		balance_dirty_pages_ratelimited(mapping);
 		if (fatal_signal_pending(current)) {
-			status = -EINTR;
+			status = -ERR(EINTR);
 			break;
 		}
 	} while (iov_iter_count(i));

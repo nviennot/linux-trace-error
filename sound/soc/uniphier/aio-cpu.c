@@ -133,14 +133,14 @@ static int find_divider(struct uniphier_aio *aio, int pll_id, unsigned int freq)
 	int i;
 
 	if (!is_valid_pll(aio->chip, pll_id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pll = &aio->chip->plls[pll_id];
 	for (i = 0; i < ARRAY_SIZE(mul); i++)
 		if (pll->freq * mul[i] / div[i] == freq)
 			return i;
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int uniphier_aio_set_sysclk(struct snd_soc_dai *dai, int clk_id,
@@ -153,7 +153,7 @@ static int uniphier_aio_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	switch (clk_id) {
 	case AUD_CLK_IO:
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	case AUD_CLK_A1:
 		pll_id = AUD_PLL_A1;
 		break;
@@ -188,7 +188,7 @@ static int uniphier_aio_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 	default:
 		dev_err(dev, "Sysclk(%d) is not supported\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (pll_auto) {
@@ -202,7 +202,7 @@ static int uniphier_aio_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		if (pll_id == aio->chip->num_plls) {
 			dev_err(dev, "Sysclk frequency is not supported(%d)\n",
 				freq);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -222,7 +222,7 @@ static int uniphier_aio_set_pll(struct snd_soc_dai *dai, int pll_id,
 	int ret;
 
 	if (!is_valid_pll(aio->chip, pll_id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = aio_chip_set_pll(aio->chip, pll_id, freq_out);
 	if (ret < 0)
@@ -245,7 +245,7 @@ static int uniphier_aio_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(dev, "Format is not supported(%d)\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -300,7 +300,7 @@ static int uniphier_aio_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dev, "Rate is not supported(%d)\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ret = snd_soc_dai_set_sysclk(dai, AUD_CLK_A,
 				     freq, SND_SOC_CLOCK_OUT);
@@ -633,7 +633,7 @@ int uniphier_aio_probe(struct platform_device *pdev)
 
 	chip->chip_spec = of_device_get_match_data(dev);
 	if (!chip->chip_spec)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chip->regmap_sg = syscon_regmap_lookup_by_phandle(dev->of_node,
 							  "socionext,syscon");

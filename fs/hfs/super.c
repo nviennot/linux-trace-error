@@ -210,7 +210,7 @@ static const match_table_t tokens = {
 static inline int match_fourchar(substring_t *arg, u32 *result)
 {
 	if (arg->to - arg->from != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	memcpy(result, arg->from, 4);
 	return 0;
 }
@@ -393,7 +393,7 @@ static int hfs_fill_super(struct super_block *sb, void *data, int silent)
 	spin_lock_init(&sbi->work_lock);
 	INIT_DELAYED_WORK(&sbi->mdb_work, flush_mdb);
 
-	res = -EINVAL;
+	res = -ERR(EINVAL);
 	if (!parse_options((char *)data, sbi)) {
 		pr_err("unable to parse mount options\n");
 		goto bail;
@@ -409,7 +409,7 @@ static int hfs_fill_super(struct super_block *sb, void *data, int silent)
 		if (!silent)
 			pr_warn("can't find a HFS filesystem on dev %s\n",
 				hfs_mdb_name(sb));
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -420,7 +420,7 @@ static int hfs_fill_super(struct super_block *sb, void *data, int silent)
 	res = hfs_cat_find_brec(sb, HFS_ROOT_CNID, &fd);
 	if (!res) {
 		if (fd.entrylength > sizeof(rec) || fd.entrylength < 0) {
-			res =  -EIO;
+			res =  -ERR(EIO);
 			goto bail;
 		}
 		hfs_bnode_read(fd.bnode, &rec, fd.entryoffset, fd.entrylength);
@@ -429,7 +429,7 @@ static int hfs_fill_super(struct super_block *sb, void *data, int silent)
 		hfs_find_exit(&fd);
 		goto bail_no_root;
 	}
-	res = -EINVAL;
+	res = -ERR(EINVAL);
 	root_inode = hfs_iget(sb, &fd.search_key->cat, &rec);
 	hfs_find_exit(&fd);
 	if (!root_inode)

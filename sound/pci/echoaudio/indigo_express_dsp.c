@@ -31,7 +31,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	u32 clock, control_reg, old_control_reg;
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	old_control_reg = le32_to_cpu(chip->comm_page->control_register);
 	control_reg = old_control_reg & ~INDIGO_EXPRESS_CLOCK_MASK;
@@ -56,7 +56,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 		clock = INDIGO_EXPRESS_48000|INDIGO_EXPRESS_DOUBLE_SPEED;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	control_reg |= clock;
@@ -81,10 +81,10 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 
 	if (snd_BUG_ON(pipe >= num_pipes_out(chip) ||
 		       output >= num_busses_out(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->vmixer_gain[output][pipe] = gain;
 	index = output * num_pipes_out(chip) + pipe;
@@ -101,7 +101,7 @@ static int set_vmixer_gain(struct echoaudio *chip, u16 output, u16 pipe,
 static int update_vmixer_level(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_SET_VMIXER_GAIN);
 }

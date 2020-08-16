@@ -126,7 +126,7 @@ static int axg_tdmout_prepare(struct regmap *map,
 	default:
 		pr_err("Unsupported format: %u\n",
 		       ts->iface->fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = TDMOUT_CTRL0_INIT_BITNUM(skew);
@@ -162,7 +162,7 @@ static int axg_tdmout_prepare(struct regmap *map,
 	default:
 		pr_err("Unsupported physical width: %u\n",
 		       ts->physical_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If the sample clock is inverted, invert it back for the formatter */

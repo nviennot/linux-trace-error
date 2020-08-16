@@ -436,7 +436,7 @@ int rsnd_ssiu_probe(struct rsnd_priv *priv)
 			nr	= ARRAY_SIZE(gen3_id);
 		} else {
 			dev_err(dev, "unknown SSIU\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 

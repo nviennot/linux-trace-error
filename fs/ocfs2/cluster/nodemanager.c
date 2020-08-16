@@ -53,7 +53,7 @@ int o2nm_configured_node_map(unsigned long *map, unsigned bytes)
 	BUG_ON(bytes < (sizeof(cluster->cl_nodes_bitmap)));
 
 	if (cluster == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	read_lock(&cluster->cl_nodes_lock);
 	memcpy(map, cluster->cl_nodes_bitmap, sizeof(cluster->cl_nodes_bitmap));
@@ -193,10 +193,10 @@ static ssize_t o2nm_node_num_store(struct config_item *item, const char *page,
 
 	tmp = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tmp >= O2NM_MAX_NODES)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* once we're in the cl_nodes tree networking can look us up by
 	 * node number and try to use our address and port attributes
@@ -204,21 +204,21 @@ static ssize_t o2nm_node_num_store(struct config_item *item, const char *page,
 	 * before writing the node attribute? */
 	if (!test_bit(O2NM_NODE_ATTR_ADDRESS, &node->nd_set_attributes) ||
 	    !test_bit(O2NM_NODE_ATTR_PORT, &node->nd_set_attributes))
-		return -EINVAL; /* XXX */
+		return -ERR(EINVAL); /* XXX */
 
 	o2nm_lock_subsystem();
 	cluster = to_o2nm_cluster_from_node(node);
 	if (!cluster) {
 		o2nm_unlock_subsystem();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	write_lock(&cluster->cl_nodes_lock);
 	if (cluster->cl_nodes[tmp])
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	else if (test_and_set_bit(O2NM_NODE_ATTR_NUM,
 			&node->nd_set_attributes))
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else  {
 		cluster->cl_nodes[tmp] = node;
 		node->nd_num = tmp;
@@ -246,15 +246,15 @@ static ssize_t o2nm_node_ipv4_port_store(struct config_item *item,
 
 	tmp = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tmp == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (tmp >= (u16)-1)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (test_and_set_bit(O2NM_NODE_ATTR_PORT, &node->nd_set_attributes))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	node->nd_ipv4_port = htons(tmp);
 
 	return count;
@@ -279,11 +279,11 @@ static ssize_t o2nm_node_ipv4_address_store(struct config_item *item,
 	ret = sscanf(page, "%3u.%3u.%3u.%3u", &octets[3], &octets[2],
 		     &octets[1], &octets[0]);
 	if (ret != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < ARRAY_SIZE(octets); i++) {
 		if (octets[i] > 255)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		be32_add_cpu(&ipv4_addr, octets[i] << (i * 8));
 	}
 
@@ -291,16 +291,16 @@ static ssize_t o2nm_node_ipv4_address_store(struct config_item *item,
 	cluster = to_o2nm_cluster_from_node(node);
 	if (!cluster) {
 		o2nm_unlock_subsystem();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = 0;
 	write_lock(&cluster->cl_nodes_lock);
 	if (o2nm_node_ip_tree_lookup(cluster, ipv4_addr, &p, &parent))
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	else if (test_and_set_bit(O2NM_NODE_ATTR_ADDRESS,
 			&node->nd_set_attributes))
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else {
 		rb_link_node(&node->nd_ip_node, parent, p);
 		rb_insert_color(&node->nd_ip_node, &cluster->cl_node_ip_tree);
@@ -332,7 +332,7 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 
 	tmp = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp = !!tmp; /* boolean of whether this node wants to be local */
 
@@ -341,12 +341,12 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 	if (!test_bit(O2NM_NODE_ATTR_ADDRESS, &node->nd_set_attributes) ||
 	    !test_bit(O2NM_NODE_ATTR_NUM, &node->nd_set_attributes) ||
 	    !test_bit(O2NM_NODE_ATTR_PORT, &node->nd_set_attributes))
-		return -EINVAL; /* XXX */
+		return -ERR(EINVAL); /* XXX */
 
 	o2nm_lock_subsystem();
 	cluster = to_o2nm_cluster_from_node(node);
 	if (!cluster) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -354,7 +354,7 @@ static ssize_t o2nm_node_local_store(struct config_item *item, const char *page,
 	 * when a different one is already set */
 	if (tmp && tmp == cluster->cl_has_local &&
 	    cluster->cl_local_node != node->nd_num) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -431,12 +431,12 @@ static ssize_t o2nm_cluster_attr_write(const char *page, ssize_t count,
 
 	tmp = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tmp == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (tmp >= (u32)-1)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	*val = tmp;
 
@@ -466,11 +466,11 @@ static ssize_t o2nm_cluster_idle_timeout_ms_store(struct config_item *item,
 			     "the first peer has agreed to it."
 			     "  %d connected peers\n",
 			     o2net_num_connected_peers());
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		} else if (val <= cluster->cl_keepalive_delay_ms) {
 			mlog(ML_NOTICE, "o2net: idle timeout must be larger "
 			     "than keepalive delay\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		} else {
 			cluster->cl_idle_timeout_ms = val;
 		}
@@ -503,11 +503,11 @@ static ssize_t o2nm_cluster_keepalive_delay_ms_store(
 			     " the first peer has agreed to it."
 			     "  %d connected peers\n",
 			     o2net_num_connected_peers());
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		} else if (val >= cluster->cl_idle_timeout_ms) {
 			mlog(ML_NOTICE, "o2net: keepalive delay must be "
 			     "smaller than idle timeout\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		} else {
 			cluster->cl_keepalive_delay_ms = val;
 		}
@@ -564,7 +564,7 @@ static ssize_t o2nm_cluster_fence_method_store(
 	}
 
 bail:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 CONFIGFS_ATTR(o2nm_cluster_, idle_timeout_ms);
@@ -586,7 +586,7 @@ static struct config_item *o2nm_node_group_make_item(struct config_group *group,
 	struct o2nm_node *node = NULL;
 
 	if (strlen(name) > O2NM_MAX_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	node = kzalloc(sizeof(struct o2nm_node), GFP_KERNEL);
 	if (node == NULL)
@@ -694,7 +694,7 @@ static struct config_group *o2nm_cluster_group_make_group(struct config_group *g
 	/* this runs under the parent dir's i_mutex; there can be only
 	 * one caller in here at a time */
 	if (o2nm_single_cluster)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	cluster = kzalloc(sizeof(struct o2nm_cluster), GFP_KERNEL);
 	ns = kzalloc(sizeof(struct o2nm_node_group), GFP_KERNEL);
@@ -790,7 +790,7 @@ int o2nm_depend_this_node(void)
 
 	local_node = o2nm_get_node_by_num(o2nm_this_node());
 	if (!local_node) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 

@@ -93,7 +93,7 @@ int f2fs_read_inline_data(struct inode *inode, struct page *page)
 
 	if (!f2fs_has_inline_data(inode)) {
 		f2fs_put_page(ipage, 1);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (page->index)
@@ -231,7 +231,7 @@ int f2fs_write_inline_data(struct inode *inode, struct page *page)
 
 	if (!f2fs_has_inline_data(inode)) {
 		f2fs_put_dnode(&dn);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	f2fs_bug_on(F2FS_I_SB(inode), page->index);
@@ -606,7 +606,7 @@ int f2fs_add_inline_entry(struct inode *dir, const struct f2fs_filename *fname,
 		err = do_convert_inline_dir(dir, ipage, inline_dentry);
 		if (err)
 			return err;
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -752,12 +752,12 @@ int f2fs_inline_data_fiemap(struct inode *inode,
 
 	if ((S_ISREG(inode->i_mode) || S_ISLNK(inode->i_mode)) &&
 				!f2fs_has_inline_data(inode)) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
 	if (S_ISDIR(inode->i_mode) && !f2fs_has_inline_dentry(inode)) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 

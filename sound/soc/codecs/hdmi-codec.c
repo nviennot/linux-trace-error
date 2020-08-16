@@ -363,7 +363,7 @@ static int hdmi_codec_get_ch_alloc_table_idx(struct hdmi_codec_priv *hcp,
 		return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static int hdmi_codec_chmap_ctl_get(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
@@ -395,7 +395,7 @@ static int hdmi_codec_startup(struct snd_pcm_substream *substream,
 	if (hcp->busy) {
 		dev_err(dai->dev, "Only one simultaneous stream supported!\n");
 		mutex_unlock(&hcp->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (hcp->hcd.ops->audio_startup) {
@@ -513,7 +513,7 @@ static int hdmi_codec_i2s_set_fmt(struct snd_soc_dai *dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -552,7 +552,7 @@ static int hdmi_codec_i2s_set_fmt(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Invalid DAI interface format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -698,7 +698,7 @@ int hdmi_codec_set_jack_detect(struct snd_soc_component *component,
 			       struct snd_soc_jack *jack)
 {
 	struct hdmi_codec_priv *hcp = snd_soc_component_get_drvdata(component);
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (hcp->hcd.ops->hook_plugged_cb) {
 		hcp->jack = jack;
@@ -771,7 +771,7 @@ static int hdmi_of_xlate_dai_id(struct snd_soc_component *component,
 				 struct device_node *endpoint)
 {
 	struct hdmi_codec_priv *hcp = snd_soc_component_get_drvdata(component);
-	int ret = -ENOTSUPP; /* see snd_soc_get_dai_id() */
+	int ret = -ERR(ENOTSUPP); /* see snd_soc_get_dai_id() */
 
 	if (hcp->hcd.ops->get_dai_id)
 		ret = hcp->hcd.ops->get_dai_id(component, endpoint);
@@ -810,14 +810,14 @@ static int hdmi_codec_probe(struct platform_device *pdev)
 
 	if (!hcd) {
 		dev_err(dev, "%s: No platform data\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dai_count = hcd->i2s + hcd->spdif;
 	if (dai_count < 1 || !hcd->ops || !hcd->ops->hw_params ||
 	    !hcd->ops->audio_shutdown) {
 		dev_err(dev, "%s: Invalid parameters\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hcp = devm_kzalloc(dev, sizeof(*hcp), GFP_KERNEL);

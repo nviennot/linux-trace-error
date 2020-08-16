@@ -116,7 +116,7 @@ list_set_kadt(struct ip_set *set, const struct sk_buff *skb,
 	      enum ipset_adt adt, struct ip_set_adt_opt *opt)
 {
 	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	rcu_read_lock();
 	switch (adt) {
@@ -476,7 +476,7 @@ list_set_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int
@@ -492,7 +492,7 @@ list_set_list(const struct ip_set *set,
 
 	atd = nla_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(e, &map->members, list) {
@@ -524,7 +524,7 @@ nla_put_failure:
 	if (unlikely(i == first)) {
 		nla_nest_cancel(skb, atd);
 		cb->args[IPSET_CB_ARG0] = 0;
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 	} else {
 		cb->args[IPSET_CB_ARG0] = i;
 		nla_nest_end(skb, atd);

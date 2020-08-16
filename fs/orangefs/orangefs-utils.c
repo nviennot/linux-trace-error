@@ -302,7 +302,7 @@ again2:
 		    &new_op->downcall.resp.getattr.attributes,
 		    new_op->downcall.resp.getattr.link_target);
 		if (ret) {
-			ret = -ESTALE;
+			ret = -ERR(ESTALE);
 			goto out_unlock;
 		}
 	}
@@ -339,7 +339,7 @@ again2:
 			    new_op->downcall.resp.getattr.link_target,
 			    ORANGEFS_NAME_MAX);
 			if (ret == -E2BIG) {
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto out_unlock;
 			}
 			inode->i_link = orangefs_inode->link_target;
@@ -349,7 +349,7 @@ again2:
 	default:
 		/* XXX: ESTALE?  This is what is done if it is not new. */
 		orangefs_make_bad_inode(inode);
-		ret = -ESTALE;
+		ret = -ERR(ESTALE);
 		goto out_unlock;
 	}
 
@@ -505,13 +505,13 @@ int orangefs_normalize_to_errno(__s32 error_code)
 			 * cancellation error codes generally correspond to
 			 * a timeout from the client's perspective
 			 */
-			error_code = -ETIMEDOUT;
+			error_code = -ERR(ETIMEDOUT);
 		} else {
 			/* assume a default error code */
 			gossip_err("%s: bad error code :%d:.\n",
 				__func__,
 				error_code);
-			error_code = -EINVAL;
+			error_code = -ERR(EINVAL);
 		}
 
 	/* Convert ORANGEFS encoded errno values into regular errno values. */
@@ -520,7 +520,7 @@ int orangefs_normalize_to_errno(__s32 error_code)
 		if (i < ARRAY_SIZE(PINT_errno_mapping))
 			error_code = -PINT_errno_mapping[i];
 		else
-			error_code = -EINVAL;
+			error_code = -ERR(EINVAL);
 
 	/*
 	 * Only ORANGEFS protocol error codes should ever come here. Otherwise
@@ -528,7 +528,7 @@ int orangefs_normalize_to_errno(__s32 error_code)
 	 */
 	} else {
 		gossip_err("%s: unknown error code.\n", __func__);
-		error_code = -EINVAL;
+		error_code = -ERR(EINVAL);
 	}
 	return error_code;
 }

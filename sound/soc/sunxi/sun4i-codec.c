@@ -309,7 +309,7 @@ static int sun4i_codec_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -470,7 +470,7 @@ static int sun4i_codec_get_hw_rate(struct snd_pcm_hw_params *params)
 		return 5;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -580,7 +580,7 @@ static int sun4i_codec_hw_params(struct snd_pcm_substream *substream,
 
 	clk_freq = sun4i_codec_get_mod_freq(params);
 	if (!clk_freq)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_set_rate(scodec->clk_module, clk_freq);
 	if (ret)
@@ -1441,7 +1441,7 @@ static struct snd_soc_card *sun8i_a23_codec_create_card(struct device *dev)
 						 0);
 	if (!aux_dev.dlc.of_node) {
 		dev_err(dev, "Can't find analog controls for codec.\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	card->dai_link = sun4i_codec_create_link(dev, &card->num_links);
@@ -1479,7 +1479,7 @@ static struct snd_soc_card *sun8i_h3_codec_create_card(struct device *dev)
 						 0);
 	if (!aux_dev.dlc.of_node) {
 		dev_err(dev, "Can't find analog controls for codec.\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	card->dai_link = sun4i_codec_create_link(dev, &card->num_links);
@@ -1517,7 +1517,7 @@ static struct snd_soc_card *sun8i_v3s_codec_create_card(struct device *dev)
 						 0);
 	if (!aux_dev.dlc.of_node) {
 		dev_err(dev, "Can't find analog controls for codec.\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	card->dai_link = sun4i_codec_create_link(dev, &card->num_links);
@@ -1714,7 +1714,7 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	quirks = of_device_get_match_data(&pdev->dev);
 	if (quirks == NULL) {
 		dev_err(&pdev->dev, "Failed to determine the quirks to use\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	scodec->regmap = devm_regmap_init_mmio(&pdev->dev, base,
@@ -1769,7 +1769,7 @@ static int sun4i_codec_probe(struct platform_device *pdev)
 	/* Enable the bus clock */
 	if (clk_prepare_enable(scodec->clk_apb)) {
 		dev_err(&pdev->dev, "Failed to enable the APB clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Deassert the reset control */

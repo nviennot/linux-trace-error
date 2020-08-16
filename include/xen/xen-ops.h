@@ -99,13 +99,13 @@ static inline int xen_xlate_remap_gfn_array(struct vm_area_struct *vma,
 					    unsigned int domid,
 					    struct page **pages)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int xen_xlate_unmap_gfn_range(struct vm_area_struct *vma,
 					    int nr, struct page **pages)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -173,7 +173,7 @@ static inline int xen_remap_domain_mfn_array(struct vm_area_struct *vma,
 					     struct page **pages)
 {
 	if (xen_feature(XENFEAT_auto_translated_physmap))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return xen_remap_pfn(vma, addr, mfn, nr, err_ptr, prot, domid,
 			     true, pages);
@@ -198,7 +198,7 @@ static inline int xen_remap_domain_gfn_range(struct vm_area_struct *vma,
 					     struct page **pages)
 {
 	if (xen_feature(XENFEAT_auto_translated_physmap))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return xen_remap_pfn(vma, addr, &gfn, nr, NULL, prot, domid, false,
 			     pages);

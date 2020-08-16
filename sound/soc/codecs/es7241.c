@@ -60,7 +60,7 @@ static int es7241_set_slave_mode(struct es7241_data *priv,
 			goto out_ok;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 out_ok:
 	es7241_set_mode(priv, 1, 1);
@@ -76,7 +76,7 @@ static int es7241_set_master_mode(struct es7241_data *priv,
 	 * from what we provide, then error out
 	 */
 	if (mfs && mfs != mode->mst_mfs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	es7241_set_mode(priv, mode->mst_m0, mode->mst_m1);
 
@@ -106,7 +106,7 @@ static int es7241_hw_params(struct snd_pcm_substream *substream,
 
 	/* should not happen */
 	dev_err(dai->dev, "unsupported rate: %u\n", rate);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int es7241_set_sysclk(struct snd_soc_dai *dai, int clk_id,
@@ -119,7 +119,7 @@ static int es7241_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		return 0;
 	}
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static int es7241_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
@@ -128,12 +128,12 @@ static int es7241_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF) {
 		dev_err(dai->dev, "Unsupported dai clock inversion\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != priv->fmt) {
 		dev_err(dai->dev, "Invalid dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -146,7 +146,7 @@ static int es7241_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	default:
 		dev_err(dai->dev, "Unsupported clock configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -265,7 +265,7 @@ static int es7241_probe(struct platform_device *pdev)
 	priv->chip = of_device_get_match_data(dev);
 	if (!priv->chip) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	es7241_parse_fmt(dev, priv);

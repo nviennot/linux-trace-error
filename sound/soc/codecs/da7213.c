@@ -797,7 +797,7 @@ static int da7213_dai_event(struct snd_soc_dapm_widget *w,
 					    DA7213_DAI_CLK_EN_MASK, 0);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1174,7 +1174,7 @@ static int da7213_hw_params(struct snd_pcm_substream *substream,
 		dai_ctrl |= DA7213_DAI_WORD_LENGTH_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set sampling rate */
@@ -1210,7 +1210,7 @@ static int da7213_hw_params(struct snd_pcm_substream *substream,
 		fs = DA7213_SR_96000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, DA7213_DAI_CTRL, DA7213_DAI_WORD_LENGTH_MASK,
@@ -1236,7 +1236,7 @@ static int da7213_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		da7213->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set clock normal/inverted */
@@ -1258,7 +1258,7 @@ static int da7213_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 					DA7213_DAI_CLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAI_FORMAT_DSP_A:
@@ -1278,11 +1278,11 @@ static int da7213_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 			dai_clk_mode |= DA7213_DAI_WCLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Only I2S is supported */
@@ -1304,7 +1304,7 @@ static int da7213_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		dai_ctrl |= DA7213_DAI_FORMAT_DSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* By default only 64 BCLK per WCLK is supported */
@@ -1356,7 +1356,7 @@ static int da7213_set_component_sysclk(struct snd_soc_component *component,
 	if (((freq < 5000000) && (freq != 32768)) || (freq > 54000000)) {
 		dev_err(component->dev, "Unsupported MCLK value %d\n",
 			freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
@@ -1371,7 +1371,7 @@ static int da7213_set_component_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Unknown clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	da7213->clk_src = clk_id;
@@ -1408,7 +1408,7 @@ static int da7213_set_component_pll(struct snd_soc_component *component,
 		if (!da7213->master) {
 			dev_err(component->dev,
 				"32KHz only valid if codec is clock master\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* 32KHz PLL Mode */
@@ -1422,7 +1422,7 @@ static int da7213_set_component_pll(struct snd_soc_component *component,
 			dev_err(component->dev,
 				"PLL input clock %d below valid range\n",
 				da7213->mclk_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (da7213->mclk_rate <= 9000000) {
 			indiv_bits = DA7213_PLL_INDIV_5_TO_9_MHZ;
 			indiv = DA7213_PLL_INDIV_5_TO_9_MHZ_VAL;
@@ -1439,7 +1439,7 @@ static int da7213_set_component_pll(struct snd_soc_component *component,
 			dev_err(component->dev,
 				"PLL input clock %d above valid range\n",
 				da7213->mclk_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		freq_ref = (da7213->mclk_rate / indiv);
 	}
@@ -1463,7 +1463,7 @@ static int da7213_set_component_pll(struct snd_soc_component *component,
 		if (da7213->mclk_rate != 32768) {
 			dev_err(component->dev,
 				"32KHz mode only valid with 32KHz MCLK\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		pll_ctrl |= DA7213_PLL_32K_MODE | DA7213_PLL_SRM_EN;
@@ -1471,7 +1471,7 @@ static int da7213_set_component_pll(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid PLL config\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate dividers for PLL */

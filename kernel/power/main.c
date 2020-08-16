@@ -109,10 +109,10 @@ static ssize_t pm_async_store(struct kobject *kobj, struct kobj_attribute *attr,
 	unsigned long val;
 
 	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pm_async_enabled = val;
 	return n;
@@ -174,7 +174,7 @@ static ssize_t mem_sleep_store(struct kobject *kobj, struct kobj_attribute *attr
 		return error;
 
 	if (pm_autosleep_state() > PM_SUSPEND_ON) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -182,7 +182,7 @@ static ssize_t mem_sleep_store(struct kobject *kobj, struct kobj_attribute *attr
 	if (state < PM_SUSPEND_MAX && state > PM_SUSPEND_ON)
 		mem_sleep_current = state;
 	else
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 
  out:
 	pm_autosleep_unlock();
@@ -212,10 +212,10 @@ static ssize_t sync_on_suspend_store(struct kobject *kobj,
 	unsigned long val;
 
 	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sync_on_suspend_enabled = !!val;
 	return n;
@@ -264,7 +264,7 @@ static ssize_t pm_test_store(struct kobject *kobj, struct kobj_attribute *attr,
 	int level;
 	char *p;
 	int len;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	p = memchr(buf, '\n', n);
 	len = p ? p - buf : n;
@@ -484,10 +484,10 @@ static ssize_t pm_print_times_store(struct kobject *kobj,
 	unsigned long val;
 
 	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pm_print_times_enabled = !!val;
 	return n;
@@ -504,7 +504,7 @@ static ssize_t pm_wakeup_irq_show(struct kobject *kobj,
 					struct kobj_attribute *attr,
 					char *buf)
 {
-	return pm_wakeup_irq ? sprintf(buf, "%u\n", pm_wakeup_irq) : -ENODATA;
+	return pm_wakeup_irq ? sprintf(buf, "%u\n", pm_wakeup_irq) : -ERR(ENODATA);
 }
 
 power_attr_ro(pm_wakeup_irq);
@@ -524,10 +524,10 @@ static ssize_t pm_debug_messages_store(struct kobject *kobj,
 	unsigned long val;
 
 	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pm_debug_messages_on = !!val;
 	return n;
@@ -646,7 +646,7 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 		return error;
 
 	if (pm_autosleep_state() > PM_SUSPEND_ON) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -659,7 +659,7 @@ static ssize_t state_store(struct kobject *kobj, struct kobj_attribute *attr,
 	} else if (state == PM_SUSPEND_MAX) {
 		error = hibernate();
 	} else {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	}
 
  out:
@@ -705,7 +705,7 @@ static ssize_t wakeup_count_show(struct kobject *kobj,
 	unsigned int val;
 
 	return pm_get_wakeup_count(&val, true) ?
-		sprintf(buf, "%u\n", val) : -EINTR;
+		sprintf(buf, "%u\n", val) : -ERR(EINTR);
 }
 
 static ssize_t wakeup_count_store(struct kobject *kobj,
@@ -720,11 +720,11 @@ static ssize_t wakeup_count_store(struct kobject *kobj,
 		return error;
 
 	if (pm_autosleep_state() > PM_SUSPEND_ON) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out;
 	}
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (sscanf(buf, "%u", &val) == 1) {
 		if (pm_save_wakeup_count(val))
 			error = n;
@@ -770,7 +770,7 @@ static ssize_t autosleep_store(struct kobject *kobj,
 
 	if (state == PM_SUSPEND_ON
 	    && strcmp(buf, "off") && strcmp(buf, "off\n"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (state == PM_SUSPEND_MEM)
 		state = mem_sleep_current;
@@ -843,7 +843,7 @@ pm_trace_store(struct kobject *kobj, struct kobj_attribute *attr,
 		}
 		return n;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 power_attr(pm_trace);
@@ -873,7 +873,7 @@ static ssize_t pm_freeze_timeout_store(struct kobject *kobj,
 	unsigned long val;
 
 	if (kstrtoul(buf, 10, &val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	freeze_timeout_msecs = val;
 	return n;

@@ -992,7 +992,7 @@ int psi_show(struct seq_file *m, struct psi_group *group, enum psi_res res)
 	u64 now;
 
 	if (static_branch_likely(&psi_disabled))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Update averages before reporting them */
 	mutex_lock(&group->avgs_lock);
@@ -1062,25 +1062,25 @@ struct psi_trigger *psi_trigger_create(struct psi_group *group,
 	u32 window_us;
 
 	if (static_branch_likely(&psi_disabled))
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	if (sscanf(buf, "some %u %u", &threshold_us, &window_us) == 2)
 		state = PSI_IO_SOME + res * 2;
 	else if (sscanf(buf, "full %u %u", &threshold_us, &window_us) == 2)
 		state = PSI_IO_FULL + res * 2;
 	else
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (state >= PSI_NONIDLE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (window_us < WINDOW_MIN_US ||
 		window_us > WINDOW_MAX_US)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* Check threshold */
 	if (threshold_us == 0 || threshold_us > window_us)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	t = kmalloc(sizeof(*t), GFP_KERNEL);
 	if (!t)
@@ -1246,10 +1246,10 @@ static ssize_t psi_write(struct file *file, const char __user *user_buf,
 	struct psi_trigger *new;
 
 	if (static_branch_likely(&psi_disabled))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!nbytes)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf_size = min(nbytes, sizeof(buf));
 	if (copy_from_user(buf, user_buf, buf_size))

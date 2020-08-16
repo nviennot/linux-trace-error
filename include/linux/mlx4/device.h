@@ -1182,7 +1182,7 @@ static inline int map_hw_to_sw_id(u16 header_id)
 		if (header_id == __sw_id_hw[i])
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 enum mlx4_net_trans_promisc_mode {

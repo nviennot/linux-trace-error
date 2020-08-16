@@ -101,7 +101,7 @@ static unsigned int twl6040_read(struct snd_soc_component *component, unsigned i
 	u8 value;
 
 	if (reg >= TWL6040_CACHEREGNUM)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (reg) {
 	case TWL6040_REG_HSLCTL:
@@ -162,7 +162,7 @@ static int twl6040_write(struct snd_soc_component *component,
 	struct twl6040 *twl6040 = to_twl6040(component);
 
 	if (reg >= TWL6040_CACHEREGNUM)
-		return -EIO;
+		return -ERR(EIO);
 
 	twl6040_update_dl12_cache(component, reg, value);
 	if (twl6040_can_write_to_chip(component, reg))
@@ -330,7 +330,7 @@ static int twl6040_soc_dapm_put_vibra_enum(struct snd_kcontrol *kcontrol,
 	/* Do not allow changes while Input/FF efect is running */
 	val = twl6040_read(component, e->reg);
 	if (val & TWL6040_VIBENA && !(val & TWL6040_VIBSEL))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return snd_soc_dapm_put_enum_double(kcontrol, ucontrol);
 }
@@ -552,7 +552,7 @@ EXPORT_SYMBOL_GPL(twl6040_get_clk_id);
 int twl6040_get_trim_value(struct snd_soc_component *component, enum twl6040_trim trim)
 {
 	if (unlikely(trim >= TWL6040_TRIM_INVAL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return twl6040_read(component, TWL6040_REG_TRIM1 + trim);
 }
@@ -887,7 +887,7 @@ static int twl6040_hw_params(struct snd_pcm_substream *substream,
 		if (unlikely(priv->pll == TWL6040_SYSCLK_SEL_HPPLL)) {
 			dev_err(component->dev, "HPPLL does not support rate %d\n",
 				rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		priv->sysclk = 17640000;
 		break;
@@ -900,7 +900,7 @@ static int twl6040_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unsupported rate %d\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -917,13 +917,13 @@ static int twl6040_prepare(struct snd_pcm_substream *substream,
 	if (!priv->sysclk) {
 		dev_err(component->dev,
 			"no mclk configured, call set_sysclk() on init\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = twl6040_set_pll(twl6040, priv->pll, priv->clk_in, priv->sysclk);
 	if (ret) {
 		dev_err(component->dev, "Can not set PLL (%d)\n", ret);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	return 0;
@@ -943,7 +943,7 @@ static int twl6040_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "unknown clk_id %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

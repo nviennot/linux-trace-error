@@ -115,7 +115,7 @@ static int valid_label(const struct nlattr *attr,
 
 	if (*label & ~MPLS_LABEL_MASK || *label == MPLS_LABEL_IMPLNULL) {
 		NL_SET_ERR_MSG_MOD(extack, "MPLS label out of range");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -149,7 +149,7 @@ static int tcf_mpls_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing netlink attributes");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, TCA_MPLS_MAX, nla, mpls_policy, extack);
@@ -158,7 +158,7 @@ static int tcf_mpls_init(struct net *net, struct nlattr *nla,
 
 	if (!tb[TCA_MPLS_PARMS]) {
 		NL_SET_ERR_MSG_MOD(extack, "No MPLS params");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	parm = nla_data(tb[TCA_MPLS_PARMS]);
 	index = parm->index;
@@ -168,34 +168,34 @@ static int tcf_mpls_init(struct net *net, struct nlattr *nla,
 	case TCA_MPLS_ACT_POP:
 		if (!tb[TCA_MPLS_PROTO]) {
 			NL_SET_ERR_MSG_MOD(extack, "Protocol must be set for MPLS pop");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!eth_proto_is_802_3(nla_get_be16(tb[TCA_MPLS_PROTO]))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid protocol type for MPLS pop");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (tb[TCA_MPLS_LABEL] || tb[TCA_MPLS_TTL] || tb[TCA_MPLS_TC] ||
 		    tb[TCA_MPLS_BOS]) {
 			NL_SET_ERR_MSG_MOD(extack, "Label, TTL, TC or BOS cannot be used with MPLS pop");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case TCA_MPLS_ACT_DEC_TTL:
 		if (tb[TCA_MPLS_PROTO] || tb[TCA_MPLS_LABEL] ||
 		    tb[TCA_MPLS_TTL] || tb[TCA_MPLS_TC] || tb[TCA_MPLS_BOS]) {
 			NL_SET_ERR_MSG_MOD(extack, "Label, TTL, TC, BOS or protocol cannot be used with MPLS dec_ttl");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case TCA_MPLS_ACT_PUSH:
 		if (!tb[TCA_MPLS_LABEL]) {
 			NL_SET_ERR_MSG_MOD(extack, "Label is required for MPLS push");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (tb[TCA_MPLS_PROTO] &&
 		    !eth_p_mpls(nla_get_be16(tb[TCA_MPLS_PROTO]))) {
 			NL_SET_ERR_MSG_MOD(extack, "Protocol must be an MPLS type for MPLS push");
-			return -EPROTONOSUPPORT;
+			return -ERR(EPROTONOSUPPORT);
 		}
 		/* Push needs a TTL - if not specified, set a default value. */
 		if (!tb[TCA_MPLS_TTL]) {
@@ -210,12 +210,12 @@ static int tcf_mpls_init(struct net *net, struct nlattr *nla,
 	case TCA_MPLS_ACT_MODIFY:
 		if (tb[TCA_MPLS_PROTO]) {
 			NL_SET_ERR_MSG_MOD(extack, "Protocol cannot be used with MPLS modify");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		NL_SET_ERR_MSG_MOD(extack, "Unknown MPLS action");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
@@ -236,7 +236,7 @@ static int tcf_mpls_init(struct net *net, struct nlattr *nla,
 		ret = ACT_P_CREATED;
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
@@ -345,7 +345,7 @@ static int tcf_mpls_dump(struct sk_buff *skb, struct tc_action *a,
 nla_put_failure:
 	spin_unlock_bh(&m->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int tcf_mpls_walker(struct net *net, struct sk_buff *skb,

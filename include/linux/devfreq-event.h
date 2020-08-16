@@ -122,12 +122,12 @@ static inline void *devfreq_event_get_drvdata(struct devfreq_event_dev *edev)
 #else
 static inline int devfreq_event_enable_edev(struct devfreq_event_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devfreq_event_disable_edev(struct devfreq_event_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline bool devfreq_event_is_enabled(struct devfreq_event_dev *edev)
@@ -137,47 +137,47 @@ static inline bool devfreq_event_is_enabled(struct devfreq_event_dev *edev)
 
 static inline int devfreq_event_set_event(struct devfreq_event_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devfreq_event_get_event(struct devfreq_event_dev *edev,
 					struct devfreq_event_data *edata)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devfreq_event_reset_event(struct devfreq_event_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct devfreq_event_dev *devfreq_event_get_edev_by_phandle(
 					struct device *dev, int index)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int devfreq_event_get_edev_count(struct device *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct devfreq_event_dev *devfreq_event_add_edev(struct device *dev,
 					struct devfreq_event_desc *desc)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int devfreq_event_remove_edev(struct devfreq_event_dev *edev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline struct devfreq_event_dev *devm_devfreq_event_add_edev(
 					struct device *dev,
 					struct devfreq_event_desc *desc)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void devm_devfreq_event_remove_edev(struct device *dev,

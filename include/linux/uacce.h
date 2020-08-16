@@ -132,12 +132,12 @@ static inline
 struct uacce_device *uacce_alloc(struct device *parent,
 				 struct uacce_interface *interface)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline int uacce_register(struct uacce_device *uacce)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void uacce_remove(struct uacce_device *uacce) {}

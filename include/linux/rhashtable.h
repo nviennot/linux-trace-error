@@ -766,7 +766,7 @@ slow_path:
 	if (elasticity <= 0)
 		goto slow_path;
 
-	data = ERR_PTR(-E2BIG);
+	data = ERR_PTR(-ERR(E2BIG));
 	if (unlikely(rht_grow_above_max(ht, tbl)))
 		goto out_unlock;
 
@@ -826,7 +826,7 @@ static inline int rhashtable_insert_fast(
 	if (IS_ERR(ret))
 		return PTR_ERR(ret);
 
-	return ret == NULL ? 0 : -EEXIST;
+	return ret == NULL ? 0 : -ERR(EEXIST);
 }
 
 /**
@@ -907,7 +907,7 @@ static inline int rhashtable_lookup_insert_fast(
 	if (IS_ERR(ret))
 		return PTR_ERR(ret);
 
-	return ret == NULL ? 0 : -EEXIST;
+	return ret == NULL ? 0 : -ERR(EEXIST);
 }
 
 /**
@@ -959,7 +959,7 @@ static inline int rhashtable_lookup_insert_key(
 	if (IS_ERR(ret))
 		return PTR_ERR(ret);
 
-	return ret == NULL ? 0 : -EEXIST;
+	return ret == NULL ? 0 : -ERR(EEXIST);
 }
 
 /**
@@ -992,12 +992,12 @@ static inline int __rhashtable_remove_fast_one(
 	struct rhash_head __rcu **pprev;
 	struct rhash_head *he;
 	unsigned int hash;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	hash = rht_head_hashfn(ht, tbl, obj, params);
 	bkt = rht_bucket_var(tbl, hash);
 	if (!bkt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	pprev = NULL;
 	rht_lock(tbl, bkt);
 
@@ -1144,18 +1144,18 @@ static inline int __rhashtable_replace_fast(
 	struct rhash_head __rcu **pprev;
 	struct rhash_head *he;
 	unsigned int hash;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	/* Minimally, the old and new objects must have same hash
 	 * (which should mean identifiers are the same).
 	 */
 	hash = rht_head_hashfn(ht, tbl, obj_old, params);
 	if (hash != rht_head_hashfn(ht, tbl, obj_new, params))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bkt = rht_bucket_var(tbl, hash);
 	if (!bkt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	pprev = NULL;
 	rht_lock(tbl, bkt);

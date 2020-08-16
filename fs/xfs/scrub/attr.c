@@ -478,7 +478,7 @@ xchk_xattr(
 	int				error = 0;
 
 	if (!xfs_inode_hasattr(sc->ip))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	memset(&sx, 0, sizeof(sx));
 	/* Check attribute tree structure */

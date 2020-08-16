@@ -155,7 +155,7 @@ struct inode * sysv_new_inode(const struct inode * dir, umode_t mode)
 		if (count == 0) {
 			iput(inode);
 			mutex_unlock(&sbi->s_lock);
-			return ERR_PTR(-ENOSPC);
+			return ERR_PTR(-ERR(ENOSPC));
 		}
 	}
 	/* Now count > 0. */

@@ -40,7 +40,7 @@ nfacct_mt_checkentry(const struct xt_mtchk_param *par)
 	if (nfacct == NULL) {
 		pr_info_ratelimited("accounting object `%s' does not exists\n",
 				    info->name);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	info->nfacct = nfacct;
 	return 0;

@@ -28,7 +28,7 @@ extern int of_irq_parse_oldworld(struct device_node *device, int index,
 static inline int of_irq_parse_oldworld(struct device_node *device, int index,
 				      struct of_phandle_args *out_irq)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_PPC32 && CONFIG_PPC_PMAC */
 

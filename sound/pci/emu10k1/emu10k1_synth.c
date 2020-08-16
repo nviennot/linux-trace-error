@@ -26,7 +26,7 @@ static int snd_emu10k1_synth_probe(struct device *_dev)
 
 	arg = SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (arg == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (arg->seq_ports <= 0)
 		return 0; /* nothing */

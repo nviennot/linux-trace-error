@@ -504,7 +504,7 @@ int ip6_mc_input(struct sk_buff *skb)
 		if (!dev) {
 			rcu_read_unlock();
 			kfree_skb(skb);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	} else {
 		dev = skb->dev;

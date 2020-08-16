@@ -54,7 +54,7 @@ static struct dentry *afs_mntpt_lookup(struct inode *dir,
 				       unsigned int flags)
 {
 	_enter("%p,%p{%pd2}", dir, dentry, dentry);
-	return ERR_PTR(-EREMOTE);
+	return ERR_PTR(-ERR(EREMOTE));
 }
 
 /*
@@ -63,7 +63,7 @@ static struct dentry *afs_mntpt_lookup(struct inode *dir,
 static int afs_mntpt_open(struct inode *inode, struct file *file)
 {
 	_enter("%p,%p{%pD2}", inode, file, file);
-	return -EREMOTE;
+	return -ERR(EREMOTE);
 }
 
 /*
@@ -96,7 +96,7 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 		unsigned size = mntpt->d_name.len;
 
 		if (size < 2)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		p = mntpt->d_name.name;
 		if (mntpt->d_name.name[0] == '.') {
@@ -106,7 +106,7 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 			ctx->force = true;
 		}
 		if (size > AFS_MAXCELLNAME)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 
 		cell = afs_lookup_cell(ctx->net, p, size, NULL, false);
 		if (IS_ERR(cell)) {
@@ -127,7 +127,7 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 			ctx->cell = afs_get_cell(src_as->cell);
 
 		if (size < 2 || size > PAGE_SIZE - 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		page = read_mapping_page(d_inode(mntpt)->i_mapping, 0, NULL);
 		if (IS_ERR(page))
@@ -140,7 +140,7 @@ static int afs_mntpt_set_params(struct fs_context *fc, struct dentry *mntpt)
 		}
 
 		buf = kmap(page);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (buf[size - 1] == '.')
 			ret = vfs_parse_fs_string(fc, "source", buf, size - 1);
 		kunmap(page);

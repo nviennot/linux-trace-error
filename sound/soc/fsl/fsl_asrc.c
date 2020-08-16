@@ -176,10 +176,10 @@ static int fsl_asrc_request_pair(int channels, struct fsl_asrc_pair *pair)
 
 	if (index == ASRC_INVALID_PAIR) {
 		dev_err(dev, "all pairs are busy now\n");
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else if (asrc->channel_avail < channels) {
 		dev_err(dev, "can't afford required channels: %d\n", channels);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		asrc->channel_avail -= channels;
 		asrc->pair[index] = pair;
@@ -264,7 +264,7 @@ static int fsl_asrc_set_ideal_ratio(struct fsl_asrc_pair *pair,
 
 	if (!outrate) {
 		pair_err("output rate should not be zero\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate the intergal part of the ratio */
@@ -325,13 +325,13 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 
 	if (!config) {
 		pair_err("invalid pair config\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Validate channels */
 	if (config->channel_num < 1 || config->channel_num > 10) {
 		pair_err("does not support %d channels\n", config->channel_num);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (snd_pcm_format_width(config->input_format)) {
@@ -347,7 +347,7 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 	default:
 		pair_err("does not support this input format, %d\n",
 			 config->input_format);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (snd_pcm_format_width(config->output_format)) {
@@ -360,7 +360,7 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 	default:
 		pair_err("does not support this output format, %d\n",
 			 config->output_format);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	inrate = config->input_sample_rate;
@@ -374,7 +374,7 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 
 	if (in == ARRAY_SIZE(supported_asrc_rate)) {
 		pair_err("unsupported input sample rate: %dHz\n", inrate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (out = 0; out < ARRAY_SIZE(supported_asrc_rate); out++)
@@ -383,14 +383,14 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 
 	if (out == ARRAY_SIZE(supported_asrc_rate)) {
 		pair_err("unsupported output sample rate: %dHz\n", outrate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((outrate >= 5512 && outrate <= 30000) &&
 	    (outrate > 24 * inrate || inrate > 8 * outrate)) {
 		pair_err("exceed supported ratio range [1/24, 8] for \
 				inrate/outrate: %d/%d\n", inrate, outrate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Validate input and output clock sources */
@@ -414,7 +414,7 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 	if (div[IN] == 0 || (!ideal && (div[IN] > 1024 || rem[IN] != 0))) {
 		pair_err("failed to support input sample rate %dHz by asrck_%x\n",
 				inrate, clk_index[ideal ? OUT : IN]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	div[IN] = min_t(u32, 1024, div[IN]);
@@ -431,7 +431,7 @@ static int fsl_asrc_config_pair(struct fsl_asrc_pair *pair, bool use_ideal_rate)
 	if (div[OUT] == 0 || (!ideal && (div[OUT] > 1024 || rem[OUT] != 0))) {
 		pair_err("failed to support output sample rate %dHz by asrck_%x\n",
 				outrate, clk_index[OUT]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	div[OUT] = min_t(u32, 1024, div[OUT]);
@@ -659,7 +659,7 @@ static int fsl_asrc_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 		fsl_asrc_stop_pair(pair);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1022,7 +1022,7 @@ static int fsl_asrc_probe(struct platform_device *pdev)
 	asrc_priv->soc = of_device_get_match_data(&pdev->dev);
 	if (!asrc_priv->soc) {
 		dev_err(&pdev->dev, "failed to get soc data\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	asrc->use_edma = asrc_priv->soc->use_edma;
@@ -1048,7 +1048,7 @@ static int fsl_asrc_probe(struct platform_device *pdev)
 
 		if (map_idx > 1) {
 			dev_err(&pdev->dev, "unsupported clk map index\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (of_device_is_compatible(np, "fsl,imx8qm-asrc")) {
 			asrc_priv->clk_map[IN] = clk_map_imx8qm[map_idx];

@@ -672,14 +672,14 @@ int bdi_set_min_ratio(struct backing_dev_info *bdi, unsigned int min_ratio)
 
 	spin_lock_bh(&bdi_lock);
 	if (min_ratio > bdi->max_ratio) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		min_ratio -= bdi->min_ratio;
 		if (bdi_min_ratio + min_ratio < 100) {
 			bdi_min_ratio += min_ratio;
 			bdi->min_ratio += min_ratio;
 		} else {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 	spin_unlock_bh(&bdi_lock);
@@ -692,11 +692,11 @@ int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned max_ratio)
 	int ret = 0;
 
 	if (max_ratio > 100)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&bdi_lock);
 	if (bdi->min_ratio > max_ratio) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		bdi->max_ratio = max_ratio;
 		bdi->max_prop_frac = (FPROP_FRAC_BASE * max_ratio) / 100;

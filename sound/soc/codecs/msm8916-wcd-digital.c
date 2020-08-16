@@ -671,12 +671,12 @@ static int msm8916_wcd_digital_enable_dmic(struct snd_soc_dapm_widget *w,
 
 	if (dmic_num == NULL) {
 		dev_err(component->dev, "Invalid DMIC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ret = kstrtouint(dmic_num, 10, &dmic);
 	if (ret < 0 || dmic > 2) {
 		dev_err(component->dev, "Invalid DMIC line on the component\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -886,7 +886,7 @@ static int msm8916_wcd_digital_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->component->dev, "Invalid sampling rate %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (substream->stream) {
@@ -899,7 +899,7 @@ static int msm8916_wcd_digital_hw_params(struct snd_pcm_substream *substream,
 				    RX_I2S_CTL_RX_I2S_FS_RATE_MASK, rx_fs_rate);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_format(params)) {
@@ -922,7 +922,7 @@ static int msm8916_wcd_digital_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "%s: wrong format selected\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

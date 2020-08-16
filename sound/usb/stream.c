@@ -970,7 +970,7 @@ snd_usb_get_audioformat_uac3(struct snd_usb_audio *chip,
 		dev_err(&dev->dev,
 			"%u:%d : can't get High Capability descriptor\n",
 			iface_no, altno);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	/*
@@ -996,7 +996,7 @@ snd_usb_get_audioformat_uac3(struct snd_usb_audio *chip,
 			"%u:%d : can't get Cluster Descriptor\n",
 			iface_no, altno);
 		kfree(cluster);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	num_channels = cluster->bNrChannels;

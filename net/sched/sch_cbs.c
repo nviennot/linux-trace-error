@@ -282,7 +282,7 @@ static int cbs_enable_offload(struct net_device *dev, struct cbs_sched_data *q,
 
 	if (!ops->ndo_setup_tc) {
 		NL_SET_ERR_MSG(extack, "Specified device does not support cbs offload");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	cbs.queue = q->queue;
@@ -373,7 +373,7 @@ static int cbs_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!tb[TCA_CBS_PARMS]) {
 		NL_SET_ERR_MSG(extack, "Missing CBS parameter which are mandatory");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	qopt = nla_data(tb[TCA_CBS_PARMS]);
@@ -405,7 +405,7 @@ static int cbs_init(struct Qdisc *sch, struct nlattr *opt,
 
 	if (!opt) {
 		NL_SET_ERR_MSG(extack, "Missing CBS qdisc options  which are mandatory");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	q->qdisc = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
@@ -480,7 +480,7 @@ static int cbs_dump_class(struct Qdisc *sch, unsigned long cl,
 	struct cbs_sched_data *q = qdisc_priv(sch);
 
 	if (cl != 1 || !q->qdisc)	/* only one class */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	tcm->tcm_handle |= TC_H_MIN(1);
 	tcm->tcm_info = q->qdisc->handle;

@@ -283,7 +283,7 @@ int afs_page_filler(void *data, struct page *page)
 
 	BUG_ON(!PageLocked(page));
 
-	ret = -ESTALE;
+	ret = -ERR(ESTALE);
 	if (test_bit(AFS_VNODE_DELETED, &vnode->flags))
 		goto error;
 
@@ -295,7 +295,7 @@ int afs_page_filler(void *data, struct page *page)
 					 NULL,
 					 GFP_KERNEL);
 #else
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 #endif
 	switch (ret) {
 		/* read BIO submitted (page in cache) */
@@ -340,7 +340,7 @@ int afs_page_filler(void *data, struct page *page)
 				_debug("got NOENT from server"
 				       " - marking file deleted and stale");
 				set_bit(AFS_VNODE_DELETED, &vnode->flags);
-				ret = -ESTALE;
+				ret = -ERR(ESTALE);
 			}
 
 #ifdef CONFIG_AFS_FSCACHE
@@ -519,7 +519,7 @@ error:
 		_debug("got NOENT from server"
 		       " - marking file deleted and stale");
 		set_bit(AFS_VNODE_DELETED, &vnode->flags);
-		ret = -ESTALE;
+		ret = -ERR(ESTALE);
 	}
 
 	for (i = 0; i < req->nr_pages; i++) {
@@ -555,7 +555,7 @@ static int afs_readpages(struct file *file, struct address_space *mapping,
 	vnode = AFS_FS_I(mapping->host);
 	if (test_bit(AFS_VNODE_DELETED, &vnode->flags)) {
 		_leave(" = -ESTALE");
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 
 	/* attempt to read as many of the pages as possible */
@@ -568,7 +568,7 @@ static int afs_readpages(struct file *file, struct address_space *mapping,
 					  NULL,
 					  mapping_gfp_mask(mapping));
 #else
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 #endif
 
 	switch (ret) {

@@ -59,7 +59,7 @@ static int nft_range_init(const struct nft_ctx *ctx, const struct nft_expr *expr
 	    !tb[NFTA_RANGE_OP]	      ||
 	    !tb[NFTA_RANGE_FROM_DATA] ||
 	    !tb[NFTA_RANGE_TO_DATA])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_data_init(NULL, &priv->data_from, sizeof(priv->data_from),
 			    &desc_from, tb[NFTA_RANGE_FROM_DATA]);
@@ -67,7 +67,7 @@ static int nft_range_init(const struct nft_ctx *ctx, const struct nft_expr *expr
 		return err;
 
 	if (desc_from.type != NFT_DATA_VALUE) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err1;
 	}
 
@@ -77,12 +77,12 @@ static int nft_range_init(const struct nft_ctx *ctx, const struct nft_expr *expr
 		goto err1;
 
 	if (desc_to.type != NFT_DATA_VALUE) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err2;
 	}
 
 	if (desc_from.len != desc_to.len) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err2;
 	}
 
@@ -100,7 +100,7 @@ static int nft_range_init(const struct nft_ctx *ctx, const struct nft_expr *expr
 	case NFT_RANGE_NEQ:
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err2;
 	}
 

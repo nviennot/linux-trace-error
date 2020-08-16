@@ -347,7 +347,7 @@ static int wm8737_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(coeff_div)) {
 		dev_err(component->dev, "%dHz MCLK can't support %dHz\n",
 			wm8737->mclk, params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	clocking |= coeff_div[i].usb | (coeff_div[i].sr << WM8737_SR_SHIFT);
@@ -365,7 +365,7 @@ static int wm8737_hw_params(struct snd_pcm_substream *substream,
 		af |= 0x18;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8737_AUDIO_FORMAT, WM8737_WL_MASK, af);
@@ -393,7 +393,7 @@ static int wm8737_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	dev_err(component->dev, "MCLK rate %dHz not supported\n", freq);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 
@@ -410,7 +410,7 @@ static int wm8737_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -429,7 +429,7 @@ static int wm8737_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		af |= 0x13;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -439,7 +439,7 @@ static int wm8737_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		af |= WM8737_LRP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8737_AUDIO_FORMAT,

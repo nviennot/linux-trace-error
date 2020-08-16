@@ -606,7 +606,7 @@ rate_limit_us_store(struct gov_attr_set *attr_set, const char *buf, size_t count
 	unsigned int rate_limit_us;
 
 	if (kstrtouint(buf, 10, &rate_limit_us))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tunables->rate_limit_us = rate_limit_us;
 
@@ -742,7 +742,7 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 	/* State should be equivalent to EXIT */
 	if (policy->governor_data)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	cpufreq_enable_fast_switch(policy);
 
@@ -760,7 +760,7 @@ static int sugov_init(struct cpufreq_policy *policy)
 
 	if (global_tunables) {
 		if (WARN_ON(have_governor_per_policy())) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto stop_kthread;
 		}
 		policy->governor_data = sg_policy;

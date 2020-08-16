@@ -131,7 +131,7 @@ int nfs_get_root(struct super_block *s, struct fs_context *fc)
 		kflags |= SECURITY_LSM_NATIVE_LABELS;
 	if (ctx->clone_data.sb) {
 		if (d_inode(fc->root)->i_fop != &nfs_dir_operations) {
-			error = -ESTALE;
+			error = -ERR(ESTALE);
 			goto error_splat_root;
 		}
 		/* clone lsm security options from the parent to the new sb */

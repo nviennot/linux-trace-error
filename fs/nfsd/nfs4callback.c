@@ -231,11 +231,11 @@ static int decode_cb_op_status(struct xdr_stream *xdr,
 	*status = nfs_cb_stat_to_errno(be32_to_cpup(p));
 	return 0;
 out_overflow:
-	return -EIO;
+	return -ERR(EIO);
 out_unexpected:
 	dprintk("NFSD: Callback server returned operation %d but "
 		"we issued a request for %d\n", op, expected);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -299,7 +299,7 @@ static int decode_cb_compound4res(struct xdr_stream *xdr,
 	hdr->nops = be32_to_cpup(p);
 	return 0;
 out_overflow:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -388,7 +388,7 @@ static int decode_cb_sequence4resok(struct xdr_stream *xdr,
 				    struct nfsd4_callback *cb)
 {
 	struct nfsd4_session *session = cb->cb_clp->cl_cb_session;
-	int status = -ESERVERFAULT;
+	int status = -ERR(ESERVERFAULT);
 	__be32 *p;
 	u32 dummy;
 
@@ -426,7 +426,7 @@ out:
 	cb->cb_seq_status = status;
 	return status;
 out_overflow:
-	status = -EIO;
+	status = -ERR(EIO);
 	goto out;
 }
 
@@ -907,7 +907,7 @@ static int setup_callback_client(struct nfs4_client *clp, struct nfs4_cb_conn *c
 		if (!clp->cl_cred.cr_principal &&
 		    (clp->cl_cred.cr_flavor >= RPC_AUTH_GSS_KRB5)) {
 			trace_nfsd_cb_setup_err(clp, -EINVAL);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		args.client_name = clp->cl_cred.cr_principal;
 		args.prognumber	= conn->cb_prog;
@@ -917,7 +917,7 @@ static int setup_callback_client(struct nfs4_client *clp, struct nfs4_cb_conn *c
 	} else {
 		if (!conn->cb_xprt) {
 			trace_nfsd_cb_setup_err(clp, -EINVAL);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		clp->cl_cb_conn.cb_xprt = conn->cb_xprt;
 		clp->cl_cb_session = ses;

@@ -178,7 +178,7 @@ smb2_wait_mtu_credits(struct TCP_Server_Info *server, unsigned int size,
 		} else {
 			if (server->tcpStatus == CifsExiting) {
 				spin_unlock(&server->req_lock);
-				return -ENOENT;
+				return -ERR(ENOENT);
 			}
 
 			scredits = server->credits;
@@ -222,7 +222,7 @@ smb2_adjust_credits(struct TCP_Server_Info *server,
 	if (credits->value < new_val) {
 		WARN_ONCE(1, "request has less credits (%d) than required (%d)",
 			  credits->value, new_val);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	spin_lock(&server->req_lock);
@@ -231,7 +231,7 @@ smb2_adjust_credits(struct TCP_Server_Info *server,
 		spin_unlock(&server->req_lock);
 		cifs_server_dbg(VFS, "trying to return %d credits to old session\n",
 			 credits->value - new_val);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	server->credits += credits->value - new_val;
@@ -316,7 +316,7 @@ smb2_negotiate(const unsigned int xid, struct cifs_ses *ses)
 	rc = SMB2_negotiate(xid, ses);
 	/* BB we probably don't need to retry with modern servers */
 	if (rc == -EAGAIN)
-		rc = -EHOSTDOWN;
+		rc = -ERR(EHOSTDOWN);
 	return rc;
 }
 
@@ -455,7 +455,7 @@ parse_server_interfaces(struct network_interface_info_ioctl_rsp *buf,
 
 	if (!nb_iface) {
 		cifs_dbg(VFS, "%s: malformed interface info\n", __func__);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -536,7 +536,7 @@ next_iface:
 	}
 
 	if (!*iface_count) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -689,7 +689,7 @@ int open_shroot(unsigned int xid, struct cifs_tcon *tcon,
 		flags |= CIFS_TRANSFORM_REQ;
 
 	if (!server->ops->new_lease_key)
-		return -EIO;
+		return -ERR(EIO);
 
 	server->ops->new_lease_key(pfid);
 
@@ -983,7 +983,7 @@ move_smb2_ea_to_cifs(char *dst, size_t dst_size,
 
 		if (src_size < 8 + name_len + 1 + value_len) {
 			cifs_dbg(FYI, "EA entry goes beyond length of list\n");
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto out;
 		}
 
@@ -994,7 +994,7 @@ move_smb2_ea_to_cifs(char *dst, size_t dst_size,
 				if (dst_size == 0)
 					goto out;
 				if (dst_size < value_len) {
-					rc = -ERANGE;
+					rc = -ERR(ERANGE);
 					goto out;
 				}
 				memcpy(dst, value, value_len);
@@ -1018,7 +1018,7 @@ move_smb2_ea_to_cifs(char *dst, size_t dst_size,
 				rc += user_name_len;
 			} else {
 				/* stop before overrun buffer */
-				rc = -ERANGE;
+				rc = -ERR(ERANGE);
 				break;
 			}
 		}
@@ -1028,7 +1028,7 @@ move_smb2_ea_to_cifs(char *dst, size_t dst_size,
 
 		if (src_size < le32_to_cpu(src->next_entry_offset)) {
 			/* stop before overrun buffer */
-			rc = -ERANGE;
+			rc = -ERR(ERANGE);
 			break;
 		}
 		src_size -= le32_to_cpu(src->next_entry_offset);
@@ -1038,7 +1038,7 @@ move_smb2_ea_to_cifs(char *dst, size_t dst_size,
 
 	/* didn't find the named attribute */
 	if (ea_name)
-		rc = -ENODATA;
+		rc = -ERR(ENODATA);
 
 out:
 	return (ssize_t)rc;
@@ -1131,7 +1131,7 @@ smb2_set_ea(const unsigned int xid, struct cifs_tcon *tcon,
 		flags |= CIFS_TRANSFORM_REQ;
 
 	if (ea_name_len > 255)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	utf16_path = cifs_convert_path_to_utf16(path, cifs_sb);
 	if (!utf16_path)
@@ -1177,7 +1177,7 @@ smb2_set_ea(const unsigned int xid, struct cifs_tcon *tcon,
 			if(CIFSMaxBufSize - MAX_SMB2_CREATE_RESPONSE_SIZE -
 			   MAX_SMB2_CLOSE_RESPONSE_SIZE - 256 <
 			   used_len + ea_name_len + ea_value_len + 1) {
-				rc = -ENOSPC;
+				rc = -ERR(ENOSPC);
 				goto sea_exit;
 			}
 		}
@@ -1452,7 +1452,7 @@ SMB2_request_res_key(const unsigned int xid, struct cifs_tcon *tcon,
 	}
 	if (ret_data_len < sizeof(struct resume_key_req)) {
 		cifs_tcon_dbg(VFS, "Invalid refcopy resume key length\n");
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto req_res_key_exit;
 	}
 	memcpy(pcchunk->SourceKey, res_key->ResumeKey, COPY_CHUNK_RES_KEY_SIZE);
@@ -1513,12 +1513,12 @@ smb2_ioctl_query_info(const unsigned int xid,
 
 	if (qi.output_buffer_length > 1024) {
 		kfree(vars);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!ses || !server) {
 		kfree(vars);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (smb3_encryption_required(tcon))
@@ -1573,7 +1573,7 @@ smb2_ioctl_query_info(const unsigned int xid,
 	if (qi.flags & PASSTHRU_FSCTL) {
 		/* Can eventually relax perm check since server enforces too */
 		if (!capable(CAP_SYS_ADMIN))
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 		else  {
 			rqst[1].rq_iov = &vars->io_iov[0];
 			rqst[1].rq_nvec = SMB2_IOCTL_IOV_SIZE;
@@ -1590,7 +1590,7 @@ smb2_ioctl_query_info(const unsigned int xid,
 	} else if (qi.flags == PASSTHRU_SET_INFO) {
 		/* Can eventually relax perm check since server enforces too */
 		if (!capable(CAP_SYS_ADMIN))
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 		else  {
 			rqst[1].rq_iov = &vars->si_iov[0];
 			rqst[1].rq_nvec = 1;
@@ -1618,7 +1618,7 @@ smb2_ioctl_query_info(const unsigned int xid,
 	} else { /* unknown flags */
 		cifs_tcon_dbg(VFS, "Invalid passthru query flags: 0x%x\n",
 			      qi.flags);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 
 	if (rc)
@@ -1750,12 +1750,12 @@ smb2_copychunk_range(const unsigned int xid,
 			if (ret_data_len !=
 					sizeof(struct copychunk_ioctl_rsp)) {
 				cifs_tcon_dbg(VFS, "Invalid cchunk response size\n");
-				rc = -EIO;
+				rc = -ERR(EIO);
 				goto cchunk_out;
 			}
 			if (retbuf->TotalBytesWritten == 0) {
 				cifs_dbg(FYI, "no bytes copied\n");
-				rc = -EIO;
+				rc = -ERR(EIO);
 				goto cchunk_out;
 			}
 			/*
@@ -1764,12 +1764,12 @@ smb2_copychunk_range(const unsigned int xid,
 			if (le32_to_cpu(retbuf->TotalBytesWritten) >
 			    le32_to_cpu(pcchunk->Length)) {
 				cifs_tcon_dbg(VFS, "Invalid copy chunk response\n");
-				rc = -EIO;
+				rc = -ERR(EIO);
 				goto cchunk_out;
 			}
 			if (le32_to_cpu(retbuf->ChunksWritten) != 1) {
 				cifs_tcon_dbg(VFS, "Invalid num chunks written\n");
-				rc = -EIO;
+				rc = -ERR(EIO);
 				goto cchunk_out;
 			}
 			chunks_copied++;
@@ -1959,7 +1959,7 @@ smb2_duplicate_extents(const unsigned int xid,
 	/* server fileays advertise duplicate extent support with this flag */
 	if ((le32_to_cpu(tcon->fsAttrInfo.Attributes) &
 	     FILE_SUPPORTS_BLOCK_REFCOUNTING) == 0)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	dup_ext_buf.VolatileFileHandle = srcfile->fid.volatile_fid;
 	dup_ext_buf.PersistentFileHandle = srcfile->fid.persistent_fid;
@@ -2667,7 +2667,7 @@ smb2_get_dfs_refer(const unsigned int xid, struct cifs_ses *ses,
 	if (tcon == NULL) {
 		cifs_dbg(VFS, "session %p has no tcon available for a dfs referral request\n",
 			 ses);
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -2741,7 +2741,7 @@ parse_reparse_posix(struct reparse_posix_data *symlink_buf,
 	if (le64_to_cpu(symlink_buf->InodeType) != NFS_SPECFILE_LNK) {
 		cifs_dbg(VFS, "%lld not a supported symlink type\n",
 			le64_to_cpu(symlink_buf->InodeType));
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	*target_path = cifs_strndup_from_utf16(
@@ -2771,7 +2771,7 @@ parse_reparse_symlink(struct reparse_symlink_data_buffer *symlink_buf,
 	if (sub_offset + 20 > plen ||
 	    sub_offset + sub_len + 20 > plen) {
 		cifs_dbg(VFS, "srv returned malformed symlink buffer\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*target_path = cifs_strndup_from_utf16(
@@ -2794,14 +2794,14 @@ parse_reparse_point(struct reparse_data_buffer *buf,
 	if (plen < sizeof(struct reparse_data_buffer)) {
 		cifs_dbg(VFS, "reparse buffer is too small. Must be at least 8 bytes but was %d\n",
 			 plen);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (plen < le16_to_cpu(buf->ReparseDataLength) +
 	    sizeof(struct reparse_data_buffer)) {
 		cifs_dbg(VFS, "srv returned invalid reparse buf length: %d\n",
 			 plen);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* See MS-FSCC 2.1.2 */
@@ -2817,7 +2817,7 @@ parse_reparse_point(struct reparse_data_buffer *buf,
 	default:
 		cifs_dbg(VFS, "srv returned unknown symlink buffer tag:0x%08x\n",
 			 le32_to_cpu(buf->ReparseTag));
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 }
 
@@ -2945,7 +2945,7 @@ smb2_query_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 		    rsp_iov[1].iov_len) {
 			cifs_tcon_dbg(VFS, "srv returned invalid ioctl len: %d\n",
 				 plen);
-			rc = -EIO;
+			rc = -ERR(EIO);
 			goto querty_exit;
 		}
 
@@ -2955,21 +2955,21 @@ smb2_query_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 	}
 
 	if (!rc || !err_iov.iov_base) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto querty_exit;
 	}
 
 	err_buf = err_iov.iov_base;
 	if (le32_to_cpu(err_buf->ByteCount) < sizeof(struct smb2_symlink_err_rsp) ||
 	    err_iov.iov_len < SMB2_SYMLINK_STRUCT_SIZE) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto querty_exit;
 	}
 
 	symlink = (struct smb2_symlink_err_rsp *)err_buf->ErrorData;
 	if (le32_to_cpu(symlink->SymLinkErrorTag) != SYMLINK_ERROR_TAG ||
 	    le32_to_cpu(symlink->ReparseTag) != IO_REPARSE_TAG_SYMLINK) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto querty_exit;
 	}
 
@@ -2981,13 +2981,13 @@ smb2_query_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 	print_offset = le16_to_cpu(symlink->PrintNameOffset);
 
 	if (err_iov.iov_len < SMB2_SYMLINK_STRUCT_SIZE + sub_offset + sub_len) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto querty_exit;
 	}
 
 	if (err_iov.iov_len <
 	    SMB2_SYMLINK_STRUCT_SIZE + print_offset + print_len) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto querty_exit;
 	}
 
@@ -3019,7 +3019,7 @@ get_smb2_acl_by_fid(struct cifs_sb_info *cifs_sb,
 {
 	struct cifs_ntsd *pntsd = NULL;
 	unsigned int xid;
-	int rc = -EOPNOTSUPP;
+	int rc = -ERR(EOPNOTSUPP);
 	struct tcon_link *tlink = cifs_sb_tlink(cifs_sb);
 
 	if (IS_ERR(tlink))
@@ -3197,7 +3197,7 @@ static long smb3_zero_range(struct file *file, struct cifs_tcon *tcon,
 	/* if file not oplocked can't be sure whether asking to extend size */
 	if (!CIFS_CACHE_READ(cifsi))
 		if (keep_size == false) {
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			trace_smb3_zero_err(xid, cfile->fid.persistent_fid,
 				tcon->tid, ses->Suid, offset, len, rc);
 			free_xid(xid);
@@ -3254,7 +3254,7 @@ static long smb3_punch_hole(struct file *file, struct cifs_tcon *tcon,
 	/* Need to make file sparse, if not already, before freeing range. */
 	/* Consider adding equivalent for compressed since it could also work */
 	if (!smb2_set_sparse(xid, tcon, cfile, inode, set_sparse)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		free_xid(xid);
 		return rc;
 	}
@@ -3285,7 +3285,7 @@ static long smb3_simple_falloc(struct file *file, struct cifs_tcon *tcon,
 	struct inode *inode;
 	struct cifsInodeInfo *cifsi;
 	struct cifsFileInfo *cfile = file->private_data;
-	long rc = -EOPNOTSUPP;
+	long rc = -ERR(EOPNOTSUPP);
 	unsigned int xid;
 	__le64 eof;
 
@@ -3348,7 +3348,7 @@ static long smb3_simple_falloc(struct file *file, struct cifs_tcon *tcon,
 		 * or end of the file non-sparse via set_sparse is harmless.
 		 */
 		if ((off > 8192) || (off + len + 8192 < i_size_read(inode))) {
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 	}
@@ -3385,7 +3385,7 @@ static loff_t smb3_llseek(struct file *file, struct cifs_tcon *tcon, loff_t offs
 	cifsi = CIFS_I(inode);
 
 	if (offset < 0 || offset >= i_size_read(inode))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	xid = get_xid();
 	/*
@@ -3426,12 +3426,12 @@ static loff_t smb3_llseek(struct file *file, struct cifs_tcon *tcon, loff_t offs
 		goto lseek_exit;
 
 	if (whence == SEEK_DATA && out_data_len == 0) {
-		rc = -ENXIO;
+		rc = -ERR(ENXIO);
 		goto lseek_exit;
 	}
 
 	if (out_data_len < sizeof(struct file_allocated_range_buffer)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto lseek_exit;
 	}
 	if (whence == SEEK_DATA) {
@@ -3486,11 +3486,11 @@ static int smb3_fiemap(struct cifs_tcon *tcon,
 		goto out;
 
 	if (out_data_len && out_data_len < sizeof(struct file_allocated_range_buffer)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	if (out_data_len % sizeof(struct file_allocated_range_buffer)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -3542,7 +3542,7 @@ static long smb3_fallocate(struct file *file, struct cifs_tcon *tcon, int mode,
 	else if (mode == 0)
 		return smb3_simple_falloc(file, tcon, off, len, false);
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void
@@ -4184,7 +4184,7 @@ init_read_bvec(struct page **pages, unsigned int npages, unsigned int data_size,
 	if (data_size != 0) {
 		cifs_dbg(VFS, "%s: something went wrong\n", __func__);
 		kfree(bvec);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*page_vec = bvec;
@@ -4211,7 +4211,7 @@ handle_read_data(struct TCP_Server_Info *server, struct mid_q_entry *mid,
 
 	if (shdr->Command != SMB2_READ) {
 		cifs_server_dbg(VFS, "only big read responses are supported\n");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	if (server->ops->is_session_expired &&
@@ -4263,7 +4263,7 @@ handle_read_data(struct TCP_Server_Info *server, struct mid_q_entry *mid,
 		/* data_offset is beyond the end of smallbuf */
 		cifs_dbg(FYI, "%s: data offset (%u) beyond end of smallbuf\n",
 			 __func__, data_offset);
-		rdata->result = -EIO;
+		rdata->result = -ERR(EIO);
 		dequeue_mid(mid, rdata->result);
 		return 0;
 	}
@@ -4279,14 +4279,14 @@ handle_read_data(struct TCP_Server_Info *server, struct mid_q_entry *mid,
 			/* data offset is beyond the 1st page of response */
 			cifs_dbg(FYI, "%s: data offset (%u) beyond 1st page of response\n",
 				 __func__, data_offset);
-			rdata->result = -EIO;
+			rdata->result = -ERR(EIO);
 			dequeue_mid(mid, rdata->result);
 			return 0;
 		}
 
 		if (data_len > page_data_size - pad_len) {
 			/* data_len is corrupt -- discard frame */
-			rdata->result = -EIO;
+			rdata->result = -ERR(EIO);
 			dequeue_mid(mid, rdata->result);
 			return 0;
 		}
@@ -4308,7 +4308,7 @@ handle_read_data(struct TCP_Server_Info *server, struct mid_q_entry *mid,
 	} else {
 		/* read response payload cannot be in both buf and pages */
 		WARN_ONCE(1, "buf can not contain only a part of read data");
-		rdata->result = -EIO;
+		rdata->result = -ERR(EIO);
 		dequeue_mid(mid, rdata->result);
 		return 0;
 	}
@@ -4580,13 +4580,13 @@ smb3_receive_transform(struct TCP_Server_Info *server,
 		cifs_server_dbg(VFS, "Transform message is too small (%u)\n",
 			 pdu_length);
 		cifs_reconnect(server);
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 	}
 
 	if (pdu_length < orig_len + sizeof(struct smb2_transform_hdr)) {
 		cifs_server_dbg(VFS, "Transform message is broken\n");
 		cifs_reconnect(server);
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 	}
 
 	/* TODO: add support for compounds containing READ. */
@@ -4625,7 +4625,7 @@ smb2_make_node(unsigned int xid, struct inode *inode,
 	       char *full_path, umode_t mode, dev_t dev)
 {
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	int rc = -EPERM;
+	int rc = -ERR(EPERM);
 	FILE_ALL_INFO *buf = NULL;
 	struct cifs_io_parms io_parms = {0};
 	__u32 oplock = 0;

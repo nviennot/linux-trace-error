@@ -259,7 +259,7 @@ static struct rds_connection *__rds_conn_create(struct net *net,
 	}
 	rcu_read_lock();
 	if (rds_destroy_pending(conn))
-		ret = -ENETDOWN;
+		ret = -ERR(ENETDOWN);
 	else
 		ret = trans->conn_alloc(conn, GFP_ATOMIC);
 	if (ret) {

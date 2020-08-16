@@ -114,7 +114,7 @@ static int snd_card_als100_pnp(int dev, struct snd_card_als100 *acard,
 
 	acard->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->dev == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	acard->devmpu = pnp_request_card_device(card, id->devs[1].id, acard->dev);
 	acard->devopl = pnp_request_card_device(card, id->devs[2].id, acard->dev);
@@ -293,7 +293,7 @@ static int snd_als100_pnp_detect(struct pnp_card_link *card,
 		als100_devices++;
 		return 0;
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void snd_als100_pnp_remove(struct pnp_card_link *pcard)
@@ -352,7 +352,7 @@ static int __init alsa_card_als100_init(void)
 #ifdef MODULE
 		snd_printk(KERN_ERR "no Avance Logic based soundcards found\n");
 #endif
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

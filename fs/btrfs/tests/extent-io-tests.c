@@ -68,7 +68,7 @@ static int test_find_delalloc(u32 sectorsize)
 	u64 total_dirty = 2 * max_bytes;
 	u64 start, end, test_start;
 	bool found;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	test_msg("running find delalloc tests");
 
@@ -280,14 +280,14 @@ static int check_eb_bitmap(unsigned long *bitmap, struct extent_buffer *eb,
 		bit1 = !!extent_buffer_test_bit(eb, 0, i);
 		if (bit1 != bit) {
 			test_err("bits do not match");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		bit1 = !!extent_buffer_test_bit(eb, i / BITS_PER_BYTE,
 						i % BITS_PER_BYTE);
 		if (bit1 != bit) {
 			test_err("offset bits do not match");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -304,7 +304,7 @@ static int __test_eb_bitmaps(unsigned long *bitmap, struct extent_buffer *eb,
 	memzero_extent_buffer(eb, 0, len);
 	if (memcmp_extent_buffer(eb, bitmap, 0, len) != 0) {
 		test_err("bitmap was not zeroed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bitmap_set(bitmap, 0, len * BITS_PER_BYTE);
@@ -438,7 +438,7 @@ static int test_find_first_clear_extent_bit(void)
 {
 	struct extent_io_tree tree;
 	u64 start, end;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	test_msg("running find_first_clear_extent_bit test");
 

@@ -47,7 +47,7 @@ int nf_log_set(struct net *net, u_int8_t pf, const struct nf_logger *logger)
 	const struct nf_logger *log;
 
 	if (pf == NFPROTO_UNSPEC || pf >= ARRAY_SIZE(net->nf.nf_loggers))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&nf_log_mutex);
 	log = nft_log_dereference(net->nf.nf_loggers[pf]);
@@ -82,14 +82,14 @@ int nf_log_register(u_int8_t pf, struct nf_logger *logger)
 	int ret = 0;
 
 	if (pf >= ARRAY_SIZE(init_net.nf.nf_loggers))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&nf_log_mutex);
 
 	if (pf == NFPROTO_UNSPEC) {
 		for (i = NFPROTO_UNSPEC; i < NFPROTO_NUMPROTO; i++) {
 			if (rcu_access_pointer(loggers[i][logger->type])) {
-				ret = -EEXIST;
+				ret = -ERR(EEXIST);
 				goto unlock;
 			}
 		}
@@ -97,7 +97,7 @@ int nf_log_register(u_int8_t pf, struct nf_logger *logger)
 			rcu_assign_pointer(loggers[i][logger->type], logger);
 	} else {
 		if (rcu_access_pointer(loggers[pf][logger->type])) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto unlock;
 		}
 		rcu_assign_pointer(loggers[pf][logger->type], logger);
@@ -129,11 +129,11 @@ int nf_log_bind_pf(struct net *net, u_int8_t pf,
 		   const struct nf_logger *logger)
 {
 	if (pf >= ARRAY_SIZE(net->nf.nf_loggers))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&nf_log_mutex);
 	if (__find_logger(pf, logger->name) == NULL) {
 		mutex_unlock(&nf_log_mutex);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	rcu_assign_pointer(net->nf.nf_loggers[pf], logger);
 	mutex_unlock(&nf_log_mutex);
@@ -161,7 +161,7 @@ EXPORT_SYMBOL_GPL(nf_logger_request_module);
 int nf_logger_find_get(int pf, enum nf_log_type type)
 {
 	struct nf_logger *logger;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (pf == NFPROTO_INET) {
 		ret = nf_logger_find_get(NFPROTO_IPV4, type);
@@ -367,7 +367,7 @@ static int seq_show(struct seq_file *s, void *v)
 		seq_printf(s, "%2lld %s (", *pos, logger->name);
 
 	if (seq_has_overflowed(s))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	for (i = 0; i < NF_LOG_TYPE_MAX; i++) {
 		if (loggers[*pos][i] == NULL)
@@ -379,13 +379,13 @@ static int seq_show(struct seq_file *s, void *v)
 			seq_puts(s, ",");
 
 		if (seq_has_overflowed(s))
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 	}
 
 	seq_puts(s, ")\n");
 
 	if (seq_has_overflowed(s))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	return 0;
 }
 
@@ -442,7 +442,7 @@ static int nf_log_proc_dostring(struct ctl_table *table, int write,
 		logger = __find_logger(tindex, buf);
 		if (logger == NULL) {
 			mutex_unlock(&nf_log_mutex);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		rcu_assign_pointer(net->nf.nf_loggers[tindex], logger);
 		mutex_unlock(&nf_log_mutex);

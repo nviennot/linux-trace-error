@@ -57,7 +57,7 @@ static inline void init_pushpull(struct pushpull *pp, char *buf,
 static inline int pushbit(struct pushpull *pp, int bit, int use_reserved)
 {
 	if (pp->ofs >= pp->buflen - (use_reserved?0:pp->reserve))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (bit)
 		pp->buf[pp->ofs >> 3] |= (1<<(7-(pp->ofs & 7)));

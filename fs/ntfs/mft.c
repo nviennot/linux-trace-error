@@ -61,7 +61,7 @@ static inline MFT_RECORD *map_mft_record_page(ntfs_inode *ni)
 	if (unlikely(index >= end_index)) {
 		if (index > end_index || (i_size & ~PAGE_MASK) < ofs +
 				vol->mft_record_size) {
-			page = ERR_PTR(-ENOENT);
+			page = ERR_PTR(-ERR(ENOENT));
 			ntfs_error(vol->sb, "Attempt to read mft record 0x%lx, "
 					"which is beyond the end of the mft.  "
 					"This is probably a bug in the ntfs "
@@ -82,7 +82,7 @@ static inline MFT_RECORD *map_mft_record_page(ntfs_inode *ni)
 		ntfs_error(vol->sb, "Mft record 0x%lx is corrupt.  "
 				"Run chkdsk.", ni->mft_no);
 		ntfs_unmap_page(page);
-		page = ERR_PTR(-EIO);
+		page = ERR_PTR(-ERR(EIO));
 		NVolSetErrors(vol);
 	}
 err_out:
@@ -282,7 +282,7 @@ MFT_RECORD *map_extent_mft_record(ntfs_inode *base_ni, MFT_REF mref,
 			ntfs_error(base_ni->vol->sb, "Found stale extent mft "
 					"reference! Corrupt filesystem. "
 					"Run chkdsk.");
-			return ERR_PTR(-EIO);
+			return ERR_PTR(-ERR(EIO));
 		}
 map_err_out:
 		ntfs_error(base_ni->vol->sb, "Failed to map extent "
@@ -313,7 +313,7 @@ map_err_out:
 		ntfs_error(base_ni->vol->sb, "Found stale extent mft "
 				"reference! Corrupt filesystem. Run chkdsk.");
 		destroy_ni = true;
-		m = ERR_PTR(-EIO);
+		m = ERR_PTR(-ERR(EIO));
 		goto unm_err_out;
 	}
 	/* Attach extent inode to base inode, reallocating memory if needed. */
@@ -430,7 +430,7 @@ static int ntfs_sync_mft_mirror_umount(ntfs_volume *vol,
 	BUG_ON(vol->mftmirr_ino);
 	ntfs_error(vol->sb, "Umount time mft mirror syncing is not "
 			"implemented yet.  %s", ntfs_please_email);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /**
@@ -468,7 +468,7 @@ int ntfs_sync_mft_mirror(ntfs_volume *vol, const unsigned long mft_no,
 	ntfs_debug("Entering for inode 0x%lx.", mft_no);
 	BUG_ON(!max_bhs);
 	if (WARN_ON(max_bhs > MAX_BHS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(!vol->mftmirr_ino)) {
 		/* This could happen during umount... */
 		err = ntfs_sync_mft_mirror_umount(vol, mft_no, m);
@@ -561,7 +561,7 @@ int ntfs_sync_mft_mirror(ntfs_volume *vol, const unsigned long mft_no,
 						"be determined (error code "
 						"%lli).", mft_no,
 						(long long)lcn);
-				err = -EIO;
+				err = -ERR(EIO);
 			}
 		}
 		BUG_ON(!buffer_uptodate(bh));
@@ -591,7 +591,7 @@ int ntfs_sync_mft_mirror(ntfs_volume *vol, const unsigned long mft_no,
 
 			wait_on_buffer(tbh);
 			if (unlikely(!buffer_uptodate(tbh))) {
-				err = -EIO;
+				err = -ERR(EIO);
 				/*
 				 * Set the buffer uptodate so the page and
 				 * buffer states do not become out of sync.
@@ -675,7 +675,7 @@ int write_mft_record_nolock(ntfs_inode *ni, MFT_RECORD *m, int sync)
 	BUG_ON(!max_bhs);
 	BUG_ON(!PageLocked(page));
 	if (WARN_ON(max_bhs > MAX_BHS)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_out;
 	}
 	/*
@@ -748,7 +748,7 @@ int write_mft_record_nolock(ntfs_inode *ni, MFT_RECORD *m, int sync)
 						"on disk could not be "
 						"determined (error code %lli).",
 						ni->mft_no, (long long)lcn);
-				err = -EIO;
+				err = -ERR(EIO);
 			}
 		}
 		BUG_ON(!buffer_uptodate(bh));
@@ -791,7 +791,7 @@ int write_mft_record_nolock(ntfs_inode *ni, MFT_RECORD *m, int sync)
 
 		wait_on_buffer(tbh);
 		if (unlikely(!buffer_uptodate(tbh))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			/*
 			 * Set the buffer uptodate so the page and buffer
 			 * states do not become out of sync.
@@ -1162,7 +1162,7 @@ static int ntfs_mft_bitmap_find_and_alloc_free_rec_nolock(ntfs_volume *vol,
 		pass = 2;
 		/* This happens on a freshly formatted volume. */
 		if (data_pos >= pass_end)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 	}
 	pass_start = data_pos;
 	ntfs_debug("Starting bitmap search: pass %u, pass_start 0x%llx, "
@@ -1207,7 +1207,7 @@ static int ntfs_mft_bitmap_find_and_alloc_free_rec_nolock(ntfs_volume *vol,
 					ll = data_pos + (bit & ~7ull) + b;
 					if (unlikely(ll > (1ll << 32))) {
 						ntfs_unmap_page(page);
-						return -ENOSPC;
+						return -ERR(ENOSPC);
 					}
 					*byte |= 1 << b;
 					flush_dcache_page(page);
@@ -1250,7 +1250,7 @@ static int ntfs_mft_bitmap_find_and_alloc_free_rec_nolock(ntfs_volume *vol,
 	/* No free mft records in currently initialized mft bitmap. */
 	ntfs_debug("Done.  (No free mft records left in currently initialized "
 			"mft bitmap.)");
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -1308,7 +1308,7 @@ static int ntfs_mft_bitmap_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Failed to determine last allocated "
 				"cluster of mft bitmap attribute.");
 		if (!IS_ERR(rl))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		else
 			ret = PTR_ERR(rl);
 		return ret;
@@ -1399,7 +1399,7 @@ static int ntfs_mft_bitmap_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Failed to find last attribute extent of "
 				"mft bitmap attribute.");
 		if (ret == -ENOENT)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto undo_alloc;
 	}
 	a = ctx->attr;
@@ -1418,7 +1418,7 @@ static int ntfs_mft_bitmap_extend_allocation_nolock(ntfs_volume *vol)
 				"mft bitmap attribute extent.");
 		ret = mp_size;
 		if (!ret)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto undo_alloc;
 	}
 	/* Expand the attribute record if necessary. */
@@ -1439,7 +1439,7 @@ static int ntfs_mft_bitmap_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Not enough space in this mft record to "
 				"accommodate extended mft bitmap attribute "
 				"extent.  Cannot handle this yet.");
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto undo_alloc;
 	}
 	status.mp_rebuilt = 1;
@@ -1602,7 +1602,7 @@ static int ntfs_mft_bitmap_extend_initialized_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Failed to find first attribute extent of "
 				"mft bitmap attribute.");
 		if (ret == -ENOENT)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto put_err_out;
 	}
 	a = ctx->attr;
@@ -1739,7 +1739,7 @@ static int ntfs_mft_data_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Failed to determine last allocated "
 				"cluster of mft data attribute.");
 		if (!IS_ERR(rl))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		else
 			ret = PTR_ERR(rl);
 		return ret;
@@ -1767,7 +1767,7 @@ static int ntfs_mft_data_extend_allocation_nolock(ntfs_volume *vol)
 					"because the maximum number of inodes "
 					"(2^32) has already been reached.");
 			up_write(&mft_ni->runlist.lock);
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 	}
 	ntfs_debug("Trying mft data allocation with %s cluster count %lli.",
@@ -1831,7 +1831,7 @@ static int ntfs_mft_data_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Failed to find last attribute extent of "
 				"mft data attribute.");
 		if (ret == -ENOENT)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto undo_alloc;
 	}
 	a = ctx->attr;
@@ -1850,7 +1850,7 @@ static int ntfs_mft_data_extend_allocation_nolock(ntfs_volume *vol)
 				"mft data attribute extent.");
 		ret = mp_size;
 		if (!ret)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto undo_alloc;
 	}
 	/* Expand the attribute record if necessary. */
@@ -1876,7 +1876,7 @@ static int ntfs_mft_data_extend_allocation_nolock(ntfs_volume *vol)
 		ntfs_error(vol->sb, "Not enough space in this mft record to "
 				"accommodate extended mft data attribute "
 				"extent.  Cannot handle this yet.");
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto undo_alloc;
 	}
 	mp_rebuilt = true;
@@ -2013,7 +2013,7 @@ static int ntfs_mft_record_layout(const ntfs_volume *vol, const s64 mft_no,
 	if (mft_no >= (1ll << 32)) {
 		ntfs_error(vol->sb, "Mft record number 0x%llx exceeds "
 				"maximum of 2^32.", (long long)mft_no);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 	/* Start by clearing the whole mft record to gives us a clean slate. */
 	memset(m, 0, vol->mft_record_size);
@@ -2108,7 +2108,7 @@ static int ntfs_mft_record_format(const ntfs_volume *vol, const s64 mft_no)
 				(i_size & ~PAGE_MASK))) {
 			ntfs_error(vol->sb, "Tried to format non-existing mft "
 					"record 0x%llx.", (long long)mft_no);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 	/* Read, map, and pin the page containing the mft record. */
@@ -2265,7 +2265,7 @@ ntfs_inode *ntfs_mft_record_alloc(ntfs_volume *vol, const int mode,
 		BUG_ON(base_ni);
 		/* We only support creation of normal files and directories. */
 		if (!S_ISREG(mode) && !S_ISDIR(mode))
-			return ERR_PTR(-EOPNOTSUPP);
+			return ERR_PTR(-ERR(EOPNOTSUPP));
 	}
 	BUG_ON(!mrec);
 	mft_ni = NTFS_I(vol->mft_ino);
@@ -2534,7 +2534,7 @@ mft_rec_already_initialized:
 					"used itself.  Corrupt filesystem.  "
 					"Unmount and run chkdsk.",
 					(long long)bit);
-			err = -EIO;
+			err = -ERR(EIO);
 			SetPageUptodate(page);
 			unlock_page(page);
 			ntfs_unmap_page(page);
@@ -2746,7 +2746,7 @@ max_err_out:
 	ntfs_warning(vol->sb, "Cannot allocate mft record because the maximum "
 			"number of inodes (2^32) has already been reached.");
 	up_write(&vol->mftbmp_lock);
-	return ERR_PTR(-ENOSPC);
+	return ERR_PTR(-ERR(ENOSPC));
 }
 
 /**
@@ -2799,12 +2799,12 @@ int ntfs_extent_mft_record_free(ntfs_inode *ni, MFT_RECORD *m)
 		ntfs_error(vol->sb, "Tried to free busy extent inode 0x%lx, "
 				"not freeing.", base_ni->mft_no);
 		mutex_unlock(&base_ni->extent_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* Dissociate the ntfs inode from the base inode. */
 	extent_nis = base_ni->ext.extent_ntfs_inos;
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	for (i = 0; i < base_ni->nr_extents; i++) {
 		if (ni != extent_nis[i])
 			continue;

@@ -358,7 +358,7 @@ u64 ufs_new_fragments(struct inode *inode, void *p, u64 fragment,
 	sb = inode->i_sb;
 	uspi = UFS_SB(sb)->s_uspi;
 	usb1 = ubh_get_usb_first(uspi);
-	*err = -ENOSPC;
+	*err = -ERR(ENOSPC);
 
 	mutex_lock(&UFS_SB(sb)->s_lock);
 	tmp = ufs_data_ptr_to_cpu(sb, p);

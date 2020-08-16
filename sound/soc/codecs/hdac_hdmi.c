@@ -258,7 +258,7 @@ static int hdac_hdmi_port_select_set(struct hdac_device *hdev,
 	/* AC_PAR_DEVLIST_LEN is 0 based. */
 	num_ports = hdac_hdmi_get_port_len(hdev, port->pin->nid);
 	if (num_ports < 0)
-		return -EIO;
+		return -ERR(EIO);
 	/*
 	 * Device List Length is a 0 based integer value indicating the
 	 * number of sink device that a MST Pin Widget can support.
@@ -270,7 +270,7 @@ static int hdac_hdmi_port_select_set(struct hdac_device *hdev,
 			AC_VERB_SET_DEVICE_SEL, port->id);
 
 	if (port->id != hdac_hdmi_port_select_get(hdev, port))
-		return -EIO;
+		return -ERR(EIO);
 
 	dev_dbg(&hdev->dev, "Selected the port=%d\n", port->id);
 
@@ -405,7 +405,7 @@ static int hdac_hdmi_setup_audio_infoframe(struct hdac_device *hdev,
 
 	default:
 		dev_err(&hdev->dev, "Invalid connection type: %d\n", conn_type);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* stop infoframe transmission */
@@ -471,7 +471,7 @@ static int hdac_hdmi_set_hw_params(struct snd_pcm_substream *substream,
 
 	pcm = hdac_hdmi_get_pcm_from_cvt(hdmi, dai_map->cvt);
 	if (!pcm)
-		return -EIO;
+		return -ERR(EIO);
 
 	pcm->format = format;
 	pcm->channels = params_channels(hparams);
@@ -487,11 +487,11 @@ static int hdac_hdmi_query_port_connlist(struct hdac_device *hdev,
 		dev_warn(&hdev->dev,
 			"HDMI: pin %d wcaps %#x does not support connection list\n",
 			pin->nid, get_wcaps(hdev, pin->nid));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (hdac_hdmi_port_select_set(hdev, port) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	port->num_mux_nids = snd_hdac_get_connections(hdev, pin->nid,
 			port->mux_nids, HDA_MAX_CONNECTIONS);
@@ -769,11 +769,11 @@ static int hdac_hdmi_pin_output_widget_event(struct snd_soc_dapm_widget *w,
 
 	pcm = hdac_hdmi_get_pcm(hdev, port);
 	if (!pcm)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* set the device if pin is mst_capable */
 	if (hdac_hdmi_port_select_set(hdev, port) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -815,7 +815,7 @@ static int hdac_hdmi_cvt_output_widget_event(struct snd_soc_dapm_widget *w,
 
 	pcm = hdac_hdmi_get_pcm_from_cvt(hdmi, cvt);
 	if (!pcm)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -874,7 +874,7 @@ static int hdac_hdmi_pin_mux_widget_event(struct snd_soc_dapm_widget *w,
 
 	/* set the device if pin is mst_capable */
 	if (hdac_hdmi_port_select_set(hdev, port) < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (mux_idx > 0) {
 		snd_hdac_codec_write(hdev, port->pin->nid, 0,
@@ -906,7 +906,7 @@ static int hdac_hdmi_set_pin_port_mux(struct snd_kcontrol *kcontrol,
 		return ret;
 
 	if (port == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&hdmi->pin_mutex);
 	list_for_each_entry(pcm, &hdmi->pcm_list, head) {
@@ -1074,7 +1074,7 @@ static int create_fill_widget_route_map(struct snd_soc_dapm_context *dapm)
 	int ret, i = 0, num_routes = 0, j;
 
 	if (list_empty(&hdmi->cvt_list) || list_empty(&hdmi->pin_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	widgets = devm_kzalloc(dapm->dev, (sizeof(*widgets) *
 				((2 * hdmi->num_ports) + hdmi->num_cvt)),
@@ -1173,7 +1173,7 @@ static int hdac_hdmi_init_dai_map(struct hdac_device *hdev)
 	int dai_id = 0;
 
 	if (list_empty(&hdmi->cvt_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(cvt, &hdmi->cvt_list, head) {
 		dai_map = &hdmi->dai_map[dai_id];
@@ -1224,7 +1224,7 @@ static int hdac_hdmi_parse_eld(struct hdac_device *hdev,
 
 	if (ver != ELD_VER_CEA_861D && ver != ELD_VER_PARTIAL) {
 		dev_err(&hdev->dev, "HDMI: Unknown ELD version %d\n", ver);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mnl = (port->eld.eld_buffer[DRM_ELD_CEA_EDID_VER_MNL] &
@@ -1232,7 +1232,7 @@ static int hdac_hdmi_parse_eld(struct hdac_device *hdev,
 
 	if (mnl > ELD_MAX_MNL) {
 		dev_err(&hdev->dev, "HDMI: MNL Invalid %d\n", mnl);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	port->eld.info.spk_alloc = port->eld.eld_buffer[DRM_ELD_SPEAKER];
@@ -1270,7 +1270,7 @@ static void hdac_hdmi_present_sense(struct hdac_hdmi_pin *pin,
 	if (size > 0) {
 		size = min(size, ELD_MAX_SIZE);
 		if (hdac_hdmi_parse_eld(hdev, port) < 0)
-			size = -EINVAL;
+			size = -ERR(EINVAL);
 	}
 
 	if (size > 0) {
@@ -1451,7 +1451,7 @@ static int hdac_hdmi_create_dais(struct hdac_device *hdev,
 		rates &= ~(SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |
 			   SNDRV_PCM_RATE_176400);
 		if (!rates)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sprintf(dai_name, "intel-hdmi-hifi%d", i+1);
 		hdmi_dais[i].name = devm_kstrdup(&hdev->dev,
@@ -1505,7 +1505,7 @@ static int hdac_hdmi_parse_and_map_nid(struct hdac_device *hdev,
 	num_nodes = snd_hdac_get_sub_nodes(hdev, hdev->afg, &nid);
 	if (!nid || num_nodes <= 0) {
 		dev_warn(&hdev->dev, "HDMI: failed to get afg sub nodes\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < num_nodes; i++, nid++) {
@@ -1535,7 +1535,7 @@ static int hdac_hdmi_parse_and_map_nid(struct hdac_device *hdev,
 	}
 
 	if (!hdmi->num_pin || !hdmi->num_cvt) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		dev_err(&hdev->dev, "Bad pin/cvt setup in %s\n", __func__);
 		return ret;
 	}
@@ -1832,7 +1832,7 @@ static int hdmi_codec_probe(struct snd_soc_component *component)
 	hlink = snd_hdac_ext_bus_get_link(hdev->bus, dev_name(&hdev->dev));
 	if (!hlink) {
 		dev_err(&hdev->dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	snd_hdac_ext_bus_link_get(hdev->bus, hlink);
@@ -2010,7 +2010,7 @@ static int hdac_hdmi_dev_probe(struct hdac_device *hdev)
 	hlink = snd_hdac_ext_bus_get_link(hdev->bus, dev_name(&hdev->dev));
 	if (!hlink) {
 		dev_err(&hdev->dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	snd_hdac_ext_bus_link_get(hdev->bus, hlink);
@@ -2027,7 +2027,7 @@ static int hdac_hdmi_dev_probe(struct hdac_device *hdev)
 	hdmi_priv->hdev = hdev;
 
 	if (!hdac_id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (hdac_id->driver_data)
 		hdmi_priv->drv_data =
@@ -2112,7 +2112,7 @@ static int hdac_hdmi_runtime_suspend(struct device *dev)
 	hlink = snd_hdac_ext_bus_get_link(bus, dev_name(dev));
 	if (!hlink) {
 		dev_err(dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	snd_hdac_codec_link_down(hdev);
@@ -2138,7 +2138,7 @@ static int hdac_hdmi_runtime_resume(struct device *dev)
 	hlink = snd_hdac_ext_bus_get_link(bus, dev_name(dev));
 	if (!hlink) {
 		dev_err(dev, "hdac link not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	snd_hdac_ext_bus_link_get(bus, hlink);

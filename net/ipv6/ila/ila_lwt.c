@@ -41,7 +41,7 @@ static int ila_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	struct rt6_info *rt = (struct rt6_info *)orig_dst;
 	struct ila_lwt *ilwt = ila_lwt_lwtunnel(orig_dst->lwtstate);
 	struct dst_entry *dst;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (skb->protocol != htons(ETH_P_IPV6))
 		goto drop;
@@ -75,7 +75,7 @@ static int ila_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 
 		dst = ip6_route_output(net, NULL, &fl6);
 		if (dst->error) {
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			dst_release(dst);
 			goto drop;
 		}
@@ -115,7 +115,7 @@ static int ila_input(struct sk_buff *skb)
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static const struct nla_policy ila_nl_policy[ILA_ATTR_MAX + 1] = {
@@ -144,7 +144,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 	int ret;
 
 	if (family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nla_parse_nested_deprecated(tb, ILA_ATTR_MAX, nla,
 					  ila_nl_policy, extack);
@@ -152,7 +152,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 		return ret;
 
 	if (!tb[ILA_ATTR_LOCATOR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iaddr = (struct ila_addr *)&cfg6->fc_dst;
 
@@ -168,7 +168,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 			/* Need to have full locator and at least type field
 			 * included in destination
 			 */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		eff_ident_type = iaddr->ident.type;
@@ -179,7 +179,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 	switch (eff_ident_type) {
 	case ILA_ATYPE_IID:
 		/* Don't allow ILA for IID type */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	case ILA_ATYPE_LUID:
 		break;
 	case ILA_ATYPE_VIRT_V4:
@@ -188,7 +188,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 	case ILA_ATYPE_NONLOCAL_ADDR:
 		/* These ILA formats are not supported yet. */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[ILA_ATTR_HOOK_TYPE])
@@ -202,7 +202,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 		lwt_output = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[ILA_ATTR_CSUM_MODE])
@@ -213,7 +213,7 @@ static int ila_build_state(struct net *net, struct nlattr *nla,
 		/* Don't allow translation if checksum neutral bit is
 		 * configured and it's set in the SIR address.
 		 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	newts = lwtunnel_state_alloc(sizeof(*ilwt));
@@ -283,7 +283,7 @@ static int ila_fill_encap_info(struct sk_buff *skb,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ila_encap_nlsize(struct lwtunnel_state *lwtstate)

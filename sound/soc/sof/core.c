@@ -307,7 +307,7 @@ int snd_sof_device_probe(struct device *dev, struct snd_sof_pdata *plat_data)
 	    !sof_ops(sdev)->send_msg || !sof_ops(sdev)->load_firmware ||
 	    !sof_ops(sdev)->ipc_msg_data || !sof_ops(sdev)->ipc_pcm_params ||
 	    !sof_ops(sdev)->fw_ready)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	INIT_LIST_HEAD(&sdev->pcm_list);
 	INIT_LIST_HEAD(&sdev->kcontrol_list);

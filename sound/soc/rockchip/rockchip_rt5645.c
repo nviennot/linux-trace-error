@@ -77,7 +77,7 @@ static int rk_aif1_hw_params(struct snd_pcm_substream *substream,
 		mclk = 11289600;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, 0, mclk,
@@ -166,7 +166,7 @@ static int snd_rk_mc_probe(struct platform_device *pdev)
 	if (!rk_dailink.codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'rockchip,audio-codec' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rk_dailink.cpus->of_node = of_parse_phandle(np,
@@ -174,7 +174,7 @@ static int snd_rk_mc_probe(struct platform_device *pdev)
 	if (!rk_dailink.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'rockchip,i2s-controller' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto put_codec_of_node;
 	}
 

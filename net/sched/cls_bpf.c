@@ -183,7 +183,7 @@ static int cls_bpf_offload_cmd(struct tcf_proto *tp, struct cls_bpf_prog *prog,
 	}
 
 	if (prog && skip_sw && !(prog->gen_flags & TCA_CLS_FLAGS_IN_HW))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -200,7 +200,7 @@ static int cls_bpf_offload(struct tcf_proto *tp, struct cls_bpf_prog *prog,
 	if (prog && oldprog &&
 	    cls_bpf_flags(prog->gen_flags) !=
 	    cls_bpf_flags(oldprog->gen_flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (prog && tc_skip_hw(prog->gen_flags))
 		prog = NULL;
@@ -245,7 +245,7 @@ static int cls_bpf_init(struct tcf_proto *tp)
 
 	head = kzalloc(sizeof(*head), GFP_KERNEL);
 	if (head == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	INIT_LIST_HEAD_RCU(&head->plist);
 	idr_init(&head->handle_idr);
@@ -345,11 +345,11 @@ static int cls_bpf_prog_from_ops(struct nlattr **tb, struct cls_bpf_prog *prog)
 
 	bpf_num_ops = nla_get_u16(tb[TCA_BPF_OPS_LEN]);
 	if (bpf_num_ops > BPF_MAXINSNS || bpf_num_ops == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bpf_size = bpf_num_ops * sizeof(*bpf_ops);
 	if (bpf_size != nla_len(tb[TCA_BPF_OPS]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bpf_ops = kmemdup(nla_data(tb[TCA_BPF_OPS]), bpf_size, GFP_KERNEL);
 	if (bpf_ops == NULL)
@@ -417,7 +417,7 @@ static int cls_bpf_set_parms(struct net *net, struct tcf_proto *tp,
 	is_bpf = tb[TCA_BPF_OPS_LEN] && tb[TCA_BPF_OPS];
 	is_ebpf = tb[TCA_BPF_FD];
 	if ((!is_bpf && !is_ebpf) || (is_bpf && is_ebpf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = tcf_exts_validate(net, tp, tb, est, &prog->exts, ovr, true,
 				extack);
@@ -428,7 +428,7 @@ static int cls_bpf_set_parms(struct net *net, struct tcf_proto *tp,
 		u32 bpf_flags = nla_get_u32(tb[TCA_BPF_FLAGS]);
 
 		if (bpf_flags & ~TCA_BPF_FLAG_ACT_DIRECT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		have_exts = bpf_flags & TCA_BPF_FLAG_ACT_DIRECT;
 	}
@@ -436,7 +436,7 @@ static int cls_bpf_set_parms(struct net *net, struct tcf_proto *tp,
 		gen_flags = nla_get_u32(tb[TCA_BPF_FLAGS_GEN]);
 		if (gen_flags & ~CLS_BPF_SUPPORTED_GEN_FLAGS ||
 		    !tc_flags_valid(gen_flags))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	prog->exts_integrated = have_exts;
@@ -468,7 +468,7 @@ static int cls_bpf_change(struct net *net, struct sk_buff *in_skb,
 	int ret;
 
 	if (tca[TCA_OPTIONS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nla_parse_nested_deprecated(tb, TCA_BPF_MAX, tca[TCA_OPTIONS],
 					  bpf_policy, NULL);
@@ -477,7 +477,7 @@ static int cls_bpf_change(struct net *net, struct sk_buff *in_skb,
 
 	prog = kzalloc(sizeof(*prog), GFP_KERNEL);
 	if (!prog)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ret = tcf_exts_init(&prog->exts, net, TCA_BPF_ACT, TCA_BPF_POLICE);
 	if (ret < 0)
@@ -485,7 +485,7 @@ static int cls_bpf_change(struct net *net, struct sk_buff *in_skb,
 
 	if (oldprog) {
 		if (handle && oldprog->handle != handle) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto errout;
 		}
 	}
@@ -545,12 +545,12 @@ static int cls_bpf_dump_bpf_info(const struct cls_bpf_prog *prog,
 	struct nlattr *nla;
 
 	if (nla_put_u16(skb, TCA_BPF_OPS_LEN, prog->bpf_num_ops))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nla = nla_reserve(skb, TCA_BPF_OPS, prog->bpf_num_ops *
 			  sizeof(struct sock_filter));
 	if (nla == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), prog->bpf_ops, nla_len(nla));
 
@@ -564,14 +564,14 @@ static int cls_bpf_dump_ebpf_info(const struct cls_bpf_prog *prog,
 
 	if (prog->bpf_name &&
 	    nla_put_string(skb, TCA_BPF_NAME, prog->bpf_name))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, TCA_BPF_ID, prog->filter->aux->id))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nla = nla_reserve(skb, TCA_BPF_TAG, sizeof(prog->filter->tag));
 	if (nla == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), prog->filter->tag, nla_len(nla));
 

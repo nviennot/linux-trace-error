@@ -66,7 +66,7 @@ otg_start_hnp(struct usb_otg *otg)
 	if (otg && otg->start_hnp)
 		return otg->start_hnp(otg);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* Context: can sleep */
@@ -76,7 +76,7 @@ otg_set_vbus(struct usb_otg *otg, bool enabled)
 	if (otg && otg->set_vbus)
 		return otg->set_vbus(otg, enabled);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* for HCDs */
@@ -86,7 +86,7 @@ otg_set_host(struct usb_otg *otg, struct usb_bus *host)
 	if (otg && otg->set_host)
 		return otg->set_host(otg, host);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* for usb peripheral controller drivers */
@@ -98,7 +98,7 @@ otg_set_peripheral(struct usb_otg *otg, struct usb_gadget *periph)
 	if (otg && otg->set_peripheral)
 		return otg->set_peripheral(otg, periph);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int
@@ -107,7 +107,7 @@ otg_start_srp(struct usb_otg *otg)
 	if (otg && otg->start_srp)
 		return otg->start_srp(otg);
 
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* for OTG controller drivers (and maybe other stuff) */

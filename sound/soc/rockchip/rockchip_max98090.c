@@ -167,7 +167,7 @@ static int rk_aif1_hw_params(struct snd_pcm_substream *substream,
 		mclk = 11289600;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, 0, mclk,
@@ -368,7 +368,7 @@ static int rk_parse_headset_from_of(struct device *dev, struct device_node *np)
 	if (!rk_98090_headset_dev.dlc.of_node) {
 		dev_err(dev,
 			"Property 'rockchip,headset-codec' missing/invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -388,7 +388,7 @@ static int snd_rk_mc_probe(struct platform_device *pdev)
 	if (!np_cpu) {
 		dev_err(&pdev->dev,
 			"Property 'rockchip,i2s-controller missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -417,7 +417,7 @@ static int snd_rk_mc_probe(struct platform_device *pdev)
 		card->dai_link[0].platforms->of_node = np_cpu;
 	} else {
 		dev_err(dev, "At least one of codecs should be specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	card->dev = dev;

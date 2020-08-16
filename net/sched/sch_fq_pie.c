@@ -277,7 +277,7 @@ static int fq_pie_change(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested(tb, TCA_FQ_PIE_MAX, opt, fq_pie_policy, extack);
 	if (err < 0)
@@ -359,7 +359,7 @@ static int fq_pie_change(struct Qdisc *sch, struct nlattr *opt,
 
 flow_error:
 	sch_tree_unlock(sch);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void fq_pie_timer(struct timer_list *t)
@@ -444,7 +444,7 @@ static int fq_pie_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 	opts = nla_nest_start(skb, TCA_OPTIONS);
 	if (!opts)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/* convert target from pschedtime to us */
 	if (nla_put_u32(skb, TCA_FQ_PIE_LIMIT, sch->limit) ||
@@ -469,7 +469,7 @@ static int fq_pie_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int fq_pie_dump_stats(struct Qdisc *sch, struct gnet_dump *d)

@@ -36,32 +36,32 @@ static int hsr_newlink(struct net *src_net, struct net_device *dev,
 
 	if (!data) {
 		NL_SET_ERR_MSG_MOD(extack, "No slave devices specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!data[IFLA_HSR_SLAVE1]) {
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 device not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	link[0] = __dev_get_by_index(src_net,
 				     nla_get_u32(data[IFLA_HSR_SLAVE1]));
 	if (!link[0]) {
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 does not exist");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!data[IFLA_HSR_SLAVE2]) {
 		NL_SET_ERR_MSG_MOD(extack, "Slave2 device not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	link[1] = __dev_get_by_index(src_net,
 				     nla_get_u32(data[IFLA_HSR_SLAVE2]));
 	if (!link[1]) {
 		NL_SET_ERR_MSG_MOD(extack, "Slave2 does not exist");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (link[0] == link[1]) {
 		NL_SET_ERR_MSG_MOD(extack, "Slave1 and Slave2 are same");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!data[IFLA_HSR_MULTICAST_SPEC])
@@ -76,7 +76,7 @@ static int hsr_newlink(struct net *src_net, struct net_device *dev,
 		if (hsr_version > 1) {
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Only versions 0..1 are supported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -124,7 +124,7 @@ static int hsr_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static struct rtnl_link_ops hsr_link_ops __read_mostly = {

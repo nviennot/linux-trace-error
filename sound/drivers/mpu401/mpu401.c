@@ -95,11 +95,11 @@ static int snd_mpu401_probe(struct platform_device *devptr)
 
 	if (port[dev] == SNDRV_AUTO_PORT) {
 		snd_printk(KERN_ERR "specify port\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (irq[dev] == SNDRV_AUTO_IRQ) {
 		snd_printk(KERN_ERR "specify or disable IRQ\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	err = snd_mpu401_create(&devptr->dev, dev, &card);
 	if (err < 0)
@@ -146,13 +146,13 @@ static int snd_mpu401_pnp(int dev, struct pnp_dev *device,
 	if (!pnp_port_valid(device, 0) ||
 	    pnp_port_flags(device, 0) & IORESOURCE_DISABLED) {
 		snd_printk(KERN_ERR "no PnP port\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (pnp_port_len(device, 0) < IO_EXTENT) {
 		snd_printk(KERN_ERR "PnP port length is %llu, expected %d\n",
 			   (unsigned long long)pnp_port_len(device, 0),
 			   IO_EXTENT);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	port[dev] = pnp_port_start(device, 0);
 
@@ -191,7 +191,7 @@ static int snd_mpu401_pnp_probe(struct pnp_dev *pnp_dev,
 		++dev;
 		return 0;
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void snd_mpu401_pnp_remove(struct pnp_dev *dev)
@@ -258,7 +258,7 @@ static int __init alsa_card_mpu401_init(void)
 		printk(KERN_ERR "MPU-401 device not found or device busy\n");
 #endif
 		snd_mpu401_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

@@ -208,9 +208,9 @@ void autofs_clean_ino(struct autofs_info *);
 static inline int autofs_prepare_pipe(struct file *pipe)
 {
 	if (!(pipe->f_mode & FMODE_CAN_WRITE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!S_ISFIFO(file_inode(pipe)->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* We want a packet pipe */
 	pipe->f_flags |= O_DIRECT;
 	/* We don't expect -EAGAIN */

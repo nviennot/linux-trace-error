@@ -100,7 +100,7 @@ static int call_cpuidle_s2idle(struct cpuidle_driver *drv,
 			       struct cpuidle_device *dev)
 {
 	if (current_clr_polling_and_test())
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return cpuidle_enter_s2idle(drv, dev);
 }
@@ -115,7 +115,7 @@ static int call_cpuidle(struct cpuidle_driver *drv, struct cpuidle_device *dev,
 	if (current_clr_polling_and_test()) {
 		dev->last_residency_ns = 0;
 		local_irq_enable();
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/*

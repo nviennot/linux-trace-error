@@ -143,7 +143,7 @@ static int rt5682_sdw_hw_params(struct snd_pcm_substream *substream,
 		return -ENOMEM;
 
 	if (!rt5682->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* SoundWire specific configuration */
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -224,7 +224,7 @@ static int rt5682_sdw_hw_params(struct snd_pcm_substream *substream,
 		val_c = RT5682_SDW_REF_2_11K;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params_rate(params) <= 48000) {
@@ -262,7 +262,7 @@ static int rt5682_sdw_hw_free(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!rt5682->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdw_stream_remove_slave(rt5682->slave, stream->sdw_stream);
 	return 0;
@@ -383,7 +383,7 @@ static int rt5682_io_init(struct device *dev, struct sdw_slave *slave)
 	regmap_read(rt5682->regmap, RT5682_DEVICE_ID, &val);
 	if (val != DEVICE_ID) {
 		dev_err(dev, "Device with ID register %x is not rt5682\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/*
@@ -642,7 +642,7 @@ static int rt5682_clock_config(struct device *dev)
 		value = 0x5;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt5682->sdw_regmap, 0xe0, value);
@@ -699,7 +699,7 @@ static int rt5682_sdw_probe(struct sdw_slave *slave,
 	/* Regmap Initialization */
 	regmap = devm_regmap_init_sdw(slave, &rt5682_sdw_regmap);
 	if (IS_ERR(regmap))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rt5682_sdw_init(&slave->dev, regmap, slave);
 
@@ -751,7 +751,7 @@ static int __maybe_unused rt5682_dev_resume(struct device *dev)
 				msecs_to_jiffies(RT5682_PROBE_TIMEOUT));
 	if (!time) {
 		dev_err(&slave->dev, "Initialization not complete, timed out\n");
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 regmap_sync:

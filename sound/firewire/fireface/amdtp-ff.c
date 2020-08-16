@@ -19,7 +19,7 @@ int amdtp_ff_set_parameters(struct amdtp_stream *s, unsigned int rate,
 	unsigned int data_channels;
 
 	if (amdtp_stream_running(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	p->pcm_channels = pcm_channels;
 	data_channels = pcm_channels;

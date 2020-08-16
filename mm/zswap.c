@@ -317,7 +317,7 @@ static int zswap_rb_insert(struct rb_root *root, struct zswap_entry *entry,
 			link = &(*link)->rb_right;
 		else {
 			*dupentry = myentry;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	rb_link_node(&entry->rbnode, parent, link);
@@ -703,7 +703,7 @@ static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 
 	if (zswap_init_failed) {
 		pr_err("can't set param, initialization failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* no change required */
@@ -719,18 +719,18 @@ static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 	if (!type) {
 		if (!zpool_has_pool(s)) {
 			pr_err("zpool %s not available\n", s);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		type = s;
 	} else if (!compressor) {
 		if (!crypto_has_comp(s, 0, 0)) {
 			pr_err("compressor %s not available\n", s);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		compressor = s;
 	} else {
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock(&zswap_pools_lock);
@@ -750,7 +750,7 @@ static int __zswap_param_set(const char *val, const struct kernel_param *kp,
 	if (pool)
 		ret = param_set_charp(s, kp);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	spin_lock(&zswap_pools_lock);
 
@@ -806,11 +806,11 @@ static int zswap_enabled_param_set(const char *val,
 {
 	if (zswap_init_failed) {
 		pr_err("can't enable, initialization failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (!zswap_has_pool && zswap_init_started) {
 		pr_err("can't enable, no pool configured\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return param_set_bool(val, kp);
@@ -911,7 +911,7 @@ static int zswap_writeback_entry(struct zpool *pool, unsigned long handle)
 	case ZSWAP_SWAPCACHE_EXIST:
 		/* page is already in the swap cache, ignore for now */
 		put_page(page);
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto fail;
 
 	case ZSWAP_SWAPCACHE_NEW: /* page is locked */
@@ -1015,12 +1015,12 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
 
 	/* THP isn't supported */
 	if (PageTransHuge(page)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto reject;
 	}
 
 	if (!zswap_enabled || !tree) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto reject;
 	}
 
@@ -1069,7 +1069,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
 	/* if entry is successfully added, it keeps the reference */
 	entry->pool = zswap_pool_current_get();
 	if (!entry->pool) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto freepage;
 	}
 
@@ -1081,7 +1081,7 @@ static int zswap_frontswap_store(unsigned type, pgoff_t offset,
 	kunmap_atomic(src);
 	put_cpu_ptr(entry->pool->tfm);
 	if (ret) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto put_dstmem;
 	}
 
@@ -1268,7 +1268,7 @@ static struct dentry *zswap_debugfs_root;
 static int __init zswap_debugfs_init(void)
 {
 	if (!debugfs_initialized())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	zswap_debugfs_root = debugfs_create_dir("zswap", NULL);
 

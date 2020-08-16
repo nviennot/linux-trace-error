@@ -463,7 +463,7 @@ int snd_ak4114_build(struct ak4114 *ak4114,
 	int err;
 
 	if (snd_BUG_ON(!cap_substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ak4114->playback_substream = ply_substream;
 	ak4114->capture_substream = cap_substream;
 	for (idx = 0; idx < AK4114_CONTROLS; idx++) {

@@ -436,12 +436,12 @@ static int jfs_remount(struct super_block *sb, int *flags, char *data)
 
 	sync_filesystem(sb);
 	if (!parse_options(data, sb, &newLVSize, &flag))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (newLVSize) {
 		if (sb_rdonly(sb)) {
 			pr_err("JFS: resize requires volume to be mounted read-write\n");
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		rc = jfs_extendfs(sb, newLVSize, 0);
 		if (rc)
@@ -493,7 +493,7 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct inode *inode;
 	int rc;
 	s64 newLVSize = 0;
-	int flag, ret = -EINVAL;
+	int flag, ret = -ERR(EINVAL);
 
 	jfs_info("In jfs_read_super: s_flags=0x%lx", sb->s_flags);
 
@@ -764,7 +764,7 @@ static ssize_t jfs_quota_read(struct super_block *sb, int type, char *data,
 		else {
 			bh = sb_bread(sb, tmp_bh.b_blocknr);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 			memcpy(data, bh->b_data+offset, tocopy);
 			brelse(bh);
 		}
@@ -804,7 +804,7 @@ static ssize_t jfs_quota_write(struct super_block *sb, int type,
 		else
 			bh = sb_getblk(sb, tmp_bh.b_blocknr);
 		if (!bh) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		lock_buffer(bh);

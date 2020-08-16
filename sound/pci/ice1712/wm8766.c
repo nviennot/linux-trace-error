@@ -307,7 +307,7 @@ static int snd_wm8766_add_control(struct snd_wm8766 *wm, int num)
 		cont.info = snd_wm8766_enum_info;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ctl = snd_ctl_new1(&cont, wm);
 	if (!ctl)

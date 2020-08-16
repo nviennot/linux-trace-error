@@ -56,7 +56,7 @@ int snd_sbdsp_get_byte(struct snd_sb *chip)
 		}
 	}
 	snd_printd("%s [0x%lx]: timeout\n", __func__, chip->port);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 int snd_sbdsp_reset(struct snd_sb *chip)
@@ -75,7 +75,7 @@ int snd_sbdsp_reset(struct snd_sb *chip)
 				break;
 		}
 	snd_printdd("%s [0x%lx] failed...\n", __func__, chip->port);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_sbdsp_version(struct snd_sb * chip)
@@ -102,12 +102,12 @@ static int snd_sbdsp_probe(struct snd_sb * chip)
 	spin_lock_irqsave(&chip->reg_lock, flags);
 	if (snd_sbdsp_reset(chip) < 0) {
 		spin_unlock_irqrestore(&chip->reg_lock, flags);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	version = snd_sbdsp_version(chip);
 	if (version < 0) {
 		spin_unlock_irqrestore(&chip->reg_lock, flags);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	spin_unlock_irqrestore(&chip->reg_lock, flags);
 	major = version >> 8;
@@ -142,7 +142,7 @@ static int snd_sbdsp_probe(struct snd_sb * chip)
 		default:
 			snd_printk(KERN_INFO "SB [0x%lx]: unknown DSP chip version %i.%i\n",
 				   chip->port, major, minor);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		break;
 	case SB_HW_ALS100:
@@ -161,7 +161,7 @@ static int snd_sbdsp_probe(struct snd_sb * chip)
 		str = "Pro (Jazz16)";
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	sprintf(chip->name, "Sound Blaster %s", str);
 	chip->version = (major << 8) | minor;
@@ -209,7 +209,7 @@ int snd_sbdsp_create(struct snd_card *card,
 	};
 
 	if (snd_BUG_ON(!r_chip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*r_chip = NULL;
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL)
@@ -230,7 +230,7 @@ int snd_sbdsp_create(struct snd_card *card,
 			"SoundBlaster", (void *) chip)) {
 		snd_printk(KERN_ERR "sb: can't grab irq %d\n", irq);
 		snd_sbdsp_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = irq;
 	card->sync_irq = chip->irq;
@@ -241,14 +241,14 @@ int snd_sbdsp_create(struct snd_card *card,
 	if ((chip->res_port = request_region(port, 16, "SoundBlaster")) == NULL) {
 		snd_printk(KERN_ERR "sb: can't grab port 0x%lx\n", port);
 		snd_sbdsp_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 #ifdef CONFIG_ISA
 	if (dma8 >= 0 && request_dma(dma8, "SoundBlaster - 8bit")) {
 		snd_printk(KERN_ERR "sb: can't grab DMA8 %d\n", dma8);
 		snd_sbdsp_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->dma8 = dma8;
 	if (dma16 >= 0) {
@@ -258,7 +258,7 @@ int snd_sbdsp_create(struct snd_card *card,
 		} else if (request_dma(dma16, "SoundBlaster - 16bit")) {
 			snd_printk(KERN_ERR "sb: can't grab DMA16 %d\n", dma16);
 			snd_sbdsp_free(chip);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	chip->dma16 = dma16;

@@ -229,7 +229,7 @@ static int klp_check_stack_func(struct klp_func *func, unsigned long *entries,
 		}
 
 		if (address >= func_addr && address < func_addr + func_size)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	}
 
 	return 0;

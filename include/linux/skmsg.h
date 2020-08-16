@@ -435,7 +435,7 @@ static inline int psock_replace_prog(struct bpf_prog **pprog,
 				     struct bpf_prog *old)
 {
 	if (cmpxchg(pprog, old, prog) != old)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (old)
 		bpf_prog_put(old);

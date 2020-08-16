@@ -733,7 +733,7 @@ static int reuse_unused_kprobe(struct kprobe *ap)
 	ap->flags &= ~KPROBE_FLAG_DISABLED;
 	/* Optimize it again (remove from op->list) */
 	if (!kprobe_optready(ap))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	optimize_kprobe(ap);
 	return 0;
@@ -970,7 +970,7 @@ static int reuse_unused_kprobe(struct kprobe *ap)
 	 * Thus there should be no chance to reuse unused kprobe.
 	 */
 	printk(KERN_ERR "Error: There should be no unused kprobe here.\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void free_aggr_kprobe(struct kprobe *p)
@@ -1507,7 +1507,7 @@ static kprobe_opcode_t *_kprobe_addr(kprobe_opcode_t *addr,
 	if (symbol_name) {
 		addr = kprobe_lookup_name(symbol_name, offset);
 		if (!addr)
-			return ERR_PTR(-ENOENT);
+			return ERR_PTR(-ERR(ENOENT));
 	}
 
 	addr = (kprobe_opcode_t *)(((char *)addr) + offset);
@@ -1515,7 +1515,7 @@ static kprobe_opcode_t *_kprobe_addr(kprobe_opcode_t *addr,
 		return addr;
 
 invalid:
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static kprobe_opcode_t *kprobe_addr(struct kprobe *p)
@@ -1552,7 +1552,7 @@ static inline int check_kprobe_rereg(struct kprobe *p)
 
 	mutex_lock(&kprobe_mutex);
 	if (__get_valid_kprobe(p))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	mutex_unlock(&kprobe_mutex);
 
 	return ret;
@@ -1567,10 +1567,10 @@ int __weak arch_check_ftrace_location(struct kprobe *p)
 #ifdef CONFIG_KPROBES_ON_FTRACE
 		/* Given address is not on the instruction boundary */
 		if ((unsigned long)p->addr != ftrace_addr)
-			return -EILSEQ;
+			return -ERR(EILSEQ);
 		p->flags |= KPROBE_FLAG_FTRACE;
 #else	/* !CONFIG_KPROBES_ON_FTRACE */
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	}
 	return 0;
@@ -1592,7 +1592,7 @@ static int check_kprobe_address_safe(struct kprobe *p,
 	    within_kprobe_blacklist((unsigned long) p->addr) ||
 	    jump_label_text_reserved(p->addr, p->addr) ||
 	    find_bug((unsigned long)p->addr)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1604,7 +1604,7 @@ static int check_kprobe_address_safe(struct kprobe *p,
 		 * its code to prohibit unexpected unloading.
 		 */
 		if (unlikely(!try_module_get(*probed_mod))) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 
@@ -1616,7 +1616,7 @@ static int check_kprobe_address_safe(struct kprobe *p,
 		    (*probed_mod)->state != MODULE_STATE_COMING) {
 			module_put(*probed_mod);
 			*probed_mod = NULL;
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 	}
 out:
@@ -1722,7 +1722,7 @@ static struct kprobe *__disable_kprobe(struct kprobe *p)
 	/* Get an original kprobe for return */
 	orig_p = __get_valid_kprobe(p);
 	if (unlikely(orig_p == NULL))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (!kprobe_disabled(p)) {
 		/* Disable probe if it is a child probe */
@@ -1828,7 +1828,7 @@ int register_kprobes(struct kprobe **kps, int num)
 	int i, ret = 0;
 
 	if (num <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (i = 0; i < num; i++) {
 		ret = register_kprobe(kps[i]);
 		if (ret < 0) {
@@ -1966,7 +1966,7 @@ int register_kretprobe(struct kretprobe *rp)
 	void *addr;
 
 	if (!kprobe_on_func_entry(rp->kp.addr, rp->kp.symbol_name, rp->kp.offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (kretprobe_blacklist_size) {
 		addr = kprobe_addr(&rp->kp);
@@ -1975,7 +1975,7 @@ int register_kretprobe(struct kretprobe *rp)
 
 		for (i = 0; kretprobe_blacklist[i].name != NULL; i++) {
 			if (kretprobe_blacklist[i].addr == addr)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -2018,7 +2018,7 @@ int register_kretprobes(struct kretprobe **rps, int num)
 	int ret = 0, i;
 
 	if (num <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (i = 0; i < num; i++) {
 		ret = register_kretprobe(rps[i]);
 		if (ret < 0) {
@@ -2062,13 +2062,13 @@ EXPORT_SYMBOL_GPL(unregister_kretprobes);
 #else /* CONFIG_KRETPROBES */
 int register_kretprobe(struct kretprobe *rp)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(register_kretprobe);
 
 int register_kretprobes(struct kretprobe **rps, int num)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 EXPORT_SYMBOL_GPL(register_kretprobes);
 
@@ -2144,13 +2144,13 @@ int enable_kprobe(struct kprobe *kp)
 	/* Check whether specified probe is valid. */
 	p = __get_valid_kprobe(kp);
 	if (unlikely(p == NULL)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (kprobe_gone(kp)) {
 		/* This kprobe has gone, we couldn't enable it. */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2185,7 +2185,7 @@ int kprobe_add_ksym_blacklist(unsigned long entry)
 
 	if (!kernel_text_address(entry) ||
 	    !kallsyms_lookup_size_offset(entry, &size, &offset))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ent = kmalloc(sizeof(*ent), GFP_KERNEL);
 	if (!ent)
@@ -2697,7 +2697,7 @@ static ssize_t write_enabled_file_bool(struct file *file,
 		ret = disarm_all_kprobes();
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret)

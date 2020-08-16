@@ -29,18 +29,18 @@ int irq_reserve_ipi(struct irq_domain *domain,
 
 	if (!domain ||!irq_domain_is_ipi(domain)) {
 		pr_warn("Reservation on a non IPI domain\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!cpumask_subset(dest, cpu_possible_mask)) {
 		pr_warn("Reservation is not in possible_cpu_mask\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nr_irqs = cpumask_weight(dest);
 	if (!nr_irqs) {
 		pr_warn("Reservation for empty destination mask\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (irq_domain_is_ipi_single(domain)) {
@@ -71,7 +71,7 @@ int irq_reserve_ipi(struct irq_domain *domain,
 			next = cpumask_next(next, dest);
 		if (next < nr_cpu_ids) {
 			pr_warn("Destination mask has holes\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -99,7 +99,7 @@ int irq_reserve_ipi(struct irq_domain *domain,
 
 free_descs:
 	irq_free_descs(virq, nr_irqs);
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 /**
@@ -120,15 +120,15 @@ int irq_destroy_ipi(unsigned int irq, const struct cpumask *dest)
 	unsigned int nr_irqs;
 
 	if (!irq || !data || !ipimask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	domain = data->domain;
 	if (WARN_ON(domain == NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!irq_domain_is_ipi(domain)) {
 		pr_warn("Trying to destroy a non IPI domain!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (WARN_ON(!cpumask_subset(dest, ipimask)))
@@ -136,7 +136,7 @@ int irq_destroy_ipi(unsigned int irq, const struct cpumask *dest)
 		 * Must be destroying a subset of CPUs to which this IPI
 		 * was set up to target
 		 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (irq_domain_is_ipi_per_cpu(domain)) {
 		irq = irq + cpumask_first(dest) - data->common->ipi_offset;
@@ -189,20 +189,20 @@ static int ipi_send_verify(struct irq_chip *chip, struct irq_data *data,
 	struct cpumask *ipimask = irq_data_get_affinity_mask(data);
 
 	if (!chip || !ipimask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!chip->ipi_send_single && !chip->ipi_send_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cpu >= nr_cpu_ids)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dest) {
 		if (!cpumask_subset(dest, ipimask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (!cpumask_test_cpu(cpu, ipimask))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -230,7 +230,7 @@ int __ipi_send_single(struct irq_desc *desc, unsigned int cpu)
 	 * trusted, only check for errors when debugging.
 	 */
 	if (WARN_ON_ONCE(ipi_send_verify(chip, data, NULL, cpu)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	if (!chip->ipi_send_single) {
 		chip->ipi_send_mask(data, cpumask_of(cpu));
@@ -273,7 +273,7 @@ int __ipi_send_mask(struct irq_desc *desc, const struct cpumask *dest)
 	 * trusted, only check for errors when debugging.
 	 */
 	if (WARN_ON_ONCE(ipi_send_verify(chip, data, dest, 0)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	if (chip->ipi_send_mask) {
 		chip->ipi_send_mask(data, dest);
@@ -311,7 +311,7 @@ int ipi_send_single(unsigned int virq, unsigned int cpu)
 	struct irq_chip *chip = data ? irq_data_get_irq_chip(data) : NULL;
 
 	if (WARN_ON_ONCE(ipi_send_verify(chip, data, NULL, cpu)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __ipi_send_single(desc, cpu);
 }
@@ -332,7 +332,7 @@ int ipi_send_mask(unsigned int virq, const struct cpumask *dest)
 	struct irq_chip *chip = data ? irq_data_get_irq_chip(data) : NULL;
 
 	if (WARN_ON_ONCE(ipi_send_verify(chip, data, dest, 0)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __ipi_send_mask(desc, dest);
 }

@@ -267,7 +267,7 @@ static int wm8955_configure_clocking(struct snd_soc_component *component)
 		dev_err(component->dev, "Sample rate %dHz unsupported\n",
 			wm8955->fs);
 		WARN_ON(sr == -1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (i == ARRAY_SIZE(clock_cfgs)) {
@@ -285,7 +285,7 @@ static int wm8955_configure_clocking(struct snd_soc_component *component)
 			dev_err(component->dev,
 				"Unable to generate %dHz from %dHz MCLK\n",
 				wm8955->fs, wm8955->mclk_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, WM8955_PLL_CONTROL_1,
@@ -348,7 +348,7 @@ static int wm8955_sysclk(struct snd_soc_dapm_widget *w,
 		ret = wm8955_configure_clocking(component);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -402,7 +402,7 @@ static int wm8955_put_deemph(struct snd_kcontrol *kcontrol,
 	unsigned int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8955->deemph = deemph;
 
@@ -608,7 +608,7 @@ static int wm8955_hw_params(struct snd_pcm_substream *substream,
 		wl = 0xc;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, WM8955_AUDIO_INTERFACE,
 			    WM8955_WL_MASK, wl);
@@ -657,7 +657,7 @@ static int wm8955_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "Clock source is %d at %uHz\n", clk_id, freq);
@@ -677,7 +677,7 @@ static int wm8955_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif |= WM8955_MS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -696,7 +696,7 @@ static int wm8955_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif |= 0x1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -710,7 +710,7 @@ static int wm8955_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif |= WM8955_BCLKINV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -730,11 +730,11 @@ static int wm8955_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			aif |= WM8955_LRP;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8955_AUDIO_INTERFACE,

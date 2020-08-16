@@ -734,7 +734,7 @@ nlmsvc_update_deferred_block(struct nlm_block *block, int result)
 static int nlmsvc_grant_deferred(struct file_lock *fl, int result)
 {
 	struct nlm_block *block;
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 
 	spin_lock(&nlm_blocked_lock);
 	list_for_each_entry(block, &nlm_blocked, b_list) {
@@ -743,7 +743,7 @@ static int nlmsvc_grant_deferred(struct file_lock *fl, int result)
 							block, block->b_flags);
 			if (block->b_flags & B_QUEUED) {
 				if (block->b_flags & B_TIMED_OUT) {
-					rc = -ENOLCK;
+					rc = -ERR(ENOLCK);
 					break;
 				}
 				nlmsvc_update_deferred_block(block, result);

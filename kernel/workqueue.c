@@ -1301,9 +1301,9 @@ fail:
 	rcu_read_unlock();
 	local_irq_restore(*flags);
 	if (work_is_canceling(work))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	cpu_relax();
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 /**
@@ -4013,12 +4013,12 @@ static int apply_workqueue_attrs_locked(struct workqueue_struct *wq,
 
 	/* only unbound workqueues can change attributes */
 	if (WARN_ON(!(wq->flags & WQ_UNBOUND)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* creating multiple pwqs breaks ordering guarantee */
 	if (!list_empty(&wq->pwqs)) {
 		if (WARN_ON(wq->flags & __WQ_ORDERED_EXPLICIT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		wq->flags &= ~__WQ_ORDERED;
 	}
@@ -5138,7 +5138,7 @@ EXPORT_SYMBOL_GPL(work_on_cpu);
  */
 long work_on_cpu_safe(int cpu, long (*fn)(void *), void *arg)
 {
-	long ret = -ENODEV;
+	long ret = -ERR(ENODEV);
 
 	get_online_cpus();
 	if (cpu_online(cpu))
@@ -5309,7 +5309,7 @@ static int workqueue_apply_unbound_cpumask(void)
  */
 int workqueue_set_unbound_cpumask(cpumask_var_t cpumask)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	cpumask_var_t saved_cpumask;
 
 	if (!zalloc_cpumask_var(&saved_cpumask, GFP_KERNEL))
@@ -5394,7 +5394,7 @@ static ssize_t max_active_store(struct device *dev,
 	int val;
 
 	if (sscanf(buf, "%d", &val) != 1 || val <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	workqueue_set_max_active(wq, val);
 	return count;
@@ -5475,7 +5475,7 @@ static ssize_t wq_nice_store(struct device *dev, struct device_attribute *attr,
 	    attrs->nice >= MIN_NICE && attrs->nice <= MAX_NICE)
 		ret = apply_workqueue_attrs_locked(wq, attrs);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 out_unlock:
 	apply_wqattrs_unlock();
@@ -5547,7 +5547,7 @@ static ssize_t wq_numa_store(struct device *dev, struct device_attribute *attr,
 	if (!attrs)
 		goto out_unlock;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (sscanf(buf, "%d", &v) == 1) {
 		attrs->no_numa = !v;
 		ret = apply_workqueue_attrs_locked(wq, attrs);
@@ -5651,7 +5651,7 @@ int workqueue_sysfs_register(struct workqueue_struct *wq)
 	 * workqueues.
 	 */
 	if (WARN_ON(wq->flags & __WQ_ORDERED_EXPLICIT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wq->wq_dev = wq_dev = kzalloc(sizeof(*wq_dev), GFP_KERNEL);
 	if (!wq_dev)

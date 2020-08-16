@@ -229,7 +229,7 @@ static int nfsd4_scsi_identify_device(struct block_device *bdev,
 	int retries = 1, error;
 
 	if (WARN_ON_ONCE(!blk_queue_scsi_passthrough(q)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 again:
 	buf = kzalloc(bufflen, GFP_KERNEL);
@@ -258,7 +258,7 @@ again:
 	if (req->result) {
 		pr_err("pNFS: INQUIRY 0x83 failed with: %x\n",
 			req->result);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out_put_request;
 	}
 
@@ -355,14 +355,14 @@ nfsd4_block_get_device_info_scsi(struct super_block *sb,
 	if (!ops) {
 		pr_err("pNFS: device %s does not support PRs.\n",
 			sb->s_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	error = ops->pr_register(sb->s_bdev, 0, NFSD_MDS_PR_KEY, true);
 	if (error) {
 		pr_err("pNFS: failed to register key for device %s.\n",
 			sb->s_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	error = ops->pr_reserve(sb->s_bdev, NFSD_MDS_PR_KEY,
@@ -370,7 +370,7 @@ nfsd4_block_get_device_info_scsi(struct super_block *sb,
 	if (error) {
 		pr_err("pNFS: failed to reserve device %s.\n",
 			sb->s_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

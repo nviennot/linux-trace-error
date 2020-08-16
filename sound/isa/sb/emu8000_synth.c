@@ -29,10 +29,10 @@ static int snd_emu8000_probe(struct device *_dev)
 
 	hw = *(struct snd_emu8000**)SNDRV_SEQ_DEVICE_ARGPTR(dev);
 	if (hw == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (hw->emu)
-		return -EBUSY; /* already exists..? */
+		return -ERR(EBUSY); /* already exists..? */
 
 	if (snd_emux_new(&emu) < 0)
 		return -ENOMEM;

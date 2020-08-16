@@ -255,7 +255,7 @@ found_match:
 static struct ts_config *fsm_init(const void *pattern, unsigned int len,
 				    gfp_t gfp_mask, int flags)
 {
-	int i, err = -EINVAL;
+	int i, err = -ERR(EINVAL);
 	struct ts_config *conf;
 	struct ts_fsm *fsm;
 	struct ts_fsm_token *tokens = (struct ts_fsm_token *) pattern;

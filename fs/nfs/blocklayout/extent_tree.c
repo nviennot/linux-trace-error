@@ -269,7 +269,7 @@ ext_tree_insert(struct pnfs_block_layout *bl, struct pnfs_block_extent *new)
 		break;
 	default:
 		dprintk("invalid extent type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock(&bl->bl_ext_lock);
@@ -300,7 +300,7 @@ retry:
 
 		split = kmemdup(new, sizeof(*new), GFP_ATOMIC);
 		if (!split) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -535,7 +535,7 @@ static int ext_tree_encode_commit(struct pnfs_block_layout *bl, __be32 *p,
 		(*count)++;
 		if (ext_tree_layoutupdate_size(bl, *count) > buffer_size) {
 			/* keep counting.. */
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			continue;
 		}
 

@@ -80,7 +80,7 @@ static int udp_uncompress(struct sk_buff *skb, size_t needed)
 	}
 
 	if (fail)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* UDP length needs to be infered from the lower layers
 	 * here, we obtain the hint from the remaining size of the

@@ -26,9 +26,9 @@ int snd_oss_info_register(int dev, int num, char *string)
 	char *x;
 
 	if (snd_BUG_ON(dev < 0 || dev >= SNDRV_OSS_INFO_DEV_COUNT))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(num < 0 || num >= SNDRV_CARDS))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	mutex_lock(&strings);
 	if (string == NULL) {
 		if ((x = snd_sndstat_strings[num][dev]) != NULL) {

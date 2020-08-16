@@ -34,7 +34,7 @@ int wimax_gnl_doit_state_get(struct sk_buff *skb, struct genl_info *info)
 	struct wimax_dev *wimax_dev;
 
 	d_fnstart(3, NULL, "(skb %p info %p)\n", skb, info);
-	result = -ENODEV;
+	result = -ERR(ENODEV);
 	if (info->attrs[WIMAX_GNL_STGET_IFIDX] == NULL) {
 		pr_err("WIMAX_GNL_OP_STATE_GET: can't find IFIDX attribute\n");
 		goto error_no_wimax_dev;

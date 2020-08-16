@@ -47,7 +47,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 
 	local_irq_enable();
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != ECHO3G))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -91,7 +91,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 		chip->px_digital_in = chip->bx_digital_in = 24;
 		chip->px_num = chip->bx_num = 32;
 	} else {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	chip->digital_modes =	ECHOCAPS_HAS_DIGITAL_MODE_SPDIF_RCA |

@@ -330,7 +330,7 @@ static int vti6_input_proto(struct sk_buff *skb, int nexthdr, __be32 spi,
 		return xfrm_input(skb, nexthdr, spi, encap_type);
 	}
 	rcu_read_unlock();
-	return -EINVAL;
+	return -ERR(EINVAL);
 discard:
 	kfree_skb(skb);
 	return 0;
@@ -375,7 +375,7 @@ static int vti6_rcv_cb(struct sk_buff *skb, int err)
 		if (inner_mode == NULL) {
 			XFRM_INC_STATS(dev_net(skb->dev),
 				       LINUX_MIB_XFRMINSTATEMODEERROR);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -386,7 +386,7 @@ static int vti6_rcv_cb(struct sk_buff *skb, int err)
 	skb->mark = orig_mark;
 
 	if (!ret)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	skb_scrub_packet(skb, !net_eq(t->net, dev_net(skb->dev)));
 	skb->dev = dev;
@@ -529,7 +529,7 @@ vti6_xmit(struct sk_buff *skb, struct net_device *dev, struct flowi *fl)
 				  htonl(mtu));
 		}
 
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto tx_err_dst_release;
 	}
 
@@ -827,13 +827,13 @@ vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		break;
 	case SIOCADDTUNNEL:
 	case SIOCCHGTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		err = -EFAULT;
 		if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 			break;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (p.proto != IPPROTO_IPV6  && p.proto != 0)
 			break;
 		vti6_parm_from_user(&p1, &p);
@@ -841,7 +841,7 @@ vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		if (dev != ip6n->fb_tnl_dev && cmd == SIOCCHGTUNNEL) {
 			if (t) {
 				if (t->dev != dev) {
-					err = -EEXIST;
+					err = -ERR(EEXIST);
 					break;
 				}
 			} else
@@ -856,10 +856,10 @@ vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 				err = -EFAULT;
 
 		} else
-			err = (cmd == SIOCADDTUNNEL ? -ENOBUFS : -ENOENT);
+			err = (cmd == SIOCADDTUNNEL ? -ERR(ENOBUFS) : -ERR(ENOENT));
 		break;
 	case SIOCDELTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 
@@ -867,12 +867,12 @@ vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			err = -EFAULT;
 			if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 				break;
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			vti6_parm_from_user(&p1, &p);
 			t = vti6_locate(net, &p1, 0);
 			if (!t)
 				break;
-			err = -EPERM;
+			err = -ERR(EPERM);
 			if (t->dev == ip6n->fb_tnl_dev)
 				break;
 			dev = t->dev;
@@ -881,7 +881,7 @@ vti6_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		unregister_netdevice(dev);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	return err;
 }
@@ -1016,7 +1016,7 @@ static int vti6_newlink(struct net *src_net, struct net_device *dev,
 	nt->parms.proto = IPPROTO_IPV6;
 
 	if (vti6_locate(net, &nt->parms, 0))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	return vti6_tnl_create2(dev);
 }
@@ -1040,7 +1040,7 @@ static int vti6_changelink(struct net_device *dev, struct nlattr *tb[],
 	struct vti6_net *ip6n = net_generic(net, vti6_net_id);
 
 	if (dev == ip6n->fb_tnl_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vti6_netlink_parms(data, &p);
 
@@ -1048,7 +1048,7 @@ static int vti6_changelink(struct net_device *dev, struct nlattr *tb[],
 
 	if (t) {
 		if (t->dev != dev)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else
 		t = netdev_priv(dev);
 
@@ -1088,7 +1088,7 @@ static int vti6_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy vti6_policy[IFLA_VTI_MAX + 1] = {

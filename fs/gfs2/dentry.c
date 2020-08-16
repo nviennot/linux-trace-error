@@ -42,7 +42,7 @@ static int gfs2_drevalidate(struct dentry *dentry, unsigned int flags)
 	int had_lock = 0;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	parent = dget_parent(dentry);
 	sdp = GFS2_SB(d_inode(parent));
@@ -68,7 +68,7 @@ static int gfs2_drevalidate(struct dentry *dentry, unsigned int flags)
 	}
 
 	error = gfs2_dir_check(d_inode(parent), &dentry->d_name, ip);
-	valid = inode ? !error : (error == -ENOENT);
+	valid = inode ? !error : (error == -ERR(ENOENT));
 
 	if (!had_lock)
 		gfs2_glock_dq_uninit(&d_gh);

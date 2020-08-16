@@ -25,7 +25,7 @@ xchk_should_terminate(
 
 	if (fatal_signal_pending(current)) {
 		if (*error == 0)
-			*error = -EAGAIN;
+			*error = -ERR(EAGAIN);
 		return true;
 	}
 	return false;
@@ -101,7 +101,7 @@ int xchk_setup_rt(struct xfs_scrub *sc, struct xfs_inode *ip);
 static inline int
 xchk_setup_rt(struct xfs_scrub *sc, struct xfs_inode *ip)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 #ifdef CONFIG_XFS_QUOTA
@@ -110,7 +110,7 @@ int xchk_setup_quota(struct xfs_scrub *sc, struct xfs_inode *ip);
 static inline int
 xchk_setup_quota(struct xfs_scrub *sc, struct xfs_inode *ip)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 int xchk_setup_fscounters(struct xfs_scrub *sc, struct xfs_inode *ip);

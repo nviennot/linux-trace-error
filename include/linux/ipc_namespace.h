@@ -138,7 +138,7 @@ static inline struct ipc_namespace *copy_ipcs(unsigned long flags,
 	struct user_namespace *user_ns, struct ipc_namespace *ns)
 {
 	if (flags & CLONE_NEWIPC)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return ns;
 }

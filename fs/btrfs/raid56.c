@@ -1421,7 +1421,7 @@ static int fail_rbio_index(struct btrfs_raid_bio *rbio, int failed)
 		rbio->failb = failed;
 		atomic_inc(&rbio->error);
 	} else {
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 out:
 	spin_unlock_irqrestore(&rbio->bio_list_lock, flags);
@@ -1439,7 +1439,7 @@ static int fail_bio_stripe(struct btrfs_raid_bio *rbio,
 	int failed = find_bio_stripe(rbio, bio);
 
 	if (failed < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	return fail_rbio_index(rbio, failed);
 }
@@ -1589,7 +1589,7 @@ cleanup:
 	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
 
-	return -EIO;
+	return -ERR(EIO);
 
 finish:
 	validate_rbio_for_rmw(rbio);
@@ -2137,7 +2137,7 @@ cleanup:
 	while ((bio = bio_list_pop(&bio_list)))
 		bio_put(bio);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -2178,7 +2178,7 @@ int raid56_parity_recover(struct btrfs_fs_info *fs_info, struct bio *bio,
 		if (generic_io)
 			btrfs_put_bbio(bbio);
 		kfree(rbio);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (generic_io) {

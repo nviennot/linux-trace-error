@@ -93,7 +93,7 @@ static int snd_opl3_detect(struct snd_opl3 * opl3)
 	signature = stat1 = inb(opl3->l_port);	/* Status register */
 	if ((stat1 & 0xe0) != 0x00) {	/* Should be 0x00 */
 		snd_printd("OPL3: stat1 = 0x%x\n", stat1);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* Set timer1 to 0xff */
 	opl3->command(opl3, OPL3_LEFT | OPL3_REG_TIMER1, 0xff);
@@ -109,7 +109,7 @@ static int snd_opl3_detect(struct snd_opl3 * opl3)
 	opl3->command(opl3, OPL3_LEFT | OPL3_REG_TIMER_CONTROL, OPL3_IRQ_RESET);
 	if ((stat2 & 0xe0) != 0xc0) {	/* There is no YM3812 */
 		snd_printd("OPL3: stat2 = 0x%x\n", stat2);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* If the toplevel code knows exactly the type of chip, don't try
@@ -126,7 +126,7 @@ static int snd_opl3_detect(struct snd_opl3 * opl3)
 		 * by the OPL4 driver; so we can assume OPL3 here.
 		 */
 		if (snd_BUG_ON(!opl3->r_port))
-			return -ENODEV;
+			return -ERR(ENODEV);
 		opl3->hardware = OPL3_HW_OPL3;
 	}
 	return 0;
@@ -312,7 +312,7 @@ EXPORT_SYMBOL(snd_opl3_interrupt);
 static int snd_opl3_free(struct snd_opl3 *opl3)
 {
 	if (snd_BUG_ON(!opl3))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (opl3->private_free)
 		opl3->private_free(opl3);
 	snd_opl3_clear_patches(opl3);
@@ -363,7 +363,7 @@ int snd_opl3_init(struct snd_opl3 *opl3)
 {
 	if (! opl3->command) {
 		printk(KERN_ERR "snd_opl3_init: command not defined!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	opl3->command(opl3, OPL3_LEFT | OPL3_REG_TEST, OPL3_ENABLE_WAVE_SELECT);
@@ -402,13 +402,13 @@ int snd_opl3_create(struct snd_card *card,
 		if ((opl3->res_l_port = request_region(l_port, 2, "OPL2/3 (left)")) == NULL) {
 			snd_printk(KERN_ERR "opl3: can't grab left port 0x%lx\n", l_port);
 			snd_device_free(card, opl3);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		if (r_port != 0 &&
 		    (opl3->res_r_port = request_region(r_port, 2, "OPL2/3 (right)")) == NULL) {
 			snd_printk(KERN_ERR "opl3: can't grab right port 0x%lx\n", r_port);
 			snd_device_free(card, opl3);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	opl3->l_port = l_port;

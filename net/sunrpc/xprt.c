@@ -100,7 +100,7 @@ int xprt_register_transport(struct xprt_class *transport)
 	struct xprt_class *t;
 	int result;
 
-	result = -EEXIST;
+	result = -ERR(EEXIST);
 	spin_lock(&xprt_list_lock);
 	list_for_each_entry(t, &xprt_list, list) {
 		/* don't register the same transport class twice */
@@ -143,7 +143,7 @@ int xprt_unregister_transport(struct xprt_class *transport)
 			goto out;
 		}
 	}
-	result = -ENOENT;
+	result = -ERR(ENOENT);
 
 out:
 	spin_unlock(&xprt_list_lock);
@@ -219,7 +219,7 @@ out_locked:
 out_unlock:
 	xprt_clear_locked(xprt);
 out_sleep:
-	task->tk_status = -EAGAIN;
+	task->tk_status = -ERR(EAGAIN);
 	if  (RPC_IS_SOFT(task))
 		rpc_sleep_on_timeout(&xprt->sending, task, NULL,
 				xprt_request_timeout(req));
@@ -285,7 +285,7 @@ int xprt_reserve_xprt_cong(struct rpc_xprt *xprt, struct rpc_task *task)
 out_unlock:
 	xprt_clear_locked(xprt);
 out_sleep:
-	task->tk_status = -EAGAIN;
+	task->tk_status = -ERR(EAGAIN);
 	if (RPC_IS_SOFT(task))
 		rpc_sleep_on_timeout(&xprt->sending, task, NULL,
 				xprt_request_timeout(req));
@@ -647,7 +647,7 @@ int xprt_adjust_timeout(struct rpc_rqst *req)
 		spin_lock(&xprt->transport_lock);
 		rpc_init_rtt(req->rq_task->tk_client->cl_rtt, to->to_initval);
 		spin_unlock(&xprt->transport_lock);
-		status = -ETIMEDOUT;
+		status = -ERR(ETIMEDOUT);
 	}
 
 	if (req->rq_timeout == 0) {
@@ -829,7 +829,7 @@ void xprt_connect(struct rpc_task *task)
 			xprt, (xprt_connected(xprt) ? "is" : "is not"));
 
 	if (!xprt_bound(xprt)) {
-		task->tk_status = -EAGAIN;
+		task->tk_status = -ERR(EAGAIN);
 		return;
 	}
 	if (!xprt_lock_write(xprt, task))
@@ -1449,11 +1449,11 @@ xprt_request_transmit(struct rpc_rqst *req, struct rpc_task *snd_task)
 		}
 		/* Verify that our message lies in the RPCSEC_GSS window */
 		if (rpcauth_xmit_need_reencode(task)) {
-			status = -EBADMSG;
+			status = -ERR(EBADMSG);
 			goto out_dequeue;
 		}
 		if (RPC_SIGNALLED(task)) {
-			status = -ERESTARTSYS;
+			status = -ERR(ERESTARTSYS);
 			goto out_dequeue;
 		}
 	}
@@ -1566,7 +1566,7 @@ out:
 
 static struct rpc_rqst *xprt_dynamic_alloc_slot(struct rpc_xprt *xprt)
 {
-	struct rpc_rqst *req = ERR_PTR(-EAGAIN);
+	struct rpc_rqst *req = ERR_PTR(-ERR(EAGAIN));
 
 	if (xprt->num_reqs >= xprt->max_reqs)
 		goto out;
@@ -1616,7 +1616,7 @@ void xprt_alloc_slot(struct rpc_xprt *xprt, struct rpc_task *task)
 		dprintk("RPC:       waiting for request slot\n");
 		/* fall through */
 	default:
-		task->tk_status = -EAGAIN;
+		task->tk_status = -ERR(EAGAIN);
 	}
 	spin_unlock(&xprt->reserve_lock);
 	return;
@@ -1766,7 +1766,7 @@ void xprt_reserve(struct rpc_task *task)
 	if (task->tk_rqstp != NULL)
 		return;
 
-	task->tk_status = -EAGAIN;
+	task->tk_status = -ERR(EAGAIN);
 	if (!xprt_throttle_congested(xprt, task))
 		xprt_do_reserve(xprt, task);
 }
@@ -1788,7 +1788,7 @@ void xprt_retry_reserve(struct rpc_task *task)
 	if (task->tk_rqstp != NULL)
 		return;
 
-	task->tk_status = -EAGAIN;
+	task->tk_status = -ERR(EAGAIN);
 	xprt_do_reserve(xprt, task);
 }
 
@@ -1904,7 +1904,7 @@ struct rpc_xprt *xprt_create_transport(struct xprt_create *args)
 	}
 	spin_unlock(&xprt_list_lock);
 	dprintk("RPC: transport (%d) not supported\n", args->ident);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 
 found:
 	xprt = t->setup(args);
@@ -1920,7 +1920,7 @@ found:
 
 	if (strlen(args->servername) > RPC_MAXNETNAMELEN) {
 		xprt_destroy(xprt);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	xprt->servername = kstrdup(args->servername, GFP_KERNEL);
 	if (xprt->servername == NULL) {

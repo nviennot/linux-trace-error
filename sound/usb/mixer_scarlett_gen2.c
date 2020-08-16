@@ -628,7 +628,7 @@ static int scarlett2_usb(
 			mixer->chip,
 			"Scarlett Gen 2 USB request result cmd %x was %d\n",
 			cmd, err);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -650,7 +650,7 @@ static int scarlett2_usb(
 			mixer->chip,
 			"Scarlett Gen 2 USB response result cmd %x was %d\n",
 			cmd, err);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -669,7 +669,7 @@ static int scarlett2_usb(
 			resp_size, le16_to_cpu(resp->size),
 			le32_to_cpu(resp->error),
 			le32_to_cpu(resp->pad));
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -1591,7 +1591,7 @@ static int scarlett2_mux_src_enum_ctl_info(struct snd_kcontrol *kctl,
 		item -= ports[port_type].num[SCARLETT2_PORT_IN];
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int scarlett2_mux_src_enum_ctl_get(struct snd_kcontrol *kctl,
@@ -1979,7 +1979,7 @@ static int scarlett2_mixer_status_create(struct usb_mixer_interface *mixer)
 	}
 
 	if (snd_usb_pipe_sanity_check(dev, pipe))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mixer->urb = usb_alloc_urb(0, GFP_KERNEL);
 	if (!mixer->urb)
@@ -2018,7 +2018,7 @@ int snd_scarlett_gen2_controls_create(struct usb_mixer_interface *mixer)
 		info = &s18i20_gen2_info;
 		break;
 	default: /* device not (yet) supported */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!(mixer->chip->setup & SCARLETT2_ENABLE)) {

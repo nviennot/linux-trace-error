@@ -187,7 +187,7 @@ static int pcxhr_pll_freq_register(unsigned int freq, unsigned int* pllreg,
 	unsigned int reg;
 
 	if (freq < 6900 || freq > 110000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	reg = (28224000 * 2) / freq;
 	reg = (reg - 1) / 2;
 	if (reg < 0x200)
@@ -297,7 +297,7 @@ static int pcxhr_get_clock_reg(struct pcxhr_mgr *mgr, unsigned int rate,
 		val = PCXHR_FREQ_AES_4;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*reg = val;
 	*freq = realfreq;
@@ -438,7 +438,7 @@ static int pcxhr_sub_get_external_clock(struct pcxhr_mgr *mgr,
 		reg = REG_STATUS_AES_4;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_READ);
 	rmh.cmd_len = 2;
@@ -501,12 +501,12 @@ static int pcxhr_set_stream_state(struct snd_pcxhr *chip,
 		if (stream->status != PCXHR_STREAM_STATUS_SCHEDULE_STOP) {
 			dev_err(chip->card->dev,
 				"pcxhr_set_stream_state CANNOT be stopped\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		start = 0;
 	}
 	if (!stream->substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stream->timer_abs_periods = 0;
 	stream->timer_period_frag = 0;	/* reset theoretical stream pos */
@@ -572,7 +572,7 @@ static int pcxhr_set_format(struct pcxhr_stream *stream)
 	default:
 		dev_err(chip->card->dev,
 			"error pcxhr_set_format() : unknown format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sample_rate = chip->mgr->sample_rate;
@@ -847,13 +847,13 @@ static int pcxhr_trigger(struct snd_pcm_substream *subs, int cmd)
 				    stream->pipe->is_capture ? 'C' : 'P',
 				    stream->pipe->first_audio);
 			if (pcxhr_set_format(stream))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (pcxhr_update_r_buffer(stream))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			stream->status = PCXHR_STREAM_STATUS_SCHEDULE_RUN;
 			if (pcxhr_set_stream_state(chip, stream))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			stream->status = PCXHR_STREAM_STATUS_RUNNING;
 		}
 		break;
@@ -863,7 +863,7 @@ static int pcxhr_trigger(struct snd_pcm_substream *subs, int cmd)
 			stream = s->runtime->private_data;
 			stream->status = PCXHR_STREAM_STATUS_SCHEDULE_STOP;
 			if (pcxhr_set_stream_state(chip, stream))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			snd_pcm_trigger_done(s, subs);
 		}
 		break;
@@ -871,7 +871,7 @@ static int pcxhr_trigger(struct snd_pcm_substream *subs, int cmd)
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		/* TODO */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1015,7 +1015,7 @@ static int pcxhr_open(struct snd_pcm_substream *subs)
 		dev_err(chip->card->dev, "pcxhr_open chip%d subs%d in use\n",
 			   chip->chip_idx, subs->number);
 		mutex_unlock(&mgr->setup_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* float format support is in some cases buggy on stereo cards */
@@ -1043,7 +1043,7 @@ static int pcxhr_open(struct snd_pcm_substream *subs)
 			    external_rate == 0) {
 				/* cannot detect the external clock rate */
 				mutex_unlock(&mgr->setup_mutex);
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 			runtime->hw.rate_min = external_rate;
 			runtime->hw.rate_max = external_rate;
@@ -1486,10 +1486,10 @@ static int pcxhr_probe(struct pci_dev *pci,
 	char *card_name;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (! enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* enable PCI device */
@@ -1502,7 +1502,7 @@ static int pcxhr_probe(struct pci_dev *pci,
 		dev_err(&pci->dev,
 			"architecture does not support 32bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* alloc card manager */
@@ -1515,7 +1515,7 @@ static int pcxhr_probe(struct pci_dev *pci,
 	if (snd_BUG_ON(pci_id->driver_data >= PCI_ID_LAST)) {
 		kfree(mgr);
 		pci_disable_device(pci);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	card_name =
 		pcxhr_board_params[pci_id->driver_data].board_name;
@@ -1554,7 +1554,7 @@ static int pcxhr_probe(struct pci_dev *pci,
 				 KBUILD_MODNAME, mgr)) {
 		dev_err(&pci->dev, "unable to grab IRQ %d\n", pci->irq);
 		pcxhr_free(mgr);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	mgr->irq = pci->irq;
 

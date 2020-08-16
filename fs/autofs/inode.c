@@ -226,7 +226,7 @@ int autofs_fill_super(struct super_block *s, void *data, int silent)
 	struct autofs_info *ino;
 	int pgrp = 0;
 	bool pgrp_set = false;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
 	if (!sbi)

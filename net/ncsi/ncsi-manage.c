@@ -1249,7 +1249,7 @@ static int ncsi_choose_active_channel(struct ncsi_dev_priv *ndp)
 		netdev_warn(ndp->ndev.dev,
 			    "NCSI: No channel found to configure!\n");
 		ncsi_report_link(ndp, true);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return ncsi_process_next_channel(ndp);
@@ -1520,7 +1520,7 @@ int ncsi_process_next_channel(struct ncsi_dev_priv *ndp)
 		netdev_err(ndp->ndev.dev, "Invalid state 0x%x on %d:%d\n",
 			   old_state, nc->package->id, nc->id);
 		ncsi_report_link(ndp, false);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1534,7 +1534,7 @@ out:
 	}
 
 	ncsi_report_link(ndp, false);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int ncsi_kick_channels(struct ncsi_dev_priv *ndp)
@@ -1619,7 +1619,7 @@ int ncsi_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
 		netdev_warn(dev,
 			    "tried to add vlan id %u but NCSI max already registered (%u)\n",
 			    vid, NCSI_MAX_VLAN_VIDS);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	vlan = kzalloc(sizeof(*vlan), GFP_KERNEL);
@@ -1667,7 +1667,7 @@ int ncsi_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
 
 	if (!found) {
 		netdev_err(dev, "NCSI: vid %u wasn't registered!\n", vid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	found = ncsi_kick_channels(ndp) != 0;
@@ -1746,7 +1746,7 @@ int ncsi_start_dev(struct ncsi_dev *nd)
 
 	if (nd->state != ncsi_dev_state_registered &&
 	    nd->state != ncsi_dev_state_functional)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	if (!(ndp->flags & NCSI_DEV_PROBED)) {
 		ndp->package_probe_id = 0;

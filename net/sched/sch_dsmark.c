@@ -120,13 +120,13 @@ static int dsmark_change(struct Qdisc *sch, u32 classid, u32 parent,
 	struct dsmark_qdisc_data *p = qdisc_priv(sch);
 	struct nlattr *opt = tca[TCA_OPTIONS];
 	struct nlattr *tb[TCA_DSMARK_MAX + 1];
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	pr_debug("%s(sch %p,[qdisc %p],classid %x,parent %x), arg 0x%lx\n",
 		 __func__, sch, p, classid, parent, *arg);
 
 	if (!dsmark_valid_index(p, *arg)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto errout;
 	}
 
@@ -155,7 +155,7 @@ static int dsmark_delete(struct Qdisc *sch, unsigned long arg)
 	struct dsmark_qdisc_data *p = qdisc_priv(sch);
 
 	if (!dsmark_valid_index(p, arg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p->mv[arg - 1].mask = 0xff;
 	p->mv[arg - 1].value = 0;
@@ -341,7 +341,7 @@ static int dsmark_init(struct Qdisc *sch, struct nlattr *opt,
 {
 	struct dsmark_qdisc_data *p = qdisc_priv(sch);
 	struct nlattr *tb[TCA_DSMARK_MAX + 1];
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	u32 default_index = NO_DEFAULT_INDEX;
 	u16 indices;
 	int i;
@@ -360,7 +360,7 @@ static int dsmark_init(struct Qdisc *sch, struct nlattr *opt,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!tb[TCA_DSMARK_INDICES])
 		goto errout;
 	indices = nla_get_u16(tb[TCA_DSMARK_INDICES]);
@@ -432,7 +432,7 @@ static int dsmark_dump_class(struct Qdisc *sch, unsigned long cl,
 	pr_debug("%s(sch %p,[qdisc %p],class %ld\n", __func__, sch, p, cl);
 
 	if (!dsmark_valid_index(p, cl))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tcm->tcm_handle = TC_H_MAKE(TC_H_MAJ(sch->handle), cl - 1);
 	tcm->tcm_info = p->q->handle;
@@ -448,7 +448,7 @@ static int dsmark_dump_class(struct Qdisc *sch, unsigned long cl,
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int dsmark_dump(struct Qdisc *sch, struct sk_buff *skb)
@@ -474,7 +474,7 @@ static int dsmark_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct Qdisc_class_ops dsmark_class_ops = {

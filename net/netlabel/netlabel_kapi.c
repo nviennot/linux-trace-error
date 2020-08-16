@@ -72,10 +72,10 @@ int netlbl_cfg_map_del(const char *domain,
 							audit_info);
 #endif /* IPv6 */
 		default:
-			return -EPFNOSUPPORT;
+			return -ERR(EPFNOSUPPORT);
 		}
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 /**
@@ -169,7 +169,7 @@ int netlbl_cfg_unlbl_map_add(const char *domain,
 		entry->def.addrsel = addrmap;
 		entry->def.type = NETLBL_NLTYPE_ADDRSELECT;
 	} else {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto cfg_unlbl_map_add_failure;
 	}
 
@@ -225,7 +225,7 @@ int netlbl_cfg_unlbl_static_add(struct net *net,
 		break;
 #endif /* IPv6 */
 	default:
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 	}
 
 	return netlbl_unlhsh_add(net,
@@ -267,7 +267,7 @@ int netlbl_cfg_unlbl_static_del(struct net *net,
 		break;
 #endif /* IPv6 */
 	default:
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 	}
 
 	return netlbl_unlhsh_remove(net,
@@ -334,7 +334,7 @@ int netlbl_cfg_cipsov4_map_add(u32 doi,
 
 	doi_def = cipso_v4_doi_getdef(doi);
 	if (doi_def == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
 	if (entry == NULL)
@@ -371,7 +371,7 @@ int netlbl_cfg_cipsov4_map_add(u32 doi,
 		entry->def.addrsel = addrmap;
 		entry->def.type = NETLBL_NLTYPE_ADDRSELECT;
 	} else {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto out_addrmap;
 	}
 
@@ -410,7 +410,7 @@ int netlbl_cfg_calipso_add(struct calipso_doi *doi_def,
 #if IS_ENABLED(CONFIG_IPV6)
 	return calipso_doi_add(doi_def, audit_info);
 #else /* IPv6 */
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 #endif /* IPv6 */
 }
 
@@ -460,7 +460,7 @@ int netlbl_cfg_calipso_map_add(u32 doi,
 
 	doi_def = calipso_doi_getdef(doi);
 	if (doi_def == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	entry = kzalloc(sizeof(*entry), GFP_ATOMIC);
 	if (entry == NULL)
@@ -501,7 +501,7 @@ int netlbl_cfg_calipso_map_add(u32 doi,
 		entry->def.addrsel = addrmap;
 		entry->def.type = NETLBL_NLTYPE_ADDRSELECT;
 	} else {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto out_addrmap;
 	}
 
@@ -523,7 +523,7 @@ out_entry:
 	calipso_doi_putdef(doi_def);
 	return ret_val;
 #else /* IPv6 */
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 #endif /* IPv6 */
 }
 
@@ -614,7 +614,7 @@ int netlbl_catmap_walk(struct netlbl_lsm_catmap *catmap, u32 offset)
 
 	iter = _netlbl_catmap_getnode(&catmap, offset, _CM_F_WALK, 0);
 	if (iter == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (offset > iter->startbit) {
 		offset -= iter->startbit;
 		idx = offset / NETLBL_CATMAP_MAPSIZE;
@@ -639,13 +639,13 @@ int netlbl_catmap_walk(struct netlbl_lsm_catmap *catmap, u32 offset)
 				iter = iter->next;
 				idx = 0;
 			} else
-				return -ENOENT;
+				return -ERR(ENOENT);
 		}
 		bitmap = iter->bitmap[idx];
 		bit = 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL(netlbl_catmap_walk);
 
@@ -671,7 +671,7 @@ int netlbl_catmap_walkrng(struct netlbl_lsm_catmap *catmap, u32 offset)
 
 	iter = _netlbl_catmap_getnode(&catmap, offset, _CM_F_WALK, 0);
 	if (iter == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (offset > iter->startbit) {
 		offset -= iter->startbit;
 		idx = offset / NETLBL_CATMAP_MAPSIZE;
@@ -705,7 +705,7 @@ int netlbl_catmap_walkrng(struct netlbl_lsm_catmap *catmap, u32 offset)
 		bit = 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /**
@@ -732,7 +732,7 @@ int netlbl_catmap_getlong(struct netlbl_lsm_catmap *catmap,
 
 	/* only allow aligned offsets */
 	if ((off & (BITS_PER_LONG - 1)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* a null catmap is equivalent to an empty one */
 	if (!catmap) {
@@ -849,7 +849,7 @@ int netlbl_catmap_setlong(struct netlbl_lsm_catmap **catmap,
 
 	/* only allow aligned offsets */
 	if ((offset & (BITS_PER_LONG - 1)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iter = _netlbl_catmap_getnode(catmap, offset, _CM_F_ALLOC, flags);
 	if (iter == NULL)
@@ -982,14 +982,14 @@ int netlbl_sock_setattr(struct sock *sk,
 	rcu_read_lock();
 	dom_entry = netlbl_domhsh_getentry(secattr->domain, family);
 	if (dom_entry == NULL) {
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 		goto socket_setattr_return;
 	}
 	switch (family) {
 	case AF_INET:
 		switch (dom_entry->def.type) {
 		case NETLBL_NLTYPE_ADDRSELECT:
-			ret_val = -EDESTADDRREQ;
+			ret_val = -ERR(EDESTADDRREQ);
 			break;
 		case NETLBL_NLTYPE_CIPSOV4:
 			ret_val = cipso_v4_sock_setattr(sk,
@@ -1000,14 +1000,14 @@ int netlbl_sock_setattr(struct sock *sk,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
 	case AF_INET6:
 		switch (dom_entry->def.type) {
 		case NETLBL_NLTYPE_ADDRSELECT:
-			ret_val = -EDESTADDRREQ;
+			ret_val = -ERR(EDESTADDRREQ);
 			break;
 		case NETLBL_NLTYPE_CALIPSO:
 			ret_val = calipso_sock_setattr(sk,
@@ -1018,12 +1018,12 @@ int netlbl_sock_setattr(struct sock *sk,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EPROTONOSUPPORT;
+		ret_val = -ERR(EPROTONOSUPPORT);
 	}
 
 socket_setattr_return:
@@ -1081,7 +1081,7 @@ int netlbl_sock_getattr(struct sock *sk,
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EPROTONOSUPPORT;
+		ret_val = -ERR(EPROTONOSUPPORT);
 	}
 
 	return ret_val;
@@ -1117,7 +1117,7 @@ int netlbl_conn_setattr(struct sock *sk,
 		entry = netlbl_domhsh_getentry_af4(secattr->domain,
 						   addr4->sin_addr.s_addr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto conn_setattr_return;
 		}
 		switch (entry->type) {
@@ -1132,7 +1132,7 @@ int netlbl_conn_setattr(struct sock *sk,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
@@ -1141,7 +1141,7 @@ int netlbl_conn_setattr(struct sock *sk,
 		entry = netlbl_domhsh_getentry_af6(secattr->domain,
 						   &addr6->sin6_addr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto conn_setattr_return;
 		}
 		switch (entry->type) {
@@ -1156,12 +1156,12 @@ int netlbl_conn_setattr(struct sock *sk,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EPROTONOSUPPORT;
+		ret_val = -ERR(EPROTONOSUPPORT);
 	}
 
 conn_setattr_return:
@@ -1192,7 +1192,7 @@ int netlbl_req_setattr(struct request_sock *req,
 		entry = netlbl_domhsh_getentry_af4(secattr->domain,
 						   ireq->ir_rmt_addr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto req_setattr_return;
 		}
 		switch (entry->type) {
@@ -1205,7 +1205,7 @@ int netlbl_req_setattr(struct request_sock *req,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
@@ -1213,7 +1213,7 @@ int netlbl_req_setattr(struct request_sock *req,
 		entry = netlbl_domhsh_getentry_af6(secattr->domain,
 						   &ireq->ir_v6_rmt_addr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto req_setattr_return;
 		}
 		switch (entry->type) {
@@ -1226,12 +1226,12 @@ int netlbl_req_setattr(struct request_sock *req,
 			ret_val = 0;
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EPROTONOSUPPORT;
+		ret_val = -ERR(EPROTONOSUPPORT);
 	}
 
 req_setattr_return:
@@ -1290,7 +1290,7 @@ int netlbl_skbuff_setattr(struct sk_buff *skb,
 		entry = netlbl_domhsh_getentry_af4(secattr->domain,
 						   hdr4->daddr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto skbuff_setattr_return;
 		}
 		switch (entry->type) {
@@ -1304,7 +1304,7 @@ int netlbl_skbuff_setattr(struct sk_buff *skb,
 			ret_val = cipso_v4_skbuff_delattr(skb);
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #if IS_ENABLED(CONFIG_IPV6)
@@ -1313,7 +1313,7 @@ int netlbl_skbuff_setattr(struct sk_buff *skb,
 		entry = netlbl_domhsh_getentry_af6(secattr->domain,
 						   &hdr6->daddr);
 		if (entry == NULL) {
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 			goto skbuff_setattr_return;
 		}
 		switch (entry->type) {
@@ -1327,12 +1327,12 @@ int netlbl_skbuff_setattr(struct sk_buff *skb,
 			ret_val = calipso_skbuff_delattr(skb);
 			break;
 		default:
-			ret_val = -ENOENT;
+			ret_val = -ERR(ENOENT);
 		}
 		break;
 #endif /* IPv6 */
 	default:
-		ret_val = -EPROTONOSUPPORT;
+		ret_val = -ERR(EPROTONOSUPPORT);
 	}
 
 skbuff_setattr_return:
@@ -1435,7 +1435,7 @@ int netlbl_cache_add(const struct sk_buff *skb, u16 family,
 	unsigned char *ptr;
 
 	if ((secattr->flags & NETLBL_SECATTR_CACHE) == 0)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	switch (family) {
 	case AF_INET:
@@ -1451,7 +1451,7 @@ int netlbl_cache_add(const struct sk_buff *skb, u16 family,
 		break;
 #endif /* IPv6 */
 	}
-	return -ENOMSG;
+	return -ERR(ENOMSG);
 }
 
 /*

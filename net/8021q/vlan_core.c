@@ -209,7 +209,7 @@ static int vlan_add_rx_filter_info(struct net_device *dev, __be16 proto, u16 vid
 	if (netif_device_present(dev))
 		return dev->netdev_ops->ndo_vlan_rx_add_vid(dev, proto, vid);
 	else
-		return -ENODEV;
+		return -ERR(ENODEV);
 }
 
 static int vlan_kill_rx_filter_info(struct net_device *dev, __be16 proto, u16 vid)
@@ -220,7 +220,7 @@ static int vlan_kill_rx_filter_info(struct net_device *dev, __be16 proto, u16 vi
 	if (netif_device_present(dev))
 		return dev->netdev_ops->ndo_vlan_rx_kill_vid(dev, proto, vid);
 	else
-		return -ENODEV;
+		return -ERR(ENODEV);
 }
 
 int vlan_for_each(struct net_device *dev,
@@ -510,7 +510,7 @@ static int vlan_gro_complete(struct sk_buff *skb, int nhoff)
 	struct vlan_hdr *vhdr = (struct vlan_hdr *)(skb->data + nhoff);
 	__be16 type = vhdr->h_vlan_encapsulated_proto;
 	struct packet_offload *ptype;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	rcu_read_lock();
 	ptype = gro_find_complete_by_type(type);

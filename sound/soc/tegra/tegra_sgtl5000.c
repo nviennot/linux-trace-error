@@ -133,7 +133,7 @@ static int tegra_sgtl5000_driver_probe(struct platform_device *pdev)
 	if (!tegra_sgtl5000_dai.codecs->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,audio-codec' missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -142,7 +142,7 @@ static int tegra_sgtl5000_driver_probe(struct platform_device *pdev)
 	if (!tegra_sgtl5000_dai.cpus->of_node) {
 		dev_err(&pdev->dev,
 			"Property 'nvidia,i2s-controller' missing/invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_put_codec_of_node;
 	}
 

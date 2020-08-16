@@ -1254,7 +1254,7 @@ static int nlattr_to_tcp(struct nlattr *cda[], struct nf_conn *ct)
 
 	if (tb[CTA_PROTOINFO_TCP_STATE] &&
 	    nla_get_u8(tb[CTA_PROTOINFO_TCP_STATE]) >= TCP_CONNTRACK_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&ct->lock);
 	if (tb[CTA_PROTOINFO_TCP_STATE])
@@ -1398,7 +1398,7 @@ tcp_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
 	return 0;
 
 nla_put_failure:
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static const struct nla_policy tcp_timeout_nla_policy[CTA_TIMEOUT_TCP_MAX+1] = {

@@ -109,7 +109,7 @@ int __skb_wait_for_more_packets(struct sock *sk, struct sk_buff_head *queue,
 	/* Sequenced packets can come disconnected.
 	 * If so we report the problem
 	 */
-	error = -ENOTCONN;
+	error = -ERR(ENOTCONN);
 	if (connection_based(sk) &&
 	    !(sk->sk_state == TCP_ESTABLISHED || sk->sk_state == TCP_LISTEN))
 		goto out_err;
@@ -276,7 +276,7 @@ struct sk_buff *__skb_try_recv_datagram(struct sock *sk,
 		sk_busy_loop(sk, flags & MSG_DONTWAIT);
 	} while (READ_ONCE(queue->prev) != *last);
 
-	error = -EAGAIN;
+	error = -ERR(EAGAIN);
 
 no_packet:
 	*err = error;
@@ -355,7 +355,7 @@ int __sk_queue_drop_skb(struct sock *sk, struct sk_buff_head *sk_queue,
 	int err = 0;
 
 	if (flags & MSG_PEEK) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		spin_lock_bh(&sk_queue->lock);
 		if (skb->next) {
 			__skb_unlink(skb, sk_queue);
@@ -629,7 +629,7 @@ int __zerocopy_sg_from_iter(struct sock *sk, struct sk_buff *skb,
 		int n = 0;
 
 		if (frag == MAX_SKB_FRAGS)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		copied = iov_iter_get_pages(from, pages, length,
 					    MAX_SKB_FRAGS - frag, &start);
@@ -723,7 +723,7 @@ int skb_copy_and_csum_datagram_msg(struct sk_buff *skb,
 
 	if (msg_data_left(msg) < chunk) {
 		if (__skb_checksum_complete(skb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (skb_copy_datagram_msg(skb, hlen, msg, chunk))
 			goto fault;
 	} else {
@@ -734,7 +734,7 @@ int skb_copy_and_csum_datagram_msg(struct sk_buff *skb,
 
 		if (csum_fold(csum)) {
 			iov_iter_revert(&msg->msg_iter, chunk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (unlikely(skb->ip_summed == CHECKSUM_COMPLETE) &&

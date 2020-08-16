@@ -48,7 +48,7 @@ struct cpu_stop_work {
 
 static inline int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	preempt_disable();
 	if (cpu == smp_processor_id())
 		ret = fn(arg);

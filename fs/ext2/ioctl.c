@@ -40,7 +40,7 @@ long ext2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return ret;
 
 		if (!inode_owner_or_capable(inode)) {
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 			goto setflags_out;
 		}
 
@@ -55,7 +55,7 @@ long ext2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		/* Is it quota file? Do not allow user to mess with it */
 		if (IS_NOQUOTA(inode)) {
 			inode_unlock(inode);
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto setflags_out;
 		}
 		oldflags = ei->i_flags;
@@ -85,7 +85,7 @@ setflags_out:
 		__u32 generation;
 
 		if (!inode_owner_or_capable(inode))
-			return -EPERM;
+			return -ERR(EPERM);
 		ret = mnt_want_write_file(filp);
 		if (ret)
 			return ret;
@@ -111,14 +111,14 @@ setversion_out:
 			rsv_window_size = ei->i_block_alloc_info->rsv_window_node.rsv_goal_size;
 			return put_user(rsv_window_size, (int __user *)arg);
 		}
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	case EXT2_IOC_SETRSVSZ: {
 
 		if (!test_opt(inode->i_sb, RESERVATION) ||!S_ISREG(inode->i_mode))
-			return -ENOTTY;
+			return -ERR(ENOTTY);
 
 		if (!inode_owner_or_capable(inode))
-			return -EACCES;
+			return -ERR(EACCES);
 
 		if (get_user(rsv_window_size, (int __user *)arg))
 			return -EFAULT;
@@ -154,7 +154,7 @@ setversion_out:
 		return ret;
 	}
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -176,7 +176,7 @@ long ext2_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		cmd = EXT2_IOC_SETVERSION;
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 	return ext2_ioctl(file, cmd, (unsigned long) compat_ptr(arg));
 }

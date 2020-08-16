@@ -104,7 +104,7 @@ static int axg_spdifout_trigger(struct snd_pcm_substream *substream, int cmd,
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -136,7 +136,7 @@ static int axg_spdifout_sample_fmt(struct snd_pcm_hw_params *params,
 	default:
 		dev_err(dai->dev, "too many channels for spdif dai: %u\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(priv->map, SPDIFOUT_CTRL0,
@@ -159,7 +159,7 @@ static int axg_spdifout_sample_fmt(struct snd_pcm_hw_params *params,
 	default:
 		dev_err(dai->dev, "Unsupported physical width: %u\n",
 			params_physical_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Position of the MSB in FIFO samples */

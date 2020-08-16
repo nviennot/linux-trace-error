@@ -188,7 +188,7 @@ int cond_index_bool(void *key, void *datum, void *datap)
 	p = datap;
 
 	if (!booldatum->value || booldatum->value > p->p_bools.nprim)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p->sym_val_to_name[SYM_BOOLS][booldatum->value - 1] = key;
 	p->bool_val_to_struct[booldatum->value - 1] = booldatum;
@@ -222,7 +222,7 @@ int cond_read_bool(struct policydb *p, struct hashtab *h, void *fp)
 	booldatum->value = le32_to_cpu(buf[0]);
 	booldatum->state = le32_to_cpu(buf[1]);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (!bool_isvalid(booldatum))
 		goto err;
 
@@ -271,7 +271,7 @@ static int cond_insertf(struct avtab *a, struct avtab_key *k, struct avtab_datum
 	if (k->specified & AVTAB_TYPE) {
 		if (avtab_search(&p->te_avtab, k)) {
 			pr_err("SELinux: type rule already exists outside of a conditional.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/*
 		 * If we are reading the false list other will be a pointer to
@@ -286,7 +286,7 @@ static int cond_insertf(struct avtab *a, struct avtab_key *k, struct avtab_datum
 			if (node_ptr) {
 				if (avtab_search_node_next(node_ptr, k->specified)) {
 					pr_err("SELinux: too many conflicting type rules.\n");
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 				found = false;
 				for (i = 0; i < other->len; i++) {
@@ -297,13 +297,13 @@ static int cond_insertf(struct avtab *a, struct avtab_key *k, struct avtab_datum
 				}
 				if (!found) {
 					pr_err("SELinux: conflicting type rules.\n");
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			}
 		} else {
 			if (avtab_search(&p->te_cond_avtab, k)) {
 				pr_err("SELinux: conflicting type rules when adding type rule for true.\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -401,7 +401,7 @@ static int cond_read_node(struct policydb *p, struct cond_node *node, void *fp)
 		expr->bool = le32_to_cpu(buf[1]);
 
 		if (!expr_node_isvalid(p, expr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	rc = cond_read_av_list(p, fp, &node->true_list, NULL);

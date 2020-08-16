@@ -407,7 +407,7 @@ xfs_open_devices(
 		if (rtdev == ddev || rtdev == logdev) {
 			xfs_warn(mp,
 	"Cannot mount filesystem with identical rtdev and ddev/logdev.");
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_close_rtdev;
 		}
 		dax_rtdev = fs_dax_get_by_bdev(rtdev);
@@ -951,14 +951,14 @@ xfs_finish_flags(
 			   mp->m_logbsize < mp->m_sb.sb_logsunit) {
 			xfs_warn(mp,
 		"logbuf size must be greater than or equal to log stripe size");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		/* Fail a mount if the logbuf is larger than 32K */
 		if (mp->m_logbsize > XLOG_BIG_RECORD_BSIZE) {
 			xfs_warn(mp,
 		"logbuf size for version 1 logs must be 16K or 32K");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -969,7 +969,7 @@ xfs_finish_flags(
 	    (mp->m_flags & XFS_MOUNT_NOATTR2)) {
 		xfs_warn(mp, "Cannot mount a V5 filesystem as noattr2. "
 			     "attr2 is always enabled for V5 filesystems.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -986,7 +986,7 @@ xfs_finish_flags(
 	if ((mp->m_sb.sb_flags & XFS_SBF_READONLY) && !ronly) {
 		xfs_warn(mp,
 			"cannot mount a read-only filesystem as read-write");
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	if ((mp->m_qflags & (XFS_GQUOTA_ACCT | XFS_GQUOTA_ACTIVE)) &&
@@ -994,7 +994,7 @@ xfs_finish_flags(
 	    !xfs_sb_version_has_pquotino(&mp->m_sb)) {
 		xfs_warn(mp,
 		  "Super block does not support project and group quota together");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1141,7 +1141,7 @@ suffix_kstrtoint(
 	}
 
 	if (kstrtoint(value, base, &_res))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	kfree(value);
 	*res = _res << shift_left_factor;
 	return ret;
@@ -1172,7 +1172,7 @@ xfs_fc_parse_param(
 		return 0;
 	case Opt_logbsize:
 		if (suffix_kstrtoint(param->string, 10, &mp->m_logbsize))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	case Opt_logdev:
 		kfree(mp->m_logname);
@@ -1188,7 +1188,7 @@ xfs_fc_parse_param(
 		return 0;
 	case Opt_allocsize:
 		if (suffix_kstrtoint(param->string, 10, &size))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		mp->m_allocsize_log = ffs(size) - 1;
 		mp->m_flags |= XFS_MOUNT_ALLOCSIZE;
 		return 0;
@@ -1299,7 +1299,7 @@ xfs_fc_parse_param(
 #endif
 	default:
 		xfs_warn(mp, "unknown mount option [%s].", param->key);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1315,32 +1315,32 @@ xfs_fc_validate_params(
 	if ((mp->m_flags & XFS_MOUNT_NORECOVERY) &&
 	    !(mp->m_flags & XFS_MOUNT_RDONLY)) {
 		xfs_warn(mp, "no-recovery mounts must be read-only.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((mp->m_flags & XFS_MOUNT_NOALIGN) &&
 	    (mp->m_dalign || mp->m_swidth)) {
 		xfs_warn(mp,
 	"sunit and swidth options incompatible with the noalign option");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!IS_ENABLED(CONFIG_XFS_QUOTA) && mp->m_qflags != 0) {
 		xfs_warn(mp, "quota support not available in this kernel.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((mp->m_dalign && !mp->m_swidth) ||
 	    (!mp->m_dalign && mp->m_swidth)) {
 		xfs_warn(mp, "sunit and swidth must be specified together");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mp->m_dalign && (mp->m_swidth % mp->m_dalign != 0)) {
 		xfs_warn(mp,
 	"stripe width (%d) must be a multiple of the stripe unit (%d)",
 			mp->m_swidth, mp->m_dalign);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mp->m_logbufs != -1 &&
@@ -1349,7 +1349,7 @@ xfs_fc_validate_params(
 	     mp->m_logbufs > XLOG_MAX_ICLOGS)) {
 		xfs_warn(mp, "invalid logbufs value: %d [not %d-%d]",
 			mp->m_logbufs, XLOG_MIN_ICLOGS, XLOG_MAX_ICLOGS);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mp->m_logbsize != -1 &&
@@ -1360,7 +1360,7 @@ xfs_fc_validate_params(
 		xfs_warn(mp,
 			"invalid logbufsize: %d [not 16k,32k,64k,128k or 256k]",
 			mp->m_logbsize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((mp->m_flags & XFS_MOUNT_ALLOCSIZE) &&
@@ -1368,7 +1368,7 @@ xfs_fc_validate_params(
 	     mp->m_allocsize_log < XFS_MIN_IO_LOG)) {
 		xfs_warn(mp, "invalid log iosize: %d [not %d-%d]",
 			mp->m_allocsize_log, XFS_MIN_IO_LOG, XFS_MAX_IO_LOG);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1459,7 +1459,7 @@ xfs_fc_fill_super(
 "MAX_LFS_FILESIZE block offset (%llu) exceeds extent map maximum (%llu)!",
 			 XFS_B_TO_FSBT(mp, MAX_LFS_FILESIZE),
 			 XFS_MAX_FILEOFF);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_free_sb;
 	}
 
@@ -1506,7 +1506,7 @@ xfs_fc_fill_super(
 		if (xfs_sb_version_hasreflink(&mp->m_sb)) {
 			xfs_alert(mp,
 		"DAX and reflink cannot be used together!");
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_filestream_unmount;
 		}
 	}
@@ -1525,7 +1525,7 @@ xfs_fc_fill_super(
 		if (mp->m_sb.sb_rblocks) {
 			xfs_alert(mp,
 	"reflink not compatible with realtime device!");
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_filestream_unmount;
 		}
 
@@ -1538,7 +1538,7 @@ xfs_fc_fill_super(
 	if (xfs_sb_version_hasrmapbt(&mp->m_sb) && mp->m_sb.sb_rblocks) {
 		xfs_alert(mp,
 	"reverse mapping btree not compatible with realtime device!");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_filestream_unmount;
 	}
 
@@ -1548,7 +1548,7 @@ xfs_fc_fill_super(
 
 	root = igrab(VFS_I(mp->m_rootip));
 	if (!root) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto out_unmount;
 	}
 	sb->s_root = d_make_root(root);
@@ -1599,7 +1599,7 @@ xfs_remount_rw(
 	if (mp->m_flags & XFS_MOUNT_NORECOVERY) {
 		xfs_warn(mp,
 			"ro->rw transition prohibited on norecovery mount");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (XFS_SB_VERSION_NUM(sbp) == XFS_SB_VERSION_5 &&
@@ -1608,7 +1608,7 @@ xfs_remount_rw(
 	"ro->rw transition prohibited on unknown (0x%x) ro-compat filesystem",
 			(sbp->sb_features_ro_compat &
 				XFS_SB_FEAT_RO_COMPAT_UNKNOWN));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mp->m_flags &= ~XFS_MOUNT_RDONLY;

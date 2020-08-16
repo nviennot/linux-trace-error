@@ -911,14 +911,14 @@ static inline struct l2cap_chan *l2cap_chan_no_new_connection(struct l2cap_chan 
 
 static inline int l2cap_chan_no_recv(struct l2cap_chan *chan, struct sk_buff *skb)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline struct sk_buff *l2cap_chan_no_alloc_skb(struct l2cap_chan *chan,
 						      unsigned long hdr_len,
 						      unsigned long len, int nb)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline void l2cap_chan_no_teardown(struct l2cap_chan *chan, int err)

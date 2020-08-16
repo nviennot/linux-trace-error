@@ -130,7 +130,7 @@ static struct Qdisc_ops *qdisc_base;
 int register_qdisc(struct Qdisc_ops *qops)
 {
 	struct Qdisc_ops *q, **qp;
-	int rc = -EEXIST;
+	int rc = -ERR(EEXIST);
 
 	write_lock(&qdisc_mod_lock);
 	for (qp = &qdisc_base; (q = *qp) != NULL; qp = &q->next)
@@ -166,7 +166,7 @@ out:
 	return rc;
 
 out_einval:
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	goto out;
 }
 EXPORT_SYMBOL(register_qdisc);
@@ -174,7 +174,7 @@ EXPORT_SYMBOL(register_qdisc);
 int unregister_qdisc(struct Qdisc_ops *qops)
 {
 	struct Qdisc_ops *q, **qp;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	write_lock(&qdisc_mod_lock);
 	for (qp = &qdisc_base; (q = *qp) != NULL; qp = &q->next)
@@ -219,7 +219,7 @@ int qdisc_set_default(const char *name)
 	const struct Qdisc_ops *ops;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	write_lock(&qdisc_mod_lock);
 	ops = qdisc_lookup_default(name);
@@ -239,7 +239,7 @@ int qdisc_set_default(const char *name)
 	}
 	write_unlock(&qdisc_mod_lock);
 
-	return ops ? 0 : -ENOENT;
+	return ops ? 0 : -ERR(ENOENT);
 }
 
 #ifdef CONFIG_NET_SCH_DEFAULT
@@ -483,7 +483,7 @@ static struct qdisc_size_table *qdisc_get_stab(struct nlattr *opt,
 		return ERR_PTR(err);
 	if (!tb[TCA_STAB_BASE]) {
 		NL_SET_ERR_MSG(extack, "Size table base attribute is missing");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	s = nla_data(tb[TCA_STAB_BASE]);
@@ -491,7 +491,7 @@ static struct qdisc_size_table *qdisc_get_stab(struct nlattr *opt,
 	if (s->tsize > 0) {
 		if (!tb[TCA_STAB_DATA]) {
 			NL_SET_ERR_MSG(extack, "Size table data attribute is missing");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		tab = nla_data(tb[TCA_STAB_DATA]);
 		tsize = nla_len(tb[TCA_STAB_DATA]) / sizeof(u16);
@@ -499,7 +499,7 @@ static struct qdisc_size_table *qdisc_get_stab(struct nlattr *opt,
 
 	if (tsize != s->tsize || (!tab && tsize > 0)) {
 		NL_SET_ERR_MSG(extack, "Invalid size of size table");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	list_for_each_entry(stab, &qdisc_stab_list, list) {
@@ -971,7 +971,7 @@ static int qdisc_notify(struct net *net, struct sk_buff *oskb,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (old && !tc_qdisc_dump_ignore(old, false)) {
 		if (tc_fill_qdisc(skb, old, clid, portid, n->nlmsg_seq,
@@ -990,7 +990,7 @@ static int qdisc_notify(struct net *net, struct sk_buff *oskb,
 
 err_out:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void notify_and_destroy(struct net *net, struct sk_buff *skb,
@@ -1045,7 +1045,7 @@ static int qdisc_graft(struct net_device *dev, struct Qdisc *parent,
 			ingress = 1;
 			if (!dev_ingress_queue(dev)) {
 				NL_SET_ERR_MSG(extack, "Device does not have an ingress queue");
-				return -ENOENT;
+				return -ERR(ENOENT);
 			}
 		}
 
@@ -1098,12 +1098,12 @@ skip:
 			qdisc_clear_nolock(new);
 
 		if (!cops || !cops->graft)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		cl = cops->find(parent, classid);
 		if (!cl) {
 			NL_SET_ERR_MSG(extack, "Specified class not found");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		err = cops->graft(parent, cl, new, &old, extack);
@@ -1124,11 +1124,11 @@ static int qdisc_block_indexes_set(struct Qdisc *sch, struct nlattr **tca,
 
 		if (!block_index) {
 			NL_SET_ERR_MSG(extack, "Ingress block index cannot be 0");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!sch->ops->ingress_block_set) {
 			NL_SET_ERR_MSG(extack, "Ingress block sharing is not supported");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		sch->ops->ingress_block_set(sch, block_index);
 	}
@@ -1137,11 +1137,11 @@ static int qdisc_block_indexes_set(struct Qdisc *sch, struct nlattr **tca,
 
 		if (!block_index) {
 			NL_SET_ERR_MSG(extack, "Egress block index cannot be 0");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!sch->ops->egress_block_set) {
 			NL_SET_ERR_MSG(extack, "Egress block sharing is not supported");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		sch->ops->egress_block_set(sch, block_index);
 	}
@@ -1188,14 +1188,14 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 				 * so don't keep a reference.
 				 */
 				module_put(ops->owner);
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				goto err_out;
 			}
 		}
 	}
 #endif
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!ops) {
 		NL_SET_ERR_MSG(extack, "Specified qdisc not found");
 		goto err_out;
@@ -1217,7 +1217,7 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 			handle = qdisc_alloc_handle(dev);
 			if (handle == 0) {
 				NL_SET_ERR_MSG(extack, "Maximum number of qdisc handles was exceeded");
-				err = -ENOSPC;
+				err = -ERR(ENOSPC);
 				goto err_out3;
 			}
 		}
@@ -1259,7 +1259,7 @@ static struct Qdisc *qdisc_create(struct net_device *dev,
 	if (tca[TCA_RATE]) {
 		seqcount_t *running;
 
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		if (sch->flags & TCQ_F_MQROOT) {
 			NL_SET_ERR_MSG(extack, "Cannot attach rate estimator to a multi-queue root qdisc");
 			goto err_out4;
@@ -1322,11 +1322,11 @@ static int qdisc_change(struct Qdisc *sch, struct nlattr **tca,
 	if (tca[TCA_OPTIONS]) {
 		if (!sch->ops->change) {
 			NL_SET_ERR_MSG(extack, "Change operation not supported by specified qdisc");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (tca[TCA_INGRESS_BLOCK] || tca[TCA_EGRESS_BLOCK]) {
 			NL_SET_ERR_MSG(extack, "Change of blocks is not supported");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		err = sch->ops->change(sch, tca[TCA_OPTIONS], extack);
 		if (err)
@@ -1380,7 +1380,7 @@ static int check_loop(struct Qdisc *q, struct Qdisc *p, int depth)
 	arg.depth = depth;
 	arg.p = p;
 	q->ops->cl_ops->walk(q, &arg.w);
-	return arg.w.stop ? -ELOOP : 0;
+	return arg.w.stop ? -ERR(ELOOP) : 0;
 }
 
 static int
@@ -1393,7 +1393,7 @@ check_loop_fn(struct Qdisc *q, unsigned long cl, struct qdisc_walker *w)
 	leaf = cops->leaf(q, cl);
 	if (leaf) {
 		if (leaf == arg->p || arg->depth > 7)
-			return -ELOOP;
+			return -ERR(ELOOP);
 		return check_loop(leaf, arg->p, arg->depth + 1);
 	}
 	return 0;
@@ -1428,7 +1428,7 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if ((n->nlmsg_type != RTM_GETQDISC) &&
 	    !netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = nlmsg_parse_deprecated(n, sizeof(*tcm), tca, TCA_MAX,
 				     rtm_tca_policy, extack);
@@ -1437,7 +1437,7 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n,
 
 	dev = __dev_get_by_index(net, tcm->tcm_ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	clid = tcm->tcm_parent;
 	if (clid) {
@@ -1446,7 +1446,7 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n,
 				p = qdisc_lookup(dev, TC_H_MAJ(clid));
 				if (!p) {
 					NL_SET_ERR_MSG(extack, "Failed to find qdisc with specified classid");
-					return -ENOENT;
+					return -ERR(ENOENT);
 				}
 				q = qdisc_leaf(p, clid);
 			} else if (dev_ingress_queue(dev)) {
@@ -1457,34 +1457,34 @@ static int tc_get_qdisc(struct sk_buff *skb, struct nlmsghdr *n,
 		}
 		if (!q) {
 			NL_SET_ERR_MSG(extack, "Cannot find specified qdisc on specified device");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 
 		if (tcm->tcm_handle && q->handle != tcm->tcm_handle) {
 			NL_SET_ERR_MSG(extack, "Invalid handle");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else {
 		q = qdisc_lookup(dev, tcm->tcm_handle);
 		if (!q) {
 			NL_SET_ERR_MSG(extack, "Failed to find qdisc with specified handle");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
 	if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], q->ops->id)) {
 		NL_SET_ERR_MSG(extack, "Invalid qdisc name");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (n->nlmsg_type == RTM_DELQDISC) {
 		if (!clid) {
 			NL_SET_ERR_MSG(extack, "Classid cannot be zero");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (q->handle == 0) {
 			NL_SET_ERR_MSG(extack, "Cannot delete qdisc with handle of zero");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		err = qdisc_graft(dev, p, skb, n, clid, NULL, q, extack);
 		if (err != 0)
@@ -1511,7 +1511,7 @@ static int tc_modify_qdisc(struct sk_buff *skb, struct nlmsghdr *n,
 	int err;
 
 	if (!netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 replay:
 	/* Reinit, just in case something touches this. */
@@ -1526,7 +1526,7 @@ replay:
 
 	dev = __dev_get_by_index(net, tcm->tcm_ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 
 	if (clid) {
@@ -1535,7 +1535,7 @@ replay:
 				p = qdisc_lookup(dev, TC_H_MAJ(clid));
 				if (!p) {
 					NL_SET_ERR_MSG(extack, "Failed to find specified qdisc");
-					return -ENOENT;
+					return -ERR(ENOENT);
 				}
 				q = qdisc_leaf(p, clid);
 			} else if (dev_ingress_queue_create(dev)) {
@@ -1553,28 +1553,28 @@ replay:
 			if (tcm->tcm_handle) {
 				if (q && !(n->nlmsg_flags & NLM_F_REPLACE)) {
 					NL_SET_ERR_MSG(extack, "NLM_F_REPLACE needed to override");
-					return -EEXIST;
+					return -ERR(EEXIST);
 				}
 				if (TC_H_MIN(tcm->tcm_handle)) {
 					NL_SET_ERR_MSG(extack, "Invalid minor handle");
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 				q = qdisc_lookup(dev, tcm->tcm_handle);
 				if (!q)
 					goto create_n_graft;
 				if (n->nlmsg_flags & NLM_F_EXCL) {
 					NL_SET_ERR_MSG(extack, "Exclusivity flag on, cannot override");
-					return -EEXIST;
+					return -ERR(EEXIST);
 				}
 				if (tca[TCA_KIND] &&
 				    nla_strcmp(tca[TCA_KIND], q->ops->id)) {
 					NL_SET_ERR_MSG(extack, "Invalid qdisc name");
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 				if (q == p ||
 				    (p && check_loop(q, p, 0))) {
 					NL_SET_ERR_MSG(extack, "Qdisc parent/child loop detected");
-					return -ELOOP;
+					return -ERR(ELOOP);
 				}
 				qdisc_refcount_inc(q);
 				goto graft;
@@ -1612,7 +1612,7 @@ replay:
 	} else {
 		if (!tcm->tcm_handle) {
 			NL_SET_ERR_MSG(extack, "Handle cannot be zero");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		q = qdisc_lookup(dev, tcm->tcm_handle);
 	}
@@ -1620,15 +1620,15 @@ replay:
 	/* Change qdisc parameters */
 	if (!q) {
 		NL_SET_ERR_MSG(extack, "Specified qdisc not found");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (n->nlmsg_flags & NLM_F_EXCL) {
 		NL_SET_ERR_MSG(extack, "Exclusivity flag on, cannot modify");
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	if (tca[TCA_KIND] && nla_strcmp(tca[TCA_KIND], q->ops->id)) {
 		NL_SET_ERR_MSG(extack, "Invalid qdisc name");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	err = qdisc_change(q, tca, extack);
 	if (err == 0)
@@ -1638,7 +1638,7 @@ replay:
 create_n_graft:
 	if (!(n->nlmsg_flags & NLM_F_CREATE)) {
 		NL_SET_ERR_MSG(extack, "Qdisc not found. To create specify NLM_F_CREATE flag");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (clid == TC_H_INGRESS) {
 		if (dev_ingress_queue(dev)) {
@@ -1647,7 +1647,7 @@ create_n_graft:
 					 tca, &err, extack);
 		} else {
 			NL_SET_ERR_MSG(extack, "Cannot find ingress queue for specified device");
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 		}
 	} else {
 		struct netdev_queue *dev_queue;
@@ -1848,11 +1848,11 @@ static int tclass_notify(struct net *net, struct sk_buff *oskb,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tc_fill_tclass(skb, q, cl, portid, n->nlmsg_seq, 0, event) < 0) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = rtnetlink_send(skb, net, portid, RTNLGRP_TC,
@@ -1872,16 +1872,16 @@ static int tclass_del_notify(struct net *net,
 	int err = 0;
 
 	if (!cops->delete)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tc_fill_tclass(skb, q, cl, portid, n->nlmsg_seq, 0,
 			   RTM_DELTCLASS) < 0) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = cops->delete(q, cl);
@@ -2000,7 +2000,7 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 
 	if ((n->nlmsg_type != RTM_GETTCLASS) &&
 	    !netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = nlmsg_parse_deprecated(n, sizeof(*tcm), tca, TCA_MAX,
 				     rtm_tca_policy, extack);
@@ -2009,7 +2009,7 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 
 	dev = __dev_get_by_index(net, tcm->tcm_ifindex);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	   parent == TC_H_UNSPEC - unspecified parent.
@@ -2036,7 +2036,7 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 		if (qid && qid1) {
 			/* If both majors are known, they must be identical. */
 			if (qid != qid1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} else if (qid1) {
 			qid = qid1;
 		} else if (qid == 0)
@@ -2057,12 +2057,12 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 	/* OK. Locate qdisc */
 	q = qdisc_lookup(dev, qid);
 	if (!q)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* An check that it supports classes */
 	cops = q->ops->cl_ops;
 	if (cops == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Now try to get class */
 	if (clid == 0) {
@@ -2075,14 +2075,14 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 		cl = cops->find(q, clid);
 
 	if (cl == 0) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		if (n->nlmsg_type != RTM_NEWTCLASS ||
 		    !(n->nlmsg_flags & NLM_F_CREATE))
 			goto out;
 	} else {
 		switch (n->nlmsg_type) {
 		case RTM_NEWTCLASS:
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (n->nlmsg_flags & NLM_F_EXCL)
 				goto out;
 			break;
@@ -2095,18 +2095,18 @@ static int tc_ctl_tclass(struct sk_buff *skb, struct nlmsghdr *n,
 			err = tclass_notify(net, skb, n, q, cl, RTM_NEWTCLASS);
 			goto out;
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	}
 
 	if (tca[TCA_INGRESS_BLOCK] || tca[TCA_EGRESS_BLOCK]) {
 		NL_SET_ERR_MSG(extack, "Shared blocks are not supported for classes");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	new_cl = cl;
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (cops->change)
 		err = cops->change(q, clid, portid, tca, &new_cl, extack);
 	if (err == 0) {

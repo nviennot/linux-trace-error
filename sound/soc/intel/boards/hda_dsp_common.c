@@ -49,7 +49,7 @@ int hda_dsp_hdmi_build_controls(struct snd_soc_card *card,
 	int err = 0, i = 0;
 
 	if (!comp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hda_pvt = snd_soc_component_get_drvdata(comp);
 	hcodec = &hda_pvt->codec;

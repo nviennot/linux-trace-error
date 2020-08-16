@@ -76,7 +76,7 @@ void sprd_mcdt_free_chan(struct sprd_mcdt_chan *chan)
 
 int sprd_mcdt_chan_write(struct sprd_mcdt_chan *chan, char *tx_buf, u32 size)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size)
@@ -87,7 +87,7 @@ int sprd_mcdt_chan_read(struct sprd_mcdt_chan *chan, char *rx_buf, u32 size)
 int sprd_mcdt_chan_int_enable(struct sprd_mcdt_chan *chan, u32 water_mark,
 			      struct sprd_mcdt_chan_callback *cb)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 void sprd_mcdt_chan_int_disable(struct sprd_mcdt_chan *chan)
@@ -96,7 +96,7 @@ void sprd_mcdt_chan_int_disable(struct sprd_mcdt_chan *chan)
 int sprd_mcdt_chan_dma_enable(struct sprd_mcdt_chan *chan,
 			      enum sprd_mcdt_dma_chan dma_chan, u32 water_mark)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 void sprd_mcdt_chan_dma_disable(struct sprd_mcdt_chan *chan)

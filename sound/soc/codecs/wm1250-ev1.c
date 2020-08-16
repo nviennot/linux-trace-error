@@ -104,7 +104,7 @@ static int wm1250_ev1_hw_params(struct snd_pcm_substream *substream,
 			       0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -210,7 +210,7 @@ static int wm1250_ev1_probe(struct i2c_client *i2c,
 
 	if (id != 1) {
 		dev_err(&i2c->dev, "Unknown board ID %d\n", id);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_info(&i2c->dev, "revision %d\n", rev + 1);

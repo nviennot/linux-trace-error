@@ -513,7 +513,7 @@ static struct mpls_route *mpls_rt_alloc(u8 num_nh, u8 max_alen, u8 max_labels)
 
 	size = sizeof(*rt) + num_nh * nh_size;
 	if (size > MAX_MPLS_ROUTE_MEM)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	rt = kzalloc(size, GFP_KERNEL);
 	if (!rt)
@@ -606,7 +606,7 @@ static struct net_device *inet_fib_lookup_dev(struct net *net,
 static struct net_device *inet_fib_lookup_dev(struct net *net,
 					      const void *addr)
 {
-	return ERR_PTR(-EAFNOSUPPORT);
+	return ERR_PTR(-ERR(EAFNOSUPPORT));
 }
 #endif
 
@@ -619,7 +619,7 @@ static struct net_device *inet6_fib_lookup_dev(struct net *net,
 	struct flowi6 fl6;
 
 	if (!ipv6_stub)
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 
 	memset(&fl6, 0, sizeof(fl6));
 	memcpy(&fl6.daddr, addr, sizeof(struct in6_addr));
@@ -637,7 +637,7 @@ static struct net_device *inet6_fib_lookup_dev(struct net *net,
 static struct net_device *inet6_fib_lookup_dev(struct net *net,
 					       const void *addr)
 {
-	return ERR_PTR(-EAFNOSUPPORT);
+	return ERR_PTR(-ERR(EAFNOSUPPORT));
 }
 #endif
 
@@ -663,7 +663,7 @@ static struct net_device *find_outdev(struct net *net,
 	}
 
 	if (!dev)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (IS_ERR(dev))
 		return dev;
@@ -678,7 +678,7 @@ static int mpls_nh_assign_dev(struct net *net, struct mpls_route *rt,
 			      struct mpls_nh *nh, int oif)
 {
 	struct net_device *dev = NULL;
-	int err = -ENODEV;
+	int err = -ERR(ENODEV);
 
 	dev = find_outdev(net, rt, nh, oif);
 	if (IS_ERR(dev)) {
@@ -688,7 +688,7 @@ static int mpls_nh_assign_dev(struct net *net, struct mpls_route *rt,
 	}
 
 	/* Ensure this is a supported device */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!mpls_dev_get(dev))
 		goto errout;
 
@@ -718,7 +718,7 @@ static int nla_get_via(const struct nlattr *nla, u8 *via_alen, u8 *via_table,
 		       u8 via_addr[], struct netlink_ext_ack *extack)
 {
 	struct rtvia *via = nla_data(nla);
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int alen;
 
 	if (nla_len(nla) < offsetof(struct rtvia, rtvia_addr)) {
@@ -895,7 +895,7 @@ static int mpls_nh_build_multi(struct mpls_route_config *cfg,
 		nla_via = NULL;
 		nla_newdst = NULL;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!rtnh_ok(rtnh, remaining))
 			goto errout;
 
@@ -963,7 +963,7 @@ static int mpls_route_add(struct mpls_route_config *cfg,
 	struct mpls_route __rcu **platform_label;
 	struct net *net = cfg->rc_nlinfo.nl_net;
 	struct mpls_route *rt, *old;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	u8 max_via_alen;
 	unsigned index;
 	u8 max_labels;
@@ -981,27 +981,27 @@ static int mpls_route_add(struct mpls_route_config *cfg,
 		goto errout;
 
 	/* Append makes no sense with mpls */
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (cfg->rc_nlflags & NLM_F_APPEND) {
 		NL_SET_ERR_MSG(extack, "MPLS does not support route append");
 		goto errout;
 	}
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	platform_label = rtnl_dereference(net->mpls.platform_label);
 	old = rtnl_dereference(platform_label[index]);
 	if ((cfg->rc_nlflags & NLM_F_EXCL) && old)
 		goto errout;
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (!(cfg->rc_nlflags & NLM_F_REPLACE) && old)
 		goto errout;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!(cfg->rc_nlflags & NLM_F_CREATE) && !old)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (cfg->rc_mp) {
 		nhs = mpls_count_nexthops(cfg->rc_mp, cfg->rc_mp_len,
 					  cfg->rc_via_alen, &max_via_alen,
@@ -1050,7 +1050,7 @@ static int mpls_route_del(struct mpls_route_config *cfg,
 {
 	struct net *net = cfg->rc_nlinfo.nl_net;
 	unsigned index;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	index = cfg->rc_label;
 
@@ -1103,13 +1103,13 @@ static int mpls_fill_stats_af(struct sk_buff *skb,
 
 	mdev = mpls_dev_get(dev);
 	if (!mdev)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	nla = nla_reserve_64bit(skb, MPLS_STATS_LINK,
 				sizeof(struct mpls_link_stats),
 				MPLS_STATS_UNSPEC);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	stats = nla_data(nla);
 	mpls_get_stats(mdev, stats);
@@ -1139,7 +1139,7 @@ static int mpls_netconf_fill_devconf(struct sk_buff *skb, struct mpls_dev *mdev,
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(struct netconfmsg),
 			flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (type == NETCONFA_ALL)
 		all = true;
@@ -1160,7 +1160,7 @@ static int mpls_netconf_fill_devconf(struct sk_buff *skb, struct mpls_dev *mdev,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int mpls_netconf_msgsize_devconf(int type)
@@ -1182,7 +1182,7 @@ static void mpls_netconf_notify_devconf(struct net *net, int event,
 					int type, struct mpls_dev *mdev)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(mpls_netconf_msgsize_devconf(type), GFP_KERNEL);
 	if (!skb)
@@ -1217,7 +1217,7 @@ static int mpls_netconf_valid_get_req(struct sk_buff *skb,
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(struct netconfmsg))) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid header for netconf get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -1240,7 +1240,7 @@ static int mpls_netconf_valid_get_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in netconf get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1263,7 +1263,7 @@ static int mpls_netconf_get_devconf(struct sk_buff *in_skb,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!tb[NETCONFA_IFINDEX])
 		goto errout;
 
@@ -1276,7 +1276,7 @@ static int mpls_netconf_get_devconf(struct sk_buff *in_skb,
 	if (!mdev)
 		goto errout;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	skb = nlmsg_new(mpls_netconf_msgsize_devconf(NETCONFA_ALL), GFP_KERNEL);
 	if (!skb)
 		goto errout;
@@ -1313,12 +1313,12 @@ static int mpls_netconf_dump_devconf(struct sk_buff *skb,
 
 		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid header for netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (nlmsg_attrlen(nlh, sizeof(*ncm))) {
 			NL_SET_ERR_MSG_MOD(extack, "Invalid data after header in netconf dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1427,7 +1427,7 @@ static int mpls_dev_sysctl_register(struct net_device *dev,
 free:
 	kfree(table);
 out:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static void mpls_dev_sysctl_unregister(struct net_device *dev,
@@ -1664,7 +1664,7 @@ static int nla_put_via(struct sk_buff *skb,
 
 	nla = nla_reserve(skb, RTA_VIA, alen + 2);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (table <= NEIGH_NR_TABLES)
 		family = table_to_family[table];
@@ -1684,7 +1684,7 @@ int nla_put_labels(struct sk_buff *skb, int attrtype,
 	int i;
 	nla = nla_reserve(skb, attrtype, labels*4);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nla_label = nla_data(nla);
 	bos = true;
@@ -1712,14 +1712,14 @@ int nla_get_labels(const struct nlattr *nla, u8 max_labels, u8 *labels,
 	if (len & 3 || len / 4 > 255) {
 		NL_SET_ERR_MSG_ATTR(extack, nla,
 				    "Invalid length for labels attribute");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Limit the number of new labels allowed */
 	nla_labels = len/4;
 	if (nla_labels > max_labels) {
 		NL_SET_ERR_MSG(extack, "Too many labels");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* when label == NULL, caller wants number of labels */
@@ -1738,13 +1738,13 @@ int nla_get_labels(const struct nlattr *nla, u8 max_labels, u8 *labels,
 		if (dec.ttl) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "TTL in label must be 0");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (dec.tc) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "Traffic class in label must be 0");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (dec.bos != bos) {
@@ -1756,7 +1756,7 @@ int nla_get_labels(const struct nlattr *nla, u8 max_labels, u8 *labels,
 				NL_SET_ERR_MSG(extack,
 					       "BOS bit can only be set in first label");
 			}
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (dec.label) {
@@ -1767,7 +1767,7 @@ int nla_get_labels(const struct nlattr *nla, u8 max_labels, u8 *labels,
 			 */
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "Implicit NULL Label (3) can not be used in encapsulation");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		label[i] = dec.label;
@@ -1793,7 +1793,7 @@ static int rtm_to_route_config(struct sk_buff *skb,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	rtm = nlmsg_data(nlh);
 
 	if (rtm->rtm_family != AF_MPLS) {
@@ -1969,7 +1969,7 @@ static int mpls_dump_route(struct sk_buff *skb, u32 portid, u32 seq, int event,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*rtm), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm = nlmsg_data(nlh);
 	rtm->rtm_family = AF_MPLS;
@@ -2067,7 +2067,7 @@ static int mpls_dump_route(struct sk_buff *skb, u32 portid, u32 seq, int event,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 #if IS_ENABLED(CONFIG_INET)
@@ -2089,7 +2089,7 @@ static int mpls_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid header for FIB dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rtm = nlmsg_data(nlh);
@@ -2097,7 +2097,7 @@ static int mpls_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 	    rtm->rtm_table   || rtm->rtm_scope    || rtm->rtm_type  ||
 	    rtm->rtm_flags) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for FIB dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rtm->rtm_protocol) {
@@ -2118,11 +2118,11 @@ static int mpls_valid_fib_dump_req(struct net *net, const struct nlmsghdr *nlh,
 			ifindex = nla_get_u32(tb[i]);
 			filter->dev = __dev_get_by_index(net, ifindex);
 			if (!filter->dev)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			filter->filter_set = 1;
 		} else if (tb[i]) {
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2254,7 +2254,7 @@ static void rtmsg_lfib(int event, u32 label, struct mpls_route *rt,
 {
 	struct sk_buff *skb;
 	u32 seq = nlh ? nlh->nlmsg_seq : 0;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(lfib_nlmsg_size(rt), GFP_KERNEL);
 	if (skb == NULL)
@@ -2286,7 +2286,7 @@ static int mpls_valid_getroute_req(struct sk_buff *skb,
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*rtm))) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid header for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!netlink_strict_get_check(skb))
@@ -2298,12 +2298,12 @@ static int mpls_valid_getroute_req(struct sk_buff *skb,
 	    rtm->rtm_src_len || rtm->rtm_tos || rtm->rtm_table ||
 	    rtm->rtm_protocol || rtm->rtm_scope || rtm->rtm_type) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid values in header for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (rtm->rtm_flags & ~RTM_F_FIB_MATCH) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Invalid flags for get route request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(*rtm), tb, RTA_MAX,
@@ -2313,7 +2313,7 @@ static int mpls_valid_getroute_req(struct sk_buff *skb,
 
 	if ((tb[RTA_DST] || tb[RTA_NEWDST]) && !rtm->rtm_dst_len) {
 		NL_SET_ERR_MSG_MOD(extack, "rtm_dst_len must be 20 for MPLS");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i <= RTA_MAX; i++) {
@@ -2326,7 +2326,7 @@ static int mpls_valid_getroute_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG_MOD(extack, "Unsupported attribute in get route request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2363,26 +2363,26 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 
 		if (nla_get_labels(tb[RTA_DST], 1, &label_count,
 				   &in_label, extack)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout;
 		}
 
 		if (!mpls_label_ok(net, &in_label, extack)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout;
 		}
 	}
 
 	rt = mpls_route_input_rcu(net, in_label);
 	if (!rt) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto errout;
 	}
 
 	if (rtm->rtm_flags & RTM_F_FIB_MATCH) {
 		skb = nlmsg_new(lfib_nlmsg_size(rt), GFP_KERNEL);
 		if (!skb) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto errout;
 		}
 
@@ -2400,7 +2400,7 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 	if (tb[RTA_NEWDST]) {
 		if (nla_get_labels(tb[RTA_NEWDST], MAX_NEW_LABELS, &n_labels,
 				   labels, extack) != 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto errout;
 		}
 
@@ -2409,7 +2409,7 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 
 	skb = alloc_skb(NLMSG_GOODSIZE, GFP_KERNEL);
 	if (!skb) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errout;
 	}
 
@@ -2420,7 +2420,7 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 		int i;
 
 		if (skb_cow(skb, hdr_size)) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto errout_free;
 		}
 
@@ -2440,7 +2440,7 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 
 	nh = mpls_select_multipath(rt, skb);
 	if (!nh) {
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		goto errout_free;
 	}
 
@@ -2452,7 +2452,7 @@ static int mpls_getroute(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
 	nlh = nlmsg_put(skb, portid, in_nlh->nlmsg_seq,
 			RTM_NEWROUTE, sizeof(*r), 0);
 	if (!nlh) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto errout_free;
 	}
 
@@ -2490,7 +2490,7 @@ errout:
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 errout_free:
 	kfree_skb(skb);
 	return err;

@@ -521,7 +521,7 @@ int ext4_wait_block_bitmap(struct super_block *sb, ext4_group_t block_group,
 			       block_group, (unsigned long long) bh->b_blocknr);
 		ext4_mark_group_bitmap_corrupted(sb, block_group,
 					EXT4_GROUP_INFO_BBITMAP_CORRUPT);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	clear_buffer_new(bh);
 	/* Panic or remount fs read-only if block bitmap is invalid */
@@ -609,7 +609,7 @@ int ext4_claim_free_clusters(struct ext4_sb_info *sbi,
 		percpu_counter_add(&sbi->s_dirtyclusters_counter, nclusters);
 		return 0;
 	} else
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 }
 
 /**

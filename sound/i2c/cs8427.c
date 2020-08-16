@@ -53,7 +53,7 @@ int snd_cs8427_reg_write(struct snd_i2c_device *device, unsigned char reg,
 	if ((err = snd_i2c_sendbytes(device, buf, 2)) != 2) {
 		snd_printk(KERN_ERR "unable to send bytes 0x%02x:0x%02x "
 			   "to CS8427 (%i)\n", buf[0], buf[1], err);
-		return err < 0 ? err : -EIO;
+		return err < 0 ? err : -ERR(EIO);
 	}
 	return 0;
 }
@@ -68,12 +68,12 @@ static int snd_cs8427_reg_read(struct snd_i2c_device *device, unsigned char reg)
 	if ((err = snd_i2c_sendbytes(device, &reg, 1)) != 1) {
 		snd_printk(KERN_ERR "unable to send register 0x%x byte "
 			   "to CS8427\n", reg);
-		return err < 0 ? err : -EIO;
+		return err < 0 ? err : -ERR(EIO);
 	}
 	if ((err = snd_i2c_readbytes(device, &buf, 1)) != 1) {
 		snd_printk(KERN_ERR "unable to read register 0x%x byte "
 			   "from CS8427\n", reg);
-		return err < 0 ? err : -EIO;
+		return err < 0 ? err : -ERR(EIO);
 	}
 	return buf;
 }
@@ -126,7 +126,7 @@ static int snd_cs8427_send_corudata(struct snd_i2c_device *device,
 	for (idx = 0; idx < count; idx++)
 		data[idx + 1] = bitrev8(ndata[idx]);
 	if (snd_i2c_sendbytes(device, data, count + 1) != count + 1)
-		return -EIO;
+		return -ERR(EIO);
 	return 1;
 }
 
@@ -210,7 +210,7 @@ int snd_cs8427_init(struct snd_i2c_bus *bus,
 	/* send initial values */
 	memcpy(chip->regmap + (initvals1[0] & 0x7f), initvals1 + 1, 6);
 	if ((err = snd_i2c_sendbytes(device, initvals1, 7)) != 7) {
-		err = err < 0 ? err : -EIO;
+		err = err < 0 ? err : -ERR(EIO);
 		goto __fail;
 	}
 	/* Turn off CS8427 interrupt stuff that is not used in hardware */
@@ -222,7 +222,7 @@ int snd_cs8427_init(struct snd_i2c_bus *bus,
 	/* send transfer initialization sequence */
 	memcpy(chip->regmap + (initvals2[0] & 0x7f), initvals2 + 1, 3);
 	if ((err = snd_i2c_sendbytes(device, initvals2, 4)) != 4) {
-		err = err < 0 ? err : -EIO;
+		err = err < 0 ? err : -ERR(EIO);
 		goto __fail;
 	}
 	/* write default channel status bytes */
@@ -292,7 +292,7 @@ int snd_cs8427_create(struct snd_i2c_bus *bus,
 
       __fail:
       	snd_i2c_device_free(device);
-      	return err < 0 ? err : -EIO;
+      	return err < 0 ? err : -ERR(EIO);
 }
 
 EXPORT_SYMBOL(snd_cs8427_create);
@@ -387,14 +387,14 @@ static int snd_cs8427_qsubcode_get(struct snd_kcontrol *kcontrol,
 		snd_printk(KERN_ERR "unable to send register 0x%x byte "
 			   "to CS8427\n", reg);
 		snd_i2c_unlock(device->bus);
-		return err < 0 ? err : -EIO;
+		return err < 0 ? err : -ERR(EIO);
 	}
 	err = snd_i2c_readbytes(device, ucontrol->value.bytes.data, 10);
 	if (err != 10) {
 		snd_printk(KERN_ERR "unable to read Q-subcode bytes "
 			   "from CS8427\n");
 		snd_i2c_unlock(device->bus);
-		return err < 0 ? err : -EIO;
+		return err < 0 ? err : -ERR(EIO);
 	}
 	snd_i2c_unlock(device->bus);
 	return 0;
@@ -522,7 +522,7 @@ int snd_cs8427_iec958_build(struct snd_i2c_device *cs8427,
 	int err;
 
 	if (snd_BUG_ON(!play_substream || !cap_substream))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (idx = 0; idx < ARRAY_SIZE(snd_cs8427_iec958_controls); idx++) {
 		kctl = snd_ctl_new1(&snd_cs8427_iec958_controls[idx], cs8427);
 		if (kctl == NULL)
@@ -540,7 +540,7 @@ int snd_cs8427_iec958_build(struct snd_i2c_device *cs8427,
 	chip->playback.substream = play_substream;
 	chip->capture.substream = cap_substream;
 	if (snd_BUG_ON(!chip->playback.pcm_ctl))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -551,7 +551,7 @@ int snd_cs8427_iec958_active(struct snd_i2c_device *cs8427, int active)
 	struct cs8427 *chip;
 
 	if (snd_BUG_ON(!cs8427))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	chip = cs8427->private_data;
 	if (active)
 		memcpy(chip->playback.pcm_status,
@@ -572,7 +572,7 @@ int snd_cs8427_iec958_pcm(struct snd_i2c_device *cs8427, unsigned int rate)
 	int err, reset;
 
 	if (snd_BUG_ON(!cs8427))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	chip = cs8427->private_data;
 	status = chip->playback.pcm_status;
 	snd_i2c_lock(cs8427->bus);

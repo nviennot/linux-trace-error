@@ -289,7 +289,7 @@ static inline int ptp_find_pin(struct ptp_clock *ptp,
 { return -1; }
 static inline int ptp_schedule_worker(struct ptp_clock *ptp,
 				      unsigned long delay)
-{ return -EOPNOTSUPP; }
+{ return -ERR(EOPNOTSUPP); }
 static inline void ptp_cancel_worker_sync(struct ptp_clock *ptp)
 { }
 

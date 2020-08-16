@@ -48,17 +48,17 @@ static int pcxhr_init_board(struct pcxhr_mgr *mgr)
 		return err;
 	/* test 4, 8 or 12 phys out */
 	if ((rmh.stat[0] & MASK_FIRST_FIELD) < mgr->playback_chips * 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* test 4, 8 or 2 phys in */
 	if (((rmh.stat[0] >> (2 * FIELD_SIZE)) & MASK_FIRST_FIELD) <
 	    mgr->capture_chips * 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* test max nb substream per board */
 	if ((rmh.stat[1] & 0x5F) < card_streams)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* test max nb substream per pipe */
 	if (((rmh.stat[1] >> 7) & 0x5F) < PCXHR_PLAYBACK_STREAMS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dev_dbg(&mgr->pci->dev,
 		"supported formats : playback=%x capture=%x\n",
 		    rmh.stat[2], rmh.stat[3]);
@@ -376,7 +376,7 @@ int pcxhr_setup_firmware(struct pcxhr_mgr *mgr)
 			dev_err(&mgr->pci->dev,
 				"pcxhr: can't load firmware %s\n",
 				   path);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		/* fake hwdep dsp record */
 		err = pcxhr_dsp_load(mgr, i, fw_entry);

@@ -222,7 +222,7 @@ int hda_dsp_pcm_open(struct snd_sof_dev *sdev,
 
 	if (!dsp_stream) {
 		dev_err(sdev->dev, "error: no stream available\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* binding pcm substream to hda stream */
@@ -241,7 +241,7 @@ int hda_dsp_pcm_close(struct snd_sof_dev *sdev,
 
 	if (ret) {
 		dev_dbg(sdev->dev, "stream %s not opened!\n", substream->name);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* unbinding pcm substream to hda stream */

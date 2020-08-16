@@ -37,11 +37,11 @@ int fsl_asoc_get_dma_channel(struct device_node *ssi_np,
 
 	dma_channel_np = of_parse_phandle(ssi_np, name, 0);
 	if (!dma_channel_np)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!of_device_is_compatible(dma_channel_np, "fsl,ssi-dma-channel")) {
 		of_node_put(dma_channel_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Determine the dev_name for the device_node.  This code mimics the
@@ -63,7 +63,7 @@ int fsl_asoc_get_dma_channel(struct device_node *ssi_np,
 	iprop = of_get_property(dma_channel_np, "cell-index", NULL);
 	if (!iprop) {
 		of_node_put(dma_channel_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*dma_channel_id = be32_to_cpup(iprop);
 
@@ -72,7 +72,7 @@ int fsl_asoc_get_dma_channel(struct device_node *ssi_np,
 	if (!iprop) {
 		of_node_put(dma_np);
 		of_node_put(dma_channel_np);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*dma_id = be32_to_cpup(iprop);
 

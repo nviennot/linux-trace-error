@@ -620,7 +620,7 @@ static int set_dmic_params(struct snd_soc_dapm_widget *w,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1342,7 +1342,7 @@ static int get_coeff(int mclk, int rate, int timesofbclk)
 			(coeff_div[i].bclk / coeff_div[i].rate) == timesofbclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rt5631_hifi_pcm_params(struct snd_pcm_substream *substream,
@@ -1386,7 +1386,7 @@ static int rt5631_hifi_pcm_params(struct snd_pcm_substream *substream,
 		iface |= RT5631_SDP_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5631_SDP_CTRL,
@@ -1415,7 +1415,7 @@ static int rt5631_hifi_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		rt5631->master = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1431,7 +1431,7 @@ static int rt5631_hifi_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface  |= RT5631_SDP_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1441,7 +1441,7 @@ static int rt5631_hifi_codec_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= RT5631_SDP_I2S_BCLK_POL_CTRL;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, RT5631_SDP_CTRL, iface);
@@ -1462,7 +1462,7 @@ static int rt5631_hifi_codec_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rt5631_codec_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
@@ -1470,7 +1470,7 @@ static int rt5631_codec_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 {
 	struct snd_soc_component *component = codec_dai->component;
 	struct rt5631_priv *rt5631 = snd_soc_component_get_drvdata(component);
-	int i, ret = -EINVAL;
+	int i, ret = -ERR(EINVAL);
 
 	dev_dbg(component->dev, "enter %s\n", __func__);
 

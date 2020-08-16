@@ -164,7 +164,7 @@ static int vxfs_try_sb_magic(struct super_block *sbp, int silent,
 			break;
 		}
 
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		rsbp = (struct vxfs_sb *)bp->b_data;
 		if (rsbp->vs_magic != magic) {
 			if (!silent)
@@ -210,7 +210,7 @@ static int vxfs_fill_super(struct super_block *sbp, void *dp, int silent)
 	struct vxfs_sb		*rsbp;
 	u_long			bsize;
 	struct inode *root;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	u32 j;
 
 	sbp->s_flags |= SB_RDONLY;

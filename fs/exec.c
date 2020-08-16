@@ -141,17 +141,17 @@ SYSCALL_DEFINE1(uselib, const char __user *, library)
 	if (IS_ERR(file))
 		goto out;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!S_ISREG(file_inode(file)->i_mode))
 		goto exit;
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	if (path_noexec(&file->f_path))
 		goto exit;
 
 	fsnotify_open(file);
 
-	error = -ENOEXEC;
+	error = -ERR(ENOEXEC);
 
 	read_lock(&binfmt_lock);
 	list_for_each_entry(fmt, &formats, lh) {
@@ -253,7 +253,7 @@ static int __bprm_mm_init(struct linux_binprm *bprm)
 	vma_set_anonymous(vma);
 
 	if (mmap_write_lock_killable(mm)) {
-		err = -EINTR;
+		err = -ERR(EINTR);
 		goto err_free;
 	}
 
@@ -437,11 +437,11 @@ static int count(struct user_arg_ptr argv, int max)
 				return -EFAULT;
 
 			if (i >= max)
-				return -E2BIG;
+				return -ERR(E2BIG);
 			++i;
 
 			if (fatal_signal_pending(current))
-				return -ERESTARTNOHAND;
+				return -ERR(ERESTARTNOHAND);
 			cond_resched();
 		}
 	}
@@ -485,7 +485,7 @@ static int prepare_arg_pages(struct linux_binprm *bprm,
 	 */
 	ptr_size = (bprm->argc + bprm->envc) * sizeof(void *);
 	if (limit <= ptr_size)
-		return -E2BIG;
+		return -ERR(E2BIG);
 	limit -= ptr_size;
 
 	bprm->argmin = bprm->p - limit;
@@ -519,7 +519,7 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 		if (!len)
 			goto out;
 
-		ret = -E2BIG;
+		ret = -ERR(E2BIG);
 		if (!valid_arg_len(bprm, len))
 			goto out;
 
@@ -536,7 +536,7 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 			int offset, bytes_to_copy;
 
 			if (fatal_signal_pending(current)) {
-				ret = -ERESTARTNOHAND;
+				ret = -ERR(ERESTARTNOHAND);
 				goto out;
 			}
 			cond_resched();
@@ -559,7 +559,7 @@ static int copy_strings(int argc, struct user_arg_ptr argv,
 
 				page = get_arg_page(bprm, pos, 1);
 				if (!page) {
-					ret = -E2BIG;
+					ret = -ERR(E2BIG);
 					goto out;
 				}
 
@@ -600,13 +600,13 @@ int copy_string_kernel(const char *arg, struct linux_binprm *bprm)
 	if (len == 0)
 		return -EFAULT;
 	if (!valid_arg_len(bprm, len))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	/* We're going to work our way backwards. */
 	arg += len;
 	bprm->p -= len;
 	if (IS_ENABLED(CONFIG_MMU) && bprm->p < bprm->argmin)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	while (len > 0) {
 		unsigned int bytes_to_copy = min_t(unsigned int, len,
@@ -620,7 +620,7 @@ int copy_string_kernel(const char *arg, struct linux_binprm *bprm)
 
 		page = get_arg_page(bprm, pos, 1);
 		if (!page)
-			return -E2BIG;
+			return -ERR(E2BIG);
 		kaddr = kmap_atomic(page);
 		flush_arg_page(bprm, pos & PAGE_MASK, page);
 		memcpy(kaddr + offset_in_page(pos), arg, bytes_to_copy);
@@ -764,7 +764,7 @@ int setup_arg_pages(struct linux_binprm *bprm,
 	bprm->exec -= stack_shift;
 
 	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	vm_flags = VM_STACK_FLAGS;
 
@@ -877,7 +877,7 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
 	};
 
 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (flags & AT_SYMLINK_NOFOLLOW)
 		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
 	if (flags & AT_EMPTY_PATH)
@@ -887,7 +887,7 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
 	if (IS_ERR(file))
 		goto out;
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (!S_ISREG(file_inode(file)->i_mode))
 		goto exit;
 
@@ -930,7 +930,7 @@ int kernel_read_file(struct file *file, void **buf, loff_t *size,
 	int ret;
 
 	if (!S_ISREG(file_inode(file)->i_mode) || max_size < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = deny_write_access(file);
 	if (ret)
@@ -942,11 +942,11 @@ int kernel_read_file(struct file *file, void **buf, loff_t *size,
 
 	i_size = i_size_read(file_inode(file));
 	if (i_size <= 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (i_size > SIZE_MAX || (max_size > 0 && i_size > max_size)) {
-		ret = -EFBIG;
+		ret = -ERR(EFBIG);
 		goto out;
 	}
 
@@ -970,7 +970,7 @@ int kernel_read_file(struct file *file, void **buf, loff_t *size,
 	}
 
 	if (pos != i_size) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_free;
 	}
 
@@ -999,7 +999,7 @@ int kernel_read_file_from_path(const char *path, void **buf, loff_t *size,
 	int ret;
 
 	if (!path || !*path)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	file = filp_open(path, O_RDONLY, 0);
 	if (IS_ERR(file))
@@ -1020,7 +1020,7 @@ int kernel_read_file_from_path_initns(const char *path, void **buf,
 	int ret;
 
 	if (!path || !*path)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	task_lock(&init_task);
 	get_fs_root(init_task.fs, &root);
@@ -1041,7 +1041,7 @@ int kernel_read_file_from_fd(int fd, void **buf, loff_t *size, loff_t max_size,
 			     enum kernel_read_file_id id)
 {
 	struct fd f = fdget(fd);
-	int ret = -EBADF;
+	int ret = -ERR(EBADF);
 
 	if (!f.file)
 		goto out;
@@ -1098,7 +1098,7 @@ static int exec_mmap(struct mm_struct *mm)
 		if (unlikely(old_mm->core_state)) {
 			mmap_read_unlock(old_mm);
 			mutex_unlock(&tsk->signal->exec_update_mutex);
-			return -EINTR;
+			return -ERR(EINTR);
 		}
 	}
 
@@ -1142,7 +1142,7 @@ static int de_thread(struct task_struct *tsk)
 		 * return so that the signal is processed.
 		 */
 		spin_unlock_irq(lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	sig->group_exit_task = tsk;
@@ -1256,7 +1256,7 @@ killed:
 	sig->group_exit_task = NULL;
 	sig->notify_count = 0;
 	read_unlock(&tasklist_lock);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 
@@ -1531,7 +1531,7 @@ EXPORT_SYMBOL(finalize_exec);
 static int prepare_bprm_creds(struct linux_binprm *bprm)
 {
 	if (mutex_lock_interruptible(&current->signal->cred_guard_mutex))
-		return -ERESTARTNOINTR;
+		return -ERR(ERESTARTNOINTR);
 
 	bprm->cred = prepare_exec_creds();
 	if (likely(bprm->cred))
@@ -1738,7 +1738,7 @@ static int search_binary_handler(struct linux_binprm *bprm)
 	if (retval)
 		return retval;
 
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
  retry:
 	read_lock(&binfmt_lock);
 	list_for_each_entry(fmt, &formats, lh) {
@@ -1785,7 +1785,7 @@ static int exec_binprm(struct linux_binprm *bprm)
 	for (depth = 0;; depth++) {
 		struct file *exec;
 		if (depth > 5)
-			return -ELOOP;
+			return -ERR(ELOOP);
 
 		ret = search_binary_handler(bprm);
 		if (ret < 0)
@@ -1801,7 +1801,7 @@ static int exec_binprm(struct linux_binprm *bprm)
 		if (unlikely(bprm->have_execfd)) {
 			if (bprm->executable) {
 				fput(exec);
-				return -ENOEXEC;
+				return -ERR(ENOEXEC);
 			}
 			bprm->executable = exec;
 		} else
@@ -1839,7 +1839,7 @@ static int __do_execve_file(int fd, struct filename *filename,
 	 */
 	if ((current->flags & PF_NPROC_EXCEEDED) &&
 	    atomic_read(&current_user()->processes) > rlimit(RLIMIT_NPROC)) {
-		retval = -EAGAIN;
+		retval = -ERR(EAGAIN);
 		goto out_ret;
 	}
 

@@ -256,9 +256,9 @@ static int snd_mpu401_uart_cmd(struct snd_mpu401 * mpu, unsigned char cmd,
 static int snd_mpu401_do_reset(struct snd_mpu401 *mpu)
 {
 	if (snd_mpu401_uart_cmd(mpu, MPU401_RESET, 1))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_mpu401_uart_cmd(mpu, MPU401_ENTER_UART, 0))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -284,7 +284,7 @@ static int snd_mpu401_uart_input_open(struct snd_rawmidi_substream *substream)
 error_out:
 	if (mpu->open_input && mpu->close_input)
 		mpu->close_input(mpu);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_mpu401_uart_output_open(struct snd_rawmidi_substream *substream)
@@ -306,7 +306,7 @@ static int snd_mpu401_uart_output_open(struct snd_rawmidi_substream *substream)
 error_out:
 	if (mpu->open_output && mpu->close_output)
 		mpu->close_output(mpu);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_mpu401_uart_input_close(struct snd_rawmidi_substream *substream)
@@ -322,7 +322,7 @@ static int snd_mpu401_uart_input_close(struct snd_rawmidi_substream *substream)
 	if (mpu->close_input)
 		mpu->close_input(mpu);
 	if (err)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -339,7 +339,7 @@ static int snd_mpu401_uart_output_close(struct snd_rawmidi_substream *substream)
 	if (mpu->close_output)
 		mpu->close_output(mpu);
 	if (err)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -546,7 +546,7 @@ int snd_mpu401_uart_new(struct snd_card *card, int device,
 			snd_printk(KERN_ERR "mpu401_uart: "
 				   "unable to grab port 0x%lx size %d\n",
 				   port, res_size);
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto free_device;
 		}
 	}
@@ -567,7 +567,7 @@ int snd_mpu401_uart_new(struct snd_card *card, int device,
 				"MPU401 UART", (void *) mpu)) {
 			snd_printk(KERN_ERR "mpu401_uart: "
 				   "unable to grab IRQ %d\n", irq);
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto free_device;
 		}
 	}

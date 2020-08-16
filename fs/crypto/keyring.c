@@ -146,7 +146,7 @@ static struct key *search_fscrypt_keyring(struct key *keyring,
 	if (IS_ERR(keyref)) {
 		if (PTR_ERR(keyref) == -EAGAIN || /* not found */
 		    PTR_ERR(keyref) == -EKEYREVOKED) /* recently invalidated */
-			keyref = ERR_PTR(-ENOKEY);
+			keyref = ERR_PTR(-ERR(ENOKEY));
 		return ERR_CAST(keyref);
 	}
 	return key_ref_to_ptr(keyref);
@@ -237,7 +237,7 @@ struct key *fscrypt_find_master_key(struct super_block *sb,
 	/* pairs with smp_store_release() in allocate_filesystem_keyring() */
 	keyring = READ_ONCE(sb->s_master_keys);
 	if (keyring == NULL)
-		return ERR_PTR(-ENOKEY); /* No keyring yet, so no keys yet. */
+		return ERR_PTR(-ERR(ENOKEY)); /* No keyring yet, so no keys yet. */
 
 	format_mk_description(description, mk_spec);
 	return search_fscrypt_keyring(keyring, &key_type_fscrypt, description);
@@ -502,14 +502,14 @@ static int fscrypt_provisioning_key_preparse(struct key_preparsed_payload *prep)
 
 	if (prep->datalen < sizeof(*payload) + FSCRYPT_MIN_KEY_SIZE ||
 	    prep->datalen > sizeof(*payload) + FSCRYPT_MAX_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (payload->type != FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    payload->type != FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (payload->__reserved)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	prep->payload.data[0] = kmemdup(payload, prep->datalen, GFP_KERNEL);
 	if (!prep->payload.data[0])
@@ -593,7 +593,7 @@ static int get_keyring_key(u32 key_id, u32 type,
 	goto out_put;
 
 bad_key:
-	err = -EKEYREJECTED;
+	err = -ERR(EKEYREJECTED);
 out_put:
 	key_ref_put(ref);
 	return err;
@@ -635,10 +635,10 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
 		return -EFAULT;
 
 	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Only root can add keys that are identified by an arbitrary descriptor
@@ -647,19 +647,19 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
 	 */
 	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	memset(&secret, 0, sizeof(secret));
 	if (arg.key_id) {
 		if (arg.raw_size != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = get_keyring_key(arg.key_id, arg.key_spec.type, &secret);
 		if (err)
 			goto out_wipe_secret;
 	} else {
 		if (arg.raw_size < FSCRYPT_MIN_KEY_SIZE ||
 		    arg.raw_size > FSCRYPT_MAX_KEY_SIZE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		secret.size = arg.raw_size;
 		err = -EFAULT;
 		if (copy_from_user(secret.raw, uarg->raw, secret.size))
@@ -834,7 +834,7 @@ static int check_for_busy_inodes(struct super_block *sb,
 		     sb->s_id, busy_count, master_key_spec_type(&mk->mk_spec),
 		     master_key_spec_len(&mk->mk_spec), (u8 *)&mk->mk_spec.u,
 		     ino);
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int try_to_lock_encrypted_files(struct super_block *sb,
@@ -913,10 +913,10 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
 		return -EFAULT;
 
 	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Only root can add and remove keys that are identified by an arbitrary
@@ -924,7 +924,7 @@ static int do_remove_key(struct file *filp, void __user *_uarg, bool all_users)
 	 */
 	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR &&
 	    !capable(CAP_SYS_ADMIN))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* Find the key being removed. */
 	key = fscrypt_find_master_key(sb, &arg.key_spec);
@@ -1005,7 +1005,7 @@ EXPORT_SYMBOL_GPL(fscrypt_ioctl_remove_key);
 int fscrypt_ioctl_remove_key_all_users(struct file *filp, void __user *uarg)
 {
 	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+		return -ERR(EACCES);
 	return do_remove_key(filp, uarg, true);
 }
 EXPORT_SYMBOL_GPL(fscrypt_ioctl_remove_key_all_users);
@@ -1045,10 +1045,10 @@ int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
 		return -EFAULT;
 
 	if (!valid_key_spec(&arg.key_spec))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	arg.status_flags = 0;
 	arg.user_count = 0;

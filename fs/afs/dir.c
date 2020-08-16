@@ -199,7 +199,7 @@ static int afs_dir_open(struct inode *inode, struct file *file)
 	BUILD_BUG_ON(sizeof(union afs_xdr_dirent) != 32);
 
 	if (test_bit(AFS_VNODE_DELETED, &AFS_FS_I(inode)->flags))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return afs_open(inode, file);
 }
@@ -223,7 +223,7 @@ retry:
 		return ERR_PTR(afs_bad(dvnode, afs_file_error_dir_small));
 	if (i_size > 2048 * 1024) {
 		trace_afs_file_error(dvnode, -EFBIG, afs_file_error_dir_big);
-		return ERR_PTR(-EFBIG);
+		return ERR_PTR(-ERR(EFBIG));
 	}
 
 	_enter("%llu", i_size);
@@ -293,7 +293,7 @@ retry:
 	/* If we're going to reload, we need to lock all the pages to prevent
 	 * races.
 	 */
-	ret = -ERESTARTSYS;
+	ret = -ERR(ERESTARTSYS);
 	if (down_read_killable(&dvnode->validate_lock) < 0)
 		goto error;
 
@@ -316,7 +316,7 @@ retry:
 			goto content_has_grown;
 
 		/* Validate the data we just read. */
-		ret = -EIO;
+		ret = -ERR(EIO);
 		if (!afs_dir_check_pages(dvnode, req))
 			goto error_unlock;
 
@@ -452,7 +452,7 @@ static int afs_dir_iterate(struct inode *dir, struct dir_context *ctx,
 
 	if (test_bit(AFS_VNODE_DELETED, &AFS_FS_I(dir)->flags)) {
 		_leave(" = -ESTALE");
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 
 	req = afs_read_dir(dvnode, key);
@@ -577,10 +577,10 @@ static int afs_do_lookup_one(struct inode *dir, struct dentry *dentry,
 		return ret;
 	}
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (!cookie.found) {
 		_leave(" = -ENOENT [not found]");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	*fid = cookie.fid;
@@ -774,7 +774,7 @@ static struct inode *afs_do_lookup(struct inode *dir, struct dentry *dentry,
 
 	dentry->d_fsdata = (void *)(unsigned long)data_version;
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (!cookie->found)
 		goto out;
 
@@ -832,7 +832,7 @@ static struct inode *afs_do_lookup(struct inode *dir, struct dentry *dentry,
 	 * lookups contained therein are stored in the reply without aborting
 	 * the whole operation.
 	 */
-	op->error = -ENOTSUPP;
+	op->error = -ERR(ENOTSUPP);
 	if (!cookie->one_only) {
 		op->ops = &afs_inline_bulk_status_operation;
 		afs_begin_vnode_operation(op);
@@ -901,7 +901,7 @@ static struct dentry *afs_lookup_atsys(struct inode *dir, struct dentry *dentry,
 		name = subs->subs[i];
 		len = dentry->d_name.len - 4 + strlen(name);
 		if (len >= AFSNAMEMAX) {
-			ret = ERR_PTR(-ENAMETOOLONG);
+			ret = ERR_PTR(-ERR(ENAMETOOLONG));
 			goto out_s;
 		}
 
@@ -944,12 +944,12 @@ static struct dentry *afs_lookup(struct inode *dir, struct dentry *dentry,
 
 	if (dentry->d_name.len >= AFSNAMEMAX) {
 		_leave(" = -ENAMETOOLONG");
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	}
 
 	if (test_bit(AFS_VNODE_DELETED, &dvnode->flags)) {
 		_leave(" = -ESTALE");
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	key = afs_request_key(dvnode->volume->cell);
@@ -1009,13 +1009,13 @@ static int afs_d_revalidate_rcu(struct dentry *dentry)
 	parent = READ_ONCE(dentry->d_parent);
 	dir = d_inode_rcu(parent);
 	if (!dir)
-		return -ECHILD;
+		return -ERR(ECHILD);
 	dvnode = AFS_FS_I(dir);
 	if (test_bit(AFS_VNODE_DELETED, &dvnode->flags))
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (!afs_check_validity(dvnode))
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	/* We only need to invalidate a dentry if the server's copy changed
 	 * behind our back.  If we made the change, it's no problem.  Note that
@@ -1027,7 +1027,7 @@ static int afs_d_revalidate_rcu(struct dentry *dentry)
 	if (de_version != dir_version) {
 		dir_version = (long)READ_ONCE(dvnode->invalid_before);
 		if (de_version - dir_version < 0)
-			return -ECHILD;
+			return -ERR(ECHILD);
 	}
 
 	/* Check to see if the vnode referred to by the dentry still
@@ -1038,7 +1038,7 @@ static int afs_d_revalidate_rcu(struct dentry *dentry)
 		if (inode) {
 			vnode = AFS_FS_I(inode);
 			if (!afs_check_validity(vnode))
-				return -ECHILD;
+				return -ERR(ECHILD);
 		}
 	}
 
@@ -1547,7 +1547,7 @@ static int afs_unlink(struct inode *dir, struct dentry *dentry)
 	       dvnode->fid.vid, dvnode->fid.vnode, dentry);
 
 	if (dentry->d_name.len >= AFSNAMEMAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	op = afs_alloc_operation(NULL, dvnode->volume);
 	if (IS_ERR(op))
@@ -1621,7 +1621,7 @@ static int afs_create(struct inode *dir, struct dentry *dentry, umode_t mode,
 {
 	struct afs_operation *op;
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
-	int ret = -ENAMETOOLONG;
+	int ret = -ERR(ENAMETOOLONG);
 
 	_enter("{%llx:%llu},{%pd},%ho",
 	       dvnode->fid.vid, dvnode->fid.vnode, dentry, mode);
@@ -1692,7 +1692,7 @@ static int afs_link(struct dentry *from, struct inode *dir,
 	struct afs_operation *op;
 	struct afs_vnode *dvnode = AFS_FS_I(dir);
 	struct afs_vnode *vnode = AFS_FS_I(d_inode(from));
-	int ret = -ENAMETOOLONG;
+	int ret = -ERR(ENAMETOOLONG);
 
 	_enter("{%llx:%llu},{%llx:%llu},{%pd}",
 	       vnode->fid.vid, vnode->fid.vnode,
@@ -1749,11 +1749,11 @@ static int afs_symlink(struct inode *dir, struct dentry *dentry,
 	       dvnode->fid.vid, dvnode->fid.vnode, dentry,
 	       content);
 
-	ret = -ENAMETOOLONG;
+	ret = -ERR(ENAMETOOLONG);
 	if (dentry->d_name.len >= AFSNAMEMAX)
 		goto error;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (strlen(content) >= AFSPATHMAX)
 		goto error;
 
@@ -1882,11 +1882,11 @@ static int afs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int ret;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Don't allow silly-rename files be moved around. */
 	if (old_dentry->d_flags & DCACHE_NFSFS_RENAMED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vnode = AFS_FS_I(d_inode(old_dentry));
 	orig_dvnode = AFS_FS_I(old_dir);

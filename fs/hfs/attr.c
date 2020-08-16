@@ -28,7 +28,7 @@ static int __hfs_setxattr(struct inode *inode, enum hfs_xattr_type type,
 	int res;
 
 	if (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	res = hfs_find_init(HFS_SB(inode->i_sb)->cat_tree, &fd);
 	if (res)
@@ -46,14 +46,14 @@ static int __hfs_setxattr(struct inode *inode, enum hfs_xattr_type type,
 		if (size == 4)
 			memcpy(&file->UsrWds.fdType, value, 4);
 		else
-			res = -ERANGE;
+			res = -ERR(ERANGE);
 		break;
 
 	case HFS_CREATOR:
 		if (size == 4)
 			memcpy(&file->UsrWds.fdCreator, value, 4);
 		else
-			res = -ERANGE;
+			res = -ERR(ERANGE);
 		break;
 	}
 
@@ -74,7 +74,7 @@ static ssize_t __hfs_getxattr(struct inode *inode, enum hfs_xattr_type type,
 	ssize_t res = 0;
 
 	if (!S_ISREG(inode->i_mode) || HFS_IS_RSRC(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (size) {
 		res = hfs_find_init(HFS_SB(inode->i_sb)->cat_tree, &fd);
@@ -95,7 +95,7 @@ static ssize_t __hfs_getxattr(struct inode *inode, enum hfs_xattr_type type,
 			memcpy(value, &file->UsrWds.fdType, 4);
 			res = 4;
 		} else
-			res = size ? -ERANGE : 4;
+			res = size ? -ERR(ERANGE) : 4;
 		break;
 
 	case HFS_CREATOR:
@@ -103,7 +103,7 @@ static ssize_t __hfs_getxattr(struct inode *inode, enum hfs_xattr_type type,
 			memcpy(value, &file->UsrWds.fdCreator, 4);
 			res = 4;
 		} else
-			res = size ? -ERANGE : 4;
+			res = size ? -ERR(ERANGE) : 4;
 		break;
 	}
 
@@ -126,7 +126,7 @@ static int hfs_xattr_set(const struct xattr_handler *handler,
 			 int flags)
 {
 	if (!value)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return __hfs_setxattr(inode, handler->flags, value, size, flags);
 }

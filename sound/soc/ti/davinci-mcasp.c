@@ -478,7 +478,7 @@ static int davinci_mcasp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		data_delay = 0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -557,7 +557,7 @@ static int davinci_mcasp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		mcasp->bclk_master = 0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -583,7 +583,7 @@ static int davinci_mcasp_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		fs_pol_rising = true;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -644,7 +644,7 @@ static int __davinci_mcasp_set_clkdiv(struct davinci_mcasp *mcasp, int div_id,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pm_runtime_put(mcasp->dev);
@@ -762,14 +762,14 @@ static int davinci_mcasp_set_tdm_slot(struct snd_soc_dai *dai,
 		dev_err(mcasp->dev,
 			"Bad tdm mask tx: 0x%08x rx: 0x%08x slots %d\n",
 			tx_mask, rx_mask, slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (slot_width &&
 	    (slot_width < 8 || slot_width > 32 || slot_width % 4 != 0)) {
 		dev_err(mcasp->dev, "%s: Unsupported slot_width %d\n",
 			__func__, slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mcasp->tdm_slots = slots;
@@ -901,7 +901,7 @@ static int mcasp_common_hw_param(struct davinci_mcasp *mcasp, int stream,
 		dev_warn(mcasp->dev, "stream has more channels (%d) than are "
 			 "enabled in mcasp (%d)\n", channels,
 			 active_serializers * slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* AFIFO is not in use */
@@ -926,7 +926,7 @@ static int mcasp_common_hw_param(struct davinci_mcasp *mcasp, int stream,
 		dev_err(mcasp->dev, "Invalid combination of period words and "
 			"active serializers: %d, %d\n", period_words,
 			active_serializers);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1086,7 +1086,7 @@ static int mcasp_dit_hw_param(struct davinci_mcasp *mcasp,
 		break;
 	default:
 		printk(KERN_WARNING "unsupported sampling rate: %d\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mcasp_set_reg(mcasp, DAVINCI_MCASP_DITCSRA_REG, cs_value);
@@ -1219,7 +1219,7 @@ static int davinci_mcasp_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		printk(KERN_WARNING "davinci-mcasp: unsupported PCM format");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = davinci_mcasp_set_dai_fmt(cpu_dai, mcasp->dai_fmt);
@@ -1286,7 +1286,7 @@ static int davinci_mcasp_trigger(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1462,7 +1462,7 @@ static int davinci_mcasp_startup(struct snd_pcm_substream *substream,
 
 	/* Do not allow more then one stream per direction */
 	if (mcasp->substreams[substream->stream])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	mcasp->substreams[substream->stream] = substream;
 
@@ -1769,7 +1769,7 @@ static struct davinci_mcasp_pdata *davinci_mcasp_set_pdata_from_of(
 			return NULL;
 	} else {
 		/* control shouldn't reach here. something is wrong */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto nodata;
 	}
 
@@ -1782,7 +1782,7 @@ static struct davinci_mcasp_pdata *davinci_mcasp_set_pdata_from_of(
 		if (val < 2 || val > 32) {
 			dev_err(&pdev->dev,
 				"tdm-slots must be in rage [2-32]\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto nodata;
 		}
 
@@ -1898,7 +1898,7 @@ static int davinci_mcasp_get_dma_type(struct davinci_mcasp *mcasp)
 	}
 	if (WARN_ON(!chan->device || !chan->device->dev)) {
 		dma_release_channel(chan);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (chan->device->dev->of_node)
@@ -1974,7 +1974,7 @@ static int davinci_mcasp_gpio_request(struct gpio_chip *chip, unsigned offset)
 	if (mcasp->num_serializer && offset < mcasp->num_serializer &&
 	    mcasp->serial_dir[offset] != INACTIVE_MODE) {
 		dev_err(mcasp->dev, "AXR%u pin is  used for audio\n", offset);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* Do not change the PIN yet */
@@ -2136,7 +2136,7 @@ static int davinci_mcasp_probe(struct platform_device *pdev)
 
 	if (!pdev->dev.platform_data && !pdev->dev.of_node) {
 		dev_err(&pdev->dev, "No platform data supplied\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mcasp = devm_kzalloc(&pdev->dev, sizeof(struct davinci_mcasp),
@@ -2147,7 +2147,7 @@ static int davinci_mcasp_probe(struct platform_device *pdev)
 	pdata = davinci_mcasp_set_pdata_from_of(pdev);
 	if (!pdata) {
 		dev_err(&pdev->dev, "no platform data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mem = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mpu");
@@ -2157,7 +2157,7 @@ static int davinci_mcasp_probe(struct platform_device *pdev)
 		mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 		if (!mem) {
 			dev_err(&pdev->dev, "no mem resource?\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -2358,7 +2358,7 @@ static int davinci_mcasp_probe(struct platform_device *pdev)
 
 	ret = davinci_mcasp_get_dt_params(mcasp);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = devm_snd_soc_register_component(&pdev->dev,
 					&davinci_mcasp_component,

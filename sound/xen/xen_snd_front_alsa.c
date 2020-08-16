@@ -185,7 +185,7 @@ static int to_sndif_format(snd_pcm_format_t format)
 		if (ALSA_SNDIF_FORMATS[i].alsa == format)
 			return ALSA_SNDIF_FORMATS[i].sndif;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static u64 to_sndif_formats_mask(u64 alsa_formats)
@@ -566,7 +566,7 @@ static int alsa_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return xen_snd_front_stream_trigger(&stream->evt_pair->req, type);
@@ -609,7 +609,7 @@ static int alsa_pb_copy_user(struct snd_pcm_substream *substream,
 	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
 	if (unlikely(pos + count > stream->buffer_sz))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(stream->buffer + pos, src, count))
 		return -EFAULT;
@@ -624,7 +624,7 @@ static int alsa_pb_copy_kernel(struct snd_pcm_substream *substream,
 	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
 	if (unlikely(pos + count > stream->buffer_sz))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(stream->buffer + pos, src, count);
 
@@ -639,7 +639,7 @@ static int alsa_cap_copy_user(struct snd_pcm_substream *substream,
 	int ret;
 
 	if (unlikely(pos + count > stream->buffer_sz))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = xen_snd_front_stream_read(&stream->evt_pair->req, pos, count);
 	if (ret < 0)
@@ -657,7 +657,7 @@ static int alsa_cap_copy_kernel(struct snd_pcm_substream *substream,
 	int ret;
 
 	if (unlikely(pos + count > stream->buffer_sz))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = xen_snd_front_stream_read(&stream->evt_pair->req, pos, count);
 	if (ret < 0)
@@ -675,7 +675,7 @@ static int alsa_pb_fill_silence(struct snd_pcm_substream *substream,
 	struct xen_snd_front_pcm_stream_info *stream = stream_get(substream);
 
 	if (unlikely(pos + count > stream->buffer_sz))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(stream->buffer + pos, 0, count);
 

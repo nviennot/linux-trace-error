@@ -408,23 +408,23 @@ static ssize_t snd_seq_read(struct file *file, char __user *buf, size_t count,
 	struct snd_seq_event_cell *cell;
 
 	if (!(snd_seq_file_flags(file) & SNDRV_SEQ_LFLG_INPUT))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (!access_ok(buf, count))
 		return -EFAULT;
 
 	/* check client structures are in place */
 	if (snd_BUG_ON(!client))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (!client->accept_input || (fifo = client->data.user.fifo) == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (atomic_read(&fifo->overflow) > 0) {
 		/* buffer overflow is detected */
 		snd_seq_fifo_clear(fifo);
 		/* return error code */
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	cell = NULL;
@@ -604,7 +604,7 @@ static int snd_seq_deliver_single_event(struct snd_seq_client *client,
 {
 	struct snd_seq_client *dest = NULL;
 	struct snd_seq_client_port *dest_port = NULL;
-	int result = -ENOENT;
+	int result = -ERR(ENOENT);
 	int direct;
 
 	direct = snd_seq_ev_is_direct(event);
@@ -618,7 +618,7 @@ static int snd_seq_deliver_single_event(struct snd_seq_client *client,
 
 	/* check permission */
 	if (! check_port_perm(dest_port, SNDRV_SEQ_PORT_CAP_WRITE)) {
-		result = -EPERM;
+		result = -ERR(EPERM);
 		goto __skip;
 	}
 		
@@ -671,7 +671,7 @@ static int deliver_to_subscribers(struct snd_seq_client *client,
 
 	src_port = snd_seq_port_use_ptr(client, event->source.port);
 	if (src_port == NULL)
-		return -EINVAL; /* invalid source port */
+		return -ERR(EINVAL); /* invalid source port */
 	/* save original event record */
 	event_saved = *event;
 	grp = &src_port->c_src;
@@ -816,12 +816,12 @@ static int snd_seq_deliver_event(struct snd_seq_client *client, struct snd_seq_e
 		pr_debug("ALSA: seq: too long delivery path (%d:%d->%d:%d)\n",
 			   event->source.client, event->source.port,
 			   event->dest.client, event->dest.port);
-		return -EMLINK;
+		return -ERR(EMLINK);
 	}
 
 	if (snd_seq_ev_is_variable(event) &&
 	    snd_BUG_ON(atomic && (event->data.ext.len & SNDRV_SEQ_EXT_USRPTR)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (event->queue == SNDRV_SEQ_ADDRESS_SUBSCRIBERS ||
 	    event->dest.client == SNDRV_SEQ_ADDRESS_SUBSCRIBERS)
@@ -857,12 +857,12 @@ int snd_seq_dispatch_event(struct snd_seq_event_cell *cell, int atomic, int hop)
 	int result;
 
 	if (snd_BUG_ON(!cell))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	client = snd_seq_client_use_ptr(cell->event.source.client);
 	if (client == NULL) {
 		snd_seq_cell_free(cell); /* release this cell */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cell->event.type == SNDRV_SEQ_EVENT_NOTE) {
@@ -947,22 +947,22 @@ static int snd_seq_client_enqueue_event(struct snd_seq_client *client,
 		/* check presence of source port */
 		struct snd_seq_client_port *src_port = snd_seq_port_use_ptr(client, event->source.port);
 		if (src_port == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		snd_seq_port_unlock(src_port);
 	}
 
 	/* direct event processing without enqueued */
 	if (snd_seq_ev_is_direct(event)) {
 		if (event->type == SNDRV_SEQ_EVENT_NOTE)
-			return -EINVAL; /* this event must be enqueued! */
+			return -ERR(EINVAL); /* this event must be enqueued! */
 		return snd_seq_deliver_event(client, event, atomic, hop);
 	}
 
 	/* Not direct, normal queuing */
 	if (snd_seq_queue_is_used(event->queue, client->number) <= 0)
-		return -EINVAL;  /* invalid queue */
+		return -ERR(EINVAL);  /* invalid queue */
 	if (! snd_seq_write_pool_allocated(client))
-		return -ENXIO; /* queue is not allocated */
+		return -ERR(ENXIO); /* queue is not allocated */
 
 	/* allocate an event cell */
 	err = snd_seq_event_dup(client->pool, event, &cell, !blocking || atomic,
@@ -989,16 +989,16 @@ static int check_event_type_and_length(struct snd_seq_event *ev)
 	switch (snd_seq_ev_length_type(ev)) {
 	case SNDRV_SEQ_EVENT_LENGTH_FIXED:
 		if (snd_seq_ev_is_variable_type(ev))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case SNDRV_SEQ_EVENT_LENGTH_VARIABLE:
 		if (! snd_seq_ev_is_variable_type(ev) ||
 		    (ev->data.ext.len & ~SNDRV_SEQ_EXT_MASK) >= SNDRV_SEQ_MAX_EVENT_LEN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case SNDRV_SEQ_EVENT_LENGTH_VARUSR:
 		if (! snd_seq_ev_is_direct(ev))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	}
 	return 0;
@@ -1025,14 +1025,14 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 	struct snd_seq_event event;
 
 	if (!(snd_seq_file_flags(file) & SNDRV_SEQ_LFLG_OUTPUT))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* check client structures are in place */
 	if (snd_BUG_ON(!client))
-		return -ENXIO;
+		return -ERR(ENXIO);
 		
 	if (!client->accept_output || client->pool == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
  repeat:
 	handled = 0;
@@ -1045,7 +1045,7 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 	}
 
 	/* only process whole events */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	while (count >= sizeof(struct snd_seq_event)) {
 		/* Read in the event header from the user */
 		len = sizeof(event);
@@ -1056,7 +1056,7 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 		event.source.client = client->number;	/* fill in client number */
 		/* Check for extension data length */
 		if (check_event_type_and_length(&event)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -1064,7 +1064,7 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 		if (event.type == SNDRV_SEQ_EVENT_NONE)
 			goto __skip_event;
 		else if (snd_seq_ev_is_reserved(&event)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -1072,7 +1072,7 @@ static ssize_t snd_seq_write(struct file *file, const char __user *buf,
 			int extlen = event.data.ext.len & ~SNDRV_SEQ_EXT_MASK;
 			if ((size_t)(extlen + len) > count) {
 				/* back out, will get an error this time or next */
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 			/* set user space pointer */
@@ -1194,22 +1194,22 @@ static int snd_seq_ioctl_running_mode(struct snd_seq_client *client, void  *arg)
 	/* requested client number */
 	cptr = snd_seq_client_use_ptr(info->client);
 	if (cptr == NULL)
-		return -ENOENT;		/* don't change !!! */
+		return -ERR(ENOENT);		/* don't change !!! */
 
 #ifdef SNDRV_BIG_ENDIAN
 	if (!info->big_endian) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __err;
 	}
 #else
 	if (info->big_endian) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __err;
 	}
 
 #endif
 	if (info->cpu_mode > sizeof(long)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __err;
 	}
 	cptr->convert32 = (info->cpu_mode < sizeof(long));
@@ -1254,7 +1254,7 @@ static int snd_seq_ioctl_get_client_info(struct snd_seq_client *client,
 	/* requested client number */
 	cptr = snd_seq_client_use_ptr(client_info->client);
 	if (cptr == NULL)
-		return -ENOENT;		/* don't change !!! */
+		return -ERR(ENOENT);		/* don't change !!! */
 
 	get_client_info(cptr, client_info);
 	snd_seq_client_unlock(cptr);
@@ -1271,10 +1271,10 @@ static int snd_seq_ioctl_set_client_info(struct snd_seq_client *client,
 
 	/* it is not allowed to set the info fields for an another client */
 	if (client->number != client_info->client)
-		return -EPERM;
+		return -ERR(EPERM);
 	/* also client type must be set now */
 	if (client->type != client_info->type)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* fill the info fields */
 	if (client_info->name[0])
@@ -1300,7 +1300,7 @@ static int snd_seq_ioctl_create_port(struct snd_seq_client *client, void *arg)
 
 	/* it is not allowed to create the port for an another client */
 	if (info->addr.client != client->number)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	port = snd_seq_create_port(client, (info->flags & SNDRV_SEQ_PORT_FLG_GIVEN_PORT) ? info->addr.port : -1);
 	if (port == NULL)
@@ -1310,7 +1310,7 @@ static int snd_seq_ioctl_create_port(struct snd_seq_client *client, void *arg)
 		port_idx = port->addr.port;
 		snd_seq_port_unlock(port);
 		snd_seq_delete_port(client, port_idx);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (client->type == KERNEL_CLIENT) {
 		if ((callback = info->kernel) != NULL) {
@@ -1345,7 +1345,7 @@ static int snd_seq_ioctl_delete_port(struct snd_seq_client *client, void *arg)
 
 	/* it is not allowed to remove the port for an another client */
 	if (info->addr.client != client->number)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = snd_seq_delete_port(client, info->addr.port);
 	if (err >= 0)
@@ -1365,12 +1365,12 @@ static int snd_seq_ioctl_get_port_info(struct snd_seq_client *client, void *arg)
 
 	cptr = snd_seq_client_use_ptr(info->addr.client);
 	if (cptr == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	port = snd_seq_port_use_ptr(cptr, info->addr.port);
 	if (port == NULL) {
 		snd_seq_client_unlock(cptr);
-		return -ENOENT;			/* don't change */
+		return -ERR(ENOENT);			/* don't change */
 	}
 
 	/* get port info */
@@ -1391,7 +1391,7 @@ static int snd_seq_ioctl_set_port_info(struct snd_seq_client *client, void *arg)
 	struct snd_seq_client_port *port;
 
 	if (info->addr.client != client->number) /* only set our own ports ! */
-		return -EPERM;
+		return -ERR(EPERM);
 	port = snd_seq_port_use_ptr(client, info->addr.port);
 	if (port) {
 		snd_seq_set_port_info(port, info);
@@ -1416,9 +1416,9 @@ static int check_subscription_permission(struct snd_seq_client *client,
 	    client->number != subs->dest.client) {
 		/* connection by third client - check export permission */
 		if (check_port_perm(sport, SNDRV_SEQ_PORT_CAP_NO_EXPORT))
-			return -EPERM;
+			return -ERR(EPERM);
 		if (check_port_perm(dport, SNDRV_SEQ_PORT_CAP_NO_EXPORT))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	/* check read permission */
@@ -1427,12 +1427,12 @@ static int check_subscription_permission(struct snd_seq_client *client,
 	 */
 	if (client->number != subs->sender.client) {
 		if (! check_port_perm(sport, PERM_RD))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 	/* check write permission */
 	if (client->number != subs->dest.client) {
 		if (! check_port_perm(dport, PERM_WR))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 	return 0;
 }
@@ -1463,7 +1463,7 @@ static int snd_seq_ioctl_subscribe_port(struct snd_seq_client *client,
 					void *arg)
 {
 	struct snd_seq_port_subscribe *subs = arg;
-	int result = -EINVAL;
+	int result = -ERR(EINVAL);
 	struct snd_seq_client *receiver = NULL, *sender = NULL;
 	struct snd_seq_client_port *sport = NULL, *dport = NULL;
 
@@ -1505,7 +1505,7 @@ static int snd_seq_ioctl_unsubscribe_port(struct snd_seq_client *client,
 					  void *arg)
 {
 	struct snd_seq_port_subscribe *subs = arg;
-	int result = -ENXIO;
+	int result = -ERR(ENXIO);
 	struct snd_seq_client *receiver = NULL, *sender = NULL;
 	struct snd_seq_client_port *sport = NULL, *dport = NULL;
 
@@ -1579,7 +1579,7 @@ static int snd_seq_ioctl_get_queue_info(struct snd_seq_client *client,
 
 	q = queueptr(info->queue);
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(info, 0, sizeof(*info));
 	info->queue = q->queue;
@@ -1599,24 +1599,24 @@ static int snd_seq_ioctl_set_queue_info(struct snd_seq_client *client,
 	struct snd_seq_queue *q;
 
 	if (info->owner != client->number)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* change owner/locked permission */
 	if (snd_seq_queue_check_access(info->queue, client->number)) {
 		if (snd_seq_queue_set_owner(info->queue, client->number, info->locked) < 0)
-			return -EPERM;
+			return -ERR(EPERM);
 		if (info->locked)
 			snd_seq_queue_use(info->queue, client->number, 1);
 	} else {
-		return -EPERM;
+		return -ERR(EPERM);
 	}	
 
 	q = queueptr(info->queue);
 	if (! q)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (q->owner != client->number) {
 		queuefree(q);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 	strscpy(q->name, info->name, sizeof(q->name));
 	queuefree(q);
@@ -1633,7 +1633,7 @@ static int snd_seq_ioctl_get_named_queue(struct snd_seq_client *client,
 
 	q = snd_seq_queue_find_name(info->name);
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info->queue = q->queue;
 	info->owner = q->owner;
 	info->locked = q->locked;
@@ -1652,7 +1652,7 @@ static int snd_seq_ioctl_get_queue_status(struct snd_seq_client *client,
 
 	queue = queueptr(status->queue);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	memset(status, 0, sizeof(*status));
 	status->queue = queue->queue;
 	
@@ -1681,7 +1681,7 @@ static int snd_seq_ioctl_get_queue_tempo(struct snd_seq_client *client,
 
 	queue = queueptr(tempo->queue);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	memset(tempo, 0, sizeof(*tempo));
 	tempo->queue = queue->queue;
 	
@@ -1701,7 +1701,7 @@ static int snd_seq_ioctl_get_queue_tempo(struct snd_seq_client *client,
 int snd_seq_set_queue_tempo(int client, struct snd_seq_queue_tempo *tempo)
 {
 	if (!snd_seq_queue_check_access(tempo->queue, client))
-		return -EPERM;
+		return -ERR(EPERM);
 	return snd_seq_queue_timer_set_tempo(tempo->queue, client, tempo);
 }
 EXPORT_SYMBOL(snd_seq_set_queue_tempo);
@@ -1727,7 +1727,7 @@ static int snd_seq_ioctl_get_queue_timer(struct snd_seq_client *client,
 
 	queue = queueptr(timer->queue);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&queue->timer_mutex);
 	tmr = queue->timer;
@@ -1754,7 +1754,7 @@ static int snd_seq_ioctl_set_queue_timer(struct snd_seq_client *client,
 	int result = 0;
 
 	if (timer->type != SNDRV_SEQ_TIMER_ALSA)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (snd_seq_queue_check_access(timer->queue, client->number)) {
 		struct snd_seq_queue *q;
@@ -1762,7 +1762,7 @@ static int snd_seq_ioctl_set_queue_timer(struct snd_seq_client *client,
 
 		q = queueptr(timer->queue);
 		if (q == NULL)
-			return -ENXIO;
+			return -ERR(ENXIO);
 		mutex_lock(&q->timer_mutex);
 		tmr = q->timer;
 		snd_seq_queue_timer_close(timer->queue);
@@ -1775,7 +1775,7 @@ static int snd_seq_ioctl_set_queue_timer(struct snd_seq_client *client,
 		mutex_unlock(&q->timer_mutex);
 		queuefree(q);
 	} else {
-		return -EPERM;
+		return -ERR(EPERM);
 	}	
 
 	return result;
@@ -1791,7 +1791,7 @@ static int snd_seq_ioctl_get_queue_client(struct snd_seq_client *client,
 
 	used = snd_seq_queue_is_used(info->queue, client->number);
 	if (used < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info->used = used;
 	info->client = client->number;
 
@@ -1825,7 +1825,7 @@ static int snd_seq_ioctl_get_client_pool(struct snd_seq_client *client,
 
 	cptr = snd_seq_client_use_ptr(info->client);
 	if (cptr == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	memset(info, 0, sizeof(*info));
 	info->client = cptr->number;
 	info->output_pool = cptr->pool->size;
@@ -1853,7 +1853,7 @@ static int snd_seq_ioctl_set_client_pool(struct snd_seq_client *client,
 	int rc;
 
 	if (client->number != info->client)
-		return -EINVAL; /* can't change other clients */
+		return -ERR(EINVAL); /* can't change other clients */
 
 	if (info->output_pool >= 1 && info->output_pool <= SNDRV_SEQ_MAX_EVENTS &&
 	    (! snd_seq_write_pool_allocated(client) ||
@@ -1861,7 +1861,7 @@ static int snd_seq_ioctl_set_client_pool(struct snd_seq_client *client,
 		if (snd_seq_write_pool_allocated(client)) {
 			/* is the pool in use? */
 			if (atomic_read(&client->pool->counter))
-				return -EBUSY;
+				return -ERR(EBUSY);
 			/* remove all existing cells */
 			snd_seq_pool_mark_closing(client->pool);
 			snd_seq_pool_done(client->pool);
@@ -1926,7 +1926,7 @@ static int snd_seq_ioctl_get_subscription(struct snd_seq_client *client,
 	struct snd_seq_client *sender = NULL;
 	struct snd_seq_client_port *sport = NULL;
 
-	result = -EINVAL;
+	result = -ERR(EINVAL);
 	if ((sender = snd_seq_client_use_ptr(subs->sender.client)) == NULL)
 		goto __end;
 	if ((sport = snd_seq_port_use_ptr(sender, subs->sender.port)) == NULL)
@@ -1949,7 +1949,7 @@ static int snd_seq_ioctl_get_subscription(struct snd_seq_client *client,
 static int snd_seq_ioctl_query_subs(struct snd_seq_client *client, void *arg)
 {
 	struct snd_seq_query_subs *subs = arg;
-	int result = -ENXIO;
+	int result = -ERR(ENXIO);
 	struct snd_seq_client *cptr = NULL;
 	struct snd_seq_client_port *port = NULL;
 	struct snd_seq_port_subs_info *group;
@@ -1976,7 +1976,7 @@ static int snd_seq_ioctl_query_subs(struct snd_seq_client *client, void *arg)
 	/* search for the subscriber */
 	subs->num_subs = group->count;
 	i = 0;
-	result = -ENOENT;
+	result = -ERR(ENOENT);
 	list_for_each(p, &group->list_head) {
 		if (i++ == subs->index) {
 			/* found! */
@@ -2026,7 +2026,7 @@ static int snd_seq_ioctl_query_next_client(struct snd_seq_client *client,
 			break; /* found */
 	}
 	if (cptr == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	get_client_info(cptr, info);
 	snd_seq_client_unlock(cptr);
@@ -2046,14 +2046,14 @@ static int snd_seq_ioctl_query_next_port(struct snd_seq_client *client,
 
 	cptr = snd_seq_client_use_ptr(info->addr.client);
 	if (cptr == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* search for next port */
 	info->addr.port++;
 	port = snd_seq_port_query_nearest(cptr, info);
 	if (port == NULL) {
 		snd_seq_client_unlock(cptr);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* get port info */
@@ -2132,14 +2132,14 @@ static long snd_seq_ioctl(struct file *file, unsigned int cmd,
 	int err;
 
 	if (snd_BUG_ON(!client))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	for (handler = ioctl_handlers; handler->cmd > 0; ++handler) {
 		if (handler->cmd == cmd)
 			break;
 	}
 	if (handler->cmd == 0)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 
 	memset(&buf, 0, sizeof(buf));
 
@@ -2185,12 +2185,12 @@ int snd_seq_create_kernel_client(struct snd_card *card, int client_index,
 	va_list args;
 
 	if (snd_BUG_ON(in_interrupt()))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (card && client_index >= SNDRV_SEQ_CLIENTS_PER_CARD)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (card == NULL && client_index >= SNDRV_SEQ_GLOBAL_CLIENTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&register_mutex);
 
@@ -2205,7 +2205,7 @@ int snd_seq_create_kernel_client(struct snd_card *card, int client_index,
 	client = seq_create_client1(client_index, 0);
 	if (client == NULL) {
 		mutex_unlock(&register_mutex);
-		return -EBUSY;	/* failure code */
+		return -ERR(EBUSY);	/* failure code */
 	}
 	usage_alloc(&client_usage, 1);
 
@@ -2234,11 +2234,11 @@ int snd_seq_delete_kernel_client(int client)
 	struct snd_seq_client *ptr;
 
 	if (snd_BUG_ON(in_interrupt()))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ptr = clientptr(client);
 	if (ptr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	seq_free_client(ptr);
 	kfree(ptr);
@@ -2258,25 +2258,25 @@ int snd_seq_kernel_client_enqueue(int client, struct snd_seq_event *ev,
 	int result;
 
 	if (snd_BUG_ON(!ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ev->type == SNDRV_SEQ_EVENT_NONE)
 		return 0; /* ignore this */
 	if (ev->type == SNDRV_SEQ_EVENT_KERNEL_ERROR)
-		return -EINVAL; /* quoted events can't be enqueued */
+		return -ERR(EINVAL); /* quoted events can't be enqueued */
 
 	/* fill in client number */
 	ev->source.client = client;
 
 	if (check_event_type_and_length(ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cptr = snd_seq_client_use_ptr(client);
 	if (cptr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	if (!cptr->accept_output) {
-		result = -EPERM;
+		result = -ERR(EPERM);
 	} else { /* send it */
 		mutex_lock(&cptr->ioctl_mutex);
 		result = snd_seq_client_enqueue_event(cptr, ev, file, blocking,
@@ -2304,21 +2304,21 @@ int snd_seq_kernel_client_dispatch(int client, struct snd_seq_event * ev,
 	int result;
 
 	if (snd_BUG_ON(!ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* fill in client number */
 	ev->queue = SNDRV_SEQ_QUEUE_DIRECT;
 	ev->source.client = client;
 
 	if (check_event_type_and_length(ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cptr = snd_seq_client_use_ptr(client);
 	if (cptr == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!cptr->accept_output)
-		result = -EPERM;
+		result = -ERR(EPERM);
 	else
 		result = snd_seq_deliver_event(cptr, ev, atomic, hop);
 
@@ -2346,7 +2346,7 @@ int snd_seq_kernel_client_ctl(int clientid, unsigned int cmd, void *arg)
 
 	client = clientptr(clientid);
 	if (client == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	for (handler = ioctl_handlers; handler->cmd > 0; ++handler) {
 		if (handler->cmd == cmd)
@@ -2355,7 +2355,7 @@ int snd_seq_kernel_client_ctl(int clientid, unsigned int cmd, void *arg)
 
 	pr_debug("ALSA: seq unknown ioctl() 0x%x (type='%c', number=0x%02x)\n",
 		 cmd, _IOC_TYPE(cmd), _IOC_NR(cmd));
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 EXPORT_SYMBOL(snd_seq_kernel_client_ctl);
 
@@ -2366,7 +2366,7 @@ int snd_seq_kernel_client_write_poll(int clientid, struct file *file, poll_table
 
 	client = clientptr(clientid);
 	if (client == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (! snd_seq_write_pool_allocated(client))
 		return 1;

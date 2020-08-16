@@ -341,7 +341,7 @@ static inline void acpi_processor_ppc_has_changed(struct acpi_processor *pr,
 }
 static inline int acpi_processor_get_bios_limit(int cpu, unsigned int *limit)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #endif				/* CONFIG_CPU_FREQ */
@@ -391,13 +391,13 @@ static inline int acpi_processor_tstate_has_changed(struct acpi_processor *pr)
 
 static inline int acpi_processor_get_throttling_info(struct acpi_processor *pr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_processor_set_throttling(struct acpi_processor *pr,
 					 int state, bool force)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void acpi_processor_reevaluate_tstate(struct acpi_processor *pr,
@@ -416,22 +416,22 @@ int acpi_processor_hotplug(struct acpi_processor *pr);
 #else
 static inline int acpi_processor_power_init(struct acpi_processor *pr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_processor_power_exit(struct acpi_processor *pr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_processor_power_state_has_changed(struct acpi_processor *pr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int acpi_processor_hotplug(struct acpi_processor *pr)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif /* CONFIG_ACPI_PROCESSOR_IDLE */
 

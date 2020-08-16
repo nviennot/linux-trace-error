@@ -14,7 +14,7 @@ int drv_start(struct ieee80211_local *local)
 	might_sleep();
 
 	if (WARN_ON(local->started))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	trace_drv_start(local);
 	local->started = true;
@@ -60,7 +60,7 @@ int drv_add_interface(struct ieee80211_local *local,
 		    (sdata->vif.type == NL80211_IFTYPE_MONITOR &&
 		     !ieee80211_hw_check(&local->hw, WANT_MONITOR_VIF) &&
 		     !(sdata->u.mntr.flags & MONITOR_FLAG_ACTIVE))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	trace_drv_add_interface(local, sdata);
 	ret = local->ops->add_interface(&local->hw, &sdata->vif);
@@ -81,7 +81,7 @@ int drv_change_interface(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_change_interface(local, sdata, type, p2p);
 	ret = local->ops->change_interface(&local->hw, &sdata->vif, type, p2p);
@@ -116,7 +116,7 @@ int drv_sta_state(struct ieee80211_local *local,
 
 	sdata = get_bss_sdata(sdata);
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_sta_state(local, sdata, &sta->sta, old_state, new_state);
 	if (local->ops->sta_state) {
@@ -140,13 +140,13 @@ int drv_sta_set_txpwr(struct ieee80211_local *local,
 		      struct ieee80211_sub_if_data *sdata,
 		      struct sta_info *sta)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
 	sdata = get_bss_sdata(sdata);
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_sta_set_txpwr(local, sdata, &sta->sta);
 	if (local->ops->sta_set_txpwr)
@@ -180,12 +180,12 @@ int drv_conf_tx(struct ieee80211_local *local,
 		struct ieee80211_sub_if_data *sdata, u16 ac,
 		const struct ieee80211_tx_queue_params *params)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (params->cw_min == 0 || params->cw_min > params->cw_max) {
 		/*
@@ -195,7 +195,7 @@ int drv_conf_tx(struct ieee80211_local *local,
 		WARN_ONCE(local->ops->conf_tx,
 			  "%s: invalid CW_min/CW_max: %d/%d\n",
 			  sdata->name, params->cw_min, params->cw_max);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	trace_drv_conf_tx(local, sdata, ac, params);
@@ -277,7 +277,7 @@ int drv_switch_vif_chanctx(struct ieee80211_local *local,
 	might_sleep();
 
 	if (!local->ops->switch_vif_chanctx)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	for (i = 0; i < n_vifs; i++) {
 		struct ieee80211_chanctx *new_ctx =
@@ -324,13 +324,13 @@ int drv_ampdu_action(struct ieee80211_local *local,
 		     struct ieee80211_sub_if_data *sdata,
 		     struct ieee80211_ampdu_params *params)
 {
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
 	sdata = get_bss_sdata(sdata);
 	if (!check_sdata_in_driver(sdata))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_drv_ampdu_action(local, sdata, params);
 

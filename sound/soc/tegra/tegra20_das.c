@@ -38,7 +38,7 @@ int tegra20_das_connect_dap_to_dac(int dap, int dac)
 	u32 reg;
 
 	if (!das)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	addr = TEGRA20_DAS_DAP_CTRL_SEL +
 		(dap * TEGRA20_DAS_DAP_CTRL_SEL_STRIDE);
@@ -57,7 +57,7 @@ int tegra20_das_connect_dap_to_dap(int dap, int otherdap, int master,
 	u32 reg;
 
 	if (!das)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	addr = TEGRA20_DAS_DAP_CTRL_SEL +
 		(dap * TEGRA20_DAS_DAP_CTRL_SEL_STRIDE);
@@ -78,7 +78,7 @@ int tegra20_das_connect_dac_to_dap(int dac, int dap)
 	u32 reg;
 
 	if (!das)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	addr = TEGRA20_DAS_DAC_INPUT_DATA_CLK_SEL +
 		(dac * TEGRA20_DAS_DAC_INPUT_DATA_CLK_SEL_STRIDE);
@@ -124,7 +124,7 @@ static int tegra20_das_probe(struct platform_device *pdev)
 	int ret = 0;
 
 	if (das)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	das = devm_kzalloc(&pdev->dev, sizeof(struct tegra20_das), GFP_KERNEL);
 	if (!das) {
@@ -185,7 +185,7 @@ err:
 static int tegra20_das_remove(struct platform_device *pdev)
 {
 	if (!das)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	das = NULL;
 

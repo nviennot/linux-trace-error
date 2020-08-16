@@ -98,7 +98,7 @@ static int imx_es8328_probe(struct platform_device *pdev)
 	if (ext_port > MUX_PORT_MAX || ext_port == 0) {
 		dev_err(dev, "mux-ext-port: hardware only has %d mux ports\n",
 			MUX_PORT_MAX);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
@@ -131,14 +131,14 @@ static int imx_es8328_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(pdev->dev.of_node, "audio-codec", 0);
 	if (!ssi_np || !codec_np) {
 		dev_err(dev, "phandle missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
 	ssi_pdev = of_find_device_by_node(ssi_np);
 	if (!ssi_pdev) {
 		dev_err(dev, "failed to find SSI platform device\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 

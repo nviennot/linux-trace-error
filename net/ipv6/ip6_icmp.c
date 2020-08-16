@@ -14,7 +14,7 @@ static ip6_icmp_send_t __rcu *ip6_icmp_send;
 int inet6_register_icmp_sender(ip6_icmp_send_t *fn)
 {
 	return (cmpxchg((ip6_icmp_send_t **)&ip6_icmp_send, NULL, fn) == NULL) ?
-		0 : -EBUSY;
+		0 : -ERR(EBUSY);
 }
 EXPORT_SYMBOL(inet6_register_icmp_sender);
 
@@ -23,7 +23,7 @@ int inet6_unregister_icmp_sender(ip6_icmp_send_t *fn)
 	int ret;
 
 	ret = (cmpxchg((ip6_icmp_send_t **)&ip6_icmp_send, fn, NULL) == fn) ?
-	      0 : -EINVAL;
+	      0 : -ERR(EINVAL);
 
 	synchronize_net();
 

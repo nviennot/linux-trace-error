@@ -94,7 +94,7 @@ extern int __tick_broadcast_oneshot_control(enum tick_broadcast_state state);
 static inline int
 __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 {
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 #endif
 

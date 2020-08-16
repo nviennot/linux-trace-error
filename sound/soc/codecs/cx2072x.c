@@ -495,7 +495,7 @@ static int cx2072x_reg_raw_write(struct i2c_client *client,
 	int ret;
 
 	if (WARN_ON(val_count + 2 > sizeof(buf)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf[0] = reg >> 8;
 	buf[1] = reg & 0xff;
@@ -505,7 +505,7 @@ static int cx2072x_reg_raw_write(struct i2c_client *client,
 	ret = i2c_master_send(client, buf, val_count + 2);
 	if (ret != val_count + 2) {
 		dev_err(dev, "I2C write failed, ret = %d\n", ret);
-		return ret < 0 ? ret : -EIO;
+		return ret < 0 ? ret : -ERR(EIO);
 	}
 	return 0;
 }
@@ -558,7 +558,7 @@ static int cx2072x_reg_read(void *context, unsigned int reg,
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
 	if (ret != ARRAY_SIZE(msgs)) {
 		dev_err(dev, "Failed to read register, ret = %d\n", ret);
-		return ret < 0 ? ret : -EIO;
+		return ret < 0 ? ret : -ERR(EIO);
 	}
 
 	*value = le32_to_cpu(recv_buf);
@@ -614,7 +614,7 @@ static int cx2072x_config_pll(struct cx2072x_priv *cx2072x)
 
 	default:
 		dev_err(dev, "Unsupported sample rate %d\n", sample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Configure PLL settings */
@@ -698,12 +698,12 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 
 	if (frame_len <= 0) {
 		dev_err(dev, "Incorrect frame len %d\n", frame_len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (sample_size <= 0) {
 		dev_err(dev, "Incorrect sample size %d\n", sample_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dev, "config_i2spcm set_dai_fmt- %08x\n", fmt);
@@ -726,7 +726,7 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 
 	default:
 		dev_err(dev, "Unsupported DAI master mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set format */
@@ -749,7 +749,7 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 
 	default:
 		dev_err(dev, "Unsupported DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -776,7 +776,7 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 
 	default:
 		dev_err(dev, "Unsupported DAI clock inversion\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg1.r.rx_data_one_line = 1;
@@ -823,7 +823,7 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 		reg6.r.tx_pause_cycles = i2s_right_pause_interval;
 	} else {
 		dev_err(dev, "TDM mode is not implemented yet\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regdbt2.r.i2s_bclk_invert = is_bclk_inv;
 
@@ -843,7 +843,7 @@ static int cx2072x_config_i2spcm(struct cx2072x_priv *cx2072x)
 		mod = do_div(div, bclk_rate);
 		if (mod) {
 			dev_err(dev, "Unsupported BCLK %dHz\n", bclk_rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		dev_dbg(dev, "enables BCLK %dHz output\n", bclk_rate);
 		reg5.r.i2s_pcm_clk_div = (u32)div - 1;
@@ -932,7 +932,7 @@ static int cx2072x_hw_params(struct snd_pcm_substream *substream,
 
 	if (cx2072x->mclk_rate == 0) {
 		dev_err(dev, "Master clock rate is not configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cx2072x->bclk_ratio)
@@ -949,7 +949,7 @@ static int cx2072x_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dev, "Unsupported sample rate %d\n", sample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dev, "Sample size %d bits, frame = %d bits, rate = %d Hz\n",
@@ -997,7 +997,7 @@ static int cx2072x_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	if (clk_set_rate(cx2072x->mclk, freq)) {
 		dev_err(codec->dev, "set clk rate failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cx2072x->mclk_rate = freq;
@@ -1019,7 +1019,7 @@ static int cx2072x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	default:
 		dev_err(dev, "Unsupported DAI master mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set format */
@@ -1031,7 +1031,7 @@ static int cx2072x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	default:
 		dev_err(dev, "Unsupported DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -1044,7 +1044,7 @@ static int cx2072x_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	default:
 		dev_err(dev, "Unsupported DAI clock inversion\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cx2072x->dai_fmt = fmt;

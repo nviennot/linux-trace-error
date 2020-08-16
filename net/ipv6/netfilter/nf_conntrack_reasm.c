@@ -188,7 +188,7 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 
 	if ((unsigned int)end > IPV6_MAXPLEN) {
 		pr_debug("offset is too large.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ecn = ip6_frag_ecn(ipv6_hdr(skb));
@@ -222,7 +222,7 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 			 */
 			pr_debug("end of fragment not rounded to 8 bytes.\n");
 			inet_frag_kill(&fq->q);
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 		if (end > fq->q.len) {
 			/* Some bits beyond end -> corruption. */
@@ -258,7 +258,7 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 		if (err == IPFRAG_DUP) {
 			/* No error for duplicates, pretend they got queued. */
 			kfree_skb(skb);
-			return -EINPROGRESS;
+			return -ERR(EINPROGRESS);
 		}
 		goto insert_error;
 	}
@@ -292,17 +292,17 @@ static int nf_ct_frag6_queue(struct frag_queue *fq, struct sk_buff *skb,
 		/* After queue has assumed skb ownership, only 0 or
 		 * -EINPROGRESS must be returned.
 		 */
-		return err ? -EINPROGRESS : 0;
+		return err ? -ERR(EINPROGRESS) : 0;
 	}
 
 	skb_dst_drop(skb);
-	return -EINPROGRESS;
+	return -ERR(EINPROGRESS);
 
 insert_error:
 	inet_frag_kill(&fq->q);
 err:
 	skb_dst_drop(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -370,7 +370,7 @@ static int nf_ct_frag6_reasm(struct frag_queue *fq, struct sk_buff *skb,
 
 err:
 	inet_frag_kill(&fq->q);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*

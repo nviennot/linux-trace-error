@@ -30,7 +30,7 @@ static int submit_audio_in_urb(struct snd_line6_pcm *line6pcm)
 
 	if (index < 0 || index >= line6pcm->line6->iso_buffers) {
 		dev_err(line6pcm->line6->ifcdev, "no free URB found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	urb_in = line6pcm->in.urbs[index];
@@ -287,7 +287,7 @@ int line6_create_audio_in_urbs(struct snd_line6_pcm *line6pcm)
 		urb->error_count = 0;
 		urb->complete = audio_in_callback;
 		if (usb_urb_ep_type_check(urb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;

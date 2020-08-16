@@ -925,11 +925,11 @@ static inline int xdp_ok_fwd_dev(const struct net_device *fwd,
 	unsigned int len;
 
 	if (unlikely(!(fwd->flags & IFF_UP)))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	len = fwd->mtu + fwd->hard_header_len + VLAN_HLEN;
 	if (pktlen > len)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -1101,7 +1101,7 @@ static inline int
 bpf_jit_add_poke_descriptor(struct bpf_prog *prog,
 			    struct bpf_jit_poke_descriptor *poke)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void bpf_jit_free(struct bpf_prog *fp)
@@ -1129,7 +1129,7 @@ static inline bool is_bpf_text_address(unsigned long addr)
 static inline int bpf_get_kallsym(unsigned int symnum, unsigned long *value,
 				  char *type, char *sym)
 {
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 static inline const char *

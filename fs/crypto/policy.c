@@ -291,7 +291,7 @@ int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
 	memset(policy_u, 0, sizeof(*policy_u));
 
 	if (!fscrypt_context_is_valid(ctx_u, ctx_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (ctx_u->version) {
 	case FSCRYPT_CONTEXT_V1: {
@@ -328,7 +328,7 @@ int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
 	}
 	}
 	/* unreachable */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Retrieve an inode's encryption policy */
@@ -346,11 +346,11 @@ static int fscrypt_get_policy(struct inode *inode, union fscrypt_policy *policy)
 	}
 
 	if (!IS_ENCRYPTED(inode))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	ret = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
 	if (ret < 0)
-		return (ret == -ERANGE) ? -EINVAL : ret;
+		return (ret == -ERR(ERANGE)) ? -ERR(EINVAL) : ret;
 
 	return fscrypt_policy_from_context(policy, &ctx, ret);
 }
@@ -363,7 +363,7 @@ static int set_encryption_policy(struct inode *inode,
 	int err;
 
 	if (!fscrypt_supported_policy(policy, inode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (policy->version) {
 	case FSCRYPT_POLICY_V1:
@@ -392,7 +392,7 @@ static int set_encryption_policy(struct inode *inode,
 		break;
 	default:
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
@@ -414,7 +414,7 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 
 	size = fscrypt_policy_size(&policy);
 	if (size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We should just copy the remaining 'size - 1' bytes here, but a
@@ -433,7 +433,7 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	policy.version = version;
 
 	if (!inode_owner_or_capable(inode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -444,18 +444,18 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	ret = fscrypt_get_policy(inode, &existing_policy);
 	if (ret == -ENODATA) {
 		if (!S_ISDIR(inode->i_mode))
-			ret = -ENOTDIR;
+			ret = -ERR(ENOTDIR);
 		else if (IS_DEADDIR(inode))
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		else if (!inode->i_sb->s_cop->empty_dir(inode))
-			ret = -ENOTEMPTY;
+			ret = -ERR(ENOTEMPTY);
 		else
 			ret = set_encryption_policy(inode, &policy);
 	} else if (ret == -EINVAL ||
 		   (ret == 0 && !fscrypt_policies_equal(&policy,
 							&existing_policy))) {
 		/* The file already uses a different encryption policy. */
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	}
 
 	inode_unlock(inode);
@@ -476,7 +476,7 @@ int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
 		return err;
 
 	if (policy.version != FSCRYPT_POLICY_V1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_to_user(arg, &policy, sizeof(policy.v1)))
 		return -EFAULT;
@@ -507,7 +507,7 @@ int fscrypt_ioctl_get_policy_ex(struct file *filp, void __user *uarg)
 		return -EFAULT;
 
 	if (policy_size > arg.policy_size)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	arg.policy_size = policy_size;
 
 	if (copy_to_user(uarg, &arg, sizeof(arg.policy_size) + policy_size))
@@ -527,7 +527,7 @@ int fscrypt_ioctl_get_nonce(struct file *filp, void __user *arg)
 	if (ret < 0)
 		return ret;
 	if (!fscrypt_context_is_valid(&ctx, ret))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_to_user(arg, fscrypt_context_nonce(&ctx),
 			 FS_KEY_DERIVATION_NONCE_SIZE))
 		return -EFAULT;
@@ -629,7 +629,7 @@ int fscrypt_inherit_context(struct inode *parent, struct inode *child,
 
 	ci = READ_ONCE(parent->i_crypt_info);
 	if (ci == NULL)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	ctxsize = fscrypt_new_context_from_policy(&ctx, &ci->ci_policy);
 
@@ -689,7 +689,7 @@ int fscrypt_set_test_dummy_encryption(struct super_block *sb,
 		key_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
 		/* key_spec.u.identifier gets filled in when adding the key */
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -702,7 +702,7 @@ int fscrypt_set_test_dummy_encryption(struct super_block *sb,
 		if (dummy_ctx->ctx->version == version)
 			err = 0;
 		else
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -732,7 +732,7 @@ int fscrypt_set_test_dummy_encryption(struct super_block *sb,
 		break;
 	default:
 		WARN_ON(1);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 	dummy_ctx->ctx = ctx;

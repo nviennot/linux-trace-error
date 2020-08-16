@@ -65,7 +65,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 	if (unlikely(!bh))
 		return -ENOMEM;
 
-	err = -EEXIST; /* internal code */
+	err = -ERR(EEXIST); /* internal code */
 	page = bh->b_page;
 
 	if (buffer_uptodate(bh) || buffer_dirty(bh))
@@ -88,7 +88,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 
 	if (mode_flags & REQ_RAHEAD) {
 		if (pblocknr != *submit_ptr + 1 || !trylock_buffer(bh)) {
-			err = -EBUSY; /* internal code */
+			err = -ERR(EBUSY); /* internal code */
 			brelse(bh);
 			goto out_locked;
 		}
@@ -97,7 +97,7 @@ int nilfs_btnode_submit_block(struct address_space *btnc, __u64 blocknr,
 	}
 	if (buffer_uptodate(bh)) {
 		unlock_buffer(bh);
-		err = -EEXIST; /* internal code */
+		err = -ERR(EEXIST); /* internal code */
 		goto found;
 	}
 	set_buffer_mapped(bh);

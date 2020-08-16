@@ -42,7 +42,7 @@
 static int ocfs2_symlink_get_block(struct inode *inode, sector_t iblock,
 				   struct buffer_head *bh_result, int create)
 {
-	int err = -EIO;
+	int err = -ERR(EIO);
 	int status;
 	struct ocfs2_dinode *fe = NULL;
 	struct buffer_head *bh = NULL;
@@ -192,7 +192,7 @@ int ocfs2_get_block(struct inode *inode, sector_t iblock,
 
 	if (!ocfs2_sparse_alloc(osb)) {
 		if (p_blkno == 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			mlog(ML_ERROR,
 			     "iblock = %llu p_blkno = %llu blkno=(%llu)\n",
 			     (unsigned long long)iblock,
@@ -213,7 +213,7 @@ int ocfs2_get_block(struct inode *inode, sector_t iblock,
 
 bail:
 	if (err < 0)
-		err = -EIO;
+		err = -ERR(EIO);
 
 	return err;
 }
@@ -228,7 +228,7 @@ int ocfs2_read_inline_data(struct inode *inode, struct page *page,
 	if (!(le16_to_cpu(di->i_dyn_features) & OCFS2_INLINE_DATA_FL)) {
 		ocfs2_error(inode->i_sb, "Inode %llu lost inline data flag\n",
 			    (unsigned long long)OCFS2_I(inode)->ip_blkno);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	size = i_size_read(inode);
@@ -239,7 +239,7 @@ int ocfs2_read_inline_data(struct inode *inode, struct page *page,
 			    "Inode %llu has with inline data has bad size: %Lu\n",
 			    (unsigned long long)OCFS2_I(inode)->ip_blkno,
 			    (unsigned long long)size);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	kaddr = kmap_atomic(page);
@@ -653,7 +653,7 @@ int ocfs2_map_page_blocks(struct page *page, u64 *p_blkno,
 	while(wait_bh > wait) {
 		wait_on_buffer(*--wait_bh);
 		if (!buffer_uptodate(*wait_bh))
-			ret = -EIO;
+			ret = -ERR(EIO);
 	}
 
 	if (ret == 0 || !new)
@@ -1080,7 +1080,7 @@ static int ocfs2_grab_pages_for_write(struct address_space *mapping,
 			if (mmap_page->mapping != mapping) {
 				WARN_ON(mmap_page->mapping);
 				unlock_page(mmap_page);
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				goto out;
 			}
 
@@ -2275,7 +2275,7 @@ unlock:
 	brelse(di_bh);
 out:
 	if (ret < 0)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	return ret;
 }
 

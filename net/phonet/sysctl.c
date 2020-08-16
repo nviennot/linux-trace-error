@@ -65,7 +65,7 @@ static int proc_local_port_range(struct ctl_table *table, int write,
 
 	if (write && ret == 0) {
 		if (range[1] < range[0])
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		else
 			set_local_port_range(range);
 	}

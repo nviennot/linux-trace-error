@@ -598,7 +598,7 @@ static int __init test_module_init(void)
 
 	if (err) {
 		pr_warn("FAIL!\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	} else {
 		pr_info("all tests passed\n");
 	}

@@ -75,7 +75,7 @@ int fscrypt_init_hkdf(struct fscrypt_hkdf *hkdf, const u8 *master_key,
 	}
 
 	if (WARN_ON(crypto_shash_digestsize(hmac_tfm) != sizeof(prk))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_free_tfm;
 	}
 
@@ -121,7 +121,7 @@ int fscrypt_hkdf_expand(const struct fscrypt_hkdf *hkdf, u8 context,
 	u8 tmp[HKDF_HASHLEN];
 
 	if (WARN_ON(okmlen > 255 * HKDF_HASHLEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	desc->tfm = hkdf->hmac_tfm;
 

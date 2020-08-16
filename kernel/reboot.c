@@ -316,7 +316,7 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 
 	/* We only trust the superuser with rebooting the system. */
 	if (!ns_capable(pid_ns->user_ns, CAP_SYS_BOOT))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* For safety, we require "magic" arguments. */
 	if (magic1 != LINUX_REBOOT_MAGIC1 ||
@@ -324,7 +324,7 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 			magic2 != LINUX_REBOOT_MAGIC2A &&
 			magic2 != LINUX_REBOOT_MAGIC2B &&
 			magic2 != LINUX_REBOOT_MAGIC2C))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If pid namespaces are enabled and the current task is in a child
@@ -389,7 +389,7 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
 #endif
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	mutex_unlock(&system_transition_mutex);

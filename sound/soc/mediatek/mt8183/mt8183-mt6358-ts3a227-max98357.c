@@ -491,7 +491,7 @@ mt8183_mt6358_ts3a227_max98357_dev_probe(struct platform_device *pdev)
 					 "mediatek,platform", 0);
 	if (!platform_node) {
 		dev_err(&pdev->dev, "Property 'platform' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ec_codec = of_parse_phandle(pdev->dev.of_node, "mediatek,ec-codec", 0);

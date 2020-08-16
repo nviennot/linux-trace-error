@@ -968,7 +968,7 @@ int rt5645_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (filter_mask & RT5645_DA_STEREO_FILTER) {
@@ -2740,12 +2740,12 @@ static int rt5645_hw_params(struct snd_pcm_substream *substream,
 	pre_div = rl6231_get_clk_info(rt5645->sysclk, rt5645->lrck[dai->id]);
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rt5645->codec_type) {
@@ -2778,7 +2778,7 @@ static int rt5645_hw_params(struct snd_pcm_substream *substream,
 		val_len = 0x3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2799,7 +2799,7 @@ static int rt5645_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2829,7 +2829,7 @@ static int rt5645_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5645->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2839,7 +2839,7 @@ static int rt5645_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= (1 << pol_sft);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2855,7 +2855,7 @@ static int rt5645_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5645_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	switch (dai->id) {
 	case RT5645_AIF1:
@@ -2870,7 +2870,7 @@ static int rt5645_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2897,7 +2897,7 @@ static int rt5645_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5645_GLB_CLK,
 		RT5645_SCLK_SRC_MASK, reg_val);
@@ -2949,12 +2949,12 @@ static int rt5645_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 			break;
 		default:
 			dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -3908,7 +3908,7 @@ static int rt5645_i2c_probe(struct i2c_client *i2c,
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5645 or rt5650\n",
 			val);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err_enable;
 	}
 

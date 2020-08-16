@@ -96,7 +96,7 @@ hash_ipportip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!ip_set_get_ip4_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip);
 	ip4addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip2);
@@ -262,7 +262,7 @@ hash_ipportip6_kadt(struct ip_set *set, const struct sk_buff *skb,
 
 	if (!ip_set_get_ip6_port(skb, opt->flags & IPSET_DIM_TWO_SRC,
 				 &e.port, &e.proto))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip.in6);
 	ip6addrptr(skb, opt->flags & IPSET_DIM_THREE_SRC, &e.ip2.in6);

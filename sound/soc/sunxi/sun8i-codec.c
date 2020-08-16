@@ -169,7 +169,7 @@ static int sun8i_codec_get_hw_rate(struct snd_pcm_hw_params *params)
 	case 192000:
 		return 0xa;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -187,7 +187,7 @@ static int sun8i_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		value = 0x0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(scodec->regmap, SUN8I_AIF1CLK_CTRL,
 			   BIT(SUN8I_AIF1CLK_CTRL_AIF1_MSTR_MOD),
@@ -202,7 +202,7 @@ static int sun8i_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		value = 0x1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(scodec->regmap, SUN8I_AIF1CLK_CTRL,
 			   BIT(SUN8I_AIF1CLK_CTRL_AIF1_BCLK_INV),
@@ -238,7 +238,7 @@ static int sun8i_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		value = 0x3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	regmap_update_bits(scodec->regmap, SUN8I_AIF1CLK_CTRL,
 			   SUN8I_AIF1CLK_CTRL_AIF1_DATA_FMT_MASK,
@@ -297,7 +297,7 @@ static int sun8i_codec_get_lrck_div(unsigned int channels,
 	unsigned int div = word_size * channels;
 
 	if (div < 16 || div > 256)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ilog2(div) - 4;
 }

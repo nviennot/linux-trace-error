@@ -161,7 +161,7 @@ static const struct ubifs_lprops *scan_for_dirty(struct ubifs_info *c,
 	/* We have looked everywhere in main memory, now scan the flash */
 	if (c->pnodes_have >= c->pnode_cnt)
 		/* All pnodes are in memory, so skip scan */
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 	data.min_space = min_space;
 	data.pick_free = pick_free;
 	data.lnum = -1;
@@ -441,7 +441,7 @@ const struct ubifs_lprops *do_find_free_space(struct ubifs_info *c,
 	/* We have looked everywhere in main memory, now scan the flash */
 	if (c->pnodes_have >= c->pnode_cnt)
 		/* All pnodes are in memory, so skip scan */
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 	data.min_space = min_space;
 	data.pick_free = pick_free;
 	data.lnum = -1;
@@ -689,7 +689,7 @@ int ubifs_find_free_leb_for_idx(struct ubifs_info *c)
 	}
 
 	if (!lprops) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -841,7 +841,7 @@ static int find_dirty_idx_leb(struct ubifs_info *c)
 	}
 	if (c->pnodes_have >= c->pnode_cnt)
 		/* All pnodes are in memory, so skip scan */
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	err = ubifs_lpt_scan_nolock(c, -1, c->lscan_lnum,
 				    (ubifs_lpt_scan_callback)scan_dirty_idx_cb,
 				    &data);
@@ -909,7 +909,7 @@ static int find_dirtiest_idx_leb(struct ubifs_info *c)
 
 	while (1) {
 		if (!c->dirty_idx.cnt)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		/* The lprops pointers were replaced by LEB numbers */
 		lnum = (size_t)c->dirty_idx.arr[--c->dirty_idx.cnt];
 		lp = ubifs_lpt_lookup(c, lnum);

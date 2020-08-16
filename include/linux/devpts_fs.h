@@ -37,7 +37,7 @@ int ptm_open_peer(struct file *master, struct tty_struct *tty, int flags);
 static inline int
 ptm_open_peer(struct file *master, struct tty_struct *tty, int flags)
 {
-	return -EIO;
+	return -ERR(EIO);
 }
 #endif
 

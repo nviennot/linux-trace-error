@@ -146,7 +146,7 @@ static int vlan_dev_change_mtu(struct net_device *dev, int new_mtu)
 	if (netif_reduces_vlan_mtu(real_dev))
 		max_mtu -= VLAN_HLEN;
 	if (max_mtu < new_mtu)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	dev->mtu = new_mtu;
 
@@ -192,7 +192,7 @@ int vlan_dev_set_egress_priority(const struct net_device *dev,
 	mp = vlan->egress_priority_map[skb_prio & 0xF];
 	np = kmalloc(sizeof(struct vlan_priority_tci_mapping), GFP_KERNEL);
 	if (!np)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	np->next = mp;
 	np->priority = skb_prio;
@@ -219,7 +219,7 @@ int vlan_dev_change_flags(const struct net_device *dev, u32 flags, u32 mask)
 	if (mask & ~(VLAN_FLAG_REORDER_HDR | VLAN_FLAG_GVRP |
 		     VLAN_FLAG_LOOSE_BINDING | VLAN_FLAG_MVRP |
 		     VLAN_FLAG_BRIDGE_BINDING))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vlan->flags = (old_flags & ~mask) | (flags & mask);
 
@@ -263,7 +263,7 @@ static int vlan_dev_open(struct net_device *dev)
 
 	if (!(real_dev->flags & IFF_UP) &&
 	    !(vlan->flags & VLAN_FLAG_LOOSE_BINDING))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	if (!ether_addr_equal(dev->dev_addr, real_dev->dev_addr) &&
 	    !vlan_dev_inherit_address(dev, real_dev)) {
@@ -334,7 +334,7 @@ static int vlan_dev_set_mac_address(struct net_device *dev, void *p)
 	int err;
 
 	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	if (!(dev->flags & IFF_UP))
 		goto out;
@@ -358,7 +358,7 @@ static int vlan_dev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	struct net_device *real_dev = vlan_dev_priv(dev)->real_dev;
 	const struct net_device_ops *ops = real_dev->netdev_ops;
 	struct ifreq ifrr;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 
 	strncpy(ifrr.ifr_name, real_dev->name, IFNAMSIZ);
 	ifrr.ifr_ifru = ifr->ifr_ifru;
@@ -425,7 +425,7 @@ static int vlan_dev_fcoe_enable(struct net_device *dev)
 {
 	struct net_device *real_dev = vlan_dev_priv(dev)->real_dev;
 	const struct net_device_ops *ops = real_dev->netdev_ops;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (ops->ndo_fcoe_enable)
 		rc = ops->ndo_fcoe_enable(real_dev);
@@ -436,7 +436,7 @@ static int vlan_dev_fcoe_disable(struct net_device *dev)
 {
 	struct net_device *real_dev = vlan_dev_priv(dev)->real_dev;
 	const struct net_device_ops *ops = real_dev->netdev_ops;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (ops->ndo_fcoe_disable)
 		rc = ops->ndo_fcoe_disable(real_dev);
@@ -462,7 +462,7 @@ static int vlan_dev_fcoe_get_wwn(struct net_device *dev, u64 *wwn, int type)
 {
 	struct net_device *real_dev = vlan_dev_priv(dev)->real_dev;
 	const struct net_device_ops *ops = real_dev->netdev_ops;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (ops->ndo_fcoe_get_wwn)
 		rc = ops->ndo_fcoe_get_wwn(real_dev, wwn, type);

@@ -160,19 +160,19 @@ static int ip6mr_rule_action(struct fib_rule *rule, struct flowi *flp,
 	case FR_ACT_TO_TBL:
 		break;
 	case FR_ACT_UNREACHABLE:
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 	case FR_ACT_PROHIBIT:
-		return -EACCES;
+		return -ERR(EACCES);
 	case FR_ACT_BLACKHOLE:
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	arg->table = fib_rule_get_table(rule, arg);
 
 	mrt = ip6mr_get_table(rule->fr_net, arg->table);
 	if (!mrt)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	res->mrt = mrt;
 	return 0;
 }
@@ -411,7 +411,7 @@ static void *ip6mr_vif_seq_start(struct seq_file *seq, loff_t *pos)
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
 	if (!mrt)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	iter->mrt = mrt;
 
@@ -461,7 +461,7 @@ static void *ipmr_mfc_seq_start(struct seq_file *seq, loff_t *pos)
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
 	if (!mrt)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	return mr_mfc_seq_start(seq, pos, mrt, &mfc_unres_lock);
 }
@@ -700,7 +700,7 @@ static int mif6_delete(struct mr_table *mrt, int vifi, int notify,
 	struct inet6_dev *in6_dev;
 
 	if (vifi < 0 || vifi >= mrt->maxvif)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	v = &mrt->vif_table[vifi];
 
@@ -715,7 +715,7 @@ static int mif6_delete(struct mr_table *mrt, int vifi, int notify,
 
 	if (!dev) {
 		write_unlock_bh(&mrt_lock);
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	}
 
 #ifdef CONFIG_IPV6_PIMSM_V2
@@ -781,7 +781,7 @@ static void ip6mr_destroy_unres(struct mr_table *mrt, struct mfc6_cache *c)
 			nlh->nlmsg_type = NLMSG_ERROR;
 			nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
 			skb_trim(skb, nlh->nlmsg_len);
-			((struct nlmsgerr *)nlmsg_data(nlh))->error = -ETIMEDOUT;
+			((struct nlmsgerr *)nlmsg_data(nlh))->error = -ERR(ETIMEDOUT);
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
 		} else
 			kfree_skb(skb);
@@ -868,7 +868,7 @@ static int mif6_add(struct net *net, struct mr_table *mrt,
 
 	/* Is vif busy ? */
 	if (VIF_EXISTS(mrt, vifi))
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 
 	switch (vifc->mif6c_flags) {
 #ifdef CONFIG_IPV6_PIMSM_V2
@@ -878,10 +878,10 @@ static int mif6_add(struct net *net, struct mr_table *mrt,
 		 * All the packets will be sent to the daemon
 		 */
 		if (mrt->mroute_reg_vif_num >= 0)
-			return -EADDRINUSE;
+			return -ERR(EADDRINUSE);
 		dev = ip6mr_reg_vif(net, mrt);
 		if (!dev)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		err = dev_set_allmulti(dev, 1);
 		if (err) {
 			unregister_netdevice(dev);
@@ -893,7 +893,7 @@ static int mif6_add(struct net *net, struct mr_table *mrt,
 	case 0:
 		dev = dev_get_by_index(net, vifc->mif6c_pifi);
 		if (!dev)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		err = dev_set_allmulti(dev, 1);
 		if (err) {
 			dev_put(dev);
@@ -901,7 +901,7 @@ static int mif6_add(struct net *net, struct mr_table *mrt,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	in6_dev = __in6_dev_get(dev);
@@ -1022,7 +1022,7 @@ static void ip6mr_cache_resolve(struct net *net, struct mr_table *mrt,
 				nlh->nlmsg_type = NLMSG_ERROR;
 				nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
 				skb_trim(skb, nlh->nlmsg_len);
-				((struct nlmsgerr *)nlmsg_data(nlh))->error = -EMSGSIZE;
+				((struct nlmsgerr *)nlmsg_data(nlh))->error = -ERR(EMSGSIZE);
 			}
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
 		} else
@@ -1053,7 +1053,7 @@ static int ip6mr_cache_report(struct mr_table *mrt, struct sk_buff *pkt,
 		skb = alloc_skb(sizeof(struct ipv6hdr) + sizeof(*msg), GFP_ATOMIC);
 
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* I suppose that internal messages
 	 * do not require checksums */
@@ -1114,7 +1114,7 @@ static int ip6mr_cache_report(struct mr_table *mrt, struct sk_buff *pkt,
 	if (!mroute6_sk) {
 		rcu_read_unlock();
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mrt6msg_netlink_event(mrt, skb);
@@ -1157,7 +1157,7 @@ static int ip6mr_cache_unresolved(struct mr_table *mrt, mifi_t mifi,
 			spin_unlock_bh(&mfc_unres_lock);
 
 			kfree_skb(skb);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 
 		/* Fill in the new cache entry */
@@ -1190,7 +1190,7 @@ static int ip6mr_cache_unresolved(struct mr_table *mrt, mifi_t mifi,
 	/* See if we can append the packet */
 	if (c->_c.mfc_un.unres.unresolved.qlen > 3) {
 		kfree_skb(skb);
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 	} else {
 		if (dev) {
 			skb->dev = dev;
@@ -1219,7 +1219,7 @@ static int ip6mr_mfc_delete(struct mr_table *mrt, struct mf6cctl *mfc,
 				    &mfc->mf6cc_mcastgrp.sin6_addr, parent);
 	rcu_read_unlock();
 	if (!c)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	rhltable_remove(&mrt->mfc_hash, &c->_c.mnode, ip6mr_rht_params);
 	list_del_rcu(&c->_c.list);
 
@@ -1371,7 +1371,7 @@ int __init ip6_mr_init(void)
 #ifdef CONFIG_IPV6_PIMSM_V2
 	if (inet6_add_protocol(&pim6_protocol, IPPROTO_PIM) < 0) {
 		pr_err("%s: can't add PIM protocol\n", __func__);
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto add_proto_fail;
 	}
 #endif
@@ -1413,7 +1413,7 @@ static int ip6mr_mfc_add(struct net *net, struct mr_table *mrt,
 	int i, err;
 
 	if (mfc->mf6cc_parent >= MAXMIFS)
-		return -ENFILE;
+		return -ERR(ENFILE);
 
 	memset(ttls, 255, MAXMIFS);
 	for (i = 0; i < MAXMIFS; i++) {
@@ -1441,7 +1441,7 @@ static int ip6mr_mfc_add(struct net *net, struct mr_table *mrt,
 
 	if (!ipv6_addr_any(&mfc->mf6cc_mcastgrp.sin6_addr) &&
 	    !ipv6_addr_is_multicast(&mfc->mf6cc_mcastgrp.sin6_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	c = ip6mr_cache_alloc();
 	if (!c)
@@ -1552,7 +1552,7 @@ static int ip6mr_sk_init(struct mr_table *mrt, struct sock *sk)
 	rtnl_lock();
 	write_lock_bh(&mrt_lock);
 	if (rtnl_dereference(mrt->mroute_sk)) {
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 	} else {
 		rcu_assign_pointer(mrt->mroute_sk, sk);
 		sock_set_flag(sk, SOCK_RCU_FREE);
@@ -1572,7 +1572,7 @@ static int ip6mr_sk_init(struct mr_table *mrt, struct sock *sk)
 
 int ip6mr_sk_done(struct sock *sk)
 {
-	int err = -EACCES;
+	int err = -ERR(EACCES);
 	struct net *net = sock_net(sk);
 	struct mr_table *mrt;
 
@@ -1640,22 +1640,22 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 
 	if (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
 	if (!mrt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (optname != MRT6_INIT) {
 		if (sk != rcu_access_pointer(mrt->mroute_sk) &&
 		    !ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EACCES;
+			return -ERR(EACCES);
 	}
 
 	switch (optname) {
 	case MRT6_INIT:
 		if (optlen < sizeof(int))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return ip6mr_sk_init(mrt, sk);
 
@@ -1664,11 +1664,11 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 
 	case MRT6_ADD_MIF:
 		if (optlen < sizeof(vif))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&vif, optval, sizeof(vif)))
 			return -EFAULT;
 		if (vif.mif6c_mifi >= MAXMIFS)
-			return -ENFILE;
+			return -ERR(ENFILE);
 		rtnl_lock();
 		ret = mif6_add(net, mrt, &vif,
 			       sk == rtnl_dereference(mrt->mroute_sk));
@@ -1677,7 +1677,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 
 	case MRT6_DEL_MIF:
 		if (optlen < sizeof(mifi_t))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&mifi, optval, sizeof(mifi_t)))
 			return -EFAULT;
 		rtnl_lock();
@@ -1696,7 +1696,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 	case MRT6_ADD_MFC_PROXY:
 	case MRT6_DEL_MFC_PROXY:
 		if (optlen < sizeof(mfc))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&mfc, optval, sizeof(mfc)))
 			return -EFAULT;
 		if (parent == 0)
@@ -1717,7 +1717,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 		int flags;
 
 		if (optlen != sizeof(flags))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(flags, (int __user *)optval))
 			return -EFAULT;
 		rtnl_lock();
@@ -1734,7 +1734,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 		int v;
 
 		if (optlen != sizeof(v))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(v, (int __user *)optval))
 			return -EFAULT;
 		mrt->mroute_do_assert = v;
@@ -1747,7 +1747,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 		int v;
 
 		if (optlen != sizeof(v))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(v, (int __user *)optval))
 			return -EFAULT;
 		v = !!v;
@@ -1768,14 +1768,14 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 		u32 v;
 
 		if (optlen != sizeof(u32))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(v, (u32 __user *)optval))
 			return -EFAULT;
 		/* "pim6reg%u" should not exceed 16 bytes (IFNAMSIZ) */
 		if (v != RT_TABLE_DEFAULT && v >= 100000000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (sk == rcu_access_pointer(mrt->mroute_sk))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		rtnl_lock();
 		ret = 0;
@@ -1793,7 +1793,7 @@ int ip6_mroute_setsockopt(struct sock *sk, int optname, char __user *optval, uns
 	 *	set.
 	 */
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 }
 
@@ -1811,11 +1811,11 @@ int ip6_mroute_getsockopt(struct sock *sk, int optname, char __user *optval,
 
 	if (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
 	if (!mrt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (optname) {
 	case MRT6_VERSION:
@@ -1830,7 +1830,7 @@ int ip6_mroute_getsockopt(struct sock *sk, int optname, char __user *optval,
 		val = mrt->mroute_do_assert;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (get_user(olr, optlen))
@@ -1838,7 +1838,7 @@ int ip6_mroute_getsockopt(struct sock *sk, int optname, char __user *optval,
 
 	olr = min_t(int, olr, sizeof(int));
 	if (olr < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (put_user(olr, optlen))
 		return -EFAULT;
@@ -1862,14 +1862,14 @@ int ip6mr_ioctl(struct sock *sk, int cmd, void __user *arg)
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
 	if (!mrt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (cmd) {
 	case SIOCGETMIFCNT_IN6:
 		if (copy_from_user(&vr, arg, sizeof(vr)))
 			return -EFAULT;
 		if (vr.mifi >= mrt->maxvif)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
 		read_lock(&mrt_lock);
 		vif = &mrt->vif_table[vr.mifi];
@@ -1885,7 +1885,7 @@ int ip6mr_ioctl(struct sock *sk, int cmd, void __user *arg)
 			return 0;
 		}
 		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	case SIOCGETSGCNT_IN6:
 		if (copy_from_user(&sr, arg, sizeof(sr)))
 			return -EFAULT;
@@ -1903,9 +1903,9 @@ int ip6mr_ioctl(struct sock *sk, int cmd, void __user *arg)
 			return 0;
 		}
 		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 
@@ -1937,14 +1937,14 @@ int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
 	if (!mrt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	switch (cmd) {
 	case SIOCGETMIFCNT_IN6:
 		if (copy_from_user(&vr, arg, sizeof(vr)))
 			return -EFAULT;
 		if (vr.mifi >= mrt->maxvif)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
 		read_lock(&mrt_lock);
 		vif = &mrt->vif_table[vr.mifi];
@@ -1960,7 +1960,7 @@ int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 			return 0;
 		}
 		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	case SIOCGETSGCNT_IN6:
 		if (copy_from_user(&sr, arg, sizeof(sr)))
 			return -EFAULT;
@@ -1978,9 +1978,9 @@ int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 			return 0;
 		}
 		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 #endif
@@ -2205,7 +2205,7 @@ int ip6_mr_input(struct sk_buff *skb)
 		dev = dev_get_by_index_rcu(net, IPCB(skb)->iif);
 		if (!dev) {
 			kfree_skb(skb);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
@@ -2242,7 +2242,7 @@ int ip6_mr_input(struct sk_buff *skb)
 		}
 		read_unlock(&mrt_lock);
 		kfree_skb(skb);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ip6_mr_forward(net, mrt, dev, skb, cache);
@@ -2262,7 +2262,7 @@ int ip6mr_get_route(struct net *net, struct sk_buff *skb, struct rtmsg *rtm,
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
 	if (!mrt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	read_lock(&mrt_lock);
 	cache = ip6mr_cache_find(mrt, &rt->rt6i_src.addr, &rt->rt6i_dst.addr);
@@ -2283,7 +2283,7 @@ int ip6mr_get_route(struct net *net, struct sk_buff *skb, struct rtmsg *rtm,
 		dev = skb->dev;
 		if (!dev || (vif = ip6mr_find_vif(mrt, dev)) < 0) {
 			read_unlock(&mrt_lock);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		/* really correct? */
@@ -2332,7 +2332,7 @@ static int ip6mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 
 	nlh = nlmsg_put(skb, portid, seq, cmd, sizeof(*rtm), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtm = nlmsg_data(nlh);
 	rtm->rtm_family   = RTNL_FAMILY_IP6MR;
@@ -2363,7 +2363,7 @@ static int ip6mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int _ip6mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
@@ -2400,7 +2400,7 @@ static void mr6_netlink_event(struct mr_table *mrt, struct mfc6_cache *mfc,
 {
 	struct net *net = read_pnet(&mrt->net);
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(mr6_msgsize(mfc->_c.mfc_parent >= MAXMIFS, mrt->maxvif),
 			GFP_ATOMIC);
@@ -2507,7 +2507,7 @@ static int ip6mr_rtm_dumproute(struct sk_buff *skb, struct netlink_callback *cb)
 				return skb->len;
 
 			NL_SET_ERR_MSG_MOD(cb->extack, "MR table does not exist");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		err = mr_table_dump(mrt, skb, cb, _ip6mr_fill_mroute,
 				    &mfc_unres_lock, &filter);

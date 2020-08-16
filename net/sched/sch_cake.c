@@ -2566,7 +2566,7 @@ static int cake_change(struct Qdisc *sch, struct nlattr *opt,
 	int err;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_CAKE_MAX, opt, cake_policy,
 					  extack);
@@ -2581,7 +2581,7 @@ static int cake_change(struct Qdisc *sch, struct nlattr *opt,
 #else
 		NL_SET_ERR_MSG_ATTR(extack, tb[TCA_CAKE_NAT],
 				    "No conntrack support in kernel");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 #endif
 	}
 

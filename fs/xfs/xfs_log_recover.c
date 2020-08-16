@@ -731,7 +731,7 @@ validate_head:
 		/* start ptr at last block ptr before head_blk */
 		error = xlog_find_verify_log_record(log, start_blk, &head_blk, 0);
 		if (error == 1)
-			error = -EIO;
+			error = -ERR(EIO);
 		if (error)
 			goto out_free_buffer;
 	} else {
@@ -750,7 +750,7 @@ validate_head:
 			error = xlog_find_verify_log_record(log, start_blk,
 							&new_blk, (int)head_blk);
 			if (error == 1)
-				error = -EIO;
+				error = -ERR(EIO);
 			if (error)
 				goto out_free_buffer;
 			if (new_blk != log_bbnum)
@@ -1108,7 +1108,7 @@ xlog_verify_head(
 		if (found < 0)
 			return found;
 		if (found == 0)		/* XXX: right thing to do here? */
-			return -EIO;
+			return -ERR(EIO);
 
 		/*
 		 * Reset the head block to the starting block of the first bad
@@ -1508,7 +1508,7 @@ xlog_find_zeroed(
 	 */
 	error = xlog_find_verify_log_record(log, start_blk, &last_blk, 0);
 	if (error == 1)
-		error = -EIO;
+		error = -ERR(EIO);
 	if (error)
 		goto out_free_buffer;
 
@@ -2447,7 +2447,7 @@ xlog_recover_process_data(
 
 	/* check the log format matches our own - else we can't recover */
 	if (xlog_header_check_recover(log->l_mp, rhead))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_xfs_log_recover_record(log, rhead, pass);
 	while ((dp < end) && num_logops) {
@@ -2489,7 +2489,7 @@ xlog_finish_defer_ops(
 	 */
 	freeblks = percpu_counter_sum(&mp->m_fdblocks);
 	if (freeblks <= 0)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	resblks = min_t(int64_t, UINT_MAX, freeblks);
 	resblks = (resblks * 15) >> 4;
 	error = xfs_trans_alloc(mp, &M_RES(mp)->tr_itruncate, resblks,
@@ -3317,7 +3317,7 @@ xlog_do_recover(
 	 * If IO errors happened during recovery, bail out.
 	 */
 	if (XFS_FORCED_SHUTDOWN(mp)) {
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -3396,7 +3396,7 @@ xlog_recover(
 	 */
 	if (xfs_sb_version_hascrc(&log->l_mp->m_sb) &&
 	    !xfs_log_check_lsn(log->l_mp, log->l_mp->m_sb.sb_lsn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tail_blk != head_blk) {
 		/* There used to be a comment here:
@@ -3432,7 +3432,7 @@ xlog_recover(
 "The log can not be fully and/or safely recovered by this kernel.");
 			xfs_warn(log->l_mp,
 "Please recover the log on a kernel that supports the unknown features.");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*

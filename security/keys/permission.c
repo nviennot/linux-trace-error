@@ -33,7 +33,7 @@ int key_task_permission(const key_ref_t key_ref, const struct cred *cred,
 	switch (need_perm) {
 	default:
 		WARN_ON(1);
-		return -EACCES;
+		return -ERR(EACCES);
 	case KEY_NEED_UNLINK:
 	case KEY_SYSADMIN_OVERRIDE:
 	case KEY_AUTHTOKEN_OVERRIDE:
@@ -83,7 +83,7 @@ use_these_perms:
 		kperm |= key->perm >> 24;
 
 	if ((kperm & mask) != mask)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	/* let LSM be the final arbiter */
 lsm:
@@ -105,17 +105,17 @@ int key_validate(const struct key *key)
 	time64_t expiry = READ_ONCE(key->expiry);
 
 	if (flags & (1 << KEY_FLAG_INVALIDATED))
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	/* check it's still accessible */
 	if (flags & ((1 << KEY_FLAG_REVOKED) |
 		     (1 << KEY_FLAG_DEAD)))
-		return -EKEYREVOKED;
+		return -ERR(EKEYREVOKED);
 
 	/* check it hasn't expired */
 	if (expiry) {
 		if (ktime_get_real_seconds() >= expiry)
-			return -EKEYEXPIRED;
+			return -ERR(EKEYEXPIRED);
 	}
 
 	return 0;

@@ -275,7 +275,7 @@ static int rsvp_init(struct tcf_proto *tp)
 		rcu_assign_pointer(tp->root, data);
 		return 0;
 	}
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static void __rsvp_delete_filter(struct rsvp_filter *f)
@@ -489,7 +489,7 @@ static int rsvp_change(struct net *net, struct sk_buff *in_skb,
 	int err;
 
 	if (opt == NULL)
-		return handle ? -EINVAL : 0;
+		return handle ? -ERR(EINVAL) : 0;
 
 	err = nla_parse_nested_deprecated(tb, TCA_RSVP_MAX, opt, rsvp_policy,
 					  NULL);
@@ -536,13 +536,13 @@ static int rsvp_change(struct net *net, struct sk_buff *in_skb,
 	}
 
 	/* Now more serious part... */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (handle)
 		goto errout2;
 	if (tb[TCA_RSVP_DST] == NULL)
 		goto errout2;
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	f = kzalloc(sizeof(struct rsvp_filter), GFP_KERNEL);
 	if (f == NULL)
 		goto errout2;
@@ -571,7 +571,7 @@ static int rsvp_change(struct net *net, struct sk_buff *in_skb,
 		goto errout;
 
 	if (f->tunnelhdr) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (f->res.classid > 255)
 			goto errout;
 
@@ -623,7 +623,7 @@ insert:
 
 	/* No session found. Create new one. */
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	s = kzalloc(sizeof(struct rsvp_session), GFP_KERNEL);
 	if (s == NULL)
 		goto errout;

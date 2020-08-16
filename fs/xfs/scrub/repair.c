@@ -58,13 +58,13 @@ xrep_attempt(
 		 */
 		sc->sm->sm_flags &= ~XFS_SCRUB_FLAGS_OUT;
 		sc->flags |= XREP_ALREADY_FIXED;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case -EDEADLOCK:
 	case -EAGAIN:
 		/* Tell the caller to try again having grabbed all the locks. */
 		if (!(sc->flags & XCHK_TRY_HARDER)) {
 			sc->flags |= XCHK_TRY_HARDER;
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		/*
 		 * We tried harder but still couldn't grab all the resources
@@ -299,7 +299,7 @@ xrep_alloc_ag_block(
 		if (error)
 			return error;
 		if (bno == NULLAGBLOCK)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		xfs_extent_busy_reuse(sc->mp, sc->sa.agno, bno,
 				1, false);
 		*fsbno = XFS_AGB_TO_FSB(sc->mp, sc->sa.agno, bno);
@@ -324,7 +324,7 @@ xrep_alloc_ag_block(
 	if (error)
 		return error;
 	if (args.fsbno == NULLFSBLOCK)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	ASSERT(args.len == 1);
 	*fsbno = args.fsbno;
 
@@ -666,7 +666,7 @@ xrep_findroot_agfl_walk(
 {
 	xfs_agblock_t		*agbno = priv;
 
-	return (*agbno == bno) ? -ECANCELED : 0;
+	return (*agbno == bno) ? -ERR(ECANCELED) : 0;
 }
 
 /* Does this block match the btree information passed in? */

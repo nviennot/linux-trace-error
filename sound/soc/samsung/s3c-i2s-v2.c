@@ -232,7 +232,7 @@ static int s3c2412_snd_lrsync(struct s3c_i2sv2_info *i2s)
 
 	if (!loops) {
 		printk(KERN_ERR "%s: timeout\n", __func__);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	return 0;
@@ -263,7 +263,7 @@ static int s3c2412_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		pr_err("unknown master/slave format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iismod &= ~S3C2412_IISMOD_SDF_MASK;
@@ -283,7 +283,7 @@ static int s3c2412_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		pr_err("Unknown data format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(iismod, i2s->regs + S3C2412_IISMOD);
@@ -352,7 +352,7 @@ static int s3c_i2sv2_set_sysclk(struct snd_soc_dai *cpu_dai,
 	case S3C_I2SV2_CLKSRC_CDCLK:
 		/* Error if controller doesn't have the CDCLKCON bit */
 		if (!(i2s->feature & S3C_FEATURE_CDCLKCON))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (dir) {
 		case SND_SOC_CLOCK_IN:
@@ -362,12 +362,12 @@ static int s3c_i2sv2_set_sysclk(struct snd_soc_dai *cpu_dai,
 			iismod &= ~S3C64XX_IISMOD_CDCLKCON;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(iismod, i2s->regs + S3C2412_IISMOD);
@@ -429,7 +429,7 @@ static int s3c2412_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		local_irq_restore(irqs);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -468,7 +468,7 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		reg = readl(i2s->regs + S3C2412_IISMOD);
@@ -497,7 +497,7 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		reg = readl(i2s->regs + S3C2412_IISMOD);
@@ -517,7 +517,7 @@ static int s3c2412_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -630,7 +630,7 @@ int s3c_i2sv2_probe(struct snd_soc_dai *dai,
 	i2s->iis_pclk = clk_get(dev, "iis");
 	if (IS_ERR(i2s->iis_pclk)) {
 		dev_err(dev, "failed to get iis_clock\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	clk_prepare_enable(i2s->iis_pclk);

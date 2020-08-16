@@ -31,7 +31,7 @@ static inline int crypto_des_verify_key(struct crypto_tfm *tfm, const u8 *key)
 	err = des_expand_key(&tmp, key, DES_KEY_SIZE);
 	if (err == -ENOKEY) {
 		if (crypto_tfm_get_flags(tfm) & CRYPTO_TFM_REQ_FORBID_WEAK_KEYS)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else
 			err = 0;
 	}
@@ -55,7 +55,7 @@ static inline int crypto_des_verify_key(struct crypto_tfm *tfm, const u8 *key)
 static inline int des3_ede_verify_key(const u8 *key, unsigned int key_len,
 				      bool check_weak)
 {
-	int ret = fips_enabled ? -EINVAL : -ENOKEY;
+	int ret = fips_enabled ? -ERR(EINVAL) : -ERR(ENOKEY);
 	u32 K[6];
 
 	memcpy(K, key, DES3_EDE_KEY_SIZE);
@@ -112,7 +112,7 @@ static inline int verify_aead_des_key(struct crypto_aead *tfm, const u8 *key,
 				      int keylen)
 {
 	if (keylen != DES_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return crypto_des_verify_key(crypto_aead_tfm(tfm), key);
 }
 
@@ -120,7 +120,7 @@ static inline int verify_aead_des3_key(struct crypto_aead *tfm, const u8 *key,
 				       int keylen)
 {
 	if (keylen != DES3_EDE_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return crypto_des3_ede_verify_key(crypto_aead_tfm(tfm), key);
 }
 

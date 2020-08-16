@@ -124,13 +124,13 @@ static int em_canid_change(struct net *net, void *data, int len,
 	int i;
 
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (len % sizeof(struct can_filter))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (len > sizeof(struct can_filter) * EM_CAN_RULES_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cm = kzalloc(sizeof(struct canid_match) + len, GFP_KERNEL);
 	if (!cm)
@@ -196,7 +196,7 @@ static int em_canid_dump(struct sk_buff *skb, struct tcf_ematch *m)
 	 */
 	if (nla_put_nohdr(skb, sizeof(struct can_filter) * cm->rules_count,
 	    &cm->rules_raw) < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

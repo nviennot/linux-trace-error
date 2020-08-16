@@ -366,7 +366,7 @@ static int wm8974_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8974_CLOCK, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -438,7 +438,7 @@ static int wm8974_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 	struct wm8974_priv *priv = snd_soc_component_get_drvdata(component);
 
 	if (dir != SND_SOC_CLOCK_IN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->mclk = freq;
 
@@ -460,7 +460,7 @@ static int wm8974_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -476,12 +476,12 @@ static int wm8974_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_DSP_A:
 		if ((fmt & SND_SOC_DAIFMT_INV_MASK) == SND_SOC_DAIFMT_IB_IF ||
 		    (fmt & SND_SOC_DAIFMT_INV_MASK) == SND_SOC_DAIFMT_NB_IF) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		iface |= 0x00018;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -498,7 +498,7 @@ static int wm8974_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0080;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8974_IFACE, iface);

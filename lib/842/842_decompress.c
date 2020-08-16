@@ -71,7 +71,7 @@ static int __split_next_bits(struct sw842_param *p, u64 *d, u8 n, u8 s)
 
 	if (n <= s) {
 		pr_debug("split_next_bits invalid n %u s %u\n", n, s);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = next_bits(p, &tmp, n - s);
@@ -90,7 +90,7 @@ static int next_bits(struct sw842_param *p, u64 *d, u8 n)
 
 	if (n > 64) {
 		pr_debug("next_bits invalid n %u\n", n);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* split this up if reading > 8 bytes, or if we're at the end of
@@ -104,7 +104,7 @@ static int next_bits(struct sw842_param *p, u64 *d, u8 n)
 		return __split_next_bits(p, d, n, 8);
 
 	if (DIV_ROUND_UP(bits, 8) > p->ilen)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (bits <= 8)
 		*d = *in >> (8 - bits);
@@ -134,7 +134,7 @@ static int do_data(struct sw842_param *p, u8 n)
 	int ret;
 
 	if (n > p->olen)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	ret = next_bits(p, &v, n * 8);
 	if (ret)
@@ -151,7 +151,7 @@ static int do_data(struct sw842_param *p, u8 n)
 		put_unaligned(cpu_to_be64((u64)v), (__be64 *)p->out);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	p->out += n;
@@ -190,7 +190,7 @@ static int __do_index(struct sw842_param *p, u8 size, u8 bits, u64 fsize)
 	if (offset + size > total) {
 		pr_debug("index%x %lx points past end %lx\n", size,
 			 (unsigned long)offset, (unsigned long)total);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (size != 2 && size != 4 && size != 8)
@@ -219,7 +219,7 @@ static int do_index(struct sw842_param *p, u8 n)
 	case 8:
 		return __do_index(p, 8, I8_BITS, I8_FIFO_SIZE);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -228,7 +228,7 @@ static int do_op(struct sw842_param *p, u8 o)
 	int i, ret = 0;
 
 	if (o >= OPS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < 4; i++) {
 		u8 op = decomp_ops[o][i];
@@ -246,7 +246,7 @@ static int do_op(struct sw842_param *p, u8 o)
 			break;
 		default:
 			pr_err("Internal error, invalid op %x\n", op);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (ret)
@@ -307,13 +307,13 @@ int sw842_decompress(const u8 *in, unsigned int ilen,
 				return ret;
 
 			if (p.out == out) /* no previous bytes */
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* copy rep + 1 */
 			rep++;
 
 			if (rep * 8 > p.olen)
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 
 			while (rep-- > 0) {
 				memcpy(p.out, p.out - 8, 8);
@@ -327,7 +327,7 @@ int sw842_decompress(const u8 *in, unsigned int ilen,
 			break;
 		case OP_ZEROS:
 			if (8 > p.olen)
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 
 			memset(p.out, 0, 8);
 			p.out += 8;
@@ -343,7 +343,7 @@ int sw842_decompress(const u8 *in, unsigned int ilen,
 				return ret;
 
 			if (!bytes || bytes > SHORT_DATA_BITS_MAX)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			while (bytes-- > 0) {
 				ret = next_bits(&p, &tmp, 8);
@@ -384,11 +384,11 @@ int sw842_decompress(const u8 *in, unsigned int ilen,
 	 */
 	if (crc != (u64)crc32_be(0, out, total - p.olen)) {
 		pr_debug("CRC mismatch for decompression\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unlikely((total - p.olen) > UINT_MAX))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	*olen = total - p.olen;
 

@@ -247,7 +247,7 @@ requeue:
 	cache->cache.ops->put_object(&xobject->fscache,
 		(enum fscache_obj_ref_trace)cachefiles_obj_put_wait_timeo);
 	_leave(" = -ETIMEDOUT");
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 /*
@@ -351,19 +351,19 @@ try_again:
 	if (!d_can_lookup(cache->graveyard)) {
 		unlock_rename(cache->graveyard, dir);
 		cachefiles_io_error(cache, "Graveyard no longer a directory");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (trap == rep) {
 		unlock_rename(cache->graveyard, dir);
 		cachefiles_io_error(cache, "May not make directory loop");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (d_mountpoint(rep)) {
 		unlock_rename(cache->graveyard, dir);
 		cachefiles_io_error(cache, "Mountpoint in cache");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	grave = lookup_one_len(nbuffer, cache->graveyard, strlen(nbuffer));
@@ -377,7 +377,7 @@ try_again:
 
 		cachefiles_io_error(cache, "Lookup error %ld",
 				    PTR_ERR(grave));
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (d_is_positive(grave)) {
@@ -392,7 +392,7 @@ try_again:
 		unlock_rename(cache->graveyard, dir);
 		dput(grave);
 		cachefiles_io_error(cache, "Mountpoint in graveyard");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* target should not be an ancestor of source */
@@ -400,7 +400,7 @@ try_again:
 		unlock_rename(cache->graveyard, dir);
 		dput(grave);
 		cachefiles_io_error(cache, "May not make directory loop");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* attempt the rename */
@@ -506,7 +506,7 @@ int cachefiles_walk_to_object(struct cachefiles_object *parent,
 	if (!(d_is_dir(parent->dentry))) {
 		// TODO: convert file to dir
 		_leave("looking up in none directory");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	dir = dget(parent->dentry);
@@ -581,7 +581,7 @@ lookup_again:
 		} else if (!d_can_lookup(next)) {
 			pr_err("inode %lu is not a directory\n",
 			       d_backing_inode(next)->i_ino);
-			ret = -ENOBUFS;
+			ret = -ERR(ENOBUFS);
 			goto error;
 		}
 
@@ -613,7 +613,7 @@ lookup_again:
 			   ) {
 			pr_err("inode %lu is not a file or directory\n",
 			       d_backing_inode(next)->i_ino);
-			ret = -ENOBUFS;
+			ret = -ERR(ENOBUFS);
 			goto error;
 		}
 	}
@@ -688,7 +688,7 @@ lookup_again:
 		if (d_is_reg(object->dentry)) {
 			const struct address_space_operations *aops;
 
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			aops = d_backing_inode(object->dentry)->i_mapping->a_ops;
 			if (!aops->bmap)
 				goto check_error;
@@ -814,11 +814,11 @@ retry:
 
 	if (!d_can_lookup(subdir)) {
 		pr_err("%s is not a directory\n", dirname);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto check_error;
 	}
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if (!(d_backing_inode(subdir)->i_opflags & IOP_XATTR) ||
 	    !d_backing_inode(subdir)->i_op->lookup ||
 	    !d_backing_inode(subdir)->i_op->mkdir ||
@@ -892,7 +892,7 @@ static struct dentry *cachefiles_check_active(struct cachefiles_cache *cache,
 		inode_unlock(d_inode(dir));
 		dput(victim);
 		_leave(" = -ENOENT [absent]");
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 
 	/* check to see if we're using this object */
@@ -921,7 +921,7 @@ object_in_use:
 	inode_unlock(d_inode(dir));
 	dput(victim);
 	//_leave(" = -EBUSY [in use]");
-	return ERR_PTR(-EBUSY);
+	return ERR_PTR(-ERR(EBUSY));
 
 lookup_error:
 	inode_unlock(d_inode(dir));
@@ -929,14 +929,14 @@ lookup_error:
 	if (ret == -ENOENT) {
 		/* file or dir now absent - probably retired by netfs */
 		_leave(" = -ESTALE [absent]");
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	if (ret == -EIO) {
 		cachefiles_io_error(cache, "Lookup failed");
 	} else if (ret != -ENOMEM) {
 		pr_err("Internal error: %d\n", ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	_leave(" = %d", ret);
@@ -990,12 +990,12 @@ error:
 	if (ret == -ENOENT) {
 		/* file or dir now absent - probably retired by netfs */
 		_leave(" = -ESTALE [absent]");
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 
 	if (ret != -ENOMEM) {
 		pr_err("Internal error: %d\n", ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	_leave(" = %d", ret);

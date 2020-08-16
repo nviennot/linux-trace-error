@@ -85,7 +85,7 @@ static inline int gfs2_check_internal_file_size(struct inode *inode,
 	return 0;
 err:
 	gfs2_consist_inode(GFS2_I(inode));
-	return -EIO;
+	return -ERR(EIO);
 }
 
 extern struct inode *gfs2_inode_lookup(struct super_block *sb, unsigned type, 

@@ -109,7 +109,7 @@ static inline void hardlockup_detector_perf_disable(void) { }
 static inline void hardlockup_detector_perf_enable(void) { }
 static inline void hardlockup_detector_perf_cleanup(void) { }
 # if !defined(CONFIG_HAVE_NMI_WATCHDOG)
-static inline int hardlockup_detector_perf_init(void) { return -ENODEV; }
+static inline int hardlockup_detector_perf_init(void) { return -ERR(ENODEV); }
 static inline void arch_touch_nmi_watchdog(void) {}
 # else
 static inline int hardlockup_detector_perf_init(void) { return 0; }

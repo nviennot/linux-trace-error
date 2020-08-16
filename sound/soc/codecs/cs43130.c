@@ -243,7 +243,7 @@ static int cs43130_pll_config(struct snd_soc_component *component)
 
 	pll_entry = cs43130_get_pll_table(cs43130->mclk, cs43130->mclk_int);
 	if (!pll_entry)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pll_entry->pll_cal_ratio == 0) {
 		regmap_update_bits(cs43130->regmap, CS43130_PLL_SET_1,
@@ -305,7 +305,7 @@ static int cs43130_set_pll(struct snd_soc_component *component, int pll_id, int 
 	default:
 		dev_err(component->dev,
 			"unsupported pll input reference clock:%d\n", freq_in);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq_out) {
@@ -318,7 +318,7 @@ static int cs43130_set_pll(struct snd_soc_component *component, int pll_id, int 
 	default:
 		dev_err(component->dev,
 			"unsupported pll output ref clock: %u\n", freq_out);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = cs43130_pll_config(component);
@@ -347,7 +347,7 @@ static int cs43130_change_clksrc(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid MCLK INT freq: %u\n", cs43130->mclk_int);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (src) {
@@ -371,7 +371,7 @@ static int cs43130_change_clksrc(struct snd_soc_component *component,
 					   1 << CS43130_XTAL_RDY_INT_SHIFT);
 			if (ret == 0) {
 				dev_err(component->dev, "Timeout waiting for XTAL_READY interrupt\n");
-				return -ETIMEDOUT;
+				return -ERR(ETIMEDOUT);
 			}
 		}
 
@@ -407,7 +407,7 @@ static int cs43130_change_clksrc(struct snd_soc_component *component,
 					   1 << CS43130_XTAL_RDY_INT_SHIFT);
 			if (ret == 0) {
 				dev_err(component->dev, "Timeout waiting for XTAL_READY interrupt\n");
-				return -ETIMEDOUT;
+				return -ERR(ETIMEDOUT);
 			}
 		}
 
@@ -423,7 +423,7 @@ static int cs43130_change_clksrc(struct snd_soc_component *component,
 				   1 << CS43130_PLL_RDY_INT_SHIFT);
 		if (ret == 0) {
 			dev_err(component->dev, "Timeout waiting for PLL_READY interrupt\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 
 		regmap_update_bits(cs43130->regmap, CS43130_SYS_CLK_CTL_1,
@@ -454,7 +454,7 @@ static int cs43130_change_clksrc(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid MCLK source value\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -487,7 +487,7 @@ static int cs43130_set_bitwidth(int dai_id, unsigned int bitwidth_dai,
 
 	bw_map = cs43130_get_bitwidth_table(bitwidth_dai);
 	if (!bw_map)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dai_id) {
 	case CS43130_ASP_PCM_DAI:
@@ -509,7 +509,7 @@ static int cs43130_set_bitwidth(int dai_id, unsigned int bitwidth_dai,
 				   CS43130_XSP_BITSIZE_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -592,7 +592,7 @@ static int cs43130_set_sp_fmt(int dai_id, unsigned int bitwidth_sclk,
 		frm_phase = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cs43130->dais[dai_id].dai_mode) {
@@ -603,7 +603,7 @@ static int cs43130_set_sp_fmt(int dai_id, unsigned int bitwidth_sclk,
 		dai_mode_val = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frm_size = bitwidth_sclk * params_channels(params);
@@ -672,7 +672,7 @@ static int cs43130_set_sp_fmt(int dai_id, unsigned int bitwidth_sclk,
 		regmap_write(cs43130->regmap, CS43130_XSP_CLOCK_CONF, clk_data);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (frm_size) {
@@ -701,11 +701,11 @@ static int cs43130_set_sp_fmt(int dai_id, unsigned int bitwidth_sclk,
 					      ARRAY_SIZE(cs43130_64_clk_gen));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!clk_gen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dai_id) {
 	case CS43130_ASP_PCM_DAI:
@@ -738,7 +738,7 @@ static int cs43130_set_sp_fmt(int dai_id, unsigned int bitwidth_sclk,
 			     CS43130_SP_N_MSB_DATA_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -806,7 +806,7 @@ static int cs43130_dsd_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Rate(%u) not supported\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cs43130->dais[dai->id].dai_mode == SND_SOC_DAIFMT_CBM_CFM)
@@ -877,7 +877,7 @@ static int cs43130_hw_params(struct snd_pcm_substream *substream,
 		default:
 			dev_err(component->dev, "Rate(%u) not supported\n",
 				params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(cs43130->regmap, CS43130_DSD_PATH_CTL_2,
@@ -887,13 +887,13 @@ static int cs43130_hw_params(struct snd_pcm_substream *substream,
 	case CS43130_ASP_PCM_DAI:
 		rate_map = cs43130_get_rate_table(params_rate(params));
 		if (!rate_map)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		regmap_write(cs43130->regmap, CS43130_SP_SRATE, rate_map->val);
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI (%d)\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -917,13 +917,13 @@ static int cs43130_hw_params(struct snd_pcm_substream *substream,
 	if (!sclk) {
 		/* at this point, SCLK must be set */
 		dev_err(component->dev, "SCLK freq is not set\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bitwidth_sclk = (sclk / params_rate(params)) / params_channels(params);
 	if (bitwidth_sclk < bitwidth_dai) {
 		dev_err(component->dev, "Format not supported: SCLK freq is too low\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev,
@@ -1025,7 +1025,7 @@ static int cs43130_pcm_ch_put(struct snd_kcontrol *kcontrol,
 	unsigned int val;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
 
 	switch (cs43130->dev_id) {
@@ -1190,7 +1190,7 @@ static int cs43130_dsd_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1247,7 +1247,7 @@ static int cs43130_pcm_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1323,7 +1323,7 @@ static int cs43130_dac_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAC event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1361,7 +1361,7 @@ static int cs43130_hpin_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(component->dev, "Invalid HPIN event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1480,7 +1480,7 @@ static int cs43130_pcm_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "unsupported mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1499,7 +1499,7 @@ static int cs43130_pcm_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	default:
 		dev_err(component->dev,
 			"unsupported audio format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "dai_id = %d,  dai_mode = %u, dai_format = %u\n",
@@ -1524,7 +1524,7 @@ static int cs43130_dsd_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Unsupported DAI format.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "dai_mode = 0x%x\n",
@@ -1640,14 +1640,14 @@ static int cs43130_component_set_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid MCLK INT freq: %u\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (source == CS43130_MCLK_SRC_EXT) {
 		cs43130->pll_bypass = true;
 	} else {
 		dev_err(component->dev, "Invalid MCLK source\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2397,7 +2397,7 @@ static int cs43130_handle_device_data(struct i2c_client *i2c_client,
 	default:
 		dev_err(&i2c_client->dev,
 			"Invalid cirrus,xtal-ibias value: %d\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cs43130->dc_meas = of_property_read_bool(np, "cirrus,dc-measure");
@@ -2490,7 +2490,7 @@ static int cs43130_i2c_probe(struct i2c_client *client,
 			"CS43130 Device ID %X. Expected ID %X, %X, %X or %X\n",
 			devid, CS43130_CHIP_ID, CS4399_CHIP_ID,
 			CS43131_CHIP_ID, CS43198_CHIP_ID);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 

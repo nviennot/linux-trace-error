@@ -151,7 +151,7 @@ static int snd_sh_dac_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		dac_audio_stop_timer(chip);
 		break;
 	default:
-		 return -EINVAL;
+		 return -ERR(EINVAL);
 	}
 
 	return 0;

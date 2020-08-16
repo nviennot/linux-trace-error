@@ -319,7 +319,7 @@ static int spdif_softreset(struct fsl_spdif_priv *spdif_priv)
 	if (cycle)
 		return 0;
 	else
-		return -EBUSY;
+		return -ERR(EBUSY);
 }
 
 static void spdif_set_cstatus(struct spdif_mixer_control *ctrl,
@@ -357,7 +357,7 @@ static int spdif_set_rx_clksrc(struct fsl_spdif_priv *spdif_priv,
 	u8 clksrc = spdif_priv->rxclk_src;
 
 	if (clksrc >= SRPC_CLKSRC_MAX || gainsel >= GAINSEL_MULTI_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_update_bits(regmap, REG_SPDIF_SRPC,
 			SRPC_CLKSRC_SEL_MASK | SRPC_GAINSEL_MASK,
@@ -403,19 +403,19 @@ static int spdif_set_sample_rate(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(&pdev->dev, "unsupported sample rate %d\n", sample_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	clk = spdif_priv->txclk_src[rate];
 	if (clk >= STC_TXCLK_SRC_MAX) {
 		dev_err(&pdev->dev, "tx clock source is out of range\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	txclk_df = spdif_priv->txclk_df[rate];
 	if (txclk_df == 0) {
 		dev_err(&pdev->dev, "the txclk_df can't be zero\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sysclk_df = spdif_priv->sysclk_df[rate];
@@ -617,7 +617,7 @@ static int fsl_spdif_trigger(struct snd_pcm_substream *substream,
 		regmap_update_bits(regmap, REG_SPDIF_SIE, intr, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -693,7 +693,7 @@ static int fsl_spdif_capture_get(struct snd_kcontrol *kcontrol,
 
 	regmap_read(regmap, REG_SPDIF_SIS, &val);
 	if (!(val & INT_CNEW))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	regmap_read(regmap, REG_SPDIF_SRCSH, &cstatus);
 	ucontrol->value.iec958.status[0] = (cstatus >> 16) & 0xFF;
@@ -722,7 +722,7 @@ static int fsl_spdif_subcode_get(struct snd_kcontrol *kcontrol,
 	struct fsl_spdif_priv *spdif_priv = snd_soc_dai_get_drvdata(cpu_dai);
 	struct spdif_mixer_control *ctrl = &spdif_priv->fsl_spdif_control;
 	unsigned long flags;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	spin_lock_irqsave(&ctrl->ctl_lock, flags);
 	if (ctrl->ready_buf) {
@@ -754,7 +754,7 @@ static int fsl_spdif_qget(struct snd_kcontrol *kcontrol,
 	struct fsl_spdif_priv *spdif_priv = snd_soc_dai_get_drvdata(cpu_dai);
 	struct spdif_mixer_control *ctrl = &spdif_priv->fsl_spdif_control;
 	unsigned long flags;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	spin_lock_irqsave(&ctrl->ctl_lock, flags);
 	if (ctrl->ready_buf) {
@@ -1222,7 +1222,7 @@ static int fsl_spdif_probe(struct platform_device *pdev)
 	int irq, ret, i;
 
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spdif_priv = devm_kzalloc(&pdev->dev, sizeof(*spdif_priv), GFP_KERNEL);
 	if (!spdif_priv)

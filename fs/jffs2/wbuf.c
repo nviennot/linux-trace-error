@@ -242,7 +242,7 @@ static int jffs2_verify_write(struct jffs2_sb_info *c, unsigned char *buf,
 	} else if (retlen != c->wbuf_pagesize) {
 		pr_warn("%s(): Read back of page at %08x gave short read: %zd not %d\n",
 			__func__, ofs, retlen, c->wbuf_pagesize);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (!memcmp(buf, c->wbuf_verify, c->wbuf_pagesize))
 		return 0;
@@ -263,7 +263,7 @@ static int jffs2_verify_write(struct jffs2_sb_info *c, unsigned char *buf,
 	print_hex_dump(KERN_WARNING, "", DUMP_PREFIX_OFFSET, 16, 1,
 		       c->wbuf_verify, c->wbuf_pagesize, 0);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 #else
 #define jffs2_verify_write(c,b,o) (0)
@@ -423,7 +423,7 @@ static void jffs2_wbuf_recover(struct jffs2_sb_info *c)
 			pr_notice("Faking write error at 0x%08x\n", ofs);
 			breakme = 0;
 			mtd_write(c->mtd, ofs, towrite, &retlen, brokenbuf);
-			ret = -EIO;
+			ret = -ERR(EIO);
 		} else
 #endif
 			ret = mtd_write(c->mtd, ofs, towrite, &retlen,
@@ -631,7 +631,7 @@ static int __jffs2_flush_wbuf(struct jffs2_sb_info *c, int pad)
 		breakme = 0;
 		mtd_write(c->mtd, c->wbuf_ofs, c->wbuf_pagesize, &retlen,
 			  brokenbuf);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else
 #endif
 
@@ -644,7 +644,7 @@ static int __jffs2_flush_wbuf(struct jffs2_sb_info *c, int pad)
 	} else if (retlen != c->wbuf_pagesize) {
 		pr_warn("jffs2_flush_wbuf(): Write was short: %zd instead of %d\n",
 			retlen, c->wbuf_pagesize);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto wfail;
 	} else if ((ret = jffs2_verify_write(c, c->wbuf, c->wbuf_ofs))) {
 	wfail:
@@ -1048,7 +1048,7 @@ int jffs2_check_oob_empty(struct jffs2_sb_info *c,
 		pr_err("cannot read OOB for EB at %08x, requested %zd bytes, read %zd bytes, error %d\n",
 		       jeb->offset, ops.ooblen, ops.oobretlen, ret);
 		if (!ret || mtd_is_bitflip(ret))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		return ret;
 	}
 
@@ -1090,7 +1090,7 @@ int jffs2_check_nand_cleanmarker(struct jffs2_sb_info *c,
 		pr_err("cannot read OOB for EB at %08x, requested %zd bytes, read %zd bytes, error %d\n",
 		       jeb->offset, ops.ooblen, ops.oobretlen, ret);
 		if (!ret || mtd_is_bitflip(ret))
-			ret = -EIO;
+			ret = -ERR(EIO);
 		return ret;
 	}
 
@@ -1115,7 +1115,7 @@ int jffs2_write_nand_cleanmarker(struct jffs2_sb_info *c,
 		pr_err("cannot write OOB for EB at %08x, requested %zd bytes, read %zd bytes, error %d\n",
 		       jeb->offset, ops.ooblen, ops.oobretlen, ret);
 		if (!ret)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		return ret;
 	}
 
@@ -1191,7 +1191,7 @@ int jffs2_nand_flash_setup(struct jffs2_sb_info *c)
 
 	if (c->mtd->oobavail == 0) {
 		pr_err("inconsistent device description\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	jffs2_dbg(1, "using OOB on NAND\n");

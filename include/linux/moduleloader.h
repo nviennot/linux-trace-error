@@ -58,7 +58,7 @@ static inline int apply_relocate(Elf_Shdr *sechdrs,
 {
 	printk(KERN_ERR "module %s: REL relocation unsupported\n",
 	       module_name(me));
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 }
 #endif
 
@@ -81,7 +81,7 @@ static inline int apply_relocate_add(Elf_Shdr *sechdrs,
 {
 	printk(KERN_ERR "module %s: REL relocation unsupported\n",
 	       module_name(me));
-	return -ENOEXEC;
+	return -ERR(ENOEXEC);
 }
 #endif
 

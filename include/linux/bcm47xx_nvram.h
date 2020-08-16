@@ -22,16 +22,16 @@ static inline void bcm47xx_nvram_release_contents(char *nvram)
 #else
 static inline int bcm47xx_nvram_init_from_mem(u32 base, u32 lim)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 };
 static inline int bcm47xx_nvram_getenv(const char *name, char *val,
 				       size_t val_len)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 };
 static inline int bcm47xx_nvram_gpio_pin(const char *name)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 };
 
 static inline char *bcm47xx_nvram_get_contents(size_t *val_len)

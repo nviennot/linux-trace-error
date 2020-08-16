@@ -422,7 +422,7 @@ static int pll_factors(struct _pll_div *pll_div, unsigned int target,
 	if (i == ARRAY_SIZE(post_table)) {
 		printk(KERN_ERR "wm8580: Unable to scale output frequency "
 		       "%u\n", target);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	Ndiv = target / source;
@@ -437,7 +437,7 @@ static int pll_factors(struct _pll_div *pll_div, unsigned int target,
 	if ((Ndiv < 5) || (Ndiv > 13)) {
 		printk(KERN_ERR
 			"WM8580 N=%u outside supported range\n", Ndiv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pll_div->n = Ndiv;
@@ -486,7 +486,7 @@ static int wm8580_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 		pwr_mask = WM8580_PWRDN2_PLLBPD;
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (freq_in && freq_out) {
@@ -559,7 +559,7 @@ static int wm8580_paif_hw_params(struct snd_pcm_substream *substream,
 		paifb |= WM8580_AIF_LENGTH_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Look up the SYSCLK ratio; accept only exact matches */
@@ -570,7 +570,7 @@ static int wm8580_paif_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(wm8580_sysclk_ratios)) {
 		dev_err(component->dev, "Invalid clock ratio %d/%d\n",
 			wm8580->sysclk[dai->driver->id], params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	paifa |= i;
 	dev_dbg(component->dev, "Running at %dfs with %dHz clock\n",
@@ -621,7 +621,7 @@ static int wm8580_set_paif_dai_fmt(struct snd_soc_dai *codec_dai,
 		aifa |= WM8580_AIF_MS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -647,7 +647,7 @@ static int wm8580_set_paif_dai_fmt(struct snd_soc_dai *codec_dai,
 		aifb |= WM8580_AIF_LRP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -656,7 +656,7 @@ static int wm8580_set_paif_dai_fmt(struct snd_soc_dai *codec_dai,
 
 	case SND_SOC_DAIFMT_IB_IF:
 		if (!can_invert_lrclk)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		aifb |= WM8580_AIF_BCP;
 		aifb |= WM8580_AIF_LRP;
 		break;
@@ -667,12 +667,12 @@ static int wm8580_set_paif_dai_fmt(struct snd_soc_dai *codec_dai,
 
 	case SND_SOC_DAIFMT_NB_IF:
 		if (!can_invert_lrclk)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		aifb |= WM8580_AIF_LRP;
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8580_PAIF1 + codec_dai->driver->id, aifa);
@@ -709,7 +709,7 @@ static int wm8580_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_write(component, WM8580_PLLB4, reg);
 		break;
@@ -735,13 +735,13 @@ static int wm8580_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_write(component, WM8580_PLLB4, reg);
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -767,13 +767,13 @@ static int wm8580_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 
 	default:
 		WARN(1, "Unknown DAI driver ID\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (clk_id) {
 	case WM8580_CLKSRC_ADCMCLK:
 		if (dai->driver->id != WM8580_DAI_PAIFTX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		sel = 0 << sel_shift;
 		break;
 	case WM8580_CLKSRC_PLLA:
@@ -787,7 +787,7 @@ static int wm8580_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Unknown clock %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* We really should validate PLL settings but not yet */
@@ -1029,7 +1029,7 @@ static int wm8580_i2c_probe(struct i2c_client *i2c,
 
 	if (!wm8580->drvdata) {
 		dev_err(&i2c->dev, "failed to find driver data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = devm_snd_soc_register_component(&i2c->dev,

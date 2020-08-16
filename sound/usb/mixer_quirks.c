@@ -217,7 +217,7 @@ static long snd_usb_sbrc_hwdep_read(struct snd_hwdep *hw, char __user *buf,
 	u32 rc_code;
 
 	if (count != 1 && count != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = wait_event_interruptible(mixer->rc_waitq,
 				       (rc_code = xchg(&mixer->rc_code, 0)) != 0);
 	if (err == 0) {
@@ -335,7 +335,7 @@ static int snd_audigy2nx_led_put(struct snd_kcontrol *kcontrol,
 	int err;
 
 	if (value > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (value == old_value)
 		return 0;
 	kcontrol->private_value = (value << 8) | index;
@@ -493,7 +493,7 @@ static int snd_emu0204_ch_switch_put(struct snd_kcontrol *kcontrol,
 	int err;
 
 	if (value > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (value == kcontrol->private_value)
 		return 0;
@@ -1511,12 +1511,12 @@ static int snd_microii_spdif_default_get(struct snd_kcontrol *kcontrol,
 	/* use known values for that card: interface#1 altsetting#1 */
 	iface = usb_ifnum_to_if(chip->dev, 1);
 	if (!iface || iface->num_altsetting < 2) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto end;
 	}
 	alts = &iface->altsetting[1];
 	if (get_iface_desc(alts)->bNumEndpoints < 1) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto end;
 	}
 	ep = get_endpoint(alts, 0)->bEndpointAddress;
@@ -1931,7 +1931,7 @@ static int snd_rme_rate_get(struct snd_kcontrol *kcontrol,
 			rate = snd_rme_rate_table[idx];
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ucontrol->value.integer.value[0] = rate;
 	return 0;
@@ -1961,7 +1961,7 @@ static int snd_rme_sync_state_get(struct snd_kcontrol *kcontrol,
 			idx = SND_RME_CLOCK_LOCK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ucontrol->value.enumerated.item[0] = idx;
 	return 0;
@@ -2345,7 +2345,7 @@ static int snd_bbfpro_ctl_put(struct snd_kcontrol *kcontrol,
 	}
 
 	if (val > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (val == old_value)
 		return 0;
@@ -2433,7 +2433,7 @@ static int snd_bbfpro_vol_put(struct snd_kcontrol *kcontrol,
 	old_value = kcontrol->private_value >> SND_BBFPRO_MIXER_VAL_SHIFT;
 
 	if (uvalue > SND_BBFPRO_MIXER_VAL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (uvalue == old_value)
 		return 0;

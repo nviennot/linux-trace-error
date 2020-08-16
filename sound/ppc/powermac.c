@@ -98,7 +98,7 @@ static int snd_pmac_probe(struct platform_device *devptr)
 		break;
 	default:
 		snd_printk(KERN_ERR "unsupported hardware %d\n", chip->model);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __error;
 	}
 

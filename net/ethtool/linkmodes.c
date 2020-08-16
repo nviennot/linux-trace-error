@@ -109,7 +109,7 @@ static int linkmodes_fill_reply(struct sk_buff *skb,
 	int ret;
 
 	if (nla_put_u8(skb, ETHTOOL_A_LINKMODES_AUTONEG, lsettings->autoneg))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ret = ethnl_put_bitset(skb, ETHTOOL_A_LINKMODES_OURS,
 			       ksettings->link_modes.advertising,
@@ -117,29 +117,29 @@ static int linkmodes_fill_reply(struct sk_buff *skb,
 			       __ETHTOOL_LINK_MODE_MASK_NBITS, link_mode_names,
 			       compact);
 	if (ret < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (!data->peer_empty) {
 		ret = ethnl_put_bitset(skb, ETHTOOL_A_LINKMODES_PEER,
 				       ksettings->link_modes.lp_advertising,
 				       NULL, __ETHTOOL_LINK_MODE_MASK_NBITS,
 				       link_mode_names, compact);
 		if (ret < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 
 	if (nla_put_u32(skb, ETHTOOL_A_LINKMODES_SPEED, lsettings->speed) ||
 	    nla_put_u8(skb, ETHTOOL_A_LINKMODES_DUPLEX, lsettings->duplex))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (lsettings->master_slave_cfg != MASTER_SLAVE_CFG_UNSUPPORTED &&
 	    nla_put_u8(skb, ETHTOOL_A_LINKMODES_MASTER_SLAVE_CFG,
 		       lsettings->master_slave_cfg))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (lsettings->master_slave_state != MASTER_SLAVE_STATE_UNSUPPORTED &&
 	    nla_put_u8(skb, ETHTOOL_A_LINKMODES_MASTER_SLAVE_STATE,
 		       lsettings->master_slave_state))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -337,13 +337,13 @@ static int ethnl_update_linkmodes(struct genl_info *info, struct nlattr **tb,
 		if (lsettings->master_slave_cfg == MASTER_SLAVE_CFG_UNSUPPORTED) {
 			NL_SET_ERR_MSG_ATTR(info->extack, master_slave_cfg,
 					    "master/slave configuration not supported by device");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 
 		if (!ethnl_validate_master_slave_cfg(cfg)) {
 			NL_SET_ERR_MSG_ATTR(info->extack, master_slave_cfg,
 					    "master/slave value is invalid");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	}
 
@@ -394,7 +394,7 @@ int ethnl_set_linkmodes(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	dev = req_info.dev;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!dev->ethtool_ops->get_link_ksettings ||
 	    !dev->ethtool_ops->set_link_ksettings)
 		goto out_dev;

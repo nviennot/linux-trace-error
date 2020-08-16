@@ -33,11 +33,11 @@ static int linkstate_get_sqi(struct net_device *dev)
 	int ret;
 
 	if (!phydev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&phydev->lock);
 	if (!phydev->drv || !phydev->drv->get_sqi)
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	else
 		ret = phydev->drv->get_sqi(phydev);
 	mutex_unlock(&phydev->lock);
@@ -51,11 +51,11 @@ static int linkstate_get_sqi_max(struct net_device *dev)
 	int ret;
 
 	if (!phydev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&phydev->lock);
 	if (!phydev->drv || !phydev->drv->get_sqi_max)
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	else
 		ret = phydev->drv->get_sqi_max(phydev);
 	mutex_unlock(&phydev->lock);
@@ -118,15 +118,15 @@ static int linkstate_fill_reply(struct sk_buff *skb,
 
 	if (data->link >= 0 &&
 	    nla_put_u8(skb, ETHTOOL_A_LINKSTATE_LINK, !!data->link))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (data->sqi != -EOPNOTSUPP &&
 	    nla_put_u32(skb, ETHTOOL_A_LINKSTATE_SQI, data->sqi))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (data->sqi_max != -EOPNOTSUPP &&
 	    nla_put_u32(skb, ETHTOOL_A_LINKSTATE_SQI_MAX, data->sqi_max))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

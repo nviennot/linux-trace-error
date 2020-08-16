@@ -181,7 +181,7 @@ static int get_ctl_type(struct snd_card *card, struct snd_ctl_elem_id *id,
 	kctl = snd_ctl_find_id(card, id);
 	if (! kctl) {
 		up_read(&card->controls_rwsem);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	info = kzalloc(sizeof(*info), GFP_KERNEL);
 	if (info == NULL) {
@@ -231,7 +231,7 @@ static int copy_ctl_value_from_user(struct snd_card *card,
 	if (get_user(indirect, &data32->indirect))
 		return -EFAULT;
 	if (indirect)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	type = get_ctl_type(card, &data->id, &count);
 	if (type < 0)
 		return type;
@@ -249,7 +249,7 @@ static int copy_ctl_value_from_user(struct snd_card *card,
 		size = get_elem_size(type, count);
 		if (size < 0) {
 			dev_err(card->dev, "snd_ioctl32_ctl_elem_value: unknown type %d\n", type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (copy_from_user(data->value.bytes.data, valuep, size))
 			return -EFAULT;
@@ -438,7 +438,7 @@ static inline long snd_ctl_ioctl_compat(struct file *file, unsigned int cmd, uns
 
 	ctl = file->private_data;
 	if (snd_BUG_ON(!ctl || !ctl->card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	switch (cmd) {
 	case SNDRV_CTL_IOCTL_PVERSION:
@@ -484,5 +484,5 @@ static inline long snd_ctl_ioctl_compat(struct file *file, unsigned int cmd, uns
 		}
 	}
 	up_read(&snd_ioctl_rwsem);
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }

@@ -198,7 +198,7 @@ static int fsl_easrc_set_rs_ratio(struct fsl_asrc_pair *ctx)
 		frac_bits = 37;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = (u64)in_rate << frac_bits;
@@ -207,7 +207,7 @@ static int fsl_easrc_set_rs_ratio(struct fsl_asrc_pair *ctx)
 
 	if (r[1] & 0xFFFFF000) {
 		dev_err(&easrc->pdev->dev, "ratio exceed range\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(easrc->regmap, REG_EASRC_RRL(ctx->index),
@@ -247,7 +247,7 @@ static int fsl_easrc_coeff_mem_ptr_reset(struct fsl_asrc *easrc,
 	u32 reg, mask, val;
 
 	if (!easrc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev = &easrc->pdev->dev;
 
@@ -256,7 +256,7 @@ static int fsl_easrc_coeff_mem_ptr_reset(struct fsl_asrc *easrc,
 		/* This resets the prefilter memory pointer addr */
 		if (ctx_id >= EASRC_CTX_MAX_NUM) {
 			dev_err(dev, "Invalid context id[%d]\n", ctx_id);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		reg = REG_EASRC_CCE1(ctx_id);
@@ -271,7 +271,7 @@ static int fsl_easrc_coeff_mem_ptr_reset(struct fsl_asrc *easrc,
 		break;
 	default:
 		dev_err(dev, "Unknown memory type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -315,7 +315,7 @@ static int fsl_easrc_resampler_config(struct fsl_asrc *easrc)
 
 	if (!hdr) {
 		dev_err(dev, "firmware not loaded!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	for (i = 0; i < hdr->interp_scen; i++) {
@@ -333,7 +333,7 @@ static int fsl_easrc_resampler_config(struct fsl_asrc *easrc)
 
 	if (!selected_interp) {
 		dev_err(dev, "failed to get interpreter configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -420,7 +420,7 @@ static int fsl_easrc_normalize_filter(struct fsl_asrc *easrc,
 
 	if ((shift > 0 && exp >= 0x7ff) || (shift < 0 && exp <= 0)) {
 		dev_err(dev, "coef out of range\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	outcoef = (u64)(coef & 0x800FFFFFFFFFFFFFll) + ((u64)exp << 52);
@@ -444,7 +444,7 @@ static int fsl_easrc_write_pf_coeff_mem(struct fsl_asrc *easrc, int ctx_id,
 
 	if (!coef) {
 		dev_err(dev, "coef table is NULL\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -484,13 +484,13 @@ static int fsl_easrc_prefilter_config(struct fsl_asrc *easrc,
 	int ret, i;
 
 	if (!easrc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev = &easrc->pdev->dev;
 
 	if (ctx_id >= EASRC_CTX_MAX_NUM) {
 		dev_err(dev, "Invalid context id[%d]\n", ctx_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	easrc_priv = easrc->private;
@@ -593,7 +593,7 @@ static int fsl_easrc_prefilter_config(struct fsl_asrc *easrc,
 			dev_err(dev, "Conversion from in ratio %u(%u) to out ratio %u(%u) is not supported\n",
 				in_s_rate, inrate,
 				out_s_rate, outrate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*
@@ -642,7 +642,7 @@ static int fsl_easrc_prefilter_config(struct fsl_asrc *easrc,
 	if (ctx_priv->st1_num_taps > EASRC_MAX_PF_TAPS) {
 		dev_err(dev, "ST1 taps [%d] mus be lower than %d\n",
 			ctx_priv->st1_num_taps, EASRC_MAX_PF_TAPS);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto ctx_error;
 	}
 
@@ -667,7 +667,7 @@ static int fsl_easrc_prefilter_config(struct fsl_asrc *easrc,
 		if (ctx_priv->st2_num_taps + ctx_priv->st1_num_taps > EASRC_MAX_PF_TAPS) {
 			dev_err(dev, "ST2 taps [%d] mus be lower than %d\n",
 				ctx_priv->st2_num_taps, EASRC_MAX_PF_TAPS);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto ctx_error;
 		}
 
@@ -872,7 +872,7 @@ static int fsl_easrc_config_slot(struct fsl_asrc *easrc, unsigned int ctx_id)
 	int i, ret;
 
 	if (req_channels <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < EASRC_CTX_MAX_NUM; i++) {
 		slot0 = &easrc_priv->slot[i][0];
@@ -913,7 +913,7 @@ static int fsl_easrc_config_slot(struct fsl_asrc *easrc, unsigned int ctx_id)
 
 	if (req_channels > 0) {
 		dev_err(&easrc->pdev->dev, "no avail slot.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -973,13 +973,13 @@ int fsl_easrc_config_context(struct fsl_asrc *easrc, unsigned int ctx_id)
 	int ret;
 
 	if (!easrc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev = &easrc->pdev->dev;
 
 	if (ctx_id >= EASRC_CTX_MAX_NUM) {
 		dev_err(dev, "Invalid context id[%d]\n", ctx_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ctx = easrc->pair[ctx_id];
@@ -1051,7 +1051,7 @@ static int fsl_easrc_process_format(struct fsl_asrc_pair *ctx,
 	int ret;
 
 	if (!fmt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Context Input Floating Point Format
@@ -1081,7 +1081,7 @@ static int fsl_easrc_process_format(struct fsl_asrc_pair *ctx,
 		fmt->addexp = 31;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (raw_fmt) {
@@ -1205,7 +1205,7 @@ int fsl_easrc_set_ctx_organziation(struct fsl_asrc_pair *ctx)
 	struct fsl_asrc *easrc;
 
 	if (!ctx)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	easrc = ctx->asrc;
 	ctx_priv = ctx->private;
@@ -1265,11 +1265,11 @@ int fsl_easrc_request_context(int channels, struct fsl_asrc_pair *ctx)
 
 	if (index == ASRC_INVALID_PAIR) {
 		dev_err(dev, "all contexts are busy\n");
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	} else if (channels > easrc->channel_avail) {
 		dev_err(dev, "can't give the required channels: %d\n",
 			channels);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		ctx->index = index;
 		ctx->channels = channels;
@@ -1437,7 +1437,7 @@ static int fsl_easrc_trigger(struct snd_pcm_substream *substream,
 			return ret;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1527,7 +1527,7 @@ static int fsl_easrc_hw_free(struct snd_pcm_substream *substream,
 	struct fsl_easrc_ctx_priv *ctx_priv;
 
 	if (!ctx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctx_priv = ctx->private;
 
@@ -1813,7 +1813,7 @@ static int fsl_easrc_get_firmware(struct fsl_asrc *easrc)
 	int ret;
 
 	if (!easrc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	easrc_priv = easrc->private;
 	fw_p = &easrc_priv->fw;

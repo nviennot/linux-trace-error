@@ -109,7 +109,7 @@ static inline void v9fs_fscache_invalidate_page(struct page *page) {}
 static inline int v9fs_readpage_from_fscache(struct inode *inode,
 					     struct page *page)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline int v9fs_readpages_from_fscache(struct inode *inode,
@@ -117,7 +117,7 @@ static inline int v9fs_readpages_from_fscache(struct inode *inode,
 					      struct list_head *pages,
 					      unsigned *nr_pages)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline void v9fs_readpage_to_fscache(struct inode *inode,

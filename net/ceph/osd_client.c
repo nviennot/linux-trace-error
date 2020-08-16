@@ -1361,7 +1361,7 @@ static int reopen_osd(struct ceph_osd *osd)
 	if (RB_EMPTY_ROOT(&osd->o_requests) &&
 	    RB_EMPTY_ROOT(&osd->o_linger_requests)) {
 		close_osd(osd);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	peer_addr = &osd->o_osdc->osdmap->osd_addr[osd->o_osd];
@@ -1378,7 +1378,7 @@ static int reopen_osd(struct ceph_osd *osd)
 			req->r_stamp = jiffies;
 		}
 
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	ceph_con_close(&osd->o_con);
@@ -1404,7 +1404,7 @@ static struct ceph_osd *lookup_create_osd(struct ceph_osd_client *osdc, int o,
 		osd = &osdc->homeless_osd;
 	if (!osd) {
 		if (!wrlocked)
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 
 		osd = create_osd(osdc, o);
 		insert_osd(&osdc->osds, osd);
@@ -1842,7 +1842,7 @@ static int decode_hoid(void **p, void *end, struct ceph_hobject_id *hoid)
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hoid_encoding_size(const struct ceph_hobject_id *hoid)
@@ -2390,7 +2390,7 @@ again:
 		    pool_full(osdc, req->r_t.base_oloc.pool))) {
 		dout("req %p full/pool_full\n", req);
 		if (ceph_test_opt(osdc->client, ABORT_ON_FULL)) {
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 		} else {
 			pr_warn_ratelimited("FULL or reached pool quota\n");
 			req->r_t.paused = true;
@@ -3041,7 +3041,7 @@ static int normalize_watch_error(int err)
 	 * the delete appear the same to the user.
 	 */
 	if (err == -ENOENT)
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 
 	return err;
 }
@@ -3519,7 +3519,7 @@ out:
 	return ret;
 
 e_inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out;
 }
 
@@ -3559,7 +3559,7 @@ out:
 	return ret;
 
 e_inval:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out;
 }
 
@@ -3650,7 +3650,7 @@ static int decode_MOSDOpReply(const struct ceph_msg *msg, struct MOSDOpReply *m)
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -4259,7 +4259,7 @@ static int decode_MOSDBackoff(const struct ceph_msg *msg, struct MOSDBackoff *m)
 	return 0;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct ceph_msg *create_backoff_message(
@@ -4507,7 +4507,7 @@ static void handle_watch_notify(struct ceph_osd_client *osdc,
 	     opcode, cookie, lreq, lreq->is_watch);
 	if (opcode == CEPH_WATCH_EVENT_DISCONNECT) {
 		if (!lreq->last_error) {
-			lreq->last_error = -ENOTCONN;
+			lreq->last_error = -ERR(ENOTCONN);
 			queue_watch_error(lreq);
 		}
 	} else if (!lreq->is_watch) {
@@ -4599,7 +4599,7 @@ static int wait_request_timeout(struct ceph_osd_request *req,
 	left = wait_for_completion_killable_timeout(&req->r_completion,
 						ceph_timeout_jiffies(timeout));
 	if (left <= 0) {
-		left = left ?: -ETIMEDOUT;
+		left = left ?: -ERR(ETIMEDOUT);
 		ceph_osdc_cancel_request(req);
 	} else {
 		left = req->r_result; /* completed */
@@ -5017,7 +5017,7 @@ static int decode_watcher(void **p, void *end, struct ceph_watch_item *item)
 	if (ret)
 		goto bad;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	ceph_decode_copy_safe(p, end, &item->name, sizeof(item->name), bad);
 	ceph_decode_64_safe(p, end, item->cookie, bad);
 	ceph_decode_skip_32(p, end, bad); /* skip timeout seconds */
@@ -5157,7 +5157,7 @@ int ceph_osdc_call(struct ceph_osd_client *osdc,
 	int ret;
 
 	if (req_len > PAGE_SIZE)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	req = ceph_osdc_alloc_request(osdc, NULL, 1, false, GFP_NOIO);
 	if (!req)

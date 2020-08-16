@@ -137,14 +137,14 @@ static int membarrier_private_expedited(int flags)
 
 	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
 		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!(atomic_read(&mm->membarrier_state) &
 		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY))
-			return -EPERM;
+			return -ERR(EPERM);
 	} else {
 		if (!(atomic_read(&mm->membarrier_state) &
 		      MEMBARRIER_STATE_PRIVATE_EXPEDITED_READY))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	if (atomic_read(&mm->mm_users) == 1 || num_online_cpus() == 1)
@@ -285,7 +285,7 @@ static int membarrier_register_private_expedited(int flags)
 
 	if (flags & MEMBARRIER_FLAG_SYNC_CORE) {
 		if (!IS_ENABLED(CONFIG_ARCH_HAS_MEMBARRIER_SYNC_CORE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ready_state =
 			MEMBARRIER_STATE_PRIVATE_EXPEDITED_SYNC_CORE_READY;
 	}

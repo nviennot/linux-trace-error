@@ -239,7 +239,7 @@ int fat_get_cluster(struct inode *inode, int cluster, int *fclus, int *dclus)
 		fat_fs_error_ratelimit(sb,
 			"%s: invalid start cluster (i_pos %lld, start %08x)",
 			__func__, MSDOS_I(inode)->i_pos, *dclus);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (cluster == 0)
 		return 0;
@@ -259,7 +259,7 @@ int fat_get_cluster(struct inode *inode, int cluster, int *fclus, int *dclus)
 			fat_fs_error_ratelimit(sb,
 				"%s: detected the cluster chain loop (i_pos %lld)",
 				__func__, MSDOS_I(inode)->i_pos);
-			nr = -EIO;
+			nr = -ERR(EIO);
 			goto out;
 		}
 
@@ -270,7 +270,7 @@ int fat_get_cluster(struct inode *inode, int cluster, int *fclus, int *dclus)
 			fat_fs_error_ratelimit(sb,
 				"%s: invalid cluster chain (i_pos %lld)",
 				__func__, MSDOS_I(inode)->i_pos);
-			nr = -EIO;
+			nr = -ERR(EIO);
 			goto out;
 		} else if (nr == FAT_ENT_EOF) {
 			fat_cache_add(inode, &cid);
@@ -302,7 +302,7 @@ static int fat_bmap_cluster(struct inode *inode, int cluster)
 	else if (ret == FAT_ENT_EOF) {
 		fat_fs_error(sb, "%s: request beyond EOF (i_pos %lld)",
 			     __func__, MSDOS_I(inode)->i_pos);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return dclus;
 }

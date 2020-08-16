@@ -206,7 +206,7 @@ btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 		csums_in_item /= csum_size;
 
 		if (csum_offset == csums_in_item) {
-			ret = -EFBIG;
+			ret = -ERR(EFBIG);
 			goto fail;
 		} else if (csum_offset > csums_in_item) {
 			goto fail;
@@ -218,7 +218,7 @@ btrfs_lookup_csum(struct btrfs_trans_handle *trans,
 	return item;
 fail:
 	if (ret > 0)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	return ERR_PTR(ret);
 }
 

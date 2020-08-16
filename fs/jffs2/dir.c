@@ -84,7 +84,7 @@ static struct dentry *jffs2_lookup(struct inode *dir_i, struct dentry *target,
 	jffs2_dbg(1, "jffs2_lookup()\n");
 
 	if (target->d_name.len > JFFS2_MAX_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	dir_f = JFFS2_INODE_INFO(dir_i);
 
@@ -251,10 +251,10 @@ static int jffs2_link (struct dentry *old_dentry, struct inode *dir_i, struct de
 
 	/* Don't let people make hard links to bad inodes. */
 	if (!f->inocache)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (d_is_dir(old_dentry))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* XXX: This is ugly */
 	type = (d_inode(old_dentry)->i_mode & S_IFMT) >> 12;
@@ -292,7 +292,7 @@ static int jffs2_symlink (struct inode *dir_i, struct dentry *dentry, const char
 	/* FIXME: If you care. We'd need to use frags for the target
 	   if it grows much more than this */
 	if (targetlen > 254)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	ri = jffs2_alloc_raw_inode();
 
@@ -592,7 +592,7 @@ static int jffs2_rmdir (struct inode *dir_i, struct dentry *dentry)
 
 	for (fd = f->dents ; fd; fd = fd->next) {
 		if (fd->ino)
-			return -ENOTEMPTY;
+			return -ERR(ENOTEMPTY);
 	}
 
 	ret = jffs2_do_unlink(c, dir_f, dentry->d_name.name,
@@ -763,7 +763,7 @@ static int jffs2_rename (struct inode *old_dir_i, struct dentry *old_dentry,
 	uint32_t now;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The VFS will check for us and prevent trying to rename a
 	 * file over a directory and vice versa, but if it's a directory,
@@ -779,7 +779,7 @@ static int jffs2_rename (struct inode *old_dir_i, struct dentry *old_dentry,
 			for (fd = victim_f->dents; fd; fd = fd->next) {
 				if (fd->ino) {
 					mutex_unlock(&victim_f->sem);
-					return -ENOTEMPTY;
+					return -ERR(ENOTEMPTY);
 				}
 			}
 			mutex_unlock(&victim_f->sem);

@@ -132,7 +132,7 @@ static int adfs_f_validate(struct adfs_dir *dir)
 	     memcmp(&head->startname, "Hugo", 4)) ||
 	    memcmp(&head->startname, &tail->endname, 4) ||
 	    adfs_dir_checkbyte(dir) != tail->dircheckbyte)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -145,7 +145,7 @@ static int adfs_f_read(struct super_block *sb, u32 indaddr, unsigned int size,
 	int ret;
 
 	if (size && size != ADFS_NEWDIR_SIZE)
-		return -EIO;
+		return -ERR(EIO);
 
 	ret = adfs_dir_read_buffers(sb, indaddr, ADFS_NEWDIR_SIZE, dir);
 	if (ret)
@@ -165,7 +165,7 @@ bad_dir:
 	adfs_error(sb, "dir %06x is corrupted", indaddr);
 	adfs_dir_relse(dir);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -222,7 +222,7 @@ __adfs_dir_get(struct adfs_dir *dir, int pos, struct object_info *obj)
 		return ret;
 
 	if (!de.dirobname[0])
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	adfs_dir2obj(dir, obj, &de);
 
@@ -233,7 +233,7 @@ static int
 adfs_f_setpos(struct adfs_dir *dir, unsigned int fpos)
 {
 	if (fpos >= ADFS_NUM_DIR_ENTRIES)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dir->pos = 5 + fpos * 26;
 	return 0;
@@ -280,11 +280,11 @@ static int adfs_f_update(struct adfs_dir *dir, struct object_info *obj)
 		ret = adfs_dir_copyfrom(&de, dir, offset, sizeof(de));
 		if (ret) {
 			adfs_error(dir->sb, "error reading directory entry");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		if (!de.dirobname[0]) {
 			adfs_error(dir->sb, "unable to locate entry to update");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	} while (adfs_readval(de.dirinddiscadd, 3) != obj->indaddr);
 

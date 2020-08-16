@@ -76,7 +76,7 @@ static int vfs_parse_sb_flag(struct fs_context *fc, const char *key)
 		return 0;
 	}
 
-	return -ENOPARAM;
+	return -ERR(ENOPARAM);
 }
 
 /**
@@ -319,7 +319,7 @@ struct fs_context *vfs_dup_fs_context(struct fs_context *src_fc)
 	int ret;
 
 	if (!src_fc->ops->dup)
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	fc = kmemdup(src_fc, sizeof(struct fs_context), GFP_KERNEL);
 	if (!fc)
@@ -567,7 +567,7 @@ static int legacy_parse_monolithic(struct fs_context *fc, void *data)
 
 	if (ctx->param_type != LEGACY_FS_UNSET_PARAMS) {
 		pr_warn("VFS: Can't mix monolithic and individual options\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ctx->legacy_data = data;

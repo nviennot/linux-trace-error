@@ -128,7 +128,7 @@ int ecryptfs_get_lower_file(struct dentry *dentry, struct inode *inode)
 	mutex_lock(&inode_info->lower_file_mutex);
 	count = atomic_inc_return(&inode_info->lower_file_count);
 	if (WARN_ON_ONCE(count < 1))
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else if (count == 1) {
 		rc = ecryptfs_init_lower_file(dentry,
 					      &inode_info->lower_file);
@@ -269,7 +269,7 @@ static int ecryptfs_parse_options(struct ecryptfs_sb_info *sbi, char *options,
 	*check_ruid = 0;
 
 	if (!options) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	ecryptfs_init_mount_crypt_stat(mount_crypt_stat);
@@ -383,7 +383,7 @@ static int ecryptfs_parse_options(struct ecryptfs_sb_info *sbi, char *options,
 		}
 	}
 	if (!sig_set) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		ecryptfs_printk(KERN_ERR, "You must supply at least one valid "
 				"auth tok signature as a mount "
 				"parameter; see the eCryptfs README\n");
@@ -414,7 +414,7 @@ static int ecryptfs_parse_options(struct ecryptfs_sb_info *sbi, char *options,
 		ecryptfs_printk(KERN_ERR,
 				"eCryptfs doesn't support cipher: %s\n",
 				mount_crypt_stat->global_default_cipher_name);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -431,7 +431,7 @@ static int ecryptfs_parse_options(struct ecryptfs_sb_info *sbi, char *options,
 			       mount_crypt_stat->global_default_cipher_name,
 			       mount_crypt_stat->global_default_cipher_key_size,
 			       rc);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			mutex_unlock(&key_tfm_list_mutex);
 			goto out;
 		}
@@ -449,7 +449,7 @@ static int ecryptfs_parse_options(struct ecryptfs_sb_info *sbi, char *options,
 			       mount_crypt_stat->global_default_fn_cipher_name,
 			       mount_crypt_stat->global_default_fn_cipher_key_bytes,
 			       rc);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			mutex_unlock(&key_tfm_list_mutex);
 			goto out;
 		}
@@ -524,7 +524,7 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
 		goto out1;
 	}
 	if (path.dentry->d_sb->s_type == &ecryptfs_fs_type) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_ERR "Mount on filesystem of type "
 			"eCryptfs explicitly disallowed due to "
 			"known incompatibilities\n");
@@ -532,7 +532,7 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
 	}
 
 	if (check_ruid && !uid_eq(d_inode(path.dentry)->i_uid, current_uid())) {
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		printk(KERN_ERR "Mount of device (uid: %d) not owned by "
 		       "requested user (uid: %d)\n",
 			i_uid_read(d_inode(path.dentry)),
@@ -562,7 +562,7 @@ static struct dentry *ecryptfs_mount(struct file_system_type *fs_type, int flags
 	s->s_magic = ECRYPTFS_SUPER_MAGIC;
 	s->s_stack_depth = path.dentry->d_sb->s_stack_depth + 1;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (s->s_stack_depth > FILESYSTEM_MAX_STACK_DEPTH) {
 		pr_err("eCryptfs: maximum fs stacking depth exceeded\n");
 		goto out_free;
@@ -802,7 +802,7 @@ static int __init ecryptfs_init(void)
 	int rc;
 
 	if (ECRYPTFS_DEFAULT_EXTENT_SIZE > PAGE_SIZE) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		ecryptfs_printk(KERN_ERR, "The eCryptfs extent size is "
 				"larger than the host's page size, and so "
 				"eCryptfs cannot run on this system. The "

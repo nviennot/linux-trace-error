@@ -50,7 +50,7 @@ static int none_respond_to_challenge(struct rxrpc_connection *conn,
 
 	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 			      tracepoint_string("chall_none"));
-	return -EPROTO;
+	return -ERR(EPROTO);
 }
 
 static int none_verify_response(struct rxrpc_connection *conn,
@@ -61,7 +61,7 @@ static int none_verify_response(struct rxrpc_connection *conn,
 
 	trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 			      tracepoint_string("resp_none"));
-	return -EPROTO;
+	return -ERR(EPROTO);
 }
 
 static void none_clear(struct rxrpc_connection *conn)

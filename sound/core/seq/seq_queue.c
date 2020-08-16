@@ -189,10 +189,10 @@ int snd_seq_queue_delete(int client, int queueid)
 	struct snd_seq_queue *q;
 
 	if (queueid < 0 || queueid >= SNDRV_SEQ_MAX_QUEUES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	q = queue_list_remove(queueid, client);
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	queue_delete(q);
 
 	return 0;
@@ -292,11 +292,11 @@ int snd_seq_enqueue_event(struct snd_seq_event_cell *cell, int atomic, int hop)
 	struct snd_seq_queue *q;
 
 	if (snd_BUG_ON(!cell))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dest = cell->event.queue;	/* destination queue */
 	q = queueptr(dest);
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* handle relative time stamps, convert them into absolute */
 	if ((cell->event.flags & SNDRV_SEQ_TIME_MODE_MASK) == SNDRV_SEQ_TIME_MODE_REL) {
 		switch (cell->event.flags & SNDRV_SEQ_TIME_STAMP_MASK) {
@@ -398,11 +398,11 @@ int snd_seq_queue_set_owner(int queueid, int client, int locked)
 	unsigned long flags;
 
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (! queue_access_lock(q, client)) {
 		queuefree(q);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	spin_lock_irqsave(&q->owner_lock, flags);
@@ -430,7 +430,7 @@ int snd_seq_queue_timer_open(int queueid)
 
 	queue = queueptr(queueid);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tmr = queue->timer;
 	if ((result = snd_seq_timer_open(queue)) < 0) {
 		snd_seq_timer_defaults(tmr);
@@ -450,7 +450,7 @@ int snd_seq_queue_timer_close(int queueid)
 
 	queue = queueptr(queueid);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_seq_timer_close(queue);
 	queuefree(queue);
 	return result;
@@ -464,10 +464,10 @@ int snd_seq_queue_timer_set_tempo(int queueid, int client,
 	int result;
 
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (! queue_access_lock(q, client)) {
 		queuefree(q);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	result = snd_seq_timer_set_tempo_ppq(q->timer, info->tempo, info->ppq);
@@ -508,7 +508,7 @@ int snd_seq_queue_use(int queueid, int client, int use)
 
 	queue = queueptr(queueid);
 	if (queue == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&queue->timer_mutex);
 	queue_use(queue, client, use);
 	mutex_unlock(&queue->timer_mutex);
@@ -528,7 +528,7 @@ int snd_seq_queue_is_used(int queueid, int client)
 
 	q = queueptr(queueid);
 	if (q == NULL)
-		return -EINVAL; /* invalid queue */
+		return -ERR(EINVAL); /* invalid queue */
 	result = test_bit(client, q->clients_bitmap) ? 1 : 0;
 	queuefree(q);
 	return result;
@@ -718,15 +718,15 @@ int snd_seq_control_queue(struct snd_seq_event *ev, int atomic, int hop)
 	struct snd_seq_queue *q;
 
 	if (snd_BUG_ON(!ev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	q = queueptr(ev->data.queue.queue);
 
 	if (q == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (! queue_access_lock(q, ev->source.client)) {
 		queuefree(q);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	snd_seq_queue_process_event(q, ev, atomic, hop);

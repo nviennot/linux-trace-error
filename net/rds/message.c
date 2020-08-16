@@ -315,7 +315,7 @@ struct scatterlist *rds_message_alloc_sgs(struct rds_message *rm, int nents)
 
 	if (nents <= 0) {
 		pr_warn("rds: alloc sgs failed! nents <= 0\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (rm->m_used_sgs + nents > rm->m_total_sgs) {

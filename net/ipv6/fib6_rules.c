@@ -140,10 +140,10 @@ static int fib6_rule_saddr(struct net *net, struct fib_rule *rule, int flags,
 
 		if (ipv6_dev_get_saddr(net, dev, &flp6->daddr,
 				       rt6_flags2srcprefs(flags), &saddr))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		if (!ipv6_prefix_equal(&saddr, &r->src.addr, r->src.plen))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		flp6->saddr = saddr;
 	}
@@ -165,18 +165,18 @@ static int fib6_rule_action_alt(struct fib_rule *rule, struct flowi *flp,
 	case FR_ACT_TO_TBL:
 		break;
 	case FR_ACT_UNREACHABLE:
-		return -ENETUNREACH;
+		return -ERR(ENETUNREACH);
 	case FR_ACT_PROHIBIT:
-		return -EACCES;
+		return -ERR(EACCES);
 	case FR_ACT_BLACKHOLE:
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tb_id = fib_rule_get_table(rule, arg);
 	table = fib6_get_table(net, tb_id);
 	if (!table)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	oif = (int *)arg->lookup_data;
 	err = fib6_table_lookup(net, table, *oif, flp6, res, flags);
@@ -184,7 +184,7 @@ static int fib6_rule_action_alt(struct fib_rule *rule, struct flowi *flp,
 		err = fib6_rule_saddr(net, rule, flags, flp6,
 				      res->nh->fib_nh_dev);
 	else
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 
 	return err;
 }
@@ -205,16 +205,16 @@ static int __fib6_rule_action(struct fib_rule *rule, struct flowi *flp,
 	case FR_ACT_TO_TBL:
 		break;
 	case FR_ACT_UNREACHABLE:
-		err = -ENETUNREACH;
+		err = -ERR(ENETUNREACH);
 		rt = net->ipv6.ip6_null_entry;
 		goto discard_pkt;
 	default:
 	case FR_ACT_BLACKHOLE:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		rt = net->ipv6.ip6_blk_hole_entry;
 		goto discard_pkt;
 	case FR_ACT_PROHIBIT:
-		err = -EACCES;
+		err = -ERR(EACCES);
 		rt = net->ipv6.ip6_prohibit_entry;
 		goto discard_pkt;
 	}
@@ -222,7 +222,7 @@ static int __fib6_rule_action(struct fib_rule *rule, struct flowi *flp,
 	tb_id = fib_rule_get_table(rule, arg);
 	table = fib6_get_table(net, tb_id);
 	if (!table) {
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -240,7 +240,7 @@ static int __fib6_rule_action(struct fib_rule *rule, struct flowi *flp,
 	}
 again:
 	ip6_rt_put_flags(rt, flags);
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	rt = NULL;
 	goto out;
 
@@ -342,7 +342,7 @@ static int fib6_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 			       struct nlattr **tb,
 			       struct netlink_ext_ack *extack)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct net *net = sock_net(skb->sk);
 	struct fib6_rule *rule6 = (struct fib6_rule *) rule;
 
@@ -353,7 +353,7 @@ static int fib6_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
 		}
 
 		if (fib6_new_table(net, rule->table) == NULL) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			goto errout;
 		}
 	}
@@ -430,7 +430,7 @@ static int fib6_rule_fill(struct fib_rule *rule, struct sk_buff *skb,
 	return 0;
 
 nla_put_failure:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static size_t fib6_rule_nlmsg_payload(struct fib_rule *rule)

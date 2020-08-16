@@ -33,7 +33,7 @@ int xfrm6_tunnel_register(struct xfrm6_tunnel *handler, unsigned short family)
 {
 	struct xfrm6_tunnel __rcu **pprev;
 	struct xfrm6_tunnel *t;
-	int ret = -EEXIST;
+	int ret = -ERR(EEXIST);
 	int priority = handler->priority;
 
 	mutex_lock(&tunnel6_mutex);
@@ -77,7 +77,7 @@ int xfrm6_tunnel_deregister(struct xfrm6_tunnel *handler, unsigned short family)
 {
 	struct xfrm6_tunnel __rcu **pprev;
 	struct xfrm6_tunnel *t;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	mutex_lock(&tunnel6_mutex);
 
@@ -182,7 +182,7 @@ static int tunnel6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int tunnel46_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
@@ -194,7 +194,7 @@ static int tunnel46_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int tunnelmpls6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
@@ -206,7 +206,7 @@ static int tunnelmpls6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static const struct inet6_protocol tunnel6_protocol = {
@@ -231,19 +231,19 @@ static int __init tunnel6_init(void)
 {
 	if (inet6_add_protocol(&tunnel6_protocol, IPPROTO_IPV6)) {
 		pr_err("%s: can't add protocol\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (inet6_add_protocol(&tunnel46_protocol, IPPROTO_IPIP)) {
 		pr_err("%s: can't add protocol\n", __func__);
 		inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (xfrm6_tunnel_mpls_supported() &&
 	    inet6_add_protocol(&tunnelmpls6_protocol, IPPROTO_MPLS)) {
 		pr_err("%s: can't add protocol\n", __func__);
 		inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6);
 		inet6_del_protocol(&tunnel46_protocol, IPPROTO_IPIP);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	return 0;
 }

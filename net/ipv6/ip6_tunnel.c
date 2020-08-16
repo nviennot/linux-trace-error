@@ -317,7 +317,7 @@ static struct ip6_tnl *ip6_tnl_create(struct net *net, struct __ip6_tnl_parm *p)
 	struct net_device *dev;
 	struct ip6_tnl *t;
 	char name[IFNAMSIZ];
-	int err = -E2BIG;
+	int err = -ERR(E2BIG);
 
 	if (p->name[0]) {
 		if (!dev_valid_name(p->name))
@@ -379,13 +379,13 @@ static struct ip6_tnl *ip6_tnl_locate(struct net *net,
 		    ipv6_addr_equal(remote, &t->parms.raddr) &&
 		    p->link == t->parms.link) {
 			if (create)
-				return ERR_PTR(-EEXIST);
+				return ERR_PTR(-ERR(EEXIST));
 
 			return t;
 		}
 	}
 	if (!create)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 	return ip6_tnl_create(net, p);
 }
 
@@ -501,7 +501,7 @@ ip6_tnl_err(struct sk_buff *skb, __u8 ipproto, struct inet6_skb_parm *opt,
 	u8 rel_code = ICMPV6_ADDR_UNREACH;
 	__u32 rel_info = 0;
 	struct ip6_tnl *t;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	int rel_msg = 0;
 	u8 tproto;
 	__u16 len;
@@ -1199,7 +1199,7 @@ route_lookup:
 	skb_dst_update_pmtu_no_confirm(skb, mtu);
 	if (skb->len - t->tun_hlen - eth_hlen > mtu && !skb_is_gso(skb)) {
 		*pmtu = mtu;
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto tx_err_dst_release;
 	}
 
@@ -1662,13 +1662,13 @@ ip6_tnl_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		break;
 	case SIOCADDTUNNEL:
 	case SIOCCHGTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		err = -EFAULT;
 		if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 			break;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (p.proto != IPPROTO_IPV6 && p.proto != IPPROTO_IPIP &&
 		    p.proto != 0)
 			break;
@@ -1677,7 +1677,7 @@ ip6_tnl_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		if (cmd == SIOCCHGTUNNEL) {
 			if (!IS_ERR(t)) {
 				if (t->dev != dev) {
-					err = -EEXIST;
+					err = -ERR(EEXIST);
 					break;
 				}
 			} else
@@ -1698,7 +1698,7 @@ ip6_tnl_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		}
 		break;
 	case SIOCDELTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 
@@ -1706,12 +1706,12 @@ ip6_tnl_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			err = -EFAULT;
 			if (copy_from_user(&p, ifr->ifr_ifru.ifru_data, sizeof(p)))
 				break;
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			ip6_tnl_parm_from_user(&p1, &p);
 			t = ip6_tnl_locate(net, &p1, 0);
 			if (IS_ERR(t))
 				break;
-			err = -EPERM;
+			err = -ERR(EPERM);
 			if (t->dev == ip6n->fb_tnl_dev)
 				break;
 			dev = t->dev;
@@ -1720,7 +1720,7 @@ ip6_tnl_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		unregister_netdevice(dev);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	return err;
 }
@@ -1741,17 +1741,17 @@ int ip6_tnl_change_mtu(struct net_device *dev, int new_mtu)
 
 	if (tnl->parms.proto == IPPROTO_IPV6) {
 		if (new_mtu < IPV6_MIN_MTU)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (new_mtu < ETH_MIN_MTU)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	if (tnl->parms.proto == IPPROTO_IPV6 || tnl->parms.proto == 0) {
 		if (new_mtu > IP6_MAX_MTU - dev->hard_header_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (new_mtu > IP_MAX_MTU - dev->hard_header_len)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	dev->mtu = new_mtu;
 	return 0;
@@ -1770,7 +1770,7 @@ int ip6_tnl_encap_add_ops(const struct ip6_tnl_encap_ops *ops,
 			  unsigned int num)
 {
 	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return !cmpxchg((const struct ip6_tnl_encap_ops **)
 			&ip6tun_encaps[num],
@@ -1784,7 +1784,7 @@ int ip6_tnl_encap_del_ops(const struct ip6_tnl_encap_ops *ops,
 	int ret;
 
 	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ret = (cmpxchg((const struct ip6_tnl_encap_ops **)
 		       &ip6tun_encaps[num],
@@ -1964,7 +1964,7 @@ static int ip6_tnl_validate(struct nlattr *tb[], struct nlattr *data[],
 	if (proto != IPPROTO_IPV6 &&
 	    proto != IPPROTO_IPIP &&
 	    proto != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -2063,11 +2063,11 @@ static int ip6_tnl_newlink(struct net *src_net, struct net_device *dev,
 
 	if (nt->parms.collect_md) {
 		if (rtnl_dereference(ip6n->collect_md_tun))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		t = ip6_tnl_locate(net, &nt->parms, 0);
 		if (!IS_ERR(t))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	err = ip6_tnl_create2(dev);
@@ -2088,7 +2088,7 @@ static int ip6_tnl_changelink(struct net_device *dev, struct nlattr *tb[],
 	struct ip_tunnel_encap ipencap;
 
 	if (dev == ip6n->fb_tnl_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ip6_tnl_netlink_encap_parms(data, &ipencap)) {
 		int err = ip6_tnl_encap_setup(t, &ipencap);
@@ -2098,12 +2098,12 @@ static int ip6_tnl_changelink(struct net_device *dev, struct nlattr *tb[],
 	}
 	ip6_tnl_netlink_parms(data, &p);
 	if (p.collect_md)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t = ip6_tnl_locate(net, &p, 0);
 	if (!IS_ERR(t)) {
 		if (t->dev != dev)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else
 		t = netdev_priv(dev);
 
@@ -2182,7 +2182,7 @@ static int ip6_tnl_fill_info(struct sk_buff *skb, const struct net_device *dev)
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 struct net *ip6_tnl_get_link_net(const struct net_device *dev)
@@ -2340,7 +2340,7 @@ static int __init ip6_tunnel_init(void)
 	int  err;
 
 	if (!ipv6_mod_enabled())
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	err = register_pernet_device(&ip6_tnl_net_ops);
 	if (err < 0)

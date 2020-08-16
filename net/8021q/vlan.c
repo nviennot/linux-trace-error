@@ -65,7 +65,7 @@ static int vlan_group_prealloc_vid(struct vlan_group *vg,
 	size = sizeof(struct net_device *) * VLAN_GROUP_ARRAY_PART_LEN;
 	array = kzalloc(size, GFP_KERNEL);
 	if (array == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	vg->vlan_devices_arrays[pidx][vidx] = array;
 	return 0;
@@ -130,12 +130,12 @@ int vlan_check_real_dev(struct net_device *real_dev,
 	if (real_dev->features & NETIF_F_VLAN_CHALLENGED) {
 		pr_info("VLANs not supported on %s\n", name);
 		NL_SET_ERR_MSG_MOD(extack, "VLANs not supported on device");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (vlan_find_dev(real_dev, protocol, vlan_id) != NULL) {
 		NL_SET_ERR_MSG_MOD(extack, "VLAN device already exists");
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	return 0;
@@ -220,7 +220,7 @@ static int register_vlan_device(struct net_device *real_dev, u16 vlan_id)
 	int err;
 
 	if (vlan_id >= VLAN_VID_MASK)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	err = vlan_check_real_dev(real_dev, htons(ETH_P_8021Q), vlan_id,
 				  NULL);
@@ -257,7 +257,7 @@ static int register_vlan_device(struct net_device *real_dev, u16 vlan_id)
 			       NET_NAME_UNKNOWN, vlan_setup);
 
 	if (new_dev == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	dev_net_set(new_dev, net);
 	/* need 4 bytes for extra VLAN header info,
@@ -561,19 +561,19 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 	case DEL_VLAN_CMD:
 	case GET_VLAN_REALDEV_NAME_CMD:
 	case GET_VLAN_VID_CMD:
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		dev = __dev_get_by_name(net, args.device1);
 		if (!dev)
 			goto out;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (args.cmd != ADD_VLAN_CMD && !is_vlan_dev(dev))
 			goto out;
 	}
 
 	switch (args.cmd) {
 	case SET_VLAN_INGRESS_PRIORITY_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		vlan_dev_set_ingress_priority(dev,
@@ -583,7 +583,7 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 		break;
 
 	case SET_VLAN_EGRESS_PRIORITY_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		err = vlan_dev_set_egress_priority(dev,
@@ -592,7 +592,7 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 		break;
 
 	case SET_VLAN_FLAG_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		err = vlan_dev_change_flags(dev,
@@ -601,7 +601,7 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 		break;
 
 	case SET_VLAN_NAME_TYPE_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		if (args.u.name_type < VLAN_NAME_TYPE_HIGHEST) {
@@ -611,19 +611,19 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 			vn->name_type = args.u.name_type;
 			err = 0;
 		} else {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		}
 		break;
 
 	case ADD_VLAN_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		err = register_vlan_device(dev, args.u.VID);
 		break;
 
 	case DEL_VLAN_CMD:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			break;
 		unregister_vlan_dev(dev, NULL);
@@ -647,7 +647,7 @@ static int vlan_ioctl_handler(struct net *net, void __user *arg)
 		break;
 
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		break;
 	}
 out:

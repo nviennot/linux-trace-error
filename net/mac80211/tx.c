@@ -873,7 +873,7 @@ static int ieee80211_fragment(struct ieee80211_tx_data *tx,
 	int rem = skb->len - hdrlen - per_fragm;
 
 	if (WARN_ON(rem < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* first fragment was already added to queue by caller */
 
@@ -2380,14 +2380,14 @@ int ieee80211_lookup_ra_sta(struct ieee80211_sub_if_data *sdata,
 			*sta_out = sta;
 			return 0;
 		} else if (sdata->wdev.use_4addr) {
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 		}
 		/* fall through */
 	case NL80211_IFTYPE_AP:
 	case NL80211_IFTYPE_OCB:
 	case NL80211_IFTYPE_ADHOC:
 		if (is_multicast_ether_addr(skb->data)) {
-			*sta_out = ERR_PTR(-ENOENT);
+			*sta_out = ERR_PTR(-ERR(ENOENT));
 			return 0;
 		}
 		sta = sta_info_get_bss(sdata, skb->data);
@@ -2419,20 +2419,20 @@ int ieee80211_lookup_ra_sta(struct ieee80211_sub_if_data *sdata,
 				 * unreachable.
 				 */
 				if (!ieee80211_is_tdls_setup(skb))
-					return -EINVAL;
+					return -ERR(EINVAL);
 			}
 
 		}
 
 		sta = sta_info_get(sdata, sdata->u.mgd.bssid);
 		if (!sta)
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
-	*sta_out = sta ?: ERR_PTR(-ENOENT);
+	*sta_out = sta ?: ERR_PTR(-ERR(ENOENT));
 	return 0;
 }
 
@@ -2546,7 +2546,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 					u.ap);
 		chanctx_conf = rcu_dereference(ap_sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		band = chanctx_conf->def.chan->band;
@@ -2557,7 +2557,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 		if (sdata->vif.type == NL80211_IFTYPE_AP)
 			chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		fc |= cpu_to_le16(IEEE80211_FCTL_FROMDS);
@@ -2650,7 +2650,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 		}
 		chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		band = chanctx_conf->def.chan->band;
@@ -2693,7 +2693,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 		}
 		chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		band = chanctx_conf->def.chan->band;
@@ -2706,7 +2706,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 		hdrlen = 24;
 		chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		band = chanctx_conf->def.chan->band;
@@ -2719,13 +2719,13 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 		hdrlen = 24;
 		chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 		if (!chanctx_conf) {
-			ret = -ENOTCONN;
+			ret = -ERR(ENOTCONN);
 			goto free;
 		}
 		band = chanctx_conf->def.chan->band;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto free;
 	}
 
@@ -2762,7 +2762,7 @@ static struct sk_buff *ieee80211_build_hdr(struct ieee80211_sub_if_data *sdata,
 
 		I802_DEBUG_INC(local->tx_handlers_drop_unauth_port);
 
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto free;
 	}
 
@@ -4313,7 +4313,7 @@ ieee80211_build_data_template(struct ieee80211_sub_if_data *sdata,
 
 	if (ieee80211_lookup_ra_sta(sdata, skb, &sta)) {
 		kfree_skb(skb);
-		skb = ERR_PTR(-EINVAL);
+		skb = ERR_PTR(-ERR(EINVAL));
 		goto out;
 	}
 
@@ -4328,7 +4328,7 @@ ieee80211_build_data_template(struct ieee80211_sub_if_data *sdata,
 	if (ieee80211_tx_h_select_key(&tx) != TX_CONTINUE) {
 		rcu_read_unlock();
 		kfree_skb(skb);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 out:
@@ -4727,7 +4727,7 @@ static int ieee80211_beacon_protect(struct sk_buff *skb,
 	/* we may crash after this, but it'd be a bug in crypto */
 	WARN_ON(check_skb != skb);
 	if (WARN_ON_ONCE(res != TX_CONTINUE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -5259,11 +5259,11 @@ int ieee80211_reserve_tid(struct ieee80211_sta *pubsta, u8 tid)
 		break;
 	default:
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (WARN_ON(tid >= IEEE80211_NUM_UPS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sta->reserved_tid == tid) {
 		ret = 0;
@@ -5272,7 +5272,7 @@ int ieee80211_reserve_tid(struct ieee80211_sta *pubsta, u8 tid)
 
 	if (sta->reserved_tid != IEEE80211_TID_UNRESERVED) {
 		sdata_err(sdata, "TID reservation already active\n");
-		ret = -EALREADY;
+		ret = -ERR(EALREADY);
 		goto out;
 	}
 
@@ -5372,7 +5372,7 @@ int ieee80211_tx_control_port(struct wiphy *wiphy, struct net_device *dev,
 	 */
 	if (proto != sdata->control_port_protocol &&
 	    proto != cpu_to_be16(ETH_P_PREAUTH))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (proto == sdata->control_port_protocol)
 		ctrl_flags |= IEEE80211_TX_CTRL_PORT_CTRL_PROTO |

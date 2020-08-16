@@ -2141,7 +2141,7 @@ static int __init rcu_torture_fwd_prog_init(void)
 	if (stall_cpu > 0) {
 		VERBOSE_TOROUT_STRING("rcu_torture_fwd_prog_init: Disabled, conflicts with CPU-stall testing");
 		if (IS_MODULE(CONFIG_RCU_TORTURE_TESTS))
-			return -EINVAL; /* In module, can fail back to user. */
+			return -ERR(EINVAL); /* In module, can fail back to user. */
 		WARN_ON(1); /* Make sure rcutorture notices conflict. */
 		return 0;
 	}
@@ -2515,7 +2515,7 @@ rcu_torture_init(void)
 	};
 
 	if (!torture_init_begin(torture_type, verbose))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Process args and tell the world that the torturer is on the job. */
 	for (i = 0; i < ARRAY_SIZE(torture_ops); i++) {
@@ -2531,7 +2531,7 @@ rcu_torture_init(void)
 			pr_cont(" %s", torture_ops[i]->name);
 		pr_cont("\n");
 		WARN_ON(!IS_MODULE(CONFIG_RCU_TORTURE_TEST));
-		firsterr = -EINVAL;
+		firsterr = -ERR(EINVAL);
 		cur_ops = NULL;
 		goto unwind;
 	}

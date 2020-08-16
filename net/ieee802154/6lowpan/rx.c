@@ -85,7 +85,7 @@ int lowpan_iphc_decompress(struct sk_buff *skb)
 	struct ieee802154_hdr hdr;
 
 	if (ieee802154_hdr_peek_addrs(skb, &hdr) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return lowpan_header_decompress(skb, skb->dev, &hdr.dest, &hdr.source);
 }

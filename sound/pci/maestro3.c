@@ -1046,7 +1046,7 @@ static int snd_m3_pcm_start(struct snd_m3 *chip, struct m3_dma *s,
 			    struct snd_pcm_substream *subs)
 {
 	if (! s || ! subs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_m3_inc_timer_users(chip);
 	switch (subs->stream) {
@@ -1073,7 +1073,7 @@ static int snd_m3_pcm_stop(struct snd_m3 *chip, struct m3_dma *s,
 			   struct snd_pcm_substream *subs)
 {
 	if (! s || ! subs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_m3_assp_write(chip, MEMTYPE_INTERNAL_DATA,
 			  s->inst.data + CDATA_INSTANCE_READY, 0);
@@ -1098,17 +1098,17 @@ snd_m3_pcm_trigger(struct snd_pcm_substream *subs, int cmd)
 {
 	struct snd_m3 *chip = snd_pcm_substream_chip(subs);
 	struct m3_dma *s = subs->runtime->private_data;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (snd_BUG_ON(!s))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	spin_lock(&chip->reg_lock);
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 		if (s->running)
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		else {
 			s->running = 1;
 			err = snd_m3_pcm_start(chip, s, subs);
@@ -1410,14 +1410,14 @@ snd_m3_pcm_prepare(struct snd_pcm_substream *subs)
 	struct m3_dma *s = runtime->private_data;
 
 	if (snd_BUG_ON(!s))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (runtime->format != SNDRV_PCM_FORMAT_U8 &&
 	    runtime->format != SNDRV_PCM_FORMAT_S16_LE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (runtime->rate > 48000 ||
 	    runtime->rate < 8000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irq(&chip->reg_lock);
 
@@ -2529,7 +2529,7 @@ snd_m3_create(struct snd_card *card, struct pci_dev *pci,
 	*chip_ret = NULL;
 
 	if (pci_enable_device(pci))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* check, if we can restrict PCI DMA transfers to 28 bits */
 	if (dma_set_mask(&pci->dev, DMA_BIT_MASK(28)) < 0 ||
@@ -2537,7 +2537,7 @@ snd_m3_create(struct snd_card *card, struct pci_dev *pci,
 		dev_err(card->dev,
 			"architecture does not support 28bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -2694,13 +2694,13 @@ snd_m3_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 
 	/* don't pick up modems */
 	if (((pci->class >> 8) & 0xffff) != PCI_CLASS_MULTIMEDIA_AUDIO)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

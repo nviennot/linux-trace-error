@@ -1159,7 +1159,7 @@ int rxrpc_extract_header(struct rxrpc_skb_priv *sp, struct sk_buff *skb)
 	if (skb_copy_bits(skb, 0, &whdr, sizeof(whdr)) < 0) {
 		trace_rxrpc_rx_eproto(NULL, sp->hdr.serial,
 				      tracepoint_string("bad_hdr"));
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	memset(sp, 0, sizeof(*sp));

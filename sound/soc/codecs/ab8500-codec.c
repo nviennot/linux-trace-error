@@ -1148,7 +1148,7 @@ static int sid_status_control_put(struct snd_kcontrol *kcontrol,
 		dev_err(component->dev,
 			"%s: ERROR: This control supports '%s' only!\n",
 			__func__, enum_sid_state[SID_APPLY_FIR]);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	mutex_lock(&drvdata->ctrl_lock);
@@ -1158,9 +1158,9 @@ static int sid_status_control_put(struct snd_kcontrol *kcontrol,
 		if ((sidconf & BIT(AB8500_SIDFIRCONF_ENFIRSIDS)) == 0) {
 			dev_err(component->dev, "%s: Sidetone busy while off!\n",
 				__func__);
-			status = -EPERM;
+			status = -ERR(EPERM);
 		} else {
-			status = -EBUSY;
+			status = -ERR(EBUSY);
 		}
 		goto out;
 	}
@@ -1219,14 +1219,14 @@ static int anc_status_control_put(struct snd_kcontrol *kcontrol,
 
 	req = ucontrol->value.enumerated.item[0];
 	if (req >= ARRAY_SIZE(enum_anc_state)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto cleanup;
 	}
 	if (req != ANC_APPLY_FIR_IIR && req != ANC_APPLY_FIR &&
 		req != ANC_APPLY_IIR) {
 		dev_err(dev, "%s: ERROR: Unsupported status to set '%s'!\n",
 			__func__, enum_anc_state[req]);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto cleanup;
 	}
 	apply_fir = req == ANC_APPLY_FIR || req == ANC_APPLY_FIR_IIR;
@@ -2023,7 +2023,7 @@ static int ab8500_audio_set_ear_cmv(struct snd_soc_component *component,
 		dev_err(component->dev,
 			"%s: Unknown earpiece CM-voltage (%d)!\n",
 			__func__, (int)ear_cmv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(component->dev, "%s: Earpiece CM-voltage: %s\n", __func__,
 		cmv_str);
@@ -2052,7 +2052,7 @@ static int ab8500_audio_set_bit_delay(struct snd_soc_dai *dai,
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupported bit-delay (0x%x)!\n",
 			__func__, delay);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->component->dev, "%s: IF0 Bit-delay: %d bits.\n",
@@ -2088,7 +2088,7 @@ static int ab8500_codec_set_dai_clock_gate(struct snd_soc_component *component,
 		dev_err(component->dev,
 			"%s: ERROR: Unsupported clock mask (0x%x)!\n",
 			__func__, fmt & SND_SOC_DAIFMT_CLOCK_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AB8500_DIGIFCONF1, mask, val);
@@ -2131,7 +2131,7 @@ static int ab8500_codec_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupporter master mask 0x%x\n",
 			__func__, fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AB8500_DIGIFCONF3, mask, val);
@@ -2178,7 +2178,7 @@ static int ab8500_codec_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupported format (0x%x)!\n",
 			__func__, fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2210,7 +2210,7 @@ static int ab8500_codec_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupported INV mask 0x%x\n",
 			__func__, fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AB8500_DIGIFCONF2, mask, val);
@@ -2245,7 +2245,7 @@ static int ab8500_codec_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->component->dev, "%s: Unsupported slot-width 0x%x\n",
 			__func__, slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->component->dev, "%s: IF0 slot-width: %d bits.\n",
@@ -2274,14 +2274,14 @@ static int ab8500_codec_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupported number of slots (%d)!\n",
 			__func__, slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, AB8500_DIGIFCONF1, mask, val);
 
 	/* Setup TDM DA according to active tx slots */
 
 	if (tx_mask & ~0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mask = AB8500_DASLOTCONFX_SLTODAX_MASK;
 	tx_mask = tx_mask << AB8500_DA_DATA0_OFFSET;
@@ -2317,13 +2317,13 @@ static int ab8500_codec_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		dev_err(dai->component->dev,
 			"%s: Unsupported number of active TX-slots (%d)!\n",
 			__func__, slots_active);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Setup TDM AD according to active RX-slots */
 
 	if (rx_mask & ~0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rx_mask = rx_mask << AB8500_AD_DATA0_OFFSET;
 	slots_active = hweight32(rx_mask);
@@ -2361,7 +2361,7 @@ static int ab8500_codec_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		dev_err(dai->component->dev,
 			"%s: Unsupported number of active RX-slots (%d)!\n",
 			__func__, slots_active);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

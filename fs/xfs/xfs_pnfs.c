@@ -62,7 +62,7 @@ xfs_fs_get_uuid(
 "Using experimental pNFS feature, use at your own risk!");
 
 	if (*len < sizeof(uuid_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memcpy(buf, &mp->m_sb.sb_uuid, sizeof(uuid_t));
 	*len = sizeof(uuid_t);
@@ -93,7 +93,7 @@ xfs_fs_map_blocks(
 	int			error = 0;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * We can't export inodes residing on the realtime device.  The realtime
@@ -101,14 +101,14 @@ xfs_fs_map_blocks(
 	 * to find it.
 	 */
 	if (XFS_IS_REALTIME_INODE(ip))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/*
 	 * The pNFS block layout spec actually supports reflink like
 	 * functionality, but the Linux pNFS server doesn't implement it yet.
 	 */
 	if (xfs_is_reflink_inode(ip))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/*
 	 * Lock out any other I/O before we flush and invalidate the pagecache,
@@ -119,7 +119,7 @@ xfs_fs_map_blocks(
 	 */
 	xfs_ilock(ip, XFS_IOLOCK_EXCL);
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	limit = mp->m_super->s_maxbytes;
 	if (!write)
 		limit = max(limit, round_up(i_size_read(inode),
@@ -203,7 +203,7 @@ xfs_pnfs_validate_isize(
 	if (imap.br_startblock == HOLESTARTBLOCK ||
 	    imap.br_startblock == DELAYSTARTBLOCK ||
 	    imap.br_state == XFS_EXT_UNWRITTEN)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 

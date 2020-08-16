@@ -768,7 +768,7 @@ static int add_ipu_page(struct f2fs_sb_info *sbi, struct bio **bio,
 {
 	enum temp_type temp;
 	bool found = false;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	for (temp = HOT; temp < NR_TEMP_TYPE && !found; temp++) {
 		struct f2fs_bio_info *io = sbi->write_io[DATA] + temp;
@@ -1093,7 +1093,7 @@ int f2fs_reserve_new_blocks(struct dnode_of_data *dn, blkcnt_t count)
 		return 0;
 
 	if (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (unlikely((err = inc_valid_block_count(sbi, dn->inode, &count))))
 		return err;
 
@@ -1186,7 +1186,7 @@ struct page *f2fs_get_read_data_page(struct inode *inode, pgoff_t index,
 	f2fs_put_dnode(&dn);
 
 	if (unlikely(dn.data_blkaddr == NULL_ADDR)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto put_err;
 	}
 	if (dn.data_blkaddr != NEW_ADDR &&
@@ -1247,7 +1247,7 @@ struct page *f2fs_find_data_page(struct inode *inode, pgoff_t index)
 	wait_on_page_locked(page);
 	if (unlikely(!PageUptodate(page))) {
 		f2fs_put_page(page, 0);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	return page;
 }
@@ -1275,7 +1275,7 @@ repeat:
 	}
 	if (unlikely(!PageUptodate(page))) {
 		f2fs_put_page(page, 1);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	return page;
 }
@@ -1349,7 +1349,7 @@ static int __allocate_data_block(struct dnode_of_data *dn, int seg_type)
 	int err;
 
 	if (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = f2fs_get_node_info(sbi, dn->nid, &ni);
 	if (err)
@@ -1538,7 +1538,7 @@ next_block:
 	} else {
 		if (create) {
 			if (unlikely(f2fs_cp_error(sbi))) {
-				err = -EIO;
+				err = -ERR(EIO);
 				goto sync_out;
 			}
 			if (flag == F2FS_GET_BLOCK_PRE_AIO) {
@@ -1616,7 +1616,7 @@ skip:
 
 		map->m_len += dn.ofs_in_node - ofs_in_node;
 		if (prealloc && dn.ofs_in_node != last_ofs_in_node + 1) {
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto sync_out;
 		}
 		dn.ofs_in_node = end_offset;
@@ -1755,7 +1755,7 @@ static int get_data_block_bmap(struct inode *inode, sector_t iblock,
 {
 	/* Block number less than F2FS MAX BLOCKS */
 	if (unlikely(iblock >= F2FS_I_SB(inode)->max_file_blocks))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	return __get_data_block(inode, iblock, bh_result, create,
 						F2FS_GET_BLOCK_BMAP, NULL,
@@ -1975,7 +1975,7 @@ next:
 prep_next:
 	cond_resched();
 	if (fatal_signal_pending(current))
-		ret = -EINTR;
+		ret = -ERR(EINTR);
 	else
 		goto next;
 out:
@@ -2060,7 +2060,7 @@ zero_out:
 		zero_user_segment(page, 0, PAGE_SIZE);
 		if (f2fs_need_verity(inode, page->index) &&
 		    !fsverity_verify_page(page)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		if (!PageUptodate(page))
@@ -2374,13 +2374,13 @@ next_page:
 static int f2fs_read_data_page(struct file *file, struct page *page)
 {
 	struct inode *inode = page_file_mapping(page)->host;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	trace_f2fs_readpage(page, DATA);
 
 	if (!f2fs_is_compress_backend_ready(inode)) {
 		unlock_page(page);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* If the file has inline data, try to read it directly */
@@ -2555,7 +2555,7 @@ int f2fs_do_write_data_page(struct f2fs_io_info *fio)
 
 	/* Deadlock due to between page->lock and f2fs_lock_op */
 	if (fio->need_lock == LOCK_REQ && !f2fs_trylock_op(fio->sbi))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	err = f2fs_get_dnode_of_data(&dn, page->index, LOOKUP_NODE);
 	if (err)
@@ -2607,7 +2607,7 @@ got_it:
 
 	if (fio->need_lock == LOCK_RETRY) {
 		if (!f2fs_trylock_op(fio->sbi)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out_writepage;
 		}
 		fio->need_lock = LOCK_REQ;
@@ -2731,7 +2731,7 @@ write:
 	else
 		set_inode_flag(inode, FI_HOT_DATA);
 
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (f2fs_has_inline_data(inode)) {
 		err = f2fs_write_inline_data(inode, page);
 		if (!err)
@@ -3289,7 +3289,7 @@ static int f2fs_write_begin(struct file *file, struct address_space *mapping,
 	trace_f2fs_write_begin(inode, pos, len, flags);
 
 	if (!f2fs_is_checkpoint_ready(sbi)) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto fail;
 	}
 
@@ -3392,7 +3392,7 @@ repeat:
 			goto repeat;
 		}
 		if (unlikely(!PageUptodate(page))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto fail;
 		}
 	}
@@ -3464,7 +3464,7 @@ static int check_direct_IO(struct inode *inode, struct iov_iter *iter,
 			blkbits = blksize_bits(bdev_logical_block_size(bdev));
 		blocksize_mask = (1 << blkbits) - 1;
 		if (align & blocksize_mask)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 1;
 	}
 	return 0;
@@ -3545,13 +3545,13 @@ static ssize_t f2fs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 	if (iocb->ki_flags & IOCB_NOWAIT) {
 		if (!down_read_trylock(&fi->i_gc_rwsem[rw])) {
 			iocb->ki_hint = hint;
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 		if (do_opu && !down_read_trylock(&fi->i_gc_rwsem[READ])) {
 			up_read(&fi->i_gc_rwsem[rw]);
 			iocb->ki_hint = hint;
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 	} else {
@@ -3694,7 +3694,7 @@ static sector_t f2fs_bmap_compress(struct inode *inode, sector_t block)
 
 	return blknr;
 #else
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 #endif
 }
 
@@ -3731,9 +3731,9 @@ int f2fs_migrate_page(struct address_space *mapping,
 	/* migrating an atomic written page is safe with the inmem_lock hold */
 	if (atomic_written) {
 		if (mode != MIGRATE_SYNC)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (!mutex_trylock(&fi->inmem_lock))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	}
 
 	/* one extra reference was held for atomic_write page */
@@ -3869,7 +3869,7 @@ out:
 	return ret;
 bad_bmap:
 	pr_err("swapon: swapfile has holes\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
@@ -3879,17 +3879,17 @@ static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
 	int ret;
 
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (f2fs_readonly(F2FS_I_SB(inode)->sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	ret = f2fs_convert_inline_inode(inode);
 	if (ret)
 		return ret;
 
 	if (f2fs_disable_compressed_file(inode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = check_swap_activate(sis, file, span);
 	if (ret < 0)
@@ -3911,7 +3911,7 @@ static void f2fs_swap_deactivate(struct file *file)
 static int f2fs_swap_activate(struct swap_info_struct *sis, struct file *file,
 				sector_t *span)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void f2fs_swap_deactivate(struct file *file)

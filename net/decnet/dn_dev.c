@@ -254,7 +254,7 @@ static int dn_forwarding_proc(struct ctl_table *table, int write,
 	int tmp, old;
 
 	if (table->extra1 == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dn_db = rcu_dereference_raw(dev->dn_ptr);
 	old = dn_db->parms.forwarding;
@@ -283,7 +283,7 @@ static int dn_forwarding_proc(struct ctl_table *table, int write,
 
 	return err;
 #else
-	return -EINVAL;
+	return -ERR(EINVAL);
 #endif
 }
 
@@ -366,7 +366,7 @@ static int dn_dev_insert_ifa(struct dn_dev *dn_db, struct dn_ifaddr *ifa)
 	     ifa1 != NULL;
 	     ifa1 = rtnl_dereference(ifa1->ifa_next)) {
 		if (ifa1->ifa_local == ifa->ifa_local)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	if (dev->type == ARPHRD_ETHER) {
@@ -431,18 +431,18 @@ int dn_dev_ioctl(unsigned int cmd, void __user *arg)
 		break;
 	case SIOCSIFADDR:
 		if (!capable(CAP_NET_ADMIN))
-			return -EACCES;
+			return -ERR(EACCES);
 		if (sdn->sdn_family != AF_DECnet)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rtnl_lock();
 
 	if ((dev = __dev_get_by_name(&init_net, ifr->ifr_name)) == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto done;
 	}
 
@@ -455,7 +455,7 @@ int dn_dev_ioctl(unsigned int cmd, void __user *arg)
 	}
 
 	if (ifa == NULL && cmd != SIOCSIFADDR) {
-		ret = -EADDRNOTAVAIL;
+		ret = -ERR(EADDRNOTAVAIL);
 		goto done;
 	}
 
@@ -467,7 +467,7 @@ int dn_dev_ioctl(unsigned int cmd, void __user *arg)
 	case SIOCSIFADDR:
 		if (!ifa) {
 			if ((ifa = dn_dev_alloc_ifa()) == NULL) {
-				ret = -ENOBUFS;
+				ret = -ERR(ENOBUFS);
 				break;
 			}
 			memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
@@ -511,9 +511,9 @@ struct net_device *dn_dev_get_default(void)
 int dn_dev_set_default(struct net_device *dev, int force)
 {
 	struct net_device *old = NULL;
-	int rv = -EBUSY;
+	int rv = -ERR(EBUSY);
 	if (!dev->dn_ptr)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock(&dndev_lock);
 	if (force || decnet_default_device == NULL) {
@@ -574,10 +574,10 @@ static int dn_nl_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct ifaddrmsg *ifm;
 	struct dn_ifaddr *ifa;
 	struct dn_ifaddr __rcu **ifap;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!net_eq(net, &init_net))
 		goto errout;
@@ -587,12 +587,12 @@ static int dn_nl_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (err < 0)
 		goto errout;
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	ifm = nlmsg_data(nlh);
 	if ((dn_db = dn_dev_by_index(ifm->ifa_index)) == NULL)
 		goto errout;
 
-	err = -EADDRNOTAVAIL;
+	err = -ERR(EADDRNOTAVAIL);
 	for (ifap = &dn_db->ifa_list;
 	     (ifa = rtnl_dereference(*ifap)) != NULL;
 	     ifap = &ifa->ifa_next) {
@@ -623,10 +623,10 @@ static int dn_nl_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int err;
 
 	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!net_eq(net, &init_net))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
 				     dn_ifa_policy, extack);
@@ -634,11 +634,11 @@ static int dn_nl_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 		return err;
 
 	if (tb[IFA_LOCAL] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ifm = nlmsg_data(nlh);
 	if ((dev = __dev_get_by_index(&init_net, ifm->ifa_index)) == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((dn_db = rtnl_dereference(dev->dn_ptr)) == NULL) {
 		dn_db = dn_dev_create(dev, &err);
@@ -647,7 +647,7 @@ static int dn_nl_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	if ((ifa = dn_dev_alloc_ifa()) == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (tb[IFA_ADDRESS] == NULL)
 		tb[IFA_ADDRESS] = tb[IFA_LOCAL];
@@ -689,7 +689,7 @@ static int dn_nl_fill_ifaddr(struct sk_buff *skb, struct dn_ifaddr *ifa,
 
 	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*ifm), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ifm = nlmsg_data(nlh);
 	ifm->ifa_family = AF_DECnet;
@@ -711,13 +711,13 @@ static int dn_nl_fill_ifaddr(struct sk_buff *skb, struct dn_ifaddr *ifa,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void dn_ifaddr_notify(int event, struct dn_ifaddr *ifa)
 {
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = alloc_skb(dn_ifaddr_nlmsg_size(), GFP_KERNEL);
 	if (skb == NULL)
@@ -790,7 +790,7 @@ static int dn_dev_get_first(struct net_device *dev, __le16 *addr)
 {
 	struct dn_dev *dn_db;
 	struct dn_ifaddr *ifa;
-	int rv = -ENODEV;
+	int rv = -ERR(ENODEV);
 
 	rcu_read_lock();
 	dn_db = rcu_dereference(dev->dn_ptr);
@@ -1086,11 +1086,11 @@ static struct dn_dev *dn_dev_create(struct net_device *dev, int *err)
 			break;
 	}
 
-	*err = -ENODEV;
+	*err = -ERR(ENODEV);
 	if (i == DN_DEV_LIST_SIZE)
 		return NULL;
 
-	*err = -ENOBUFS;
+	*err = -ERR(ENOBUFS);
 	if ((dn_db = kzalloc(sizeof(struct dn_dev), GFP_ATOMIC)) == NULL)
 		return NULL;
 

@@ -48,13 +48,13 @@ static int dma_init_coherent_memory(phys_addr_t phys_addr,
 	int ret;
 
 	if (!size) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	mem_base = memremap(phys_addr, size, MEMREMAP_WC);
 	if (!mem_base) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	dma_mem = kzalloc(sizeof(struct dma_coherent_mem), GFP_KERNEL);
@@ -98,10 +98,10 @@ static int dma_assign_coherent_memory(struct device *dev,
 				      struct dma_coherent_mem *mem)
 {
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (dev->dma_mem)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dev->dma_mem = mem;
 	return 0;
@@ -245,7 +245,7 @@ static int __dma_mmap_from_coherent(struct dma_coherent_mem *mem,
 		unsigned long user_count = vma_pages(vma);
 		int count = PAGE_ALIGN(size) >> PAGE_SHIFT;
 
-		*ret = -ENXIO;
+		*ret = -ERR(ENXIO);
 		if (off < count && user_count <= count - off) {
 			unsigned long pfn = mem->pfn_base + start + off;
 			*ret = remap_pfn_range(vma, vma->vm_start, pfn,
@@ -337,12 +337,12 @@ static int __init rmem_dma_setup(struct reserved_mem *rmem)
 	unsigned long node = rmem->fdt_node;
 
 	if (of_get_flat_dt_prop(node, "reusable", NULL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_ARM
 	if (!of_get_flat_dt_prop(node, "no-map", NULL)) {
 		pr_err("Reserved memory: regions without no-map are not yet supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_get_flat_dt_prop(node, "linux,dma-default", NULL)) {

@@ -651,11 +651,11 @@ int debug_object_activate(void *addr, struct debug_obj_descr *descr)
 			raw_spin_unlock_irqrestore(&db->lock, flags);
 			debug_print_object(obj, "activate");
 			ret = debug_object_fixup(descr->fixup_activate, addr, state);
-			return ret ? 0 : -EINVAL;
+			return ret ? 0 : -ERR(EINVAL);
 
 		case ODEBUG_STATE_DESTROYED:
 			print_object = true;
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		default:
 			ret = 0;
@@ -684,7 +684,7 @@ int debug_object_activate(void *addr, struct debug_obj_descr *descr)
 		debug_print_object(&o, "activate");
 		ret = debug_object_fixup(descr->fixup_activate, addr,
 					ODEBUG_STATE_NOTAVAILABLE);
-		return ret ? 0 : -EINVAL;
+		return ret ? 0 : -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1154,7 +1154,7 @@ check_results(void *addr, enum debug_obj_state state, int fixups, int warnings)
 	struct debug_bucket *db;
 	struct debug_obj *obj;
 	unsigned long flags;
-	int res = -EINVAL;
+	int res = -ERR(EINVAL);
 
 	db = get_bucket((unsigned long) addr);
 

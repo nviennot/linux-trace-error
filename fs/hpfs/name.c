@@ -42,12 +42,12 @@ static inline unsigned char locase(unsigned char *dir, unsigned char a)
 int hpfs_chk_name(const unsigned char *name, unsigned *len)
 {
 	int i;
-	if (*len > 254) return -ENAMETOOLONG;
+	if (*len > 254) return -ERR(ENAMETOOLONG);
 	hpfs_adjust_length(name, len);
-	if (!*len) return -EINVAL;
-	for (i = 0; i < *len; i++) if (not_allowed_char(name[i])) return -EINVAL;
-	if (*len == 1) if (name[0] == '.') return -EINVAL;
-	if (*len == 2) if (name[0] == '.' && name[1] == '.') return -EINVAL;
+	if (!*len) return -ERR(EINVAL);
+	for (i = 0; i < *len; i++) if (not_allowed_char(name[i])) return -ERR(EINVAL);
+	if (*len == 1) if (name[0] == '.') return -ERR(EINVAL);
+	if (*len == 2) if (name[0] == '.' && name[1] == '.') return -ERR(EINVAL);
 	return 0;
 }
 

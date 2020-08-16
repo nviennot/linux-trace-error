@@ -147,7 +147,7 @@ static int sctp_v6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 	skb->transport_header = savesctp;
 	if (!sk) {
 		__ICMP6_INC_STATS(net, idev, ICMP6_MIB_INERRORS);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1157,7 +1157,7 @@ int sctp_v6_add_protocol(void)
 	register_inet6addr_notifier(&sctp_inet6addr_notifier);
 
 	if (inet6_add_protocol(&sctpv6_protocol, IPPROTO_SCTP) < 0)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return 0;
 }

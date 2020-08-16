@@ -177,7 +177,7 @@ int hfsplus_block_free(struct super_block *sb, u32 offset, u32 count)
 	hfs_dbg(BITMAP, "block_free: %u,%u\n", offset, count);
 	/* are all of the bits in range? */
 	if ((offset + count) > sbi->total_blocks)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	mutex_lock(&sbi->alloc_mutex);
 	mapping = sbi->alloc_file->i_mapping;
@@ -242,5 +242,5 @@ kaboom:
 	pr_crit("unable to mark blocks free: error %ld\n", PTR_ERR(page));
 	mutex_unlock(&sbi->alloc_mutex);
 
-	return -EIO;
+	return -ERR(EIO);
 }

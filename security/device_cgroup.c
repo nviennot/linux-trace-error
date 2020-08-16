@@ -604,7 +604,7 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 	struct dev_cgroup *parent = css_to_devcgroup(devcgroup->css.parent);
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	memset(&ex, 0, sizeof(ex));
 	b = buffer;
@@ -614,10 +614,10 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		switch (filetype) {
 		case DEVCG_ALLOW:
 			if (css_has_online_children(&devcgroup->css))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (!may_allow_all(parent))
-				return -EPERM;
+				return -ERR(EPERM);
 			dev_exception_clean(devcgroup);
 			devcgroup->behavior = DEVCG_DEFAULT_ALLOW;
 			if (!parent)
@@ -630,13 +630,13 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 			break;
 		case DEVCG_DENY:
 			if (css_has_online_children(&devcgroup->css))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			dev_exception_clean(devcgroup);
 			devcgroup->behavior = DEVCG_DEFAULT_DENY;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 	case 'b':
@@ -646,11 +646,11 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		ex.type = DEVCG_DEV_CHAR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	b++;
 	if (!isspace(*b))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	b++;
 	if (*b == '*') {
 		ex.major = ~0;
@@ -665,12 +665,12 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		}
 		rc = kstrtou32(temp, 10, &ex.major);
 		if (rc)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (*b != ':')
-		return -EINVAL;
+		return -ERR(EINVAL);
 	b++;
 
 	/* read minor */
@@ -687,12 +687,12 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		}
 		rc = kstrtou32(temp, 10, &ex.minor);
 		if (rc)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!isspace(*b))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (b++, count = 0; count < 3; count++, b++) {
 		switch (*b) {
 		case 'r':
@@ -709,7 +709,7 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 			count = 3;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -723,13 +723,13 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		if (devcgroup->behavior == DEVCG_DEFAULT_ALLOW) {
 			/* Check if the parent allows removing it first */
 			if (!parent_allows_removal(devcgroup, &ex))
-				return -EPERM;
+				return -ERR(EPERM);
 			dev_exception_rm(devcgroup, &ex);
 			break;
 		}
 
 		if (!parent_has_perm(devcgroup, &ex))
-			return -EPERM;
+			return -ERR(EPERM);
 		rc = dev_exception_add(devcgroup, &ex);
 		break;
 	case DEVCG_DENY:
@@ -749,7 +749,7 @@ static int devcgroup_update_access(struct dev_cgroup *devcgroup,
 		rc = propagate_exception(devcgroup, &ex);
 		break;
 	default:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 	return rc;
 }
@@ -822,7 +822,7 @@ static int devcgroup_legacy_check_permission(short type, u32 major, u32 minor,
 	rcu_read_unlock();
 
 	if (!rc)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -836,7 +836,7 @@ int devcgroup_check_permission(short type, u32 major, u32 minor, short access)
 	int rc = BPF_CGROUP_RUN_PROG_DEVICE_CGROUP(type, major, minor, access);
 
 	if (rc)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	#ifdef CONFIG_CGROUP_DEVICE
 	return devcgroup_legacy_check_permission(type, major, minor, access);

@@ -39,7 +39,7 @@ static int nft_xfrm_get_init(const struct nft_ctx *ctx,
 	u8 dir;
 
 	if (!tb[NFTA_XFRM_KEY] || !tb[NFTA_XFRM_DIR] || !tb[NFTA_XFRM_DREG])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (ctx->family) {
 	case NFPROTO_IPV4:
@@ -47,7 +47,7 @@ static int nft_xfrm_get_init(const struct nft_ctx *ctx,
 	case NFPROTO_INET:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->key = ntohl(nla_get_u32(tb[NFTA_XFRM_KEY]));
@@ -65,7 +65,7 @@ static int nft_xfrm_get_init(const struct nft_ctx *ctx,
 		len = sizeof(struct in6_addr);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dir = nla_get_u8(tb[NFTA_XFRM_DIR]);
@@ -75,14 +75,14 @@ static int nft_xfrm_get_init(const struct nft_ctx *ctx,
 		priv->dir = dir;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb[NFTA_XFRM_SPNUM])
 		spnum = ntohl(nla_get_be32(tb[NFTA_XFRM_SPNUM]));
 
 	if (spnum >= XFRM_MAX_DEPTH)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	priv->spnum = spnum;
 
@@ -247,7 +247,7 @@ static int nft_xfrm_validate(const struct nft_ctx *ctx, const struct nft_expr *e
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);

@@ -87,7 +87,7 @@ static int tas2562_set_bias_level(struct snd_soc_component *component,
 	default:
 		dev_err(tas2562->dev,
 				"wrong power level setting %d\n", level);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -158,7 +158,7 @@ static int tas2562_set_samplerate(struct tas2562_data *tas2562, int samplerate)
 	default:
 		dev_info(tas2562->dev, "%s, unsupported sample rate, %d\n",
 			__func__, samplerate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(tas2562->component, TAS2562_TDM_CFG0,
@@ -202,7 +202,7 @@ static int tas2562_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(tas2562->dev, "slot width not supported");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	if (ret < 0)
@@ -240,7 +240,7 @@ static int tas2562_set_bitwidth(struct tas2562_data *tas2562, int bitwidth)
 
 	default:
 		dev_info(tas2562->dev, "Unsupported bitwidth format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(tas2562->component,
@@ -297,7 +297,7 @@ static int tas2562_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(tas2562->dev, "ASI format Inverse is not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, TAS2562_TDM_CFG1,
@@ -320,7 +320,7 @@ static int tas2562_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(tas2562->dev, "DAI Format is not found, fmt=0x%x\n",
 			fmt);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -428,7 +428,7 @@ static int tas2562_dac_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_err(tas2562->dev, "Not supported evevt\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 end:

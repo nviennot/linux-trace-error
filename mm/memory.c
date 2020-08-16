@@ -1451,7 +1451,7 @@ pte_t *__get_locked_pte(struct mm_struct *mm, unsigned long addr,
 static int validate_page_before_insert(struct page *page)
 {
 	if (PageAnon(page) || PageSlab(page) || page_has_type(page))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	flush_dcache_page(page);
 	return 0;
 }
@@ -1460,7 +1460,7 @@ static int insert_page_into_pte_locked(struct mm_struct *mm, pte_t *pte,
 			unsigned long addr, struct page *page, pgprot_t prot)
 {
 	if (!pte_none(*pte))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	/* Ok, finally just insert the thing.. */
 	get_page(page);
 	inc_mm_counter_fast(mm, mm_counter_file(page));
@@ -1504,7 +1504,7 @@ static int insert_page_in_batch_locked(struct mm_struct *mm, pte_t *pte,
 	int err;
 
 	if (!page_count(page))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = validate_page_before_insert(page);
 	if (err)
 		return err;
@@ -1601,7 +1601,7 @@ int vm_insert_pages(struct vm_area_struct *vma, unsigned long addr,
 	return insert_pages(vma, addr, pages, num, vma->vm_page_prot);
 #else
 	unsigned long idx = 0, pgcount = *num;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	for (; idx < pgcount; ++idx) {
 		err = vm_insert_page(vma, addr + (PAGE_SIZE * idx), pages[idx]);
@@ -1649,7 +1649,7 @@ int vm_insert_page(struct vm_area_struct *vma, unsigned long addr,
 	if (addr < vma->vm_start || addr >= vma->vm_end)
 		return -EFAULT;
 	if (!page_count(page))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!(vma->vm_flags & VM_MIXEDMAP)) {
 		BUG_ON(mmap_read_trylock(vma->vm_mm));
 		BUG_ON(vma->vm_flags & VM_PFNMAP);
@@ -1679,11 +1679,11 @@ static int __vm_map_pages(struct vm_area_struct *vma, struct page **pages,
 
 	/* Fail if the user requested offset is beyond the end of the object */
 	if (offset >= num)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	/* Fail if the user requested size exceeds available object size */
 	if (count > num - offset)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	for (i = 0; i < count; i++) {
 		ret = vm_insert_page(vma, uaddr, pages[offset + i]);
@@ -2001,7 +2001,7 @@ static int remap_pte_range(struct mm_struct *mm, pmd_t *pmd,
 	do {
 		BUG_ON(!pte_none(*pte));
 		if (!pfn_modify_allowed(pfn, prot)) {
-			err = -EACCES;
+			err = -ERR(EACCES);
 			break;
 		}
 		set_pte_at(mm, addr, pte, pte_mkspecial(pfn_pte(pfn, prot)));
@@ -2121,13 +2121,13 @@ int remap_pfn_range(struct vm_area_struct *vma, unsigned long addr,
 	 */
 	if (is_cow_mapping(vma->vm_flags)) {
 		if (addr != vma->vm_start || end != vma->vm_end)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		vma->vm_pgoff = pfn;
 	}
 
 	err = track_pfn_remap(vma, &prot, remap_pfn, addr, PAGE_ALIGN(size));
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vma->vm_flags |= VM_IO | VM_PFNMAP | VM_DONTEXPAND | VM_DONTDUMP;
 
@@ -2171,7 +2171,7 @@ int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long
 
 	/* Check that the physical memory area passed in looks valid */
 	if (start + len < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * You *really* shouldn't map things that aren't page-aligned,
 	 * but we've historically allowed it because IO memory might
@@ -2181,18 +2181,18 @@ int vm_iomap_memory(struct vm_area_struct *vma, phys_addr_t start, unsigned long
 	pfn = start >> PAGE_SHIFT;
 	pages = (len + ~PAGE_MASK) >> PAGE_SHIFT;
 	if (pfn + pages < pfn)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We start the mapping 'vm_pgoff' pages into the area */
 	if (vma->vm_pgoff > pages)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pfn += vma->vm_pgoff;
 	pages -= vma->vm_pgoff;
 
 	/* Can we fit all of the mapping? */
 	vm_len = vma->vm_end - vma->vm_start;
 	if (vm_len >> PAGE_SHIFT > pages)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Ok, let it rip */
 	return io_remap_pfn_range(vma, vma->vm_start, pfn, vm_len, vma->vm_page_prot);
@@ -2331,7 +2331,7 @@ static int __apply_to_page_range(struct mm_struct *mm, unsigned long addr,
 	int err = 0;
 
 	if (WARN_ON(addr >= end))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pgd = pgd_offset(mm, addr);
 	do {
@@ -3740,7 +3740,7 @@ static int fault_around_bytes_get(void *data, u64 *val)
 static int fault_around_bytes_set(void *data, u64 val)
 {
 	if (val / PAGE_SIZE > PTRS_PER_PTE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (val > PAGE_SIZE)
 		fault_around_bytes = rounddown_pow_of_two(val);
 	else
@@ -4545,7 +4545,7 @@ unlock:
 	if (range)
 		mmu_notifier_invalidate_range_end(range);
 out:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int follow_pte(struct mm_struct *mm, unsigned long address,
@@ -4587,7 +4587,7 @@ EXPORT_SYMBOL(follow_pte_pmd);
 int follow_pfn(struct vm_area_struct *vma, unsigned long address,
 	unsigned long *pfn)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	spinlock_t *ptl;
 	pte_t *ptep;
 
@@ -4608,7 +4608,7 @@ int follow_phys(struct vm_area_struct *vma,
 		unsigned long address, unsigned int flags,
 		unsigned long *prot, resource_size_t *phys)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	pte_t *ptep, pte;
 	spinlock_t *ptl;
 
@@ -4641,7 +4641,7 @@ int generic_access_phys(struct vm_area_struct *vma, unsigned long addr,
 	int offset = addr & (PAGE_SIZE-1);
 
 	if (follow_phys(vma, addr, write, &prot, &phys_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	maddr = ioremap_prot(phys_addr, PAGE_ALIGN(len + offset), prot);
 	if (!maddr)

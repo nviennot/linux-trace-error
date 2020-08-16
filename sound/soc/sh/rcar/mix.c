@@ -202,7 +202,7 @@ static int rsnd_mix_pcm_new(struct rsnd_mod *mod,
 		break;
 	default:
 		dev_err(dev, "unknown SRC is connected\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Volume */
@@ -287,7 +287,7 @@ int rsnd_mix_probe(struct rsnd_priv *priv)
 
 	nr = of_get_child_count(node);
 	if (!nr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto rsnd_mix_probe_done;
 	}
 

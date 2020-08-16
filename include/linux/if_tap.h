@@ -12,11 +12,11 @@ struct file;
 struct socket;
 static inline struct socket *tap_get_socket(struct file *f)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline struct ptr_ring *tap_get_ptr_ring(struct file *f)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 #endif /* CONFIG_TAP */
 

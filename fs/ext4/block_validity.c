@@ -197,7 +197,7 @@ static int ext4_protect_reserved_inode(struct super_block *sb,
 
 	if ((ino < EXT4_ROOT_INO) ||
 	    (ino > le32_to_cpu(sbi->s_es->s_inodes_count)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	inode = ext4_iget(sb, ino, EXT4_IGET_SPECIAL);
 	if (IS_ERR(inode))
 		return PTR_ERR(inode);

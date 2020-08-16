@@ -498,7 +498,7 @@ static int hsw_pcm_hw_params(struct snd_soc_component *component,
 			hsw_notify_pointer, pcm_data);
 		if (pcm_data->stream == NULL) {
 			dev_err(rtd->dev, "error: failed to create stream\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -534,7 +534,7 @@ static int hsw_pcm_hw_params(struct snd_soc_component *component,
 	default:
 		dev_err(rtd->dev, "error: invalid DAI ID %d\n",
 			asoc_rtd_to_cpu(rtd, 0)->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = sst_hsw_stream_format(hsw, pcm_data->stream,
@@ -571,7 +571,7 @@ static int hsw_pcm_hw_params(struct snd_soc_component *component,
 	default:
 		dev_err(rtd->dev, "error: invalid format %d\n",
 			params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = sst_hsw_stream_set_bits(hsw, pcm_data->stream, bits);
@@ -621,7 +621,7 @@ static int hsw_pcm_hw_params(struct snd_soc_component *component,
 	module_data = sst_module_get_from_id(dsp, module_id);
 	if (module_data == NULL) {
 		dev_err(rtd->dev, "error: failed to get module config\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sst_hsw_stream_set_module_info(hsw, pcm_data->stream,
@@ -808,7 +808,7 @@ static int hsw_pcm_open(struct snd_soc_component *component,
 		pm_runtime_mark_last_busy(pdata->dev);
 		pm_runtime_put_autosuspend(pdata->dev);
 		mutex_unlock(&pcm_data->mutex);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_unlock(&pcm_data->mutex);
@@ -883,7 +883,7 @@ err:
 		sst_hsw_runtime_module_free(pcm_data->runtime);
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void hsw_pcm_free_modules(struct hsw_priv_data *pdata)
@@ -1021,7 +1021,7 @@ static int hsw_pcm_probe(struct snd_soc_component *component)
 	int i, ret = 0;
 
 	if (!pdata)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dev = component->dev;
 	dma_dev = pdata->dma_dev;
@@ -1118,7 +1118,7 @@ static int hsw_pcm_dev_probe(struct platform_device *pdev)
 	int ret;
 
 	if (!sst_pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv_data = devm_kzalloc(&pdev->dev, sizeof(*priv_data), GFP_KERNEL);
 	if (!priv_data)
@@ -1126,7 +1126,7 @@ static int hsw_pcm_dev_probe(struct platform_device *pdev)
 
 	ret = sst_hsw_dsp_init(&pdev->dev, sst_pdata);
 	if (ret < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	priv_data->hsw = sst_pdata->dsp;
 	platform_set_drvdata(pdev, priv_data);

@@ -238,7 +238,7 @@ static struct net_device *__ip_tunnel_create(struct net *net,
 	struct net_device *dev;
 	char name[IFNAMSIZ];
 
-	err = -E2BIG;
+	err = -ERR(E2BIG);
 	if (parms->name[0]) {
 		if (!dev_valid_name(parms->name))
 			goto failed;
@@ -435,7 +435,7 @@ int ip_tunnel_encap_add_ops(const struct ip_tunnel_encap_ops *ops,
 			    unsigned int num)
 {
 	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return !cmpxchg((const struct ip_tunnel_encap_ops **)
 			&iptun_encaps[num],
@@ -449,7 +449,7 @@ int ip_tunnel_encap_del_ops(const struct ip_tunnel_encap_ops *ops,
 	int ret;
 
 	if (num >= MAX_IPTUN_ENCAP_OPS)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ret = (cmpxchg((const struct ip_tunnel_encap_ops **)
 		       &iptun_encaps[num],
@@ -511,7 +511,7 @@ static int tnl_update_pmtu(struct net_device *dev, struct sk_buff *skb,
 		    mtu < pkt_size) {
 			memset(IPCB(skb), 0, sizeof(*IPCB(skb)));
 			icmp_send(skb, ICMP_DEST_UNREACH, ICMP_FRAG_NEEDED, htonl(mtu));
-			return -E2BIG;
+			return -ERR(E2BIG);
 		}
 	}
 #if IS_ENABLED(CONFIG_IPV6)
@@ -535,7 +535,7 @@ static int tnl_update_pmtu(struct net_device *dev, struct sk_buff *skb,
 		if (!skb_is_gso(skb) && mtu >= IPV6_MIN_MTU &&
 					mtu < pkt_size) {
 			icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-			return -E2BIG;
+			return -ERR(E2BIG);
 		}
 	}
 #endif
@@ -881,7 +881,7 @@ int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 
 	case SIOCADDTUNNEL:
 	case SIOCCHGTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto done;
 		if (p->iph.ttl)
@@ -902,13 +902,13 @@ int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 				break;
 			}
 
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			break;
 		}
 		if (dev != itn->fb_tunnel_dev && cmd == SIOCCHGTUNNEL) {
 			if (t) {
 				if (t->dev != dev) {
-					err = -EEXIST;
+					err = -ERR(EEXIST);
 					break;
 				}
 			} else {
@@ -920,7 +920,7 @@ int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 					nflags = IFF_POINTOPOINT;
 
 				if ((dev->flags^nflags)&(IFF_POINTOPOINT|IFF_BROADCAST)) {
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					break;
 				}
 
@@ -932,21 +932,21 @@ int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 			err = 0;
 			ip_tunnel_update(itn, t, dev, p, true, 0);
 		} else {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 		}
 		break;
 
 	case SIOCDELTUNNEL:
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
 			goto done;
 
 		if (dev == itn->fb_tunnel_dev) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			t = ip_tunnel_find(itn, p, itn->fb_tunnel_dev->type);
 			if (!t)
 				goto done;
-			err = -EPERM;
+			err = -ERR(EPERM);
 			if (t == netdev_priv(itn->fb_tunnel_dev))
 				goto done;
 			dev = t->dev;
@@ -956,7 +956,7 @@ int ip_tunnel_ctl(struct net_device *dev, struct ip_tunnel_parm *p, int cmd)
 		break;
 
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 done:
@@ -985,11 +985,11 @@ int __ip_tunnel_change_mtu(struct net_device *dev, int new_mtu, bool strict)
 	int max_mtu = IP_MAX_MTU - dev->hard_header_len - t_hlen;
 
 	if (new_mtu < ETH_MIN_MTU)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (new_mtu > max_mtu) {
 		if (strict)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		new_mtu = max_mtu;
 	}
@@ -1141,10 +1141,10 @@ int ip_tunnel_newlink(struct net_device *dev, struct nlattr *tb[],
 
 	if (nt->collect_md) {
 		if (rtnl_dereference(itn->collect_md_tun))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		if (ip_tunnel_find(itn, p, dev->type))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	nt->net = net;
@@ -1188,13 +1188,13 @@ int ip_tunnel_changelink(struct net_device *dev, struct nlattr *tb[],
 	struct ip_tunnel_net *itn = net_generic(net, tunnel->ip_tnl_net_id);
 
 	if (dev == itn->fb_tunnel_dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	t = ip_tunnel_find(itn, p, dev->type);
 
 	if (t) {
 		if (t->dev != dev)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	} else {
 		t = tunnel;
 
@@ -1208,7 +1208,7 @@ int ip_tunnel_changelink(struct net_device *dev, struct nlattr *tb[],
 
 			if ((dev->flags ^ nflags) &
 			    (IFF_POINTOPOINT | IFF_BROADCAST))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 

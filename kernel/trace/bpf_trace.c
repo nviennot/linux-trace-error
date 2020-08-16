@@ -742,15 +742,15 @@ get_map_perf_counter(struct bpf_map *map, u64 flags,
 	struct bpf_event_entry *ee;
 
 	if (unlikely(flags & ~(BPF_F_INDEX_MASK)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (index == BPF_F_CURRENT_CPU)
 		index = cpu;
 	if (unlikely(index >= array->map.max_entries))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	ee = READ_ONCE(array->ptrs[index]);
 	if (!ee)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return perf_event_read_local(ee->event, value, enabled, running);
 }
@@ -818,19 +818,19 @@ __bpf_perf_event_output(struct pt_regs *regs, struct bpf_map *map,
 	if (index == BPF_F_CURRENT_CPU)
 		index = cpu;
 	if (unlikely(index >= array->map.max_entries))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	ee = READ_ONCE(array->ptrs[index]);
 	if (!ee)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	event = ee->event;
 	if (unlikely(event->attr.type != PERF_TYPE_SOFTWARE ||
 		     event->attr.config != PERF_COUNT_SW_BPF_OUTPUT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(event->oncpu != cpu))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return perf_event_output(event, sd, regs);
 }
@@ -922,7 +922,7 @@ u64 bpf_event_output(struct bpf_map *map, u64 flags, void *meta, u64 meta_size,
 	u64 ret;
 
 	if (WARN_ON_ONCE(nest_level > ARRAY_SIZE(bpf_misc_sds.sds))) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 	sd = this_cpu_ptr(&bpf_misc_sds.sds[nest_level - 1]);
@@ -999,22 +999,22 @@ static int bpf_send_signal_common(u32 sig, enum pid_type type)
 	 * task.
 	 */
 	if (unlikely(current->flags & (PF_KTHREAD | PF_EXITING)))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (unlikely(uaccess_kernel()))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (unlikely(!nmi_uaccess_okay()))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (irqs_disabled()) {
 		/* Do an early check on signal validity. Otherwise,
 		 * the error is lost in deferred irq_work.
 		 */
 		if (unlikely(!valid_signal(sig)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		work = this_cpu_ptr(&send_signal_work);
 		if (atomic_read(&work->irq_work.flags) & IRQ_WORK_BUSY)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		/* Add the current task, which is the target of sending signal,
 		 * to the irq_work. The current task may change when queued
@@ -1395,7 +1395,7 @@ static struct pt_regs *get_bpf_raw_tp_regs(void)
 
 	if (WARN_ON_ONCE(nest_level > ARRAY_SIZE(tp_regs->regs))) {
 		this_cpu_dec(bpf_raw_tp_nest_level);
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 	}
 
 	return &tp_regs->regs[nest_level - 1];
@@ -1558,7 +1558,7 @@ int __weak bpf_prog_test_run_tracing(struct bpf_prog *prog,
 				     const union bpf_attr *kattr,
 				     union bpf_attr __user *uattr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 const struct bpf_verifier_ops raw_tracepoint_verifier_ops = {
@@ -1691,7 +1691,7 @@ int perf_event_attach_bpf_prog(struct perf_event *event,
 {
 	struct bpf_prog_array *old_array;
 	struct bpf_prog_array *new_array;
-	int ret = -EEXIST;
+	int ret = -ERR(EEXIST);
 
 	/*
 	 * Kprobe override only works if they are on the function entry,
@@ -1700,7 +1700,7 @@ int perf_event_attach_bpf_prog(struct perf_event *event,
 	if (prog->kprobe_override &&
 	    (!trace_kprobe_on_func_entry(event->tp_event) ||
 	     !trace_kprobe_error_injectable(event->tp_event)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&bpf_event_mutex);
 
@@ -1710,7 +1710,7 @@ int perf_event_attach_bpf_prog(struct perf_event *event,
 	old_array = bpf_event_rcu_dereference(event->tp_event->prog_array);
 	if (old_array &&
 	    bpf_prog_array_length(old_array) >= BPF_TRACE_MAX_PROGS) {
-		ret = -E2BIG;
+		ret = -ERR(E2BIG);
 		goto unlock;
 	}
 
@@ -1766,15 +1766,15 @@ int perf_event_query_prog_array(struct perf_event *event, void __user *info)
 	int ret;
 
 	if (!perfmon_capable())
-		return -EPERM;
+		return -ERR(EPERM);
 	if (event->attr.type != PERF_TYPE_TRACEPOINT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&query, uquery, sizeof(query)))
 		return -EFAULT;
 
 	ids_len = query.ids_len;
 	if (ids_len > BPF_TRACE_MAX_PROGS)
-		return -E2BIG;
+		return -ERR(E2BIG);
 	ids = kcalloc(ids_len, sizeof(u32), GFP_USER | __GFP_NOWARN);
 	if (!ids)
 		return -ENOMEM;
@@ -1884,10 +1884,10 @@ static int __bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *
 	 * available in this tracepoint
 	 */
 	if (prog->aux->max_ctx_offset > btp->num_args * sizeof(u64))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (prog->aux->max_tp_access > btp->writable_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return tracepoint_probe_register(tp, (void *)btp->bpf_func, prog);
 }
@@ -1912,11 +1912,11 @@ int bpf_get_perf_event_info(const struct perf_event *event, u32 *prog_id,
 
 	prog = event->prog;
 	if (!prog)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* not supporting BPF_PROG_TYPE_PERF_EVENT yet */
 	if (prog->type == BPF_PROG_TYPE_PERF_EVENT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	*prog_id = prog->aux->id;
 	flags = event->tp_event->flags;
@@ -1931,7 +1931,7 @@ int bpf_get_perf_event_info(const struct perf_event *event, u32 *prog_id,
 		*probe_addr = 0x0;
 	} else {
 		/* kprobe/uprobe */
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 #ifdef CONFIG_KPROBE_EVENTS
 		if (flags & TRACE_EVENT_FL_KPROBE)
 			err = bpf_get_kprobe_info(event, fd_type, buf,

@@ -192,14 +192,14 @@ static int rt_mt6_check(const struct xt_mtchk_param *par)
 
 	if (rtinfo->invflags & ~IP6T_RT_INV_MASK) {
 		pr_debug("unknown flags %X\n", rtinfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if ((rtinfo->flags & (IP6T_RT_RES | IP6T_RT_FST_MASK)) &&
 	    (!(rtinfo->flags & IP6T_RT_TYP) ||
 	     (rtinfo->rt_type != 0) ||
 	     (rtinfo->invflags & IP6T_RT_INV_TYP))) {
 		pr_debug("`--rt-type 0' required before `--rt-0-*'");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

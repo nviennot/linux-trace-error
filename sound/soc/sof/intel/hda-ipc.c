@@ -111,7 +111,7 @@ void hda_dsp_ipc_get_reply(struct snd_sof_dev *sdev)
 			!(reply.hdr.cmd & SOF_IPC_GLB_PROBE)) {
 			dev_err(sdev->dev, "error: reply expected %zu got %u bytes\n",
 				msg->reply_size, reply.hdr.size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		/* read the message */
@@ -289,7 +289,7 @@ int hda_ipc_pcm_params(struct snd_sof_dev *sdev,
 	/* check for unaligned offset or overflow */
 	if (posn_offset > sdev->stream_box.size ||
 	    posn_offset % sizeof(struct sof_ipc_stream_posn) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hda_stream->stream.posn_offset = sdev->stream_box.offset + posn_offset;
 

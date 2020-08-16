@@ -248,7 +248,7 @@ check2ndT2(char *buf)
 	/* check for parm and data offset going beyond end of smb */
 	if (pSMB->WordCount != 10) { /* coalesce_t2 depends on this */
 		cifs_dbg(FYI, "Invalid transact2 word count\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pSMBt = (struct smb_t2_rsp *)pSMB;
@@ -261,7 +261,7 @@ check2ndT2(char *buf)
 	else if (total_data_size < data_in_this_rsp) {
 		cifs_dbg(FYI, "total data %d smaller than data in frame %d\n",
 			 total_data_size, data_in_this_rsp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	remaining = total_data_size - data_in_this_rsp;
@@ -271,7 +271,7 @@ check2ndT2(char *buf)
 	if (total_data_size > CIFSMaxBufSize) {
 		cifs_dbg(VFS, "TotalDataSize %d is over maximum buffer %d\n",
 			 total_data_size, CIFSMaxBufSize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return remaining;
 }
@@ -301,7 +301,7 @@ coalesce_t2(char *second_buf, struct smb_hdr *target_hdr)
 	if (remaining < 0) {
 		cifs_dbg(FYI, "Server sent too much data. tgt_total_cnt=%hu total_in_tgt=%u\n",
 			 tgt_total_cnt, total_in_tgt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (remaining == 0) {
@@ -329,7 +329,7 @@ coalesce_t2(char *second_buf, struct smb_hdr *target_hdr)
 	if (total_in_tgt > USHRT_MAX) {
 		cifs_dbg(FYI, "coalesced DataCount too large (%u)\n",
 			 total_in_tgt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	put_unaligned_le16(total_in_tgt, &pSMBt->t2_rsp.DataCount);
 
@@ -339,7 +339,7 @@ coalesce_t2(char *second_buf, struct smb_hdr *target_hdr)
 	/* is the result too big for the field? */
 	if (byte_count > USHRT_MAX) {
 		cifs_dbg(FYI, "coalesced BCC too large (%u)\n", byte_count);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	put_bcc(byte_count, target_hdr);
 
@@ -349,7 +349,7 @@ coalesce_t2(char *second_buf, struct smb_hdr *target_hdr)
 	if (byte_count > CIFSMaxBufSize + MAX_CIFS_HDR_SIZE - 4) {
 		cifs_dbg(FYI, "coalesced BCC exceeds buffer size (%u)\n",
 			 byte_count);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 	target_hdr->smb_buf_length = cpu_to_be32(byte_count);
 
@@ -422,7 +422,7 @@ cifs_negotiate(const unsigned int xid, struct cifs_ses *ses)
 		set_credits(ses->server, 1);
 		rc = CIFSSMBNegotiate(xid, ses);
 		if (rc == -EAGAIN)
-			rc = -EHOSTDOWN;
+			rc = -ERR(EHOSTDOWN);
 	}
 	return rc;
 }
@@ -804,7 +804,7 @@ smb_set_file_info(struct inode *inode, const char *full_path,
 	rc = CIFS_open(xid, &oparms, &oplock, NULL);
 	if (rc != 0) {
 		if (rc == -EIO)
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -875,7 +875,7 @@ static int
 cifs_queryfs(const unsigned int xid, struct cifs_tcon *tcon,
 	     struct cifs_sb_info *cifs_sb, struct kstatfs *buf)
 {
-	int rc = -EOPNOTSUPP;
+	int rc = -ERR(EOPNOTSUPP);
 
 	buf->f_type = CIFS_MAGIC_NUMBER;
 
@@ -934,7 +934,7 @@ cifs_unix_dfs_readlink(const unsigned int xid, struct cifs_tcon *tcon,
 	}
 	return rc;
 #else /* No DFS support */
-	return -EREMOTE;
+	return -ERR(EREMOTE);
 #endif
 }
 
@@ -952,7 +952,7 @@ cifs_query_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 
 	if (is_reparse_point) {
 		cifs_dbg(VFS, "reparse points not handled for SMB1 symlinks\n");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* Check for unix extensions */
@@ -1030,7 +1030,7 @@ cifs_make_node(unsigned int xid, struct inode *inode,
 {
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct inode *newinode = NULL;
-	int rc = -EPERM;
+	int rc = -ERR(EPERM);
 	FILE_ALL_INFO *buf = NULL;
 	struct cifs_io_parms io_parms;
 	__u32 oplock = 0;

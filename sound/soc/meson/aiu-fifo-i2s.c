@@ -105,7 +105,7 @@ static int aiu_fifo_i2s_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported physical width %u\n",
 			params_physical_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIU_MEM_I2S_CONTROL,

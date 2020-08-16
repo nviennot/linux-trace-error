@@ -50,7 +50,7 @@ int __init parse_efi_signature_list(
 		size_t lsize, esize, hsize, elsize;
 
 		if (size < sizeof(list))
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 
 		memcpy(&list, data, sizeof(list));
 		pr_devel("LIST[%04x] guid=%pUl ls=%x hs=%x ss=%x\n",
@@ -66,7 +66,7 @@ int __init parse_efi_signature_list(
 		if (lsize > size) {
 			pr_devel("<--%s() = -EBADMSG [overrun @%x]\n",
 				 __func__, offs);
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 		}
 
 		if (lsize < sizeof(list) ||
@@ -75,7 +75,7 @@ int __init parse_efi_signature_list(
 		    elsize < esize ||
 		    elsize % esize != 0) {
 			pr_devel("- bad size combo @%x\n", offs);
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 		}
 
 		handler = get_handler_for_guid(&list.signature_type);

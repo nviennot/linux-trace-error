@@ -2107,13 +2107,13 @@ batadv_bla_claim_dump_entry(struct sk_buff *msg, u32 portid,
 	u16 backbone_crc;
 	bool is_own;
 	void *hdr;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_BLA_CLAIM);
 	if (!hdr) {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 		goto out;
 	}
 
@@ -2217,11 +2217,11 @@ int batadv_bla_claim_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ifindex = batadv_netlink_get_ifindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -2230,7 +2230,7 @@ int batadv_bla_claim_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -2344,13 +2344,13 @@ batadv_bla_backbone_dump_entry(struct sk_buff *msg, u32 portid,
 	bool is_own;
 	int msecs;
 	void *hdr;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_BLA_BACKBONE);
 	if (!hdr) {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 		goto out;
 	}
 
@@ -2455,11 +2455,11 @@ int batadv_bla_backbone_dump(struct sk_buff *msg, struct netlink_callback *cb)
 	ifindex = batadv_netlink_get_ifindex(cb->nlh,
 					     BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -2468,7 +2468,7 @@ int batadv_bla_backbone_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

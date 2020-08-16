@@ -144,38 +144,38 @@ static int parse_options(struct super_block *sb, struct adfs_sb_info *asb,
 		switch (token) {
 		case Opt_uid:
 			if (match_int(args, &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			asb->s_uid = make_kuid(current_user_ns(), option);
 			if (!uid_valid(asb->s_uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_gid:
 			if (match_int(args, &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			asb->s_gid = make_kgid(current_user_ns(), option);
 			if (!gid_valid(asb->s_gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case Opt_ownmask:
 			if (match_octal(args, &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			asb->s_owner_mask = option;
 			break;
 		case Opt_othmask:
 			if (match_octal(args, &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			asb->s_other_mask = option;
 			break;
 		case Opt_ftsuffix:
 			if (match_int(args, &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			asb->s_ftsuffix = option;
 			break;
 		default:
 			adfs_msg(sb, KERN_ERR,
 				 "unrecognised mount option \"%s\" or missing value",
 				 p);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -295,7 +295,7 @@ static int adfs_probe(struct super_block *sb, unsigned int offset, int silent,
 			if (!silent)
 				adfs_msg(sb, KERN_ERR,
 					 "error: unsupported blocksize");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* read the buffer */
@@ -304,7 +304,7 @@ static int adfs_probe(struct super_block *sb, unsigned int offset, int silent,
 			adfs_msg(sb, KERN_ERR,
 				 "error: unable to read block %u, try %d",
 				 offset >> sb->s_blocksize_bits, try);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/* validate it */
@@ -325,7 +325,7 @@ static int adfs_probe(struct super_block *sb, unsigned int offset, int silent,
 		brelse(bh);
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int adfs_validate_bblk(struct super_block *sb, struct buffer_head *bh,
@@ -336,12 +336,12 @@ static int adfs_validate_bblk(struct super_block *sb, struct buffer_head *bh,
 
 	b_data = bh->b_data + (ADFS_DISCRECORD % sb->s_blocksize);
 	if (adfs_checkbblk(b_data))
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	/* Do some sanity checks on the ADFS disc record */
 	dr = (struct adfs_discrecord *)(b_data + ADFS_DR_OFFSET);
 	if (adfs_checkdiscrecord(dr))
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	*drp = dr;
 	return 0;
@@ -355,7 +355,7 @@ static int adfs_validate_dr0(struct super_block *sb, struct buffer_head *bh,
 	/* Do some sanity checks on the ADFS disc record */
 	dr = (struct adfs_discrecord *)(bh->b_data + 4);
 	if (adfs_checkdiscrecord(dr) || dr->nzones_high || dr->nzones != 1)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
 	*drp = dr;
 	return 0;
@@ -367,7 +367,7 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 	struct object_info root_obj;
 	struct adfs_sb_info *asb;
 	struct inode *root;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	sb->s_flags |= ADFS_SB_FLAGS;
 
@@ -398,7 +398,7 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 			adfs_msg(sb, KERN_ERR,
 				 "error: can't find an ADFS filesystem on dev %s.",
 				 sb->s_id);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	if (ret)
 		goto error;
@@ -442,7 +442,7 @@ static int adfs_fill_super(struct super_block *sb, void *data, int silent)
 	if (!sb->s_root) {
 		adfs_free_map(sb);
 		adfs_error(sb, "get root inode failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto error;
 	}
 	return 0;

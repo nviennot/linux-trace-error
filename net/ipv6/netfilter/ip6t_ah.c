@@ -90,7 +90,7 @@ static int ah_mt6_check(const struct xt_mtchk_param *par)
 
 	if (ahinfo->invflags & ~IP6T_AH_INV_MASK) {
 		pr_debug("unknown flags %X\n", ahinfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

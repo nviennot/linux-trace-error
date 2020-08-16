@@ -164,7 +164,7 @@ static int __nf_queue(struct sk_buff *skb, const struct nf_hook_state *state,
 	/* QUEUE == DROP if no one is waiting, to be safe. */
 	qh = rcu_dereference(net->nf.queue_handler);
 	if (!qh)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	switch (state->pf) {
 	case AF_INET:
@@ -184,7 +184,7 @@ static int __nf_queue(struct sk_buff *skb, const struct nf_hook_state *state,
 
 	if (skb_dst(skb) && !skb_dst_force(skb)) {
 		kfree(entry);
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 	}
 
 	*entry = (struct nf_queue_entry) {

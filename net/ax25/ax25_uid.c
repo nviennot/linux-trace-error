@@ -74,7 +74,7 @@ int ax25_uid_ioctl(int cmd, struct sockaddr_ax25 *sax)
 
 	switch (cmd) {
 	case SIOCAX25GETUID:
-		res = -ENOENT;
+		res = -ERR(ENOENT);
 		read_lock(&ax25_uid_lock);
 		ax25_uid_for_each(ax25_uid, &ax25_uid_list) {
 			if (ax25cmp(&sax->sax25_call, &ax25_uid->call) == 0) {
@@ -90,17 +90,17 @@ int ax25_uid_ioctl(int cmd, struct sockaddr_ax25 *sax)
 	{
 		kuid_t sax25_kuid;
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		sax25_kuid = make_kuid(current_user_ns(), sax->sax25_uid);
 		if (!uid_valid(sax25_kuid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		user = ax25_findbyuid(sax25_kuid);
 		if (user) {
 			ax25_uid_put(user);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 		if (sax->sax25_uid == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if ((ax25_uid = kmalloc(sizeof(*ax25_uid), GFP_KERNEL)) == NULL)
 			return -ENOMEM;
 
@@ -116,7 +116,7 @@ int ax25_uid_ioctl(int cmd, struct sockaddr_ax25 *sax)
 	}
 	case SIOCAX25DELUID:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		ax25_uid = NULL;
 		write_lock(&ax25_uid_lock);
@@ -126,7 +126,7 @@ int ax25_uid_ioctl(int cmd, struct sockaddr_ax25 *sax)
 		}
 		if (ax25_uid == NULL) {
 			write_unlock(&ax25_uid_lock);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		hlist_del_init(&ax25_uid->uid_node);
 		ax25_uid_put(ax25_uid);
@@ -135,10 +135,10 @@ int ax25_uid_ioctl(int cmd, struct sockaddr_ax25 *sax)
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
-	return -EINVAL;	/*NOTREACHED */
+	return -ERR(EINVAL);	/*NOTREACHED */
 }
 
 #ifdef CONFIG_PROC_FS

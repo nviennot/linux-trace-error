@@ -40,16 +40,16 @@ static snd_pcm_sframes_t io_playback_transfer(struct snd_pcm_plugin *plugin,
 				    snd_pcm_uframes_t frames)
 {
 	if (snd_BUG_ON(!plugin))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!src_channels))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (plugin->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED) {
 		return pcm_write(plugin->plug, src_channels->area.addr, frames);
 	} else {
 		int channel, channels = plugin->dst_format.channels;
 		void **bufs = (void**)plugin->extra_data;
 		if (snd_BUG_ON(!bufs))
-			return -ENXIO;
+			return -ERR(ENXIO);
 		for (channel = 0; channel < channels; channel++) {
 			if (src_channels[channel].enabled)
 				bufs[channel] = src_channels[channel].area.addr;
@@ -66,16 +66,16 @@ static snd_pcm_sframes_t io_capture_transfer(struct snd_pcm_plugin *plugin,
 				   snd_pcm_uframes_t frames)
 {
 	if (snd_BUG_ON(!plugin))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!dst_channels))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (plugin->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED) {
 		return pcm_read(plugin->plug, dst_channels->area.addr, frames);
 	} else {
 		int channel, channels = plugin->dst_format.channels;
 		void **bufs = (void**)plugin->extra_data;
 		if (snd_BUG_ON(!bufs))
-			return -ENXIO;
+			return -ERR(ENXIO);
 		for (channel = 0; channel < channels; channel++) {
 			if (dst_channels[channel].enabled)
 				bufs[channel] = dst_channels[channel].area.addr;
@@ -114,10 +114,10 @@ int snd_pcm_plugin_build_io(struct snd_pcm_substream *plug,
 	struct snd_pcm_plugin *plugin;
 
 	if (snd_BUG_ON(!r_plugin))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	*r_plugin = NULL;
 	if (snd_BUG_ON(!plug || !params))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	format.format = params_format(params);
 	format.rate = params_rate(params);
 	format.channels = params_channels(params);

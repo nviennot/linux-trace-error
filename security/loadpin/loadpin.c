@@ -111,7 +111,7 @@ static void loadpin_sb_free_security(struct super_block *mnt_sb)
 	 * no other modules or firmware can be loaded.
 	 */
 	if (!IS_ERR_OR_NULL(pinned_root) && mnt_sb == pinned_root) {
-		pinned_root = ERR_PTR(-EIO);
+		pinned_root = ERR_PTR(-ERR(EIO));
 		pr_info("umount pinned fs: refusing further loads\n");
 	}
 }
@@ -136,7 +136,7 @@ static int loadpin_read_file(struct file *file, enum kernel_read_file_id id)
 		}
 
 		report_load(origin, NULL, "old-api-denied");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	load_root = file->f_path.mnt->mnt_sb;
@@ -169,7 +169,7 @@ static int loadpin_read_file(struct file *file, enum kernel_read_file_id id)
 		}
 
 		report_load(origin, file, "denied");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	return 0;

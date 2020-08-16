@@ -349,7 +349,7 @@ static int wait_for_matching_downcall(struct orangefs_kernel_op_s *op,
 			     __func__,
 			     llu(op->tag),
 			     op);
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 	if (op_state_purged(op)) {
 		gossip_debug(GOSSIP_WAIT_DEBUG,
@@ -359,8 +359,8 @@ static int wait_for_matching_downcall(struct orangefs_kernel_op_s *op,
 			     op,
 			     op->attempts);
 		return (op->attempts < ORANGEFS_PURGE_RETRY_COUNT) ?
-			 -EAGAIN :
-			 -EIO;
+			 -ERR(EAGAIN) :
+			 	 -ERR(EIO);
 	}
 	/* must have timed out, then... */
 	gossip_debug(GOSSIP_WAIT_DEBUG,
@@ -369,5 +369,5 @@ static int wait_for_matching_downcall(struct orangefs_kernel_op_s *op,
 		     llu(op->tag),
 		     op,
 		     op->attempts);
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }

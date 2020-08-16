@@ -38,7 +38,7 @@ static int nft_dup_netdev_init(const struct nft_ctx *ctx,
 	struct nft_dup_netdev *priv = nft_expr_priv(expr);
 
 	if (tb[NFTA_DUP_SREG_DEV] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->sreg_dev = nft_parse_register(tb[NFTA_DUP_SREG_DEV]);
 	return nft_validate_register_load(priv->sreg_dev, sizeof(int));

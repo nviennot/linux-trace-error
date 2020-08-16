@@ -178,7 +178,7 @@ affs_find_entry(struct inode *dir, struct dentry *dentry)
 
 	bh = affs_bread(sb, dir->i_ino);
 	if (!bh)
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	key = be32_to_cpu(AFFS_HEAD(bh)->table[affs_hash_name(sb, dentry->d_name.name, dentry->d_name.len)]);
 
@@ -188,7 +188,7 @@ affs_find_entry(struct inode *dir, struct dentry *dentry)
 			return NULL;
 		bh = affs_bread(sb, key);
 		if (!bh)
-			return ERR_PTR(-EIO);
+			return ERR_PTR(-ERR(EIO));
 		if (affs_match(dentry, AFFS_TAIL(sb, bh)->name, toupper))
 			return bh;
 		key = be32_to_cpu(AFFS_TAIL(sb, bh)->hash_chain);
@@ -253,7 +253,7 @@ affs_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
 
 	inode = affs_new_inode(dir);
 	if (!inode)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	inode->i_mode = mode;
 	affs_mode_to_prot(inode);
@@ -283,7 +283,7 @@ affs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 
 	inode = affs_new_inode(dir);
 	if (!inode)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	inode->i_mode = S_IFDIR | mode;
 	affs_mode_to_prot(inode);
@@ -326,7 +326,7 @@ affs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	maxlen = AFFS_SB(sb)->s_hashsize * sizeof(u32) - 1;
 	inode  = affs_new_inode(dir);
 	if (!inode)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	inode->i_op = &affs_symlink_inode_operations;
 	inode_nohighmem(inode);
@@ -334,7 +334,7 @@ affs_symlink(struct inode *dir, struct dentry *dentry, const char *symname)
 	inode->i_mode = S_IFLNK | 0777;
 	affs_mode_to_prot(inode);
 
-	error = -EIO;
+	error = -ERR(EIO);
 	bh = affs_bread(sb, inode->i_ino);
 	if (!bh)
 		goto err;
@@ -422,7 +422,7 @@ affs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	bh = affs_bread(sb, d_inode(old_dentry)->i_ino);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Remove header from its parent directory. */
 	affs_lock_dir(old_dir);
@@ -457,11 +457,11 @@ affs_xrename(struct inode *old_dir, struct dentry *old_dentry,
 
 	bh_old = affs_bread(sb, d_inode(old_dentry)->i_ino);
 	if (!bh_old)
-		return -EIO;
+		return -ERR(EIO);
 
 	bh_new = affs_bread(sb, d_inode(new_dentry)->i_ino);
 	if (!bh_new)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Remove old header from its parent directory. */
 	affs_lock_dir(old_dir);
@@ -504,7 +504,7 @@ int affs_rename2(struct inode *old_dir, struct dentry *old_dentry,
 {
 
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("%s(old=%lu,\"%pd\" to new=%lu,\"%pd\")\n", __func__,
 		 old_dir->i_ino, old_dentry, new_dir->i_ino, new_dentry);
@@ -522,7 +522,7 @@ static struct dentry *affs_get_parent(struct dentry *child)
 
 	bh = affs_bread(child->d_sb, d_inode(child)->i_ino);
 	if (!bh)
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	parent = affs_iget(child->d_sb,
 			   be32_to_cpu(AFFS_TAIL(child->d_sb, bh)->parent));
@@ -539,7 +539,7 @@ static struct inode *affs_nfs_get_inode(struct super_block *sb, u64 ino,
 	struct inode *inode;
 
 	if (!affs_validblock(sb, ino))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	inode = affs_iget(sb, ino);
 	if (IS_ERR(inode))

@@ -58,7 +58,7 @@ static int omap_abe_hw_params(struct snd_pcm_substream *substream,
 	else if (clk_id == TWL6040_SYSCLK_SEL_LPPLL)
 		freq = 32768;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set the codec mclk */
 	ret = snd_soc_dai_set_sysclk(codec_dai, clk_id, freq,
@@ -219,7 +219,7 @@ static int omap_abe_probe(struct platform_device *pdev)
 
 	if (!node) {
 		dev_err(&pdev->dev, "of node is missing.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(struct abe_twl6040), GFP_KERNEL);
@@ -236,7 +236,7 @@ static int omap_abe_probe(struct platform_device *pdev)
 
 	if (snd_soc_of_parse_card_name(card, "ti,model")) {
 		dev_err(&pdev->dev, "Card name is not provided\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = snd_soc_of_parse_audio_routing(card, "ti,audio-routing");
@@ -248,7 +248,7 @@ static int omap_abe_probe(struct platform_device *pdev)
 	dai_node = of_parse_phandle(node, "ti,mcpdm", 0);
 	if (!dai_node) {
 		dev_err(&pdev->dev, "McPDM node is not provided\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->dai_links[0].name = "DMIC";
@@ -287,14 +287,14 @@ static int omap_abe_probe(struct platform_device *pdev)
 	of_property_read_u32(node, "ti,mclk-freq", &priv->mclk_freq);
 	if (!priv->mclk_freq) {
 		dev_err(&pdev->dev, "MCLK frequency not provided\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	card->fully_routed = 1;
 
 	if (!priv->mclk_freq) {
 		dev_err(&pdev->dev, "MCLK frequency missing\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	card->dai_link = priv->dai_links;

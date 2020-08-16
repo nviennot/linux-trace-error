@@ -146,14 +146,14 @@ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
 
 static inline int create_user_ns(struct cred *new)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int unshare_userns(unsigned long unshare_flags,
 				 struct cred **new_cred)
 {
 	if (unshare_flags & CLONE_NEWUSER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -179,7 +179,7 @@ static inline bool current_in_userns(const struct user_namespace *target_ns)
 
 static inline struct ns_common *ns_get_owner(struct ns_common *ns)
 {
-	return ERR_PTR(-EPERM);
+	return ERR_PTR(-ERR(EPERM));
 }
 #endif
 

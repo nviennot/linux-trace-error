@@ -127,7 +127,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
 		return 0;
 	}
 	if (ptr >= TASK_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	urseq_cs = (struct rseq_cs __user *)(unsigned long)ptr;
 	if (copy_from_user(rseq_cs, urseq_cs, sizeof(*rseq_cs)))
 		return -EFAULT;
@@ -136,13 +136,13 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
 	    rseq_cs->start_ip + rseq_cs->post_commit_offset >= TASK_SIZE ||
 	    rseq_cs->abort_ip >= TASK_SIZE ||
 	    rseq_cs->version > 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Check for overflow. */
 	if (rseq_cs->start_ip + rseq_cs->post_commit_offset < rseq_cs->start_ip)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Ensure that abort_ip is not in the critical section. */
 	if (rseq_cs->abort_ip - rseq_cs->start_ip < rseq_cs->post_commit_offset)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	usig = (u32 __user *)(unsigned long)(rseq_cs->abort_ip - sizeof(u32));
 	ret = get_user(sig, usig);
@@ -153,7 +153,7 @@ static int rseq_get_rseq_cs(struct task_struct *t, struct rseq_cs *rseq_cs)
 		printk_ratelimited(KERN_WARNING
 			"Possible attack attempt. Unexpected rseq signature 0x%x, expecting 0x%x (pid=%d, addr=%p).\n",
 			sig, current->rseq_sig, current->pid, usig);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -180,7 +180,7 @@ static int rseq_need_restart(struct task_struct *t, u32 cs_flags)
 	if (unlikely((flags & RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL) &&
 		     (flags & RSEQ_CS_PREEMPT_MIGRATE_FLAGS) !=
 		     RSEQ_CS_PREEMPT_MIGRATE_FLAGS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Load and clear event mask atomically with respect to
@@ -311,14 +311,14 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 
 	if (flags & RSEQ_FLAG_UNREGISTER) {
 		if (flags & ~RSEQ_FLAG_UNREGISTER)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Unregister rseq for current thread. */
 		if (current->rseq != rseq || !current->rseq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rseq_len != sizeof(*rseq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (current->rseq_sig != sig)
-			return -EPERM;
+			return -ERR(EPERM);
 		ret = rseq_reset_rseq_cpu_id(current);
 		if (ret)
 			return ret;
@@ -328,7 +328,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 	}
 
 	if (unlikely(flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (current->rseq) {
 		/*
@@ -337,11 +337,11 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 		 * one.
 		 */
 		if (current->rseq != rseq || rseq_len != sizeof(*rseq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (current->rseq_sig != sig)
-			return -EPERM;
+			return -ERR(EPERM);
 		/* Already registered. */
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/*
@@ -350,7 +350,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
 	 */
 	if (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq)) ||
 	    rseq_len != sizeof(*rseq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!access_ok(rseq, rseq_len))
 		return -EFAULT;
 	current->rseq = rseq;

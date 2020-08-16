@@ -327,22 +327,22 @@ static int snd_cmi8330_pnp(int dev, struct snd_cmi8330 *acard,
 
 	acard->cap = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->cap == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	acard->play = pnp_request_card_device(card, id->devs[1].id, NULL);
 	if (acard->play == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	acard->mpu = pnp_request_card_device(card, id->devs[2].id, NULL);
 	if (acard->mpu == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	pdev = acard->cap;
 
 	err = pnp_activate_dev(pdev);
 	if (err < 0) {
 		snd_printk(KERN_ERR "AD1848 PnP configure failure\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	wssport[dev] = pnp_port_start(pdev, 0);
 	wssdma[dev] = pnp_dma(pdev, 0);
@@ -356,7 +356,7 @@ static int snd_cmi8330_pnp(int dev, struct snd_cmi8330 *acard,
 	err = pnp_activate_dev(pdev);
 	if (err < 0) {
 		snd_printk(KERN_ERR "SB16 PnP configure failure\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	sbport[dev] = pnp_port_start(pdev, 0);
 	sbdma8[dev] = pnp_dma(pdev, 0);
@@ -534,7 +534,7 @@ static int snd_cmi8330_probe(struct snd_card *card, int dev)
 	}
 	if (acard->wss->hardware != WSS_HW_CMI8330) {
 		snd_printk(KERN_ERR PFX "AD1848 not found during probe\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if ((err = snd_sbdsp_create(card, sbport[dev],
@@ -680,7 +680,7 @@ static int snd_cmi8330_pnp_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 			       
 	res = snd_cmi8330_card_new(&pcard->card->dev, dev, &card);
 	if (res < 0)

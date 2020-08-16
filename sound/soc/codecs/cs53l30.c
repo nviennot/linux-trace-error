@@ -526,7 +526,7 @@ static int cs53l30_get_mclkx_coeff(int mclkx)
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs53l30_get_mclk_coeff(int mclk_rate, int srate)
@@ -539,7 +539,7 @@ static int cs53l30_get_mclk_coeff(int mclk_rate, int srate)
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs53l30_set_sysclk(struct snd_soc_dai *dai,
@@ -578,7 +578,7 @@ static int cs53l30_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI mode */
@@ -596,7 +596,7 @@ static int cs53l30_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aspctl1 |= CS53L30_SHIFT_LEFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check to see if the SCLK is inverted */
@@ -629,7 +629,7 @@ static int cs53l30_pcm_hw_params(struct snd_pcm_substream *substream,
 	/* MCLK -> srate */
 	mclk_coeff = cs53l30_get_mclk_coeff(priv->mclk_rate, srate);
 	if (mclk_coeff < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_update_bits(priv->regmap, CS53L30_INT_SR_CTL,
 			   CS53L30_INTRNL_FS_RATIO_MASK,
@@ -774,18 +774,18 @@ static int cs53l30_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (!rx_mask) {
 		dev_err(dai->dev, "rx masks must not be 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Assuming slot_width is not supposed to be greater than 64 */
 	if (slots <= 0 || slot_width <= 0 || slot_width > 64) {
 		dev_err(dai->dev, "invalid slot number or slot width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (slot_width & 0x7) {
 		dev_err(dai->dev, "slot width must count in byte\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* How many bytes in each ASoC slot */
@@ -806,7 +806,7 @@ static int cs53l30_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (rx_mask && i == CS53L30_TDM_SLOT_MAX) {
 		dev_err(dai->dev, "rx_mask exceeds max slot number: %d\n",
 			CS53L30_TDM_SLOT_MAX);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Validate the last active CS53L30 slot */
@@ -814,7 +814,7 @@ static int cs53l30_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (slot_next > 47) {
 		dev_err(dai->dev, "slot selection out of bounds: %u\n",
 			slot_next);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < CS53L30_TDM_SLOT_MAX && loc[i] != 48; i++) {
@@ -978,7 +978,7 @@ static int cs53l30_i2c_probe(struct i2c_client *client,
 	devid |= (reg & 0xF0) >> 4;
 
 	if (devid != CS53L30_DEVID) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(dev, "Device ID (%X). Expected %X\n",
 			devid, CS53L30_DEVID);
 		goto error;

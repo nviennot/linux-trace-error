@@ -250,7 +250,7 @@ int mls_context_to_sid(struct policydb *pol,
 		 * and it did not come from an xattr.
 		 */
 		if (oldc && def_sid == SECSID_NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	}
 
@@ -262,11 +262,11 @@ int mls_context_to_sid(struct policydb *pol,
 		struct context *defcon;
 
 		if (def_sid == SECSID_NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		defcon = sidtab_search(s, def_sid);
 		if (!defcon)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return mls_context_cpy(context, defcon);
 	}
@@ -295,7 +295,7 @@ int mls_context_to_sid(struct policydb *pol,
 		/* Parse sensitivity. */
 		levdatum = hashtab_search(&pol->p_levels.table, sensitivity);
 		if (!levdatum)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		context->range.level[l].sens = levdatum->level->sens;
 
 		/* Extract category set. */
@@ -314,7 +314,7 @@ int mls_context_to_sid(struct policydb *pol,
 
 			catdatum = hashtab_search(&pol->p_cats.table, cur_cat);
 			if (!catdatum)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			rc = ebitmap_set_bit(&context->range.level[l].cat,
 					     catdatum->value - 1, 1);
@@ -327,10 +327,10 @@ int mls_context_to_sid(struct policydb *pol,
 
 			rngdatum = hashtab_search(&pol->p_cats.table, rngptr);
 			if (!rngdatum)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (catdatum->value >= rngdatum->value)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			for (i = catdatum->value; i < rngdatum->value; i++) {
 				rc = ebitmap_set_bit(&context->range.level[l].cat, i, 1);
@@ -365,7 +365,7 @@ int mls_from_string(struct policydb *p, char *str, struct context *context,
 	int rc;
 
 	if (!p->mls_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmpstr = kstrdup(str, gfp_mask);
 	if (!tmpstr) {
@@ -420,7 +420,7 @@ int mls_setup_user_range(struct policydb *p,
 		else if (mls_level_between(fromcon_clr, user_low, user_def))
 			*usercon_sen = *user_low;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Lower the clearance of available contexts
 		   if the clearance of "fromcon" is lower than
@@ -432,7 +432,7 @@ int mls_setup_user_range(struct policydb *p,
 		else if (mls_level_dom(fromcon_clr, user_clr))
 			*usercon_clr = *user_clr;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -463,7 +463,7 @@ int mls_convert_context(struct policydb *oldp,
 						   oldc->range.level[l].sens - 1));
 
 		if (!levdatum)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		newc->range.level[l].sens = levdatum->level->sens;
 
 		ebitmap_for_each_positive_bit(&oldc->range.level[l].cat,
@@ -473,7 +473,7 @@ int mls_convert_context(struct policydb *oldp,
 			catdatum = hashtab_search(&newp->p_cats.table,
 						  sym_name(oldp, SYM_CATS, i));
 			if (!catdatum)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			rc = ebitmap_set_bit(&newc->range.level[l].cat,
 					     catdatum->value - 1, 1);
 			if (rc)
@@ -548,7 +548,7 @@ int mls_compute_sid(struct policydb *p,
 
 	/* fall through */
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #ifdef CONFIG_NETLABEL

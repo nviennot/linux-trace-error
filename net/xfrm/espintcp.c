@@ -121,7 +121,7 @@ static int espintcp_parse(struct strparser *strp, struct sk_buff *skb)
 
 	len = be16_to_cpu(blen);
 	if (len < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return len;
 }
@@ -167,7 +167,7 @@ int espintcp_queue_out(struct sock *sk, struct sk_buff *skb)
 	struct espintcp_ctx *ctx = espintcp_getctx(sk);
 
 	if (skb_queue_len(&ctx->out_queue) >= netdev_max_backlog)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	__skb_queue_tail(&ctx->out_queue, skb);
 
@@ -255,7 +255,7 @@ static int espintcp_push_msgs(struct sock *sk, int flags)
 		return 0;
 
 	if (ctx->tx_running)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	ctx->tx_running = 1;
 
 	if (emsg->skb)
@@ -264,7 +264,7 @@ static int espintcp_push_msgs(struct sock *sk, int flags)
 		err = espintcp_sendskmsg_locked(sk, emsg, flags);
 	if (err == -EAGAIN) {
 		ctx->tx_running = 0;
-		return flags & MSG_DONTWAIT ? -EAGAIN : 0;
+		return flags & MSG_DONTWAIT ? -ERR(EAGAIN) : 0;
 	}
 	if (!err)
 		memset(emsg, 0, sizeof(*emsg));
@@ -283,7 +283,7 @@ int espintcp_push_skb(struct sock *sk, struct sk_buff *skb)
 
 	if (sk->sk_state != TCP_ESTABLISHED) {
 		kfree_skb(skb);
-		return -ECONNRESET;
+		return -ERR(ECONNRESET);
 	}
 
 	offset = skb_transport_offset(skb);
@@ -293,7 +293,7 @@ int espintcp_push_skb(struct sock *sk, struct sk_buff *skb)
 
 	if (emsg->len) {
 		kfree_skb(skb);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	skb_set_owner_w(skb, sk);
@@ -320,20 +320,20 @@ static int espintcp_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	int err, end;
 
 	if (msg->msg_flags & ~MSG_DONTWAIT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (size > MAX_ESPINTCP_MSG)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (msg->msg_controllen)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
 	err = espintcp_push_msgs(sk, msg->msg_flags & MSG_DONTWAIT);
 	if (err < 0) {
 		if (err != -EAGAIN || !(msg->msg_flags & MSG_DONTWAIT))
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 		goto unlock;
 	}
 
@@ -448,7 +448,7 @@ static int espintcp_init_sk(struct sock *sk)
 
 	/* sockmap is not compatible with espintcp */
 	if (sk->sk_user_data)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)

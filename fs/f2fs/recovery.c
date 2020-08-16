@@ -119,7 +119,7 @@ static int init_recovered_filename(const struct inode *dir,
 	fname->disk_name.name = raw_inode->i_name;
 
 	if (WARN_ON(fname->disk_name.len > F2FS_NAME_LEN))
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (!IS_ENCRYPTED(dir)) {
 		usr_fname->name = fname->disk_name.name;
@@ -184,7 +184,7 @@ retry:
 			WARN_ON(1);
 			err = PTR_ERR(einode);
 			if (err == -ENOENT)
-				err = -EEXIST;
+				err = -ERR(EEXIST);
 			goto out_put;
 		}
 
@@ -404,7 +404,7 @@ next:
 				    __func__, blkaddr,
 				    next_blkaddr_of_node(page));
 			f2fs_put_page(page, 1);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 

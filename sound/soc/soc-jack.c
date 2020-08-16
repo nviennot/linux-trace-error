@@ -150,12 +150,12 @@ int snd_soc_jack_add_pins(struct snd_soc_jack *jack, int count,
 		if (!pins[i].pin) {
 			dev_err(jack->card->dev, "ASoC: No name for pin %d\n",
 				i);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!pins[i].mask) {
 			dev_err(jack->card->dev, "ASoC: No mask for pin %d"
 				" (%s)\n", i, pins[i].pin);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		INIT_LIST_HEAD(&pins[i].list);
@@ -326,7 +326,7 @@ int snd_soc_jack_add_gpios(struct snd_soc_jack *jack, int count,
 		if (!gpios[i].name) {
 			dev_err(jack->card->dev,
 				"ASoC: No name for gpio at index %d\n", i);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto undo;
 		}
 
@@ -351,7 +351,7 @@ int snd_soc_jack_add_gpios(struct snd_soc_jack *jack, int count,
 				dev_err(jack->card->dev,
 					"ASoC: Invalid gpio %d\n",
 					gpios[i].gpio);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto undo;
 			}
 

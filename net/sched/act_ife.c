@@ -142,7 +142,7 @@ int ife_validate_meta_u32(void *val, int len)
 	if (len == sizeof(u32))
 		return 0;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(ife_validate_meta_u32);
 
@@ -152,7 +152,7 @@ int ife_validate_meta_u16(void *val, int len)
 	if (len == sizeof(u16))
 		return 0;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(ife_validate_meta_u16);
 
@@ -184,7 +184,7 @@ int register_ife_op(struct tcf_meta_ops *mops)
 	if (!mops->metaid || !mops->metatype || !mops->name ||
 	    !mops->check_presence || !mops->encode || !mops->decode ||
 	    !mops->get || !mops->alloc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock(&ife_mod_lock);
 
@@ -192,7 +192,7 @@ int register_ife_op(struct tcf_meta_ops *mops)
 		if (m->metaid == mops->metaid ||
 		    (strcmp(mops->name, m->name) == 0)) {
 			write_unlock(&ife_mod_lock);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -208,7 +208,7 @@ EXPORT_SYMBOL_GPL(unregister_ife_op);
 int unregister_ife_op(struct tcf_meta_ops *mops)
 {
 	struct tcf_meta_ops *m;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	write_lock(&ife_mod_lock);
 	list_for_each_entry(m, &ifeoplist, list) {
@@ -268,7 +268,7 @@ static int load_metaops_and_vet(u32 metaid, void *val, int len, bool rtnl_held)
 	int ret = 0;
 
 	if (!ops) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 #ifdef CONFIG_MODULES
 		if (rtnl_held)
 			rtnl_unlock();
@@ -329,7 +329,7 @@ static int add_metainfo_and_get_ops(const struct tcf_meta_ops *ops,
 	int ret;
 
 	if (!try_module_get(ops->owner))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	ret = __add_metainfo(ops, ife, metaid, NULL, 0, true, exists);
 	if (ret)
 		module_put(ops->owner);
@@ -343,7 +343,7 @@ static int add_metainfo(struct tcf_ife_info *ife, u32 metaid, void *metaval,
 	int ret;
 
 	if (!ops)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	ret = __add_metainfo(ops, ife, metaid, metaval, len, false, exists);
 	if (ret)
 		/*put back what find_ife_oplist took */
@@ -368,7 +368,7 @@ static int use_all_metadata(struct tcf_ife_info *ife, bool exists)
 	if (installed)
 		return 0;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int dump_metalist(struct sk_buff *skb, struct tcf_ife_info *ife)
@@ -485,7 +485,7 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG_MOD(extack, "IFE requires attributes to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_IFE_MAX, nla, ife_policy,
@@ -494,7 +494,7 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[TCA_IFE_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_IFE_PARMS]);
 
@@ -503,7 +503,7 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 	 * are not supported right now.
 	 */
 	if (parm->flags & ~IFE_ENCODE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p = kzalloc(sizeof(*p), GFP_KERNEL);
 	if (!p)
@@ -533,7 +533,7 @@ static int tcf_ife_init(struct net *net, struct nlattr *nla,
 	} else if (!ovr) {
 		tcf_idr_release(*a, bind);
 		kfree(p);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	ife = to_ife(*a);
@@ -684,7 +684,7 @@ static int find_decode_metaid(struct sk_buff *skb, struct tcf_ife_info *ife,
 		}
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int tcf_ife_decode(struct sk_buff *skb, const struct tc_action *a,

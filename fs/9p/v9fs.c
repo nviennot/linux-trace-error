@@ -81,7 +81,7 @@ static const char *const v9fs_cache_modes[nr__p9_cache_modes] = {
 /* Interpret mount options for cache mode */
 static int get_cache_mode(char *s)
 {
-	int version = -EINVAL;
+	int version = -ERR(EINVAL);
 
 	if (!strcmp(s, "loose")) {
 		version = CACHE_LOOSE;
@@ -219,7 +219,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 			if (!uid_valid(v9ses->dfltuid)) {
 				p9_debug(P9_DEBUG_ERROR,
 					 "uid field, but not a uid?\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			}
 			break;
 		case Opt_dfltgid:
@@ -234,7 +234,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 			if (!gid_valid(v9ses->dfltgid)) {
 				p9_debug(P9_DEBUG_ERROR,
 					 "gid field, but not a gid?\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			}
 			break;
 		case Opt_afid:
@@ -323,7 +323,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 				v9ses->flags |= V9FS_ACCESS_SINGLE;
 				uid = simple_strtoul(s, &e, 10);
 				if (*e != '\0') {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					pr_info("Unknown access argument %s\n",
 						s);
 					kfree(s);
@@ -331,7 +331,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 				}
 				v9ses->uid = make_kuid(current_user_ns(), uid);
 				if (!uid_valid(v9ses->uid)) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					pr_info("Unknown uid %s\n", s);
 				}
 			}
@@ -359,7 +359,7 @@ static int v9fs_parse_options(struct v9fs_session_info *v9ses, char *opts)
 			if (option < 1) {
 				p9_debug(P9_DEBUG_ERROR,
 					 "locktimeout must be a greater than zero integer.\n");
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				continue;
 			}
 			v9ses->session_lock_timeout = (long)option * HZ;

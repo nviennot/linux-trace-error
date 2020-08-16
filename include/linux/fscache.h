@@ -416,7 +416,7 @@ void fscache_update_cookie(struct fscache_cookie *cookie, const void *aux_data)
 static inline
 int fscache_pin_cookie(struct fscache_cookie *cookie)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /**
@@ -450,7 +450,7 @@ int fscache_attr_changed(struct fscache_cookie *cookie)
 	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
 		return __fscache_attr_changed(cookie);
 	else
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 }
 
 /**
@@ -504,7 +504,7 @@ void fscache_wait_on_invalidate(struct fscache_cookie *cookie)
 static inline
 int fscache_reserve_space(struct fscache_cookie *cookie, loff_t size)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 /**
@@ -547,7 +547,7 @@ int fscache_read_or_alloc_page(struct fscache_cookie *cookie,
 		return __fscache_read_or_alloc_page(cookie, page, end_io_func,
 						    context, gfp);
 	else
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 }
 
 /**
@@ -599,7 +599,7 @@ int fscache_read_or_alloc_pages(struct fscache_cookie *cookie,
 						     nr_pages, end_io_func,
 						     context, gfp);
 	else
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 }
 
 /**
@@ -628,7 +628,7 @@ int fscache_alloc_page(struct fscache_cookie *cookie,
 	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
 		return __fscache_alloc_page(cookie, page, gfp);
 	else
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 }
 
 /**
@@ -679,7 +679,7 @@ int fscache_write_page(struct fscache_cookie *cookie,
 	if (fscache_cookie_valid(cookie) && fscache_cookie_enabled(cookie))
 		return __fscache_write_page(cookie, page, object_size, gfp);
 	else
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 }
 
 /**

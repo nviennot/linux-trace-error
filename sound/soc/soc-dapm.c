@@ -620,7 +620,7 @@ static int soc_dapm_read(struct snd_soc_dapm_context *dapm, int reg,
 	unsigned int *value)
 {
 	if (!dapm->component)
-		return -EIO;
+		return -ERR(EIO);
 	return snd_soc_component_read(dapm->component, reg, value);
 }
 
@@ -628,7 +628,7 @@ static int soc_dapm_update_bits(struct snd_soc_dapm_context *dapm,
 	int reg, unsigned int mask, unsigned int value)
 {
 	if (!dapm->component)
-		return -EIO;
+		return -ERR(EIO);
 	return snd_soc_component_update_bits(dapm->component, reg,
 					     mask, value);
 }
@@ -637,7 +637,7 @@ static int soc_dapm_test_bits(struct snd_soc_dapm_context *dapm,
 	int reg, unsigned int mask, unsigned int value)
 {
 	if (!dapm->component)
-		return -EIO;
+		return -ERR(EIO);
 	return snd_soc_component_test_bits(dapm->component, reg, mask, value);
 }
 
@@ -768,7 +768,7 @@ static int dapm_connect_mux(struct snd_soc_dapm_context *dapm,
 
 	i = match_string(e->texts, e->items, control_name);
 	if (i < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	path->name = e->texts[i];
 	path->connect = (i == item);
@@ -838,7 +838,7 @@ static int dapm_connect_mixer(struct snd_soc_dapm_context *dapm,
 			return 0;
 		}
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int dapm_is_shared_kcontrol(struct snd_soc_dapm_context *dapm,
@@ -917,7 +917,7 @@ static int dapm_create_or_share_kcontrol(struct snd_soc_dapm_widget *w,
 				kcname_in_long_name = false;
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -1031,19 +1031,19 @@ static int dapm_new_mux(struct snd_soc_dapm_widget *w)
 		type = "demux";
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (w->num_kcontrols != 1) {
 		dev_err(dapm->dev,
 			"ASoC: %s %s has incorrect number of controls\n", type,
 			w->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (list_empty(&w->edges[dir])) {
 		dev_err(dapm->dev, "ASoC: %s %s has no paths\n", type, w->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = dapm_create_or_share_kcontrol(w, 0);
@@ -1383,7 +1383,7 @@ int dapm_pinctrl_event(struct snd_soc_dapm_widget *w,
 	struct pinctrl_state *s;
 
 	if (!p || !priv)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (SND_SOC_DAPM_EVENT_ON(event))
 		s = pinctrl_lookup_state(p, priv->active_state);
@@ -1404,7 +1404,7 @@ int dapm_clock_event(struct snd_soc_dapm_widget *w,
 		   struct snd_kcontrol *kcontrol, int event)
 {
 	if (!w->clk)
-		return -EIO;
+		return -ERR(EIO);
 
 	soc_dapm_async_complete(w->dapm);
 
@@ -2553,7 +2553,7 @@ static int snd_soc_dapm_set_pin(struct snd_soc_dapm_context *dapm,
 
 	if (!w) {
 		dev_err(dapm->dev, "ASoC: DAPM unknown pin %s\n", pin);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (w->connected != status) {
@@ -2778,12 +2778,12 @@ static int snd_soc_dapm_check_dynamic_path(struct snd_soc_dapm_context *dapm,
 		dev_err(dapm->dev,
 			"Direct connection between demux and mixer/mux not supported for path %s -> [%s] -> %s\n",
 			source->name, control, sink->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (!dynamic_source && !dynamic_sink) {
 		dev_err(dapm->dev,
 			"Control not supported for path %s -> [%s] -> %s\n",
 			source->name, control, sink->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2804,21 +2804,21 @@ static int snd_soc_dapm_add_path(struct snd_soc_dapm_context *dapm,
 		dev_err(dapm->dev,
 			"Connecting non-supply widget to supply widget is not supported (%s -> %s)\n",
 			wsource->name, wsink->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (connected && !wsource->is_supply) {
 		dev_err(dapm->dev,
 			"connected() callback only supported for supply widgets (%s -> %s)\n",
 			wsource->name, wsink->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wsource->is_supply && control) {
 		dev_err(dapm->dev,
 			"Conditional paths are not supported for supply widgets (%s -> [%s] -> %s)\n",
 			wsource->name, control, wsink->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dapm_check_dynamic_path(dapm, wsource, wsink, control);
@@ -2966,12 +2966,12 @@ static int snd_soc_dapm_add_route(struct snd_soc_dapm_context *dapm,
 	if (wsource == NULL) {
 		dev_err(dapm->dev, "ASoC: no source widget found for %s\n",
 			route->source);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	if (wsink == NULL) {
 		dev_err(dapm->dev, "ASoC: no sink widget found for %s\n",
 			route->sink);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 skip_search:
@@ -3004,7 +3004,7 @@ static int snd_soc_dapm_del_route(struct snd_soc_dapm_context *dapm,
 	if (route->control) {
 		dev_err(dapm->dev,
 			"ASoC: Removal of routes with controls not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prefix = soc_dapm_prefix(dapm);
@@ -3127,13 +3127,13 @@ static int snd_soc_dapm_weak_route(struct snd_soc_dapm_context *dapm,
 	if (!source) {
 		dev_err(dapm->dev, "ASoC: Unable to find source %s for weak route\n",
 			route->source);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (!sink) {
 		dev_err(dapm->dev, "ASoC: Unable to find sink %s for weak route\n",
 			route->sink);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (route->control || route->connected)
@@ -3483,13 +3483,13 @@ int snd_soc_dapm_put_enum_double(struct snd_kcontrol *kcontrol,
 	int ret = 0;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
 	mask = e->mask << e->shift_l;
 	if (e->shift_l != e->shift_r) {
 		if (item[1] > e->items)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		val |= snd_soc_enum_item_to_val(e, item[1]) << e->shift_r;
 		mask |= e->mask << e->shift_r;
 	}
@@ -3859,7 +3859,7 @@ snd_soc_dai_link_event_pre_pmu(struct snd_soc_dapm_widget *w,
 	config = rtd->dai_link->params + rtd->params_select;
 	if (WARN_ON(!config)) {
 		dev_err(w->dapm->dev, "ASoC: link config missing\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -3870,7 +3870,7 @@ snd_soc_dai_link_event_pre_pmu(struct snd_soc_dapm_widget *w,
 		dev_warn(w->dapm->dev, "ASoC: Invalid format %llx specified\n",
 			 config->formats);
 
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -3926,7 +3926,7 @@ static int snd_soc_dai_link_event(struct snd_soc_dapm_widget *w,
 
 	if (WARN_ON(list_empty(&w->edges[SND_SOC_DAPM_DIR_OUT]) ||
 		    list_empty(&w->edges[SND_SOC_DAPM_DIR_IN])))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -3994,7 +3994,7 @@ static int snd_soc_dai_link_event(struct snd_soc_dapm_widget *w,
 
 	default:
 		WARN(1, "Unknown event %d\n", event);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 out:
@@ -4022,13 +4022,13 @@ static int snd_soc_dapm_dai_link_put(struct snd_kcontrol *kcontrol,
 
 	/* Can't change the config when widget is already powered */
 	if (w->power)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (ucontrol->value.enumerated.item[0] == rtd->params_select)
 		return 0;
 
 	if (ucontrol->value.enumerated.item[0] >= rtd->dai_link->num_params)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rtd->params_select = ucontrol->value.enumerated.item[0];
 
@@ -4559,7 +4559,7 @@ int snd_soc_dapm_force_enable_pin_unlocked(struct snd_soc_dapm_context *dapm,
 
 	if (!w) {
 		dev_err(dapm->dev, "ASoC: unknown pin %s\n", pin);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(w->dapm->dev, "ASoC: force enable pin %s\n", pin);
@@ -4740,7 +4740,7 @@ int snd_soc_dapm_ignore_suspend(struct snd_soc_dapm_context *dapm,
 
 	if (!w) {
 		dev_err(dapm->dev, "ASoC: unknown pin %s\n", pin);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	w->ignore_suspend = 1;

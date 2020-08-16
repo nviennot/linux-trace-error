@@ -296,16 +296,16 @@ int br_mrp_add(struct net_bridge *br, struct br_mrp_instance *instance)
 	 */
 	mrp = br_mrp_find_id(br, instance->ring_id);
 	if (mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!br_mrp_get_port(br, instance->p_ifindex) ||
 	    !br_mrp_get_port(br, instance->s_ifindex))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* It is not possible to have the same port part of multiple rings */
 	if (!br_mrp_unique_ifindex(br, instance->p_ifindex) ||
 	    !br_mrp_unique_ifindex(br, instance->s_ifindex))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mrp = kzalloc(sizeof(*mrp), GFP_KERNEL);
 	if (!mrp)
@@ -365,7 +365,7 @@ int br_mrp_del(struct net_bridge *br, struct br_mrp_instance *instance)
 	struct br_mrp *mrp = br_mrp_find_id(br, instance->ring_id);
 
 	if (!mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	br_mrp_del_impl(br, mrp);
 
@@ -379,7 +379,7 @@ int br_mrp_set_port_state(struct net_bridge_port *p,
 			  enum br_mrp_port_state_type state)
 {
 	if (!p || !(p->flags & BR_MRP_AWARE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_bh(&p->br->lock);
 
@@ -404,12 +404,12 @@ int br_mrp_set_port_role(struct net_bridge_port *p,
 	struct br_mrp *mrp;
 
 	if (!p || !(p->flags & BR_MRP_AWARE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mrp = br_mrp_find_port(p->br, p);
 
 	if (!mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (role) {
 	case BR_MRP_PORT_ROLE_PRIMARY:
@@ -419,7 +419,7 @@ int br_mrp_set_port_role(struct net_bridge_port *p,
 		rcu_assign_pointer(mrp->s_port, p);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	br_mrp_port_switchdev_set_role(p, role);
@@ -436,7 +436,7 @@ int br_mrp_set_ring_state(struct net_bridge *br,
 	struct br_mrp *mrp = br_mrp_find_id(br, state->ring_id);
 
 	if (!mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (mrp->ring_state == BR_MRP_RING_STATE_CLOSED &&
 	    state->ring_state != BR_MRP_RING_STATE_CLOSED)
@@ -460,7 +460,7 @@ int br_mrp_set_ring_role(struct net_bridge *br,
 	int err;
 
 	if (!mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mrp->ring_role = role->ring_role;
 
@@ -475,7 +475,7 @@ int br_mrp_set_ring_role(struct net_bridge *br,
 	 * SW when ring is open, but if the is not pushed to the HW the SW will
 	 * need to detect when the ring is open
 	 */
-	mrp->ring_role_offloaded = err == -EOPNOTSUPP ? 0 : 1;
+	mrp->ring_role_offloaded = err == -ERR(EOPNOTSUPP) ? 0 : 1;
 
 	return 0;
 }
@@ -490,7 +490,7 @@ int br_mrp_start_test(struct net_bridge *br,
 	struct br_mrp *mrp = br_mrp_find_id(br, test->ring_id);
 
 	if (!mrp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Try to push it to the HW and if it fails then continue with SW
 	 * implementation and if that also fails then return error.

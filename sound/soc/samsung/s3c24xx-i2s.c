@@ -146,7 +146,7 @@ static int s3c24xx_snd_lrsync(void)
 			break;
 
 		if (!timeout--)
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		udelay(100);
 	}
 
@@ -180,7 +180,7 @@ static int s3c24xx_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		iismod &= ~S3C2410_IISMOD_SLAVE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -191,7 +191,7 @@ static int s3c24xx_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		iismod &= ~S3C2410_IISMOD_MSB;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
@@ -223,7 +223,7 @@ static int s3c24xx_i2s_hw_params(struct snd_pcm_substream *substream,
 		dma_data->addr_width = 2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
@@ -262,7 +262,7 @@ static int s3c24xx_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 			s3c24xx_snd_txctrl(0);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -287,7 +287,7 @@ static int s3c24xx_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
 		iismod |= S3C2440_IISMOD_MPLL;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel(iismod, s3c24xx_i2s.regs + S3C2410_IISMOD);
@@ -317,7 +317,7 @@ static int s3c24xx_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai,
 		writel(reg | S3C2410_IISCON_PSCEN, s3c24xx_i2s.regs + S3C2410_IISCON);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

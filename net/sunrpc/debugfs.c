@@ -92,7 +92,7 @@ static int tasks_open(struct inode *inode, struct file *filp)
 
 		if (!atomic_inc_not_zero(&clnt->cl_count)) {
 			seq_release(inode, filp);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 
@@ -193,7 +193,7 @@ xprt_info_open(struct inode *inode, struct file *filp)
 	if (!ret) {
 		if (!xprt_get(xprt)) {
 			single_release(inode, filp);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 	return ret;
@@ -285,7 +285,7 @@ fault_disconnect_write(struct file *filp, const char __user *user_buf,
 		return -EFAULT;
 	buffer[len] = '\0';
 	if (kstrtouint(buffer, 10, &rpc_inject_disconnect))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return len;
 }
 

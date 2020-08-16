@@ -153,7 +153,7 @@ static int swsusp_extents_insert(unsigned long swap_offset)
 			new = &((*new)->rb_right);
 		} else {
 			/* It already is in the tree */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	/* Add the new node and rebalance the tree. */
@@ -320,7 +320,7 @@ static int mark_swapfiles(struct swap_map_handle *handle, unsigned int flags)
 				      swsusp_resume_block, swsusp_header, NULL);
 	} else {
 		pr_err("Swap header not found!\n");
-		error = -ENODEV;
+		error = -ERR(ENODEV);
 	}
 	return error;
 }
@@ -371,7 +371,7 @@ static int write_page(void *buf, sector_t offset, struct hib_bio_batch *hb)
 	int ret;
 
 	if (!offset)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	if (hb) {
 		src = (void *)__get_free_page(GFP_NOIO | __GFP_NOWARN |
@@ -423,7 +423,7 @@ static int get_swap_writer(struct swap_map_handle *handle)
 	}
 	handle->cur_swap = alloc_swapdev_block(root_swap);
 	if (!handle->cur_swap) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto err_rel;
 	}
 	handle->k = 0;
@@ -444,7 +444,7 @@ static int swap_write_page(struct swap_map_handle *handle, void *buf,
 	sector_t offset;
 
 	if (!handle->cur)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	offset = alloc_swapdev_block(root_swap);
 	error = write_page(buf, offset, hb);
 	if (error)
@@ -453,7 +453,7 @@ static int swap_write_page(struct swap_map_handle *handle, void *buf,
 	if (handle->k >= MAP_PAGE_ENTRIES) {
 		offset = alloc_swapdev_block(root_swap);
 		if (!offset)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		handle->cur->next_swap = offset;
 		error = write_page(handle->cur, handle->cur_swap, hb);
 		if (error)
@@ -482,7 +482,7 @@ static int flush_swap_writer(struct swap_map_handle *handle)
 	if (handle->cur && handle->cur_swap)
 		return write_page(handle->cur, handle->cur_swap, NULL);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int swap_writer_finish(struct swap_map_handle *handle,
@@ -915,7 +915,7 @@ int swsusp_write(unsigned int flags)
 	if (flags & SF_NOCOMPRESS_MODE) {
 		if (!enough_swap(pages)) {
 			pr_err("Not enough free swap\n");
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 			goto out_finish;
 		}
 	}
@@ -968,7 +968,7 @@ static int get_swap_reader(struct swap_map_handle *handle,
 	*flags_p = swsusp_header->flags;
 
 	if (!swsusp_header->image) /* how can this happen? */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	handle->cur = NULL;
 	last = handle->maps = NULL;
@@ -1012,7 +1012,7 @@ static int swap_read_page(struct swap_map_handle *handle, void *buf,
 	struct swap_map_page_list *tmp;
 
 	if (!handle->cur)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	offset = handle->cur->entries[handle->k];
 	if (!offset)
 		return -EFAULT;
@@ -1091,7 +1091,7 @@ static int load_image(struct swap_map_handle *handle,
 		pr_info("Image loading done\n");
 		snapshot_write_finalize(snapshot);
 		if (!snapshot_image_loaded(snapshot))
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 	}
 	swsusp_show_speed(start, stop, nr_to_read, "Read");
 	return ret;
@@ -1435,12 +1435,12 @@ out_finish:
 		pr_info("Image loading done\n");
 		snapshot_write_finalize(snapshot);
 		if (!snapshot_image_loaded(snapshot))
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 		if (!ret) {
 			if (swsusp_header->flags & SF_CRC32_MODE) {
 				if(handle->crc32 != swsusp_header->crc32) {
 					pr_err("Invalid image CRC32!\n");
-					ret = -ENODATA;
+					ret = -ERR(ENODATA);
 				}
 			}
 		}
@@ -1528,7 +1528,7 @@ int swsusp_check(void)
 						swsusp_resume_block,
 						swsusp_header, NULL);
 		} else {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 		}
 
 put:
@@ -1578,7 +1578,7 @@ int swsusp_unmark(void)
 					swsusp_header, NULL);
 	} else {
 		pr_err("Cannot find swsusp signature!\n");
-		error = -ENODEV;
+		error = -ERR(ENODEV);
 	}
 
 	/*

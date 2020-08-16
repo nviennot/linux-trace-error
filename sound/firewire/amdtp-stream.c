@@ -83,7 +83,7 @@ int amdtp_stream_init(struct amdtp_stream *s, struct fw_unit *unit,
 		      unsigned int protocol_size)
 {
 	if (process_ctx_payloads == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s->protocol = kzalloc(protocol_size, GFP_KERNEL);
 	if (!s->protocol)
@@ -280,7 +280,7 @@ int amdtp_stream_set_parameters(struct amdtp_stream *s, unsigned int rate,
 			break;
 	}
 	if (sfc == ARRAY_SIZE(amdtp_rate_table))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	s->sfc = sfc;
 	s->data_block_quadlets = data_block_quadlets;
@@ -553,7 +553,7 @@ static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
 		dev_info_ratelimited(&s->unit->device,
 				"Invalid CIP header for AMDTP: %08X:%08X\n",
 				cip_header[0], cip_header[1]);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	/* Check valid protocol or not. */
@@ -563,7 +563,7 @@ static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
 		dev_info_ratelimited(&s->unit->device,
 				     "Detect unexpected protocol: %08x %08x\n",
 				     cip_header[0], cip_header[1]);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	/* Calculate data blocks */
@@ -579,7 +579,7 @@ static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
 			dev_err(&s->unit->device,
 				"Detect invalid value in dbs field: %08X\n",
 				cip_header[0]);
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 		if (s->flags & CIP_WRONG_DBS)
 			data_block_quadlets = s->data_block_quadlets;
@@ -614,7 +614,7 @@ static int check_cip_header(struct amdtp_stream *s, const __be32 *buf,
 		dev_err(&s->unit->device,
 			"Detect discontinuity of CIP: %02X %02X\n",
 			*data_block_counter, dbc);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*data_block_counter = dbc;
@@ -640,7 +640,7 @@ static int parse_ir_ctx_header(struct amdtp_stream *s, unsigned int cycle,
 		dev_err(&s->unit->device,
 			"Detect jumbo payload: %04x %04x\n",
 			*payload_length, s->ctx_data.tx.max_ctx_payload_length);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (!(s->flags & CIP_NO_HEADER)) {
@@ -1048,14 +1048,14 @@ static int amdtp_stream_start(struct amdtp_stream *s, int channel, int speed,
 
 	if (WARN_ON(amdtp_stream_running(s) ||
 		    (s->data_block_quadlets < 1))) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto err_unlock;
 	}
 
 	if (s->direction == AMDTP_IN_STREAM) {
 		// NOTE: IT context should be used for constant IRQ.
 		if (is_irq_target) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_unlock;
 		}
 
@@ -1333,7 +1333,7 @@ int amdtp_domain_add_stream(struct amdtp_domain *d, struct amdtp_stream *s,
 
 	list_for_each_entry(tmp, &d->streams, list) {
 		if (s == tmp)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	list_add(&s->list, &d->streams);
@@ -1362,7 +1362,7 @@ static int get_current_cycle_time(struct fw_card *fw_card, int *cur_cycle)
 				   CSR_REGISTER_BASE + CSR_CYCLE_TIME,
 				   &reg, sizeof(reg));
 	if (rcode != RCODE_COMPLETE)
-		return -EIO;
+		return -ERR(EIO);
 
 	data = be32_to_cpu(reg);
 	*cur_cycle = data >> 12;
@@ -1403,7 +1403,7 @@ int amdtp_domain_start(struct amdtp_domain *d, unsigned int ir_delay_cycle)
 			break;
 	}
 	if (!s)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	d->irq_target = s;
 
 	// This is a case that AMDTP streams in domain run just for MIDI

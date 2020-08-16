@@ -366,7 +366,7 @@ int ceph_open(struct inode *inode, struct file *file)
 
 	/* snapped files are read-only */
 	if (ceph_snap(inode) != CEPH_NOSNAP && (file->f_mode & FMODE_WRITE))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* trivially open snapdir */
 	if (ceph_snap(inode) == CEPH_SNAPDIR) {
@@ -677,11 +677,11 @@ int ceph_atomic_open(struct inode *dir, struct dentry *dentry,
 	     d_unhashed(dentry) ? "unhashed" : "hashed", flags, mode);
 
 	if (dentry->d_name.len > NAME_MAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (flags & O_CREAT) {
 		if (ceph_quota_is_max_files_exceeded(dir))
-			return -EDQUOT;
+			return -ERR(EDQUOT);
 		err = ceph_pre_init_acls(dir, &mode, &as_ctx);
 		if (err < 0)
 			return err;
@@ -690,7 +690,7 @@ int ceph_atomic_open(struct inode *dir, struct dentry *dentry,
 			goto out_ctx;
 	} else if (!d_in_lookup(dentry)) {
 		/* If it's not being looked up, it's negative */
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 retry:
 	/* do the open */
@@ -1214,7 +1214,7 @@ ceph_direct_read_write(struct kiocb *iocb, struct iov_iter *iter,
 	bool should_dirty = !write && iter_is_iovec(iter);
 
 	if (write && ceph_snap(file_inode(file)) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	dout("sync_direct_%s on file %p %lld~%u snapc %p seq %lld\n",
 	     (write ? "write" : "read"), file, pos, (unsigned)count,
@@ -1384,7 +1384,7 @@ ceph_direct_read_write(struct kiocb *iocb, struct iov_iter *iter,
 				ceph_aio_complete_req(req);
 			}
 		}
-		return -EIOCBQUEUED;
+		return -ERR(EIOCBQUEUED);
 	}
 
 	if (ret != -EOLDSNAPC && pos > iocb->ki_pos) {
@@ -1422,7 +1422,7 @@ ceph_sync_write(struct kiocb *iocb, struct iov_iter *from, loff_t pos,
 	size_t count = iov_iter_count(from);
 
 	if (ceph_snap(file_inode(file)) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	dout("sync_write on file %p %lld~%u snapc %p seq %lld\n",
 	     file, pos, (unsigned)count, snapc, snapc->seq);
@@ -1704,7 +1704,7 @@ static ssize_t ceph_write_iter(struct kiocb *iocb, struct iov_iter *from)
 	loff_t limit = max(i_size_read(inode), fsc->max_file_size);
 
 	if (ceph_snap(inode) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	prealloc_cf = ceph_alloc_cap_flush();
 	if (!prealloc_cf)
@@ -1734,7 +1734,7 @@ retry_snap:
 
 	pos = iocb->ki_pos;
 	if (unlikely(pos >= limit)) {
-		err = -EFBIG;
+		err = -ERR(EFBIG);
 		goto out;
 	} else {
 		iov_iter_truncate(from, limit - pos);
@@ -1742,7 +1742,7 @@ retry_snap:
 
 	count = iov_iter_count(from);
 	if (ceph_quota_is_max_bytes_exceeded(inode, pos + count)) {
-		err = -EDQUOT;
+		err = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -1768,7 +1768,7 @@ retry_snap:
 	up_read(&osdc->lock);
 	if ((map_flags & CEPH_OSDMAP_FULL) ||
 	    (pool_flags & CEPH_POOL_FLAG_FULL)) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -1916,13 +1916,13 @@ static loff_t ceph_llseek(struct file *file, loff_t offset, int whence)
 		break;
 	case SEEK_DATA:
 		if (offset < 0 || offset >= i_size) {
-			ret = -ENXIO;
+			ret = -ERR(ENXIO);
 			goto out;
 		}
 		break;
 	case SEEK_HOLE:
 		if (offset < 0 || offset >= i_size) {
-			ret = -ENXIO;
+			ret = -ERR(ENXIO);
 			goto out;
 		}
 		offset = i_size;
@@ -2074,10 +2074,10 @@ static long ceph_fallocate(struct file *file, int mode,
 	loff_t size;
 
 	if (mode != (FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!S_ISREG(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	prealloc_cf = ceph_alloc_cap_flush();
 	if (!prealloc_cf)
@@ -2086,7 +2086,7 @@ static long ceph_fallocate(struct file *file, int mode,
 	inode_lock(inode);
 
 	if (ceph_snap(inode) != CEPH_NOSNAP) {
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto unlock;
 	}
 
@@ -2165,7 +2165,7 @@ retry_caps:
 		if (retrying) {
 			if (!ret)
 				/* ceph_try_get_caps masks EAGAIN */
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			return ret;
 		}
 		ret = ceph_get_caps(src_filp, CEPH_CAP_FILE_RD,
@@ -2208,16 +2208,16 @@ static int is_file_size_ok(struct inode *src_inode, struct inode *dst_inode,
 	if (src_off + len > size) {
 		dout("Copy beyond EOF (%llu + %zu > %llu)\n",
 		     src_off, len, size);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	size = i_size_read(dst_inode);
 
 	endoff = dst_off + len;
 	if (inode_newsize_ok(dst_inode, endoff))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (ceph_quota_is_max_bytes_exceeded(dst_inode, endoff))
-		return -EDQUOT;
+		return -ERR(EDQUOT);
 
 	return 0;
 }
@@ -2298,7 +2298,7 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 	struct ceph_cap_flush *prealloc_cf;
 	struct ceph_fs_client *src_fsc = ceph_inode_to_client(src_inode);
 	loff_t size;
-	ssize_t ret = -EIO, bytes;
+	ssize_t ret = -ERR(EIO), bytes;
 	u64 src_objnum, dst_objnum, src_objoff, dst_objoff;
 	u32 src_objlen, dst_objlen;
 	int src_got = 0, dst_got = 0, err, dirty;
@@ -2310,11 +2310,11 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 				      &dst_fsc->client->fsid)) {
 			dout("Copying files across clusters: src: %pU dst: %pU\n",
 			     &src_fsc->client->fsid, &dst_fsc->client->fsid);
-			return -EXDEV;
+			return -ERR(EXDEV);
 		}
 	}
 	if (ceph_snap(dst_inode) != CEPH_NOSNAP)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/*
 	 * Some of the checks below will return -EOPNOTSUPP, which will force a
@@ -2325,10 +2325,10 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 	 */
 
 	if (ceph_test_mount_opt(src_fsc, NOCOPYFROM))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!src_fsc->have_copy_from2)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * Striped file layouts require that we copy partial objects, but the
@@ -2340,11 +2340,11 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 	    (dst_ci->i_layout.stripe_count != 1) ||
 	    (src_ci->i_layout.object_size != dst_ci->i_layout.object_size)) {
 		dout("Invalid src/dst files layout\n");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (len < src_ci->i_layout.object_size)
-		return -EOPNOTSUPP; /* no remote copy will be done */
+		return -ERR(EOPNOTSUPP); /* no remote copy will be done */
 
 	prealloc_cf = ceph_alloc_cap_flush();
 	if (!prealloc_cf)
@@ -2371,7 +2371,7 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 			     dst_file, (dst_off + len), &dst_got);
 	if (err < 0) {
 		dout("get_rd_wr_caps returned %d\n", err);
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -2395,7 +2395,7 @@ static ssize_t __ceph_copy_file_range(struct file *src_file, loff_t src_off,
 				      &dst_objnum, &dst_objoff, &dst_objlen);
 	/* object-level offsets need to the same */
 	if (src_objoff != dst_objoff) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out_caps;
 	}
 

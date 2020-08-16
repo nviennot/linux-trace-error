@@ -1546,7 +1546,7 @@ unsigned int reclaim_clean_pages_from_list(struct zone *zone,
  */
 int __isolate_lru_page(struct page *page, isolate_mode_t mode)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/* Only take pages on the LRU. */
 	if (!PageLRU(page))
@@ -1556,7 +1556,7 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode)
 	if (PageUnevictable(page) && !(mode & ISOLATE_UNEVICTABLE))
 		return ret;
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 
 	/*
 	 * To minimise LRU disruption, the caller can indicate that it only
@@ -1764,7 +1764,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
  */
 int isolate_lru_page(struct page *page)
 {
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	VM_BUG_ON_PAGE(!page_count(page), page);
 	WARN_RATELIMIT(PageTail(page), "trying to isolate tail page");

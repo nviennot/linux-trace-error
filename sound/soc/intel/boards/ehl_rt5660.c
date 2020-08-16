@@ -96,7 +96,7 @@ static int card_late_probe(struct snd_soc_card *card)
 	struct sof_hdmi_pcm *pcm;
 
 	if (list_empty(&ctx->hdmi_pcm_list))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!ctx->idisp_codec)
 		return 0;

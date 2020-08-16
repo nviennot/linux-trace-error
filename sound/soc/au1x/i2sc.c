@@ -84,7 +84,7 @@ static int au1xi2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	unsigned long c;
 	int ret;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	c = ctx->cfg;
 
 	c &= ~CFG_FM_MASK;
@@ -155,7 +155,7 @@ static int au1xi2s_trigger(struct snd_pcm_substream *substream,
 		WR(ctx, I2S_ENABLE, EN_D);		/* power off */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -187,7 +187,7 @@ static int au1xi2s_hw_params(struct snd_pcm_substream *substream,
 
 	v = msbits_to_reg(params->msbits);
 	if (!v)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctx->cfg &= ~CFG_SZ_MASK;
 	ctx->cfg |= v;
@@ -241,26 +241,26 @@ static int au1xi2s_drvprobe(struct platform_device *pdev)
 
 	iores = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!iores)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!devm_request_mem_region(&pdev->dev, iores->start,
 				     resource_size(iores),
 				     pdev->name))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ctx->mmio = devm_ioremap(&pdev->dev, iores->start,
 					 resource_size(iores));
 	if (!ctx->mmio)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	ctx->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	ctx->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
 	platform_set_drvdata(pdev, ctx);

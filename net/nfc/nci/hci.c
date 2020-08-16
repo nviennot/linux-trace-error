@@ -98,9 +98,9 @@ static int nci_hci_result_to_errno(u8 result)
 	case NCI_HCI_ANY_OK:
 		return 0;
 	case NCI_HCI_ANY_E_REG_PAR_UNKNOWN:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	case NCI_HCI_ANY_E_TIMEOUT:
-		return -ETIME;
+		return -ERR(ETIME);
 	default:
 		return -1;
 	}
@@ -149,7 +149,7 @@ static int nci_hci_send_data(struct nci_dev *ndev, u8 pipe,
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	i = 0;
 	skb = nci_skb_alloc(ndev, conn_info->max_pkt_payload_len +
@@ -211,7 +211,7 @@ int nci_hci_send_event(struct nci_dev *ndev, u8 gate, u8 event,
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
 	if (pipe == NCI_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	return nci_hci_send_data(ndev, pipe,
 			NCI_HCP_HEADER(NCI_HCI_HCP_EVENT, event),
@@ -230,11 +230,11 @@ int nci_hci_send_cmd(struct nci_dev *ndev, u8 gate, u8 cmd,
 	u8 pipe = ndev->hci_dev->gate2pipe[gate];
 
 	if (pipe == NCI_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
@@ -507,7 +507,7 @@ int nci_hci_open_pipe(struct nci_dev *ndev, u8 pipe)
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
@@ -572,11 +572,11 @@ int nci_hci_set_param(struct nci_dev *ndev, u8 gate, u8 idx,
 	pr_debug("idx=%d to gate %d\n", idx, gate);
 
 	if (pipe == NCI_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	tmp = kmalloc(1 + param_len, GFP_KERNEL);
 	if (!tmp)
@@ -619,11 +619,11 @@ int nci_hci_get_param(struct nci_dev *ndev, u8 gate, u8 idx,
 	pr_debug("idx=%d to gate %d\n", idx, gate);
 
 	if (pipe == NCI_HCI_INVALID_PIPE)
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	data.conn_id = conn_info->conn_id;
 	data.pipe = pipe;
@@ -659,7 +659,7 @@ int nci_hci_connect_gate(struct nci_dev *ndev,
 		return 0;
 
 	if (ndev->hci_dev->gate2pipe[dest_gate] != NCI_HCI_INVALID_PIPE)
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 
 	if (pipe != NCI_HCI_INVALID_PIPE)
 		goto open_pipe;
@@ -728,7 +728,7 @@ int nci_hci_dev_session_init(struct nci_dev *ndev)
 
 	conn_info = ndev->hci_dev->conn_info;
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	conn_info->data_exchange_cb = nci_hci_data_received_cb;
 	conn_info->data_exchange_cb_context = ndev;
@@ -736,7 +736,7 @@ int nci_hci_dev_session_init(struct nci_dev *ndev)
 	nci_hci_reset_pipes(ndev->hci_dev);
 
 	if (ndev->hci_dev->init_data.gates[0].gate != NCI_HCI_ADMIN_GATE)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	r = nci_hci_connect_gate(ndev,
 				 ndev->hci_dev->init_data.gates[0].dest_host,

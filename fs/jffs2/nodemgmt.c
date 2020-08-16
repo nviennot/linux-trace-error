@@ -74,7 +74,7 @@ static int jffs2_do_reserve_space(struct jffs2_sb_info *c,  uint32_t minsize,
 int jffs2_reserve_space(struct jffs2_sb_info *c, uint32_t minsize,
 			uint32_t *len, int prio, uint32_t sumsize)
 {
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 	int blocksneeded = c->resv_blocks_write;
 	/* align it */
 	minsize = PAD(minsize);
@@ -91,7 +91,7 @@ int jffs2_reserve_space(struct jffs2_sb_info *c, uint32_t minsize,
 	 * If not, only allow root to proceed with writing.
 	 */
 	if (prio != ALLOC_DELETION && !jffs2_rp_can_write(c)) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -125,7 +125,7 @@ int jffs2_reserve_space(struct jffs2_sb_info *c, uint32_t minsize,
 
 				spin_unlock(&c->erase_completion_lock);
 				mutex_unlock(&c->alloc_sem);
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 			}
 
 			/* Calc possibly available space. Possibly available means that we
@@ -149,7 +149,7 @@ int jffs2_reserve_space(struct jffs2_sb_info *c, uint32_t minsize,
 					  avail, blocksneeded * c->sector_size);
 				spin_unlock(&c->erase_completion_lock);
 				mutex_unlock(&c->alloc_sem);
-				return -ENOSPC;
+				return -ERR(ENOSPC);
 			}
 
 			mutex_unlock(&c->alloc_sem);
@@ -188,7 +188,7 @@ int jffs2_reserve_space(struct jffs2_sb_info *c, uint32_t minsize,
 			cond_resched();
 
 			if (signal_pending(current))
-				return -EINTR;
+				return -ERR(EINTR);
 
 			mutex_lock(&c->alloc_sem);
 			spin_lock(&c->erase_completion_lock);
@@ -306,7 +306,7 @@ static int jffs2_find_nextblock(struct jffs2_sb_info *c)
 			jffs2_flush_wbuf_pad(c);
 			spin_lock(&c->erase_completion_lock);
 			/* Have another go. It'll be on the erasable_list now */
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 
 		if (!c->nr_erasing_blocks) {
@@ -317,7 +317,7 @@ static int jffs2_find_nextblock(struct jffs2_sb_info *c)
 				list_empty(&c->erasable_list) ? "yes" : "no",
 				list_empty(&c->erasing_list) ? "yes" : "no",
 				list_empty(&c->erase_pending_list) ? "yes" : "no");
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		}
 
 		spin_unlock(&c->erase_completion_lock);
@@ -328,7 +328,7 @@ static int jffs2_find_nextblock(struct jffs2_sb_info *c)
 		/* An erase may have failed, decreasing the
 		   amount of free space available. So we must
 		   restart from the beginning */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	next = c->free_list.next;
@@ -522,7 +522,7 @@ struct jffs2_raw_node_ref *jffs2_add_physical_node_ref(struct jffs2_sb_info *c,
 			pr_warn("No nextblock");
 		pr_cont(", expected at %08x\n",
 			jeb->offset + (c->sector_size - jeb->free_size));
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 #endif
 	spin_lock(&c->erase_completion_lock);

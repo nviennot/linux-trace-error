@@ -1105,7 +1105,7 @@ static int o2hb_do_disk_heartbeat(struct o2hb_region *reg)
 	lowest_node = o2hb_lowest_node(configured_nodes, O2NM_MAX_NODES);
 	if (highest_node >= O2NM_MAX_NODES || lowest_node >= O2NM_MAX_NODES) {
 		mlog(ML_NOTICE, "o2hb: No configured nodes found!\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -1180,7 +1180,7 @@ bail:
 			atomic_set(&reg->hr_steady_iterations, 0);
 			reg->hr_aborted_start = 1;
 			wake_up(&o2hb_steady_queue);
-			ret = -EIO;
+			ret = -ERR(EIO);
 		}
 	}
 
@@ -1542,13 +1542,13 @@ static int o2hb_read_block_input(struct o2hb_region *reg,
 
 	bytes = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Heartbeat and fs min / max block sizes are the same. */
 	if (bytes > 4096 || bytes < 512)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if (hweight16(bytes) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ret_bytes)
 		*ret_bytes = bytes;
@@ -1574,7 +1574,7 @@ static ssize_t o2hb_region_block_bytes_store(struct config_item *item,
 	unsigned int block_bits;
 
 	if (reg->hr_bdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	status = o2hb_read_block_input(reg, page, &block_bytes,
 				       &block_bits);
@@ -1602,11 +1602,11 @@ static ssize_t o2hb_region_start_block_store(struct config_item *item,
 	char *p = (char *)page;
 
 	if (reg->hr_bdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp = simple_strtoull(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reg->hr_start_block = tmp;
 
@@ -1627,14 +1627,14 @@ static ssize_t o2hb_region_blocks_store(struct config_item *item,
 	char *p = (char *)page;
 
 	if (reg->hr_bdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp = simple_strtoul(p, &p, 0);
 	if (!p || (*p && (*p != '\n')))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tmp > O2NM_MAX_NODES || tmp == 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	reg->hr_blocks = (unsigned int)tmp;
 
@@ -1767,7 +1767,7 @@ static ssize_t o2hb_region_dev_store(struct config_item *item,
 	char *p = (char *)page;
 	struct fd f;
 	struct inode *inode;
-	ssize_t ret = -EINVAL;
+	ssize_t ret = -ERR(EINVAL);
 	int live_threshold;
 
 	if (reg->hr_bdev)
@@ -1815,7 +1815,7 @@ static ssize_t o2hb_region_dev_store(struct config_item *item,
 		mlog(ML_ERROR,
 		     "blocksize %u incorrect for device, expected %d",
 		     reg->hr_block_bytes, sectsize);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out3;
 	}
 
@@ -1883,12 +1883,12 @@ static ssize_t o2hb_region_dev_store(struct config_item *item,
 	}
 
 	if (reg->hr_aborted_start) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out3;
 	}
 
 	if (reg->hr_node_deleted) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out3;
 	}
 
@@ -1902,7 +1902,7 @@ static ssize_t o2hb_region_dev_store(struct config_item *item,
 	if (hb_task)
 		ret = count;
 	else
-		ret = -EIO;
+		ret = -ERR(EIO);
 
 	if (hb_task && o2hb_global_heartbeat_active())
 		printk(KERN_NOTICE "o2hb: Heartbeat started on region %s (%s)\n",
@@ -2017,7 +2017,7 @@ static struct config_item *o2hb_heartbeat_group_make_item(struct config_group *g
 		return ERR_PTR(-ENOMEM);
 
 	if (strlen(name) > O2HB_MAX_REGION_NAME_LEN) {
-		ret = -ENAMETOOLONG;
+		ret = -ERR(ENAMETOOLONG);
 		goto free;
 	}
 
@@ -2028,7 +2028,7 @@ static struct config_item *o2hb_heartbeat_group_make_item(struct config_group *g
 							 O2NM_MAX_REGIONS);
 		if (reg->hr_region_num >= O2NM_MAX_REGIONS) {
 			spin_unlock(&o2hb_live_lock);
-			ret = -EFBIG;
+			ret = -ERR(EFBIG);
 			goto free;
 		}
 		set_bit(reg->hr_region_num, o2hb_region_bitmap);
@@ -2147,7 +2147,7 @@ static ssize_t o2hb_heartbeat_group_dead_threshold_store(struct config_item *ite
 
 	tmp = simple_strtoul(p, &p, 10);
 	if (!p || (*p && (*p != '\n')))
-                return -EINVAL;
+                return -ERR(EINVAL);
 
 	/* this will validate ranges for us. */
 	o2hb_dead_threshold_set((unsigned int) tmp);
@@ -2171,7 +2171,7 @@ static ssize_t o2hb_heartbeat_group_mode_store(struct config_item *item,
 
 	len = (page[count - 1] == '\n') ? count - 1 : count;
 	if (!len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < O2HB_HEARTBEAT_NUM_MODES; ++i) {
 		if (strncasecmp(page, o2hb_heartbeat_mode_desc[i], len))
@@ -2184,7 +2184,7 @@ static ssize_t o2hb_heartbeat_group_mode_store(struct config_item *item,
 		return count;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 }
 
@@ -2240,7 +2240,7 @@ void o2hb_free_hb_set(struct config_group *group)
 static struct o2hb_callback *hbcall_from_type(enum o2hb_callback_type type)
 {
 	if (type == O2HB_NUM_CB)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return &o2hb_callbacks[type];
 }

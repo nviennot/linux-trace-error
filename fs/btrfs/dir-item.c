@@ -35,7 +35,7 @@ static struct btrfs_dir_item *insert_with_overflow(struct btrfs_trans_handle
 		struct btrfs_dir_item *di;
 		di = btrfs_match_dir_item_name(fs_info, path, name, name_len);
 		if (di)
-			return ERR_PTR(-EEXIST);
+			return ERR_PTR(-ERR(EEXIST));
 		btrfs_extend_item(path, data_size);
 	} else if (ret < 0)
 		return ERR_PTR(ret);
@@ -67,7 +67,7 @@ int btrfs_insert_xattr_item(struct btrfs_trans_handle *trans,
 	u32 data_size;
 
 	if (name_len + data_len > BTRFS_MAX_XATTR_SIZE(root->fs_info))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	key.objectid = objectid;
 	key.type = BTRFS_XATTR_ITEM_KEY;
@@ -237,7 +237,7 @@ int btrfs_check_dir_item_collision(struct btrfs_root *root, u64 dir,
 	di = btrfs_match_dir_item_name(root->fs_info, path, name, name_len);
 	if (di) {
 		/* our exact name was found */
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -250,7 +250,7 @@ int btrfs_check_dir_item_collision(struct btrfs_root *root, u64 dir,
 	slot = path->slots[0];
 	if (data_size + btrfs_item_size_nr(leaf, slot) +
 	    sizeof(struct btrfs_item) > BTRFS_LEAF_DATA_SIZE(root->fs_info)) {
-		ret = -EOVERFLOW;
+		ret = -ERR(EOVERFLOW);
 	} else {
 		/* plenty of insertion room */
 		ret = 0;
@@ -288,7 +288,7 @@ btrfs_lookup_dir_index_item(struct btrfs_trans_handle *trans,
 	if (ret < 0)
 		return ERR_PTR(ret);
 	if (ret > 0)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	return btrfs_match_dir_item_name(root->fs_info, path, name, name_len);
 }
 

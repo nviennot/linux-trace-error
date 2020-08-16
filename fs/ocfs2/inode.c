@@ -123,7 +123,7 @@ struct inode *ocfs2_ilookup(struct super_block *sb, u64 blkno)
 struct inode *ocfs2_iget(struct ocfs2_super *osb, u64 blkno, unsigned flags,
 			 int sysfile_type)
 {
-	int rc = -ESTALE;
+	int rc = -ERR(ESTALE);
 	struct inode *inode = NULL;
 	struct super_block *sb = osb->sb;
 	struct ocfs2_find_inode_args args;
@@ -136,7 +136,7 @@ struct inode *ocfs2_iget(struct ocfs2_super *osb, u64 blkno, unsigned flags,
 	 * caller, or we just pulled them off the bh. Lets do some
 	 * sanity checks to make sure they're OK. */
 	if (blkno == 0) {
-		inode = ERR_PTR(-EINVAL);
+		inode = ERR_PTR(-ERR(EINVAL));
 		mlog_errno(PTR_ERR(inode));
 		goto bail;
 	}
@@ -410,7 +410,7 @@ static int ocfs2_read_locked_inode(struct inode *inode,
 	int status, can_lock, lock_level = 0;
 	u32 generation = 0;
 
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	sb = inode->i_sb;
 	osb = OCFS2_SB(sb);
 
@@ -524,7 +524,7 @@ static int ocfs2_read_locked_inode(struct inode *inode,
 		goto bail;
 	}
 
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	fe = (struct ocfs2_dinode *) bh->b_data;
 
 	/*
@@ -649,7 +649,7 @@ static int ocfs2_remove_inode(struct inode *inode,
 		ocfs2_get_system_file_inode(osb, INODE_ALLOC_SYSTEM_INODE,
 					    le16_to_cpu(di->i_suballoc_slot));
 	if (!inode_alloc_inode) {
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -725,7 +725,7 @@ static int ocfs2_check_orphan_recovery_state(struct ocfs2_super *osb,
 
 	spin_lock(&osb->osb_lock);
 	if (ocfs2_node_map_test_bit(osb, &osb->osb_recovering_orphan_dirs, slot)) {
-		ret = -EDEADLK;
+		ret = -ERR(EDEADLK);
 		goto out;
 	}
 	/* This signals to the orphan recovery process that it should
@@ -767,7 +767,7 @@ static int ocfs2_wipe_inode(struct inode *inode,
 							       ORPHAN_DIR_SYSTEM_INODE,
 							       orphaned_slot);
 		if (!orphan_dir_inode) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			mlog_errno(status);
 			goto bail;
 		}
@@ -930,7 +930,7 @@ static int ocfs2_query_inode_wipe(struct inode *inode,
 		}
 
 		/* for lack of a better error? */
-		status = -EEXIST;
+		status = -ERR(EEXIST);
 		mlog(ML_ERROR,
 		     "Inode %llu (on-disk %llu) not orphaned! "
 		     "Disk flags  0x%x, inode flags 0x%x\n",
@@ -942,7 +942,7 @@ static int ocfs2_query_inode_wipe(struct inode *inode,
 
 	/* has someone already deleted us?! baaad... */
 	if (di->i_dtime) {
-		status = -EEXIST;
+		status = -ERR(EEXIST);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -1256,14 +1256,14 @@ int ocfs2_inode_revalidate(struct dentry *dentry)
 		inode ? (unsigned long long)OCFS2_I(inode)->ip_flags : 0);
 
 	if (!inode) {
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		goto bail;
 	}
 
 	spin_lock(&OCFS2_I(inode)->ip_lock);
 	if (OCFS2_I(inode)->ip_flags & OCFS2_INODE_DELETED) {
 		spin_unlock(&OCFS2_I(inode)->ip_lock);
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		goto bail;
 	}
 	spin_unlock(&OCFS2_I(inode)->ip_lock);
@@ -1386,7 +1386,7 @@ int ocfs2_validate_inode_block(struct super_block *sb,
 	 * Errors after here are fatal.
 	 */
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 
 	if (!OCFS2_IS_VALID_DINODE(di)) {
 		rc = ocfs2_error(sb, "Invalid dinode #%llu: signature = %.*s\n",

@@ -215,7 +215,7 @@ static int mts64_device_init(struct parport *p)
 	}
 	mts64_disable_readout(p);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* 
@@ -287,7 +287,7 @@ static int mts64_probe(struct parport *p)
 
 	c &= 0x00ff;
 	if (c != MTS64_CMD_PROBE) 
-		return -ENODEV;
+		return -ERR(ENODEV);
 	else 
 		return 0;
 
@@ -614,7 +614,7 @@ static int snd_mts64_ctl_smpte_fps_put(struct snd_kcontrol *kctl,
 	int changed = 0;
 
 	if (uctl->value.enumerated.item[0] >= 5)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&mts->lock);
 	if (mts->fps != uctl->value.enumerated.item[0]) {
 		changed = 1;
@@ -870,7 +870,7 @@ static void snd_mts64_detach(struct parport *p)
 static int snd_mts64_dev_probe(struct pardevice *pardev)
 {
 	if (strcmp(pardev->name, DRIVER_NAME))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -918,9 +918,9 @@ static int snd_mts64_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, NULL);
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) 
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = snd_card_new(&pdev->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
@@ -940,14 +940,14 @@ static int snd_mts64_probe(struct platform_device *pdev)
 					    pdev->id);	 /* device number */
 	if (!pardev) {
 		snd_printd("Cannot register pardevice\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto __err;
 	}
 
 	/* claim parport */
 	if (parport_claim(pardev)) {
 		snd_printd("Cannot claim parport 0x%lx\n", pardev->port->base);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto free_pardev;
 	}
 
@@ -960,7 +960,7 @@ static int snd_mts64_probe(struct platform_device *pdev)
 
 	err = mts64_probe(p);
 	if (err) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto __err;
 	}
 	
@@ -1037,12 +1037,12 @@ static int __init snd_mts64_module_init(void)
 
 	if (parport_register_driver(&mts64_parport_driver) != 0) {
 		platform_driver_unregister(&snd_mts64_driver);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (device_count == 0) {
 		snd_mts64_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;

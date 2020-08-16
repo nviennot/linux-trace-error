@@ -71,7 +71,7 @@ static int (*oldmem_pfn_is_ram)(unsigned long pfn);
 int register_oldmem_pfn_is_ram(int (*fn)(unsigned long pfn))
 {
 	if (oldmem_pfn_is_ram)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	oldmem_pfn_is_ram = fn;
 	return 0;
 }
@@ -530,7 +530,7 @@ static int remap_oldmem_pfn_checked(struct vm_area_struct *vma,
 	return 0;
 fail:
 	do_munmap(vma->vm_mm, from, len, NULL);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int vmcore_remap_oldmem_pfn(struct vm_area_struct *vma,
@@ -557,10 +557,10 @@ static int mmap_vmcore(struct file *file, struct vm_area_struct *vma)
 	end = start + size;
 
 	if (size > vmcore_size || end > vmcore_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (vma->vm_flags & (VM_WRITE | VM_EXEC))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	vma->vm_flags &= ~(VM_MAYWRITE | VM_MAYEXEC);
 	vma->vm_flags |= VM_MIXEDMAP;
@@ -575,7 +575,7 @@ static int mmap_vmcore(struct file *file, struct vm_area_struct *vma)
 		pfn = __pa(elfcorebuf + start) >> PAGE_SHIFT;
 		if (remap_pfn_range(vma, vma->vm_start, pfn, tsz,
 				    vma->vm_page_prot))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		size -= tsz;
 		start += tsz;
 		len += tsz;
@@ -658,12 +658,12 @@ static int mmap_vmcore(struct file *file, struct vm_area_struct *vma)
 	return 0;
 fail:
 	do_munmap(vma->vm_mm, vma->vm_start, len, NULL);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 #else
 static int mmap_vmcore(struct file *file, struct vm_area_struct *vma)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif
 
@@ -1209,7 +1209,7 @@ static int __init parse_crash_elf64_headers(void)
 		ehdr.e_phentsize != sizeof(Elf64_Phdr) ||
 		ehdr.e_phnum == 0) {
 		pr_warn("Warning: Core image elf header is not sane\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Read in all elf headers. */
@@ -1265,7 +1265,7 @@ static int __init parse_crash_elf32_headers(void)
 		ehdr.e_phentsize != sizeof(Elf32_Phdr) ||
 		ehdr.e_phnum == 0) {
 		pr_warn("Warning: Core image elf header is not sane\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Read in all elf headers. */
@@ -1308,7 +1308,7 @@ static int __init parse_crash_elf_headers(void)
 		return rc;
 	if (memcmp(e_ident, ELFMAG, SELFMAG) != 0) {
 		pr_warn("Warning: Core image elf header not found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (e_ident[EI_CLASS] == ELFCLASS64) {
@@ -1321,7 +1321,7 @@ static int __init parse_crash_elf_headers(void)
 			return rc;
 	} else {
 		pr_warn("Warning: Core image elf header is not sane\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Determine vmcore size. */
@@ -1458,12 +1458,12 @@ int vmcore_add_device_dump(struct vmcoredd_data *data)
 
 	if (vmcoredd_disabled) {
 		pr_err_once("Device dump is disabled\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!data || !strlen(data->dump_name) ||
 	    !data->vmcoredd_callback || !data->size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dump = vzalloc(sizeof(*dump));
 	if (!dump) {

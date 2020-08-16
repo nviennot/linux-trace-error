@@ -1995,7 +1995,7 @@ static inline int usb_translate_errors(int error_code)
 	case -EOPNOTSUPP:
 		return error_code;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 }
 

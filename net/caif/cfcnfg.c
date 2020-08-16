@@ -173,7 +173,7 @@ static int cfcnfg_get_id_from_ifi(struct cfcnfg *cnfg, int ifi)
 	list_for_each_entry_rcu(phy, &cnfg->phys, node)
 		if (phy->ifindex == ifi && phy->up)
 			return phy->id;
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 int caif_disconnect_client(struct net *net, struct cflayer *adap_layer)
@@ -241,11 +241,11 @@ static int caif_connect_req_to_link_param(struct cfcnfg *cnfg,
 			pref = CFPHYPREF_LOW_LAT;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		dev_info = cfcnfg_get_phyid(cnfg, pref);
 		if (dev_info == NULL)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		l->phyid = dev_info->id;
 	}
 	switch (s->protocol) {
@@ -292,7 +292,7 @@ static int caif_connect_req_to_link_param(struct cfcnfg *cnfg,
 		l->chtype = s->sockaddr.u.dbg.type;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -314,10 +314,10 @@ int caif_connect_client(struct net *net, struct caif_connect_request *conn_req,
 
 	phy = cfcnfg_get_phyinfo_rcu(cfg, param.phyid);
 	if (!phy) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto unlock;
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	if (adap_layer == NULL) {
 		pr_err("adap_layer is zero\n");
@@ -332,7 +332,7 @@ int caif_connect_client(struct net *net, struct caif_connect_request *conn_req,
 		goto unlock;
 	}
 
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 	frml = phy->frm_layer;
 	if (frml == NULL) {
 		pr_err("Specified PHY type does not exist!\n");
@@ -528,7 +528,7 @@ int cfcnfg_set_phy_state(struct cfcnfg *cnfg, struct cflayer *phy_layer,
 	phyinfo = cfcnfg_get_phyinfo_rcu(cnfg, phy_layer->id);
 	if (phyinfo == NULL) {
 		rcu_read_unlock();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (phyinfo->up == up) {
@@ -581,7 +581,7 @@ int cfcnfg_del_phy_layer(struct cfcnfg *cnfg, struct cflayer *phy_layer)
 		pr_info("Wait for device inuse\n");
 		list_add_rcu(&phyinfo->node, &cnfg->phys);
 		mutex_unlock(&cnfg->lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	frml = phyinfo->frm_layer;

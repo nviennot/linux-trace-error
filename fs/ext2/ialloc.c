@@ -456,7 +456,7 @@ struct inode *ext2_new_inode(struct inode *dir, umode_t mode,
 		group = find_group_other(sb, dir);
 
 	if (group == -1) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto fail;
 	}
 
@@ -470,7 +470,7 @@ struct inode *ext2_new_inode(struct inode *dir, umode_t mode,
 		brelse(bitmap_bh);
 		bitmap_bh = read_inode_bitmap(sb, group);
 		if (!bitmap_bh) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto fail;
 		}
 		ino = 0;
@@ -510,7 +510,7 @@ repeat_in_this_group:
 	 * Scanned all blockgroups.
 	 */
 	brelse(bitmap_bh);
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	goto fail;
 got:
 	mark_buffer_dirty(bitmap_bh);
@@ -524,7 +524,7 @@ got:
 			    "reserved inode or inode > inodes count - "
 			    "block_group = %d,inode=%lu", group,
 			    (unsigned long) ino);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto fail;
 	}
 
@@ -576,7 +576,7 @@ got:
 		ext2_error(sb, "ext2_new_inode",
 			   "inode number already in use - inode=%lu",
 			   (unsigned long) ino);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto fail;
 	}
 

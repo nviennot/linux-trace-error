@@ -94,7 +94,7 @@ static struct afs_addr_list *afs_extract_vl_addrs(const u8 **_b, const u8 *end,
 {
 	struct afs_addr_list *alist;
 	const u8 *b = *_b;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	alist = afs_alloc_addrlist(nr_addrs, VL_SERVICE, port);
 	if (!alist)
@@ -132,7 +132,7 @@ static struct afs_addr_list *afs_extract_vl_addrs(const u8 **_b, const u8 *end,
 		default:
 			_leave(" = -EADDRNOTAVAIL [unknown af %u]",
 			       hdr.address_type);
-			ret = -EADDRNOTAVAIL;
+			ret = -ERR(EADDRNOTAVAIL);
 			goto error;
 		}
 	}
@@ -173,7 +173,7 @@ struct afs_vlserver_list *afs_extract_vlserver_list(struct afs_cell *cell,
 	    hdr->hdr.version != 1) {
 		pr_notice("kAFS: Got DNS record [%u,%u] len %zu\n",
 			  hdr->hdr.content, hdr->hdr.version, end - b);
-		ret = -EDESTADDRREQ;
+		ret = -ERR(EDESTADDRREQ);
 		goto dump;
 	}
 
@@ -213,7 +213,7 @@ struct afs_vlserver_list *afs_extract_vlserver_list(struct afs_cell *cell,
 		if (end - b < bs.name_len)
 			break;
 
-		ret = -EPROTONOSUPPORT;
+		ret = -ERR(EPROTONOSUPPORT);
 		if (bs.protocol == DNS_SERVER_PROTOCOL_UNSPECIFIED) {
 			bs.protocol = DNS_SERVER_PROTOCOL_UDP;
 		} else if (bs.protocol != DNS_SERVER_PROTOCOL_UDP) {

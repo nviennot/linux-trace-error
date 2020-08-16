@@ -148,7 +148,7 @@ static int smc_ib_fill_mac(struct smc_ib_device *smcibdev, u8 ibport)
 
 	attr = rdma_get_gid_attr(smcibdev->ibdev, ibport, 0);
 	if (IS_ERR(attr))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	rc = rdma_read_gid_l2_fields(attr, NULL, smcibdev->mac[ibport - 1]);
 	rdma_put_gid_attr(attr);
@@ -213,7 +213,7 @@ int smc_ib_determine_gid(struct smc_ib_device *smcibdev, u8 ibport,
 		rcu_read_unlock();
 		rdma_put_gid_attr(attr);
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int smc_ib_remember_port_attr(struct smc_ib_device *smcibdev, u8 ibport)
@@ -423,7 +423,7 @@ int smc_ib_get_memory_region(struct ib_pd *pd, int access_flags,
 	}
 
 	if (smc_ib_map_mr_sg(buf_slot, link_idx) != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -565,7 +565,7 @@ static int smc_ib_add_dev(struct ib_device *ibdev)
 	int i;
 
 	if (ibdev->node_type != RDMA_NODE_IB_CA)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	smcibdev = kzalloc(sizeof(*smcibdev), GFP_KERNEL);
 	if (!smcibdev)

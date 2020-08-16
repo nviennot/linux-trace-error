@@ -347,7 +347,7 @@ static int choke_change(struct Qdisc *sch, struct nlattr *opt,
 	u32 max_P;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_CHOKE_MAX, opt,
 					  choke_policy, NULL);
@@ -356,17 +356,17 @@ static int choke_change(struct Qdisc *sch, struct nlattr *opt,
 
 	if (tb[TCA_CHOKE_PARMS] == NULL ||
 	    tb[TCA_CHOKE_STAB] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max_P = tb[TCA_CHOKE_MAX_P] ? nla_get_u32(tb[TCA_CHOKE_MAX_P]) : 0;
 
 	ctl = nla_data(tb[TCA_CHOKE_PARMS]);
 
 	if (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctl->limit > CHOKE_MAX_QUEUE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mask = roundup_pow_of_two(ctl->limit + 1) - 1;
 	if (mask != q->tab_mask) {
@@ -455,7 +455,7 @@ static int choke_dump(struct Qdisc *sch, struct sk_buff *skb)
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int choke_dump_stats(struct Qdisc *sch, struct gnet_dump *d)

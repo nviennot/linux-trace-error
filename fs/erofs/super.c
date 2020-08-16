@@ -68,7 +68,7 @@ static int erofs_superblock_csum_verify(struct super_block *sb, void *sbdata)
 	if (crc != expected_crc) {
 		erofs_err(sb, "invalid checksum 0x%08x, 0x%08x expected",
 			  crc, expected_crc);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 	return 0;
 }
@@ -142,7 +142,7 @@ static int erofs_read_superblock(struct super_block *sb)
 	data = kmap(page);
 	dsb = (struct erofs_super_block *)(data + EROFS_SUPER_OFFSET);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (le32_to_cpu(dsb->magic) != EROFS_SUPER_MAGIC_V1) {
 		erofs_err(sb, "cannot find valid erofs superblock");
 		goto out;
@@ -273,7 +273,7 @@ static int erofs_fc_parse_param(struct fs_context *fc,
 #endif
 		break;
 	default:
-		return -ENOPARAM;
+		return -ERR(ENOPARAM);
 	}
 	return 0;
 }
@@ -348,7 +348,7 @@ static int erofs_fc_fill_super(struct super_block *sb, struct fs_context *fc)
 
 	if (!sb_set_blocksize(sb, EROFS_BLKSIZ)) {
 		erofs_err(sb, "failed to set erofs blksize");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
@@ -387,7 +387,7 @@ static int erofs_fc_fill_super(struct super_block *sb, struct fs_context *fc)
 		erofs_err(sb, "rootino(nid %llu) is not a directory(i_mode %o)",
 			  ROOT_NID(sbi), inode->i_mode);
 		iput(inode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sb->s_root = d_make_root(inode);

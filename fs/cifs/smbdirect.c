@@ -188,12 +188,12 @@ static int smbd_conn_upcall(
 		break;
 
 	case RDMA_CM_EVENT_ADDR_ERROR:
-		info->ri_rc = -EHOSTUNREACH;
+		info->ri_rc = -ERR(EHOSTUNREACH);
 		complete(&info->ri_done);
 		break;
 
 	case RDMA_CM_EVENT_ROUTE_ERROR:
-		info->ri_rc = -ENETUNREACH;
+		info->ri_rc = -ERR(ENETUNREACH);
 		complete(&info->ri_done);
 		break;
 
@@ -563,7 +563,7 @@ static struct rdma_cm_id *smbd_create_id(
 	*sport = htons(port);
 
 	init_completion(&info->ri_done);
-	info->ri_rc = -ETIMEDOUT;
+	info->ri_rc = -ERR(ETIMEDOUT);
 
 	rc = rdma_resolve_addr(id, NULL, (struct sockaddr *)dstaddr,
 		RDMA_RESOLVE_TIMEOUT);
@@ -579,7 +579,7 @@ static struct rdma_cm_id *smbd_create_id(
 		goto out;
 	}
 
-	info->ri_rc = -ETIMEDOUT;
+	info->ri_rc = -ERR(ETIMEDOUT);
 	rc = rdma_resolve_route(id, RDMA_RESOLVE_TIMEOUT);
 	if (rc) {
 		log_rdma_event(ERR, "rdma_resolve_route() failed %i\n", rc);
@@ -631,7 +631,7 @@ static int smbd_ia_open(
 		log_rdma_event(ERR, "Device capability flags = %llx max_fast_reg_page_list_len = %u\n",
 			       info->id->device->attrs.device_cap_flags,
 			       info->id->device->attrs.max_fast_reg_page_list_len);
-		rc = -EPROTONOSUPPORT;
+		rc = -ERR(EPROTONOSUPPORT);
 		goto out2;
 	}
 	info->max_frmr_depth = min_t(int,
@@ -692,7 +692,7 @@ static int smbd_post_send_negotiate_req(struct smbd_connection *info)
 				info->id->device, (void *)packet,
 				sizeof(*packet), DMA_TO_DEVICE);
 	if (ib_dma_mapping_error(info->id->device, request->sge[0].addr)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		goto dma_mapping_failed;
 	}
 
@@ -803,7 +803,7 @@ static int smbd_post_send(struct smbd_connection *info,
 	if (rc) {
 		log_rdma_send(ERR, "ib_post_send failed rc=%d\n", rc);
 		smbd_disconnect_rdma_connection(info);
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 	} else
 		/* Reset timer for idle connection after packet is sent */
 		mod_delayed_work(info->workqueue, &info->idle_timer_work,
@@ -833,7 +833,7 @@ wait_credit:
 
 	if (info->transport_status != SMBD_CONNECTED) {
 		log_outgoing(ERR, "disconnected not sending on wait_credit\n");
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 		goto err_wait_credit;
 	}
 	if (unlikely(atomic_dec_return(&info->send_credits) < 0)) {
@@ -848,7 +848,7 @@ wait_send_queue:
 
 	if (info->transport_status != SMBD_CONNECTED) {
 		log_outgoing(ERR, "disconnected not sending on wait_send_queue\n");
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 		goto err_wait_send_queue;
 	}
 
@@ -908,7 +908,7 @@ wait_send_queue:
 						 header_length,
 						 DMA_TO_DEVICE);
 	if (ib_dma_mapping_error(info->id->device, request->sge[0].addr)) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		request->sge[0].addr = 0;
 		goto err_dma;
 	}
@@ -924,7 +924,7 @@ wait_send_queue:
 			       sg->offset, sg->length, DMA_TO_DEVICE);
 		if (ib_dma_mapping_error(
 				info->id->device, request->sge[i+1].addr)) {
-			rc = -EIO;
+			rc = -ERR(EIO);
 			request->sge[i+1].addr = 0;
 			goto err_dma;
 		}
@@ -1010,7 +1010,7 @@ static int smbd_post_send_data(
 
 	if (n_vec > SMBDIRECT_MAX_SGE) {
 		cifs_dbg(VFS, "Can't fit data to SGL, n_vec=%d\n", n_vec);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sg_init_table(sgl, n_vec);
@@ -1031,7 +1031,7 @@ static int smbd_post_recv(
 		struct smbd_connection *info, struct smbd_response *response)
 {
 	struct ib_recv_wr recv_wr;
-	int rc = -EIO;
+	int rc = -ERR(EIO);
 
 	response->sge.addr = ib_dma_map_single(
 				info->id->device, response->packet,
@@ -1088,11 +1088,11 @@ static int smbd_negotiate(struct smbd_connection *info)
 		return 0;
 
 	if (rc == 0)
-		rc = -ETIMEDOUT;
+		rc = -ERR(ETIMEDOUT);
 	else if (rc == -ERESTARTSYS)
-		rc = -EINTR;
+		rc = -ERR(EINTR);
 	else
-		rc = -ENOTCONN;
+		rc = -ERR(ENOTCONN);
 
 	return rc;
 }
@@ -1426,7 +1426,7 @@ create_conn:
 	if (server->smbd_conn)
 		cifs_dbg(VFS, "RDMA transport re-established\n");
 
-	return server->smbd_conn ? 0 : -ENOENT;
+	return server->smbd_conn ? 0 : -ERR(ENOENT);
 }
 
 static void destroy_caches_and_workqueue(struct smbd_connection *info)
@@ -1876,7 +1876,7 @@ read_rfc1002_done:
 
 	if (info->transport_status != SMBD_CONNECTED) {
 		log_read(ERR, "disconnected\n");
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 	}
 
 	goto again;
@@ -1933,7 +1933,7 @@ int smbd_recv(struct smbd_connection *info, struct msghdr *msg)
 		/* It's a bug in upper layer to get there */
 		cifs_dbg(VFS, "Invalid msg iter dir %u\n",
 			 iov_iter_rw(&msg->msg_iter));
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1955,7 +1955,7 @@ int smbd_recv(struct smbd_connection *info, struct msghdr *msg)
 		/* It's a bug in upper layer to get there */
 		cifs_dbg(VFS, "Invalid msg type %d\n",
 			 iov_iter_type(&msg->msg_iter));
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 
 out:
@@ -1988,7 +1988,7 @@ int smbd_send(struct TCP_Server_Info *server,
 	int rqst_idx;
 
 	if (info->transport_status != SMBD_CONNECTED) {
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 		goto done;
 	}
 
@@ -2004,7 +2004,7 @@ int smbd_send(struct TCP_Server_Info *server,
 	if (remaining_data_length > info->max_fragmented_send_size) {
 		log_write(ERR, "payload size %d > max size %d\n",
 			remaining_data_length, info->max_fragmented_send_size);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto done;
 	}
 

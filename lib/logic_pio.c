@@ -42,7 +42,7 @@ int logic_pio_register_range(struct logic_pio_hwaddr *new_range)
 
 	if (!new_range || !new_range->fwnode || !new_range->size ||
 	    (new_range->flags == LOGIC_PIO_INDIRECT && !new_range->ops))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	start = new_range->hw_start;
 	end = new_range->hw_start + new_range->size;
@@ -74,7 +74,7 @@ int logic_pio_register_range(struct logic_pio_hwaddr *new_range)
 		if (mmio_end + new_range->size - 1 > MMIO_UPPER_LIMIT) {
 			/* if it's too big check if 64K space can be reserved */
 			if (mmio_end + SZ_64K - 1 > MMIO_UPPER_LIMIT) {
-				ret = -E2BIG;
+				ret = -ERR(E2BIG);
 				goto end_register;
 			}
 			new_range->size = SZ_64K;
@@ -83,13 +83,13 @@ int logic_pio_register_range(struct logic_pio_hwaddr *new_range)
 		new_range->io_start = mmio_end;
 	} else if (new_range->flags == LOGIC_PIO_INDIRECT) {
 		if (iio_sz + new_range->size - 1 > IO_SPACE_LIMIT) {
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto end_register;
 		}
 		new_range->io_start = iio_sz;
 	} else {
 		/* invalid flag */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto end_register;
 	}
 

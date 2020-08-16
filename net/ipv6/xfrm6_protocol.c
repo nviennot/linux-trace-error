@@ -132,7 +132,7 @@ static int xfrm6_esp_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int xfrm6_ah_rcv(struct sk_buff *skb)
@@ -161,7 +161,7 @@ static int xfrm6_ah_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int xfrm6_ipcomp_rcv(struct sk_buff *skb)
@@ -190,7 +190,7 @@ static int xfrm6_ipcomp_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		if (!handler->err_handler(skb, opt, type, code, offset, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static const struct inet6_protocol esp6_protocol = {
@@ -236,11 +236,11 @@ int xfrm6_protocol_register(struct xfrm6_protocol *handler,
 	struct xfrm6_protocol __rcu **pprev;
 	struct xfrm6_protocol *t;
 	bool add_netproto = false;
-	int ret = -EEXIST;
+	int ret = -ERR(EEXIST);
 	int priority = handler->priority;
 
 	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&xfrm6_protocol_mutex);
 
@@ -269,7 +269,7 @@ err:
 	if (add_netproto) {
 		if (inet6_add_protocol(netproto(protocol), protocol)) {
 			pr_err("%s: can't add protocol\n", __func__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 	}
 
@@ -282,10 +282,10 @@ int xfrm6_protocol_deregister(struct xfrm6_protocol *handler,
 {
 	struct xfrm6_protocol __rcu **pprev;
 	struct xfrm6_protocol *t;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&xfrm6_protocol_mutex);
 
@@ -304,7 +304,7 @@ int xfrm6_protocol_deregister(struct xfrm6_protocol *handler,
 				       lockdep_is_held(&xfrm6_protocol_mutex))) {
 		if (inet6_del_protocol(netproto(protocol), protocol) < 0) {
 			pr_err("%s: can't remove protocol\n", __func__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 	}
 

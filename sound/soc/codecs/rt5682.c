@@ -836,7 +836,7 @@ int rt5682_sel_asrc_clk_src(struct snd_soc_component *component,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (filter_mask & RT5682_DA_STEREO1_FILTER) {
@@ -1213,7 +1213,7 @@ static int set_dmic_clk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 	struct rt5682_priv *rt5682 = snd_soc_component_get_drvdata(component);
-	int idx = -EINVAL, dmic_clk_rate = 3072000;
+	int idx = -ERR(EINVAL), dmic_clk_rate = 3072000;
 	static const int div[] = {2, 4, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128};
 
 	if (rt5682->pdata.dmic_clk_rate)
@@ -1233,7 +1233,7 @@ static int set_filter_clk(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 		snd_soc_dapm_to_component(w->dapm);
 	struct rt5682_priv *rt5682 = snd_soc_component_get_drvdata(component);
-	int ref, val, reg, idx = -EINVAL;
+	int ref, val, reg, idx = -ERR(EINVAL);
 	static const int div_f[] = {1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48};
 	static const int div_o[] = {1, 2, 4, 6, 8, 12, 16, 24, 32, 48};
 
@@ -1988,7 +1988,7 @@ static int rt5682_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	case 2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5682_TDM_CTRL,
@@ -1997,7 +1997,7 @@ static int rt5682_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	switch (slot_width) {
 	case 8:
 		if (tx_mask || rx_mask)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		cl = RT5682_I2S1_TX_CHL_8 | RT5682_I2S1_RX_CHL_8;
 		break;
 	case 16:
@@ -2017,7 +2017,7 @@ static int rt5682_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		cl = RT5682_I2S1_TX_CHL_32 | RT5682_I2S1_RX_CHL_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5682_TDM_TCON_CTRL,
@@ -2043,7 +2043,7 @@ static int rt5682_hw_params(struct snd_pcm_substream *substream,
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "lrck is %dHz and pre_div is %d for iis %d\n",
@@ -2069,7 +2069,7 @@ static int rt5682_hw_params(struct snd_pcm_substream *substream,
 		len_2 |= RT5682_I2S2_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2111,7 +2111,7 @@ static int rt5682_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2131,7 +2131,7 @@ static int rt5682_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5682->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2145,17 +2145,17 @@ static int rt5682_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		if (dai->id == RT5682_AIF1)
 			tdm_ctrl |= RT5682_TDM_S_LP_INV | RT5682_TDM_M_BP_INV;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case SND_SOC_DAIFMT_IB_IF:
 		if (dai->id == RT5682_AIF1)
 			tdm_ctrl |= RT5682_TDM_S_BP_INV | RT5682_TDM_S_LP_INV |
 				    RT5682_TDM_M_BP_INV | RT5682_TDM_M_LP_INV;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -2174,7 +2174,7 @@ static int rt5682_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		tdm_ctrl |= RT5682_TDM_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -2196,7 +2196,7 @@ static int rt5682_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -2229,7 +2229,7 @@ static int rt5682_set_component_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5682_GLB_CLK,
 		RT5682_SCLK_SRC_MASK, reg_val);
@@ -2283,7 +2283,7 @@ static int rt5682_set_component_pll(struct snd_soc_component *component,
 		default:
 			dev_err(component->dev, "Unknown PLL2 Source %d\n",
 				source);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/**
@@ -2344,7 +2344,7 @@ static int rt5682_set_component_pll(struct snd_soc_component *component,
 		default:
 			dev_err(component->dev, "Unknown PLL1 Source %d\n",
 				source);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -2398,7 +2398,7 @@ static int rt5682_set_bclk1_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 		break;
 	default:
 		dev_err(dai->dev, "Invalid bclk1 ratio %d\n", ratio);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2424,7 +2424,7 @@ static int rt5682_set_bclk2_ratio(struct snd_soc_dai *dai, unsigned int ratio)
 		break;
 	default:
 		dev_err(dai->dev, "Invalid bclk2 ratio %d\n", ratio);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2485,7 +2485,7 @@ static int rt5682_wclk_prepare(struct clk_hw *hw)
 			snd_soc_component_get_dapm(component);
 
 	if (!rt5682_clk_check(rt5682))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_dapm_mutex_lock(dapm);
 
@@ -2563,7 +2563,7 @@ static long rt5682_wclk_round_rate(struct clk_hw *hw, unsigned long rate,
 			     dai_clks_hw[RT5682_DAI_WCLK_IDX]);
 
 	if (!rt5682_clk_check(rt5682))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Only accept to set wclk rate to 48kHz temporarily.
 	 */
@@ -2582,7 +2582,7 @@ static int rt5682_wclk_set_rate(struct clk_hw *hw, unsigned long rate,
 	int pre_div;
 
 	if (!rt5682_clk_check(rt5682))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Whether the wclk's parent clk (mclk) exists or not, please ensure
@@ -2681,7 +2681,7 @@ static long rt5682_bclk_round_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long factor;
 
 	if (!*parent_rate || !rt5682_clk_check(rt5682))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * BCLK rates are set as a multiplier of WCLK in HW.
@@ -2706,7 +2706,7 @@ static int rt5682_bclk_set_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long factor;
 
 	if (!rt5682_clk_check(rt5682))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	factor = rt5682_bclk_get_factor(rate, parent_rate);
 
@@ -2716,7 +2716,7 @@ static int rt5682_bclk_set_rate(struct clk_hw *hw, unsigned long rate,
 	if (!dai) {
 		dev_err(component->dev, "dai %d not found in component\n",
 			RT5682_AIF1);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return rt5682_set_bclk1_ratio(dai, factor);
@@ -2773,7 +2773,7 @@ static int rt5682_register_dai_clks(struct snd_soc_component *component)
 			break;
 		default:
 			dev_err(dev, "Invalid clock index\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -2836,7 +2836,7 @@ static int rt5682_probe(struct snd_soc_component *component)
 			msecs_to_jiffies(RT5682_PROBE_TIMEOUT));
 		if (!time) {
 			dev_err(&slave->dev, "Initialization not complete, timed out\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 	} else {
 #ifdef CONFIG_COMMON_CLK

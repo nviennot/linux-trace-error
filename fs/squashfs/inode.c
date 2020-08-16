@@ -388,7 +388,7 @@ int squashfs_read_inode(struct inode *inode, long long ino)
 	}
 	default:
 		ERROR("Unknown inode type %d in squashfs_iget!\n", type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (xattr_id != SQUASHFS_INVALID_XATTR && msblk->xattr_id_table) {

@@ -1199,17 +1199,17 @@ sata_ehc_deb_timing(struct ata_eh_context *ehc)
 static inline int sata_scr_valid(struct ata_link *link) { return 0; }
 static inline int sata_scr_read(struct ata_link *link, int reg, u32 *val)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int sata_scr_write(struct ata_link *link, int reg, u32 val)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int sata_scr_write_flush(struct ata_link *link, int reg, u32 val)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
-static inline int sata_set_spd(struct ata_link *link) { return -EOPNOTSUPP; }
+static inline int sata_set_spd(struct ata_link *link) { return -ERR(EOPNOTSUPP); }
 static inline int sata_link_hardreset(struct ata_link *link,
 				      const unsigned long *timing,
 				      unsigned long deadline,
@@ -1218,13 +1218,13 @@ static inline int sata_link_hardreset(struct ata_link *link,
 {
 	if (online)
 		*online = false;
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int sata_link_resume(struct ata_link *link,
 				   const unsigned long *params,
 				   unsigned long deadline)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline void ata_eh_analyze_ncq_error(struct ata_link *link) { }
 #endif
@@ -1313,13 +1313,13 @@ static inline const struct ata_acpi_gtm *ata_acpi_init_gtm(struct ata_port *ap)
 static inline int ata_acpi_stm(const struct ata_port *ap,
 			       struct ata_acpi_gtm *stm)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int ata_acpi_gtm(const struct ata_port *ap,
 			       struct ata_acpi_gtm *stm)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline unsigned int ata_acpi_gtm_xfermask(struct ata_device *dev,
@@ -1826,7 +1826,7 @@ static inline int ata_check_ready(u8 status)
 
 	/* 0xff indicates either no device or device not ready */
 	if (status == 0xff)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }

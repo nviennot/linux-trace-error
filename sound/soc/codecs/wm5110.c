@@ -436,7 +436,7 @@ static int wm5110_put_dre(struct snd_kcontrol *kcontrol,
 
 	if ((lena && lnew != lold) || (rena && rnew != rold)) {
 		dev_err(arizona->dev, "Can't change DRE on active outputs\n");
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto err;
 	}
 
@@ -2060,7 +2060,7 @@ static int wm5110_set_fll(struct snd_soc_component *component, int fll_id,
 		return arizona_set_fll_refclk(&wm5110->fll[1], source, Fref,
 					      Fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -2253,7 +2253,7 @@ static int wm5110_open(struct snd_soc_component *component,
 		dev_err(arizona->dev,
 			"No suitable compressed stream for DAI '%s'\n",
 			asoc_rtd_to_codec(rtd, 0)->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return wm_adsp_compr_open(&priv->core.adsp[n_adsp], stream);

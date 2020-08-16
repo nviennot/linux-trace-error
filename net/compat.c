@@ -51,7 +51,7 @@ int __get_compat_msghdr(struct msghdr *kmsg,
 		kmsg->msg_namelen = 0;
 
 	if (kmsg->msg_namelen < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (kmsg->msg_namelen > sizeof(struct sockaddr_storage))
 		kmsg->msg_namelen = sizeof(struct sockaddr_storage);
@@ -77,7 +77,7 @@ int __get_compat_msghdr(struct msghdr *kmsg,
 	}
 
 	if (msg.msg_iovlen > UIO_MAXIOV)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	kmsg->msg_iocb = NULL;
 	*ptr = msg.msg_iov;
@@ -159,7 +159,7 @@ int cmsghdr_from_user_compat_to_kern(struct msghdr *kmsg, struct sock *sk,
 
 		/* Catch bogons. */
 		if (!CMSG_COMPAT_OK(ucmlen, ucmsg, kmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tmp = ((ucmlen - sizeof(*ucmsg)) + sizeof(struct cmsghdr));
 		tmp = CMSG_ALIGN(tmp);
@@ -167,7 +167,7 @@ int cmsghdr_from_user_compat_to_kern(struct msghdr *kmsg, struct sock *sk,
 		ucmsg = cmsg_compat_nxthdr(kmsg, ucmsg, ucmlen);
 	}
 	if (kcmlen == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* The kcmlen holds the 64-bit version of the control length.
 	 * It may not be modified as we do not stick it into the kmsg
@@ -177,7 +177,7 @@ int cmsghdr_from_user_compat_to_kern(struct msghdr *kmsg, struct sock *sk,
 	if (kcmlen > stackbuf_size)
 		kcmsg_base = kcmsg = sock_kmalloc(sk, kcmlen, GFP_KERNEL);
 	if (kcmsg == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	/* Now copy them over neatly. */
 	memset(kcmsg, 0, kcmlen);
@@ -218,7 +218,7 @@ int cmsghdr_from_user_compat_to_kern(struct msghdr *kmsg, struct sock *sk,
 	return 0;
 
 Einval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 Efault:
 	if (kcmsg_base != (struct cmsghdr *)stackbuf)
 		sock_kfree_s(sk, kcmsg_base, kcmlen);
@@ -385,7 +385,7 @@ static int __compat_sys_setsockopt(int fd, int level, int optname,
 	struct socket *sock;
 
 	if (optlen > INT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sock = sockfd_lookup(fd, &err);
 	if (sock) {

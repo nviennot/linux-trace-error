@@ -248,23 +248,23 @@ static void raw_err(struct sock *sk, struct sk_buff *skb, u32 info)
 	switch (type) {
 	default:
 	case ICMP_TIME_EXCEEDED:
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		break;
 	case ICMP_SOURCE_QUENCH:
 		return;
 	case ICMP_PARAMETERPROB:
-		err = EPROTO;
+		err = ERR(EPROTO);
 		harderr = 1;
 		break;
 	case ICMP_DEST_UNREACH:
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		if (code > NR_ICMP_UNREACH)
 			break;
 		err = icmp_err_convert[code].errno;
 		harderr = icmp_err_convert[code].fatal;
 		if (code == ICMP_FRAG_NEEDED) {
 			harderr = inet->pmtudisc != IP_PMTUDISC_DONT;
-			err = EMSGSIZE;
+			err = ERR(EMSGSIZE);
 		}
 	}
 
@@ -357,10 +357,10 @@ static int raw_send_hdrinc(struct sock *sk, struct flowi4 *fl4,
 	if (length > rt->dst.dev->mtu) {
 		ip_local_error(sk, EMSGSIZE, fl4->daddr, inet->inet_dport,
 			       rt->dst.dev->mtu);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 	if (length < sizeof(struct iphdr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags&MSG_PROBE)
 		goto out;
@@ -405,7 +405,7 @@ static int raw_send_hdrinc(struct sock *sk, struct flowi4 *fl4,
 	 * sane value.  If ihl points beyond the length of the buffer passed
 	 * in, reject the frame as invalid
 	 */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (iphlen > length)
 		goto error_free;
 
@@ -511,7 +511,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	struct raw_frag_vec rfv;
 	int hdrincl;
 
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 	if (len > 0xFFFF)
 		goto out;
 
@@ -525,7 +525,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	 *	Check the flags.
 	 */
 
-	err = -EOPNOTSUPP;
+	err = -ERR(EOPNOTSUPP);
 	if (msg->msg_flags & MSG_OOB)	/* Mirror BSD error message */
 		goto out;               /* compatibility */
 
@@ -535,13 +535,13 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	if (msg->msg_namelen) {
 		DECLARE_SOCKADDR(struct sockaddr_in *, usin, msg->msg_name);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (msg->msg_namelen < sizeof(*usin))
 			goto out;
 		if (usin->sin_family != AF_INET) {
 			pr_info_once("%s: %s forgot to set AF_INET. Fix it!\n",
 				     __func__, current->comm);
-			err = -EAFNOSUPPORT;
+			err = -ERR(EAFNOSUPPORT);
 			if (usin->sin_family)
 				goto out;
 		}
@@ -551,7 +551,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		 * IP_HDRINCL is much more convenient.
 		 */
 	} else {
-		err = -EDESTADDRREQ;
+		err = -ERR(EDESTADDRREQ);
 		if (sk->sk_state != TCP_ESTABLISHED)
 			goto out;
 		daddr = inet->inet_daddr;
@@ -586,7 +586,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	}
 
 	if (ipc.opt) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		/* Linux does not mangle headers on raw sockets,
 		 * so that IP options + IP_HDRINCL is non-sense.
 		 */
@@ -647,7 +647,7 @@ static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		goto done;
 	}
 
-	err = -EACCES;
+	err = -ERR(EACCES);
 	if (rt->rt_flags & RTCF_BROADCAST && !sock_flag(sk, SOCK_BROADCAST))
 		goto done;
 
@@ -717,7 +717,7 @@ static int raw_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	struct inet_sock *inet = inet_sk(sk);
 	struct sockaddr_in *addr = (struct sockaddr_in *) uaddr;
 	u32 tb_id = RT_TABLE_LOCAL;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int chk_addr_ret;
 
 	if (sk->sk_state != TCP_CLOSE || addr_len < sizeof(struct sockaddr_in))
@@ -730,7 +730,7 @@ static int raw_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	chk_addr_ret = inet_addr_type_table(sock_net(sk), addr->sin_addr.s_addr,
 					    tb_id);
 
-	ret = -EADDRNOTAVAIL;
+	ret = -ERR(EADDRNOTAVAIL);
 	if (addr->sin_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
 	    chk_addr_ret != RTN_MULTICAST && chk_addr_ret != RTN_BROADCAST)
 		goto out;
@@ -752,7 +752,7 @@ static int raw_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 {
 	struct inet_sock *inet = inet_sk(sk);
 	size_t copied = 0;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	DECLARE_SOCKADDR(struct sockaddr_in *, sin, msg->msg_name);
 	struct sk_buff *skb;
 
@@ -824,7 +824,7 @@ static int raw_geticmpfilter(struct sock *sk, char __user *optval, int __user *o
 
 	if (get_user(len, optlen))
 		goto out;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (len < 0)
 		goto out;
 	if (len > sizeof(struct icmp_filter))
@@ -842,11 +842,11 @@ static int do_raw_setsockopt(struct sock *sk, int level, int optname,
 {
 	if (optname == ICMP_FILTER) {
 		if (inet_sk(sk)->inet_num != IPPROTO_ICMP)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		else
 			return raw_seticmpfilter(sk, optval, optlen);
 	}
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static int raw_setsockopt(struct sock *sk, int level, int optname,
@@ -872,11 +872,11 @@ static int do_raw_getsockopt(struct sock *sk, int level, int optname,
 {
 	if (optname == ICMP_FILTER) {
 		if (inet_sk(sk)->inet_num != IPPROTO_ICMP)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		else
 			return raw_geticmpfilter(sk, optval, optlen);
 	}
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static int raw_getsockopt(struct sock *sk, int level, int optname,
@@ -921,7 +921,7 @@ static int raw_ioctl(struct sock *sk, int cmd, unsigned long arg)
 #ifdef CONFIG_IP_MROUTE
 		return ipmr_ioctl(sk, cmd, (void __user *)arg);
 #else
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 #endif
 	}
 }
@@ -932,12 +932,12 @@ static int compat_raw_ioctl(struct sock *sk, unsigned int cmd, unsigned long arg
 	switch (cmd) {
 	case SIOCOUTQ:
 	case SIOCINQ:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	default:
 #ifdef CONFIG_IP_MROUTE
 		return ipmr_compat_ioctl(sk, cmd, compat_ptr(arg));
 #else
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 #endif
 	}
 }

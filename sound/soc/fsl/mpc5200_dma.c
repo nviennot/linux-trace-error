@@ -175,7 +175,7 @@ static int psc_dma_trigger(struct snd_soc_component *component,
 	default:
 		dev_dbg(psc_dma->dev, "unhandled trigger: stream=%i cmd=%i\n",
 			substream->pstr->stream, cmd);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Update interrupt enable settings */
@@ -381,12 +381,12 @@ int mpc5200_audio_dma_create(struct platform_device *op)
 	irq = irq_of_parse_and_map(op->dev.of_node, 0);
 	if (of_address_to_resource(op->dev.of_node, 0, &res)) {
 		dev_err(&op->dev, "Missing reg property\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	regs = ioremap(res.start, resource_size(&res));
 	if (!regs) {
 		dev_err(&op->dev, "Could not map registers\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Allocate and initialize the driver private data */
@@ -399,7 +399,7 @@ int mpc5200_audio_dma_create(struct platform_device *op)
 	/* Get the PSC ID */
 	prop = of_get_property(op->dev.of_node, "cell-index", &size);
 	if (!prop || size < sizeof *prop) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_free;
 	}
 
@@ -424,7 +424,7 @@ int mpc5200_audio_dma_create(struct platform_device *op)
 	if (!psc_dma->capture.bcom_task ||
 	    !psc_dma->playback.bcom_task) {
 		dev_err(&op->dev, "Could not allocate bestcomm tasks\n");
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_free;
 	}
 
@@ -465,7 +465,7 @@ int mpc5200_audio_dma_create(struct platform_device *op)
 	rc |= request_irq(psc_dma->playback.irq, &psc_dma_bcom_irq, IRQF_SHARED,
 			  "psc-dma-playback", &psc_dma->playback);
 	if (rc) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_irq;
 	}
 

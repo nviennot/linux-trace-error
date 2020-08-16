@@ -125,7 +125,7 @@ next_extent:
 			goto out_del_cursor;
 
 		if (fatal_signal_pending(current)) {
-			error = -ERESTARTSYS;
+			error = -ERR(ERESTARTSYS);
 			goto out_del_cursor;
 		}
 	}
@@ -161,16 +161,16 @@ xfs_ioc_trim(
 	int			error, last_error = 0;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (!blk_queue_discard(q))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * We haven't recovered the log, so we cannot use our bnobt-guided
 	 * storage zapping commands.
 	 */
 	if (mp->m_flags & XFS_MOUNT_NORECOVERY)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (copy_from_user(&range, urange, sizeof(range)))
 		return -EFAULT;
@@ -187,7 +187,7 @@ xfs_ioc_trim(
 	if (range.start >= XFS_FSB_TO_B(mp, mp->m_sb.sb_dblocks) ||
 	    range.minlen > XFS_FSB_TO_B(mp, mp->m_ag_max_usable) ||
 	    range.len < mp->m_sb.sb_blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	start = BTOBB(range.start);
 	end = start + BTOBBT(range.len) - 1;

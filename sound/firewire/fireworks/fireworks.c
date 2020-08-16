@@ -131,7 +131,7 @@ get_hardware_info(struct snd_efw *efw)
 	/* the number of MIDI ports, not of MIDI conformant data channels */
 	if (hwinfo->midi_out_ports > SND_EFW_MAX_MIDI_OUT_PORTS ||
 	    hwinfo->midi_in_ports > SND_EFW_MAX_MIDI_IN_PORTS) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end;
 	}
 	efw->midi_out_ports = hwinfo->midi_out_ports;
@@ -143,7 +143,7 @@ get_hardware_info(struct snd_efw *efw)
 	    hwinfo->amdtp_rx_pcm_channels    > AM824_MAX_CHANNELS_FOR_PCM ||
 	    hwinfo->amdtp_rx_pcm_channels_2x > AM824_MAX_CHANNELS_FOR_PCM ||
 	    hwinfo->amdtp_rx_pcm_channels_4x > AM824_MAX_CHANNELS_FOR_PCM) {
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 		goto end;
 	}
 	efw->pcm_capture_channels[0] = hwinfo->amdtp_tx_pcm_channels;
@@ -156,7 +156,7 @@ get_hardware_info(struct snd_efw *efw)
 	/* Hardware metering. */
 	if (hwinfo->phys_in_grp_count  > HWINFO_MAX_CAPS_GROUPS ||
 	    hwinfo->phys_out_grp_count > HWINFO_MAX_CAPS_GROUPS) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end;
 	}
 	efw->phys_in = hwinfo->phys_in;

@@ -87,7 +87,7 @@ static long request_key_auth_read(const struct key *key,
 	long ret;
 
 	if (!rka)
-		return -EKEYREVOKED;
+		return -ERR(EKEYREVOKED);
 
 	datalen = rka->callout_len;
 	ret = datalen;
@@ -191,7 +191,7 @@ struct key *request_key_auth_new(struct key *target, const char *op,
 		if (test_bit(KEY_FLAG_REVOKED,
 			     &cred->request_key_auth->flags)) {
 			up_read(&cred->request_key_auth->sem);
-			ret = -EKEYREVOKED;
+			ret = -ERR(EKEYREVOKED);
 			goto error_free_rka;
 		}
 
@@ -268,14 +268,14 @@ struct key *key_get_instantiation_authkey(key_serial_t target_id)
 	if (IS_ERR(authkey_ref)) {
 		authkey = ERR_CAST(authkey_ref);
 		if (authkey == ERR_PTR(-EAGAIN))
-			authkey = ERR_PTR(-ENOKEY);
+			authkey = ERR_PTR(-ERR(ENOKEY));
 		goto error;
 	}
 
 	authkey = key_ref_to_ptr(authkey_ref);
 	if (test_bit(KEY_FLAG_REVOKED, &authkey->flags)) {
 		key_put(authkey);
-		authkey = ERR_PTR(-EKEYREVOKED);
+		authkey = ERR_PTR(-ERR(EKEYREVOKED));
 	}
 
 error:

@@ -212,14 +212,14 @@ int cfctrl_linkup_request(struct cflayer *layer,
 
 	if (!dn) {
 		pr_debug("not able to send linkup request\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (cfctrl_cancel_req(layer, user_layer) > 0) {
 		/* Slight Paranoia, check if already connecting */
 		pr_err("Duplicate connect request for same client\n");
 		WARN_ON(1);
-		return -EALREADY;
+		return -ERR(EALREADY);
 	}
 
 	pkt = cfpkt_create(CFPKT_CTRL_PKT_LEN);
@@ -269,7 +269,7 @@ int cfctrl_linkup_request(struct cflayer *layer,
 	default:
 		pr_warn("Request setup of bad link type = %d\n",
 			param->linktype);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	req = kzalloc(sizeof(*req), GFP_KERNEL);
 	if (!req)
@@ -295,7 +295,7 @@ int cfctrl_linkup_request(struct cflayer *layer,
 						user_layer);
 		if (count != 1) {
 			pr_err("Could not remove request (%d)", count);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	return 0;
@@ -311,7 +311,7 @@ int cfctrl_linkdown_req(struct cflayer *layer, u8 channelid,
 
 	if (!dn) {
 		pr_debug("not able to send link-down request\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	pkt = cfpkt_create(CFPKT_CTRL_PKT_LEN);
 	if (!pkt)

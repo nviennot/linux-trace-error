@@ -239,7 +239,7 @@ loop:
 	/* The file system has been taken offline. No new transactions. */
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state)) {
 		spin_unlock(&fs_info->trans_lock);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	cur_trans = fs_info->running_transaction;
@@ -250,7 +250,7 @@ loop:
 		}
 		if (btrfs_blocked_trans_types[cur_trans->state] & type) {
 			spin_unlock(&fs_info->trans_lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		refcount_inc(&cur_trans->use_count);
 		atomic_inc(&cur_trans->num_writers);
@@ -265,7 +265,7 @@ loop:
 	 * and commit it. If there is no transaction, just return ENOENT.
 	 */
 	if (type == TRANS_ATTACH)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * JOIN_NOLOCK only happens during the transaction commit, so
@@ -288,7 +288,7 @@ loop:
 	} else if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state)) {
 		spin_unlock(&fs_info->trans_lock);
 		kfree(cur_trans);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	cur_trans->fs_info = fs_info;
@@ -531,7 +531,7 @@ start_transaction(struct btrfs_root *root, unsigned int num_items,
 	ASSERT(current->journal_info != BTRFS_SEND_TRANS_STUB);
 
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return ERR_PTR(-EROFS);
+		return ERR_PTR(-ERR(EROFS));
 
 	if (current->journal_info) {
 		WARN_ON(type & TRANS_EXTWRITERS);
@@ -632,7 +632,7 @@ again:
 			wait_current_trans(fs_info);
 			if (unlikely(type == TRANS_ATTACH ||
 				     type == TRANS_JOIN_NOSTART))
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 		}
 	} while (ret == -EBUSY);
 
@@ -822,7 +822,7 @@ int btrfs_wait_for_commit(struct btrfs_fs_info *fs_info, u64 transid)
 		 */
 		if (!cur_trans) {
 			if (transid > fs_info->last_trans_committed)
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
@@ -937,7 +937,7 @@ static int __btrfs_end_transaction(struct btrfs_trans_handle *trans,
 	if (TRANS_ABORTED(trans) ||
 	    test_bit(BTRFS_FS_STATE_ERROR, &info->fs_state)) {
 		wake_up_process(info->transaction_kthread);
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 
 	kmem_cache_free(btrfs_trans_handle_cachep, trans);
@@ -1064,7 +1064,7 @@ static int btrfs_wait_extents(struct btrfs_fs_info *fs_info,
 		errors = true;
 
 	if (errors && !err)
-		err = -EIO;
+		err = -ERR(EIO);
 	return err;
 }
 
@@ -1087,7 +1087,7 @@ int btrfs_wait_tree_log_extents(struct btrfs_root *log_root, int mark)
 		errors = true;
 
 	if (errors && !err)
-		err = -EIO;
+		err = -ERR(EIO);
 	return err;
 }
 
@@ -1350,7 +1350,7 @@ int btrfs_defrag_root(struct btrfs_root *root)
 
 		if (btrfs_defrag_cancelled(info)) {
 			btrfs_debug(info, "defrag_root cancelled");
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 	}
@@ -1533,7 +1533,7 @@ static noinline int create_pending_snapshot(struct btrfs_trans_handle *trans,
 					 dentry->d_name.name,
 					 dentry->d_name.len, 0);
 	if (dir_item != NULL && !IS_ERR(dir_item)) {
-		pending->error = -EEXIST;
+		pending->error = -ERR(EEXIST);
 		goto dir_item_existed;
 	} else if (IS_ERR(dir_item)) {
 		ret = PTR_ERR(dir_item);
@@ -2136,7 +2136,7 @@ int btrfs_commit_transaction(struct btrfs_trans_handle *trans)
 		 * corrupt state (pointing to trees with unwritten nodes/leafs).
 		 */
 		if (test_bit(BTRFS_FS_STATE_TRANS_ABORTED, &fs_info->fs_state)) {
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto cleanup_transaction;
 		}
 	}

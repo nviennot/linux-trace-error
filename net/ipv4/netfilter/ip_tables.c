@@ -599,14 +599,14 @@ check_entry_size_and_hooks(struct ipt_entry *e,
 	if ((unsigned long)e % __alignof__(struct ipt_entry) != 0 ||
 	    (unsigned char *)e + sizeof(struct ipt_entry) >= limit ||
 	    (unsigned char *)e + e->next_offset > limit)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (e->next_offset
 	    < sizeof(struct ipt_entry) + sizeof(struct xt_entry_target))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ip_checkentry(&e->ip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = xt_check_entry_offsets(e, e->elems, e->target_offset,
 				     e->next_offset);
@@ -621,7 +621,7 @@ check_entry_size_and_hooks(struct ipt_entry *e,
 			newinfo->hook_entry[h] = hook_entries[h];
 		if ((unsigned char *)e - base == underflows[h]) {
 			if (!check_underflow(e))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			newinfo->underflow[h] = underflows[h];
 		}
@@ -697,7 +697,7 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 			++newinfo->stacksize;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (i != repl->num_entries)
 		goto out_free;
 
@@ -706,7 +706,7 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 		goto out_free;
 
 	if (!mark_source_chains(newinfo, repl->valid_hooks, entry0, offsets)) {
-		ret = -ELOOP;
+		ret = -ERR(ELOOP);
 		goto out_free;
 	}
 	kvfree(offsets);
@@ -926,7 +926,7 @@ static int compat_table_info(const struct xt_table_info *info,
 	int ret;
 
 	if (!newinfo || !info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* we dont care about newinfo->entries */
 	memcpy(newinfo, info, offsetof(struct xt_table_info, entries));
@@ -952,7 +952,7 @@ static int get_info(struct net *net, void __user *user,
 	int ret;
 
 	if (*len != sizeof(struct ipt_getinfo))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(name, user, sizeof(name)) != 0)
 		return -EFAULT;
@@ -1010,11 +1010,11 @@ get_entries(struct net *net, struct ipt_get_entries __user *uptr,
 	struct xt_table *t;
 
 	if (*len < sizeof(get))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&get, uptr, sizeof(get)) != 0)
 		return -EFAULT;
 	if (*len != sizeof(struct ipt_get_entries) + get.size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	get.name[sizeof(get.name) - 1] = '\0';
 
 	t = xt_find_table_lock(net, AF_INET, get.name);
@@ -1024,7 +1024,7 @@ get_entries(struct net *net, struct ipt_get_entries __user *uptr,
 			ret = copy_entries_to_user(private->size,
 						   t, uptr->entrytable);
 		else
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 
 		module_put(t->me);
 		xt_table_unlock(t);
@@ -1060,7 +1060,7 @@ __do_replace(struct net *net, const char *name, unsigned int valid_hooks,
 
 	/* You lied! */
 	if (valid_hooks != t->valid_hooks) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto put_module;
 	}
 
@@ -1118,7 +1118,7 @@ do_replace(struct net *net, const void __user *user, unsigned int len)
 	if (tmp.num_counters >= INT_MAX / sizeof(struct xt_counters))
 		return -ENOMEM;
 	if (tmp.num_counters == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp.name[sizeof(tmp.name)-1] = 0;
 
@@ -1177,7 +1177,7 @@ do_add_counters(struct net *net, const void __user *user,
 	local_bh_disable();
 	private = t->private;
 	if (private->number != tmp.num_counters) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto unlock_up_free;
 	}
 
@@ -1299,14 +1299,14 @@ check_compat_entry_size_and_hooks(struct compat_ipt_entry *e,
 	if ((unsigned long)e % __alignof__(struct compat_ipt_entry) != 0 ||
 	    (unsigned char *)e + sizeof(struct compat_ipt_entry) >= limit ||
 	    (unsigned char *)e + e->next_offset > limit)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (e->next_offset < sizeof(struct compat_ipt_entry) +
 			     sizeof(struct compat_xt_entry_target))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ip_checkentry(&e->ip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = xt_compat_check_entry_offsets(e, e->elems,
 					    e->target_offset, e->next_offset);
@@ -1421,7 +1421,7 @@ translate_compat_table(struct net *net,
 		++j;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (j != compatr->num_entries)
 		goto out_unlock;
 
@@ -1501,7 +1501,7 @@ compat_do_replace(struct net *net, void __user *user, unsigned int len)
 	if (tmp.num_counters >= INT_MAX / sizeof(struct xt_counters))
 		return -ENOMEM;
 	if (tmp.num_counters == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp.name[sizeof(tmp.name)-1] = 0;
 
@@ -1541,7 +1541,7 @@ compat_do_ipt_set_ctl(struct sock *sk,	int cmd, void __user *user,
 	int ret;
 
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case IPT_SO_SET_REPLACE:
@@ -1553,7 +1553,7 @@ compat_do_ipt_set_ctl(struct sock *sk,	int cmd, void __user *user,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1603,13 +1603,13 @@ compat_get_entries(struct net *net, struct compat_ipt_get_entries __user *uptr,
 	struct xt_table *t;
 
 	if (*len < sizeof(get))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&get, uptr, sizeof(get)) != 0)
 		return -EFAULT;
 
 	if (*len != sizeof(struct compat_ipt_get_entries) + get.size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	get.name[sizeof(get.name) - 1] = '\0';
 
@@ -1623,7 +1623,7 @@ compat_get_entries(struct net *net, struct compat_ipt_get_entries __user *uptr,
 			ret = compat_copy_entries_to_user(private->size,
 							  t, uptr->entrytable);
 		else if (!ret)
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 
 		xt_compat_flush_offsets(AF_INET);
 		module_put(t->me);
@@ -1643,7 +1643,7 @@ compat_do_ipt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 	int ret;
 
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case IPT_SO_GET_INFO:
@@ -1665,7 +1665,7 @@ do_ipt_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 	int ret;
 
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case IPT_SO_SET_REPLACE:
@@ -1677,7 +1677,7 @@ do_ipt_set_ctl(struct sock *sk, int cmd, void __user *user, unsigned int len)
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1689,7 +1689,7 @@ do_ipt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 	int ret;
 
 	if (!ns_capable(sock_net(sk)->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case IPT_SO_GET_INFO:
@@ -1706,7 +1706,7 @@ do_ipt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 		int target;
 
 		if (*len != sizeof(rev)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (copy_from_user(&rev, user, sizeof(rev)) != 0) {
@@ -1728,7 +1728,7 @@ do_ipt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
 	}
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1859,7 +1859,7 @@ static int icmp_checkentry(const struct xt_mtchk_param *par)
 	const struct ipt_icmp *icmpinfo = par->matchinfo;
 
 	/* Must specify no unknown invflags */
-	return (icmpinfo->invflags & ~IPT_ICMP_INV) ? -EINVAL : 0;
+	return (icmpinfo->invflags & ~IPT_ICMP_INV) ? -ERR(EINVAL) : 0;
 }
 
 static struct xt_target ipt_builtin_tg[] __read_mostly = {

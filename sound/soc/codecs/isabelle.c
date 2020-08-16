@@ -944,7 +944,7 @@ static int isabelle_hw_params(struct snd_pcm_substream *substream,
 		fs_val = ISABELLE_FS_RATE_48;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, ISABELLE_FS_RATE_CFG_REG,
@@ -959,7 +959,7 @@ static int isabelle_hw_params(struct snd_pcm_substream *substream,
 		aif |= ISABELLE_AIF_LENGTH_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, ISABELLE_INTF_CFG_REG,
@@ -981,7 +981,7 @@ static int isabelle_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		aif_val |= ISABELLE_AIF_MS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -995,7 +995,7 @@ static int isabelle_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		aif_val |= ISABELLE_PDM_MODE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, ISABELLE_INTF_CFG_REG,

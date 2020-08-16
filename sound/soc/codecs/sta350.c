@@ -329,7 +329,7 @@ static int sta350_coefficient_get(struct snd_kcontrol *kcontrol,
 	} else if (numcoef == 5) {
 		regmap_write(sta350->regmap, STA350_CFUD, cfud | 0x08);
 	} else {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit_unlock;
 	}
 
@@ -377,7 +377,7 @@ static int sta350_coefficient_put(struct snd_kcontrol *kcontrol,
 	else if (numcoef == 5)
 		regmap_write(sta350->regmap, STA350_CFUD, cfud | 0x02);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -637,7 +637,7 @@ static int sta350_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -647,7 +647,7 @@ static int sta350_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		sta350->format = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -658,7 +658,7 @@ static int sta350_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		confb |= STA350_CONFB_C1IM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return regmap_update_bits(sta350->regmap, STA350_CONFB,
@@ -680,7 +680,7 @@ static int sta350_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_component *component = dai->component;
 	struct sta350_priv *sta350 = snd_soc_component_get_drvdata(component);
-	int i, mcs = -EINVAL, ir = -EINVAL;
+	int i, mcs = -ERR(EINVAL), ir = -ERR(EINVAL);
 	unsigned int confa, confb;
 	unsigned int rate, ratio;
 	int ret;
@@ -688,7 +688,7 @@ static int sta350_hw_params(struct snd_pcm_substream *substream,
 	if (!sta350->mclk) {
 		dev_err(component->dev,
 			"sta350->mclk is unset. Unable to determine ratio\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	rate = params_rate(params);
@@ -704,7 +704,7 @@ static int sta350_hw_params(struct snd_pcm_substream *substream,
 
 	if (ir < 0) {
 		dev_err(component->dev, "Unsupported samplerate: %u\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < 6; i++) {
@@ -716,7 +716,7 @@ static int sta350_hw_params(struct snd_pcm_substream *substream,
 
 	if (mcs < 0) {
 		dev_err(component->dev, "Unresolvable ratio: %u\n", ratio);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	confa = (ir << STA350_CONFA_IR_SHIFT) |
@@ -788,7 +788,7 @@ static int sta350_hw_params(struct snd_pcm_substream *substream,
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(sta350->regmap, STA350_CONFA,
@@ -1120,7 +1120,7 @@ static int sta350_probe_dt(struct device *dev, struct sta350_priv *sta350)
 	pdata->ffx_power_output_mode = STA350_FFX_PM_VARIABLE_DROP_COMP;
 	if (!of_property_read_string(np, "st,ffx-power-output-mode",
 				     &ffx_power_mode)) {
-		int i, mode = -EINVAL;
+		int i, mode = -ERR(EINVAL);
 
 		for (i = 0; i < ARRAY_SIZE(sta350_ffx_modes); i++)
 			if (!strcasecmp(ffx_power_mode, sta350_ffx_modes[i]))

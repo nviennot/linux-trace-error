@@ -161,7 +161,7 @@ static int ipvs_mt_check(const struct xt_mtchk_param *par)
 		) {
 		pr_info_ratelimited("protocol family %u not supported\n",
 				    par->family);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

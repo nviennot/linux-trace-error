@@ -16,13 +16,13 @@ static int check_addr(const struct sockaddr_atmsvc *addr)
 	int i;
 
 	if (addr->sas_family != AF_ATMSVC)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	if (!*addr->sas_addr.pub)
-		return *addr->sas_addr.prv ? 0 : -EINVAL;
+		return *addr->sas_addr.prv ? 0 : -ERR(EINVAL);
 	for (i = 1; i < ATM_E164_LEN + 1; i++)	/* make sure it's \0-terminated */
 		if (!addr->sas_addr.pub[i])
 			return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int identical(const struct sockaddr_atmsvc *a, const struct sockaddr_atmsvc *b)
@@ -84,7 +84,7 @@ int atm_add_addr(struct atm_dev *dev, const struct sockaddr_atmsvc *addr,
 	list_for_each_entry(this, head, entry) {
 		if (identical(&this->addr, addr)) {
 			spin_unlock_irqrestore(&dev->lock, flags);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	this = kmalloc(sizeof(struct atm_dev_addr), GFP_ATOMIC);
@@ -127,7 +127,7 @@ int atm_del_addr(struct atm_dev *dev, const struct sockaddr_atmsvc *addr,
 		}
 	}
 	spin_unlock_irqrestore(&dev->lock, flags);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 int atm_get_addr(struct atm_dev *dev, struct sockaddr_atmsvc __user * buf,
@@ -154,7 +154,7 @@ int atm_get_addr(struct atm_dev *dev, struct sockaddr_atmsvc __user * buf,
 	list_for_each_entry(this, head, entry)
 	    memcpy(tmp_bufp++, &this->addr, sizeof(struct sockaddr_atmsvc));
 	spin_unlock_irqrestore(&dev->lock, flags);
-	error = total > size ? -E2BIG : total;
+	error = total > size ? -ERR(E2BIG) : total;
 	if (copy_to_user(buf, tmp_buf, total < size ? total : size))
 		error = -EFAULT;
 	kfree(tmp_buf);

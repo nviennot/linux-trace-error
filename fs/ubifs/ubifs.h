@@ -2075,7 +2075,7 @@ static inline int ubifs_encrypt(const struct inode *inode,
 {
 	struct ubifs_info *c = inode->i_sb->s_fs_info;
 	ubifs_assert(c, 0);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int ubifs_decrypt(const struct inode *inode,
 				struct ubifs_data_node *dn,
@@ -2083,7 +2083,7 @@ static inline int ubifs_decrypt(const struct inode *inode,
 {
 	struct ubifs_info *c = inode->i_sb->s_fs_info;
 	ubifs_assert(c, 0);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #else
 /* crypto.c */

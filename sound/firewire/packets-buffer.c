@@ -36,7 +36,7 @@ int iso_packets_buffer_init(struct iso_packets_buffer *b, struct fw_unit *unit,
 	packet_size = L1_CACHE_ALIGN(packet_size);
 	packets_per_page = PAGE_SIZE / packet_size;
 	if (WARN_ON(!packets_per_page)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_packets;
 	}
 	pages = DIV_ROUND_UP(count, packets_per_page);

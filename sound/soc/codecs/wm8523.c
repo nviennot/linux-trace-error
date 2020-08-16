@@ -130,7 +130,7 @@ static int wm8523_startup(struct snd_pcm_substream *substream,
 	if (!wm8523->sysclk) {
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_hw_constraint_list(substream->runtime, 0,
@@ -161,7 +161,7 @@ static int wm8523_hw_params(struct snd_pcm_substream *substream,
 	if (i == ARRAY_SIZE(lrclk_ratios)) {
 		dev_err(component->dev, "MCLK/fs ratio %d unsupported\n",
 			wm8523->sysclk / params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aifctrl2 &= ~WM8523_SR_MASK;
@@ -177,7 +177,7 @@ static int wm8523_hw_params(struct snd_pcm_substream *substream,
 			dev_err(component->dev,
 				"No matching BCLK/fs ratio for word length %d\n",
 				params_width(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		aifctrl2 &= ~WM8523_BCLKDIV_MASK;
@@ -248,7 +248,7 @@ static int wm8523_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	/* Need at least one supported rate... */
 	if (wm8523->rate_constraint.count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -270,7 +270,7 @@ static int wm8523_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -289,7 +289,7 @@ static int wm8523_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		aifctrl1 |= 0x0023;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -305,7 +305,7 @@ static int wm8523_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		aifctrl1 |= WM8523_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8523_AIF_CTRL1, aifctrl1);
@@ -486,7 +486,7 @@ static int wm8523_i2c_probe(struct i2c_client *i2c,
 	}
 	if (val != 0x8523) {
 		dev_err(&i2c->dev, "Device is not a WM8523, ID is %x\n", ret);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_enable;
 	}
 

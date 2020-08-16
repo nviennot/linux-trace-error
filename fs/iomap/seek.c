@@ -80,7 +80,7 @@ page_cache_seek_hole_data(struct inode *inode, loff_t offset, loff_t length,
 	struct pagevec pvec;
 
 	if (length <= 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	pagevec_init(&pvec);
 
@@ -110,7 +110,7 @@ check_range:
 	if (lastoff < offset + length)
 		goto out;
 not_found:
-	lastoff = -ENOENT;
+	lastoff = -ERR(ENOENT);
 out:
 	pagevec_release(&pvec);
 	return lastoff;
@@ -145,7 +145,7 @@ iomap_seek_hole(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 
 	/* Nothing to be found before or beyond the end of the file. */
 	if (offset < 0 || offset >= size)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	while (length > 0) {
 		ret = iomap_apply(inode, offset, length, IOMAP_REPORT, ops,
@@ -191,7 +191,7 @@ iomap_seek_data(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 
 	/* Nothing to be found before or beyond the end of the file. */
 	if (offset < 0 || offset >= size)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	while (length > 0) {
 		ret = iomap_apply(inode, offset, length, IOMAP_REPORT, ops,
@@ -206,7 +206,7 @@ iomap_seek_data(struct inode *inode, loff_t offset, const struct iomap_ops *ops)
 	}
 
 	if (length <= 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return offset;
 }
 EXPORT_SYMBOL_GPL(iomap_seek_data);

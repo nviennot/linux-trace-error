@@ -170,17 +170,17 @@ int register_ip_vs_scheduler(struct ip_vs_scheduler *scheduler)
 
 	if (!scheduler) {
 		pr_err("%s(): NULL arg\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!scheduler->name) {
 		pr_err("%s(): NULL scheduler_name\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* increase the module use count */
 	if (!ip_vs_use_count_inc())
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	mutex_lock(&ip_vs_sched_mutex);
 
@@ -189,7 +189,7 @@ int register_ip_vs_scheduler(struct ip_vs_scheduler *scheduler)
 		ip_vs_use_count_dec();
 		pr_err("%s(): [%s] scheduler already linked\n",
 		       __func__, scheduler->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -202,7 +202,7 @@ int register_ip_vs_scheduler(struct ip_vs_scheduler *scheduler)
 			ip_vs_use_count_dec();
 			pr_err("%s(): [%s] scheduler already existed "
 			       "in the system\n", __func__, scheduler->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	/*
@@ -224,7 +224,7 @@ int unregister_ip_vs_scheduler(struct ip_vs_scheduler *scheduler)
 {
 	if (!scheduler) {
 		pr_err("%s(): NULL arg\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&ip_vs_sched_mutex);
@@ -232,7 +232,7 @@ int unregister_ip_vs_scheduler(struct ip_vs_scheduler *scheduler)
 		mutex_unlock(&ip_vs_sched_mutex);
 		pr_err("%s(): [%s] scheduler is not in the list. failed\n",
 		       __func__, scheduler->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*

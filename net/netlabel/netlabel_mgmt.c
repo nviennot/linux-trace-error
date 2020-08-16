@@ -76,7 +76,7 @@ static const struct nla_policy netlbl_mgmt_genl_policy[NLBL_MGMT_A_MAX + 1] = {
 static int netlbl_mgmt_add_common(struct genl_info *info,
 				  struct netlbl_audit *audit_info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_domaddr_map *addrmap = NULL;
 	struct cipso_v4_doi *cipsov4 = NULL;
 #if IS_ENABLED(CONFIG_IPV6)
@@ -159,12 +159,12 @@ static int netlbl_mgmt_add_common(struct genl_info *info,
 
 		if (nla_len(info->attrs[NLBL_MGMT_A_IPV4ADDR]) !=
 		    sizeof(struct in_addr)) {
-			ret_val = -EINVAL;
+			ret_val = -ERR(EINVAL);
 			goto add_free_addrmap;
 		}
 		if (nla_len(info->attrs[NLBL_MGMT_A_IPV4MASK]) !=
 		    sizeof(struct in_addr)) {
-			ret_val = -EINVAL;
+			ret_val = -ERR(EINVAL);
 			goto add_free_addrmap;
 		}
 		addr = nla_data(info->attrs[NLBL_MGMT_A_IPV4ADDR]);
@@ -207,12 +207,12 @@ static int netlbl_mgmt_add_common(struct genl_info *info,
 
 		if (nla_len(info->attrs[NLBL_MGMT_A_IPV6ADDR]) !=
 		    sizeof(struct in6_addr)) {
-			ret_val = -EINVAL;
+			ret_val = -ERR(EINVAL);
 			goto add_free_addrmap;
 		}
 		if (nla_len(info->attrs[NLBL_MGMT_A_IPV6MASK]) !=
 		    sizeof(struct in6_addr)) {
-			ret_val = -EINVAL;
+			ret_val = -ERR(EINVAL);
 			goto add_free_addrmap;
 		}
 		addr = nla_data(info->attrs[NLBL_MGMT_A_IPV6ADDR]);
@@ -432,7 +432,7 @@ static int netlbl_mgmt_add(struct sk_buff *skb, struct genl_info *info)
 	     (info->attrs[NLBL_MGMT_A_IPV4MASK] != NULL)) ||
 	    ((info->attrs[NLBL_MGMT_A_IPV6ADDR] != NULL) ^
 	     (info->attrs[NLBL_MGMT_A_IPV6MASK] != NULL)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -455,7 +455,7 @@ static int netlbl_mgmt_remove(struct sk_buff *skb, struct genl_info *info)
 	struct netlbl_audit audit_info;
 
 	if (!info->attrs[NLBL_MGMT_A_DOMAIN])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -555,7 +555,7 @@ static int netlbl_mgmt_adddef(struct sk_buff *skb, struct genl_info *info)
 	     (info->attrs[NLBL_MGMT_A_IPV4MASK] != NULL)) ||
 	    ((info->attrs[NLBL_MGMT_A_IPV6ADDR] != NULL) ^
 	     (info->attrs[NLBL_MGMT_A_IPV6MASK] != NULL)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 
@@ -616,7 +616,7 @@ static int netlbl_mgmt_listdef(struct sk_buff *skb, struct genl_info *info)
 	rcu_read_lock();
 	entry = netlbl_domhsh_getentry(NULL, family);
 	if (entry == NULL) {
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 		goto listdef_failure_lock;
 	}
 	ret_val = netlbl_mgmt_listentry(ans_skb, entry);

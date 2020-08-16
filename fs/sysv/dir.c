@@ -195,7 +195,7 @@ int sysv_add_link(struct dentry *dentry, struct inode *inode)
 		while ((char *)de <= kaddr) {
 			if (!de->inode)
 				goto got_it;
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (namecompare(namelen, SYSV_NAMELEN, name, de->name)) 
 				goto out_page;
 			de++;
@@ -203,7 +203,7 @@ int sysv_add_link(struct dentry *dentry, struct inode *inode)
 		dir_put_page(page);
 	}
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 got_it:
 	pos = page_offset(page) +

@@ -67,12 +67,12 @@ static inline void drm_free_agp(struct agp_memory * handle, int pages)
 
 static inline int drm_bind_agp(struct agp_memory * handle, unsigned int start)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_unbind_agp(struct agp_memory * handle)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct drm_agp_head *drm_agp_init(struct drm_device *dev)
@@ -86,48 +86,48 @@ static inline void drm_legacy_agp_clear(struct drm_device *dev)
 
 static inline int drm_agp_acquire(struct drm_device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_release(struct drm_device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_enable(struct drm_device *dev,
 				 struct drm_agp_mode mode)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_info(struct drm_device *dev,
 			       struct drm_agp_info *info)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_alloc(struct drm_device *dev,
 				struct drm_agp_buffer *request)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_free(struct drm_device *dev,
 			       struct drm_agp_buffer *request)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_unbind(struct drm_device *dev,
 				 struct drm_agp_binding *request)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int drm_agp_bind(struct drm_device *dev,
 			       struct drm_agp_binding *request)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #endif /* CONFIG_AGP */

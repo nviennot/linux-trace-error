@@ -165,7 +165,7 @@ revert:
 		pids_cancel(q, num);
 	pids_cancel(p, num);
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int pids_can_attach(struct cgroup_taskset *tset)
@@ -278,7 +278,7 @@ static ssize_t pids_max_write(struct kernfs_open_file *of, char *buf,
 		return err;
 
 	if (limit < 0 || limit >= PIDS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 set_limit:
 	/*

@@ -8,7 +8,7 @@ static int dma_dummy_mmap(struct device *dev, struct vm_area_struct *vma,
 		void *cpu_addr, dma_addr_t dma_addr, size_t size,
 		unsigned long attrs)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static dma_addr_t dma_dummy_map_page(struct device *dev, struct page *page,

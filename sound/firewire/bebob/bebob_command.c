@@ -33,11 +33,11 @@ int avc_audio_set_selector(struct fw_unit *unit, unsigned int subunit_id,
 	if (err < 0)
 		;
 	else if (err < 9)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else
 		err = 0;
 
@@ -71,13 +71,13 @@ int avc_audio_get_selector(struct fw_unit *unit, unsigned int subunit_id,
 	if (err < 0)
 		;
 	else if (err < 9)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -126,13 +126,13 @@ int avc_bridgeco_get_plug_type(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 11)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -158,13 +158,13 @@ int avc_bridgeco_get_plug_ch_pos(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 11)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -197,13 +197,13 @@ int avc_bridgeco_get_plug_section_type(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 12)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -233,13 +233,13 @@ int avc_bridgeco_get_plug_input(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 16)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08) /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a) /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b) /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	if (err < 0)
 		goto end;
 
@@ -258,7 +258,7 @@ int avc_bridgeco_get_plug_strm_fmt(struct fw_unit *unit,
 
 	/* check given buffer */
 	if ((buf == NULL) || (*len < 12)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto end;
 	}
 
@@ -274,15 +274,15 @@ int avc_bridgeco_get_plug_strm_fmt(struct fw_unit *unit,
 	if (err < 0)
 		;
 	else if (err < 12)
-		err = -EIO;
+		err = -ERR(EIO);
 	else if (buf[0] == 0x08)        /* NOT IMPLEMENTED */
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 	else if (buf[0] == 0x0a)        /* REJECTED */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	else if (buf[0] == 0x0b)        /* IN TRANSITION */
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 	else if (buf[10] != eid)
-		err = -EIO;
+		err = -ERR(EIO);
 	if (err < 0)
 		goto end;
 

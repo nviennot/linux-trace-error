@@ -278,19 +278,19 @@ int tipc_aead_key_validate(struct tipc_aead_key *ukey)
 	/* Check if algorithm exists */
 	if (unlikely(!crypto_has_alg(ukey->alg_name, 0, 0))) {
 		pr_info("Not found cipher: \"%s\"!\n", ukey->alg_name);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Currently, we only support the "gcm(aes)" cipher algorithm */
 	if (strcmp(ukey->alg_name, "gcm(aes)"))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	/* Check if key size is correct */
 	keylen = ukey->keylen - TIPC_AES_GCM_SALT_SIZE;
 	if (unlikely(keylen != TIPC_AES_GCM_KEY_SIZE_128 &&
 		     keylen != TIPC_AES_GCM_KEY_SIZE_192 &&
 		     keylen != TIPC_AES_GCM_KEY_SIZE_256))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -428,7 +428,7 @@ static int tipc_aead_init(struct tipc_aead **aead, struct tipc_aead_key *ukey,
 	int tfm_cnt = 0;
 
 	if (unlikely(*aead))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* Allocate a new AEAD */
 	tmp = kzalloc(sizeof(*tmp), GFP_ATOMIC);
@@ -456,7 +456,7 @@ static int tipc_aead_init(struct tipc_aead **aead, struct tipc_aead_key *ukey,
 		if (unlikely(!tfm_cnt &&
 			     crypto_aead_ivsize(tfm) != TIPC_AES_GCM_IV_SIZE)) {
 			crypto_free_aead(tfm);
-			err = -ENOTSUPP;
+			err = -ERR(ENOTSUPP);
 			break;
 		}
 
@@ -531,13 +531,13 @@ static int tipc_aead_clone(struct tipc_aead **dst, struct tipc_aead *src)
 	int cpu;
 
 	if (!src)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	if (src->mode != CLUSTER_KEY)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(*dst))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	aead = kzalloc(sizeof(*aead), GFP_ATOMIC);
 	if (unlikely(!aead))
@@ -728,7 +728,7 @@ static int tipc_aead_encrypt(struct tipc_aead *aead, struct sk_buff *skb,
 
 	/* Hold bearer */
 	if (unlikely(!tipc_bearer_hold(b))) {
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 		goto exit;
 	}
 
@@ -802,7 +802,7 @@ static int tipc_aead_decrypt(struct net *net, struct tipc_aead *aead,
 	u8 *iv;
 
 	if (unlikely(!aead))
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 
 	/* Cow skb data if needed */
 	if (likely(!skb_cloned(skb) &&
@@ -856,7 +856,7 @@ static int tipc_aead_decrypt(struct net *net, struct tipc_aead *aead,
 
 	/* Hold bearer */
 	if (unlikely(!tipc_bearer_hold(b))) {
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 		goto exit;
 	}
 
@@ -1079,7 +1079,7 @@ static int tipc_crypto_key_attach(struct tipc_crypto *c,
 {
 	u8 new_pending, new_passive, new_key;
 	struct tipc_key key;
-	int rc = -EBUSY;
+	int rc = -ERR(EBUSY);
 
 	spin_lock_bh(&c->lock);
 	key = c->key;
@@ -1333,7 +1333,7 @@ static int tipc_crypto_key_revoke(struct net *net, u8 tx_key)
 	spin_unlock(&tx->lock);
 
 	pr_warn("TX(%s): key is revoked!\n", tipc_own_id_string(net));
-	return -EKEYREVOKED;
+	return -ERR(EKEYREVOKED);
 }
 
 int tipc_crypto_start(struct tipc_crypto **crypto, struct net *net,
@@ -1342,7 +1342,7 @@ int tipc_crypto_start(struct tipc_crypto **crypto, struct net *net,
 	struct tipc_crypto *c;
 
 	if (*crypto)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	/* Allocate crypto */
 	c = kzalloc(sizeof(*c), GFP_ATOMIC);
@@ -1557,7 +1557,7 @@ int tipc_crypto_xmit(struct net *net, struct sk_buff **skb,
 	struct tipc_key key = tx->key;
 	struct tipc_aead *aead = NULL;
 	struct sk_buff *probe;
-	int rc = -ENOKEY;
+	int rc = -ERR(ENOKEY);
 	u8 tx_key;
 
 	/* No encryption? */
@@ -1658,7 +1658,7 @@ int tipc_crypto_rcv(struct net *net, struct tipc_crypto *rx,
 	struct tipc_crypto_stats __percpu *stats;
 	struct tipc_aead *aead = NULL;
 	struct tipc_key key;
-	int rc = -ENOKEY;
+	int rc = -ERR(ENOKEY);
 	u8 tx_key = 0;
 
 	/* New peer?

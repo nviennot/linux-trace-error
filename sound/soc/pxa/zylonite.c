@@ -99,7 +99,7 @@ static int zylonite_voice_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		/* Don't support OSS emulation */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, PXA_SSP_CLK_AUDIO, 0, 1);

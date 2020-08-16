@@ -344,7 +344,7 @@ static int jffs2_block_check_erase(struct jffs2_sb_info *c, struct jffs2_erasebl
 				*wordebuf,
 				jeb->offset +
 				c->sector_size-retlen * sizeof(*wordebuf));
-			return -EIO;
+			return -ERR(EIO);
 		}
 		return 0;
 	}
@@ -353,7 +353,7 @@ static int jffs2_block_check_erase(struct jffs2_sb_info *c, struct jffs2_erasebl
 	if (!ebuf) {
 		pr_warn("Failed to allocate page buffer for verifying erase at 0x%08x. Refiling\n",
 			jeb->offset);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	jffs2_dbg(1, "Verifying erase at 0x%08x\n", jeb->offset);
@@ -368,13 +368,13 @@ static int jffs2_block_check_erase(struct jffs2_sb_info *c, struct jffs2_erasebl
 		if (ret) {
 			pr_warn("Read of newly-erased block at 0x%08x failed: %d. Putting on bad_list\n",
 				ofs, ret);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto fail;
 		}
 		if (retlen != readlen) {
 			pr_warn("Short read from newly-erased block at 0x%08x. Wanted %d, got %zd\n",
 				ofs, readlen, retlen);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto fail;
 		}
 		for (i=0; i<readlen; i += sizeof(unsigned long)) {
@@ -384,7 +384,7 @@ static int jffs2_block_check_erase(struct jffs2_sb_info *c, struct jffs2_erasebl
 				*bad_offset += i;
 				pr_warn("Newly-erased block contained word 0x%lx at offset 0x%08x\n",
 					*datum, *bad_offset);
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto fail;
 			}
 		}

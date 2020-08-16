@@ -123,7 +123,7 @@ nf_hook_entries_grow(const struct nf_hook_entries *old,
 	}
 
 	if (alloc_entries > MAX_HOOK_COUNT)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 
 	new = allocate_hook_entries_size(alloc_entries);
 	if (!new)
@@ -320,16 +320,16 @@ static int __nf_register_net_hook(struct net *net, int pf,
 	if (pf == NFPROTO_NETDEV) {
 #ifndef CONFIG_NETFILTER_INGRESS
 		if (reg->hooknum == NF_NETDEV_INGRESS)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 #endif
 		if (reg->hooknum != NF_NETDEV_INGRESS ||
 		    !reg->dev || dev_net(reg->dev) != net)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	pp = nf_hook_entry_head(net, pf, reg->hooknum, reg->dev);
 	if (!pp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&nf_hook_mutex);
 
@@ -517,7 +517,7 @@ int nf_hook_slow(struct sk_buff *skb, struct nf_hook_state *state,
 			kfree_skb(skb);
 			ret = NF_DROP_GETERR(verdict);
 			if (ret == 0)
-				ret = -EPERM;
+				ret = -ERR(EPERM);
 			return ret;
 		case NF_QUEUE:
 			ret = nf_queue(skb, state, s, verdict);

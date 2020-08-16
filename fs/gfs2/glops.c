@@ -420,7 +420,7 @@ static int gfs2_dinode_in(struct gfs2_inode *ip, const void *buf)
 	return 0;
 corrupt:
 	gfs2_consist_inode(ip);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**

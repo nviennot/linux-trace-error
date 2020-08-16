@@ -90,7 +90,7 @@ static int mop500_ab8500_set_mclk(struct device *dev,
 	if (IS_ERR(drvdata->clk_ptr_intclk)) {
 		dev_err(dev,
 			"%s: ERROR: intclk not initialized!\n", __func__);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	switch (drvdata->mclk_sel) {
@@ -101,13 +101,13 @@ static int mop500_ab8500_set_mclk(struct device *dev,
 		clk_ptr = drvdata->clk_ptr_ulpclk;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (IS_ERR(clk_ptr)) {
 		dev_err(dev, "%s: ERROR: %s not initialized!\n", __func__,
 			get_mclk_str(drvdata->mclk_sel));
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	status = clk_set_parent(drvdata->clk_ptr_intclk, clk_ptr);
@@ -148,7 +148,7 @@ static int mclk_input_control_put(struct snd_kcontrol *kcontrol,
 	unsigned int val = ucontrol->value.enumerated.item[0];
 
 	if (val > (unsigned int)MCLK_ULPCLK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (drvdata->mclk_sel == val)
 		return 0;
 
@@ -241,7 +241,7 @@ static int mop500_ab8500_hw_params(struct snd_pcm_substream *substream,
 		if (mop500_ab8500_rate != params_rate(params) ||
 		    mop500_ab8500_channels != params_channels(params)) {
 			mutex_unlock(&mop500_ab8500_params_lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	} else {
 		mop500_ab8500_rate = params_rate(params);
@@ -262,7 +262,7 @@ static int mop500_ab8500_hw_params(struct snd_pcm_substream *substream,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Setup codec depending on driver-mode */
@@ -311,7 +311,7 @@ static int mop500_ab8500_hw_params(struct snd_pcm_substream *substream,
 		rx_slots = (is_playback) ? 0 : RX_SLOT_8CH;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (driver_mode == DRIVERMODE_NORMAL)

@@ -123,7 +123,7 @@ static ssize_t aqm_write(struct file *file,
 	size_t len;
 
 	if (count > sizeof(buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, user_buf, count))
 		return -EFAULT;
@@ -140,7 +140,7 @@ static ssize_t aqm_write(struct file *file,
 	else if (sscanf(buf, "fq_quantum %u", &local->fq.quantum) == 1)
 		return count;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static const struct file_operations aqm_ops = {
@@ -180,7 +180,7 @@ static ssize_t airtime_flags_write(struct file *file,
 	size_t len;
 
 	if (count > sizeof(buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, user_buf, count))
 		return -EFAULT;
@@ -191,7 +191,7 @@ static ssize_t airtime_flags_write(struct file *file,
 		buf[len - 1] = 0;
 
 	if (kstrtou16(buf, 0, &local->airtime_flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -242,7 +242,7 @@ static ssize_t aql_txq_limit_write(struct file *file,
 	struct sta_info *sta;
 
 	if (count > sizeof(buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, user_buf, count))
 		return -EFAULT;
@@ -253,10 +253,10 @@ static ssize_t aql_txq_limit_write(struct file *file,
 		buf[len - 1] = 0;
 
 	if (sscanf(buf, "%u %u %u", &ac, &q_limit_low, &q_limit_high) != 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ac >= IEEE80211_NUM_ACS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	q_limit_low_old = local->aql_txq_limit_low[ac];
 	q_limit_high_old = local->aql_txq_limit_high[ac];
@@ -309,7 +309,7 @@ static ssize_t force_tx_status_write(struct file *file,
 	size_t len;
 
 	if (count > sizeof(buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(buf, user_buf, count))
 		return -EFAULT;
@@ -324,7 +324,7 @@ static ssize_t force_tx_status_write(struct file *file,
 	else if (buf[0] == '1' && buf[1] == '\0')
 		local->force_tx_status = 1;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }

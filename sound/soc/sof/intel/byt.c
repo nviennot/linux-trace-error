@@ -275,7 +275,7 @@ static void byt_get_reply(struct snd_sof_dev *sdev)
 		if (reply.hdr.size != msg->reply_size) {
 			dev_err(sdev->dev, "error: reply expected %zu got %u bytes\n",
 				msg->reply_size, reply.hdr.size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		/* read the message */
@@ -337,7 +337,7 @@ static int byt_run(struct snd_sof_dev *sdev)
 	if (tries < 0) {
 		dev_err(sdev->dev, "error:  unable to run DSP firmware\n");
 		byt_dump(sdev, SOF_DBG_REGS | SOF_DBG_MBOX);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* return init core mask */
@@ -532,7 +532,7 @@ static int tangier_pci_probe(struct snd_sof_dev *sdev)
 	if (!sdev->bar[BYT_DSP_BAR]) {
 		dev_err(sdev->dev, "error: failed to ioremap LPE base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "LPE VADDR %p\n", sdev->bar[BYT_DSP_BAR]);
 
@@ -554,7 +554,7 @@ static int tangier_pci_probe(struct snd_sof_dev *sdev)
 	if (!sdev->bar[BYT_IMR_BAR]) {
 		dev_err(sdev->dev, "error: failed to ioremap IMR base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "IMR VADDR %p\n", sdev->bar[BYT_IMR_BAR]);
 
@@ -748,7 +748,7 @@ static int byt_acpi_probe(struct snd_sof_dev *sdev)
 	} else {
 		dev_err(sdev->dev, "error: failed to get LPE base at idx %d\n",
 			desc->resindex_lpe_base);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(sdev->dev, "LPE PHY base at 0x%x size 0x%x", base, size);
@@ -756,7 +756,7 @@ static int byt_acpi_probe(struct snd_sof_dev *sdev)
 	if (!sdev->bar[BYT_DSP_BAR]) {
 		dev_err(sdev->dev, "error: failed to ioremap LPE base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "LPE VADDR %p\n", sdev->bar[BYT_DSP_BAR]);
 
@@ -776,7 +776,7 @@ static int byt_acpi_probe(struct snd_sof_dev *sdev)
 	} else {
 		dev_err(sdev->dev, "error: failed to get IMR base at idx %d\n",
 			desc->resindex_imr_base);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* some BIOSes don't map IMR */
@@ -790,7 +790,7 @@ static int byt_acpi_probe(struct snd_sof_dev *sdev)
 	if (!sdev->bar[BYT_IMR_BAR]) {
 		dev_err(sdev->dev, "error: failed to ioremap IMR base 0x%x size 0x%x\n",
 			base, size);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_dbg(sdev->dev, "IMR VADDR %p\n", sdev->bar[BYT_IMR_BAR]);
 

@@ -710,7 +710,7 @@ int jbd2_log_wait_commit(journal_t *journal, tid_t tid)
 	read_unlock(&journal->j_state_lock);
 
 	if (unlikely(is_journal_aborted(journal)))
-		err = -EIO;
+		err = -ERR(EIO);
 	return err;
 }
 
@@ -804,7 +804,7 @@ int jbd2_journal_bmap(journal_t *journal, unsigned long blocknr,
 			printk(KERN_ALERT "%s: journal block not found "
 					"at offset %lu on %s\n",
 			       __func__, blocknr, journal->j_devname);
-			err = -EIO;
+			err = -ERR(EIO);
 			jbd2_journal_abort(journal, err);
 		} else {
 			*retp = block;
@@ -1310,7 +1310,7 @@ static int journal_reset(journal_t *journal)
 		printk(KERN_ERR "JBD2: Journal too short (blocks %llu-%llu).\n",
 		       first, last);
 		journal_fail_superblock(journal);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	journal->j_first = first;
@@ -1368,7 +1368,7 @@ static int jbd2_write_superblock(journal_t *journal, int write_flags)
 
 	/* Buffer got discarded which means block device got invalidated */
 	if (!buffer_mapped(bh))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_jbd2_write_superblock(journal, write_flags);
 	if (!(journal->j_flags & JBD2_BARRIER))
@@ -1397,7 +1397,7 @@ static int jbd2_write_superblock(journal_t *journal, int write_flags)
 	if (buffer_write_io_error(bh)) {
 		clear_buffer_write_io_error(bh);
 		set_buffer_uptodate(bh);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 	if (ret) {
 		printk(KERN_ERR "JBD2: Error %d detected when updating "
@@ -1427,7 +1427,7 @@ int jbd2_journal_update_sb_log_tail(journal_t *journal, tid_t tail_tid,
 	int ret;
 
 	if (is_journal_aborted(journal))
-		return -EIO;
+		return -ERR(EIO);
 
 	BUG_ON(!mutex_is_locked(&journal->j_checkpoint_mutex));
 	jbd_debug(1, "JBD2: updating superblock (start %lu, seq %u)\n",
@@ -1531,7 +1531,7 @@ static int journal_get_superblock(journal_t *journal)
 {
 	struct buffer_head *bh;
 	journal_superblock_t *sb;
-	int err = -EIO;
+	int err = -ERR(EIO);
 
 	bh = journal->j_sb_buffer;
 
@@ -1551,7 +1551,7 @@ static int journal_get_superblock(journal_t *journal)
 
 	sb = journal->j_superblock;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	if (sb->s_header.h_magic != cpu_to_be32(JBD2_MAGIC_NUMBER) ||
 	    sb->s_blocksize != cpu_to_be32(journal->j_blocksize)) {
@@ -1696,7 +1696,7 @@ int jbd2_journal_load(journal_t *journal)
 		     ~cpu_to_be32(JBD2_KNOWN_INCOMPAT_FEATURES))) {
 			printk(KERN_WARNING
 				"JBD2: Unrecognised features on journal\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1735,7 +1735,7 @@ int jbd2_journal_load(journal_t *journal)
 
 recovery_error:
 	printk(KERN_WARNING "JBD2: recovery failed\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**
@@ -1796,7 +1796,7 @@ int jbd2_journal_destroy(journal_t *journal)
 					REQ_SYNC | REQ_PREFLUSH | REQ_FUA);
 			mutex_unlock(&journal->j_checkpoint_mutex);
 		} else
-			err = -EIO;
+			err = -ERR(EIO);
 		brelse(journal->j_sb_buffer);
 	}
 
@@ -2039,7 +2039,7 @@ int jbd2_journal_flush(journal_t *journal)
 	spin_unlock(&journal->j_list_lock);
 
 	if (is_journal_aborted(journal))
-		return -EIO;
+		return -ERR(EIO);
 
 	mutex_lock_io(&journal->j_checkpoint_mutex);
 	if (!err) {
@@ -2218,7 +2218,7 @@ int jbd2_journal_errno(journal_t *journal)
 
 	read_lock(&journal->j_state_lock);
 	if (journal->j_flags & JBD2_ABORT)
-		err = -EROFS;
+		err = -ERR(EROFS);
 	else
 		err = journal->j_errno;
 	read_unlock(&journal->j_state_lock);
@@ -2238,7 +2238,7 @@ int jbd2_journal_clear_err(journal_t *journal)
 
 	write_lock(&journal->j_state_lock);
 	if (journal->j_flags & JBD2_ABORT)
-		err = -EROFS;
+		err = -ERR(EROFS);
 	else
 		journal->j_errno = 0;
 	write_unlock(&journal->j_state_lock);
@@ -2330,7 +2330,7 @@ static int jbd2_journal_create_slab(size_t size)
 		return 0;
 
 	if (i >= JBD2_MAX_SLABS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(i < 0))
 		i = 0;

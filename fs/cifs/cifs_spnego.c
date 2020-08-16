@@ -127,7 +127,7 @@ cifs_get_spnego_key(struct cifs_ses *sesInfo)
 
 	dp = description;
 	/* start with version and hostname portion of UNC string */
-	spnego_key = ERR_PTR(-EINVAL);
+	spnego_key = ERR_PTR(-ERR(EINVAL));
 	sprintf(dp, "ver=0x%x;host=%s;", CIFS_SPNEGO_UPCALL_VERSION,
 		hostname);
 	dp = description + strlen(description);

@@ -516,7 +516,7 @@ iwe_stream_add_event_check(struct iw_request_info *info, char *stream,
 	char *res = iwe_stream_add_event(info, stream, ends, iwe, event_len);
 
 	if (res == stream)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 	return res;
 }
 
@@ -535,7 +535,7 @@ iwe_stream_add_point_check(struct iw_request_info *info, char *stream,
 	char *res = iwe_stream_add_point(info, stream, ends, iwe, extra);
 
 	if (res == stream)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 	return res;
 }
 

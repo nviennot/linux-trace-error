@@ -39,7 +39,7 @@ snd_emux_hwdep_load_patch(struct snd_emux *emu, void __user *arg)
 		if (emu->ops.load_fx)
 			return emu->ops.load_fx(emu, patch.type, patch.optarg, arg, patch.len + sizeof(patch));
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -56,7 +56,7 @@ snd_emux_hwdep_misc_mode(struct snd_emux *emu, void __user *arg)
 	if (copy_from_user(&info, arg, sizeof(info)))
 		return -EFAULT;
 	if (info.mode < 0 || info.mode >= EMUX_MD_END)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info.mode = array_index_nospec(info.mode, EMUX_MD_END);
 
 	if (info.port < 0) {

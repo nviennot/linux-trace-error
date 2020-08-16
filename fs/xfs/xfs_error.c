@@ -270,7 +270,7 @@ xfs_errortag_get(
 	unsigned int		error_tag)
 {
 	if (error_tag >= XFS_ERRTAG_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return mp->m_errortag[error_tag];
 }
@@ -282,7 +282,7 @@ xfs_errortag_set(
 	unsigned int		tag_value)
 {
 	if (error_tag >= XFS_ERRTAG_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mp->m_errortag[error_tag] = tag_value;
 	return 0;
@@ -294,7 +294,7 @@ xfs_errortag_add(
 	unsigned int		error_tag)
 {
 	if (error_tag >= XFS_ERRTAG_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return xfs_errortag_set(mp, error_tag,
 			xfs_errortag_random_default[error_tag]);

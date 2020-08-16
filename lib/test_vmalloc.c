@@ -522,7 +522,7 @@ static void do_concurrent_test(void)
 static int vmalloc_test_init(void)
 {
 	do_concurrent_test();
-	return -EAGAIN; /* Fail will directly unload the module */
+	return -ERR(EAGAIN); /* Fail will directly unload the module */
 }
 
 static void vmalloc_test_exit(void)

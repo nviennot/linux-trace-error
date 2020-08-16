@@ -19,10 +19,10 @@ static int hwpoison_inject(void *data, u64 val)
 	int err;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!pfn_valid(pfn))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	p = pfn_to_page(pfn);
 	hpage = compound_head(p);
@@ -62,7 +62,7 @@ put_out:
 static int hwpoison_unpoison(void *data, u64 val)
 {
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return unpoison_memory(val);
 }

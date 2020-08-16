@@ -26,20 +26,20 @@ int rpmh_invalidate(const struct device *dev);
 
 static inline int rpmh_write(const struct device *dev, enum rpmh_state state,
 			     const struct tcs_cmd *cmd, u32 n)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 static inline int rpmh_write_async(const struct device *dev,
 				   enum rpmh_state state,
 				   const struct tcs_cmd *cmd, u32 n)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 static inline int rpmh_write_batch(const struct device *dev,
 				   enum rpmh_state state,
 				   const struct tcs_cmd *cmd, u32 *n)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 static inline int rpmh_invalidate(const struct device *dev)
-{ return -ENODEV; }
+{ return -ERR(ENODEV); }
 
 #endif /* CONFIG_QCOM_RPMH */
 

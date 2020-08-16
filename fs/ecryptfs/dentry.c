@@ -34,7 +34,7 @@ static int ecryptfs_d_revalidate(struct dentry *dentry, unsigned int flags)
 	int rc = 1;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (lower_dentry->d_flags & DCACHE_OP_REVALIDATE)
 		rc = lower_dentry->d_op->d_revalidate(lower_dentry, flags);

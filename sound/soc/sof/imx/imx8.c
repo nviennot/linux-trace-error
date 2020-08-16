@@ -79,7 +79,7 @@ static void imx8_get_reply(struct snd_sof_dev *sdev)
 		if (reply.hdr.size != msg->reply_size) {
 			dev_err(sdev->dev, "error: reply expected %zu got %u bytes\n",
 				msg->reply_size, reply.hdr.size);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 
 		/* read the message */
@@ -285,7 +285,7 @@ static int imx8_probe(struct snd_sof_dev *sdev)
 		size = resource_size(mmio);
 	} else {
 		dev_err(sdev->dev, "error: failed to get DSP base at idx 0\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto exit_pdev_unregister;
 	}
 
@@ -293,7 +293,7 @@ static int imx8_probe(struct snd_sof_dev *sdev)
 	if (!sdev->bar[SOF_FW_BLK_TYPE_IRAM]) {
 		dev_err(sdev->dev, "failed to ioremap base 0x%x size 0x%x\n",
 			base, size);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto exit_pdev_unregister;
 	}
 	sdev->mmio_bar = SOF_FW_BLK_TYPE_IRAM;
@@ -301,7 +301,7 @@ static int imx8_probe(struct snd_sof_dev *sdev)
 	res_node = of_parse_phandle(np, "memory-region", 0);
 	if (!res_node) {
 		dev_err(&pdev->dev, "failed to get memory region node\n");
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto exit_pdev_unregister;
 	}
 

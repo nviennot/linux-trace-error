@@ -83,7 +83,7 @@ static inline int con_set_trans_old(unsigned char __user *table)
 }
 static inline int con_get_trans_old(unsigned char __user *table)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int con_set_trans_new(unsigned short __user *table)
 {
@@ -91,7 +91,7 @@ static inline int con_set_trans_new(unsigned short __user *table)
 }
 static inline int con_get_trans_new(unsigned short __user *table)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int con_clear_unimap(struct vc_data *vc)
 {
@@ -106,7 +106,7 @@ static inline
 int con_get_unimap(struct vc_data *vc, ushort ct, ushort __user *uct,
 		   struct unipair __user *list)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int con_set_default_unimap(struct vc_data *vc)
 {

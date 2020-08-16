@@ -354,7 +354,7 @@ static inline unsigned int hsi_port_id(struct hsi_client *cl)
 static inline int hsi_setup(struct hsi_client *cl)
 {
 	if (!hsi_port_claimed(cl))
-		return -EACCES;
+		return -ERR(EACCES);
 	return	hsi_get_port(cl)->setup(cl);
 }
 
@@ -370,7 +370,7 @@ static inline int hsi_setup(struct hsi_client *cl)
 static inline int hsi_flush(struct hsi_client *cl)
 {
 	if (!hsi_port_claimed(cl))
-		return -EACCES;
+		return -ERR(EACCES);
 	return hsi_get_port(cl)->flush(cl);
 }
 
@@ -409,7 +409,7 @@ static inline int hsi_async_write(struct hsi_client *cl, struct hsi_msg *msg)
 static inline int hsi_start_tx(struct hsi_client *cl)
 {
 	if (!hsi_port_claimed(cl))
-		return -EACCES;
+		return -ERR(EACCES);
 	return hsi_get_port(cl)->start_tx(cl);
 }
 
@@ -422,7 +422,7 @@ static inline int hsi_start_tx(struct hsi_client *cl)
 static inline int hsi_stop_tx(struct hsi_client *cl)
 {
 	if (!hsi_port_claimed(cl))
-		return -EACCES;
+		return -ERR(EACCES);
 	return hsi_get_port(cl)->stop_tx(cl);
 }
 #endif /* __LINUX_HSI_H__ */

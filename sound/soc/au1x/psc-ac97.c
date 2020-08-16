@@ -222,7 +222,7 @@ static int au1xpsc_ac97_hw_params(struct snd_pcm_substream *substream,
 		/* reject parameters not currently set up */
 		if ((PSC_AC97CFG_GET_LEN(r) != params->msbits) ||
 		    (pscdata->rate != params_rate(params)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 
 		/* set sample bitdepth: REG[24:21]=(BITS-2)/2 */
@@ -314,7 +314,7 @@ static int au1xpsc_ac97_trigger(struct snd_pcm_substream *substream,
 
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -329,7 +329,7 @@ static int au1xpsc_ac97_startup(struct snd_pcm_substream *substream,
 
 static int au1xpsc_ac97_probe(struct snd_soc_dai *dai)
 {
-	return au1xpsc_ac97_workdata ? 0 : -ENODEV;
+	return au1xpsc_ac97_workdata ? 0 : -ERR(ENODEV);
 }
 
 static const struct snd_soc_dai_ops au1xpsc_ac97_dai_ops = {
@@ -379,12 +379,12 @@ static int au1xpsc_ac97_drvprobe(struct platform_device *pdev)
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 0);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	wd->dmaids[SNDRV_PCM_STREAM_PLAYBACK] = dmares->start;
 
 	dmares = platform_get_resource(pdev, IORESOURCE_DMA, 1);
 	if (!dmares)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	wd->dmaids[SNDRV_PCM_STREAM_CAPTURE] = dmares->start;
 
 	/* configuration: max dma trigger threshold, enable ac97 */

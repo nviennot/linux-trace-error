@@ -69,7 +69,7 @@ int register_ip_vs_pe(struct ip_vs_pe *pe)
 
 	/* increase the module use count */
 	if (!ip_vs_use_count_inc())
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	mutex_lock(&ip_vs_pe_mutex);
 	/* Make sure that the pe with this name doesn't exist
@@ -81,7 +81,7 @@ int register_ip_vs_pe(struct ip_vs_pe *pe)
 			ip_vs_use_count_dec();
 			pr_err("%s(): [%s] pe already existed "
 			       "in the system\n", __func__, pe->name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	/* Add it into the d-linked pe list */

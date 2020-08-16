@@ -33,7 +33,7 @@ static int acp3x_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
 		adata->tdm_mode = TDM_ENABLE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -62,7 +62,7 @@ static int acp3x_i2s_set_tdm_slot(struct snd_soc_dai *cpu_dai,
 		slot_len = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frm_len = FRM_LEN | (slots << 15) | (slot_len << 18);
 	adata->tdm_fmt = frm_len;
@@ -108,7 +108,7 @@ static int acp3x_i2s_hwparams(struct snd_pcm_substream *substream,
 		rtd->xfer_resolution = 0x05;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		switch (rtd->i2s_instance) {
@@ -254,7 +254,7 @@ static int acp3x_i2s_trigger(struct snd_pcm_substream *substream,
 		ret = 0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -323,7 +323,7 @@ static int acp3x_dai_probe(struct platform_device *pdev)
 			&acp3x_dai_component, &acp3x_i2s_dai, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "Fail to register acp i2s dai\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

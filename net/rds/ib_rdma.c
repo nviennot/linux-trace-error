@@ -559,7 +559,7 @@ void *rds_ib_get_mr(struct scatterlist *sg, unsigned long nents,
 
 	rds_ibdev = rds_ib_get_device(rs->rs_bound_addr.s6_addr32[3]);
 	if (!rds_ibdev) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -573,7 +573,7 @@ void *rds_ib_get_mr(struct scatterlist *sg, unsigned long nents,
 		struct ib_mr *ib_mr;
 
 		if (!rds_ibdev->odp_capable) {
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 
@@ -612,7 +612,7 @@ void *rds_ib_get_mr(struct scatterlist *sg, unsigned long nents,
 		ic = conn->c_transport_data;
 
 	if (!rds_ibdev->mr_8k_pool || !rds_ibdev->mr_1m_pool) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 

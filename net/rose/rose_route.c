@@ -68,7 +68,7 @@ static int __must_check rose_add_node(struct rose_route_struct *rose_route,
 	}
 
 	if (rose_node != NULL && rose_node->loopback) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -309,7 +309,7 @@ static int rose_del_node(struct rose_route_struct *rose_route,
 	}
 
 	if (rose_node == NULL || rose_node->loopback) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -323,7 +323,7 @@ static int rose_del_node(struct rose_route_struct *rose_route,
 	}
 
 	if (rose_neigh == NULL) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -354,7 +354,7 @@ static int rose_del_node(struct rose_route_struct *rose_route,
 			goto out;
 		}
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 out:
 	spin_unlock_bh(&rose_neigh_list_lock);
@@ -731,13 +731,13 @@ int rose_rt_ioctl(unsigned int cmd, void __user *arg)
 		if (copy_from_user(&rose_route, arg, sizeof(struct rose_route_struct)))
 			return -EFAULT;
 		if ((dev = rose_ax25_dev_find(rose_route.device)) == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rose_dev_exists(&rose_route.address)) /* Can't add routes to ourself */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rose_route.mask > 10) /* Mask can't be more than 10 digits */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rose_route.ndigis > AX25_MAX_DIGIS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = rose_add_node(&rose_route, dev);
 		return err;
 
@@ -745,7 +745,7 @@ int rose_rt_ioctl(unsigned int cmd, void __user *arg)
 		if (copy_from_user(&rose_route, arg, sizeof(struct rose_route_struct)))
 			return -EFAULT;
 		if ((dev = rose_ax25_dev_find(rose_route.device)) == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = rose_del_node(&rose_route, dev);
 		return err;
 
@@ -753,7 +753,7 @@ int rose_rt_ioctl(unsigned int cmd, void __user *arg)
 		return rose_clear_routes();
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

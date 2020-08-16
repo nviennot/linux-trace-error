@@ -207,10 +207,10 @@ idtoname_parse(struct cache_detail *cd, char *buf, int buflen)
 	struct ent ent, *res;
 	char *buf1, *bp;
 	int len;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	if (buf[buflen - 1] != '\n')
-		return (-EINVAL);
+		return (-ERR(EINVAL));
 	buf[buflen - 1]= '\0';
 
 	buf1 = kmalloc(PAGE_SIZE, GFP_KERNEL);
@@ -249,7 +249,7 @@ idtoname_parse(struct cache_detail *cd, char *buf, int buflen)
 		goto out;
 
 	/* Name */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	len = qword_get(&buf, buf1, PAGE_SIZE);
 	if (len < 0 || len >= IDMAP_NAMESZ)
 		goto out;
@@ -376,10 +376,10 @@ nametoid_parse(struct cache_detail *cd, char *buf, int buflen)
 {
 	struct ent ent, *res;
 	char *buf1;
-	int len, error = -EINVAL;
+	int len, error = -ERR(EINVAL);
 
 	if (buf[buflen - 1] != '\n')
-		return (-EINVAL);
+		return (-ERR(EINVAL));
 	buf[buflen - 1]= '\0';
 
 	buf1 = kmalloc(PAGE_SIZE, GFP_KERNEL);

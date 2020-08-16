@@ -114,7 +114,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 
 	if (Z_OK != zlib_deflateInit(&workspace->strm, workspace->level)) {
 		pr_warn("BTRFS: deflateInit failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -180,7 +180,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 			pr_debug("BTRFS: deflate in loop returned %d\n",
 			       ret);
 			zlib_deflateEnd(&workspace->strm);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 
@@ -188,7 +188,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 		if (workspace->strm.total_in > 8192 &&
 		    workspace->strm.total_in <
 		    workspace->strm.total_out) {
-			ret = -E2BIG;
+			ret = -ERR(E2BIG);
 			goto out;
 		}
 		/* we need another page for writing out.  Test this
@@ -199,7 +199,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 			kunmap(out_page);
 			if (nr_pages == nr_dest_pages) {
 				out_page = NULL;
-				ret = -E2BIG;
+				ret = -ERR(E2BIG);
 				goto out;
 			}
 			out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
@@ -230,14 +230,14 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 			break;
 		if (ret != Z_OK && ret != Z_BUF_ERROR) {
 			zlib_deflateEnd(&workspace->strm);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		} else if (workspace->strm.avail_out == 0) {
 			/* get another page for the stream end */
 			kunmap(out_page);
 			if (nr_pages == nr_dest_pages) {
 				out_page = NULL;
-				ret = -E2BIG;
+				ret = -ERR(E2BIG);
 				goto out;
 			}
 			out_page = alloc_page(GFP_NOFS | __GFP_HIGHMEM);
@@ -255,7 +255,7 @@ int zlib_compress_pages(struct list_head *ws, struct address_space *mapping,
 	zlib_deflateEnd(&workspace->strm);
 
 	if (workspace->strm.total_out >= workspace->strm.total_in) {
-		ret = -E2BIG;
+		ret = -ERR(E2BIG);
 		goto out;
 	}
 
@@ -312,7 +312,7 @@ int zlib_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 	if (Z_OK != zlib_inflateInit2(&workspace->strm, wbits)) {
 		pr_warn("BTRFS: inflateInit failed\n");
 		kunmap(pages_in[page_in_index]);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	while (workspace->strm.total_in < srclen) {
 		ret = zlib_inflate(&workspace->strm, Z_NO_FLUSH);
@@ -353,7 +353,7 @@ int zlib_decompress_bio(struct list_head *ws, struct compressed_bio *cb)
 		}
 	}
 	if (ret != Z_STREAM_END)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	else
 		ret = 0;
 done:
@@ -400,7 +400,7 @@ int zlib_decompress(struct list_head *ws, unsigned char *data_in,
 
 	if (Z_OK != zlib_inflateInit2(&workspace->strm, wbits)) {
 		pr_warn("BTRFS: inflateInit failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	while (bytes_left > 0) {
@@ -416,7 +416,7 @@ int zlib_decompress(struct list_head *ws, unsigned char *data_in,
 		total_out = workspace->strm.total_out;
 
 		if (total_out == buf_start) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 		}
 
@@ -444,7 +444,7 @@ next:
 	}
 
 	if (ret != Z_STREAM_END && bytes_left != 0)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	else
 		ret = 0;
 

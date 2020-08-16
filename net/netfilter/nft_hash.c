@@ -78,7 +78,7 @@ static int nft_jhash_init(const struct nft_ctx *ctx,
 	    !tb[NFTA_HASH_DREG] ||
 	    !tb[NFTA_HASH_LEN]  ||
 	    !tb[NFTA_HASH_MODULUS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_HASH_OFFSET])
 		priv->offset = ntohl(nla_get_be32(tb[NFTA_HASH_OFFSET]));
@@ -90,16 +90,16 @@ static int nft_jhash_init(const struct nft_ctx *ctx,
 	if (err < 0)
 		return err;
 	if (len == 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	priv->len = len;
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_HASH_MODULUS]));
 	if (priv->modulus < 1)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	if (tb[NFTA_HASH_SEED]) {
 		priv->seed = ntohl(nla_get_be32(tb[NFTA_HASH_SEED]));
@@ -121,7 +121,7 @@ static int nft_symhash_init(const struct nft_ctx *ctx,
 
 	if (!tb[NFTA_HASH_DREG]    ||
 	    !tb[NFTA_HASH_MODULUS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_HASH_OFFSET])
 		priv->offset = ntohl(nla_get_be32(tb[NFTA_HASH_OFFSET]));
@@ -130,10 +130,10 @@ static int nft_symhash_init(const struct nft_ctx *ctx,
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_HASH_MODULUS]));
 	if (priv->modulus < 1)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	return nft_validate_register_store(ctx, priv->dreg, NULL,
 					   NFT_DATA_VALUE, sizeof(u32));
@@ -221,7 +221,7 @@ nft_hash_select_ops(const struct nft_ctx *ctx,
 	default:
 		break;
 	}
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static struct nft_expr_type nft_hash_type __read_mostly = {

@@ -64,11 +64,11 @@ static int seq_open_net(struct inode *inode, struct file *file)
 	WARN_ON_ONCE(state_size < sizeof(*p));
 
 	if (file->f_mode & FMODE_WRITE && !PDE(inode)->write)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	net = get_proc_net(inode);
 	if (!net)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	p = __seq_open_private(file, PDE(inode)->seq_ops, state_size);
 	if (!p) {
@@ -187,7 +187,7 @@ static int single_open_net(struct inode *inode, struct file *file)
 
 	net = get_proc_net(inode);
 	if (!net)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	err = single_open(file, de->single_show, net);
 	if (err)
@@ -296,7 +296,7 @@ static struct dentry *proc_tgid_net_lookup(struct inode *dir,
 	struct dentry *de;
 	struct net *net;
 
-	de = ERR_PTR(-ENOENT);
+	de = ERR_PTR(-ERR(ENOENT));
 	net = get_proc_task_net(dir);
 	if (net != NULL) {
 		de = proc_lookup_de(dir, dentry, net->proc_net);
@@ -333,7 +333,7 @@ static int proc_tgid_net_readdir(struct file *file, struct dir_context *ctx)
 	int ret;
 	struct net *net;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	net = get_proc_task_net(file_inode(file));
 	if (net != NULL) {
 		ret = proc_readdir_de(file, ctx, net->proc_net);
@@ -378,7 +378,7 @@ static __net_init int proc_net_ns_init(struct net *net)
 
 	proc_set_user(netd, uid, gid);
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	net_statd = proc_net_mkdir(net, "stat", netd);
 	if (!net_statd)
 		goto free_net;

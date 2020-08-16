@@ -1942,7 +1942,7 @@ batadv_iv_ogm_orig_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family,
 			  NLM_F_MULTI, BATADV_CMD_GET_ORIGINATORS);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
 		    orig_node->orig) ||
@@ -1963,7 +1963,7 @@ batadv_iv_ogm_orig_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -2016,7 +2016,7 @@ batadv_iv_ogm_orig_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 			batadv_neigh_node_put(neigh_node_best);
 
 			*sub_s = sub - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 
@@ -2061,7 +2061,7 @@ batadv_iv_ogm_orig_dump_bucket(struct sk_buff *msg, u32 portid, u32 seq,
 						  sub)) {
 			rcu_read_unlock();
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 	rcu_read_unlock();
@@ -2226,7 +2226,7 @@ batadv_iv_ogm_neigh_dump_neigh(struct sk_buff *msg, u32 portid, u32 seq,
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family,
 			  NLM_F_MULTI, BATADV_CMD_GET_NEIGHBORS);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (nla_put(msg, BATADV_ATTR_NEIGH_ADDRESS, ETH_ALEN,
 		    hardif_neigh->addr) ||
@@ -2241,7 +2241,7 @@ batadv_iv_ogm_neigh_dump_neigh(struct sk_buff *msg, u32 portid, u32 seq,
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -2275,7 +2275,7 @@ batadv_iv_ogm_neigh_dump_hardif(struct sk_buff *msg, u32 portid, u32 seq,
 		if (batadv_iv_ogm_neigh_dump_neigh(msg, portid, seq,
 						   hardif_neigh)) {
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 
@@ -2656,13 +2656,13 @@ static int batadv_iv_gw_dump_entry(struct sk_buff *msg, u32 portid,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_GATEWAYS);
 	if (!hdr) {
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 		goto out;
 	}
 
 	genl_dump_check_consistent(cb, hdr);
 
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 
 	if (curr_gw == gw_node)
 		if (nla_put_flag(msg, BATADV_ATTR_FLAG_BEST)) {

@@ -207,7 +207,7 @@ int atm_getnames(void __user *buf, int __user *iobuf_len)
 		size += sizeof(int);
 	if (size > len) {
 		mutex_unlock(&atm_dev_mutex);
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 	tmp_buf = kmalloc(size, GFP_ATOMIC);
 	if (!tmp_buf) {
@@ -239,7 +239,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 	dev = try_then_request_module(atm_dev_lookup(number), "atm-device-%d",
 				      number);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	switch (cmd) {
 	case ATM_GETTYPE:
@@ -262,7 +262,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 
 		for (i = 0; i < ESI_LEN; i++)
 			if (dev->esi[i]) {
-				error = -EEXIST;
+				error = -ERR(EEXIST);
 				goto done;
 			}
 	}
@@ -272,7 +272,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 		unsigned char esi[ESI_LEN];
 
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 		if (copy_from_user(esi, buf, ESI_LEN)) {
@@ -285,7 +285,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 	}
 	case ATM_GETSTATZ:
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 		/* fall through */
@@ -311,7 +311,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 		break;
 	case ATM_RSTADDR:
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 		atm_reset_addr(dev, ATM_ADDR_LOCAL);
@@ -324,7 +324,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 		struct sockaddr_atmsvc addr;
 
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 
@@ -358,7 +358,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 		if (__ATM_LM_XTRMT((int) (unsigned long) buf) &&
 		    __ATM_LM_XTLOC((int) (unsigned long) buf) >
 		    __ATM_LM_XTRMT((int) (unsigned long) buf)) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto done;
 		}
 		/* fall through */
@@ -368,7 +368,7 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 	case SONET_CLRDIAG:
 	case SONET_SETFRAMING:
 		if (!capable(CAP_NET_ADMIN)) {
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto done;
 		}
 		/* fall through */
@@ -376,20 +376,20 @@ int atm_dev_ioctl(unsigned int cmd, void __user *buf, int __user *sioc_len,
 		if (IS_ENABLED(CONFIG_COMPAT) && compat) {
 #ifdef CONFIG_COMPAT
 			if (!dev->ops->compat_ioctl) {
-				error = -EINVAL;
+				error = -ERR(EINVAL);
 				goto done;
 			}
 			size = dev->ops->compat_ioctl(dev, cmd, buf);
 #endif
 		} else {
 			if (!dev->ops->ioctl) {
-				error = -EINVAL;
+				error = -ERR(EINVAL);
 				goto done;
 			}
 			size = dev->ops->ioctl(dev, cmd, buf);
 		}
 		if (size < 0) {
-			error = (size == -ENOIOCTLCMD ? -ENOTTY : size);
+			error = (size == -ERR(ENOIOCTLCMD) ? -ERR(ENOTTY) : size);
 			goto done;
 		}
 	}

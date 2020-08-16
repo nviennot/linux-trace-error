@@ -118,7 +118,7 @@ static int nf_flow_rule_match(struct nf_flow_match *match,
 		memset(&mask->ipv6.dst, 0xff, sizeof(mask->ipv6.dst));
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	mask->control.addr_type = 0xffff;
 	match->dissector.used_keys |= BIT(key->control.addr_type);
@@ -133,7 +133,7 @@ static int nf_flow_rule_match(struct nf_flow_match *match,
 	case IPPROTO_UDP:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	key->basic.ip_proto = tuple->l4proto;
@@ -184,7 +184,7 @@ static int flow_offload_eth_src(struct net *net,
 
 	dev = dev_get_by_index(net, tuple->iifidx);
 	if (!dev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	mask = ~0xffff0000;
 	memcpy(&val16, dev->dev_addr, 2);
@@ -219,7 +219,7 @@ static int flow_offload_eth_dst(struct net *net,
 	dst_cache = flow->tuplehash[dir].tuple.dst_cache;
 	n = dst_neigh_lookup(dst_cache, daddr);
 	if (!n)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	read_lock_bh(&n->lock);
 	nud_state = n->nud_state;
@@ -228,7 +228,7 @@ static int flow_offload_eth_dst(struct net *net,
 
 	if (!(nud_state & NUD_VALID)) {
 		neigh_release(n);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	mask = ~0xffffffff;
@@ -737,7 +737,7 @@ static int flow_offload_rule_add(struct flow_offload_work *offload,
 	ok_count += flow_offload_tuple_add(offload, flow_rule[1],
 					   FLOW_OFFLOAD_DIR_REPLY);
 	if (ok_count == 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -921,7 +921,7 @@ static int nf_flow_table_block_setup(struct nf_flowtable *flowtable,
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 
 	return err;

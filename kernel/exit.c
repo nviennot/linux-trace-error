@@ -1437,7 +1437,7 @@ repeat:
 	 * might later match our criteria, even if we are not able to reap
 	 * it yet.
 	 */
-	wo->notask_error = -ECHILD;
+	wo->notask_error = -ERR(ECHILD);
 	if ((wo->wo_type < PIDTYPE_MAX) &&
 	   (!wo->wo_pid || !pid_has_task(wo->wo_pid, wo->wo_type)))
 		goto notask;
@@ -1462,7 +1462,7 @@ repeat:
 notask:
 	retval = wo->notask_error;
 	if (!retval && !(wo->wo_flags & WNOHANG)) {
-		retval = -ERESTARTSYS;
+		retval = -ERR(ERESTARTSYS);
 		if (!signal_pending(current)) {
 			schedule();
 			goto repeat;
@@ -1481,7 +1481,7 @@ static struct pid *pidfd_get_pid(unsigned int fd)
 
 	f = fdget(fd);
 	if (!f.file)
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	pid = pidfd_pid(f.file);
 	if (!IS_ERR(pid))
@@ -1501,9 +1501,9 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 
 	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
 			__WNOTHREAD|__WCLONE|__WALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (which) {
 	case P_ALL:
@@ -1512,14 +1512,14 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	case P_PID:
 		type = PIDTYPE_PID;
 		if (upid <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		pid = find_get_pid(upid);
 		break;
 	case P_PGID:
 		type = PIDTYPE_PGID;
 		if (upid < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (upid)
 			pid = find_get_pid(upid);
@@ -1529,14 +1529,14 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
 	case P_PIDFD:
 		type = PIDTYPE_PID;
 		if (upid < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		pid = pidfd_get_pid(upid);
 		if (IS_ERR(pid))
 			return PTR_ERR(pid);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wo.wo_type	= type;
@@ -1593,11 +1593,11 @@ long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
 
 	if (options & ~(WNOHANG|WUNTRACED|WCONTINUED|
 			__WNOTHREAD|__WCLONE|__WALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* -INT_MIN is not defined */
 	if (upid == INT_MIN)
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	if (upid == -1)
 		type = PIDTYPE_MAX;

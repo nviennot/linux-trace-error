@@ -235,7 +235,7 @@ clusterip_config_init(struct net *net, const struct ipt_clusterip_tgt_info *i,
 
 	if (iniface[0] == '\0') {
 		pr_info("Please specify an interface name\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	c = kzalloc(sizeof(*c), GFP_ATOMIC);
@@ -246,7 +246,7 @@ clusterip_config_init(struct net *net, const struct ipt_clusterip_tgt_info *i,
 	if (!dev) {
 		pr_info("no such interface %s\n", iniface);
 		kfree(c);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 	c->ifindex = dev->ifindex;
 	strcpy(c->ifname, dev->name);
@@ -264,7 +264,7 @@ clusterip_config_init(struct net *net, const struct ipt_clusterip_tgt_info *i,
 
 	spin_lock_bh(&cn->lock);
 	if (__clusterip_config_find(net, ip)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_config_put;
 	}
 
@@ -464,31 +464,31 @@ static int clusterip_tg_check(const struct xt_tgchk_param *par)
 
 	if (par->nft_compat) {
 		pr_err("cannot use CLUSTERIP target from nftables compat\n");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP &&
 	    cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP_SPT &&
 	    cipinfo->hash_mode != CLUSTERIP_HASHMODE_SIP_SPT_DPT) {
 		pr_info("unknown mode %u\n", cipinfo->hash_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 	if (e->ip.dmsk.s_addr != htonl(0xffffffff) ||
 	    e->ip.dst.s_addr == 0) {
 		pr_info("Please specify destination IP\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (cipinfo->num_local_nodes > ARRAY_SIZE(cipinfo->local_nodes)) {
 		pr_info("bad num_local_nodes %u\n", cipinfo->num_local_nodes);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for (i = 0; i < cipinfo->num_local_nodes; i++) {
 		if (cipinfo->local_nodes[i] - 1 >=
 		    sizeof(config->local_nodes) * 8) {
 			pr_info("bad local_nodes[%d] %u\n",
 				i, cipinfo->local_nodes[i]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -497,7 +497,7 @@ static int clusterip_tg_check(const struct xt_tgchk_param *par)
 		if (!(cipinfo->flags & CLUSTERIP_FLAG_NEW)) {
 			pr_info("no config found for %pI4, need 'new'\n",
 				&e->ip.dst.s_addr);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else {
 			config = clusterip_config_init(par->net, cipinfo,
 						       e->ip.dst.s_addr,
@@ -506,7 +506,7 @@ static int clusterip_tg_check(const struct xt_tgchk_param *par)
 				return PTR_ERR(config);
 		}
 	} else if (memcmp(&config->clustermac, &cipinfo->clustermac, ETH_ALEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nf_ct_netns_get(par->net, par->family);
 	if (ret < 0) {
@@ -781,7 +781,7 @@ static ssize_t clusterip_proc_write(struct file *file, const char __user *input,
 	int rc;
 
 	if (size > PROC_WRITELEN)
-		return -EIO;
+		return -ERR(EIO);
 	if (copy_from_user(buffer, input, size))
 		return -EFAULT;
 	buffer[size] = 0;
@@ -797,9 +797,9 @@ static ssize_t clusterip_proc_write(struct file *file, const char __user *input,
 		if (rc)
 			return rc;
 		if (clusterip_del_node(c, nodenum))
-			return -ENOENT;
+			return -ERR(ENOENT);
 	} else
-		return -EIO;
+		return -ERR(EIO);
 
 	return size;
 }

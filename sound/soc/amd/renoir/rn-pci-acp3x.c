@@ -45,7 +45,7 @@ static int rn_acp_power_on(void __iomem *acp_base)
 			return 0;
 		udelay(1);
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int rn_acp_power_off(void __iomem *acp_base)
@@ -62,7 +62,7 @@ static int rn_acp_power_off(void __iomem *acp_base)
 			return 0;
 		udelay(1);
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static int rn_acp_reset(void __iomem *acp_base)
@@ -86,7 +86,7 @@ static int rn_acp_reset(void __iomem *acp_base)
 			return 0;
 		cpu_relax();
 	}
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static void rn_acp_enable_interrupts(void __iomem *acp_base)
@@ -163,7 +163,7 @@ static int snd_rn_acp_probe(struct pci_dev *pci,
 
 	if (pci_enable_device(pci)) {
 		dev_err(&pci->dev, "pci_enable_device failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = pci_request_regions(pci, "AMD ACP3x audio");

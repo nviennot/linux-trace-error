@@ -174,7 +174,7 @@ static int get_master_node(const struct ubifs_info *c, int lnum, void **pbuf,
 	return 0;
 
 out_err:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 out_free:
 	vfree(sbuf);
 	*mst = NULL;
@@ -347,7 +347,7 @@ int ubifs_recover_master_node(struct ubifs_info *c)
 	return 0;
 
 out_err:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 out_free:
 	ubifs_err(c, "failed to recover master node");
 	if (mst1) {
@@ -671,7 +671,7 @@ struct ubifs_scan_leb *ubifs_recover_leb(struct ubifs_info *c, int lnum,
 			break;
 		} else {
 			ubifs_err(c, "unexpected return value %d", ret);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 	}
@@ -780,7 +780,7 @@ corrupted_rescan:
 	ubifs_scan_a_node(c, buf, len, lnum, offs, 0);
 corrupted:
 	ubifs_scanned_corruption(c, lnum, offs, buf);
-	err = -EUCLEAN;
+	err = -ERR(EUCLEAN);
 error:
 	ubifs_err(c, "LEB %d scanning failed", lnum);
 	ubifs_scan_destroy(sleb);
@@ -833,7 +833,7 @@ static int get_cs_sqnum(struct ubifs_info *c, int lnum, int offs,
 	return 0;
 
 out_err:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 out_free:
 	ubifs_err(c, "failed to get CS sqnum");
 	kfree(cs_node);
@@ -890,7 +890,7 @@ struct ubifs_scan_leb *ubifs_recover_log_leb(struct ubifs_info *c, int lnum,
 				ubifs_err(c, "unrecoverable log corruption in LEB %d",
 					  lnum);
 				ubifs_scan_destroy(sleb);
-				return ERR_PTR(-EUCLEAN);
+				return ERR_PTR(-ERR(EUCLEAN));
 			}
 		}
 		ubifs_scan_destroy(sleb);
@@ -1027,7 +1027,7 @@ static int clean_an_unclean_leb(struct ubifs_info *c,
 		if (ret == SCANNED_EMPTY_SPACE) {
 			ubifs_err(c, "unexpected empty space at %d:%d",
 				  lnum, offs);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		if (quiet) {
@@ -1037,7 +1037,7 @@ static int clean_an_unclean_leb(struct ubifs_info *c,
 		}
 
 		ubifs_scanned_corruption(c, lnum, offs, buf);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* Pad to min_io_size */
@@ -1201,13 +1201,13 @@ int ubifs_rcvry_gc_commit(struct ubifs_info *c)
 	if (err < 0) {
 		ubifs_err(c, "GC failed, error %d", err);
 		if (err == -EAGAIN)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		return err;
 	}
 
 	ubifs_assert(c, err == LEB_RETAINED);
 	if (err != LEB_RETAINED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = ubifs_leb_unmap(c, c->gc_lnum);
 	if (err)

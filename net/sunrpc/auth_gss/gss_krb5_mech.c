@@ -216,7 +216,7 @@ get_key(const void *p, const void *end,
 	if (!supported_gss_krb5_enctype(alg)) {
 		printk(KERN_WARNING "gss_kerberos_mech: unsupported "
 			"encryption key algorithm %d\n", alg);
-		p = ERR_PTR(-EINVAL);
+		p = ERR_PTR(-ERR(EINVAL));
 		goto out_err;
 	}
 	p = simple_get_netobj(p, end, &key);
@@ -243,7 +243,7 @@ out_err_free_tfm:
 	crypto_free_sync_skcipher(*res);
 out_err_free_key:
 	kfree(key.data);
-	p = ERR_PTR(-EINVAL);
+	p = ERR_PTR(-ERR(EINVAL));
 out_err:
 	return p;
 }
@@ -264,7 +264,7 @@ gss_import_v1_context(const void *p, const void *end, struct krb5_ctx *ctx)
 
 	ctx->gk5e = get_gss_krb5_enctype(ctx->enctype);
 	if (ctx->gk5e == NULL) {
-		p = ERR_PTR(-EINVAL);
+		p = ERR_PTR(-ERR(EINVAL));
 		goto out_err;
 	}
 
@@ -281,14 +281,14 @@ gss_import_v1_context(const void *p, const void *end, struct krb5_ctx *ctx)
 	if (IS_ERR(p))
 		goto out_err;
 	if (tmp != SGN_ALG_DES_MAC_MD5) {
-		p = ERR_PTR(-ENOSYS);
+		p = ERR_PTR(-ERR(ENOSYS));
 		goto out_err;
 	}
 	p = simple_get_bytes(p, end, &tmp, sizeof(tmp));
 	if (IS_ERR(p))
 		goto out_err;
 	if (tmp != SEAL_ALG_DES) {
-		p = ERR_PTR(-ENOSYS);
+		p = ERR_PTR(-ERR(ENOSYS));
 		goto out_err;
 	}
 	p = simple_get_bytes(p, end, &time32, sizeof(time32));
@@ -398,7 +398,7 @@ out_free_enc:
 out_free_seq:
 	crypto_free_sync_skcipher(ctx->seq);
 out_err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -581,7 +581,7 @@ out_free_acceptor_enc:
 out_free_initiator_enc:
 	crypto_free_sync_skcipher(ctx->initiator_enc);
 out_err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int
@@ -611,7 +611,7 @@ gss_import_v2_context(const void *p, const void *end, struct krb5_ctx *ctx,
 	if (seq_send64 != atomic_read(&ctx->seq_send)) {
 		dprintk("%s: seq_send64 %llx, seq_send %x overflow?\n", __func__,
 			seq_send64, atomic_read(&ctx->seq_send));
-		p = ERR_PTR(-EINVAL);
+		p = ERR_PTR(-ERR(EINVAL));
 		goto out_err;
 	}
 	p = simple_get_bytes(p, end, &ctx->enctype, sizeof(ctx->enctype));
@@ -624,7 +624,7 @@ gss_import_v2_context(const void *p, const void *end, struct krb5_ctx *ctx,
 	if (ctx->gk5e == NULL) {
 		dprintk("gss_kerberos_mech: unsupported krb5 enctype %u\n",
 			ctx->enctype);
-		p = ERR_PTR(-EINVAL);
+		p = ERR_PTR(-ERR(EINVAL));
 		goto out_err;
 	}
 	keylen = ctx->gk5e->keylength;
@@ -634,7 +634,7 @@ gss_import_v2_context(const void *p, const void *end, struct krb5_ctx *ctx,
 		goto out_err;
 
 	if (p != end) {
-		p = ERR_PTR(-EINVAL);
+		p = ERR_PTR(-ERR(EINVAL));
 		goto out_err;
 	}
 
@@ -655,7 +655,7 @@ gss_import_v2_context(const void *p, const void *end, struct krb5_ctx *ctx,
 	case ENCTYPE_AES256_CTS_HMAC_SHA1_96:
 		return context_derive_keys_new(ctx, gfp_mask);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 out_err:

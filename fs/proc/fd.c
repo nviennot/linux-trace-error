@@ -20,13 +20,13 @@
 static int seq_show(struct seq_file *m, void *v)
 {
 	struct files_struct *files = NULL;
-	int f_flags = 0, ret = -ENOENT;
+	int f_flags = 0, ret = -ERR(ENOENT);
 	struct file *file = NULL;
 	struct task_struct *task;
 
 	task = get_proc_task(m->private);
 	if (!task)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	files = get_files_struct(task);
 	put_task_struct(task);
@@ -121,7 +121,7 @@ static int tid_fd_revalidate(struct dentry *dentry, unsigned int flags)
 	unsigned int fd;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	inode = d_inode(dentry);
 	task = get_proc_task(inode);
@@ -148,7 +148,7 @@ static int proc_fd_link(struct dentry *dentry, struct path *path)
 {
 	struct files_struct *files = NULL;
 	struct task_struct *task;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	task = get_proc_task(d_inode(dentry));
 	if (task) {
@@ -188,7 +188,7 @@ static struct dentry *proc_fd_instantiate(struct dentry *dentry,
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFLNK);
 	if (!inode)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	ei = PROC_I(inode);
 	ei->fd = data->fd;
@@ -209,7 +209,7 @@ static struct dentry *proc_lookupfd_common(struct inode *dir,
 {
 	struct task_struct *task = get_proc_task(dir);
 	struct fd_data data = {.fd = name_to_int(&dentry->d_name)};
-	struct dentry *result = ERR_PTR(-ENOENT);
+	struct dentry *result = ERR_PTR(-ERR(ENOENT));
 
 	if (!task)
 		goto out_no_task;
@@ -233,7 +233,7 @@ static int proc_readfd_common(struct file *file, struct dir_context *ctx,
 	unsigned int fd;
 
 	if (!p)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!dir_emit_dots(file, ctx))
 		goto out;
@@ -327,7 +327,7 @@ static struct dentry *proc_fdinfo_instantiate(struct dentry *dentry,
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFREG | S_IRUSR);
 	if (!inode)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	ei = PROC_I(inode);
 	ei->fd = data->fd;

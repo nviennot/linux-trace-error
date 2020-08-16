@@ -118,7 +118,7 @@ static int xfrm4_esp_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int xfrm4_ah_rcv(struct sk_buff *skb)
@@ -146,7 +146,7 @@ static int xfrm4_ah_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int xfrm4_ipcomp_rcv(struct sk_buff *skb)
@@ -174,7 +174,7 @@ static int xfrm4_ipcomp_err(struct sk_buff *skb, u32 info)
 		if (!handler->err_handler(skb, info))
 			return 0;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static const struct net_protocol esp4_protocol = {
@@ -223,11 +223,11 @@ int xfrm4_protocol_register(struct xfrm4_protocol *handler,
 	struct xfrm4_protocol __rcu **pprev;
 	struct xfrm4_protocol *t;
 	bool add_netproto = false;
-	int ret = -EEXIST;
+	int ret = -ERR(EEXIST);
 	int priority = handler->priority;
 
 	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&xfrm4_protocol_mutex);
 
@@ -256,7 +256,7 @@ err:
 	if (add_netproto) {
 		if (inet_add_protocol(netproto(protocol), protocol)) {
 			pr_err("%s: can't add protocol\n", __func__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 	}
 
@@ -269,10 +269,10 @@ int xfrm4_protocol_deregister(struct xfrm4_protocol *handler,
 {
 	struct xfrm4_protocol __rcu **pprev;
 	struct xfrm4_protocol *t;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (!proto_handlers(protocol) || !netproto(protocol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&xfrm4_protocol_mutex);
 
@@ -291,7 +291,7 @@ int xfrm4_protocol_deregister(struct xfrm4_protocol *handler,
 				       lockdep_is_held(&xfrm4_protocol_mutex))) {
 		if (inet_del_protocol(netproto(protocol), protocol) < 0) {
 			pr_err("%s: can't remove protocol\n", __func__);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 	}
 

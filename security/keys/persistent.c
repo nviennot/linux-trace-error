@@ -139,7 +139,7 @@ long keyctl_get_persistent(uid_t _uid, key_serial_t destid)
 	} else {
 		uid = make_kuid(ns, _uid);
 		if (!uid_valid(uid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* You can only see your own persistent cache if you're not
 		 * sufficiently privileged.
@@ -147,7 +147,7 @@ long keyctl_get_persistent(uid_t _uid, key_serial_t destid)
 		if (!uid_eq(uid, current_uid()) &&
 		    !uid_eq(uid, current_euid()) &&
 		    !ns_capable(ns, CAP_SETUID))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	/* There must be a destination keyring */
@@ -155,7 +155,7 @@ long keyctl_get_persistent(uid_t _uid, key_serial_t destid)
 	if (IS_ERR(dest_ref))
 		return PTR_ERR(dest_ref);
 	if (key_ref_to_ptr(dest_ref)->type != &key_type_keyring) {
-		ret = -ENOTDIR;
+		ret = -ERR(ENOTDIR);
 		goto out_put_dest;
 	}
 

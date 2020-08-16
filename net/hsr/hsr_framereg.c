@@ -486,7 +486,7 @@ int hsr_get_node_data(struct hsr_priv *hsr,
 
 	node = find_node_by_addr_A(&hsr->node_db, addr);
 	if (!node)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	ether_addr_copy(addr_b, node->macaddress_B);
 

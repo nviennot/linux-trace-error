@@ -58,7 +58,7 @@ static inline struct configfs_fragment *to_frag(struct file *file)
 static int fill_read_buffer(struct file *file, struct configfs_buffer *buffer)
 {
 	struct configfs_fragment *frag = to_frag(file);
-	ssize_t count = -ENOENT;
+	ssize_t count = -ERR(ENOENT);
 
 	if (!buffer->page)
 		buffer->page = (char *) get_zeroed_page(GFP_KERNEL);
@@ -73,7 +73,7 @@ static int fill_read_buffer(struct file *file, struct configfs_buffer *buffer)
 	if (count < 0)
 		return count;
 	if (WARN_ON_ONCE(count > (ssize_t)SIMPLE_ATTR_SIZE))
-		return -EIO;
+		return -ERR(EIO);
 	buffer->needs_read_fill = 0;
 	buffer->count = count;
 	return 0;
@@ -152,7 +152,7 @@ configfs_read_bin_file(struct file *file, char __user *buf,
 
 	/* we don't support switching read/write modes */
 	if (buffer->write_in_progress) {
-		retval = -ETXTBSY;
+		retval = -ERR(ETXTBSY);
 		goto out;
 	}
 	buffer->read_in_progress = true;
@@ -163,7 +163,7 @@ configfs_read_bin_file(struct file *file, char __user *buf,
 		if (!frag->frag_dead)
 			len = buffer->bin_attr->read(buffer->item, NULL, 0);
 		else
-			len = -ENOENT;
+			len = -ERR(ENOENT);
 		up_read(&frag->frag_sem);
 		if (len <= 0) {
 			retval = len;
@@ -172,7 +172,7 @@ configfs_read_bin_file(struct file *file, char __user *buf,
 
 		/* do not exceed the maximum value */
 		if (buffer->cb_max_size && len > buffer->cb_max_size) {
-			retval = -EFBIG;
+			retval = -ERR(EFBIG);
 			goto out;
 		}
 
@@ -189,7 +189,7 @@ configfs_read_bin_file(struct file *file, char __user *buf,
 			len = buffer->bin_attr->read(buffer->item,
 						     buffer->bin_buffer, len);
 		else
-			len = -ENOENT;
+			len = -ERR(ENOENT);
 		up_read(&frag->frag_sem);
 		if (len < 0) {
 			retval = len;
@@ -244,7 +244,7 @@ static int
 flush_write_buffer(struct file *file, struct configfs_buffer *buffer, size_t count)
 {
 	struct configfs_fragment *frag = to_frag(file);
-	int res = -ENOENT;
+	int res = -ERR(ENOENT);
 
 	down_read(&frag->frag_sem);
 	if (!frag->frag_dead)
@@ -312,7 +312,7 @@ configfs_write_bin_file(struct file *file, const char __user *buf,
 
 	/* we don't support switching read/write modes */
 	if (buffer->read_in_progress) {
-		len = -ETXTBSY;
+		len = -ERR(ETXTBSY);
 		goto out;
 	}
 	buffer->write_in_progress = true;
@@ -322,7 +322,7 @@ configfs_write_bin_file(struct file *file, const char __user *buf,
 
 		if (buffer->cb_max_size &&
 			*ppos + count > buffer->cb_max_size) {
-			len = -EFBIG;
+			len = -ERR(EFBIG);
 			goto out;
 		}
 
@@ -366,12 +366,12 @@ static int __configfs_open_file(struct inode *inode, struct file *file, int type
 	if (!buffer)
 		goto out;
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	down_read(&frag->frag_sem);
 	if (unlikely(frag->frag_dead))
 		goto out_free_buffer;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	buffer->item = to_item(dentry->d_parent);
 	if (!buffer->item)
 		goto out_free_buffer;
@@ -389,11 +389,11 @@ static int __configfs_open_file(struct inode *inode, struct file *file, int type
 
 	buffer->owner = attr->ca_owner;
 	/* Grab the module reference for this attribute if we have one */
-	error = -ENODEV;
+	error = -ERR(ENODEV);
 	if (!try_module_get(buffer->owner))
 		goto out_put_item;
 
-	error = -EACCES;
+	error = -ERR(EACCES);
 	if (!buffer->item->ci_type)
 		goto out_put_module;
 

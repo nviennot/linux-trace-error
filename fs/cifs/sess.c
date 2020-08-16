@@ -565,18 +565,18 @@ int decode_ntlmssp_challenge(char *bcc_ptr, int blob_len,
 
 	if (blob_len < sizeof(CHALLENGE_MESSAGE)) {
 		cifs_dbg(VFS, "challenge blob len %d too small\n", blob_len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (memcmp(pblob->Signature, "NTLMSSP", 8)) {
 		cifs_dbg(VFS, "blob signature incorrect %s\n",
 			 pblob->Signature);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (pblob->MessageType != NtLmChallenge) {
 		cifs_dbg(VFS, "Incorrect message type %d\n",
 			 pblob->MessageType);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memcpy(ses->ntlmssp->cryptkey, pblob->Challenge, CIFS_CRYPTO_KEY_SIZE);
@@ -590,7 +590,7 @@ int decode_ntlmssp_challenge(char *bcc_ptr, int blob_len,
 	if (tioffset > blob_len || tioffset + tilen > blob_len) {
 		cifs_dbg(VFS, "tioffset + tilen too high %u + %u\n",
 			 tioffset, tilen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (tilen) {
 		ses->auth_key.response = kmemdup(bcc_ptr + tioffset, tilen,
@@ -1027,7 +1027,7 @@ sess_auth_lanman(struct sess_data *sess_data)
 
 	/* lanman response has a word count of 3 */
 	if (smb_buf->WordCount != 3) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out;
 	}
@@ -1137,7 +1137,7 @@ sess_auth_ntlm(struct sess_data *sess_data)
 	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
 	if (smb_buf->WordCount != 3) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out;
 	}
@@ -1245,7 +1245,7 @@ sess_auth_ntlmv2(struct sess_data *sess_data)
 	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
 	if (smb_buf->WordCount != 3) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out;
 	}
@@ -1324,7 +1324,7 @@ sess_auth_kerberos(struct sess_data *sess_data)
 	if (msg->version != CIFS_SPNEGO_UPCALL_VERSION) {
 		cifs_dbg(VFS, "incorrect version of cifs.upcall (expected %d but got %d)\n",
 			 CIFS_SPNEGO_UPCALL_VERSION, msg->version);
-		rc = -EKEYREJECTED;
+		rc = -ERR(EKEYREJECTED);
 		goto out_put_spnego_key;
 	}
 
@@ -1370,7 +1370,7 @@ sess_auth_kerberos(struct sess_data *sess_data)
 	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 
 	if (smb_buf->WordCount != 4) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out_put_spnego_key;
 	}
@@ -1388,7 +1388,7 @@ sess_auth_kerberos(struct sess_data *sess_data)
 	if (blob_len > bytes_remaining) {
 		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_put_spnego_key;
 	}
 	bcc_ptr += blob_len;
@@ -1441,7 +1441,7 @@ _sess_auth_rawntlmssp_assemble_req(struct sess_data *sess_data)
 	capabilities = cifs_ssetup_hdr(ses, pSMB);
 	if ((pSMB->req.hdr.Flags2 & SMBFLG2_UNICODE) == 0) {
 		cifs_dbg(VFS, "NTLMSSP requires Unicode support\n");
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	pSMB->req.hdr.Flags2 |= SMBFLG2_EXT_SEC;
@@ -1523,7 +1523,7 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 	cifs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
 
 	if (smb_buf->WordCount != 4) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out;
 	}
@@ -1538,7 +1538,7 @@ sess_auth_rawntlmssp_negotiate(struct sess_data *sess_data)
 	if (blob_len > bytes_remaining) {
 		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1608,7 +1608,7 @@ sess_auth_rawntlmssp_authenticate(struct sess_data *sess_data)
 	pSMB = (SESSION_SETUP_ANDX *)sess_data->iov[0].iov_base;
 	smb_buf = (struct smb_hdr *)sess_data->iov[0].iov_base;
 	if (smb_buf->WordCount != 4) {
-		rc = -EIO;
+		rc = -ERR(EIO);
 		cifs_dbg(VFS, "bad word count %d\n", smb_buf->WordCount);
 		goto out_free_ntlmsspblob;
 	}
@@ -1627,7 +1627,7 @@ sess_auth_rawntlmssp_authenticate(struct sess_data *sess_data)
 	if (blob_len > bytes_remaining) {
 		cifs_dbg(VFS, "bad security blob length %d\n",
 				blob_len);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_free_ntlmsspblob;
 	}
 	bcc_ptr += blob_len;
@@ -1676,7 +1676,7 @@ static int select_sec(struct cifs_ses *ses, struct sess_data *sess_data)
 	cifs_dbg(FYI, "sess setup type %d\n", type);
 	if (type == Unspecified) {
 		cifs_dbg(VFS, "Unable to select appropriate authentication method!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (type) {
@@ -1690,7 +1690,7 @@ static int select_sec(struct cifs_ses *ses, struct sess_data *sess_data)
 		sess_data->func = sess_auth_lanman;
 		break;
 #else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 #endif
 	case NTLM:
 		sess_data->func = sess_auth_ntlm;
@@ -1704,7 +1704,7 @@ static int select_sec(struct cifs_ses *ses, struct sess_data *sess_data)
 		break;
 #else
 		cifs_dbg(VFS, "Kerberos negotiated but upcall support disabled!\n");
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 		break;
 #endif /* CONFIG_CIFS_UPCALL */
 	case RawNTLMSSP:
@@ -1712,7 +1712,7 @@ static int select_sec(struct cifs_ses *ses, struct sess_data *sess_data)
 		break;
 	default:
 		cifs_dbg(VFS, "secType %d not supported!\n", type);
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	return 0;
@@ -1726,7 +1726,7 @@ int CIFS_SessSetup(const unsigned int xid, struct cifs_ses *ses,
 
 	if (ses == NULL) {
 		WARN(1, "%s: ses == NULL!", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	sess_data = kzalloc(sizeof(struct sess_data), GFP_KERNEL);

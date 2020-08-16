@@ -26,7 +26,7 @@ static int sock_wait_state(struct sock *sk, int state, unsigned long timeo)
 
 	while (sk->sk_state != state) {
 		if (!timeo) {
-			err = -EINPROGRESS;
+			err = -ERR(EINPROGRESS);
 			break;
 		}
 
@@ -67,7 +67,7 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 
 	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
 	    addr->sa_family != AF_NFC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("sk %p addr %p family %d\n", sk, addr, addr->sa_family);
 
@@ -77,24 +77,24 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 
 	/* This is going to be a listening socket, dsap must be 0 */
 	if (llcp_addr.dsap != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
 	if (sk->sk_state != LLCP_CLOSED) {
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto error;
 	}
 
 	dev = nfc_get_device(llcp_addr.dev_idx);
 	if (dev == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto error;
 	}
 
 	local = nfc_llcp_find_local(dev);
 	if (local == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto put_dev;
 	}
 
@@ -115,7 +115,7 @@ static int llcp_sock_bind(struct socket *sock, struct sockaddr *addr, int alen)
 	if (llcp_sock->ssap == LLCP_SAP_MAX) {
 		kfree(llcp_sock->service_name);
 		llcp_sock->service_name = NULL;
-		ret = -EADDRINUSE;
+		ret = -ERR(EADDRINUSE);
 		goto put_dev;
 	}
 
@@ -147,7 +147,7 @@ static int llcp_raw_sock_bind(struct socket *sock, struct sockaddr *addr,
 
 	if (!addr || alen < offsetofend(struct sockaddr, sa_family) ||
 	    addr->sa_family != AF_NFC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("sk %p addr %p family %d\n", sk, addr, addr->sa_family);
 
@@ -158,19 +158,19 @@ static int llcp_raw_sock_bind(struct socket *sock, struct sockaddr *addr,
 	lock_sock(sk);
 
 	if (sk->sk_state != LLCP_CLOSED) {
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto error;
 	}
 
 	dev = nfc_get_device(llcp_addr.dev_idx);
 	if (dev == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto error;
 	}
 
 	local = nfc_llcp_find_local(dev);
 	if (local == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto put_dev;
 	}
 
@@ -201,7 +201,7 @@ static int llcp_sock_listen(struct socket *sock, int backlog)
 
 	if ((sock->type != SOCK_SEQPACKET && sock->type != SOCK_STREAM) ||
 	    sk->sk_state != LLCP_BOUND) {
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto error;
 	}
 
@@ -228,7 +228,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 	pr_debug("%p optname %d\n", sk, optname);
 
 	if (level != SOL_NFC)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	lock_sock(sk);
 
@@ -237,7 +237,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 		if (sk->sk_state == LLCP_CONNECTED ||
 		    sk->sk_state == LLCP_BOUND ||
 		    sk->sk_state == LLCP_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -247,7 +247,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 		}
 
 		if (opt > LLCP_MAX_RW) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -259,7 +259,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 		if (sk->sk_state == LLCP_CONNECTED ||
 		    sk->sk_state == LLCP_BOUND ||
 		    sk->sk_state == LLCP_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -269,7 +269,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 		}
 
 		if (opt > LLCP_MAX_MIUX) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -278,7 +278,7 @@ static int nfc_llcp_setsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -303,14 +303,14 @@ static int nfc_llcp_getsockopt(struct socket *sock, int level, int optname,
 	pr_debug("%p optname %d\n", sk, optname);
 
 	if (level != SOL_NFC)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
 
 	local = llcp_sock->local;
 	if (!local)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	len = min_t(u32, len, sizeof(u32));
 
@@ -355,7 +355,7 @@ static int nfc_llcp_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -448,7 +448,7 @@ static int llcp_sock_accept(struct socket *sock, struct socket *newsock,
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
 	if (sk->sk_state != LLCP_LISTEN) {
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto error;
 	}
 
@@ -460,7 +460,7 @@ static int llcp_sock_accept(struct socket *sock, struct socket *newsock,
 		set_current_state(TASK_INTERRUPTIBLE);
 
 		if (!timeo) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 
@@ -497,7 +497,7 @@ static int llcp_sock_getname(struct socket *sock, struct sockaddr *uaddr,
 	DECLARE_SOCKADDR(struct sockaddr_nfc_llcp *, llcp_addr, uaddr);
 
 	if (llcp_sock == NULL || llcp_sock->dev == NULL)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	pr_debug("%p %d %d %d\n", sk, llcp_sock->target_idx,
 		 llcp_sock->dsap, llcp_sock->ssap);
@@ -507,7 +507,7 @@ static int llcp_sock_getname(struct socket *sock, struct sockaddr *uaddr,
 	lock_sock(sk);
 	if (!llcp_sock->dev) {
 		release_sock(sk);
-		return -EBADFD;
+		return -ERR(EBADFD);
 	}
 	llcp_addr->sa_family = AF_NFC;
 	llcp_addr->dev_idx = llcp_sock->dev->idx;
@@ -594,7 +594,7 @@ static int llcp_sock_release(struct socket *sock)
 
 	local = llcp_sock->local;
 	if (local == NULL) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -657,10 +657,10 @@ static int llcp_sock_connect(struct socket *sock, struct sockaddr *_addr,
 	pr_debug("sock %p sk %p flags 0x%x\n", sock, sk, flags);
 
 	if (!addr || len < sizeof(*addr) || addr->sa_family != AF_NFC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (addr->service_name_len == 0 && addr->dsap == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_debug("addr dev_idx=%u target_idx=%u protocol=%u\n", addr->dev_idx,
 		 addr->target_idx, addr->nfc_protocol);
@@ -668,25 +668,25 @@ static int llcp_sock_connect(struct socket *sock, struct sockaddr *_addr,
 	lock_sock(sk);
 
 	if (sk->sk_state == LLCP_CONNECTED) {
-		ret = -EISCONN;
+		ret = -ERR(EISCONN);
 		goto error;
 	}
 
 	dev = nfc_get_device(addr->dev_idx);
 	if (dev == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto error;
 	}
 
 	local = nfc_llcp_find_local(dev);
 	if (local == NULL) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto put_dev;
 	}
 
 	device_lock(&dev->dev);
 	if (dev->dep_link_up == false) {
-		ret = -ENOLINK;
+		ret = -ERR(ENOLINK);
 		device_unlock(&dev->dev);
 		goto put_dev;
 	}
@@ -694,7 +694,7 @@ static int llcp_sock_connect(struct socket *sock, struct sockaddr *_addr,
 
 	if (local->rf_mode == NFC_RF_INITIATOR &&
 	    addr->target_idx != local->target_idx) {
-		ret = -ENOLINK;
+		ret = -ERR(ENOLINK);
 		goto put_dev;
 	}
 
@@ -769,7 +769,7 @@ static int llcp_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 		return ret;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
@@ -779,7 +779,7 @@ static int llcp_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 
 		if (msg->msg_namelen < sizeof(*addr)) {
 			release_sock(sk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		release_sock(sk);
@@ -790,7 +790,7 @@ static int llcp_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 
 	if (sk->sk_state != LLCP_CONNECTED) {
 		release_sock(sk);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	release_sock(sk);
@@ -820,7 +820,7 @@ static int llcp_sock_recvmsg(struct socket *sock, struct msghdr *msg,
 	release_sock(sk);
 
 	if (flags & (MSG_OOB))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
 	if (!skb) {
@@ -1007,11 +1007,11 @@ static int llcp_sock_create(struct net *net, struct socket *sock,
 	if (sock->type != SOCK_STREAM &&
 	    sock->type != SOCK_DGRAM &&
 	    sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	if (sock->type == SOCK_RAW) {
 		if (!capable(CAP_NET_RAW))
-			return -EPERM;
+			return -ERR(EPERM);
 		sock->ops = &llcp_rawsock_ops;
 	} else {
 		sock->ops = &llcp_sock_ops;

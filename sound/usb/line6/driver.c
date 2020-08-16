@@ -78,7 +78,7 @@ static int line6_start_listen(struct usb_line6 *line6)
 	/* sanity checks of EP before actually submitting */
 	if (usb_urb_ep_type_check(line6->urb_listen)) {
 		dev_err(line6->ifcdev, "invalid control EP\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	line6->urb_listen->actual_length = 0;
@@ -340,7 +340,7 @@ int line6_read_data(struct usb_line6 *line6, unsigned address, void *data,
 	unsigned count;
 
 	if (address > 0xffff || datalen > 0xff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = kmalloc(1, GFP_KERNEL);
 	if (!len)
@@ -376,7 +376,7 @@ int line6_read_data(struct usb_line6 *line6, unsigned address, void *data,
 			break;
 	}
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	if (*len == 0xff) {
 		dev_err(line6->ifcdev, "read failed after %d retries\n",
 			count);
@@ -416,7 +416,7 @@ int line6_write_data(struct usb_line6 *line6, unsigned address, void *data,
 	int count;
 
 	if (address > 0xffff || datalen > 0xffff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	status = kmalloc(1, GFP_KERNEL);
 	if (!status)
@@ -456,10 +456,10 @@ int line6_write_data(struct usb_line6 *line6, unsigned address, void *data,
 	if (*status == 0xff) {
 		dev_err(line6->ifcdev, "write failed after %d retries\n",
 			count);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else if (*status != 0) {
 		dev_err(line6->ifcdev, "write failed (error %d)\n", ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 exit:
 	kfree(status);
@@ -575,13 +575,13 @@ line6_hwdep_read(struct snd_hwdep *hwdep, char __user *buf, long count,
 	unsigned int out_count;
 
 	if (mutex_lock_interruptible(&line6->messages.read_lock))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	while (kfifo_len(&line6->messages.fifo) == 0) {
 		mutex_unlock(&line6->messages.read_lock);
 
 		if (line6->messages.nonblock)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		rv = wait_event_interruptible(
 			line6->messages.wait_queue,
@@ -590,12 +590,12 @@ line6_hwdep_read(struct snd_hwdep *hwdep, char __user *buf, long count,
 			return rv;
 
 		if (mutex_lock_interruptible(&line6->messages.read_lock))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 	}
 
 	if (kfifo_peek_len(&line6->messages.fifo) > count) {
 		/* Buffer too small; allow re-read of the current item... */
-		rv = -EINVAL;
+		rv = -ERR(EINVAL);
 	} else {
 		rv = kfifo_to_user(&line6->messages.fifo, buf, count, &out_count);
 		if (rv == 0)
@@ -617,7 +617,7 @@ line6_hwdep_write(struct snd_hwdep *hwdep, const char __user *data, long count,
 
 	if (count > line6->max_packet_size * LINE6_RAW_MESSAGES_MAXCOUNT) {
 		/* This is an arbitrary limit - still better than nothing... */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	data_copy = memdup_user(data, count);
@@ -751,11 +751,11 @@ int line6_probe(struct usb_interface *interface,
 	int ret;
 
 	if (WARN_ON(data_size < sizeof(*line6)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* we don't handle multiple configurations */
 	if (usbdev->descriptor.bNumConfigurations != 1)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = snd_card_new(&interface->dev,
 			   SNDRV_DEFAULT_IDX1, SNDRV_DEFAULT_STR1,

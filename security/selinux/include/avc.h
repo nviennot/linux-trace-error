@@ -136,7 +136,7 @@ static inline int avc_audit(struct selinux_state *state,
 		return 0;
 	/* fall back to ref-walk if we have to generate audit */
 	if (flags & MAY_NOT_BLOCK)
-		return -ECHILD;
+		return -ERR(ECHILD);
 	return slow_avc_audit(state, ssid, tsid, tclass,
 			      requested, audited, denied, result,
 			      a);

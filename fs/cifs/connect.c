@@ -356,7 +356,7 @@ static int reconn_set_ipaddr(struct TCP_Server_Info *server)
 	char *unc, *ipaddr = NULL;
 
 	if (!server->hostname)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = strlen(server->hostname) + 3;
 
@@ -430,7 +430,7 @@ static inline int reconn_setup_dfs_targets(struct cifs_sb_info *cifs_sb,
 					   struct dfs_cache_tgt_list *tl)
 {
 	if (!cifs_sb->origin_fullpath)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return dfs_cache_noreq_find(cifs_sb->origin_fullpath + 1, NULL, tl);
 }
 #endif
@@ -660,7 +660,7 @@ cifs_echo_request(struct work_struct *work)
 	    time_before(jiffies, server->lstrp + echo_interval - HZ))
 		goto requeue_echo;
 
-	rc = server->ops->echo ? server->ops->echo(server) : -ENOSYS;
+	rc = server->ops->echo ? server->ops->echo(server) : -ERR(ENOSYS);
 	if (rc)
 		cifs_dbg(FYI, "Unable to send echo request to server: %s\n",
 			 server->hostname);
@@ -758,22 +758,22 @@ cifs_readv_from_socket(struct TCP_Server_Info *server, struct msghdr *smb_msg)
 		/* reconnect if no credits and no requests in flight */
 		if (zero_credits(server)) {
 			cifs_reconnect(server);
-			return -ECONNABORTED;
+			return -ERR(ECONNABORTED);
 		}
 
 		if (server_unresponsive(server))
-			return -ECONNABORTED;
+			return -ERR(ECONNABORTED);
 		if (cifs_rdma_enabled(server) && server->smbd_conn)
 			length = smbd_recv(server->smbd_conn, smb_msg);
 		else
 			length = sock_recvmsg(server->ssocket, smb_msg, 0);
 
 		if (server->tcpStatus == CifsExiting)
-			return -ESHUTDOWN;
+			return -ERR(ESHUTDOWN);
 
 		if (server->tcpStatus == CifsNeedReconnect) {
 			cifs_reconnect(server);
-			return -ECONNABORTED;
+			return -ERR(ECONNABORTED);
 		}
 
 		if (length == -ERESTARTSYS ||
@@ -792,7 +792,7 @@ cifs_readv_from_socket(struct TCP_Server_Info *server, struct msghdr *smb_msg)
 		if (length <= 0) {
 			cifs_dbg(FYI, "Received no data or error: %d\n", length);
 			cifs_reconnect(server);
-			return -ECONNABORTED;
+			return -ERR(ECONNABORTED);
 		}
 	}
 	return total_read;
@@ -1024,7 +1024,7 @@ standard_receive3(struct TCP_Server_Info *server, struct mid_q_entry *mid)
 		server->vals->header_preamble_size) {
 		cifs_server_dbg(VFS, "SMB response too long (%u bytes)\n", pdu_length);
 		cifs_reconnect(server);
-		return -ECONNABORTED;
+		return -ERR(ECONNABORTED);
 	}
 
 	/* switch to large buffer if too big for a small one */
@@ -1286,16 +1286,16 @@ extract_hostname(const char *unc)
 	/* skip double chars at beginning of string */
 	/* BB: check validity of these bytes? */
 	if (strlen(unc) < 3)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	for (src = unc; *src && *src == '\\'; src++)
 		;
 	if (!*src)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* delimiter between hostname and sharename is always '\\' now */
 	delim = strchr(src, '\\');
 	if (!delim)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	len = delim - src;
 	dst = kmalloc((len + 1), GFP_KERNEL);
@@ -1334,7 +1334,7 @@ static int get_option_uid(substring_t args[], kuid_t *result)
 
 	uid = make_kuid(current_user_ns(), value);
 	if (!uid_valid(uid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*result = uid;
 	return 0;
@@ -1352,7 +1352,7 @@ static int get_option_gid(substring_t args[], kgid_t *result)
 
 	gid = make_kgid(current_user_ns(), value);
 	if (!gid_valid(gid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*result = gid;
 	return 0;
@@ -1542,18 +1542,18 @@ cifs_parse_devname(const char *devname, struct smb_vol *vol)
 
 	if (unlikely(!devname || !*devname)) {
 		cifs_dbg(VFS, "Device name not specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* make sure we have a valid UNC double delimiter prefix */
 	len = strspn(devname, delims);
 	if (len != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* find delimiter between host and sharename */
 	pos = strpbrk(devname + 2, delims);
 	if (!pos)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* skip past delimiter */
 	++pos;
@@ -2807,7 +2807,7 @@ cifs_get_tcp_session(struct smb_vol *volume_info)
 	if (tcp_ses->rdma) {
 #ifndef CONFIG_CIFS_SMB_DIRECT
 		cifs_dbg(VFS, "CONFIG_CIFS_SMB_DIRECT is not enabled\n");
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out_err_crypto_release;
 #endif
 		tcp_ses->smbd_conn = smbd_get_connection(
@@ -2817,7 +2817,7 @@ cifs_get_tcp_session(struct smb_vol *volume_info)
 			rc = 0;
 			goto smbd_connected;
 		} else {
-			rc = -ENOENT;
+			rc = -ERR(ENOENT);
 			goto out_err_crypto_release;
 		}
 	}
@@ -2940,7 +2940,7 @@ cifs_setup_ipc(struct cifs_ses *ses, struct smb_vol *volume_info)
 		else {
 			cifs_server_dbg(VFS,
 				 "IPC: server doesn't support encryption\n");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	}
 
@@ -3105,7 +3105,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	default:
 		cifs_dbg(FYI, "Bad ss_family (%hu)\n",
 			 server->dstaddr.ss_family);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_err;
 	}
 
@@ -3132,7 +3132,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	down_read(&key->sem);
 	upayload = user_key_payload_locked(key);
 	if (IS_ERR_OR_NULL(upayload)) {
-		rc = upayload ? PTR_ERR(upayload) : -EINVAL;
+		rc = upayload ? PTR_ERR(upayload) : -ERR(EINVAL);
 		goto out_key_put;
 	}
 
@@ -3143,7 +3143,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	if (!delim) {
 		cifs_dbg(FYI, "Unable to find ':' in payload (datalen=%d)\n",
 			 upayload->datalen);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_key_put;
 	}
 
@@ -3151,7 +3151,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	if (len > CIFS_MAX_USERNAME_LEN || len <= 0) {
 		cifs_dbg(FYI, "Bad value from username search (len=%zd)\n",
 			 len);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_key_put;
 	}
 
@@ -3167,7 +3167,7 @@ cifs_set_cifscreds(struct smb_vol *vol, struct cifs_ses *ses)
 	len = key->datalen - (len + 1);
 	if (len > CIFS_MAX_PASSWORD_LEN || len <= 0) {
 		cifs_dbg(FYI, "Bad len for password search (len=%zd)\n", len);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		kfree(vol->username);
 		vol->username = NULL;
 		goto out_key_put;
@@ -3217,7 +3217,7 @@ static inline int
 cifs_set_cifscreds(struct smb_vol *vol __attribute__((unused)),
 		   struct cifs_ses *ses __attribute__((unused)))
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_KEYS */
 
@@ -3459,7 +3459,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 	}
 
 	if (!ses->server->ops->tree_connect) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto out_fail;
 	}
 
@@ -3473,7 +3473,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 			     "Use SMB2 or later for snapshot mount option\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		} else
 			tcon->snapshot_time = volume_info->snapshot_time;
@@ -3483,7 +3483,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 			     "Use SMB2.1 or later for handle timeout option\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		} else
 			tcon->handle_timeout = volume_info->handle_timeout;
@@ -3502,14 +3502,14 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 				 "SMB3 or later required for encryption\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		} else if (tcon->ses->server->capabilities &
 					SMB2_GLOBAL_CAP_ENCRYPTION)
 			tcon->seal = true;
 		else {
 			cifs_dbg(VFS, "Encryption is not supported on share\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		}
 	}
@@ -3520,7 +3520,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 			pr_warn_once("SMB3.11 POSIX Extensions are experimental\n");
 		} else {
 			cifs_dbg(VFS, "Server does not support mounting with posix SMB3.11 extensions\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		}
 	}
@@ -3543,7 +3543,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 			     "SMB3 or later required for persistent handles\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		} else if (ses->server->capabilities &
 			   SMB2_GLOBAL_CAP_PERSISTENT_HANDLES)
@@ -3551,7 +3551,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		else /* persistent handles requested but not supported */ {
 			cifs_dbg(VFS,
 				"Persistent handles not supported on share\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		}
 	} else if ((tcon->capabilities & SMB2_SHARE_CAP_CONTINUOUS_AVAILABILITY)
@@ -3563,7 +3563,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 			     "SMB2.1 or later required for resilient handles\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		}
 		tcon->use_resilient = true;
@@ -3581,7 +3581,7 @@ cifs_get_tcon(struct cifs_ses *ses, struct smb_vol *volume_info)
 		if (ses->server->vals->protocol_id == 0) {
 			cifs_dbg(VFS,
 				"SMB2 or later required for nolease option\n");
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 			goto out_fail;
 		} else
 			tcon->no_lease = volume_info->no_lease;
@@ -4296,7 +4296,7 @@ static int mount_get_conns(struct smb_vol *vol, struct cifs_sb_info *cifs_sb,
 	if ((vol->persistent == true) && (!(ses->server->capabilities &
 					    SMB2_GLOBAL_CAP_PERSISTENT_HANDLES))) {
 		cifs_server_dbg(VFS, "persistent handles not supported by server\n");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/* search for existing tcon to this server share */
@@ -4322,7 +4322,7 @@ static int mount_get_conns(struct smb_vol *vol, struct cifs_sb_info *cifs_sb,
 		if ((tcon->ses->server->tcpStatus == CifsNeedReconnect) &&
 		    (le64_to_cpu(tcon->fsUnixInfo.Capability) &
 		     CIFS_UNIX_TRANSPORT_ENCRYPTION_MANDATORY_CAP))
-			return -EACCES;
+			return -ERR(EACCES);
 	} else
 		tcon->unix_ext = 0; /* server does not support them */
 
@@ -4387,7 +4387,7 @@ build_unc_path_to_root(const struct smb_vol *vol,
 	unsigned int unc_len = strnlen(vol->UNC, MAX_TREE_SIZE + 1);
 
 	if (unc_len > MAX_TREE_SIZE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	full_path = kmalloc(unc_len + pplen + 1, GFP_KERNEL);
 	if (full_path == NULL)
@@ -4429,7 +4429,7 @@ expand_dfs_referral(const unsigned int xid, struct cifs_ses *ses,
 	char *full_path = NULL, *ref_path = NULL, *mdata = NULL;
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_DFS)
-		return -EREMOTE;
+		return -ERR(EREMOTE);
 
 	full_path = build_unc_path_to_root(volume_info, cifs_sb, true);
 	if (IS_ERR(full_path))
@@ -4472,7 +4472,7 @@ static inline int get_next_dfs_tgt(const char *path,
 		*tgt_it = dfs_cache_get_tgt_iterator(tgt_list);
 	else
 		*tgt_it = dfs_cache_get_next_tgt(tgt_list, *tgt_it);
-	return !*tgt_it ? -EHOSTDOWN : 0;
+	return !*tgt_it ? -ERR(EHOSTDOWN) : 0;
 }
 
 static int update_vol_info(const struct dfs_cache_tgt_iterator *tgt_it,
@@ -4570,7 +4570,7 @@ static int mount_do_dfs_failover(const char *path,
 	struct dfs_cache_tgt_iterator *tgt_it = NULL;
 
 	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_DFS)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	rc = dfs_cache_noreq_find(path, NULL, &tgt_list);
 	if (rc)
@@ -4609,7 +4609,7 @@ cifs_setup_volume_info(struct smb_vol *volume_info, char *mount_data,
 	int rc = 0;
 
 	if (cifs_parse_mount_options(mount_data, devname, volume_info, is_smb3))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (volume_info->nullauth) {
 		cifs_dbg(FYI, "Anonymous login\n");
@@ -4622,7 +4622,7 @@ cifs_setup_volume_info(struct smb_vol *volume_info, char *mount_data,
 		cifs_dbg(VFS, "No username specified\n");
 	/* In userspace mount helper we can get user name from alternate
 	   locations such as env variables and files on disk */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* this is needed for ASCII cp to Unicode converts */
@@ -4634,7 +4634,7 @@ cifs_setup_volume_info(struct smb_vol *volume_info, char *mount_data,
 		if (volume_info->local_nls == NULL) {
 			cifs_dbg(VFS, "CIFS mount error: iocharset %s not found\n",
 				 volume_info->iocharset);
-			return -ELIBACC;
+			return -ERR(ELIBACC);
 		}
 	}
 
@@ -4720,7 +4720,7 @@ static int is_path_remote(struct cifs_sb_info *cifs_sb, struct smb_vol *vol,
 	char *full_path;
 
 	if (!server->ops->is_path_accessible)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * cifs_build_path_to_root works only when we have a valid tcon
@@ -4829,7 +4829,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb_vol *vol)
 	(void)expand_dfs_referral(xid, ses, vol, cifs_sb, false);
 
 	if (cifs_sb->mountdata == NULL) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto error;
 	}
 
@@ -4884,7 +4884,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb_vol *vol)
 		 *     misconfigured (i.e. has loops).
 		 */
 		if (count++ > MAX_NESTED_LINKS) {
-			rc = -ELOOP;
+			rc = -ERR(ELOOP);
 			break;
 		}
 
@@ -4998,7 +4998,7 @@ int cifs_mount(struct cifs_sb_info *cifs_sb, struct smb_vol *vol)
 	if (tcon) {
 		rc = is_path_remote(cifs_sb, vol, xid, server, tcon);
 		if (rc == -EREMOTE)
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 		if (rc)
 			goto error;
 	}
@@ -5031,7 +5031,7 @@ CIFSTCon(const unsigned int xid, struct cifs_ses *ses,
 	__u16 bytes_left, count;
 
 	if (ses == NULL)
-		return -EIO;
+		return -ERR(EIO);
 
 	smb_buffer = cifs_buf_get();
 	if (smb_buffer == NULL)
@@ -5221,7 +5221,7 @@ cifs_negotiate_protocol(const unsigned int xid, struct cifs_ses *ses)
 	struct TCP_Server_Info *server = cifs_ses_server(ses);
 
 	if (!server->ops->need_neg || !server->ops->negotiate)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	/* only send once per connect */
 	if (!server->ops->need_neg(server))
@@ -5233,7 +5233,7 @@ cifs_negotiate_protocol(const unsigned int xid, struct cifs_ses *ses)
 		if (server->tcpStatus == CifsNeedNegotiate)
 			server->tcpStatus = CifsGood;
 		else
-			rc = -EHOSTDOWN;
+			rc = -ERR(EHOSTDOWN);
 		spin_unlock(&GlobalMid_Lock);
 	}
 
@@ -5244,7 +5244,7 @@ int
 cifs_setup_session(const unsigned int xid, struct cifs_ses *ses,
 		   struct nls_table *nls_info)
 {
-	int rc = -ENOSYS;
+	int rc = -ERR(ENOSYS);
 	struct TCP_Server_Info *server = cifs_ses_server(ses);
 
 	if (!ses->binding) {
@@ -5435,7 +5435,7 @@ cifs_sb_tlink(struct cifs_sb_info *cifs_sb)
 		if (newtlink == NULL)
 			return ERR_PTR(-ENOMEM);
 		newtlink->tl_uid = fsuid;
-		newtlink->tl_tcon = ERR_PTR(-EACCES);
+		newtlink->tl_tcon = ERR_PTR(-ERR(EACCES));
 		set_bit(TCON_LINK_PENDING, &newtlink->tl_flags);
 		set_bit(TCON_LINK_IN_TREE, &newtlink->tl_flags);
 		cifs_get_tlink(newtlink);
@@ -5458,7 +5458,7 @@ wait_for_construction:
 				  TASK_INTERRUPTIBLE);
 		if (ret) {
 			cifs_put_tlink(tlink);
-			return ERR_PTR(-ERESTARTSYS);
+			return ERR_PTR(-ERR(ERESTARTSYS));
 		}
 
 		/* if it's good, return it */
@@ -5468,7 +5468,7 @@ wait_for_construction:
 		/* return error if we tried this already recently */
 		if (time_before(jiffies, tlink->tl_time + TLINK_ERROR_EXPIRE)) {
 			cifs_put_tlink(tlink);
-			return ERR_PTR(-EACCES);
+			return ERR_PTR(-ERR(EACCES));
 		}
 
 		if (test_and_set_bit(TCON_LINK_PENDING, &tlink->tl_flags))
@@ -5481,7 +5481,7 @@ wait_for_construction:
 
 	if (IS_ERR(tlink->tl_tcon)) {
 		cifs_put_tlink(tlink);
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 	}
 
 	return tlink;

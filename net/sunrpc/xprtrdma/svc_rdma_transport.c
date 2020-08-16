@@ -315,7 +315,7 @@ static struct svc_xprt *svc_rdma_create(struct svc_serv *serv,
 	int ret;
 
 	if (sa->sa_family != AF_INET && sa->sa_family != AF_INET6)
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 	cma_xprt = svc_rdma_create_xprt(serv, net);
 	if (!cma_xprt)
 		return ERR_PTR(-ENOMEM);
@@ -502,7 +502,7 @@ static struct svc_xprt *svc_rdma_accept(struct svc_xprt *xprt)
 	conn_param.initiator_depth = min_t(int, newxprt->sc_ord,
 					   dev->attrs.max_qp_init_rd_atom);
 	if (!conn_param.initiator_depth) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		trace_svcrdma_initdepth_err(newxprt, ret);
 		goto errout;
 	}

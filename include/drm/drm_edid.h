@@ -355,7 +355,7 @@ int __drm_get_edid_firmware_path(char *buf, size_t bufsize);
 static inline struct edid *
 drm_load_edid_firmware(struct drm_connector *connector)
 {
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 #endif
 

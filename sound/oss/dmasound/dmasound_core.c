@@ -328,7 +328,7 @@ static int mixer_open(struct inode *inode, struct file *file)
 	mutex_lock(&dmasound_core_mutex);
 	if (!try_module_get(dmasound.mach.owner)) {
 		mutex_unlock(&dmasound_core_mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	mixer.busy = 1;
 	mutex_unlock(&dmasound_core_mutex);
@@ -365,7 +365,7 @@ static int mixer_ioctl(struct file *file, u_int cmd, u_long arg)
 	}
 	if (dmasound.mach.mixer_ioctl)
 	    return dmasound.mach.mixer_ioctl(cmd, arg);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static long mixer_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
@@ -459,7 +459,7 @@ static int sq_setup(struct sound_queue *sq)
 #ifdef DEBUG_DMASOUND
 printk("dmasound_core: tried to sq_setup a locked queue\n") ;
 #endif
-		return -EINVAL ;
+		return -ERR(EINVAL) ;
 	}
 	sq->locked = 1 ; /* don't think we have a race prob. here _check_ */
 
@@ -628,7 +628,7 @@ static ssize_t sq_write(struct file *file, const char __user *src, size_t uLeft,
 			sq_play();
 			if (write_sq.non_blocking) {
 				finish_wait(&write_sq.action_queue, &wait);
-				return uWritten > 0 ? uWritten : -EAGAIN;
+				return uWritten > 0 ? uWritten : -ERR(EAGAIN);
 			}
 			if (write_sq.count < write_sq.max_active)
 				break;
@@ -636,7 +636,7 @@ static ssize_t sq_write(struct file *file, const char __user *src, size_t uLeft,
 			schedule_timeout(HZ);
 			if (signal_pending(current)) {
 				finish_wait(&write_sq.action_queue, &wait);
-				return uWritten > 0 ? uWritten : -EINTR;
+				return uWritten > 0 ? uWritten : -ERR(EINTR);
 			}
 		}
 
@@ -728,7 +728,7 @@ static int sq_open2(struct sound_queue *sq, struct file *file, fmode_t mode,
 			/* OSS manual says we will return EBUSY regardless
 			   of O_NOBLOCK.
 			*/
-			return -EBUSY ;
+			return -ERR(EBUSY) ;
 #endif
 		}
 		sq->busy = 1; /* Let's play spot-the-race-condition */
@@ -767,7 +767,7 @@ static int sq_open(struct inode *inode, struct file *file)
 	mutex_lock(&dmasound_core_mutex);
 	if (!try_module_get(dmasound.mach.owner)) {
 		mutex_unlock(&dmasound_core_mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	rc = write_sq_open(file); /* checks the f_mode */
@@ -775,7 +775,7 @@ static int sq_open(struct inode *inode, struct file *file)
 		goto out;
 	if (file->f_mode & FMODE_READ) {
 		/* TODO: if O_RDWR, release any resources grabbed by write part */
-		rc = -ENXIO ; /* I think this is what is required by open(2) */
+		rc = -ERR(ENXIO) ; /* I think this is what is required by open(2) */
 		goto out;
 	}
 
@@ -862,13 +862,13 @@ static int sq_fsync(void)
 			 * interrupt occurred.  Stop audio output immediately
 			 * and clear the queue. */
 			sq_reset_output();
-			rc = -EINTR;
+			rc = -ERR(EINTR);
 			break;
 		}
 		if (!--timeout) {
 			printk(KERN_WARNING "dmasound: Timeout draining output\n");
 			sq_reset_output();
-			rc = -EIO;
+			rc = -ERR(EIO);
 			break;
 		}
 	}
@@ -961,17 +961,17 @@ static int set_queue_frags(struct sound_queue *sq, int bufs, int size)
 #ifdef DEBUG_DMASOUND
 printk("dmasound_core: tried to set_queue_frags on a locked queue\n") ;
 #endif
-		return -EINVAL ;
+		return -ERR(EINVAL) ;
 	}
 
 	if ((size < MIN_FRAG_SIZE) || (size > MAX_FRAG_SIZE))
-		return -EINVAL ;
+		return -ERR(EINVAL) ;
 	size = (1<<size) ; /* now in bytes */
 	if (size > sq->bufSize)
-		return -EINVAL ; /* this might still not work */
+		return -ERR(EINVAL) ; /* this might still not work */
 
 	if (bufs <= 0)
-		return -EINVAL ;
+		return -ERR(EINVAL) ;
 	if (bufs > sq->numBufs) /* the user is allowed say "don't care" with 0x7fff */
 		bufs = sq->numBufs ;
 
@@ -1060,7 +1060,7 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 			shared_resources_initialised = 0 ;
 			return IOCTL_OUT(arg, data);
 		} else
-			return -EINVAL ;
+			return -ERR(EINVAL) ;
 		break ;
 	/* OSS says these next 4 actions are undefined when the device is
 	   busy/active - we will just return -EINVAL.
@@ -1074,7 +1074,7 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 			shared_resources_initialised = 0 ;
 			return IOCTL_OUT(arg, sound_set_stereo(data));
 		} else
-			return -EINVAL ;
+			return -ERR(EINVAL) ;
 		break ;
 	case SOUND_PCM_WRITE_CHANNELS:
 		if (shared_resources_are_mine(file->f_mode) &&
@@ -1084,7 +1084,7 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 			shared_resources_initialised = 0 ;
 			return IOCTL_OUT(arg, sound_set_stereo(data-1)+1);
 		} else
-			return -EINVAL ;
+			return -ERR(EINVAL) ;
 		break ;
 	case SNDCTL_DSP_SETFMT:
 		if (shared_resources_are_mine(file->f_mode) &&
@@ -1097,12 +1097,12 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 			if (result < 0)
 				return result;
 			if (format != data && data != AFMT_QUERY)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			return 0;
 		} else
-			return -EINVAL ;
+			return -ERR(EINVAL) ;
 	case SNDCTL_DSP_SUBDIVIDE:
-		return -EINVAL ;
+		return -ERR(EINVAL) ;
 	case SNDCTL_DSP_SETFRAGMENT:
 		/* we can do this independently for the two queues - with the
 		   proviso that for fds opened O_RDWR we cannot separate the
@@ -1138,7 +1138,7 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 				return -EFAULT;
 			return 0;
 		} else
-			return -EINVAL ;
+			return -ERR(EINVAL) ;
 		break ;
 	case SNDCTL_DSP_GETCAPS:
 		val = dmasound.mach.capabilities & 0xffffff00;
@@ -1147,7 +1147,7 @@ static int sq_ioctl(struct file *file, u_int cmd, u_long arg)
 	default:
 		return mixer_ioctl(file, cmd, arg);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static long sq_unlocked_ioctl(struct file *file, u_int cmd, u_long arg)
@@ -1272,11 +1272,11 @@ static int state_open(struct inode *inode, struct file *file)
 	int ret;
 
 	mutex_lock(&dmasound_core_mutex);
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (state.busy)
 		goto out;
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	if (!try_module_get(dmasound.mach.owner))
 		goto out;
 
@@ -1402,7 +1402,7 @@ int dmasound_init(void)
 	int res ;
 #ifdef MODULE
 	if (irq_installed)
-		return -EBUSY;
+		return -ERR(EBUSY);
 #endif
 
 	/* Set up sound queue, /dev/audio and /dev/dsp. */
@@ -1420,7 +1420,7 @@ int dmasound_init(void)
 
 	if (!dmasound.mach.irqinit()) {
 		printk(KERN_ERR "DMA sound driver: Interrupt initialization failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 #ifdef MODULE
 	irq_installed = 1;

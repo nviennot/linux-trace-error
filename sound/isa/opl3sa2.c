@@ -215,7 +215,7 @@ static int snd_opl3sa2_detect(struct snd_card *card)
 	port = chip->port;
 	if ((chip->res_port = request_region(port, 2, "OPL3-SA control")) == NULL) {
 		snd_printk(KERN_ERR PFX "can't grab port 0x%lx\n", port);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	/*
 	snd_printk(KERN_DEBUG "REG 0A = 0x%x\n",
@@ -225,7 +225,7 @@ static int snd_opl3sa2_detect(struct snd_card *card)
 	tmp = snd_opl3sa2_read(chip, OPL3SA2_MISC);
 	if (tmp == 0xff) {
 		snd_printd("OPL3-SA [0x%lx] detect = 0x%x\n", port, tmp);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	switch (tmp & 0x07) {
 	case 0x01:
@@ -246,14 +246,14 @@ static int snd_opl3sa2_detect(struct snd_card *card)
 	snd_opl3sa2_write(chip, OPL3SA2_MISC, tmp ^ 7);
 	if ((tmp1 = snd_opl3sa2_read(chip, OPL3SA2_MISC)) != tmp) {
 		snd_printd("OPL3-SA [0x%lx] detect (1) = 0x%x (0x%x)\n", port, tmp, tmp1);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* try if the MIC register is accessible */
 	tmp = snd_opl3sa2_read(chip, OPL3SA2_MIC);
 	snd_opl3sa2_write(chip, OPL3SA2_MIC, 0x8a);
 	if (((tmp1 = snd_opl3sa2_read(chip, OPL3SA2_MIC)) & 0x9f) != 0x8a) {
 		snd_printd("OPL3-SA [0x%lx] detect (2) = 0x%x (0x%x)\n", port, tmp, tmp1);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	snd_opl3sa2_write(chip, OPL3SA2_MIC, 0x9f);
 	/* initialization */
@@ -585,7 +585,7 @@ static int snd_opl3sa2_pnp(int dev, struct snd_opl3sa2 *chip,
 {
 	if (pnp_activate_dev(pdev) < 0) {
 		snd_printk(KERN_ERR "PnP configure failure (out of resources?)\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	sb_port[dev] = pnp_port_start(pdev, 0);
 	wss_port[dev] = pnp_port_start(pdev, 1);
@@ -656,7 +656,7 @@ static int snd_opl3sa2_probe(struct snd_card *card, int dev)
 			  "OPL3-SA2", card);
 	if (err) {
 		snd_printk(KERN_ERR PFX "can't grab IRQ %d\n", xirq);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	chip->irq = xirq;
 	card->sync_irq = chip->irq;
@@ -715,13 +715,13 @@ static int snd_opl3sa2_pnp_detect(struct pnp_dev *pdev,
 	struct snd_card *card;
 
 	if (pnp_device_is_isapnp(pdev))
-		return -ENOENT;	/* we have another procedure - card */
+		return -ERR(ENOENT);	/* we have another procedure - card */
 	for (; dev < SNDRV_CARDS; dev++) {
 		if (enable[dev] && isapnp[dev])
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = snd_opl3sa2_card_new(&pdev->dev, dev, &card);
 	if (err < 0)
@@ -778,14 +778,14 @@ static int snd_opl3sa2_pnp_cdetect(struct pnp_card_link *pcard,
 	if (pdev == NULL) {
 		snd_printk(KERN_ERR PFX "can't get pnp device from id '%s'\n",
 			   id->devs[0].id);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	for (; dev < SNDRV_CARDS; dev++) {
 		if (enable[dev] && isapnp[dev])
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = snd_opl3sa2_card_new(&pdev->dev, dev, &card);
 	if (err < 0)

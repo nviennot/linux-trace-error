@@ -311,7 +311,7 @@ static int ext4_ext_swap_inode_data(handle_t *handle, struct inode *inode,
 	 * fail the migrate
 	 */
 	if (!ext4_test_inode_state(inode, EXT4_STATE_EXT_MIGRATE)) {
-		retval = -EAGAIN;
+		retval = -ERR(EAGAIN);
 		up_write(&EXT4_I(inode)->i_data_sem);
 		goto err_out;
 	} else
@@ -426,7 +426,7 @@ int ext4_ext_migrate(struct inode *inode)
 	 */
 	if (!ext4_has_feature_extents(inode->i_sb) ||
 	    (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (S_ISLNK(inode->i_mode) && inode->i_blocks == 0)
 		/*
@@ -607,10 +607,10 @@ int ext4_ind_migrate(struct inode *inode)
 
 	if (!ext4_has_feature_extents(inode->i_sb) ||
 	    (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ext4_has_feature_bigalloc(inode->i_sb))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * In order to get correct extent info, force all delayed allocation
@@ -637,7 +637,7 @@ int ext4_ind_migrate(struct inode *inode)
 	ex  = EXT_FIRST_EXTENT(eh);
 	if (ext4_blocks_count(es) > EXT4_MAX_BLOCK_FILE_PHYS ||
 	    eh->eh_depth != 0 || le16_to_cpu(eh->eh_entries) > 1) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto errout;
 	}
 	if (eh->eh_entries == 0)
@@ -648,7 +648,7 @@ int ext4_ind_migrate(struct inode *inode)
 		start = le32_to_cpu(ex->ee_block);
 		end = start + len - 1;
 		if (end >= EXT4_NDIR_BLOCKS) {
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto errout;
 		}
 	}

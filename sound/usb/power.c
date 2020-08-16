@@ -95,7 +95,7 @@ int snd_usb_power_domain_set(struct snd_usb_audio *chip,
 			udelay(pd->pd_d1d0_rec * 50);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

@@ -55,7 +55,7 @@ struct dentry *ovl_lookup_temp(struct dentry *workdir)
 	if (!IS_ERR(temp) && temp->d_inode) {
 		pr_err("workdir/%s already exists\n", name);
 		dput(temp);
-		temp = ERR_PTR(-EIO);
+		temp = ERR_PTR(-ERR(EIO));
 	}
 
 	return temp;
@@ -176,7 +176,7 @@ struct dentry *ovl_create_real(struct inode *dir, struct dentry *newdentry,
 	if (IS_ERR(newdentry))
 		return newdentry;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (newdentry->d_inode)
 		goto out;
 
@@ -206,7 +206,7 @@ struct dentry *ovl_create_real(struct inode *dir, struct dentry *newdentry,
 			break;
 
 		default:
-			err = -EPERM;
+			err = -ERR(EPERM);
 		}
 	}
 	if (!err && WARN_ON(!newdentry->d_inode)) {
@@ -214,7 +214,7 @@ struct dentry *ovl_create_real(struct inode *dir, struct dentry *newdentry,
 		 * Not quite sure if non-instantiated dentry is legal or not.
 		 * VFS doesn't seem to care so check and warn here.
 		 */
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 out:
 	if (err) {
@@ -249,7 +249,7 @@ static int ovl_set_opaque(struct dentry *dentry, struct dentry *upperdentry)
 	 * support xattrs. ovl_rename() calls ovl_set_opaque_xerr(-EXDEV) to
 	 * return a specific error for noxattr case.
 	 */
-	return ovl_set_opaque_xerr(dentry, upperdentry, -EIO);
+	return ovl_set_opaque_xerr(dentry, upperdentry, -ERR(EIO));
 }
 
 /*
@@ -370,7 +370,7 @@ static struct dentry *ovl_clear_empty(struct dentry *dentry,
 	int err;
 
 	if (WARN_ON(!workdir))
-		return ERR_PTR(-EROFS);
+		return ERR_PTR(-ERR(EROFS));
 
 	err = ovl_lock_rename_workdir(workdir, upperdir);
 	if (err)
@@ -382,7 +382,7 @@ static struct dentry *ovl_clear_empty(struct dentry *dentry,
 	if (err)
 		goto out_unlock;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (!S_ISDIR(stat.mode))
 		goto out_unlock;
 	upper = upperpath.dentry;
@@ -469,7 +469,7 @@ static int ovl_create_over_whiteout(struct dentry *dentry, struct inode *inode,
 	bool hardlink = !!cattr->hardlink;
 
 	if (WARN_ON(!workdir))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (!hardlink) {
 		err = posix_acl_create(dentry->d_parent->d_inode,
@@ -488,7 +488,7 @@ static int ovl_create_over_whiteout(struct dentry *dentry, struct inode *inode,
 	if (IS_ERR(upper))
 		goto out_unlock;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (d_is_negative(upper) || !IS_WHITEOUT(d_inode(upper)))
 		goto out_dput;
 
@@ -666,7 +666,7 @@ static int ovl_mknod(struct inode *dir, struct dentry *dentry, umode_t mode,
 {
 	/* Don't allow creation of "whiteout" on overlay */
 	if (S_ISCHR(mode) && rdev == WHITEOUT_DEV)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return ovl_create_object(dentry, mode, rdev, NULL);
 }
@@ -749,7 +749,7 @@ static int ovl_remove_and_whiteout(struct dentry *dentry,
 	int err;
 
 	if (WARN_ON(!workdir))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (!list_empty(list)) {
 		opaquedir = ovl_clear_empty(dentry, list);
@@ -768,7 +768,7 @@ static int ovl_remove_and_whiteout(struct dentry *dentry,
 	if (IS_ERR(upper))
 		goto out_unlock;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if ((opaquedir && upper != opaquedir) ||
 	    (!opaquedir && ovl_dentry_upper(dentry) &&
 	     !ovl_matches_upper(dentry, upper))) {
@@ -815,7 +815,7 @@ static int ovl_remove_upper(struct dentry *dentry, bool is_dir,
 	if (IS_ERR(upper))
 		goto out_unlock;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if ((opaquedir && upper != opaquedir) ||
 	    (!opaquedir && !ovl_matches_upper(dentry, upper)))
 		goto out_dput_upper;
@@ -985,7 +985,7 @@ static char *ovl_get_redirect(struct dentry *dentry, bool abs_redirect)
 
 		/* If path is too long, fall back to userspace move */
 		if (thislen + (name[0] != '/') > buflen) {
-			ret = ERR_PTR(-EXDEV);
+			ret = ERR_PTR(-ERR(EXDEV));
 			spin_unlock(&d->d_lock);
 			goto out_put;
 		}
@@ -1054,7 +1054,7 @@ static int ovl_set_redirect(struct dentry *dentry, bool samedir)
 
 	err = ovl_check_setxattr(dentry, ovl_dentry_upper(dentry),
 				 OVL_XATTR_REDIRECT,
-				 redirect, strlen(redirect), -EXDEV);
+				 redirect, strlen(redirect), -ERR(EXDEV));
 	if (!err) {
 		spin_lock(&dentry->d_lock);
 		ovl_dentry_set_redirect(dentry, redirect);
@@ -1064,7 +1064,7 @@ static int ovl_set_redirect(struct dentry *dentry, bool samedir)
 		pr_warn_ratelimited("failed to set redirect (%i)\n",
 				    err);
 		/* Fall back to userspace copy-up */
-		err = -EXDEV;
+		err = -ERR(EXDEV);
 	}
 	return err;
 }
@@ -1091,14 +1091,14 @@ static int ovl_rename(struct inode *olddir, struct dentry *old,
 	const struct cred *old_cred = NULL;
 	LIST_HEAD(list);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (flags & ~(RENAME_EXCHANGE | RENAME_NOREPLACE))
 		goto out;
 
 	flags &= ~RENAME_NOREPLACE;
 
 	/* Don't copy up directory trees */
-	err = -EXDEV;
+	err = -ERR(EXDEV);
 	if (!ovl_can_move(old))
 		goto out;
 	if (!overwrite && !ovl_can_move(new))
@@ -1189,7 +1189,7 @@ static int ovl_rename(struct inode *olddir, struct dentry *old,
 	if (IS_ERR(olddentry))
 		goto out_unlock;
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (!ovl_matches_upper(old, olddentry))
 		goto out_dput_old;
 
@@ -1202,7 +1202,7 @@ static int ovl_rename(struct inode *olddir, struct dentry *old,
 	old_opaque = ovl_dentry_is_opaque(old);
 	new_opaque = ovl_dentry_is_opaque(new);
 
-	err = -ESTALE;
+	err = -ERR(ESTALE);
 	if (d_inode(new) && ovl_dentry_upper(new)) {
 		if (opaquedir) {
 			if (newdentry != opaquedir)
@@ -1229,7 +1229,7 @@ static int ovl_rename(struct inode *olddir, struct dentry *old,
 	if (ovl_type_merge_or_lower(old))
 		err = ovl_set_redirect(old, samedir);
 	else if (is_dir && !old_opaque && ovl_type_merge(new->d_parent))
-		err = ovl_set_opaque_xerr(old, olddentry, -EXDEV);
+		err = ovl_set_opaque_xerr(old, olddentry, -ERR(EXDEV));
 	if (err)
 		goto out_dput;
 
@@ -1237,7 +1237,7 @@ static int ovl_rename(struct inode *olddir, struct dentry *old,
 		err = ovl_set_redirect(new, samedir);
 	else if (!overwrite && new_is_dir && !new_opaque &&
 		 ovl_type_merge(old->d_parent))
-		err = ovl_set_opaque_xerr(new, newdentry, -EXDEV);
+		err = ovl_set_opaque_xerr(new, newdentry, -ERR(EXDEV));
 	if (err)
 		goto out_dput;
 

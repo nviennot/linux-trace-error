@@ -253,11 +253,11 @@ extern int bcma_core_pci_plat_dev_init(struct pci_dev *dev);
 #else
 static inline int bcma_core_pci_pcibios_map_irq(const struct pci_dev *dev)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline int bcma_core_pci_plat_dev_init(struct pci_dev *dev)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 

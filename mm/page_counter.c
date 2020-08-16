@@ -185,7 +185,7 @@ int page_counter_set_max(struct page_counter *counter, unsigned long nr_pages)
 		usage = atomic_long_read(&counter->usage);
 
 		if (usage > nr_pages)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		old = xchg(&counter->max, nr_pages);
 
@@ -253,7 +253,7 @@ int page_counter_memparse(const char *buf, const char *max,
 
 	bytes = memparse(buf, &end);
 	if (*end != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*nr_pages = min(bytes / PAGE_SIZE, (u64)PAGE_COUNTER_MAX);
 

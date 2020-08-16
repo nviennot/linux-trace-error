@@ -176,7 +176,7 @@ static int wm8776_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		master = 0x100;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iface = 0;
@@ -188,7 +188,7 @@ static int wm8776_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		master = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -201,7 +201,7 @@ static int wm8776_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		iface |= 0x0001;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -217,7 +217,7 @@ static int wm8776_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		iface |= 0x004;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Finally, write out the values */
@@ -258,7 +258,7 @@ static int wm8776_hw_params(struct snd_pcm_substream *substream,
 		ratio_shift = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set word length */
@@ -278,7 +278,7 @@ static int wm8776_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported sample size: %i\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Only need to set MCLK/LRCLK ratio if we're master */
@@ -293,7 +293,7 @@ static int wm8776_hw_params(struct snd_pcm_substream *substream,
 			dev_err(component->dev,
 				"Unable to configure MCLK ratio %d/%d\n",
 				wm8776->sysclk[dai->driver->id], params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dev_dbg(component->dev, "MCLK is %dfs\n", mclk_ratios[i]);
@@ -323,7 +323,7 @@ static int wm8776_set_sysclk(struct snd_soc_dai *dai,
 	struct wm8776_priv *wm8776 = snd_soc_component_get_drvdata(component);
 
 	if (WARN_ON(dai->driver->id >= ARRAY_SIZE(wm8776->sysclk)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8776->sysclk[dai->driver->id] = freq;
 

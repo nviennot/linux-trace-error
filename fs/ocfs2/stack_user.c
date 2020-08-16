@@ -217,7 +217,7 @@ static int ocfs2_live_connection_attach(struct ocfs2_cluster_connection *conn,
 	else {
 		printk(KERN_ERR
 		       "ocfs2: Userspace control daemon is not present\n");
-		rc = -ESRCH;
+		rc = -ERR(ESRCH);
 	}
 
 	mutex_unlock(&ocfs2_control_lock);
@@ -244,7 +244,7 @@ static int ocfs2_control_cfu(void *target, size_t target_len,
 	/* The T01 expects write(2) calls to have exactly one command */
 	if ((count != target_len) ||
 	    (count > sizeof(union ocfs2_control_message)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(target, buf, target_len))
 		return -EFAULT;
@@ -265,7 +265,7 @@ static ssize_t ocfs2_control_validate_protocol(struct file *file,
 		return ret;
 
 	if (strncmp(kbuf, OCFS2_CONTROL_PROTO, OCFS2_CONTROL_PROTO_LEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ocfs2_control_set_handshake_state(file,
 					  OCFS2_CONTROL_HANDSHAKE_PROTOCOL);
@@ -311,7 +311,7 @@ static int ocfs2_control_install_private(struct file *file)
 		set_p = 0;
 	} else if ((ocfs2_control_this_node >= 0) &&
 		   (ocfs2_control_this_node != p->op_this_node)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -320,7 +320,7 @@ static int ocfs2_control_install_private(struct file *file)
 	} else if (!list_empty(&ocfs2_live_connection_list) &&
 		   ((running_proto.pv_major != p->op_proto.pv_major) ||
 		    (running_proto.pv_minor != p->op_proto.pv_minor))) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -349,7 +349,7 @@ static int ocfs2_control_get_this_node(void)
 
 	mutex_lock(&ocfs2_control_lock);
 	if (ocfs2_control_this_node < 0)
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	else
 		rc = ocfs2_control_this_node;
 	mutex_unlock(&ocfs2_control_lock);
@@ -366,23 +366,23 @@ static int ocfs2_control_do_setnode_msg(struct file *file,
 
 	if (ocfs2_control_get_handshake_state(file) !=
 	    OCFS2_CONTROL_HANDSHAKE_PROTOCOL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strncmp(msg->tag, OCFS2_CONTROL_MESSAGE_SETNODE_OP,
 		    OCFS2_CONTROL_MESSAGE_OP_LEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((msg->space != ' ') || (msg->newline != '\n'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	msg->space = msg->newline = '\0';
 
 	nodenum = simple_strtol(msg->nodestr, &ptr, 16);
 	if (!ptr || *ptr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((nodenum == LONG_MIN) || (nodenum == LONG_MAX) ||
 	    (nodenum > INT_MAX) || (nodenum < 0))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	p->op_this_node = nodenum;
 
 	return ocfs2_control_install_private(file);
@@ -399,23 +399,23 @@ static int ocfs2_control_do_setversion_msg(struct file *file,
 
 	if (ocfs2_control_get_handshake_state(file) !=
 	    OCFS2_CONTROL_HANDSHAKE_PROTOCOL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strncmp(msg->tag, OCFS2_CONTROL_MESSAGE_SETVERSION_OP,
 		    OCFS2_CONTROL_MESSAGE_OP_LEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((msg->space1 != ' ') || (msg->space2 != ' ') ||
 	    (msg->newline != '\n'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	msg->space1 = msg->space2 = msg->newline = '\0';
 
 	major = simple_strtol(msg->major, &ptr, 16);
 	if (!ptr || *ptr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	minor = simple_strtol(msg->minor, &ptr, 16);
 	if (!ptr || *ptr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The major must be between 1 and 255, inclusive.  The minor
@@ -424,13 +424,13 @@ static int ocfs2_control_do_setversion_msg(struct file *file,
 	 */
 	if ((major == LONG_MIN) || (major == LONG_MAX) ||
 	    (major > (u8)-1) || (major < 1))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if ((minor == LONG_MIN) || (minor == LONG_MAX) ||
 	    (minor > (u8)-1) || (minor < 0))
-		return -ERANGE;
+		return -ERR(ERANGE);
 	if ((major != max->pv_major) ||
 	    (minor > max->pv_minor))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p->op_proto.pv_major = major;
 	p->op_proto.pv_minor = minor;
@@ -446,24 +446,24 @@ static int ocfs2_control_do_down_msg(struct file *file,
 
 	if (ocfs2_control_get_handshake_state(file) !=
 	    OCFS2_CONTROL_HANDSHAKE_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strncmp(msg->tag, OCFS2_CONTROL_MESSAGE_DOWN_OP,
 		    OCFS2_CONTROL_MESSAGE_OP_LEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((msg->space1 != ' ') || (msg->space2 != ' ') ||
 	    (msg->newline != '\n'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	msg->space1 = msg->space2 = msg->newline = '\0';
 
 	nodenum = simple_strtol(msg->nodestr, &p, 16);
 	if (!p || *p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((nodenum == LONG_MIN) || (nodenum == LONG_MAX) ||
 	    (nodenum > INT_MAX) || (nodenum < 0))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ocfs2_control_send_down(msg->uuid, nodenum);
 
@@ -499,7 +499,7 @@ static ssize_t ocfs2_control_message(struct file *file,
 			  OCFS2_CONTROL_MESSAGE_OP_LEN))
 		ret = ocfs2_control_do_down_msg(file, &msg.u_down);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 out:
 	return ret ? ret : count;
@@ -514,7 +514,7 @@ static ssize_t ocfs2_control_write(struct file *file,
 
 	switch (ocfs2_control_get_handshake_state(file)) {
 		case OCFS2_CONTROL_HANDSHAKE_INVALID:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 
 		case OCFS2_CONTROL_HANDSHAKE_READ:
@@ -529,7 +529,7 @@ static ssize_t ocfs2_control_write(struct file *file,
 
 		default:
 			BUG();
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 	}
 
@@ -922,7 +922,7 @@ static int get_protocol_version(struct ocfs2_cluster_connection *conn)
 
 		if ((pv.pv_major != running_proto.pv_major) ||
 				(pv.pv_minor > running_proto.pv_minor)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1047,7 +1047,7 @@ static int user_cluster_connect(struct ocfs2_cluster_connection *conn)
 		       "%u.%u because negotiated protocol is %u.%u\n",
 		       conn->cc_version.pv_major, conn->cc_version.pv_minor,
 		       running_proto.pv_major, running_proto.pv_minor);
-		rc = -EPROTO;
+		rc = -ERR(EPROTO);
 		ocfs2_live_connection_drop(lc);
 		lc = NULL;
 	}
@@ -1070,7 +1070,7 @@ static int user_cluster_this_node(struct ocfs2_cluster_connection *conn,
 	else if (lc->oc_type == NO_CONTROLD)
 		rc = atomic_read(&lc->oc_this_node);
 	else
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 
 	if (rc < 0)
 		return rc;

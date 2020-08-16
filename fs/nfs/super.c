@@ -769,7 +769,7 @@ static int nfs_verify_authflavors(struct nfs_fs_context *ctx,
 
 	dfprintk(MOUNT,
 		 "NFS: specified auth flavors not supported by server\n");
-	return -EACCES;
+	return -ERR(EACCES);
 
 out:
 	ctx->selected_flavor = flavor;
@@ -848,7 +848,7 @@ static struct nfs_server *nfs_try_mount_request(struct fs_context *fc)
 	unsigned int i;
 	bool tried_auth_unix = false;
 	bool auth_null_in_list = false;
-	struct nfs_server *server = ERR_PTR(-EACCES);
+	struct nfs_server *server = ERR_PTR(-ERR(EACCES));
 	rpc_authflavor_t authlist[NFS_MAX_SECFLAVORS];
 	unsigned int authlist_len = ARRAY_SIZE(authlist);
 
@@ -960,7 +960,7 @@ nfs_compare_remount_data(struct nfs_server *nfss,
 	    ctx->nfs_server.addrlen != nfss->nfs_client->cl_addrlen ||
 	    !rpc_cmp_addr((struct sockaddr *)&ctx->nfs_server.address,
 			  (struct sockaddr *)&nfss->nfs_client->cl_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1339,10 +1339,10 @@ static int param_set_portnr(const char *val, const struct kernel_param *kp)
 	int ret;
 
 	if (!val)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = kstrtoul(val, 0, &num);
 	if (ret || num > NFS_CALLBACK_MAXPORTNR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*((unsigned int *)kp->arg) = num;
 	return 0;
 }

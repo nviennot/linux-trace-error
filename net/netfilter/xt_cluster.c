@@ -127,11 +127,11 @@ static int xt_cluster_mt_checkentry(const struct xt_mtchk_param *par)
 	if (info->total_nodes > XT_CLUSTER_NODES_MAX) {
 		pr_info_ratelimited("you have exceeded the maximum number of cluster nodes (%u > %u)\n",
 				    info->total_nodes, XT_CLUSTER_NODES_MAX);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (info->node_mask >= (1ULL << info->total_nodes)) {
 		pr_info_ratelimited("node mask cannot exceed total number of nodes\n");
-		return -EDOM;
+		return -ERR(EDOM);
 	}
 
 	ret = nf_ct_netns_get(par->net, par->family);

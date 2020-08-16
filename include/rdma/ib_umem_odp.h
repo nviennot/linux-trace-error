@@ -137,7 +137,7 @@ static inline struct ib_umem_odp *
 ib_umem_odp_get(struct ib_device *device, unsigned long addr, size_t size,
 		int access, const struct mmu_interval_notifier_ops *ops)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void ib_umem_odp_release(struct ib_umem_odp *umem_odp) {}

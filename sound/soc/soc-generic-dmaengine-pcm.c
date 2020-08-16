@@ -53,7 +53,7 @@ int snd_dmaengine_pcm_prepare_slave_config(struct snd_pcm_substream *substream,
 	if (rtd->num_cpus > 1) {
 		dev_err(rtd->dev,
 			"%s doesn't support Multi CPU yet\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dma_data = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
@@ -115,7 +115,7 @@ dmaengine_pcm_set_runtime_hwparams(struct snd_soc_component *component,
 	if (rtd->num_cpus > 1) {
 		dev_err(rtd->dev,
 			"%s doesn't support Multi CPU yet\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (pcm->config && pcm->config->pcm_hardware)
@@ -260,7 +260,7 @@ static int dmaengine_pcm_new(struct snd_soc_component *component,
 		if (!pcm->chan[i]) {
 			dev_err(component->dev,
 				"Missing dma channel for stream: %d\n", i);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_pcm_set_managed_buffer(substream,

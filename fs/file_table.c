@@ -89,7 +89,7 @@ int proc_nr_files(struct ctl_table *table, int write,
 int proc_nr_files(struct ctl_table *table, int write,
                      void *buffer, size_t *lenp, loff_t *ppos)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif
 
@@ -160,7 +160,7 @@ over:
 		pr_info("VFS: file-max limit %lu reached\n", get_max_files());
 		old_max = get_nr_files();
 	}
-	return ERR_PTR(-ENFILE);
+	return ERR_PTR(-ERR(ENFILE));
 }
 
 /*

@@ -86,7 +86,7 @@ static int aic26_hw_params(struct snd_pcm_substream *substream,
 	case 44100: fsref = 44100; divisor = AIC26_DIV_1; break;
 	case 48000: fsref = 48000; divisor = AIC26_DIV_1; break;
 	default:
-		dev_dbg(&aic26->spi->dev, "bad rate\n"); return -EINVAL;
+		dev_dbg(&aic26->spi->dev, "bad rate\n"); return -ERR(EINVAL);
 	}
 
 	/* select data word length */
@@ -96,7 +96,7 @@ static int aic26_hw_params(struct snd_pcm_substream *substream,
 	case 24: wlen = AIC26_WLEN_24; break;
 	case 32: wlen = AIC26_WLEN_32; break;
 	default:
-		dev_dbg(&aic26->spi->dev, "bad format\n"); return -EINVAL;
+		dev_dbg(&aic26->spi->dev, "bad format\n"); return -ERR(EINVAL);
 	}
 
 	/**
@@ -164,7 +164,7 @@ static int aic26_set_sysclk(struct snd_soc_dai *codec_dai,
 
 	/* MCLK needs to fall between 2MHz and 50 MHz */
 	if ((freq < 2000000) || (freq > 50000000))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	aic26->mclk = freq;
 	return 0;
@@ -183,7 +183,7 @@ static int aic26_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBM_CFM: aic26->master = 1; break;
 	case SND_SOC_DAIFMT_CBS_CFS: aic26->master = 0; break;
 	default:
-		dev_dbg(&aic26->spi->dev, "bad master\n"); return -EINVAL;
+		dev_dbg(&aic26->spi->dev, "bad master\n"); return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -193,7 +193,7 @@ static int aic26_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_RIGHT_J: aic26->datfm = AIC26_DATFM_RIGHTJ; break;
 	case SND_SOC_DAIFMT_LEFT_J:  aic26->datfm = AIC26_DATFM_LEFTJ; break;
 	default:
-		dev_dbg(&aic26->spi->dev, "bad format\n"); return -EINVAL;
+		dev_dbg(&aic26->spi->dev, "bad format\n"); return -ERR(EINVAL);
 	}
 
 	return 0;

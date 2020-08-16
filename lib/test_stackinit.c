@@ -384,7 +384,7 @@ static int __init test_stackinit_init(void)
 	else
 		pr_err("failures: %u\n", failures);
 
-	return failures ? -EINVAL : 0;
+	return failures ? -ERR(EINVAL) : 0;
 }
 module_init(test_stackinit_init);
 

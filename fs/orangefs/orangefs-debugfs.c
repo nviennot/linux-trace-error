@@ -227,7 +227,7 @@ void orangefs_debugfs_cleanup(void)
 /* open ORANGEFS_KMOD_DEBUG_HELP_FILE */
 static int orangefs_debug_help_open(struct inode *inode, struct file *file)
 {
-	int rc = -ENODEV;
+	int rc = -ERR(ENODEV);
 	int ret;
 
 	gossip_debug(GOSSIP_DEBUGFS_DEBUG,
@@ -334,7 +334,7 @@ out:
 /* open ORANGEFS_KMOD_DEBUG_FILE or ORANGEFS_CLIENT_DEBUG_FILE.*/
 static int orangefs_debug_open(struct inode *inode, struct file *file)
 {
-	int rc = -ENODEV;
+	int rc = -ERR(ENODEV);
 
 	gossip_debug(GOSSIP_DEBUGFS_DEBUG,
 		     "%s: orangefs_debug_disabled: %d\n",
@@ -516,7 +516,7 @@ out:
 static int orangefs_prepare_cdm_array(char *debug_array_string)
 {
 	int i;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 	char *cds_head = NULL;
 	char *cds_delimiter = NULL;
 	int keyword_len = 0;
@@ -603,7 +603,7 @@ int orangefs_prepare_debugfs_help_string(int at_boot)
 	size_t result_size;
 	size_t i;
 	char *new;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_UTILS_DEBUG, "%s: start\n", __func__);
 
@@ -912,7 +912,7 @@ int orangefs_debugfs_new_client_mask(void __user *arg)
 			     sizeof(struct dev_mask2_info_s));
 
 	if (ret != 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	client_debug_mask.mask1 = mask2_info.mask1_value;
 	client_debug_mask.mask2 = mask2_info.mask2_value;
@@ -989,7 +989,7 @@ int orangefs_debugfs_new_debug(void __user *arg)
 			     sizeof(mask_info));
 
 	if (ret != 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (mask_info.mask_type == KERNEL_MASK) {
 		if ((mask_info.mask_value == 0)
@@ -1020,7 +1020,7 @@ int orangefs_debugfs_new_debug(void __user *arg)
 			llu(mask_info.mask_value));
 	} else {
 		gossip_err("Invalid mask type....\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;

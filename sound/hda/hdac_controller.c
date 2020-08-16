@@ -153,7 +153,7 @@ int snd_hdac_bus_send_cmd(struct hdac_bus *bus, unsigned int val)
 	if (wp == 0xffff) {
 		/* something wrong, controller likely turned to D3 */
 		spin_unlock_irq(&bus->reg_lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	wp++;
 	wp %= AZX_MAX_CORB_ENTRIES;
@@ -162,7 +162,7 @@ int snd_hdac_bus_send_cmd(struct hdac_bus *bus, unsigned int val)
 	if (wp == rp) {
 		/* oops, it's full */
 		spin_unlock_irq(&bus->reg_lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	bus->rirb.cmds[addr]++;
@@ -288,7 +288,7 @@ int snd_hdac_bus_get_response(struct hdac_bus *bus, unsigned int addr,
 	if (!bus->polling_mode)
 		finish_wait(&bus->rirb_wq, &wait);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL_GPL(snd_hdac_bus_get_response);
 
@@ -442,7 +442,7 @@ int snd_hdac_bus_reset_link(struct hdac_bus *bus, bool full_reset)
 	/* check to see if controller is ready */
 	if (!snd_hdac_chip_readb(bus, GCTL)) {
 		dev_dbg(bus->dev, "controller not ready!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* detect codecs */
@@ -626,7 +626,7 @@ int snd_hdac_bus_alloc_stream_pages(struct hdac_bus *bus)
 	}
 
 	if (WARN_ON(!num_streams))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* allocate memory for the position buffer */
 	err = snd_dma_alloc_pages(dma_type, bus->dev,
 				  num_streams * 8, &bus->posbuf);

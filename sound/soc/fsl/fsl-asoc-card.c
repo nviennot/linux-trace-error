@@ -387,7 +387,7 @@ static int fsl_asoc_card_audmux_init(struct device_node *np,
 		break;
 	default:
 		if (!fsl_asoc_card_is_ac97(priv))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (fsl_asoc_card_is_ac97(priv)) {
@@ -500,14 +500,14 @@ static int fsl_asoc_card_probe(struct platform_device *pdev)
 		cpu_np = of_parse_phandle(np, "ssi-controller", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "CPU phandle missing or invalid\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
 	cpu_pdev = of_find_device_by_node(cpu_np);
 	if (!cpu_pdev) {
 		dev_err(&pdev->dev, "failed to find CPU DAI device\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto fail;
 	}
 
@@ -575,7 +575,7 @@ static int fsl_asoc_card_probe(struct platform_device *pdev)
 		priv->dai_fmt = SND_SOC_DAIFMT_AC97;
 	} else {
 		dev_err(&pdev->dev, "unknown Device Tree compatible\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto asrc_fail;
 	}
 
@@ -676,7 +676,7 @@ static int fsl_asoc_card_probe(struct platform_device *pdev)
 					   &priv->asrc_rate);
 		if (ret) {
 			dev_err(&pdev->dev, "failed to get output rate\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto asrc_fail;
 		}
 

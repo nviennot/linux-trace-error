@@ -505,7 +505,7 @@ static int bitmap_set_region(const struct region *r,
 	unsigned int start;
 
 	if (r->end >= nbits)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	for (start = r->start; start <= r->end; start += r->group_len)
 		bitmap_set(bitmap, start, min(r->end - start + 1, r->off));
@@ -516,7 +516,7 @@ static int bitmap_set_region(const struct region *r,
 static int bitmap_check_region(const struct region *r)
 {
 	if (r->start > r->end || r->group_len == 0 || r->off > r->group_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -528,9 +528,9 @@ static const char *bitmap_getnum(const char *str, unsigned int *num)
 
 	len = _parse_integer(str, 10, &n);
 	if (!len)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (len & KSTRTOX_OVERFLOW || n != (unsigned int)n)
-		return ERR_PTR(-EOVERFLOW);
+		return ERR_PTR(-ERR(EOVERFLOW));
 
 	*num = n;
 	return str + len;
@@ -581,7 +581,7 @@ static const char *bitmap_parse_region(const char *str, struct region *r)
 		goto no_end;
 
 	if (*str != '-')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	str = bitmap_getnum(str + 1, &r->end);
 	if (IS_ERR(str))
@@ -591,14 +591,14 @@ static const char *bitmap_parse_region(const char *str, struct region *r)
 		goto no_pattern;
 
 	if (*str != ':')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	str = bitmap_getnum(str + 1, &r->off);
 	if (IS_ERR(str))
 		return str;
 
 	if (*str != '/')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return bitmap_getnum(str + 1, &r->group_len);
 
@@ -703,7 +703,7 @@ static const char *bitmap_get_x32_reverse(const char *start,
 	for (i = 0; i < 32; i += 4) {
 		c = hex_to_bin(*end--);
 		if (c < 0)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		ret |= c << i;
 
@@ -712,7 +712,7 @@ static const char *bitmap_get_x32_reverse(const char *start,
 	}
 
 	if (hex_to_bin(*end--) >= 0)
-		return ERR_PTR(-EOVERFLOW);
+		return ERR_PTR(-ERR(EOVERFLOW));
 out:
 	*num = ret;
 	return end;
@@ -749,7 +749,7 @@ int bitmap_parse(const char *start, unsigned int buflen,
 			break;
 
 		if (!chunks--)
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 
 #if defined(CONFIG_64BIT) && defined(__BIG_ENDIAN)
 		end = bitmap_get_x32_reverse(start, end, &bitmap[chunk ^ 1]);
@@ -767,7 +767,7 @@ int bitmap_parse(const char *start, unsigned int buflen,
 	}
 
 	if (find_next_bit(maskp, unset_bit, nmaskbits) != unset_bit)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	return 0;
 }
@@ -1215,7 +1215,7 @@ EXPORT_SYMBOL(bitmap_release_region);
 int bitmap_allocate_region(unsigned long *bitmap, unsigned int pos, int order)
 {
 	if (!__reg_op(bitmap, pos, order, REG_OP_ISFREE))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return __reg_op(bitmap, pos, order, REG_OP_ALLOC);
 }
 EXPORT_SYMBOL(bitmap_allocate_region);

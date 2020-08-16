@@ -116,23 +116,23 @@ static int debugfs_parse_options(char *data, struct debugfs_mount_opts *opts)
 		switch (token) {
 		case Opt_uid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			uid = make_kuid(current_user_ns(), option);
 			if (!uid_valid(uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->uid = uid;
 			break;
 		case Opt_gid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			gid = make_kgid(current_user_ns(), option);
 			if (!gid_valid(gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->gid = gid;
 			break;
 		case Opt_mode:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->mode = option & S_IALLUGO;
 			break;
 		/*
@@ -333,7 +333,7 @@ static struct dentry *start_creating(const char *name, struct dentry *parent)
 
 	inode_lock(d_inode(parent));
 	if (unlikely(IS_DEADDIR(d_inode(parent))))
-		dentry = ERR_PTR(-ENOENT);
+		dentry = ERR_PTR(-ERR(ENOENT));
 	else
 		dentry = lookup_one_len(name, parent, strlen(name));
 	if (!IS_ERR(dentry) && d_really_is_positive(dentry)) {
@@ -344,7 +344,7 @@ static struct dentry *start_creating(const char *name, struct dentry *parent)
 			pr_err("File '%s' in directory '%s' already present!\n",
 			       name, parent->d_name.name);
 		dput(dentry);
-		dentry = ERR_PTR(-EEXIST);
+		dentry = ERR_PTR(-ERR(EEXIST));
 	}
 
 	if (IS_ERR(dentry)) {
@@ -773,7 +773,7 @@ exit:
 	unlock_rename(new_dir, old_dir);
 	if (IS_ERR(dentry))
 		return dentry;
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 EXPORT_SYMBOL_GPL(debugfs_rename);
 

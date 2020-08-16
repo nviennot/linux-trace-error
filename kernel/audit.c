@@ -419,7 +419,7 @@ static int audit_do_config_change(char *function_name, u32 *to_change, u32 new)
 		*to_change = new;
 	/* Not allowed, update reason */
 	else if (rc == 0)
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 	return rc;
 }
 
@@ -443,7 +443,7 @@ static int audit_set_enabled(u32 state)
 {
 	int rc;
 	if (state > AUDIT_LOCKED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc =  audit_do_config_change("audit_enabled", &audit_enabled, state);
 	if (!rc)
@@ -457,7 +457,7 @@ static int audit_set_failure(u32 state)
 	if (state != AUDIT_FAIL_SILENT
 	    && state != AUDIT_FAIL_PRINTK
 	    && state != AUDIT_FAIL_PANIC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return audit_do_config_change("audit_failure", &audit_failure, state);
 }
@@ -496,7 +496,7 @@ static int auditd_set(struct pid *pid, u32 portid, struct net *net)
 	struct auditd_connection *ac_old, *ac_new;
 
 	if (!pid || !net)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ac_new = kzalloc(sizeof(*ac_new), GFP_KERNEL);
 	if (!ac_new)
@@ -669,7 +669,7 @@ static int auditd_send_unicast_skb(struct sk_buff *skb)
 	if (!ac) {
 		rcu_read_unlock();
 		kfree_skb(skb);
-		rc = -ECONNREFUSED;
+		rc = -ERR(ECONNREFUSED);
 		goto err;
 	}
 	net = get_net(ac->net);
@@ -1009,13 +1009,13 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
 	 * support non init namespaces!!
 	 */
 	if (current_user_ns() != &init_user_ns)
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 
 	switch (msg_type) {
 	case AUDIT_LIST:
 	case AUDIT_ADD:
 	case AUDIT_DEL:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	case AUDIT_GET:
 	case AUDIT_SET:
 	case AUDIT_GET_FEATURE:
@@ -1031,19 +1031,19 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
 		/* Only support auditd and auditctl in initial pid namespace
 		 * for now. */
 		if (task_active_pid_ns(current) != &init_pid_ns)
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (!netlink_capable(skb, CAP_AUDIT_CONTROL))
-			err = -EPERM;
+			err = -ERR(EPERM);
 		break;
 	case AUDIT_USER:
 	case AUDIT_FIRST_USER_MSG ... AUDIT_LAST_USER_MSG:
 	case AUDIT_FIRST_USER_MSG2 ... AUDIT_LAST_USER_MSG2:
 		if (!netlink_capable(skb, CAP_AUDIT_WRITE))
-			err = -EPERM;
+			err = -ERR(EPERM);
 		break;
 	default:  /* bad msg */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	return err;
@@ -1134,7 +1134,7 @@ static int audit_set_feature(struct audit_features *uaf)
 		if (old_lock && (new_feature != old_feature)) {
 			audit_log_feature_change(i, old_feature, new_feature,
 						 old_lock, new_lock, 0);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 	}
 	/* nothing invalid, do the changes */
@@ -1244,7 +1244,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 			/* Sanity check - PID values must match. Setting
 			 * pid to 0 is how auditd ends auditing. */
 			if (new_pid && (new_pid != pid_vnr(req_pid)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			/* test the auditd connection */
 			audit_replace(req_pid);
@@ -1255,13 +1255,13 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 				if (new_pid) {
 					audit_log_config_change("audit_pid",
 							new_pid, auditd_pid, 0);
-					return -EEXIST;
+					return -ERR(EEXIST);
 				}
 				/* only current auditd can unregister itself */
 				if (pid_vnr(req_pid) != auditd_pid) {
 					audit_log_config_change("audit_pid",
 							new_pid, auditd_pid, 0);
-					return -EACCES;
+					return -ERR(EACCES);
 				}
 			}
 
@@ -1302,9 +1302,9 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		}
 		if (s.mask & AUDIT_STATUS_BACKLOG_WAIT_TIME) {
 			if (sizeof(s) > (size_t)nlh->nlmsg_len)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (s.backlog_wait_time > 10*AUDIT_BACKLOG_WAIT_TIME)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			err = audit_set_backlog_wait_time(s.backlog_wait_time);
 			if (err < 0)
 				return err;
@@ -1324,7 +1324,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		break;
 	case AUDIT_SET_FEATURE:
 		if (data_len < sizeof(struct audit_features))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = audit_set_feature(data);
 		if (err)
 			return err;
@@ -1336,7 +1336,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 			return 0;
 		/* exit early if there isn't at least one character to print */
 		if (data_len < 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = audit_filter(msg_type, AUDIT_FILTER_USER);
 		if (err == 1) { /* match or error */
@@ -1367,7 +1367,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 	case AUDIT_ADD_RULE:
 	case AUDIT_DEL_RULE:
 		if (data_len < sizeof(struct audit_rule_data))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (audit_enabled == AUDIT_LOCKED) {
 			audit_log_common_recv_msg(audit_context(), &ab,
 						  AUDIT_CONFIG_CHANGE);
@@ -1376,7 +1376,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 						"add_rule" : "remove_rule",
 					 audit_enabled);
 			audit_log_end(ab);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		err = audit_rule_change(msg_type, seq, data, data_len);
 		break;
@@ -1396,7 +1396,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		size_t msglen = data_len;
 		char *old, *new;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (msglen < 2 * sizeof(u32))
 			break;
 		memcpy(sizes, bufp, 2 * sizeof(u32));
@@ -1473,7 +1473,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		/* check if new data is valid */
 		if ((s.enabled != 0 && s.enabled != 1) ||
 		    (s.log_passwd != 0 && s.log_passwd != 1))
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 
 		if (err)
 			t = READ_ONCE(current->signal->audit_tty);
@@ -1494,7 +1494,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		break;
 	}
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -1571,7 +1571,7 @@ static int audit_multicast_bind(struct net *net, int group)
 	int err = 0;
 
 	if (!capable(CAP_AUDIT_READ))
-		err = -EPERM;
+		err = -ERR(EPERM);
 	audit_log_multicast(group, "connect", err);
 	return err;
 }
@@ -2240,14 +2240,14 @@ static int audit_set_loginuid_perm(kuid_t loginuid)
 		return 0;
 	/* if AUDIT_FEATURE_LOGINUID_IMMUTABLE means never ever allow a change*/
 	if (is_audit_feature_set(AUDIT_FEATURE_LOGINUID_IMMUTABLE))
-		return -EPERM;
+		return -ERR(EPERM);
 	/* it is set, you need permission */
 	if (!capable(CAP_AUDIT_CONTROL))
-		return -EPERM;
+		return -ERR(EPERM);
 	/* reject if this is not an unset and we don't allow that */
 	if (is_audit_feature_set(AUDIT_FEATURE_ONLY_UNSET_LOGINUID)
 				 && uid_valid(loginuid))
-		return -EPERM;
+		return -ERR(EPERM);
 	return 0;
 }
 

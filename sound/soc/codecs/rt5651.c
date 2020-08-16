@@ -1291,12 +1291,12 @@ static int rt5651_hw_params(struct snd_pcm_substream *substream,
 
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	frame_size = snd_soc_params_to_frame_size(params);
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n", frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	bclk_ms = frame_size > 32 ? 1 : 0;
 	rt5651->bclk[dai->id] = rt5651->lrck[dai->id] * (32 << bclk_ms);
@@ -1319,7 +1319,7 @@ static int rt5651_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5651_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -1339,7 +1339,7 @@ static int rt5651_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Wrong dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1360,7 +1360,7 @@ static int rt5651_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt5651->master[dai->id] = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1370,7 +1370,7 @@ static int rt5651_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5651_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1386,7 +1386,7 @@ static int rt5651_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT5651_I2S_DF_PCM_B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -1402,7 +1402,7 @@ static int rt5651_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Wrong dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1431,7 +1431,7 @@ static int rt5651_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT5651_PWR_ANLG2,
 		RT5651_PWR_PLL, pll_bit);
@@ -1482,7 +1482,7 @@ static int rt5651_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -2238,7 +2238,7 @@ static int rt5651_i2c_probe(struct i2c_client *i2c,
 	if (ret != RT5651_DEVICE_ID_VALUE) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5651\n", ret);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt5651->regmap, RT5651_RESET, 0);
@@ -2268,7 +2268,7 @@ static int rt5651_i2c_probe(struct i2c_client *i2c,
 	} else {
 		dev_warn(&i2c->dev, "Failed to reguest IRQ %d: %d\n",
 			 rt5651->irq, ret);
-		rt5651->irq = -ENXIO;
+		rt5651->irq = -ERR(ENXIO);
 	}
 
 	ret = devm_snd_soc_register_component(&i2c->dev,

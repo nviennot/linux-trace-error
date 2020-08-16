@@ -131,7 +131,7 @@ static void *trigger_start(struct seq_file *m, loff_t *pos)
 	mutex_lock(&event_mutex);
 	event_file = event_file_data(m->private);
 	if (unlikely(!event_file))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (list_empty(&event_file->triggers))
 		return *pos == 0 ? SHOW_AVAILABLE_TRIGGERS : NULL;
@@ -185,7 +185,7 @@ static int event_trigger_regex_open(struct inode *inode, struct file *file)
 
 	if (unlikely(!event_file_data(file))) {
 		mutex_unlock(&event_mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if ((file->f_mode & FMODE_WRITE) &&
@@ -218,7 +218,7 @@ int trigger_process_regex(struct trace_event_file *file, char *buff)
 {
 	char *command, *next;
 	struct event_command *p;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	next = buff = skip_spaces(buff);
 	command = strsep(&next, ": \t");
@@ -254,7 +254,7 @@ static ssize_t event_trigger_regex_write(struct file *file,
 		return 0;
 
 	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = memdup_user_nul(ubuf, cnt);
 	if (IS_ERR(buf))
@@ -267,7 +267,7 @@ static ssize_t event_trigger_regex_write(struct file *file,
 	if (unlikely(!event_file)) {
 		mutex_unlock(&event_mutex);
 		kfree(buf);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	ret = trigger_process_regex(event_file, buf);
 	mutex_unlock(&event_mutex);
@@ -334,7 +334,7 @@ __init int register_event_command(struct event_command *cmd)
 	mutex_lock(&trigger_cmd_mutex);
 	list_for_each_entry(p, &trigger_commands, list) {
 		if (strcmp(cmd->name, p->name) == 0) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out_unlock;
 		}
 	}
@@ -352,7 +352,7 @@ __init int register_event_command(struct event_command *cmd)
 __init int unregister_event_command(struct event_command *cmd)
 {
 	struct event_command *p, *n;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	mutex_lock(&trigger_cmd_mutex);
 	list_for_each_entry_safe(p, n, &trigger_commands, list) {
@@ -549,7 +549,7 @@ static int register_trigger(char *glob, struct event_trigger_ops *ops,
 
 	list_for_each_entry(test, &file->triggers, list) {
 		if (test->cmd_ops->trigger_type == data->cmd_ops->trigger_type) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto out;
 		}
 	}
@@ -669,7 +669,7 @@ event_trigger_callback(struct event_command *cmd_ops,
 	if (trigger) {
 		number = strsep(&trigger, ":");
 
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (!strlen(number))
 			goto out_free;
 
@@ -703,7 +703,7 @@ event_trigger_callback(struct event_command *cmd_ops,
 	 */
 	if (!ret) {
 		cmd_ops->unreg(glob, trigger_ops, trigger_data, file);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	} else if (ret > 0)
 		ret = 0;
 
@@ -741,7 +741,7 @@ int set_trigger_filter(char *filter_str,
 {
 	struct event_trigger_data *data = trigger_data;
 	struct event_filter *filter = NULL, *tmp;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	char *s;
 
 	if (!filter_str) /* clear the current filter */
@@ -1374,12 +1374,12 @@ int event_enable_trigger_func(struct event_command *cmd_ops,
 	int ret;
 
 	if (!param)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* separate the trigger from the filter (s:e:n [if filter]) */
 	trigger = strsep(&param, " \t");
 	if (!trigger)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (param) {
 		param = skip_spaces(param);
 		if (!*param)
@@ -1388,11 +1388,11 @@ int event_enable_trigger_func(struct event_command *cmd_ops,
 
 	system = strsep(&trigger, ":");
 	if (!trigger)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	event = strsep(&trigger, ":");
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	event_enable_file = find_event_file(tr, system, event);
 	if (!event_enable_file)
 		goto out;
@@ -1444,7 +1444,7 @@ int event_enable_trigger_func(struct event_command *cmd_ops,
 	if (trigger) {
 		number = strsep(&trigger, ":");
 
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (!strlen(number))
 			goto out_free;
 
@@ -1471,7 +1471,7 @@ int event_enable_trigger_func(struct event_command *cmd_ops,
 	/* Don't let event modules unload while probe registered */
 	ret = try_module_get(event_enable_file->event_call->mod);
 	if (!ret) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_free;
 	}
 
@@ -1485,7 +1485,7 @@ int event_enable_trigger_func(struct event_command *cmd_ops,
 	 * Consider no functions a failure too.
 	 */
 	if (!ret) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out_disable;
 	} else if (ret < 0)
 		goto out_disable;
@@ -1525,7 +1525,7 @@ int event_enable_register_trigger(char *glob,
 		    (test->cmd_ops->trigger_type ==
 		     data->cmd_ops->trigger_type) &&
 		    (test_enable_data->file == enable_data->file)) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto out;
 		}
 	}

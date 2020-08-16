@@ -88,17 +88,17 @@ static int smc_tx_wait(struct smc_sock *smc, int flags)
 		    (sk->sk_shutdown & SEND_SHUTDOWN) ||
 		    conn->killed ||
 		    conn->local_tx_ctrl.conn_state_flags.peer_done_writing) {
-			rc = -EPIPE;
+			rc = -ERR(EPIPE);
 			break;
 		}
 		if (smc_cdc_rxed_any_close(conn)) {
-			rc = -ECONNRESET;
+			rc = -ERR(ECONNRESET);
 			break;
 		}
 		if (!timeo) {
 			/* ensure EPOLLOUT is subsequently generated */
 			set_bit(SOCK_NOSPACE, &sk->sk_socket->flags);
-			rc = -EAGAIN;
+			rc = -ERR(EAGAIN);
 			break;
 		}
 		if (signal_pending(current)) {
@@ -147,19 +147,19 @@ int smc_tx_sendmsg(struct smc_sock *smc, struct msghdr *msg, size_t len)
 	sk_clear_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 
 	if (sk->sk_err || (sk->sk_shutdown & SEND_SHUTDOWN)) {
-		rc = -EPIPE;
+		rc = -ERR(EPIPE);
 		goto out_err;
 	}
 
 	while (msg_data_left(msg)) {
 		if (sk->sk_state == SMC_INIT)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		if (smc->sk.sk_shutdown & SEND_SHUTDOWN ||
 		    (smc->sk.sk_err == ECONNABORTED) ||
 		    conn->killed)
-			return -EPIPE;
+			return -ERR(EPIPE);
 		if (smc_cdc_rxed_any_close(conn))
-			return send_done ?: -ECONNRESET;
+			return send_done ?: -ERR(ECONNRESET);
 
 		if (msg->msg_flags & MSG_OOB)
 			conn->local_tx_ctrl.prod_flags.urg_data_pending = 1;
@@ -497,7 +497,7 @@ static int smcr_tx_sndbuf_nonempty(struct smc_connection *conn)
 			if (smc->sk.sk_err == ECONNABORTED)
 				return sock_error(&smc->sk);
 			if (conn->killed)
-				return -EPIPE;
+				return -ERR(EPIPE);
 			rc = 0;
 			mod_delayed_work(system_wq, &conn->tx_work,
 					 SMC_TX_WORK_DELAY);
@@ -510,7 +510,7 @@ static int smcr_tx_sndbuf_nonempty(struct smc_connection *conn)
 		/* link of connection changed, tx_work will restart */
 		smc_wr_tx_put_slot(link,
 				   (struct smc_wr_tx_pend_priv *)pend);
-		rc = -ENOLINK;
+		rc = -ERR(ENOLINK);
 		goto out_unlock;
 	}
 	if (!pflags->urg_data_present) {
@@ -558,7 +558,7 @@ int smc_tx_sndbuf_nonempty(struct smc_connection *conn)
 
 	if (conn->killed ||
 	    conn->local_rx_ctrl.conn_state_flags.peer_conn_abort)
-		return -EPIPE;	/* connection being aborted */
+		return -ERR(EPIPE);	/* connection being aborted */
 	if (conn->lgr->is_smcd)
 		rc = smcd_tx_sndbuf_nonempty(conn);
 	else

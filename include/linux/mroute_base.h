@@ -335,7 +335,7 @@ static inline struct mr_mfc *mr_mfc_find_any(struct mr_table *mrt,
 static inline int mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
 				 struct mr_mfc *c, struct rtmsg *rtm)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int
@@ -348,7 +348,7 @@ mr_rtm_dumproute(struct sk_buff *skb, struct netlink_callback *cb,
 			     int cmd, int flags),
 		 spinlock_t *lock, struct fib_dump_filter *filter)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int mr_dump(struct net *net, struct notifier_block *nb,
@@ -360,7 +360,7 @@ static inline int mr_dump(struct net *net, struct notifier_block *nb,
 						      struct mr_table *mrt),
 			  rwlock_t *mrt_lock, struct netlink_ext_ack *extack)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

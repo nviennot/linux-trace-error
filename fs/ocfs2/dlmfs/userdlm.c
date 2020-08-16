@@ -421,7 +421,7 @@ int user_dlm_cluster_lock(struct user_lock_res *lockres,
 	    level != DLM_LOCK_PR) {
 		mlog(ML_ERROR, "lockres %.*s: invalid request!\n",
 		     lockres->l_namelen, lockres->l_name);
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -430,7 +430,7 @@ int user_dlm_cluster_lock(struct user_lock_res *lockres,
 
 again:
 	if (signal_pending(current)) {
-		status = -ERESTARTSYS;
+		status = -ERR(ERESTARTSYS);
 		goto bail;
 	}
 
@@ -592,7 +592,7 @@ void user_dlm_lock_res_init(struct user_lock_res *lockres,
 
 int user_dlm_destroy_lock(struct user_lock_res *lockres)
 {
-	int status = -EBUSY;
+	int status = -ERR(EBUSY);
 	struct ocfs2_cluster_connection *conn =
 		cluster_connection_from_user_lockres(lockres);
 

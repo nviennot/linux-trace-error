@@ -308,7 +308,7 @@ static int _get_block_create_0(struct inode *inode, sector_t block,
 		if (p)
 			kunmap(bh_result->b_page);
 		if (result == IO_ERROR)
-			return -EIO;
+			return -ERR(EIO);
 		/*
 		 * We do not return -ENOENT if there is a hole but page is
 		 * uptodate, because it means that there is some MMAPED data
@@ -316,7 +316,7 @@ static int _get_block_create_0(struct inode *inode, sector_t block,
 		 */
 		if ((args & GET_BLOCK_NO_HOLE)
 		    && !PageUptodate(bh_result->b_page)) {
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		return 0;
 	}
@@ -348,7 +348,7 @@ static int _get_block_create_0(struct inode *inode, sector_t block,
 			 */
 		if ((args & GET_BLOCK_NO_HOLE)
 			    && !PageUptodate(bh_result->b_page)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 
 		pathrelse(&path);
@@ -365,7 +365,7 @@ static int _get_block_create_0(struct inode *inode, sector_t block,
 		pathrelse(&path);
 		if (p)
 			kunmap(bh_result->b_page);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/*
@@ -454,7 +454,7 @@ finished:
 	pathrelse(&path);
 
 	if (result == IO_ERROR)
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * this buffer has valid data, but isn't valid for io.  mapping it to
@@ -473,7 +473,7 @@ static int reiserfs_bmap(struct inode *inode, sector_t block,
 			 struct buffer_head *bh_result, int create)
 {
 	if (!file_capable(inode, block))
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	reiserfs_write_lock(inode->i_sb);
 	/* do not read the direct item */
@@ -539,7 +539,7 @@ static int reiserfs_get_blocks_direct_io(struct inode *inode,
 		 * offset in the file fail by unmapping the buffer
 		 */
 		clear_buffer_mapped(bh_result);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	/*
@@ -585,7 +585,7 @@ static int convert_tail_for_hole(struct inode *inode,
 	int retval = 0;
 
 	if ((tail_offset & (bh_result->b_size - 1)) != 1)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* always try to read until the end of the block */
 	tail_start = tail_offset & (PAGE_SIZE - 1);
@@ -690,7 +690,7 @@ int reiserfs_get_block(struct inode *inode, sector_t block,
 
 	if (!file_capable(inode, block)) {
 		reiserfs_write_unlock(inode->i_sb);
-		return -EFBIG;
+		return -ERR(EFBIG);
 	}
 
 	/*
@@ -740,7 +740,7 @@ research:
 
 	retval = search_for_position_by_key(inode->i_sb, &key, &path);
 	if (retval == IO_ERROR) {
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto failure;
 	}
 
@@ -782,9 +782,9 @@ research:
 				goto research;
 			}
 			if (repeat == QUOTA_EXCEEDED)
-				retval = -EDQUOT;
+				retval = -ERR(EDQUOT);
 			else
-				retval = -ENOSPC;
+				retval = -ERR(ENOSPC);
 			goto failure;
 		}
 
@@ -1124,13 +1124,13 @@ research:
 
 		retval = search_for_position_by_key(inode->i_sb, &key, &path);
 		if (retval == IO_ERROR) {
-			retval = -EIO;
+			retval = -ERR(EIO);
 			goto failure;
 		}
 		if (retval == POSITION_FOUND) {
 			reiserfs_warning(inode->i_sb, "vs-825",
 					 "%K should not be found", &key);
-			retval = -EEXIST;
+			retval = -ERR(EEXIST);
 			if (allocated_block_nr)
 				reiserfs_free_block(th, inode,
 						    allocated_block_nr, 1);
@@ -1776,7 +1776,7 @@ int reiserfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	int jbegin_count = 1;
 
 	if (sb_rdonly(inode->i_sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	/*
 	 * memory pressure can sometimes initiate write_inode calls with
 	 * sync == 1,
@@ -1844,14 +1844,14 @@ static int reiserfs_new_directory(struct reiserfs_transaction_handle *th,
 	if (retval == IO_ERROR) {
 		reiserfs_error(sb, "vs-13080",
 			       "i/o failure occurred creating new directory");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (retval == ITEM_FOUND) {
 		pathrelse(path);
 		reiserfs_warning(sb, "vs-13070",
 				 "object with this key exists (%k)",
 				 &(ih->ih_key));
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/* insert item, that is empty directory item */
@@ -1887,14 +1887,14 @@ static int reiserfs_new_symlink(struct reiserfs_transaction_handle *th,
 	if (retval == IO_ERROR) {
 		reiserfs_error(sb, "vs-13080",
 			       "i/o failure occurred creating new symlink");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (retval == ITEM_FOUND) {
 		pathrelse(path);
 		reiserfs_warning(sb, "vs-13080",
 				 "object with this key exists (%k)",
 				 &(ih->ih_key));
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	/* insert item, that is body of symlink */
@@ -1947,7 +1947,7 @@ int reiserfs_new_inode(struct reiserfs_transaction_handle *th,
 	if (err)
 		goto out_end_trans;
 	if (!dir->i_nlink) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out_bad_inode;
 	}
 
@@ -1973,7 +1973,7 @@ int reiserfs_new_inode(struct reiserfs_transaction_handle *th,
 			     reiserfs_find_actor, &args);
 	reiserfs_write_lock_nested(inode->i_sb, depth);
 	if (err) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_bad_inode;
 	}
 
@@ -2024,19 +2024,19 @@ int reiserfs_new_inode(struct reiserfs_transaction_handle *th,
 	/* find proper place for inserting of stat data */
 	retval = search_item(sb, &key, &path_to_key);
 	if (retval == IO_ERROR) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out_bad_inode;
 	}
 	if (retval == ITEM_FOUND) {
 		pathrelse(&path_to_key);
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto out_bad_inode;
 	}
 	if (old_format_only(sb)) {
 		/* i_uid or i_gid is too big to be stored in stat data v3.5 */
 		if (i_uid_read(inode) & ~0xffff || i_gid_read(inode) & ~0xffff) {
 			pathrelse(&path_to_key);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_bad_inode;
 		}
 		inode2sd_v1(&sd, inode, inode->i_size);
@@ -2207,7 +2207,7 @@ static int grab_tail_page(struct inode *inode,
 	 * and it won't need converting or zeroing after a truncate.
 	 */
 	if ((offset & (blocksize - 1)) == 0) {
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	page = grab_cache_page(inode->i_mapping, index);
 	error = -ENOMEM;
@@ -2241,7 +2241,7 @@ static int grab_tail_page(struct inode *inode,
 		 */
 		reiserfs_error(inode->i_sb, "clm-6000",
 			       "error reading block %lu", bh->b_blocknr);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto unlock;
 	}
 	*bh_result = bh;
@@ -2391,7 +2391,7 @@ static int map_block_for_writepage(struct inode *inode,
 	th.t_trans_id = 0;
 
 	if (!buffer_uptodate(bh_result)) {
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	kmap(bh_result->b_page);
@@ -2474,7 +2474,7 @@ research:
 	} else {
 		reiserfs_warning(inode->i_sb, "clm-6003",
 				 "bad item inode %lu", inode->i_ino);
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto out;
 	}
 	retval = 0;
@@ -3312,7 +3312,7 @@ int reiserfs_setattr(struct dentry *dentry, struct iattr *attr)
 		if (get_inode_item_key_version(inode) == KEY_FORMAT_3_5 &&
 		    attr->ia_size > MAX_NON_LFS) {
 			reiserfs_write_unlock(inode->i_sb);
-			error = -EFBIG;
+			error = -ERR(EFBIG);
 			goto out;
 		}
 
@@ -3350,7 +3350,7 @@ int reiserfs_setattr(struct dentry *dentry, struct iattr *attr)
 	     ((attr->ia_valid & ATTR_GID) && (from_kgid(&init_user_ns, attr->ia_gid) & ~0xffff))) &&
 	    (get_inode_sd_version(inode) == STAT_DATA_V1)) {
 		/* stat data of format v3.5 has 16 bit uid and gid */
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 

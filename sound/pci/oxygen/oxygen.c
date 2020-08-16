@@ -841,10 +841,10 @@ static int generic_oxygen_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		++dev;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	err = oxygen_pci_probe(pci, index[dev], id[dev], THIS_MODULE,
 			       oxygen_ids, get_oxygen_model);

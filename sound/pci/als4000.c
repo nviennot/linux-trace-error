@@ -445,7 +445,7 @@ static int snd_als4000_capture_trigger(struct snd_pcm_substream *substream, int 
 							 capture_cmd(chip));
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->mixer_lock);
@@ -470,7 +470,7 @@ static int snd_als4000_playback_trigger(struct snd_pcm_substream *substream, int
 		chip->mode &= ~SB_RATE_LOCK_PLAYBACK;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->reg_lock);
@@ -743,7 +743,7 @@ static int snd_als4000_create_gameport(struct snd_card_als4000 *acard, int dev)
 	int io_port;
 
 	if (joystick_port[dev] == 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (joystick_port[dev] == 1) { /* auto-detect */
 		for (io_port = 0x200; io_port <= 0x218; io_port += 8) {
@@ -758,7 +758,7 @@ static int snd_als4000_create_gameport(struct snd_card_als4000 *acard, int dev)
 
 	if (!r) {
 		dev_warn(&acard->pci->dev, "cannot reserve joystick ports\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	acard->gameport = gp = gameport_allocate_port();
@@ -797,7 +797,7 @@ static void snd_als4000_free_gameport(struct snd_card_als4000 *acard)
 	}
 }
 #else
-static inline int snd_als4000_create_gameport(struct snd_card_als4000 *acard, int dev) { return -ENOSYS; }
+static inline int snd_als4000_create_gameport(struct snd_card_als4000 *acard, int dev) { return -ERR(ENOSYS); }
 static inline void snd_als4000_free_gameport(struct snd_card_als4000 *acard) { }
 #endif
 
@@ -826,10 +826,10 @@ static int snd_card_als4000_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* enable PCI device */
@@ -841,7 +841,7 @@ static int snd_card_als4000_probe(struct pci_dev *pci,
 	    dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(24)) < 0) {
 		dev_err(&pci->dev, "architecture does not support 24bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if ((err = pci_request_regions(pci, "ALS4000")) < 0) {

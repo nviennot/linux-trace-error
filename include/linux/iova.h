@@ -166,7 +166,7 @@ void free_cpu_cached_iovas(unsigned int cpu, struct iova_domain *iovad);
 #else
 static inline int iova_cache_get(void)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void iova_cache_put(void)
@@ -245,7 +245,7 @@ static inline int init_iova_flush_queue(struct iova_domain *iovad,
 					iova_flush_cb flush_cb,
 					iova_entry_dtor entry_dtor)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct iova *find_iova(struct iova_domain *iovad,

@@ -238,7 +238,7 @@ static int afs_query_for_alias(struct afs_cell *cell, struct key *key)
 	_enter("%s", cell->name);
 
 	if (mutex_lock_interruptible(&cell->net->proc_cells_lock) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	hlist_for_each_entry(p, &cell->net->proc_cells, proc_link) {
 		if (p == cell || p->alias_of)
@@ -255,7 +255,7 @@ static int afs_query_for_alias(struct afs_cell *cell, struct key *key)
 
 		if (mutex_lock_interruptible(&cell->net->proc_cells_lock) < 0) {
 			afs_put_cell(cell->net, p);
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		}
 
 		afs_put_cell(cell->net, p);
@@ -276,16 +276,16 @@ is_alias:
 static char *afs_vl_get_cell_name(struct afs_cell *cell, struct key *key)
 {
 	struct afs_vl_cursor vc;
-	char *cell_name = ERR_PTR(-EDESTADDRREQ);
+	char *cell_name = ERR_PTR(-ERR(EDESTADDRREQ));
 	bool skipped = false, not_skipped = false;
 	int ret;
 
 	if (!afs_begin_vlserver_operation(&vc, cell, key))
-		return ERR_PTR(-ERESTARTSYS);
+		return ERR_PTR(-ERR(ERESTARTSYS));
 
 	while (afs_select_vlserver(&vc)) {
 		if (!test_bit(AFS_VLSERVER_FL_IS_YFS, &vc.server->flags)) {
-			vc.ac.error = -EOPNOTSUPP;
+			vc.ac.error = -ERR(EOPNOTSUPP);
 			skipped = true;
 			continue;
 		}
@@ -295,7 +295,7 @@ static char *afs_vl_get_cell_name(struct afs_cell *cell, struct key *key)
 
 	ret = afs_end_vlserver_operation(&vc);
 	if (skipped && !not_skipped)
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	return ret < 0 ? ERR_PTR(ret) : cell_name;
 }
 
@@ -364,7 +364,7 @@ int afs_cell_detect_alias(struct afs_cell *cell, struct key *key)
 	int ret;
 
 	if (mutex_lock_interruptible(&net->cells_alias_lock) < 0)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	if (test_bit(AFS_CELL_FL_CHECK_ALIAS, &cell->flags)) {
 		ret = afs_do_cell_detect_alias(cell, key);

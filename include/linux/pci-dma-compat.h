@@ -121,9 +121,9 @@ static inline int pci_set_consistent_dma_mask(struct pci_dev *dev, u64 mask)
 }
 #else
 static inline int pci_set_dma_mask(struct pci_dev *dev, u64 mask)
-{ return -EIO; }
+{ return -ERR(EIO); }
 static inline int pci_set_consistent_dma_mask(struct pci_dev *dev, u64 mask)
-{ return -EIO; }
+{ return -ERR(EIO); }
 #endif
 
 #endif

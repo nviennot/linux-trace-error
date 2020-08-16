@@ -412,7 +412,7 @@ static int uni2char(const wchar_t uni,
 	int n;
 
 	if (!p_nls)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((n = p_nls->uni2char(uni, out, boundlen)) < 0)
 		return n;
 
@@ -421,7 +421,7 @@ static int uni2char(const wchar_t uni,
 		if (IS_SJIS_JISX0201KANA(out[0])) {
 			/* JIS X 0201 KANA */
 			if (boundlen < 2)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 
 			out[1] = out[0];
 			out[0] = SS2;
@@ -439,7 +439,7 @@ static int uni2char(const wchar_t uni,
 			unsigned char ch, cl;
 
 			if (boundlen < 3)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 
 			n = 3; ch = out[0]; cl = out[1];
 			out[0] = SS3;
@@ -450,7 +450,7 @@ static int uni2char(const wchar_t uni,
 
 			n = sjisibm2euc(euc, out[0], out[1]);
 			if (boundlen < n)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			for (i = 0; i < n; i++)
 				out[i] = euc[i];
 		} else if (IS_SJIS_JISX0208(out[0], out[1])) {
@@ -467,11 +467,11 @@ static int uni2char(const wchar_t uni,
 				out[1] = out[1] + 0x02;
 		} else {
 			/* Invalid characters */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return n;
 }
@@ -483,15 +483,15 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	int euc_offset, n;
 
 	if ( !p_nls )
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	/* translate EUC-JP into SJIS */
 	if (rawstring[0] > 0x7F) {
 		if (rawstring[0] == SS3) {
 			if (boundlen < 3)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			euc_offset = 3;
 
 			if (IS_EUC_UDC_HI(rawstring[1], rawstring[2])) {
@@ -502,7 +502,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 				/* IBM extended characters */
 			} else {
 				/* JIS X 0212 and Invalid characters*/
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 				/* 'GETA' with SJIS coding */
 				/* sjis_temp[0] = 0x81; */
@@ -510,7 +510,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 			}
 		} else {
 			if (boundlen < 2)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			euc_offset = 2;
 
 			if (IS_EUC_JISX0201KANA(rawstring[0], rawstring[1])) {
@@ -532,7 +532,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 					sjis_temp[1] = rawstring[1] - 0x60;
 			} else {
 				/* Invalid characters */
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	} else {
@@ -565,7 +565,7 @@ static int __init init_nls_euc_jp(void)
 		return register_nls(&table);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void __exit exit_nls_euc_jp(void)

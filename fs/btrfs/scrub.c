@@ -433,7 +433,7 @@ static int lock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
 	bg_cache = btrfs_lookup_block_group(fs_info, bytenr);
 	if (!bg_cache) {
 		ASSERT(0);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Profiles not based on parity don't need full stripe lock */
@@ -484,7 +484,7 @@ static int unlock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
 	bg_cache = btrfs_lookup_block_group(fs_info, bytenr);
 	if (!bg_cache) {
 		ASSERT(0);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (!(bg_cache->flags & BTRFS_BLOCK_GROUP_RAID56_MASK))
 		goto out;
@@ -497,7 +497,7 @@ static int unlock_full_stripe(struct btrfs_fs_info *fs_info, u64 bytenr,
 	/* Unpaired unlock_full_stripe() detected */
 	if (!fstripe_lock) {
 		WARN_ON(1);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		mutex_unlock(&locks_root->lock);
 		goto out;
 	}
@@ -1304,7 +1304,7 @@ static int scrub_setup_recheck_block(struct scrub_block *original_sblock,
 		if (ret || !bbio || mapped_length < sublen) {
 			btrfs_put_bbio(bbio);
 			btrfs_bio_counter_dec(fs_info);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		recover = kzalloc(sizeof(struct scrub_recover), GFP_NOFS);
@@ -1562,7 +1562,7 @@ static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
 		if (!page_bad->dev->bdev) {
 			btrfs_warn_rl(fs_info,
 				"scrub_repair_page_from_good_copy(bdev == NULL) is unexpected");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		bio = btrfs_io_bio_alloc(1);
@@ -1573,7 +1573,7 @@ static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
 		ret = bio_add_page(bio, page_good->page, PAGE_SIZE, 0);
 		if (PAGE_SIZE != ret) {
 			bio_put(bio);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (btrfsic_submit_bio_wait(bio)) {
@@ -1581,7 +1581,7 @@ static int scrub_repair_page_from_good_copy(struct scrub_block *sblock_bad,
 				BTRFS_DEV_STAT_WRITE_ERRS);
 			atomic64_inc(&fs_info->dev_replace.num_write_errors);
 			bio_put(bio);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		bio_put(bio);
 	}
@@ -1677,7 +1677,7 @@ again:
 			bio_put(sbio->bio);
 			sbio->bio = NULL;
 			mutex_unlock(&sctx->wr_lock);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		scrub_wr_submit(sctx);
 		goto again;
@@ -2087,7 +2087,7 @@ again:
 		if (sbio->page_count < 1) {
 			bio_put(sbio->bio);
 			sbio->bio = NULL;
-			return -EIO;
+			return -ERR(EIO);
 		}
 		scrub_submit(sctx);
 		goto again;
@@ -2970,7 +2970,7 @@ again:
 					0);
 			if (!ret) {
 				if (!bbio || mapped_length < extent_len)
-					ret = -EIO;
+					ret = -ERR(EIO);
 			}
 			if (ret) {
 				btrfs_put_bbio(bbio);
@@ -3181,7 +3181,7 @@ static noinline_for_stack int scrub_stripe(struct scrub_ctx *sctx,
 		 */
 		if (atomic_read(&fs_info->scrub_cancel_req) ||
 		    atomic_read(&sctx->cancel_req)) {
-			ret = -ECANCELED;
+			ret = -ERR(ECANCELED);
 			goto out;
 		}
 		/*
@@ -3452,7 +3452,7 @@ static noinline_for_stack int scrub_chunk(struct scrub_ctx *sctx,
 		 */
 		spin_lock(&cache->lock);
 		if (!cache->removed)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		spin_unlock(&cache->lock);
 
 		return ret;
@@ -3731,7 +3731,7 @@ int scrub_enumerate_chunks(struct scrub_ctx *sctx,
 			break;
 		if (sctx->is_dev_replace &&
 		    atomic64_read(&dev_replace->num_write_errors) > 0) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			break;
 		}
 		if (sctx->stat.malloc_errors > 0) {
@@ -3758,7 +3758,7 @@ static noinline_for_stack int scrub_supers(struct scrub_ctx *sctx,
 	struct btrfs_fs_info *fs_info = sctx->fs_info;
 
 	if (test_bit(BTRFS_FS_STATE_ERROR, &fs_info->fs_state))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Seed devices of a new filesystem has their own generation. */
 	if (scrub_dev->fs_devices != fs_info->fs_devices)
@@ -3842,7 +3842,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 	struct btrfs_workqueue *scrub_parity = NULL;
 
 	if (btrfs_fs_closing(fs_info))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (fs_info->nodesize > BTRFS_STRIPE_LEN) {
 		/*
@@ -3854,7 +3854,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 			   "scrub: size assumption nodesize <= BTRFS_STRIPE_LEN (%d <= %d) fails",
 		       fs_info->nodesize,
 		       BTRFS_STRIPE_LEN);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fs_info->sectorsize != PAGE_SIZE) {
@@ -3862,7 +3862,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		btrfs_err_rl(fs_info,
 			   "scrub: size assumption sectorsize != PAGE_SIZE (%d != %lu) fails",
 		       fs_info->sectorsize, PAGE_SIZE);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fs_info->nodesize >
@@ -3878,7 +3878,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		       SCRUB_MAX_PAGES_PER_BLOCK,
 		       fs_info->sectorsize,
 		       SCRUB_MAX_PAGES_PER_BLOCK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Allocate outside of device_list_mutex */
@@ -3891,7 +3891,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 	if (!dev || (test_bit(BTRFS_DEV_STATE_MISSING, &dev->dev_state) &&
 		     !is_dev_replace)) {
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_free_ctx;
 	}
 
@@ -3900,7 +3900,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 		btrfs_err_in_rcu(fs_info, "scrub: device %s is not writable",
 				rcu_str_deref(dev->name));
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out_free_ctx;
 	}
 
@@ -3909,7 +3909,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 	    test_bit(BTRFS_DEV_STATE_REPLACE_TGT, &dev->dev_state)) {
 		mutex_unlock(&fs_info->scrub_lock);
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_free_ctx;
 	}
 
@@ -3920,7 +3920,7 @@ int btrfs_scrub_dev(struct btrfs_fs_info *fs_info, u64 devid, u64 start,
 		up_read(&fs_info->dev_replace.rwsem);
 		mutex_unlock(&fs_info->scrub_lock);
 		mutex_unlock(&fs_info->fs_devices->device_list_mutex);
-		ret = -EINPROGRESS;
+		ret = -ERR(EINPROGRESS);
 		goto out_free_ctx;
 	}
 	up_read(&fs_info->dev_replace.rwsem);
@@ -4034,7 +4034,7 @@ int btrfs_scrub_cancel(struct btrfs_fs_info *fs_info)
 	mutex_lock(&fs_info->scrub_lock);
 	if (!atomic_read(&fs_info->scrubs_running)) {
 		mutex_unlock(&fs_info->scrub_lock);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	atomic_inc(&fs_info->scrub_cancel_req);
@@ -4059,7 +4059,7 @@ int btrfs_scrub_cancel_dev(struct btrfs_device *dev)
 	sctx = dev->scrub_ctx;
 	if (!sctx) {
 		mutex_unlock(&fs_info->scrub_lock);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 	atomic_inc(&sctx->cancel_req);
 	while (dev->scrub_ctx) {
@@ -4087,7 +4087,7 @@ int btrfs_scrub_progress(struct btrfs_fs_info *fs_info, u64 devid,
 		memcpy(progress, &sctx->stat, sizeof(*progress));
 	mutex_unlock(&fs_info->fs_devices->device_list_mutex);
 
-	return dev ? (sctx ? 0 : -ENOTCONN) : -ENODEV;
+	return dev ? (sctx ? 0 : -ERR(ENOTCONN)) : -ERR(ENODEV);
 }
 
 static void scrub_remap_extent(struct btrfs_fs_info *fs_info,

@@ -19,7 +19,7 @@ static inline __le64 *squashfs_read_xattr_id_table(struct super_block *sb,
 {
 	ERROR("Xattrs in filesystem, these will be ignored\n");
 	*xattr_table_start = start;
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline int squashfs_xattr_lookup(struct super_block *sb,

@@ -383,11 +383,11 @@ static int ext4_prepare_inline_data(handle_t *handle, struct inode *inode,
 	struct ext4_inode_info *ei = EXT4_I(inode);
 
 	if (!ext4_test_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	size = ext4_get_max_inline_size(inode);
 	if (size < len)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	ext4_write_lock_xattr(inode, &no_expand);
 
@@ -502,7 +502,7 @@ int ext4_readpage_inline(struct inode *inode, struct page *page)
 	down_read(&EXT4_I(inode)->xattr_sem);
 	if (!ext4_has_inline_data(inode)) {
 		up_read(&EXT4_I(inode)->xattr_sem);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	/*
@@ -881,7 +881,7 @@ retry_journal:
 
 	inline_size = ext4_get_max_inline_size(inode);
 
-	ret = -ENOSPC;
+	ret = -ERR(ENOSPC);
 	if (inline_size >= pos + len) {
 		ret = ext4_prepare_inline_data(handle, inode, pos + len);
 		if (ret && ret != -ENOSPC)
@@ -1101,7 +1101,7 @@ static int ext4_update_inline_dir(handle_t *handle, struct inode *dir,
 	int new_size = get_max_inline_xattr_value_size(dir, iloc);
 
 	if (new_size - old_size <= EXT4_DIR_REC_LEN(1))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	ret = ext4_update_inline_data(handle, dir,
 				      new_size + EXT4_MIN_INLINE_DATA_SIZE);
@@ -1212,7 +1212,7 @@ static int ext4_convert_inline_data_nolock(handle_t *handle,
 	if (error < 0)
 		goto out_restore;
 	if (!(map.m_flags & EXT4_MAP_MAPPED)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out_restore;
 	}
 
@@ -1226,7 +1226,7 @@ static int ext4_convert_inline_data_nolock(handle_t *handle,
 	error = ext4_journal_get_create_access(handle, data_bh);
 	if (error) {
 		unlock_buffer(data_bh);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out_restore;
 	}
 	memset(data_bh->b_data, 0, inode->i_sb->s_blocksize);
@@ -1829,7 +1829,7 @@ int ext4_destroy_inline_data(handle_t *handle, struct inode *inode)
 int ext4_inline_data_iomap(struct inode *inode, struct iomap *iomap)
 {
 	__u64 addr;
-	int error = -EAGAIN;
+	int error = -ERR(EAGAIN);
 	struct ext4_iloc iloc;
 
 	down_read(&EXT4_I(inode)->xattr_sem);

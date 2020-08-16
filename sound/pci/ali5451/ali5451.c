@@ -296,7 +296,7 @@ static int snd_ali_codec_ready(struct snd_ali *codec,
 
 	snd_ali_5451_poke(codec, port, res & ~0x8000);
 	dev_dbg(codec->card->dev, "ali_codec_ready: codec is not ready.\n ");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_ali_stimer_ready(struct snd_ali *codec)
@@ -317,7 +317,7 @@ static int snd_ali_stimer_ready(struct snd_ali *codec)
 	}
 
 	dev_err(codec->card->dev, "ali_stimer_read: stimer is not ready.\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static void snd_ali_codec_poke(struct snd_ali *codec,int secondary,
@@ -1085,7 +1085,7 @@ static int snd_ali_trigger(struct snd_pcm_substream *substream,
 		do_start = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	what = whati = 0;
@@ -1464,7 +1464,7 @@ static int snd_ali_open(struct snd_pcm_substream *substream, int rec,
 	pvoice = snd_ali_alloc_voice(codec, SNDRV_ALI_VOICE_TYPE_PCM, rec,
 				     channel);
 	if (!pvoice)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	pvoice->substream = substream;
 	runtime->private_data = pvoice;
@@ -2021,7 +2021,7 @@ static int snd_ali_resources(struct snd_ali *codec)
 	if (request_irq(codec->pci->irq, snd_ali_card_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, codec)) {
 		dev_err(codec->card->dev, "Unable to request irq.\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	codec->irq = codec->pci->irq;
 	codec->card->sync_irq = codec->irq;
@@ -2062,7 +2062,7 @@ static int snd_ali_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 31bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	codec = kzalloc(sizeof(*codec), GFP_KERNEL);
@@ -2095,7 +2095,7 @@ static int snd_ali_create(struct snd_card *card,
 	
 	if (snd_ali_resources(codec)) {
 		snd_ali_free(codec);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	codec->synth.chmap = 0;
@@ -2124,14 +2124,14 @@ static int snd_ali_create(struct snd_card *card,
 	if (!codec->pci_m1533) {
 		dev_err(card->dev, "cannot find ALi 1533 chip.\n");
 		snd_ali_free(codec);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* M7101: power management */
 	codec->pci_m7101 = pci_get_device(0x10b9, 0x7101, NULL);
 	if (!codec->pci_m7101 && codec->revision == ALI_5451_V02) {
 		dev_err(card->dev, "cannot find ALi 7101 chip.\n");
 		snd_ali_free(codec);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_dbg(card->dev, "snd_device_new is called.\n");

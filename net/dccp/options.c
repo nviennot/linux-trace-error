@@ -465,7 +465,7 @@ static int dccp_insert_option_ackvec(struct sock *sk, struct sk_buff *skb)
 	 * Each sent Ack Vector is recorded in the list, as per A.2 of RFC 4340.
 	 */
 	if (dccp_ackvec_update_records(av, dcb->dccpd_seq, nonce))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	return 0;
 }
 

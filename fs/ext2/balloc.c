@@ -1228,7 +1228,7 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
 	unsigned long num = *count;
 	int ret;
 
-	*errp = -ENOSPC;
+	*errp = -ERR(ENOSPC);
 	sb = inode->i_sb;
 
 	/*
@@ -1259,7 +1259,7 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
 	}
 
 	if (!ext2_has_free_blocks(sbi)) {
-		*errp = -ENOSPC;
+		*errp = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -1363,7 +1363,7 @@ retry_alloc:
 		goto retry_alloc;
 	}
 	/* No space left on the device */
-	*errp = -ENOSPC;
+	*errp = -ERR(ENOSPC);
 	goto out;
 
 allocated:
@@ -1419,7 +1419,7 @@ allocated:
 	return ret_block;
 
 io_error:
-	*errp = -EIO;
+	*errp = -ERR(EIO);
 out:
 	/*
 	 * Undo the block allocation

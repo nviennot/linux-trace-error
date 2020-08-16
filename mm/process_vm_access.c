@@ -198,19 +198,19 @@ static ssize_t process_vm_rw_core(pid_t pid, struct iov_iter *iter,
 	/* Get process information */
 	task = find_get_task_by_vpid(pid);
 	if (!task) {
-		rc = -ESRCH;
+		rc = -ERR(ESRCH);
 		goto free_proc_pages;
 	}
 
 	mm = mm_access(task, PTRACE_MODE_ATTACH_REALCREDS);
 	if (!mm || IS_ERR(mm)) {
-		rc = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+		rc = IS_ERR(mm) ? PTR_ERR(mm) : -ERR(ESRCH);
 		/*
 		 * Explicitly map EACCES to EPERM as EPERM is a more
 		 * appropriate error code for process_vw_readv/writev
 		 */
 		if (rc == -EACCES)
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 		goto put_task_struct;
 	}
 
@@ -269,7 +269,7 @@ static ssize_t process_vm_rw(pid_t pid,
 	int dir = vm_write ? WRITE : READ;
 
 	if (flags != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check iovecs */
 	rc = import_iovec(dir, lvec, liovcnt, UIO_FASTIOV, &iov_l, &iter);
@@ -327,7 +327,7 @@ compat_process_vm_rw(compat_pid_t pid,
 	int dir = vm_write ? WRITE : READ;
 
 	if (flags != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = compat_import_iovec(dir, lvec, liovcnt, UIO_FASTIOV, &iov_l, &iter);
 	if (rc < 0)

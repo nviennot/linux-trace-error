@@ -65,7 +65,7 @@ int get_vaddr_frames(unsigned long start, unsigned int nr_frames,
 	 * mappings.
 	 */
 	if (vma_is_fsdax(vma)) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -161,7 +161,7 @@ int frame_vector_to_pages(struct frame_vector *vec)
 	nums = frame_vector_pfns(vec);
 	for (i = 0; i < vec->nr_frames; i++)
 		if (!pfn_valid(nums[i]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	pages = (struct page **)nums;
 	for (i = 0; i < vec->nr_frames; i++)
 		pages[i] = pfn_to_page(nums[i]);

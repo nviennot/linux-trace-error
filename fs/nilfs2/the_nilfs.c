@@ -187,7 +187,7 @@ static int nilfs_store_log_cursor(struct the_nilfs *nilfs,
 			  "pointed segment number is out of range: segnum=%llu, nsegments=%lu",
 			  (unsigned long long)nilfs->ns_segnum,
 			  nilfs->ns_nsegments);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -291,20 +291,20 @@ int load_nilfs(struct the_nilfs *nilfs, struct super_block *sb)
 			nilfs_msg(sb, KERN_ERR,
 				  "couldn't proceed with recovery because of unsupported optional features (%llx)",
 				  (unsigned long long)features);
-			err = -EROFS;
+			err = -ERR(EROFS);
 			goto failed_unload;
 		}
 		if (really_read_only) {
 			nilfs_msg(sb, KERN_ERR,
 				  "write access unavailable, cannot proceed");
-			err = -EROFS;
+			err = -ERR(EROFS);
 			goto failed_unload;
 		}
 		sb->s_flags &= ~SB_RDONLY;
 	} else if (nilfs_test_opt(nilfs, NORECOVERY)) {
 		nilfs_msg(sb, KERN_ERR,
 			  "recovery cancelled because norecovery option was specified for a read/write mount");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failed_unload;
 	}
 
@@ -383,23 +383,23 @@ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
 			  le32_to_cpu(sbp->s_rev_level),
 			  le16_to_cpu(sbp->s_minor_rev_level),
 			  NILFS_CURRENT_REV, NILFS_MINOR_REV);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	nilfs->ns_sbsize = le16_to_cpu(sbp->s_bytes);
 	if (nilfs->ns_sbsize > BLOCK_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nilfs->ns_inode_size = le16_to_cpu(sbp->s_inode_size);
 	if (nilfs->ns_inode_size > nilfs->ns_blocksize) {
 		nilfs_msg(nilfs->ns_sb, KERN_ERR,
 			  "too large inode size: %d bytes",
 			  nilfs->ns_inode_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (nilfs->ns_inode_size < NILFS_MIN_INODE_SIZE) {
 		nilfs_msg(nilfs->ns_sb, KERN_ERR,
 			  "too small inode size: %d bytes",
 			  nilfs->ns_inode_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nilfs->ns_first_ino = le32_to_cpu(sbp->s_first_ino);
@@ -409,7 +409,7 @@ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
 		nilfs_msg(nilfs->ns_sb, KERN_ERR,
 			  "too short segment: %lu blocks",
 			  nilfs->ns_blocks_per_segment);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nilfs->ns_first_data_block = le64_to_cpu(sbp->s_first_data_block);
@@ -420,7 +420,7 @@ static int nilfs_store_disk_layout(struct the_nilfs *nilfs,
 		nilfs_msg(nilfs->ns_sb, KERN_ERR,
 			  "invalid reserved segments percentage: %lu",
 			  nilfs->ns_r_segments_percentage);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nilfs_set_nsegments(nilfs, le64_to_cpu(sbp->s_nsegments));
@@ -504,7 +504,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
 	if (!sbp[0]) {
 		if (!sbp[1]) {
 			nilfs_msg(sb, KERN_ERR, "unable to read superblock");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		nilfs_msg(sb, KERN_WARNING,
 			  "unable to read primary superblock (blocksize = %d)",
@@ -535,7 +535,7 @@ static int nilfs_load_super_block(struct the_nilfs *nilfs,
 	if (!valid[swp]) {
 		nilfs_release_super_block(nilfs);
 		nilfs_msg(sb, KERN_ERR, "couldn't find nilfs on the device");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!valid[!swp])
@@ -576,7 +576,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
 	blocksize = sb_min_blocksize(sb, NILFS_MIN_BLOCK_SIZE);
 	if (!blocksize) {
 		nilfs_msg(sb, KERN_ERR, "unable to set blocksize");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 	err = nilfs_load_super_block(nilfs, sb, blocksize, &sbp);
@@ -597,7 +597,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
 		nilfs_msg(sb, KERN_ERR,
 			  "couldn't mount because of unsupported filesystem blocksize %d",
 			  blocksize);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failed_sbh;
 	}
 	if (sb->s_blocksize != blocksize) {
@@ -607,7 +607,7 @@ int init_nilfs(struct the_nilfs *nilfs, struct super_block *sb, char *data)
 			nilfs_msg(sb, KERN_ERR,
 				  "blocksize %d too small for device (sector-size = %d)",
 				  blocksize, hw_blocksize);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto failed_sbh;
 		}
 		nilfs_release_super_block(nilfs);

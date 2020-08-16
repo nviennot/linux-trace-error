@@ -316,7 +316,7 @@ error_dup_user_ID:
 	mutex_unlock(&call->user_mutex);
 	rxrpc_put_call(call, rxrpc_call_put);
 	_leave(" = -EEXIST");
-	return ERR_PTR(-EEXIST);
+	return ERR_PTR(-ERR(EEXIST));
 
 	/* We got an error, but the call is attached to the socket and is in
 	 * need of release.  However, we might now race with recvmsg() when

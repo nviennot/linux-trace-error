@@ -102,7 +102,7 @@ static int cnl_dsp_start_core(struct sst_dsp *ctx, unsigned int core_mask)
 		cnl_dsp_reset_core(ctx, core_mask);
 		dev_err(ctx->dev, "DSP core mask %#x enable failed\n",
 			core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -175,7 +175,7 @@ int cnl_dsp_disable_core(struct sst_dsp *ctx, unsigned int core_mask)
 	if (is_cnl_dsp_core_enable(ctx, core_mask)) {
 		dev_err(ctx->dev, "DSP core mask %#x disable failed\n",
 			core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;

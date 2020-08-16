@@ -237,7 +237,7 @@ out_invalid:
 	ubifs_err(c, "inode %lu validation failed, error %d", inode->i_ino, err);
 	ubifs_dump_node(c, ino);
 	ubifs_dump_inode(c, inode);
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 out_ino:
 	kfree(ino);
 out:
@@ -520,18 +520,18 @@ static int init_constants_early(struct ubifs_info *c)
 	if (c->leb_size < UBIFS_MIN_LEB_SZ) {
 		ubifs_errc(c, "too small LEBs (%d bytes), min. is %d bytes",
 			   c->leb_size, UBIFS_MIN_LEB_SZ);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (c->leb_cnt < UBIFS_MIN_LEB_CNT) {
 		ubifs_errc(c, "too few LEBs (%d), min. is %d",
 			   c->leb_cnt, UBIFS_MIN_LEB_CNT);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!is_power_of_2(c->min_io_size)) {
 		ubifs_errc(c, "bad min. I/O size %d", c->min_io_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -543,7 +543,7 @@ static int init_constants_early(struct ubifs_info *c)
 	    !is_power_of_2(c->max_write_size)) {
 		ubifs_errc(c, "bad write buffer size %d for %d min. I/O unit",
 			   c->max_write_size, c->min_io_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -678,7 +678,7 @@ static int init_constants_sb(struct ubifs_info *c)
 	if (tmp > c->leb_size) {
 		ubifs_err(c, "too small LEB size %d, at least %d needed",
 			  c->leb_size, tmp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -693,7 +693,7 @@ static int init_constants_sb(struct ubifs_info *c)
 	if (c->log_lebs < tmp) {
 		ubifs_err(c, "too small log %d LEBs, required min. %d LEBs",
 			  c->log_lebs, tmp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -784,7 +784,7 @@ static int take_gc_lnum(struct ubifs_info *c)
 
 	if (c->gc_lnum == -1) {
 		ubifs_err(c, "no LEB for GC");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* And we have to tell lprops that this LEB is taken */
@@ -1064,7 +1064,7 @@ static int ubifs_parse_options(struct ubifs_info *c, char *options,
 			else {
 				ubifs_err(c, "unknown compressor \"%s\"", name); //FIXME: is c ready?
 				kfree(name);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			kfree(name);
 			c->mount_opts.override_compr = 1;
@@ -1086,7 +1086,7 @@ static int ubifs_parse_options(struct ubifs_info *c, char *options,
 			else {
 				ubifs_err(c, "unknown assert action \"%s\"", act);
 				kfree(act);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			kfree(act);
 			break;
@@ -1112,7 +1112,7 @@ static int ubifs_parse_options(struct ubifs_info *c, char *options,
 			if (!flag) {
 				ubifs_err(c, "unrecognized mount option \"%s\" or missing value",
 					  p);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			sb->s_flags |= flag;
 			break;
@@ -1195,7 +1195,7 @@ static int check_free_space(struct ubifs_info *c)
 		ubifs_err(c, "insufficient free space to mount in R/W mode");
 		ubifs_dump_budg(c, &c->bi);
 		ubifs_dump_lprops(c);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	return 0;
 }
@@ -1236,13 +1236,13 @@ static int mount_ubifs(struct ubifs_info *c)
 		 */
 		ubifs_err(c, "can't format empty UBI volume: read-only %s",
 			  c->ro_media ? "UBI volume" : "mount");
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_free;
 	}
 
 	if (c->ro_media && !c->ro_mount) {
 		ubifs_err(c, "cannot mount read-write - read-only media");
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_free;
 	}
 
@@ -1288,7 +1288,7 @@ static int mount_ubifs(struct ubifs_info *c)
 		} else {
 			ubifs_err(c, "auth_key_name, but UBIFS is built without"
 				  " authentication support");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_free;
 		}
 	}
@@ -1306,7 +1306,7 @@ static int mount_ubifs(struct ubifs_info *c)
 	if (!ubifs_compr_present(c, c->default_compr)) {
 		ubifs_err(c, "'compressor \"%s\" is not compiled in",
 			  ubifs_compr_name(c, c->default_compr));
-		err = -ENOTSUPP;
+		err = -ERR(ENOTSUPP);
 		goto out_free;
 	}
 
@@ -1663,7 +1663,7 @@ static int ubifs_remount_rw(struct ubifs_info *c)
 		ubifs_msg(c, "on-flash format version is w%d/r%d, but software only supports up to version w%d/r%d",
 			  c->fmt_version, c->ro_compat_version,
 			  UBIFS_FORMAT_VERSION, UBIFS_RO_COMPAT_VERSION);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	mutex_lock(&c->umount_mutex);
@@ -1968,11 +1968,11 @@ static int ubifs_remount_fs(struct super_block *sb, int *flags, char *data)
 	if (c->ro_mount && !(*flags & SB_RDONLY)) {
 		if (c->ro_error) {
 			ubifs_msg(c, "cannot re-mount R/W due to prior errors");
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		if (c->ro_media) {
 			ubifs_msg(c, "cannot re-mount R/W - UBI volume is R/O");
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		err = ubifs_remount_rw(c);
 		if (err)
@@ -1980,7 +1980,7 @@ static int ubifs_remount_fs(struct super_block *sb, int *flags, char *data)
 	} else if (!c->ro_mount && (*flags & SB_RDONLY)) {
 		if (c->ro_error) {
 			ubifs_msg(c, "cannot re-mount R/O due to prior errors");
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		ubifs_remount_ro(c);
 	}
@@ -2041,7 +2041,7 @@ static struct ubi_volume_desc *open_ubi(const char *name, int mode)
 	char *endptr;
 
 	if (!name || !*name)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* First, try to open using the device node path method */
 	ubi = ubi_open_volume_path(name, mode);
@@ -2050,14 +2050,14 @@ static struct ubi_volume_desc *open_ubi(const char *name, int mode)
 
 	/* Try the "nodev" method */
 	if (name[0] != 'u' || name[1] != 'b' || name[2] != 'i')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* ubi:NAME method */
 	if ((name[3] == ':' || name[3] == '!') && name[4] != '\0')
 		return ubi_open_volume_nm(0, name + 4, mode);
 
 	if (!isdigit(name[3]))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	dev = simple_strtoul(name + 3, &endptr, 0);
 
@@ -2069,7 +2069,7 @@ static struct ubi_volume_desc *open_ubi(const char *name, int mode)
 	if (*endptr == '_' && isdigit(endptr[1])) {
 		vol = simple_strtoul(endptr + 1, &endptr, 0);
 		if (*endptr != '\0')
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		return ubi_open_volume(dev, vol, mode);
 	}
 
@@ -2077,7 +2077,7 @@ static struct ubi_volume_desc *open_ubi(const char *name, int mode)
 	if ((*endptr == ':' || *endptr == '!') && endptr[1] != '\0')
 		return ubi_open_volume_nm(dev, ++endptr, mode);
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct ubifs_info *alloc_ubifs_info(struct ubi_volume_desc *ubi)
@@ -2264,7 +2264,7 @@ static struct dentry *ubifs_mount(struct file_system_type *fs_type, int flags,
 		/* A new mount point for already mounted UBIFS */
 		dbg_gen("this ubi volume is already mounted");
 		if (!!(flags & SB_RDONLY) != c1->ro_mount) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto out_deact;
 		}
 	} else {
@@ -2373,7 +2373,7 @@ static int __init ubifs_init(void)
 	if (PAGE_SIZE < UBIFS_BLOCK_SIZE) {
 		pr_err("UBIFS error (pid %d): VFS page cache size is %u bytes, but UBIFS requires at least 4096 bytes",
 		       current->pid, (unsigned int)PAGE_SIZE);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ubifs_inode_slab = kmem_cache_create("ubifs_inode_slab",

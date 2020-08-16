@@ -2228,7 +2228,7 @@ static int indep_hp_put(struct snd_kcontrol *kcontrol,
 
 	mutex_lock(&spec->pcm_mutex);
 	if (spec->active_streams) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto unlock;
 	}
 
@@ -2356,7 +2356,7 @@ static int set_multi_io(struct hda_codec *codec, int idx, bool output)
 
 	path = get_multiio_path(codec, idx);
 	if (!path)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (path->active == output)
 		return 0;
@@ -2387,7 +2387,7 @@ static int ch_mode_put(struct snd_kcontrol *kcontrol,
 
 	ch = ucontrol->value.enumerated.item[0];
 	if (ch < 0 || ch > spec->multi_ios)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ch == (spec->ext_channel_count - spec->min_channel_count) / 2)
 		return 0;
 	spec->ext_channel_count = ch * 2 + spec->min_channel_count;
@@ -3081,7 +3081,7 @@ static int new_analog_input(struct hda_codec *codec, int input_idx,
 
 	path = snd_hda_add_new_path(codec, pin, mix_nid, 0);
 	if (!path)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	print_nid_path(codec, "loopback", path);
 	spec->loopback_paths[input_idx] = snd_hda_get_path_idx(codec, path);
 
@@ -3521,7 +3521,7 @@ static int parse_capvol_in_path(struct hda_codec *codec, struct nid_path *path)
 	path->ctls[NID_PATH_VOL_CTL] = path->ctls[NID_PATH_MUTE_CTL] = 0;
 	for (depth = 0; depth < 3; depth++) {
 		if (depth >= path->depth)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		i = path->depth - depth - 1;
 		nid = path->path[i];
 		if (!path->ctls[NID_PATH_VOL_CTL]) {
@@ -4723,18 +4723,18 @@ static int automute_mode_put(struct snd_kcontrol *kcontrol,
 				return 0;
 			spec->automute_lo = 1;
 		} else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case 2:
 		if (!spec->automute_lo_possible || !spec->automute_speaker_possible)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (spec->automute_speaker && spec->automute_lo)
 			return 0;
 		spec->automute_speaker = 1;
 		spec->automute_lo = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	call_update_outputs(codec);
 	return 1;
@@ -5411,7 +5411,7 @@ static int alt_playback_pcm_open(struct hda_pcm_stream *hinfo,
 
 	mutex_lock(&spec->pcm_mutex);
 	if (spec->indep_hp && !spec->indep_hp_enabled)
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	else
 		spec->active_streams |= 1 << STREAM_INDEP_HP;
 	call_pcm_playback_hook(hinfo, codec, substream,

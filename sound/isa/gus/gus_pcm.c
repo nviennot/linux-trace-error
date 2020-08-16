@@ -332,7 +332,7 @@ static int snd_gf1_pcm_poke_block(struct snd_gus_card *gus, unsigned char *buf,
 		if (count > 0 && !in_interrupt()) {
 			schedule_timeout_interruptible(1);
 			if (signal_pending(current))
-				return -EAGAIN;
+				return -ERR(EAGAIN);
 		}
 	}
 	return 0;
@@ -343,9 +343,9 @@ static int get_bpos(struct gus_pcm_private *pcmp, int voice, unsigned int pos,
 {
 	unsigned int bpos = pos + (voice * (pcmp->dma_size / 2));
 	if (snd_BUG_ON(bpos > pcmp->dma_size))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_BUG_ON(bpos + len > pcmp->dma_size))
-		return -EIO;
+		return -ERR(EIO);
 	return bpos;
 }
 
@@ -516,7 +516,7 @@ static int snd_gf1_pcm_playback_trigger(struct snd_pcm_substream *substream,
 			snd_gf1_stop_voices(gus, voice, voice);
 		}
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -596,7 +596,7 @@ static int snd_gf1_pcm_capture_trigger(struct snd_pcm_substream *substream,
 	} else if (cmd == SNDRV_PCM_TRIGGER_STOP) {
 		val = 0;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock(&gus->reg_lock);

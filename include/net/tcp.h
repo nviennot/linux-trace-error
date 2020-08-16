@@ -2266,18 +2266,18 @@ static inline int tcp_call_bpf_3arg(struct sock *sk, int op, u32 arg1, u32 arg2,
 #else
 static inline int tcp_call_bpf(struct sock *sk, int op, u32 nargs, u32 *args)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 static inline int tcp_call_bpf_2arg(struct sock *sk, int op, u32 arg1, u32 arg2)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 static inline int tcp_call_bpf_3arg(struct sock *sk, int op, u32 arg1, u32 arg2,
 				    u32 arg3)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 #endif

@@ -157,19 +157,19 @@ static int imx_audmix_probe(struct platform_device *pdev)
 		audmix_np = pdev->dev.parent->of_node;
 	} else {
 		dev_err(&pdev->dev, "Missing parent device.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!audmix_np) {
 		dev_err(&pdev->dev, "Missing DT node for parent device.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	audmix_pdev = of_find_device_by_node(audmix_np);
 	if (!audmix_pdev) {
 		dev_err(&pdev->dev, "Missing AUDMIX platform device for %s\n",
 			np->full_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	put_device(&audmix_pdev->dev);
 
@@ -177,7 +177,7 @@ static int imx_audmix_probe(struct platform_device *pdev)
 	if (num_dai != FSL_AUDMIX_MAX_DAIS) {
 		dev_err(&pdev->dev, "Need 2 dais to be provided for %s\n",
 			audmix_np->full_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
@@ -224,7 +224,7 @@ static int imx_audmix_probe(struct platform_device *pdev)
 		cpu_pdev = of_find_device_by_node(args.np);
 		if (!cpu_pdev) {
 			dev_err(&pdev->dev, "failed to find SAI platform device\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		put_device(&cpu_pdev->dev);
 
@@ -305,7 +305,7 @@ static int imx_audmix_probe(struct platform_device *pdev)
 	cpu_pdev = of_find_device_by_node(out_cpu_np);
 	if (!cpu_pdev) {
 		dev_err(&pdev->dev, "failed to find SAI platform device\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	put_device(&cpu_pdev->dev);
 
@@ -313,7 +313,7 @@ static int imx_audmix_probe(struct platform_device *pdev)
 	if (IS_ERR(priv->cpu_mclk)) {
 		ret = PTR_ERR(priv->cpu_mclk);
 		dev_err(&cpu_pdev->dev, "failed to get DAI mclk1: %d\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv->audmix_pdev = audmix_pdev;

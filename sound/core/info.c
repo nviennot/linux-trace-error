@@ -77,7 +77,7 @@ static int alloc_info_private(struct snd_info_entry *entry,
 	struct snd_info_private_data *data;
 
 	if (!entry || !entry->p)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!try_module_get(entry->module))
 		return -EFAULT;
 	data = kzalloc(sizeof(*data), GFP_KERNEL);
@@ -106,7 +106,7 @@ static loff_t snd_info_entry_llseek(struct file *file, loff_t offset, int orig)
 {
 	struct snd_info_private_data *data;
 	struct snd_info_entry *entry;
-	loff_t ret = -EINVAL, size;
+	loff_t ret = -ERR(EINVAL), size;
 
 	data = file->private_data;
 	entry = data->entry;
@@ -154,7 +154,7 @@ static ssize_t snd_info_entry_read(struct file *file, char __user *buffer,
 
 	pos = *offset;
 	if (!valid_pos(pos, count))
-		return -EIO;
+		return -ERR(EIO);
 	if (pos >= entry->size)
 		return 0;
 	size = entry->size - pos;
@@ -176,7 +176,7 @@ static ssize_t snd_info_entry_write(struct file *file, const char __user *buffer
 
 	pos = *offset;
 	if (!valid_pos(pos, count))
-		return -EIO;
+		return -ERR(EIO);
 	if (count > 0) {
 		size_t maxsize = entry->size - pos;
 		count = min(count, maxsize);
@@ -212,7 +212,7 @@ static long snd_info_entry_ioctl(struct file *file, unsigned int cmd,
 	struct snd_info_entry *entry = data->entry;
 
 	if (!entry->c.ops->ioctl)
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	return entry->c.ops->ioctl(entry, data->file_private_data,
 				   file, cmd, arg);
 }
@@ -228,7 +228,7 @@ static int snd_info_entry_mmap(struct file *file, struct vm_area_struct *vma)
 		return 0;
 	entry = data->entry;
 	if (!entry->c.ops->mmap)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return entry->c.ops->mmap(entry, data->file_private_data,
 				  inode, file, vma);
 }
@@ -247,7 +247,7 @@ static int snd_info_entry_open(struct inode *inode, struct file *file)
 	mode = file->f_flags & O_ACCMODE;
 	if (((mode == O_RDONLY || mode == O_RDWR) && !entry->c.ops->read) ||
 	    ((mode == O_WRONLY || mode == O_RDWR) && !entry->c.ops->write)) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto error;
 	}
 
@@ -310,14 +310,14 @@ static ssize_t snd_info_text_entry_write(struct file *file,
 	int err = 0;
 
 	if (!entry->c.text.write)
-		return -EIO;
+		return -ERR(EIO);
 	pos = *offset;
 	if (!valid_pos(pos, count))
-		return -EIO;
+		return -ERR(EIO);
 	next = pos + count;
 	/* don't handle too large text inputs */
 	if (next > 16 * 1024)
-		return -EIO;
+		return -ERR(EIO);
 	mutex_lock(&entry->access);
 	buf = data->wbuffer;
 	if (!buf) {
@@ -356,7 +356,7 @@ static int snd_info_seq_show(struct seq_file *seq, void *p)
 	struct snd_info_entry *entry = data->entry;
 
 	if (!entry->c.text.read) {
-		return -EIO;
+		return -ERR(EIO);
 	} else {
 		data->rbuffer->buffer = (char *)seq; /* XXX hack! */
 		entry->c.text.read(entry, data->rbuffer);
@@ -505,7 +505,7 @@ int snd_info_card_create(struct snd_card *card)
 	struct snd_info_entry *entry;
 
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	sprintf(str, "card%i", card->number);
 	entry = create_subdir(card->module, str);
@@ -527,7 +527,7 @@ int snd_info_card_register(struct snd_card *card)
 	int err;
 
 	if (snd_BUG_ON(!card))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	err = snd_info_register(card->proc_root);
 	if (err < 0)
@@ -798,7 +798,7 @@ static int __snd_info_register(struct snd_info_entry *entry)
 	struct proc_dir_entry *root, *p = NULL;
 
 	if (snd_BUG_ON(!entry))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	root = entry->parent == NULL ? snd_proc_root->p : entry->parent->p;
 	mutex_lock(&info_mutex);
 	if (entry->p || !root)

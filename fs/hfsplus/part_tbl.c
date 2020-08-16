@@ -85,7 +85,7 @@ static int hfs_parse_old_pmap(struct super_block *sb, struct old_pmap *pm,
 		}
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int hfs_parse_new_pmap(struct super_block *sb, void *buf,
@@ -106,7 +106,7 @@ static int hfs_parse_new_pmap(struct super_block *sb, void *buf,
 		}
 
 		if (++i >= size)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		pm = (struct new_pmap *)((u8 *)pm + HFSPLUS_SECTOR_SIZE);
 		if ((u8 *)pm - (u8 *)buf >= buf_size) {
@@ -119,7 +119,7 @@ static int hfs_parse_new_pmap(struct super_block *sb, void *buf,
 		}
 	} while (pm->pmSig == cpu_to_be16(HFS_NEW_PMAP_MAGIC));
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*
@@ -149,7 +149,7 @@ int hfs_part_find(struct super_block *sb,
 		res = hfs_parse_new_pmap(sb, buf, data, part_start, part_size);
 		break;
 	default:
-		res = -ENOENT;
+		res = -ERR(ENOENT);
 		break;
 	}
 out:

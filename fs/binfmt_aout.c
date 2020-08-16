@@ -128,7 +128,7 @@ static int load_aout_binary(struct linux_binprm * bprm)
 	     N_MAGIC(ex) != QMAGIC && N_MAGIC(ex) != NMAGIC) ||
 	    N_TRSIZE(ex) || N_DRSIZE(ex) ||
 	    i_size_read(file_inode(bprm->file)) < ex.a_text+ex.a_data+N_SYMSIZE(ex)+N_TXTOFF(ex)) {
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 	}
 
 	/*
@@ -136,7 +136,7 @@ static int load_aout_binary(struct linux_binprm * bprm)
 	 * as part of an exploit attack against /proc-related vulnerabilities.
 	 */
 	if (!bprm->file->f_op->mmap)
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	fd_offset = N_TXTOFF(ex);
 
@@ -263,7 +263,7 @@ static int load_aout_library(struct file *file)
 
 	inode = file_inode(file);
 
-	retval = -ENOEXEC;
+	retval = -ERR(ENOEXEC);
 	error = kernel_read(file, &ex, sizeof(ex), &pos);
 	if (error != sizeof(ex))
 		goto out;

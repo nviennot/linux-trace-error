@@ -142,7 +142,7 @@ int dma_get_sgtable_attrs(struct device *dev, struct sg_table *sgt,
 		return dma_direct_get_sgtable(dev, sgt, cpu_addr, dma_addr,
 				size, attrs);
 	if (!ops->get_sgtable)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return ops->get_sgtable(dev, sgt, cpu_addr, dma_addr, size, attrs);
 }
 EXPORT_SYMBOL(dma_get_sgtable_attrs);
@@ -179,7 +179,7 @@ int dma_common_mmap(struct device *dev, struct vm_area_struct *vma,
 	unsigned long user_count = vma_pages(vma);
 	unsigned long count = PAGE_ALIGN(size) >> PAGE_SHIFT;
 	unsigned long off = vma->vm_pgoff;
-	int ret = -ENXIO;
+	int ret = -ERR(ENXIO);
 
 	vma->vm_page_prot = dma_pgprot(dev, vma->vm_page_prot, attrs);
 
@@ -187,13 +187,13 @@ int dma_common_mmap(struct device *dev, struct vm_area_struct *vma,
 		return ret;
 
 	if (off >= count || user_count > count - off)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	return remap_pfn_range(vma, vma->vm_start,
 			page_to_pfn(virt_to_page(cpu_addr)) + vma->vm_pgoff,
 			user_count << PAGE_SHIFT, vma->vm_page_prot);
 #else
-	return -ENXIO;
+	return -ERR(ENXIO);
 #endif /* CONFIG_MMU */
 }
 
@@ -237,7 +237,7 @@ int dma_mmap_attrs(struct device *dev, struct vm_area_struct *vma,
 		return dma_direct_mmap(dev, vma, cpu_addr, dma_addr, size,
 				attrs);
 	if (!ops->mmap)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return ops->mmap(dev, vma, cpu_addr, dma_addr, size, attrs);
 }
 EXPORT_SYMBOL(dma_mmap_attrs);
@@ -343,7 +343,7 @@ int dma_set_mask(struct device *dev, u64 mask)
 	mask = (dma_addr_t)mask;
 
 	if (!dev->dma_mask || !dma_supported(dev, mask))
-		return -EIO;
+		return -ERR(EIO);
 
 	arch_dma_set_mask(dev, mask);
 	*dev->dma_mask = mask;
@@ -361,7 +361,7 @@ int dma_set_coherent_mask(struct device *dev, u64 mask)
 	mask = (dma_addr_t)mask;
 
 	if (!dma_supported(dev, mask))
-		return -EIO;
+		return -ERR(EIO);
 
 	dev->coherent_dma_mask = mask;
 	return 0;

@@ -353,11 +353,11 @@ static int __init magician_init(void)
 	struct i2c_client *client;
 
 	if (!machine_is_magician())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	adapter = i2c_get_adapter(0);
 	if (!adapter)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	client = i2c_new_client_device(adapter, i2c_board_info);
 	i2c_put_adapter(adapter);
 	if (IS_ERR(client))

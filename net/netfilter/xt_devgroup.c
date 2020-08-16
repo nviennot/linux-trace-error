@@ -39,19 +39,19 @@ static int devgroup_mt_checkentry(const struct xt_mtchk_param *par)
 
 	if (info->flags & ~(XT_DEVGROUP_MATCH_SRC | XT_DEVGROUP_INVERT_SRC |
 			    XT_DEVGROUP_MATCH_DST | XT_DEVGROUP_INVERT_DST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->flags & XT_DEVGROUP_MATCH_SRC &&
 	    par->hook_mask & ~((1 << NF_INET_PRE_ROUTING) |
 			       (1 << NF_INET_LOCAL_IN) |
 			       (1 << NF_INET_FORWARD)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->flags & XT_DEVGROUP_MATCH_DST &&
 	    par->hook_mask & ~((1 << NF_INET_FORWARD) |
 			       (1 << NF_INET_LOCAL_OUT) |
 			       (1 << NF_INET_POST_ROUTING)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

@@ -85,12 +85,12 @@ int nfnetlink_subsys_register(const struct nfnetlink_subsystem *n)
 	/* Sanity-check attr_count size to avoid stack buffer overflow. */
 	for (cb_id = 0; cb_id < n->cb_count; cb_id++)
 		if (WARN_ON(n->cb[cb_id].attr_count > NFNL_MAX_ATTR_COUNT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	nfnl_lock(n->subsys_id);
 	if (table[n->subsys_id].subsys) {
 		nfnl_unlock(n->subsys_id);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	rcu_assign_pointer(table[n->subsys_id].subsys, n);
 	nfnl_unlock(n->subsys_id);
@@ -183,14 +183,14 @@ replay:
 #endif
 		{
 			rcu_read_unlock();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	nc = nfnetlink_find_client(type, ss);
 	if (!nc) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	{
@@ -225,13 +225,13 @@ replay:
 			nfnl_lock(subsys_id);
 			if (nfnl_dereference_protected(subsys_id) != ss ||
 			    nfnetlink_find_client(type, ss) != nc)
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 			else if (nc->call)
 				err = nc->call(net, net->nfnl, skb, nlh,
 					       (const struct nlattr **)cda,
 					       extack);
 			else
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 			nfnl_unlock(subsys_id);
 		}
 		if (err == -EAGAIN)
@@ -308,7 +308,7 @@ static void nfnetlink_rcv_batch(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int err;
 
 	if (subsys_id >= NFNL_SUBSYS_COUNT)
-		return netlink_ack(skb, nlh, -EINVAL, NULL);
+		return netlink_ack(skb, nlh, -ERR(EINVAL), NULL);
 replay:
 	status = 0;
 
@@ -359,7 +359,7 @@ replay:
 
 		if (fatal_signal_pending(current)) {
 			nfnl_err_reset(&err_list);
-			err = -EINTR;
+			err = -ERR(EINTR);
 			status = NFNL_BATCH_FAILURE;
 			goto done;
 		}
@@ -378,7 +378,7 @@ replay:
 
 		/* Only requests are handled by the kernel */
 		if (!(nlh->nlmsg_flags & NLM_F_REQUEST)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto ack;
 		}
 
@@ -392,7 +392,7 @@ replay:
 			status |= NFNL_BATCH_DONE;
 			goto done;
 		} else if (type < NLMSG_MIN_TYPE) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto ack;
 		}
 
@@ -400,13 +400,13 @@ replay:
 		 * subsystem.
 		 */
 		if (NFNL_SUBSYS_ID(type) != subsys_id) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto ack;
 		}
 
 		nc = nfnetlink_find_client(type, ss);
 		if (!nc) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto ack;
 		}
 

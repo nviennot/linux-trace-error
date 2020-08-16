@@ -476,7 +476,7 @@ static int sis_playback_open(struct snd_pcm_substream *substream)
 
 	voice = sis_alloc_playback_voice(sis);
 	if (!voice)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	voice->substream = substream;
 	runtime->private_data = voice;
@@ -592,7 +592,7 @@ static int sis_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		starting = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_group_for_each_entry(s, substream) {
@@ -663,7 +663,7 @@ static int sis_capture_open(struct snd_pcm_substream *substream)
 	spin_unlock_irqrestore(&sis->voice_lock, flags);
 
 	if (!voice)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	voice->substream = substream;
 	runtime->private_data = voice;
@@ -1065,7 +1065,7 @@ static int sis_chip_init(struct sis7019 *sis)
 		udelay(1);
 
 	if (!count)
-		return -EIO;
+		return -ERR(EIO);
 
 	outl(SIS_AC97_CMD_CODEC_COLD_RESET, io + SIS_AC97_CMD);
 	udelay(250);
@@ -1078,7 +1078,7 @@ static int sis_chip_init(struct sis7019 *sis)
 	 */
 	outl(SIS_AC97_SEMA_RELEASE, io + SIS_AC97_SEMA);
 	if (!count)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Now that we've finished the reset, find out what's attached.
 	 * There are some codec/board combinations that take an extremely
@@ -1106,7 +1106,7 @@ static int sis_chip_init(struct sis7019 *sis)
 	 */
 	if (!sis->codecs_present) {
 		dev_err(&sis->pci->dev, "could not find any codecs\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (sis->codecs_present != codecs) {
@@ -1247,7 +1247,7 @@ static int sis_resume(struct device *dev)
 
 error:
 	snd_card_disconnect(card);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static SIMPLE_DEV_PM_OPS(sis_pm, sis_suspend, sis_resume);
@@ -1310,7 +1310,7 @@ static int sis_chip_create(struct snd_card *card,
 		goto error_out_enabled;
 	}
 
-	rc = -EIO;
+	rc = -ERR(EIO);
 	sis->ioaddr = ioremap(pci_resource_start(pci, 1), 0x4000);
 	if (!sis->ioaddr) {
 		dev_err(&pci->dev, "unable to remap MMIO, aborting\n");
@@ -1373,7 +1373,7 @@ static int snd_sis7019_probe(struct pci_dev *pci,
 	struct sis7019 *sis;
 	int rc;
 
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 	if (!enable)
 		goto error_out;
 

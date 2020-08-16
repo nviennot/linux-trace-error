@@ -125,7 +125,7 @@ static int mip6_destopt_input(struct xfrm_state *x, struct sk_buff *skb)
 	spin_lock(&x->lock);
 	if (!ipv6_addr_equal(&iph->saddr, (struct in6_addr *)x->coaddr) &&
 	    !ipv6_addr_any((struct in6_addr *)x->coaddr))
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	spin_unlock(&x->lock);
 
 	return err;
@@ -299,12 +299,12 @@ static int mip6_destopt_init_state(struct xfrm_state *x)
 {
 	if (x->id.spi) {
 		pr_info("%s: spi is not 0: %u\n", __func__, x->id.spi);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (x->props.mode != XFRM_MODE_ROUTEOPTIMIZATION) {
 		pr_info("%s: state's mode is not %u: %u\n",
 			__func__, XFRM_MODE_ROUTEOPTIMIZATION, x->props.mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	x->props.header_len = sizeof(struct ipv6_destopt_hdr) +
@@ -345,7 +345,7 @@ static int mip6_rthdr_input(struct xfrm_state *x, struct sk_buff *skb)
 	spin_lock(&x->lock);
 	if (!ipv6_addr_equal(&iph->daddr, (struct in6_addr *)x->coaddr) &&
 	    !ipv6_addr_any((struct in6_addr *)x->coaddr))
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	spin_unlock(&x->lock);
 
 	return err;
@@ -434,12 +434,12 @@ static int mip6_rthdr_init_state(struct xfrm_state *x)
 {
 	if (x->id.spi) {
 		pr_info("%s: spi is not 0: %u\n", __func__, x->id.spi);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (x->props.mode != XFRM_MODE_ROUTEOPTIMIZATION) {
 		pr_info("%s: state's mode is not %u: %u\n",
 			__func__, XFRM_MODE_ROUTEOPTIMIZATION, x->props.mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	x->props.header_len = sizeof(struct rt2_hdr);
@@ -492,7 +492,7 @@ static int __init mip6_init(void)
  mip6_rthdr_xfrm_fail:
 	xfrm_unregister_type(&mip6_destopt_type, AF_INET6);
  mip6_destopt_xfrm_fail:
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void __exit mip6_fini(void)

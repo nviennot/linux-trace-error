@@ -24,7 +24,7 @@ raw_get_hashinfo(const struct inet_diag_req_v2 *r)
 		return &raw_v6_hashinfo;
 #endif
 	} else {
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 }
 
@@ -84,7 +84,7 @@ static struct sock *raw_sock_get(struct net *net, const struct inet_diag_req_v2 
 out_unlock:
 	read_unlock(&hashinfo->lock);
 
-	return sk ? sk : ERR_PTR(-ENOENT);
+	return sk ? sk : ERR_PTR(-ERR(ENOENT));
 }
 
 static int raw_diag_dump_one(struct netlink_callback *cb,
@@ -208,7 +208,7 @@ static int raw_diag_destroy(struct sk_buff *in_skb,
 	sk = raw_sock_get(net, r);
 	if (IS_ERR(sk))
 		return PTR_ERR(sk);
-	err = sock_diag_destroy(sk, ECONNABORTED);
+	err = sock_diag_destroy(sk, ERR(ECONNABORTED));
 	sock_put(sk);
 	return err;
 }

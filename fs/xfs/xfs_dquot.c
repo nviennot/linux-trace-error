@@ -334,7 +334,7 @@ xfs_dquot_disk_alloc(
 		 * have an inode lock
 		 */
 		xfs_iunlock(quotip, XFS_ILOCK_EXCL);
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	/* Create the block mapping. */
@@ -425,7 +425,7 @@ xfs_dquot_disk_read(
 		 * didn't have the quota inode lock.
 		 */
 		xfs_iunlock(quotip, lock_mode);
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	/*
@@ -441,7 +441,7 @@ xfs_dquot_disk_read(
 	ASSERT(map.br_blockcount >= 1);
 	ASSERT(map.br_startblock != DELAYSTARTBLOCK);
 	if (map.br_startblock == HOLESTARTBLOCK)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	trace_xfs_dqtobp_read(dqp);
 
@@ -651,7 +651,7 @@ xfs_dq_get_next_id(
 
 	/* If we'd wrap past the max ID, stop */
 	if (next_id < *id)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* If new ID is within the current chunk, advancing it sufficed */
 	if (next_id % mp->m_quotainfo->qi_dqperchunk) {
@@ -675,7 +675,7 @@ xfs_dq_get_next_id(
 			got.br_startoff = start;
 		*id = got.br_startoff * mp->m_quotainfo->qi_dqperchunk;
 	} else {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 	}
 
 	xfs_iunlock(quotip, lock_flags);
@@ -765,24 +765,24 @@ xfs_qm_dqget_checks(
 	uint			type)
 {
 	if (WARN_ON_ONCE(!XFS_IS_QUOTA_RUNNING(mp)))
-		return -ESRCH;
+		return -ERR(ESRCH);
 
 	switch (type) {
 	case XFS_DQ_USER:
 		if (!XFS_IS_UQUOTA_ON(mp))
-			return -ESRCH;
+			return -ERR(ESRCH);
 		return 0;
 	case XFS_DQ_GROUP:
 		if (!XFS_IS_GQUOTA_ON(mp))
-			return -ESRCH;
+			return -ERR(ESRCH);
 		return 0;
 	case XFS_DQ_PROJ:
 		if (!XFS_IS_PQUOTA_ON(mp))
-			return -ESRCH;
+			return -ERR(ESRCH);
 		return 0;
 	default:
 		WARN_ON_ONCE(0);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -939,7 +939,7 @@ restart:
 	} else {
 		/* inode stays locked on return */
 		xfs_qm_dqdestroy(dqp);
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	error = xfs_qm_dqget_cache_insert(mp, qi, tree, id, dqp);

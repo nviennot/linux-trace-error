@@ -316,7 +316,7 @@ static int ftr_set_notify(struct gpio_runtime *rt,
 	notify_func_t old;
 	int irq;
 	char *name;
-	int err = -EBUSY;
+	int err = -ERR(EBUSY);
 
 	switch (type) {
 	case AOA_NOTIFY_HEADPHONE:
@@ -335,11 +335,11 @@ static int ftr_set_notify(struct gpio_runtime *rt,
 		irq = lineout_detect_irq;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!irq)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&notif->mutex);
 
@@ -393,11 +393,11 @@ static int ftr_get_detect(struct gpio_runtime *rt,
 		active = lineout_detect_gpio_activestate;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (gpio == -1)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = pmac_call_feature(PMAC_FTR_READ_GPIO, NULL, gpio, 0);
 	if (ret < 0)

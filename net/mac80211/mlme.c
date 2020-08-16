@@ -375,7 +375,7 @@ static int ieee80211_config_bw(struct ieee80211_sub_if_data *sdata,
 		he_oper = NULL;
 
 	if (WARN_ON_ONCE(!sta))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * if bss configuration changed store the new one -
@@ -433,7 +433,7 @@ static int ieee80211_config_bw(struct ieee80211_sub_if_data *sdata,
 		sdata_info(sdata,
 			   "AP %pM changed bandwidth in a way we can't support - disconnect\n",
 			   ifmgd->bssid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (chandef.width) {
@@ -452,7 +452,7 @@ static int ieee80211_config_bw(struct ieee80211_sub_if_data *sdata,
 		new_sta_bw = IEEE80211_STA_RX_BW_160;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (new_sta_bw > sta->cur_max_bandwidth)
@@ -4287,7 +4287,7 @@ static int ieee80211_auth(struct ieee80211_sub_if_data *sdata)
 	sdata_assert_lock(sdata);
 
 	if (WARN_ON_ONCE(!auth_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	auth_data->tries++;
 
@@ -4301,7 +4301,7 @@ static int ieee80211_auth(struct ieee80211_sub_if_data *sdata)
 		 */
 		cfg80211_unlink_bss(local->hw.wiphy, auth_data->bss);
 
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	if (auth_data->algorithm == WLAN_AUTH_SAE)
@@ -4367,7 +4367,7 @@ static int ieee80211_do_assoc(struct ieee80211_sub_if_data *sdata)
 		 */
 		cfg80211_unlink_bss(local->hw.wiphy, assoc_data->bss);
 
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	sdata_info(sdata, "associate with %pM (try %d/%d)\n",
@@ -4965,7 +4965,7 @@ static int ieee80211_prep_channel(struct ieee80211_sub_if_data *sdata,
 
 	if (ifmgd->flags & IEEE80211_STA_DISABLE_HE && is_6ghz) {
 		sdata_info(sdata, "Rejecting non-HE 6/7 GHz connection");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* will change later if needed */
@@ -5044,11 +5044,11 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 	sband = local->hw.wiphy->bands[cbss->channel->band];
 
 	if (WARN_ON(!ifmgd->auth_data && !ifmgd->assoc_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* If a reconfig is happening, bail out */
 	if (local->in_reconfig)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (assoc) {
 		rcu_read_lock();
@@ -5104,7 +5104,7 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 				   "No legacy rates in association response\n");
 
 			sta_info_free(local, new_sta);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else if (!basic_rates) {
 			sdata_info(sdata,
 				   "No basic rates, using min rate instead\n");
@@ -5161,7 +5161,7 @@ static int ieee80211_prep_connection(struct ieee80211_sub_if_data *sdata,
 		if (err) {
 			if (new_sta)
 				sta_info_free(local, new_sta);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -5214,7 +5214,7 @@ int ieee80211_mgd_auth(struct ieee80211_sub_if_data *sdata,
 		break;
 	case NL80211_AUTHTYPE_SHARED_KEY:
 		if (fips_enabled)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		auth_alg = WLAN_AUTH_SHARED_KEY;
 		break;
 	case NL80211_AUTHTYPE_FT:
@@ -5236,11 +5236,11 @@ int ieee80211_mgd_auth(struct ieee80211_sub_if_data *sdata,
 		auth_alg = WLAN_AUTH_FILS_PK;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	if (ifmgd->assoc_data)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	auth_data = kzalloc(sizeof(*auth_data) + req->auth_data_len +
 			    req->ie_len, GFP_KERNEL);
@@ -5369,7 +5369,7 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 	if (!ssidie || ssidie[1] > sizeof(assoc_data->ssid)) {
 		rcu_read_unlock();
 		kfree(assoc_data);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	memcpy(assoc_data->ssid, ssidie + 2, ssidie[1]);
 	assoc_data->ssid_len = ssidie[1];
@@ -5391,12 +5391,12 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 	}
 
 	if (ifmgd->auth_data && !ifmgd->auth_data->done) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_free;
 	}
 
 	if (ifmgd->assoc_data) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_free;
 	}
 
@@ -5461,7 +5461,7 @@ int ieee80211_mgd_assoc(struct ieee80211_sub_if_data *sdata,
 	if (req->fils_kek) {
 		/* should already be checked in cfg80211 - so warn */
 		if (WARN_ON(req->fils_kek_len > FILS_MAX_KEK_LEN)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_free;
 		}
 		memcpy(assoc_data->fils_kek, req->fils_kek,
@@ -5721,7 +5721,7 @@ int ieee80211_mgd_deauth(struct ieee80211_sub_if_data *sdata,
 		return 0;
 	}
 
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 int ieee80211_mgd_disassoc(struct ieee80211_sub_if_data *sdata,
@@ -5738,7 +5738,7 @@ int ieee80211_mgd_disassoc(struct ieee80211_sub_if_data *sdata,
 	 * trying to tell us that the user wants to disconnect.
 	 */
 	if (ifmgd->associated != req->bss)
-		return -ENOLINK;
+		return -ERR(ENOLINK);
 
 	sdata_info(sdata,
 		   "disassociating from %pM by local choice (Reason: %u=%s)\n",

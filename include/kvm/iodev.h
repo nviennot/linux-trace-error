@@ -44,7 +44,7 @@ static inline int kvm_iodevice_read(struct kvm_vcpu *vcpu,
 				    int l, void *v)
 {
 	return dev->ops->read ? dev->ops->read(vcpu, dev, addr, l, v)
-				: -EOPNOTSUPP;
+				: -ERR(EOPNOTSUPP);
 }
 
 static inline int kvm_iodevice_write(struct kvm_vcpu *vcpu,
@@ -52,7 +52,7 @@ static inline int kvm_iodevice_write(struct kvm_vcpu *vcpu,
 				     int l, const void *v)
 {
 	return dev->ops->write ? dev->ops->write(vcpu, dev, addr, l, v)
-				 : -EOPNOTSUPP;
+				 : -ERR(EOPNOTSUPP);
 }
 
 static inline void kvm_iodevice_destructor(struct kvm_io_device *dev)

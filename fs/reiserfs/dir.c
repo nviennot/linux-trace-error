@@ -102,7 +102,7 @@ research:
 			 * FIXME: we could just skip part of directory
 			 * which could not be read
 			 */
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		entry_num = de.de_entry_num;
@@ -156,7 +156,7 @@ research:
 					 * We'd better stop here
 					 */
 					pathrelse(&path_to_entry);
-					ret = -EIO;
+					ret = -ERR(EIO);
 					goto out;
 				}
 

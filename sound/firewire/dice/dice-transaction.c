@@ -84,7 +84,7 @@ int snd_dice_transaction_get_rate(struct snd_dice *dice, unsigned int *rate)
 
 	index = (be32_to_cpu(info) & CLOCK_RATE_MASK) >> CLOCK_RATE_SHIFT;
 	if (index >= SND_DICE_RATES_COUNT) {
-		err = -ENOSYS;
+		err = -ERR(ENOSYS);
 		goto end;
 	}
 
@@ -198,7 +198,7 @@ static int register_notification_address(struct snd_dice *dice, bool retry)
 
 			dev_err(&dice->unit->device,
 				"device is already in use\n");
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 		}
 		if (err != -EAGAIN || retries-- > 0)
 			break;
@@ -256,7 +256,7 @@ int snd_dice_transaction_reinit(struct snd_dice *dice)
 	struct fw_address_handler *handler = &dice->notification_handler;
 
 	if (handler->callback_data == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return register_notification_address(dice, false);
 }
@@ -295,7 +295,7 @@ static int get_subaddrs(struct snd_dice *dice)
 	for (i = 0; i < ARRAY_SIZE(min_values); ++i) {
 		data = be32_to_cpu(pointers[i]);
 		if (data < min_values[i] || data >= 0x40000) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto end;
 		}
 	}
@@ -317,7 +317,7 @@ static int get_subaddrs(struct snd_dice *dice)
 			dev_err(&dice->unit->device,
 				"unknown DICE version: 0x%08x\n",
 				be32_to_cpu(version));
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto end;
 		}
 

@@ -266,7 +266,7 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 
 			if (total_len < 8) {
 				if (ret == 0)
-					ret = -ENOBUFS;
+					ret = -ERR(ENOBUFS);
 				break;
 			}
 
@@ -293,7 +293,7 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 			if (chars > total_len) {
 				if (buf->flags & PIPE_BUF_FLAG_WHOLE) {
 					if (ret == 0)
-						ret = -ENOBUFS;
+						ret = -ERR(ENOBUFS);
 					break;
 				}
 				chars = total_len;
@@ -345,7 +345,7 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 		if (ret)
 			break;
 		if (filp->f_flags & O_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 		__pipe_unlock(pipe);
@@ -379,7 +379,7 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
 		 * to mark anything accessed. And we've dropped the lock.
 		 */
 		if (wait_event_interruptible_exclusive(pipe->rd_wait, pipe_readable(pipe)) < 0)
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 
 		__pipe_lock(pipe);
 		was_full = pipe_full(pipe->head, pipe->tail, pipe->max_usage);
@@ -436,13 +436,13 @@ pipe_write(struct kiocb *iocb, struct iov_iter *from)
 
 	if (!pipe->readers) {
 		send_sig(SIGPIPE, current, 0);
-		ret = -EPIPE;
+		ret = -ERR(EPIPE);
 		goto out;
 	}
 
 #ifdef CONFIG_WATCH_QUEUE
 	if (pipe->watch_queue) {
-		ret = -EXDEV;
+		ret = -ERR(EXDEV);
 		goto out;
 	}
 #endif
@@ -488,7 +488,7 @@ pipe_write(struct kiocb *iocb, struct iov_iter *from)
 		if (!pipe->readers) {
 			send_sig(SIGPIPE, current, 0);
 			if (!ret)
-				ret = -EPIPE;
+				ret = -ERR(EPIPE);
 			break;
 		}
 
@@ -556,12 +556,12 @@ pipe_write(struct kiocb *iocb, struct iov_iter *from)
 		/* Wait for buffer space to become available. */
 		if (filp->f_flags & O_NONBLOCK) {
 			if (!ret)
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			break;
 		}
 		if (signal_pending(current)) {
 			if (!ret)
-				ret = -ERESTARTSYS;
+				ret = -ERR(ERESTARTSYS);
 			break;
 		}
 
@@ -646,7 +646,7 @@ static long pipe_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 #endif
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 
@@ -915,7 +915,7 @@ int create_pipe_files(struct file **res, int flags)
 	struct file *f;
 
 	if (!inode)
-		return -ENFILE;
+		return -ERR(ENFILE);
 
 	if (flags & O_NOTIFICATION_PIPE) {
 #ifdef CONFIG_WATCH_QUEUE
@@ -924,7 +924,7 @@ int create_pipe_files(struct file **res, int flags)
 			return -ENOMEM;
 		}
 #else
-		return -ENOPKG;
+		return -ERR(ENOPKG);
 #endif
 	}
 
@@ -959,7 +959,7 @@ static int __do_pipe_flags(int *fd, struct file **files, int flags)
 	int fdw, fdr;
 
 	if (flags & ~(O_CLOEXEC | O_NONBLOCK | O_DIRECT | O_NOTIFICATION_PIPE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = create_pipe_files(files, flags);
 	if (error)
@@ -1044,7 +1044,7 @@ static int wait_for_partner(struct pipe_inode_info *pipe, unsigned int *cnt)
 		if (signal_pending(current))
 			break;
 	}
-	return cur == *cnt ? -ERESTARTSYS : 0;
+	return cur == *cnt ? -ERR(ERESTARTSYS) : 0;
 }
 
 static void wake_up_partner(struct pipe_inode_info *pipe)
@@ -1120,7 +1120,7 @@ static int fifo_open(struct inode *inode, struct file *filp)
 	 *  POSIX.1 says that O_NONBLOCK means return -1 with
 	 *  errno=ENXIO when there is no process reading the FIFO.
 	 */
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		if (!is_pipe && (filp->f_flags & O_NONBLOCK) && !pipe->readers)
 			goto err;
 
@@ -1151,7 +1151,7 @@ static int fifo_open(struct inode *inode, struct file *filp)
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1162,13 +1162,13 @@ static int fifo_open(struct inode *inode, struct file *filp)
 err_rd:
 	if (!--pipe->readers)
 		wake_up_interruptible(&pipe->wr_wait);
-	ret = -ERESTARTSYS;
+	ret = -ERR(ERESTARTSYS);
 	goto err;
 
 err_wr:
 	if (!--pipe->writers)
 		wake_up_interruptible_all(&pipe->rd_wait);
-	ret = -ERESTARTSYS;
+	ret = -ERR(ERESTARTSYS);
 	goto err;
 
 err:
@@ -1224,7 +1224,7 @@ int pipe_resize_ring(struct pipe_inode_info *pipe, unsigned int nr_slots)
 	tail = pipe->tail;
 	n = pipe_occupancy(pipe->head, pipe->tail);
 	if (nr_slots < n)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	bufs = kcalloc(nr_slots, sizeof(*bufs),
 		       GFP_KERNEL_ACCOUNT | __GFP_NOWARN);
@@ -1279,14 +1279,14 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
 
 #ifdef CONFIG_WATCH_QUEUE
 	if (pipe->watch_queue)
-		return -EBUSY;
+		return -ERR(EBUSY);
 #endif
 
 	size = round_pipe_size(arg);
 	nr_slots = size >> PAGE_SHIFT;
 
 	if (!nr_slots)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If trying to increase the pipe capacity, check that an
@@ -1297,7 +1297,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
 	 */
 	if (nr_slots > pipe->max_usage &&
 			size > pipe_max_size && !capable(CAP_SYS_RESOURCE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	user_bufs = account_pipe_buffers(pipe->user, pipe->nr_accounted, nr_slots);
 
@@ -1305,7 +1305,7 @@ static long pipe_set_size(struct pipe_inode_info *pipe, unsigned long arg)
 			(too_many_pipe_buffers_hard(user_bufs) ||
 			 too_many_pipe_buffers_soft(user_bufs)) &&
 			pipe_is_unprivileged_user()) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out_revert_acct;
 	}
 
@@ -1347,7 +1347,7 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 
 	pipe = get_pipe_info(file, false);
 	if (!pipe)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	__pipe_lock(pipe);
 
@@ -1359,7 +1359,7 @@ long pipe_fcntl(struct file *file, unsigned int cmd, unsigned long arg)
 		ret = pipe->max_usage * PAGE_SIZE;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

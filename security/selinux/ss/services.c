@@ -113,7 +113,7 @@ static int selinux_set_mapping(struct policydb *pol,
 
 	/* Find number of classes in the input mapping */
 	if (!map)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i = 0;
 	while (map[i].name)
 		i++;
@@ -177,7 +177,7 @@ static int selinux_set_mapping(struct policydb *pol,
 err:
 	kfree(out_map->mapping);
 	out_map->mapping = NULL;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -748,7 +748,7 @@ out:
 
 	if (!enforcing_enabled(state))
 		return 0;
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 static int security_compute_validatetrans(struct selinux_state *state,
@@ -780,7 +780,7 @@ static int security_compute_validatetrans(struct selinux_state *state,
 		tclass = orig_tclass;
 
 	if (!tclass || tclass > policydb->p_classes.nprim) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	tclass_datum = policydb->class_val_to_struct[tclass - 1];
@@ -789,7 +789,7 @@ static int security_compute_validatetrans(struct selinux_state *state,
 	if (!oentry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 			__func__, oldsid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -797,7 +797,7 @@ static int security_compute_validatetrans(struct selinux_state *state,
 	if (!nentry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 			__func__, newsid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -805,7 +805,7 @@ static int security_compute_validatetrans(struct selinux_state *state,
 	if (!tentry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 			__func__, tasksid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -815,7 +815,7 @@ static int security_compute_validatetrans(struct selinux_state *state,
 					  &nentry->context, &tentry->context,
 					  constraint->expr)) {
 			if (user)
-				rc = -EPERM;
+				rc = -ERR(EPERM);
 			else
 				rc = security_validtrans_handle_fail(state,
 								     oentry,
@@ -875,7 +875,7 @@ int security_bounded_transition(struct selinux_state *state,
 	policydb = &state->ss->policydb;
 	sidtab = state->ss->sidtab;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	old_entry = sidtab_search_entry(sidtab, old_sid);
 	if (!old_entry) {
 		pr_err("SELinux: %s: unrecognized SID %u\n",
@@ -883,7 +883,7 @@ int security_bounded_transition(struct selinux_state *state,
 		goto out;
 	}
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	new_entry = sidtab_search_entry(sidtab, new_sid);
 	if (!new_entry) {
 		pr_err("SELinux: %s: unrecognized SID %u\n",
@@ -902,7 +902,7 @@ int security_bounded_transition(struct selinux_state *state,
 		BUG_ON(!type);
 
 		/* not bounded anymore */
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		if (!type->bounds)
 			break;
 
@@ -1288,7 +1288,7 @@ int security_sidtab_hash_stats(struct selinux_state *state, char *page)
 	if (!selinux_initialized(state)) {
 		pr_err("SELinux: %s:  called before initial load_policy\n",
 		       __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	read_lock(&state->ss->policy_rwlock);
@@ -1325,7 +1325,7 @@ static int security_sid_to_context_core(struct selinux_state *state,
 			const char *s = initial_sid_to_string[sid];
 
 			if (!s)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			*scontext_len = strlen(s) + 1;
 			if (!scontext)
 				return 0;
@@ -1337,7 +1337,7 @@ static int security_sid_to_context_core(struct selinux_state *state,
 		}
 		pr_err("SELinux: %s:  called before initial "
 		       "load_policy on unknown SID %d\n", __func__, sid);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	read_lock(&state->ss->policy_rwlock);
 	policydb = &state->ss->policydb;
@@ -1350,7 +1350,7 @@ static int security_sid_to_context_core(struct selinux_state *state,
 	if (!entry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 			__func__, sid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock;
 	}
 	if (only_invalid && !entry->context.len)
@@ -1428,7 +1428,7 @@ static int string_to_context_struct(struct policydb *pol,
 
 	/* Parse the security context. */
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	scontextp = (char *) scontext;
 
 	/* Extract the user. */
@@ -1480,7 +1480,7 @@ static int string_to_context_struct(struct policydb *pol,
 		goto out;
 
 	/* Check the validity of the new context. */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (!policydb_context_isvalid(pol, ctx))
 		goto out;
 	rc = 0;
@@ -1503,7 +1503,7 @@ static int security_context_to_sid_core(struct selinux_state *state,
 
 	/* An empty security context is never valid. */
 	if (!scontext_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Copy the string to allow changes and ensure a NUL terminator */
 	scontext2 = kmemdup_nul(scontext, scontext_len, gfp_flags);
@@ -1648,7 +1648,7 @@ out:
 	kfree(n);
 	if (!enforcing_enabled(state))
 		return 0;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 static void filename_compute_type(struct policydb *policydb,
@@ -1734,14 +1734,14 @@ static int security_compute_sid(struct selinux_state *state,
 	if (!sentry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 		       __func__, ssid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock;
 	}
 	tentry = sidtab_search_entry(sidtab, tsid);
 	if (!tentry) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 		       __func__, tsid);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -1950,7 +1950,7 @@ static inline int convert_context_handle_invalid_context(
 	u32 len;
 
 	if (enforcing_enabled(state))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!context_struct_to_string(policydb, context, &s, &len)) {
 		pr_warn("SELinux:  Context %s would be invalid if enforcing\n",
@@ -2023,7 +2023,7 @@ static int convert_context(struct context *oldc, struct context *newc, void *p)
 	context_init(newc);
 
 	/* Convert the user. */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	usrdatum = hashtab_search(&args->newp->p_users.table,
 				  sym_name(args->oldp,
 					   SYM_USERS, oldc->user - 1));
@@ -2032,7 +2032,7 @@ static int convert_context(struct context *oldc, struct context *newc, void *p)
 	newc->user = usrdatum->value;
 
 	/* Convert the role. */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	role = hashtab_search(&args->newp->p_roles.table,
 			      sym_name(args->oldp, SYM_ROLES, oldc->role - 1));
 	if (!role)
@@ -2040,7 +2040,7 @@ static int convert_context(struct context *oldc, struct context *newc, void *p)
 	newc->role = role->value;
 
 	/* Convert the type. */
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	typdatum = hashtab_search(&args->newp->p_types.table,
 				  sym_name(args->oldp,
 					   SYM_TYPES, oldc->type - 1));
@@ -2064,7 +2064,7 @@ static int convert_context(struct context *oldc, struct context *newc, void *p)
 		oc = args->newp->ocontexts[OCON_ISID];
 		while (oc && oc->sid[0] != SECINITSID_UNLABELED)
 			oc = oc->next;
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		if (!oc) {
 			pr_err("SELinux:  unable to look up"
 				" the initial SIDs list\n");
@@ -2519,7 +2519,7 @@ int security_node_sid(struct selinux_state *state,
 	case AF_INET: {
 		u32 addr;
 
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		if (addrlen != sizeof(u32))
 			goto out;
 
@@ -2535,7 +2535,7 @@ int security_node_sid(struct selinux_state *state,
 	}
 
 	case AF_INET6:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		if (addrlen != sizeof(u64) * 2)
 			goto out;
 		c = policydb->ocontexts[OCON_NODE6];
@@ -2617,12 +2617,12 @@ int security_get_user_sids(struct selinux_state *state,
 
 	context_init(&usercon);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	fromcon = sidtab_search(sidtab, fromsid);
 	if (!fromcon)
 		goto out_unlock;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	user = hashtab_search(&policydb->p_users.table, username);
 	if (!user)
 		goto out_unlock;
@@ -2734,7 +2734,7 @@ static inline int __security_genfs_sid(struct selinux_state *state,
 			break;
 	}
 
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 	if (!genfs || cmp)
 		goto out;
 
@@ -2745,7 +2745,7 @@ static inline int __security_genfs_sid(struct selinux_state *state,
 			break;
 	}
 
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 	if (!c)
 		goto out;
 
@@ -3021,7 +3021,7 @@ int security_sid_mls_copy(struct selinux_state *state,
 
 	read_lock(&state->ss->policy_rwlock);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	context1 = sidtab_search(sidtab, sid);
 	if (!context1) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
@@ -3029,7 +3029,7 @@ int security_sid_mls_copy(struct selinux_state *state,
 		goto out_unlock;
 	}
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	context2 = sidtab_search(sidtab, mls_sid);
 	if (!context2) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
@@ -3131,21 +3131,21 @@ int security_net_peersid_resolve(struct selinux_state *state,
 
 	read_lock(&state->ss->policy_rwlock);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	nlbl_ctx = sidtab_search(sidtab, nlbl_sid);
 	if (!nlbl_ctx) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 		       __func__, nlbl_sid);
 		goto out;
 	}
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	xfrm_ctx = sidtab_search(sidtab, xfrm_sid);
 	if (!xfrm_ctx) {
 		pr_err("SELinux: %s:  unrecognized SID %d\n",
 		       __func__, xfrm_sid);
 		goto out;
 	}
-	rc = (mls_context_cmp(nlbl_ctx, xfrm_ctx) ? 0 : -EACCES);
+	rc = (mls_context_cmp(nlbl_ctx, xfrm_ctx) ? 0 : -ERR(EACCES));
 	if (rc)
 		goto out;
 
@@ -3229,7 +3229,7 @@ int security_get_permissions(struct selinux_state *state,
 
 	read_lock(&state->ss->policy_rwlock);
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	match = hashtab_search(&policydb->p_classes.table, class);
 	if (!match) {
 		pr_err("SELinux: %s:  unrecognized class %s\n",
@@ -3329,7 +3329,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 	*rule = NULL;
 
 	if (!selinux_initialized(state))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (field) {
 	case AUDIT_SUBJ_USER:
@@ -3340,7 +3340,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 	case AUDIT_OBJ_TYPE:
 		/* only 'equals' and 'not equals' fit user, role, and type */
 		if (op != Audit_equal && op != Audit_not_equal)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_SUBJ_SEN:
 	case AUDIT_SUBJ_CLR:
@@ -3348,11 +3348,11 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 	case AUDIT_OBJ_LEV_HIGH:
 		/* we do not allow a range, indicated by the presence of '-' */
 		if (strchr(rulestr, '-'))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		/* only the above fields are valid */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tmprule = kzalloc(sizeof(struct selinux_audit_rule), GFP_KERNEL);
@@ -3368,7 +3368,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 	switch (field) {
 	case AUDIT_SUBJ_USER:
 	case AUDIT_OBJ_USER:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		userdatum = hashtab_search(&policydb->p_users.table, rulestr);
 		if (!userdatum)
 			goto out;
@@ -3376,7 +3376,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 		break;
 	case AUDIT_SUBJ_ROLE:
 	case AUDIT_OBJ_ROLE:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		roledatum = hashtab_search(&policydb->p_roles.table, rulestr);
 		if (!roledatum)
 			goto out;
@@ -3384,7 +3384,7 @@ int selinux_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
 		break;
 	case AUDIT_SUBJ_TYPE:
 	case AUDIT_OBJ_TYPE:
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		typedatum = hashtab_search(&policydb->p_types.table, rulestr);
 		if (!typedatum)
 			goto out;
@@ -3449,13 +3449,13 @@ int selinux_audit_rule_match(u32 sid, u32 field, u32 op, void *vrule)
 
 	if (unlikely(!rule)) {
 		WARN_ONCE(1, "selinux_audit_rule_match: missing rule\n");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	read_lock(&state->ss->policy_rwlock);
 
 	if (rule->au_seqno < state->ss->latest_granting) {
-		match = -ESTALE;
+		match = -ERR(ESTALE);
 		goto out;
 	}
 
@@ -3463,7 +3463,7 @@ int selinux_audit_rule_match(u32 sid, u32 field, u32 op, void *vrule)
 	if (unlikely(!ctxt)) {
 		WARN_ONCE(1, "selinux_audit_rule_match: unrecognized SID %d\n",
 			  sid);
-		match = -ENOENT;
+		match = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -3639,7 +3639,7 @@ int security_netlbl_secattr_to_sid(struct selinux_state *state,
 	else if (secattr->flags & NETLBL_SECATTR_SECID)
 		*sid = secattr->attr.secid;
 	else if (secattr->flags & NETLBL_SECATTR_MLS_LVL) {
-		rc = -EIDRM;
+		rc = -ERR(EIDRM);
 		ctx = sidtab_search(sidtab, SECINITSID_NETMSG);
 		if (ctx == NULL)
 			goto out;
@@ -3654,7 +3654,7 @@ int security_netlbl_secattr_to_sid(struct selinux_state *state,
 			if (rc)
 				goto out;
 		}
-		rc = -EIDRM;
+		rc = -ERR(EIDRM);
 		if (!mls_context_isvalid(policydb, &ctx_new))
 			goto out_free;
 
@@ -3699,7 +3699,7 @@ int security_netlbl_sid_to_secattr(struct selinux_state *state,
 
 	read_lock(&state->ss->policy_rwlock);
 
-	rc = -ENOENT;
+	rc = -ERR(ENOENT);
 	ctx = sidtab_search(state->ss->sidtab, sid);
 	if (ctx == NULL)
 		goto out;
@@ -3734,7 +3734,7 @@ int security_read_policy(struct selinux_state *state,
 	struct policy_file fp;
 
 	if (!selinux_initialized(state))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*len = security_policydb_len(state);
 

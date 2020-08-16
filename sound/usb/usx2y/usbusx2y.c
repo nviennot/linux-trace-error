@@ -289,7 +289,7 @@ int usX2Y_In04_init(struct usX2Ydev *usX2Y)
 			 i_usX2Y_In04Int, usX2Y,
 			 10);
 	if (usb_urb_ep_type_check(usX2Y->In04urb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return usb_submit_urb(usX2Y->In04urb, GFP_KERNEL);
 }
 
@@ -336,7 +336,7 @@ static int usX2Y_create_card(struct usb_device *device,
 		if (enable[dev] && !snd_usX2Y_card_used[dev])
 			break;
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	err = snd_card_new(&intf->dev, index[dev], id[dev], THIS_MODULE,
 			   sizeof(struct usX2Ydev), &card);
 	if (err < 0)
@@ -374,7 +374,7 @@ static int usX2Y_usb_probe(struct usb_device *device,
 	    (le16_to_cpu(device->descriptor.idProduct) != USB_ID_US122 &&
 	     le16_to_cpu(device->descriptor.idProduct) != USB_ID_US224 &&
 	     le16_to_cpu(device->descriptor.idProduct) != USB_ID_US428))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = usX2Y_create_card(device, intf, &card);
 	if (err < 0)

@@ -73,7 +73,7 @@ static int pagecache_write(struct inode *inode, const void *buf, size_t count,
 			   loff_t pos)
 {
 	if (pos + count > inode->i_sb->s_maxbytes)
-		return -EFBIG;
+		return -ERR(EFBIG);
 
 	while (count) {
 		size_t n = min_t(size_t, count,
@@ -97,7 +97,7 @@ static int pagecache_write(struct inode *inode, const void *buf, size_t count,
 		if (res < 0)
 			return res;
 		if (res != n)
-			return -EIO;
+			return -ERR(EIO);
 
 		buf += n;
 		pos += n;
@@ -114,10 +114,10 @@ static int ext4_begin_enable_verity(struct file *filp)
 	int err;
 
 	if (IS_DAX(inode) || ext4_test_inode_flag(inode, EXT4_INODE_DAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ext4_verity_in_progress(inode))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * Since the file was opened readonly, we have to initialize the jbd
@@ -140,7 +140,7 @@ static int ext4_begin_enable_verity(struct file *filp)
 	if (!ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS)) {
 		ext4_warning_inode(inode,
 				   "verity is only allowed on extent-based files");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	/*
@@ -337,7 +337,7 @@ static int ext4_get_verity_descriptor(struct inode *inode, void *buf,
 
 	if (buf_size) {
 		if (desc_size > buf_size)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		err = pagecache_read(inode, buf, desc_size, desc_pos);
 		if (err)
 			return err;

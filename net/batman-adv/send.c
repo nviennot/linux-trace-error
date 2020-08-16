@@ -185,7 +185,7 @@ int batadv_send_skb_to_orig(struct sk_buff *skb,
 	/* batadv_find_router() increases neigh_nodes refcount if found. */
 	neigh_node = batadv_find_router(bat_priv, orig_node, recv_if);
 	if (!neigh_node) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto free_skb;
 	}
 
@@ -207,7 +207,7 @@ int batadv_send_skb_to_orig(struct sk_buff *skb,
 	 * network coding fails, then send the packet as usual.
 	 */
 	if (recv_if && batadv_nc_skb_forward(skb, neigh_node))
-		ret = -EINPROGRESS;
+		ret = -ERR(EINPROGRESS);
 	else
 		ret = batadv_send_unicast_skb(skb, neigh_node);
 

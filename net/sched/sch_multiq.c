@@ -178,9 +178,9 @@ static int multiq_tune(struct Qdisc *sch, struct nlattr *opt,
 	int i, n_removed = 0;
 
 	if (!netif_is_multiqueue(qdisc_dev(sch)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	qopt = nla_data(opt);
 
@@ -242,7 +242,7 @@ static int multiq_init(struct Qdisc *sch, struct nlattr *opt,
 	q->queues = NULL;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
 	if (err)
@@ -252,7 +252,7 @@ static int multiq_init(struct Qdisc *sch, struct nlattr *opt,
 
 	q->queues = kcalloc(q->max_bands, sizeof(struct Qdisc *), GFP_KERNEL);
 	if (!q->queues)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	for (i = 0; i < q->max_bands; i++)
 		q->queues[i] = &noop_qdisc;
 

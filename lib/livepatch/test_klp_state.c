@@ -37,7 +37,7 @@ static int allocate_loglevel_state(void)
 
 	loglevel_state = klp_get_state(&patch, CONSOLE_LOGLEVEL_STATE);
 	if (!loglevel_state)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	loglevel_state->data = kzalloc(sizeof(console_loglevel), GFP_KERNEL);
 	if (!loglevel_state->data)

@@ -73,7 +73,7 @@ static inline int of_get_named_gpio_flags(struct device_node *np,
 	if (flags)
 		*flags = 0;
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_OF_GPIO */

@@ -815,7 +815,7 @@ static int control_mount(struct gfs2_sbd *sdp)
 
 restart:
 	if (retries++ && signal_pending(current)) {
-		error = -EINTR;
+		error = -ERR(EINTR);
 		goto fail;
 	}
 
@@ -896,7 +896,7 @@ locks_done:
 	if (lvb_gen == 0xFFFFFFFF) {
 		/* special value to force mount attempts to fail */
 		fs_err(sdp, "control_mount control_lock disabled\n");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto fail;
 	}
 
@@ -1278,7 +1278,7 @@ static int gdlm_mount(struct gfs2_sbd *sdp, const char *table)
 	fsname = strchr(table, ':');
 	if (!fsname) {
 		fs_info(sdp, "no fsname found\n");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto fail_free;
 	}
 	memset(cluster, 0, sizeof(cluster));
@@ -1312,7 +1312,7 @@ static int gdlm_mount(struct gfs2_sbd *sdp, const char *table)
 
 	if (!test_bit(SDF_NOJOURNALID, &sdp->sd_flags)) {
 		fs_err(sdp, "dlm lockspace ops disallow jid preset\n");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto fail_release;
 	}
 

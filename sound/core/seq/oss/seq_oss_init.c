@@ -200,7 +200,7 @@ snd_seq_oss_open(struct file *file, int level)
 
 	if (dp->synth_opened == 0 && dp->max_mididev == 0) {
 		/* pr_err("ALSA: seq_oss: no device found\n"); */
-		rc = -ENODEV;
+		rc = -ERR(ENODEV);
 		goto _error;
 	}
 

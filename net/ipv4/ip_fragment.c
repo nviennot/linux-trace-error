@@ -250,7 +250,7 @@ static int ip_frag_reinit(struct ipq *qp)
 
 	if (!mod_timer(&qp->q.timer, jiffies + qp->q.fqdir->timeout)) {
 		refcount_inc(&qp->q.refcnt);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	sum_truesize = inet_frag_rbtree_purge(&qp->q.rb_fragments);
@@ -276,7 +276,7 @@ static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 	struct sk_buff *prev_tail;
 	struct net_device *dev;
 	unsigned int fragsize;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	u8 ecn;
 
 	if (qp->q.flags & INET_FRAG_COMPLETE)
@@ -298,7 +298,7 @@ static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 
 	/* Determine the position of this fragment. */
 	end = offset + skb->len - skb_network_offset(skb) - ihl;
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 
 	/* Is this the final fragment? */
 	if ((flags & IP_MF) == 0) {
@@ -376,14 +376,14 @@ static int ip_frag_queue(struct ipq *qp, struct sk_buff *skb)
 	}
 
 	skb_dst_drop(skb);
-	return -EINPROGRESS;
+	return -ERR(EINPROGRESS);
 
 insert_error:
 	if (err == IPFRAG_DUP) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	__IP_INC_STATS(net, IPSTATS_MIB_REASM_OVERLAPS);
 discard_qp:
 	inet_frag_kill(&qp->q);
@@ -412,7 +412,7 @@ static int ip_frag_reasm(struct ipq *qp, struct sk_buff *skb,
 
 	ecn = ip_frag_ecn_table[qp->ecn];
 	if (unlikely(ecn == 0xff)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_fail;
 	}
 
@@ -422,7 +422,7 @@ static int ip_frag_reasm(struct ipq *qp, struct sk_buff *skb,
 		goto out_nomem;
 
 	len = ip_hdrlen(skb) + qp->q.len;
-	err = -E2BIG;
+	err = -ERR(E2BIG);
 	if (len > 65535)
 		goto out_oversize;
 

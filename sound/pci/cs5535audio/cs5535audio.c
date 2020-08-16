@@ -272,7 +272,7 @@ static int snd_cs5535audio_create(struct snd_card *card,
 	if (dma_set_mask(&pci->dev, DMA_BIT_MASK(32)) < 0 ||
 	    dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) {
 		dev_warn(card->dev, "unable to get 32bit dma\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto pcifail;
 	}
 
@@ -297,7 +297,7 @@ static int snd_cs5535audio_create(struct snd_card *card,
 	if (request_irq(pci->irq, snd_cs5535audio_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, cs5535au)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto sndfail;
 	}
 
@@ -330,10 +330,10 @@ static int snd_cs5535audio_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

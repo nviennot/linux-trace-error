@@ -40,7 +40,7 @@ static unsigned short psc_ac97_read(struct snd_ac97 *ac97, unsigned short reg)
 	if (status == 0) {
 		pr_err("timeout on ac97 bus (rdy)\n");
 		mutex_unlock(&psc_dma->mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Force clear the data valid bit */
@@ -56,14 +56,14 @@ static unsigned short psc_ac97_read(struct snd_ac97 *ac97, unsigned short reg)
 		pr_err("timeout on ac97 read (val) %x\n",
 				in_be16(&psc_dma->psc_regs->sr_csr.status));
 		mutex_unlock(&psc_dma->mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* Get the data */
 	val = in_be32(&psc_dma->psc_regs->ac97_data);
 	if (((val >> 24) & 0x7f) != reg) {
 		pr_err("reg echo error on ac97 read\n");
 		mutex_unlock(&psc_dma->mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	val = (val >> 8) & 0xffff;
 

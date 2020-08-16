@@ -76,7 +76,7 @@ int digital_skb_check_crc(struct sk_buff *skb, crc_func_t crc_func,
 	u16 crc;
 
 	if (skb->len <= 2)
-		return -EIO;
+		return -ERR(EIO);
 
 	crc = crc_func(crc_init, skb->data, skb->len - 2);
 
@@ -90,7 +90,7 @@ int digital_skb_check_crc(struct sk_buff *skb, crc_func_t crc_func,
 	     (skb->data[skb->len - 1] - ((crc >> 8) & 0xFF));
 
 	if (rc)
-		return -EIO;
+		return -ERR(EIO);
 
 	skb_trim(skb, skb->len - 2);
 
@@ -364,7 +364,7 @@ int digital_target_found(struct nfc_digital_dev *ddev,
 
 	default:
 		pr_err("Invalid protocol %d\n", protocol);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pr_debug("rf_tech=%d, protocol=%d\n", rf_tech, protocol);
@@ -479,17 +479,17 @@ static int digital_start_poll(struct nfc_dev *nfc_dev, __u32 im_protocols,
 
 	if (!matching_im_protocols && !matching_tm_protocols) {
 		pr_err("Unknown protocol\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ddev->poll_tech_count) {
 		pr_err("Already polling\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (ddev->curr_protocol) {
 		pr_err("A target is already active\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	ddev->poll_tech_count = 0;
@@ -537,7 +537,7 @@ static int digital_start_poll(struct nfc_dev *nfc_dev, __u32 im_protocols,
 	if (!ddev->poll_tech_count) {
 		pr_err("Unsupported protocols: im=0x%x, tm=0x%x\n",
 		       matching_im_protocols, matching_tm_protocols);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	schedule_delayed_work(&ddev->poll_work, 0);
@@ -617,12 +617,12 @@ static int digital_activate_target(struct nfc_dev *nfc_dev,
 
 	if (ddev->poll_tech_count) {
 		pr_err("Can't activate a target while polling\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (ddev->curr_protocol) {
 		pr_err("A target is already active\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	ddev->curr_protocol = protocol;

@@ -165,7 +165,7 @@ static void afs_kill_lockers_enoent(struct afs_vnode *vnode)
 		p = list_entry(vnode->pending_locks.next,
 			       struct file_lock, fl_u.afs.link);
 		list_del_init(&p->fl_u.afs.link);
-		p->fl_u.afs.state = -ENOENT;
+		p->fl_u.afs.state = -ERR(ENOENT);
 		wake_up(&p->fl_wait);
 	}
 
@@ -438,10 +438,10 @@ static int afs_do_setlk_check(struct afs_vnode *vnode, struct key *key,
 	 */
 	if (type == AFS_LOCK_READ) {
 		if (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE | AFS_ACE_LOCK)))
-			return -EACCES;
+			return -ERR(EACCES);
 	} else {
 		if (!(access & (AFS_ACE_INSERT | AFS_ACE_WRITE)))
-			return -EACCES;
+			return -ERR(EACCES);
 	}
 
 	return 0;
@@ -499,7 +499,7 @@ static int afs_do_setlk(struct file *file, struct file_lock *fl)
 	spin_lock(&vnode->lock);
 	list_add_tail(&fl->fl_u.afs.link, &vnode->pending_locks);
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
 		goto error_unlock;
 
@@ -526,7 +526,7 @@ static int afs_do_setlk(struct file *file, struct file_lock *fl)
 
 	if (vnode->lock_state == AFS_VNODE_LOCK_NONE &&
 	    !(fl->fl_flags & FL_SLEEP)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		if (type == AFS_LOCK_READ) {
 			if (vnode->status.lock_count == -1)
 				goto lock_is_contended; /* Write locked */
@@ -625,7 +625,7 @@ lock_is_contended:
 	if (!(fl->fl_flags & FL_SLEEP)) {
 		list_del_init(&fl->fl_u.afs.link);
 		afs_next_locker(vnode, 0);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto error_unlock;
 	}
 
@@ -729,7 +729,7 @@ static int afs_do_getlk(struct file *file, struct file_lock *fl)
 	_enter("");
 
 	if (vnode->lock_state == AFS_VNODE_LOCK_DELETED)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	fl->fl_type = F_UNLCK;
 
@@ -775,7 +775,7 @@ int afs_lock(struct file *file, int cmd, struct file_lock *fl)
 
 	/* AFS doesn't support mandatory locks */
 	if (__mandatory_lock(&vnode->vfs_inode) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	if (IS_GETLK(cmd))
 		return afs_do_getlk(file, fl);
@@ -819,7 +819,7 @@ int afs_flock(struct file *file, int cmd, struct file_lock *fl)
 	 * that would break in other places.
 	 */
 	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	fl->fl_u.afs.debug_id = atomic_inc_return(&afs_file_lock_debug_id);
 	trace_afs_flock_op(vnode, fl, afs_flock_op_flock);

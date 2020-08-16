@@ -128,7 +128,7 @@ static int idletimer_check_sysfs_name(const char *name, unsigned int size)
 	if (!strcmp(name, "power") ||
 	    !strcmp(name, "subsystem") ||
 	    !strcmp(name, "uevent"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -287,17 +287,17 @@ static int idletimer_tg_helper(struct idletimer_tg_info *info)
 {
 	if (info->timeout == 0) {
 		pr_debug("timeout value is zero\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (info->timeout >= INT_MAX / 1000) {
 		pr_debug("timeout value is too big\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (info->label[0] == '\0' ||
 	    strnlen(info->label,
 		    MAX_IDLETIMER_LABEL_SIZE) == MAX_IDLETIMER_LABEL_SIZE) {
 		pr_debug("label is empty or not nul-terminated\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -314,7 +314,7 @@ static int idletimer_tg_checkentry(const struct xt_tgchk_param *par)
 	if(ret < 0)
 	{
 		pr_debug("checkentry helper return invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mutex_lock(&list_mutex);
 
@@ -347,18 +347,18 @@ static int idletimer_tg_checkentry_v1(const struct xt_tgchk_param *par)
 	pr_debug("checkentry targinfo%s\n", info->label);
 
 	if (info->send_nl_msg)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = idletimer_tg_helper((struct idletimer_tg_info *)info);
 	if(ret < 0)
 	{
 		pr_debug("checkentry helper return invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (info->timer_type > XT_IDLETIMER_ALARM) {
 		pr_debug("invalid value for timer type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&list_mutex);
@@ -368,7 +368,7 @@ static int idletimer_tg_checkentry_v1(const struct xt_tgchk_param *par)
 		if (info->timer->timer_type != info->timer_type) {
 			pr_debug("Adding/Replacing rule with same label and different timer type is not allowed\n");
 			mutex_unlock(&list_mutex);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		info->timer->refcnt++;

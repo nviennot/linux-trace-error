@@ -229,7 +229,7 @@ static struct dentry *openpromfs_lookup(struct inode *dir, struct dentry *dentry
 	}
 
 	mutex_unlock(&op_mutex);
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 
 found:
 	inode = openprom_iget(dir->i_sb, ino);

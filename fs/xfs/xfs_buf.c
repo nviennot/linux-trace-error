@@ -623,7 +623,7 @@ xfs_buf_find(
 		XFS_STATS_INC(btp->bt_mount, xb_miss_locked);
 		spin_unlock(&pag->pag_buf_lock);
 		xfs_perag_put(pag);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* the buffer keeps the perag reference until it is freed */
@@ -642,7 +642,7 @@ found:
 		if (flags & XBF_TRYLOCK) {
 			xfs_buf_rele(bp);
 			XFS_STATS_INC(btp->bt_mount, xb_busy_locked);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		xfs_buf_lock(bp);
 		XFS_STATS_INC(btp->bt_mount, xb_get_locked_waited);
@@ -1504,7 +1504,7 @@ __xfs_buf_submit(
 	/* on shutdown we stale and complete the buffer immediately */
 	if (XFS_FORCED_SHUTDOWN(bp->b_mount)) {
 		xfs_buf_ioend_fail(bp);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/*
@@ -1808,7 +1808,7 @@ xfs_setsize_buftarg(
 		xfs_warn(btp->bt_mount,
 			"Cannot set_blocksize to %u on device %pg",
 			sectorsize, btp->bt_bdev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set up device logical sector size mask */

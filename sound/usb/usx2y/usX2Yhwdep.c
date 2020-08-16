@@ -52,12 +52,12 @@ static int snd_us428ctls_mmap(struct snd_hwdep * hw, struct file *filp, struct v
 	// FIXME this hwdep interface is used twice: fpga download and mmap for controlling Lights etc. Maybe better using 2 hwdep devs?
 	// so as long as the device isn't fully initialised yet we return -EBUSY here.
  	if (!(us428->chip_status & USX2Y_STAT_CHIP_INIT))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* if userspace tries to mmap beyond end of our buffer, fail */ 
         if (size > PAGE_ALIGN(sizeof(struct us428ctls_sharedmem))) {
 		snd_printd( "%lu > %lu\n", size, (unsigned long)sizeof(struct us428ctls_sharedmem)); 
-                return -EINVAL;
+                return -ERR(EINVAL);
 	}
 
 	if (!us428->us428ctls_sharedmem) {
@@ -114,7 +114,7 @@ static int snd_usX2Y_hwdep_dsp_status(struct snd_hwdep *hw,
 		break;
 	}
 	if (0 > id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	strcpy(info->id, type_ids[id]);
 	info->num_dsps = 2;		// 0: Prepad Data, 1: FPGA Code
 	if (us428->chip_status & USX2Y_STAT_CHIP_INIT)

@@ -682,7 +682,7 @@ static int detect_choice_get(struct snd_kcontrol *kcontrol,
 		ucontrol->value.integer.value[0] = ldev->switch_on_lineout;
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }
@@ -700,7 +700,7 @@ static int detect_choice_put(struct snd_kcontrol *kcontrol,
 		ldev->switch_on_lineout = !!ucontrol->value.integer.value[0];
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 1;
 }
@@ -741,7 +741,7 @@ static int detected_get(struct snd_kcontrol *kcontrol,
 						   AOA_NOTIFY_LINE_OUT);
 		break;
 	default:
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	ucontrol->value.integer.value[0] = v;
 	return 0;
@@ -781,18 +781,18 @@ static int check_codec(struct aoa_codec *codec,
 		if (!ref) {
 			printk(KERN_INFO "snd-aoa-fabric-layout: "
 				"required property %s not present\n", propname);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		if (*ref != codec->node->phandle) {
 			printk(KERN_INFO "snd-aoa-fabric-layout: "
 				"%s doesn't match!\n", propname);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	} else {
 		if (layouts_list_items != 1) {
 			printk(KERN_INFO "snd-aoa-fabric-layout: "
 				"more than one soundbus, but no references.\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	codec->soundbus_dev = ldev->sdev;
@@ -800,7 +800,7 @@ static int check_codec(struct aoa_codec *codec,
 
 	cc = cci->connections;
 	if (!cc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	printk(KERN_INFO "snd-aoa-fabric-layout: can use this codec\n");
 
@@ -832,7 +832,7 @@ static int layout_found_codec(struct aoa_codec *codec)
 			}
 		}
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void layout_remove_codec(struct aoa_codec *codec)
@@ -1003,7 +1003,7 @@ static int aoa_fabric_layout_probe(struct soundbus_dev *sdev)
 
 	/* hm, currently we can only have one ... */
 	if (layout_device)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* by breaking out we keep a reference */
 	for_each_child_of_node(sdev->ofdev.dev.of_node, sound) {
@@ -1011,7 +1011,7 @@ static int aoa_fabric_layout_probe(struct soundbus_dev *sdev)
 			break;
 	}
 	if (!sound)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	id = of_get_property(sound, "layout-id", NULL);
 	if (id) {
@@ -1091,7 +1091,7 @@ static int aoa_fabric_layout_probe(struct soundbus_dev *sdev)
  outnodev:
  	of_node_put(sound);
  	layout_device = NULL;
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int aoa_fabric_layout_remove(struct soundbus_dev *sdev)

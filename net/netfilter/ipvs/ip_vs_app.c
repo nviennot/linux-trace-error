@@ -78,10 +78,10 @@ ip_vs_app_inc_new(struct netns_ipvs *ipvs, struct ip_vs_app *app, __u16 proto,
 	int ret;
 
 	if (!(pp = ip_vs_proto_get(proto)))
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if (!pp->unregister_app)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inc = kmemdup(app, sizeof(*inc), GFP_KERNEL);
 	if (!inc)
@@ -195,13 +195,13 @@ struct ip_vs_app *register_ip_vs_app(struct netns_ipvs *ipvs, struct ip_vs_app *
 
 	/* increase the module use count */
 	if (!ip_vs_use_count_inc()) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out_unlock;
 	}
 
 	list_for_each_entry(a, &ipvs->app_list, a_list) {
 		if (!strcmp(app->name, a->name)) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			/* decrease the module use count */
 			ip_vs_use_count_dec();
 			goto out_unlock;

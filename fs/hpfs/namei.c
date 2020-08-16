@@ -35,9 +35,9 @@ static int hpfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	int r;
 	struct hpfs_dirent dee;
 	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
+	if ((err = hpfs_chk_name(name, &len))) return err==-ERR(ENOENT) ? -ERR(EINVAL) : err;
 	hpfs_lock(dir->i_sb);
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
 	if (!fnode)
 		goto bail;
@@ -76,7 +76,7 @@ static int hpfs_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	if (r == 1)
 		goto bail3;
 	if (r == -1) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto bail3;
 	}
 	fnode->len = len;
@@ -140,9 +140,9 @@ static int hpfs_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	struct hpfs_dirent dee;
 	int err;
 	if ((err = hpfs_chk_name(name, &len)))
-		return err==-ENOENT ? -EINVAL : err;
+		return err==-ERR(ENOENT) ? -ERR(EINVAL) : err;
 	hpfs_lock(dir->i_sb);
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
 	if (!fnode)
 		goto bail;
@@ -181,7 +181,7 @@ static int hpfs_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	if (r == 1)
 		goto bail2;
 	if (r == -1) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto bail2;
 	}
 	fnode->len = len;
@@ -226,10 +226,10 @@ static int hpfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, de
 	struct hpfs_dirent dee;
 	struct inode *result = NULL;
 	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
-	if (hpfs_sb(dir->i_sb)->sb_eas < 2) return -EPERM;
+	if ((err = hpfs_chk_name(name, &len))) return err==-ERR(ENOENT) ? -ERR(EINVAL) : err;
+	if (hpfs_sb(dir->i_sb)->sb_eas < 2) return -ERR(EPERM);
 	hpfs_lock(dir->i_sb);
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
 	if (!fnode)
 		goto bail;
@@ -263,7 +263,7 @@ static int hpfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, de
 	if (r == 1)
 		goto bail2;
 	if (r == -1) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto bail2;
 	}
 	fnode->len = len;
@@ -300,13 +300,13 @@ static int hpfs_symlink(struct inode *dir, struct dentry *dentry, const char *sy
 	struct hpfs_dirent dee;
 	struct inode *result;
 	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
+	if ((err = hpfs_chk_name(name, &len))) return err==-ERR(ENOENT) ? -ERR(EINVAL) : err;
 	hpfs_lock(dir->i_sb);
 	if (hpfs_sb(dir->i_sb)->sb_eas < 2) {
 		hpfs_unlock(dir->i_sb);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
 	if (!fnode)
 		goto bail;
@@ -341,7 +341,7 @@ static int hpfs_symlink(struct inode *dir, struct dentry *dentry, const char *sy
 	if (r == 1)
 		goto bail2;
 	if (r == -1) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto bail2;
 	}
 	fnode->len = len;
@@ -382,16 +382,16 @@ static int hpfs_unlink(struct inode *dir, struct dentry *dentry)
 	hpfs_lock(dir->i_sb);
 	hpfs_adjust_length(name, &len);
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	de = map_dirent(dir, hpfs_i(dir)->i_dno, name, len, &dno, &qbh);
 	if (!de)
 		goto out;
 
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (de->first)
 		goto out1;
 
-	err = -EISDIR;
+	err = -ERR(EISDIR);
 	if (de->directory)
 		goto out1;
 
@@ -402,7 +402,7 @@ static int hpfs_unlink(struct inode *dir, struct dentry *dentry)
 		err = -EFSERROR;
 		break;
 	case 2:		/* no space for deleting */
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		break;
 	default:
 		drop_nlink(inode);
@@ -433,21 +433,21 @@ static int hpfs_rmdir(struct inode *dir, struct dentry *dentry)
 
 	hpfs_adjust_length(name, &len);
 	hpfs_lock(dir->i_sb);
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	de = map_dirent(dir, hpfs_i(dir)->i_dno, name, len, &dno, &qbh);
 	if (!de)
 		goto out;
 
-	err = -EPERM;
+	err = -ERR(EPERM);
 	if (de->first)
 		goto out1;
 
-	err = -ENOTDIR;
+	err = -ERR(ENOTDIR);
 	if (!de->directory)
 		goto out1;
 
 	hpfs_count_dnodes(dir->i_sb, hpfs_i(inode)->i_dno, NULL, NULL, &n_items);
-	err = -ENOTEMPTY;
+	err = -ERR(ENOTEMPTY);
 	if (n_items)
 		goto out1;
 
@@ -458,7 +458,7 @@ static int hpfs_rmdir(struct inode *dir, struct dentry *dentry)
 		err = -EFSERROR;
 		break;
 	case 2:
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		break;
 	default:
 		drop_nlink(dir);
@@ -483,7 +483,7 @@ static int hpfs_symlink_readpage(struct file *file, struct page *page)
 	struct buffer_head *bh;
 	int err;
 
-	err = -EIO;
+	err = -ERR(EIO);
 	hpfs_lock(i->i_sb);
 	if (!(fnode = hpfs_map_fnode(i->i_sb, i->i_ino, &bh)))
 		goto fail;
@@ -527,7 +527,7 @@ static int hpfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((err = hpfs_chk_name(new_name, &new_len))) return err;
 	err = 0;
@@ -538,13 +538,13 @@ static int hpfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	
 	/* Erm? Moving over the empty non-busy directory is perfectly legal */
 	if (new_inode && S_ISDIR(new_inode->i_mode)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto end1;
 	}
 
 	if (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) {
 		hpfs_error(i->i_sb, "lookup succeeded but map dirent failed");
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto end1;
 	}
 	copy_de(&de, dep);
@@ -565,7 +565,7 @@ static int hpfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 			err = -EFSERROR;
 			goto end1;
 		}
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto end1;
 	}
 
@@ -573,7 +573,7 @@ static int hpfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	if ((r = hpfs_add_dirent(new_dir, new_name, new_len, &de))) {
 		if (r == -1) hpfs_error(new_dir->i_sb, "hpfs_rename: dirent already exists!");
-		err = r == 1 ? -ENOSPC : -EFSERROR;
+		err = r == 1 ? -ERR(ENOSPC) : -EFSERROR;
 		if (new_dir != old_dir) hpfs_brelse4(&qbh);
 		goto end1;
 	}
@@ -581,13 +581,13 @@ static int hpfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	if (new_dir == old_dir)
 		if (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) {
 			hpfs_error(i->i_sb, "lookup succeeded but map dirent failed at #2");
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto end1;
 		}
 
 	if ((r = hpfs_remove_dirent(old_dir, dno, dep, &qbh, 0))) {
 		hpfs_error(i->i_sb, "hpfs_rename: could not remove dirent");
-		err = r == 2 ? -ENOSPC : -EFSERROR;
+		err = r == 2 ? -ERR(ENOSPC) : -EFSERROR;
 		goto end1;
 	}
 

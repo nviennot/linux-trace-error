@@ -1092,7 +1092,7 @@ struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
 	struct epitem *epi;
 
 	if (!is_file_epoll(file))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ep = file->private_data;
 
@@ -1101,7 +1101,7 @@ struct file *get_epoll_tfile_raw_ptr(struct file *file, int tfd,
 	if (epi)
 		file_raw = epi->ffd.file;
 	else
-		file_raw = ERR_PTR(-ENOENT);
+		file_raw = ERR_PTR(-ERR(ENOENT));
 	mutex_unlock(&ep->mtx);
 
 	return file_raw;
@@ -1501,7 +1501,7 @@ static int ep_insert(struct eventpoll *ep, const struct epoll_event *event,
 
 	user_watches = atomic_long_read(&ep->user->epoll_watches);
 	if (unlikely(user_watches >= max_user_watches))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	if (!(epi = kmem_cache_alloc(epi_cache, GFP_KERNEL)))
 		return -ENOMEM;
 
@@ -1556,7 +1556,7 @@ static int ep_insert(struct eventpoll *ep, const struct epoll_event *event,
 	ep_rbtree_insert(ep, epi);
 
 	/* now check if we've created too many backpaths */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (full_check && reverse_path_check())
 		goto error_remove_epi;
 
@@ -1898,7 +1898,7 @@ fetch_events:
 		eavail = ep_events_available(ep);
 		if (!eavail) {
 			if (signal_pending(current))
-				res = -EINTR;
+				res = -ERR(EINTR);
 			else
 				__add_wait_queue_exclusive(&ep->wq, &wait);
 		}
@@ -1933,7 +1933,7 @@ send_events:
 		 * finding more events available and fetching
 		 * repeatedly.
 		 */
-		res = -EINTR;
+		res = -ERR(EINTR);
 	}
 	/*
 	 * Try to transfer events to user space. In case we get 0 events and
@@ -2057,7 +2057,7 @@ static int do_epoll_create(int flags)
 	BUILD_BUG_ON(EPOLL_CLOEXEC != O_CLOEXEC);
 
 	if (flags & ~EPOLL_CLOEXEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * Create the internal data structure ("struct eventpoll").
 	 */
@@ -2098,7 +2098,7 @@ SYSCALL_DEFINE1(epoll_create1, int, flags)
 SYSCALL_DEFINE1(epoll_create, int, size)
 {
 	if (size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return do_epoll_create(0);
 }
@@ -2112,7 +2112,7 @@ static inline int epoll_mutex_lock(struct mutex *mutex, int depth,
 	}
 	if (mutex_trylock(mutex))
 		return 0;
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
@@ -2125,7 +2125,7 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 	struct epitem *epi;
 	struct eventpoll *tep = NULL;
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	f = fdget(epfd);
 	if (!f.file)
 		goto error_return;
@@ -2136,7 +2136,7 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 		goto error_fput;
 
 	/* The target file descriptor must support poll */
-	error = -EPERM;
+	error = -ERR(EPERM);
 	if (!file_can_poll(tf.file))
 		goto error_tgt_fput;
 
@@ -2149,7 +2149,7 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 	 * the user passed to us _is_ an eventpoll file. And also we do not permit
 	 * adding an epoll file descriptor inside itself.
 	 */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (f.file == tf.file || !is_file_epoll(f.file))
 		goto error_tgt_fput;
 
@@ -2199,7 +2199,7 @@ int do_epoll_ctl(int epfd, int op, int fd, struct epoll_event *epds,
 				goto error_tgt_fput;
 			full_check = 1;
 			if (is_file_epoll(tf.file)) {
-				error = -ELOOP;
+				error = -ERR(ELOOP);
 				if (ep_loop_check(ep, tf.file) != 0) {
 					clear_tfile_check_list();
 					goto error_tgt_fput;
@@ -2231,14 +2231,14 @@ out_del:
 	 */
 	epi = ep_find(ep, tf.file, fd);
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	switch (op) {
 	case EPOLL_CTL_ADD:
 		if (!epi) {
 			epds->events |= EPOLLERR | EPOLLHUP;
 			error = ep_insert(ep, epds, tf.file, fd, full_check);
 		} else
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 		if (full_check)
 			clear_tfile_check_list();
 		break;
@@ -2246,7 +2246,7 @@ out_del:
 		if (epi)
 			error = ep_remove(ep, epi);
 		else
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 		break;
 	case EPOLL_CTL_MOD:
 		if (epi) {
@@ -2255,7 +2255,7 @@ out_del:
 				error = ep_modify(ep, epi, epds);
 			}
 		} else
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 		break;
 	}
 	if (tep != NULL)
@@ -2304,7 +2304,7 @@ static int do_epoll_wait(int epfd, struct epoll_event __user *events,
 
 	/* The maximum number of event must be greater than zero */
 	if (maxevents <= 0 || maxevents > EP_MAX_EVENTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Verify that the area passed by the user is writeable */
 	if (!access_ok(events, maxevents * sizeof(struct epoll_event)))
@@ -2313,13 +2313,13 @@ static int do_epoll_wait(int epfd, struct epoll_event __user *events,
 	/* Get the "struct file *" for the eventpoll file */
 	f = fdget(epfd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	/*
 	 * We have to check that the file structure underneath the fd
 	 * the user passed to us _is_ an eventpoll file.
 	 */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!is_file_epoll(f.file))
 		goto error_fput;
 

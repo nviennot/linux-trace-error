@@ -54,7 +54,7 @@ int snd_dice_stream_get_rate_mode(struct snd_dice *dice, unsigned int rate,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -81,7 +81,7 @@ static int ensure_phase_lock(struct snd_dice *dice, unsigned int rate)
 			break;
 	}
 	if (i == ARRAY_SIZE(snd_dice_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	data |= i << CLOCK_RATE_SHIFT;
 
 	if (completion_done(&dice->clock_accepted))
@@ -105,7 +105,7 @@ static int ensure_phase_lock(struct snd_dice *dice, unsigned int rate)
 		if (err < 0)
 			return err;
 		if (!(be32_to_cpu(nominal) & STATUS_SOURCE_LOCKED))
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 	}
 
 	return 0;
@@ -254,7 +254,7 @@ static int keep_dual_resources(struct snd_dice *dice, unsigned int rate,
 			dev_info(&dice->unit->device,
 				 "cache mismatch: pcm: %u:%u, midi: %u\n",
 				 pcm_chs, pcm_cache, midi_ports);
-			return -EPROTO;
+			return -ERR(EPROTO);
 		}
 
 		err = keep_resources(dice, stream, resources, rate, pcm_chs,
@@ -402,7 +402,7 @@ int snd_dice_stream_start_duplex(struct snd_dice *dice)
 	int err;
 
 	if (dice->substreams_counter == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	err = get_register_params(dice, &tx_params, &rx_params);
 	if (err < 0)
@@ -470,7 +470,7 @@ int snd_dice_stream_start_duplex(struct snd_dice *dice)
 			    (i < rx_params.count &&
 			     !amdtp_stream_wait_callback(&dice->rx_stream[i],
 							 CALLBACK_TIMEOUT))) {
-				err = -ETIMEDOUT;
+				err = -ERR(ETIMEDOUT);
 				goto error;
 			}
 		}
@@ -699,7 +699,7 @@ int snd_dice_stream_lock_try(struct snd_dice *dice)
 	spin_lock_irq(&dice->lock);
 
 	if (dice->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 

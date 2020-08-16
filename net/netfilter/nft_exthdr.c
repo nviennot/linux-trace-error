@@ -80,23 +80,23 @@ static int ipv4_find_option(struct net *net, struct sk_buff *skb,
 
 	iph = skb_header_pointer(skb, 0, sizeof(_iph), &_iph);
 	if (!iph)
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	start = sizeof(struct iphdr);
 
 	optlen = iph->ihl * 4 - (int)sizeof(struct iphdr);
 	if (optlen <= 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	memset(opt, 0, sizeof(struct ip_options));
 	/* Copy the options since __ip_options_compile() modifies
 	 * the options.
 	 */
 	if (skb_copy_bits(skb, start, opt->__data, optlen))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	opt->optlen = optlen;
 
 	if (__ip_options_compile(net, opt, NULL, &info))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	switch (target) {
 	case IPOPT_SSRR:
@@ -121,9 +121,9 @@ static int ipv4_find_option(struct net *net, struct sk_buff *skb,
 		found = true;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
-	return found ? target : -ENOENT;
+	return found ? target : -ERR(ENOENT);
 }
 
 static void nft_exthdr_ipv4_eval(const struct nft_expr *expr,
@@ -322,7 +322,7 @@ static int nft_exthdr_init(const struct nft_ctx *ctx,
 	    !tb[NFTA_EXTHDR_TYPE] ||
 	    !tb[NFTA_EXTHDR_OFFSET] ||
 	    !tb[NFTA_EXTHDR_LEN])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_parse_u32_check(tb[NFTA_EXTHDR_OFFSET], U8_MAX, &offset);
 	if (err < 0)
@@ -338,7 +338,7 @@ static int nft_exthdr_init(const struct nft_ctx *ctx,
 			return err;
 
 		if (flags & ~NFT_EXTHDR_F_PRESENT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (tb[NFTA_EXTHDR_OP]) {
@@ -370,10 +370,10 @@ static int nft_exthdr_tcp_set_init(const struct nft_ctx *ctx,
 	    !tb[NFTA_EXTHDR_TYPE] ||
 	    !tb[NFTA_EXTHDR_OFFSET] ||
 	    !tb[NFTA_EXTHDR_LEN])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[NFTA_EXTHDR_DREG] || tb[NFTA_EXTHDR_FLAGS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_parse_u32_check(tb[NFTA_EXTHDR_OFFSET], U8_MAX, &offset);
 	if (err < 0)
@@ -384,13 +384,13 @@ static int nft_exthdr_tcp_set_init(const struct nft_ctx *ctx,
 		return err;
 
 	if (offset < 2)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	switch (len) {
 	case 2: break;
 	case 4: break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	err = nft_parse_u32_check(tb[NFTA_EXTHDR_OP], U8_MAX, &op);
@@ -424,7 +424,7 @@ static int nft_exthdr_ipv4_init(const struct nft_ctx *ctx,
 	case IPOPT_RA:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	return 0;
 }
@@ -509,7 +509,7 @@ nft_exthdr_select_ops(const struct nft_ctx *ctx,
 		return &nft_exthdr_ipv6_ops;
 
 	if (tb[NFTA_EXTHDR_SREG] && tb[NFTA_EXTHDR_DREG])
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	op = ntohl(nla_get_be32(tb[NFTA_EXTHDR_OP]));
 	switch (op) {
@@ -531,7 +531,7 @@ nft_exthdr_select_ops(const struct nft_ctx *ctx,
 		break;
 	}
 
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 struct nft_expr_type nft_exthdr_type __read_mostly = {

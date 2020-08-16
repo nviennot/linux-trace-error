@@ -74,14 +74,14 @@ static int fat_ioctl_set_attributes(struct file *file, u32 __user *user_attr)
 
 	/* The root directory has no attributes */
 	if (inode->i_ino == MSDOS_ROOT_INO && attr != ATTR_DIR) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock_inode;
 	}
 
 	if (sbi->options.sys_immutable &&
 	    ((attr | oldattr) & ATTR_SYS) &&
 	    !capable(CAP_LINUX_IMMUTABLE)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out_unlock_inode;
 	}
 
@@ -131,10 +131,10 @@ static int fat_ioctl_fitrim(struct inode *inode, unsigned long arg)
 	int err;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!blk_queue_discard(q))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	user_range = (struct fstrim_range __user *)arg;
 	if (copy_from_user(&range, user_range, sizeof(range)))
@@ -168,7 +168,7 @@ long fat_generic_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case FITRIM:
 		return fat_ioctl_fitrim(inode, arg);
 	default:
-		return -ENOTTY;	/* Inappropriate ioctl for device */
+		return -ERR(ENOTTY);	/* Inappropriate ioctl for device */
 	}
 }
 
@@ -269,11 +269,11 @@ static long fat_fallocate(struct file *file, int mode,
 
 	/* No support for hole punch or other fallocate flags. */
 	if (mode & ~FALLOC_FL_KEEP_SIZE)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* No support for dir */
 	if (!S_ISREG(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode_lock(inode);
 	if (mode & FALLOC_FL_KEEP_SIZE) {
@@ -357,7 +357,7 @@ static int fat_free(struct inode *inode, int skip)
 			fat_fs_error(sb,
 				     "%s: invalid cluster chain (i_pos %lld)",
 				     __func__, MSDOS_I(inode)->i_pos);
-			ret = -EIO;
+			ret = -ERR(EIO);
 		} else if (ret > 0) {
 			err = fat_ent_write(inode, &fatent, FAT_ENT_EOF, wait);
 			if (err)
@@ -433,13 +433,13 @@ static int fat_sanitize_mode(const struct msdos_sb_info *sbi,
 	 * If fat_mode_can_hold_ro(inode) is false, can't change w bits.
 	 */
 	if ((perm & (S_IRUGO | S_IXUGO)) != (inode->i_mode & (S_IRUGO|S_IXUGO)))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (fat_mode_can_hold_ro(inode)) {
 		if ((perm & S_IWUGO) && ((perm & S_IWUGO) != (S_IWUGO & ~mask)))
-			return -EPERM;
+			return -ERR(EPERM);
 	} else {
 		if ((perm & S_IWUGO) != (S_IWUGO & ~mask))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	*mode_ptr &= S_IFMT | perm;
@@ -511,7 +511,7 @@ int fat_setattr(struct dentry *dentry, struct iattr *attr)
 	     (!gid_eq(attr->ia_gid, sbi->options.fs_gid))) ||
 	    ((attr->ia_valid & ATTR_MODE) &&
 	     (attr->ia_mode & ~FAT_VALID_MODE)))
-		error = -EPERM;
+		error = -ERR(EPERM);
 
 	if (error) {
 		if (sbi->options.quiet)

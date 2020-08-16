@@ -545,7 +545,7 @@ __be32 nfsd4_clone_file_range(struct nfsd_file *nf_src, u64 src_pos,
 		goto out_err;
 	}
 	if (count && cloned != count) {
-		ret = nfserrno(-EINVAL);
+		ret = nfserrno(-ERR(EINVAL));
 		goto out_err;
 	}
 	if (sync) {
@@ -1271,7 +1271,7 @@ nfsd_create_locked(struct svc_rqst *rqstp, struct svc_fh *fhp,
 	default:
 		printk(KERN_WARNING "nfsd: bad file type %o in nfsd_create\n",
 		       type);
-		host_err = -EINVAL;
+		host_err = -ERR(EINVAL);
 	}
 	if (host_err < 0)
 		goto out_nfserr;
@@ -1750,10 +1750,10 @@ retry:
 	if (IS_ERR(odentry))
 		goto out_nfserr;
 
-	host_err = -ENOENT;
+	host_err = -ERR(ENOENT);
 	if (d_really_is_negative(odentry))
 		goto out_dput_old;
-	host_err = -EINVAL;
+	host_err = -ERR(EINVAL);
 	if (odentry == trap)
 		goto out_dput_old;
 
@@ -1761,11 +1761,11 @@ retry:
 	host_err = PTR_ERR(ndentry);
 	if (IS_ERR(ndentry))
 		goto out_dput_old;
-	host_err = -ENOTEMPTY;
+	host_err = -ERR(ENOTEMPTY);
 	if (ndentry == trap)
 		goto out_dput_new;
 
-	host_err = -EXDEV;
+	host_err = -ERR(EXDEV);
 	if (ffhp->fh_export->ex_path.mnt != tfhp->fh_export->ex_path.mnt)
 		goto out_dput_new;
 	if (ffhp->fh_export->ex_path.dentry != tfhp->fh_export->ex_path.dentry)
@@ -1852,7 +1852,7 @@ nfsd_unlink(struct svc_rqst *rqstp, struct svc_fh *fhp, int type,
 
 	if (d_really_is_negative(rdentry)) {
 		dput(rdentry);
-		host_err = -ENOENT;
+		host_err = -ERR(ENOENT);
 		goto out_drop_write;
 	}
 
@@ -1922,7 +1922,7 @@ static int nfsd_buffered_filldir(struct dir_context *ctx, const char *name,
 	reclen = ALIGN(sizeof(struct buffered_dirent) + namlen, sizeof(u64));
 	if (buf->used + reclen > PAGE_SIZE) {
 		buf->full = 1;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	de->namlen = namlen;

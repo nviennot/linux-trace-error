@@ -232,7 +232,7 @@ static int input_action_end(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* regular endpoint, and forward to specified nexthop */
@@ -252,7 +252,7 @@ static int input_action_end_x(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int input_action_end_t(struct sk_buff *skb, struct seg6_local_lwt *slwt)
@@ -271,7 +271,7 @@ static int input_action_end_t(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* decapsulate and forward inner L2 frame on specified interface */
@@ -328,7 +328,7 @@ static int input_action_end_dx2(struct sk_buff *skb,
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* decapsulate and forward to specified nexthop */
@@ -364,7 +364,7 @@ static int input_action_end_dx6(struct sk_buff *skb,
 	return dst_input(skb);
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int input_action_end_dx4(struct sk_buff *skb,
@@ -398,7 +398,7 @@ static int input_action_end_dx4(struct sk_buff *skb,
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int input_action_end_dt6(struct sk_buff *skb,
@@ -418,14 +418,14 @@ static int input_action_end_dt6(struct sk_buff *skb,
 
 drop:
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* push an SRH on top of the current one */
 static int input_action_end_b6(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 {
 	struct ipv6_sr_hdr *srh;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	srh = get_and_validate_srh(skb);
 	if (!srh)
@@ -452,7 +452,7 @@ static int input_action_end_b6_encap(struct sk_buff *skb,
 				     struct seg6_local_lwt *slwt)
 {
 	struct ipv6_sr_hdr *srh;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	srh = get_and_validate_srh(skb);
 	if (!srh)
@@ -515,7 +515,7 @@ static int input_action_end_bpf(struct sk_buff *skb,
 	srh = get_and_validate_srh(skb);
 	if (!srh) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	advance_nextseg(srh, &ipv6_hdr(skb)->daddr);
 
@@ -555,7 +555,7 @@ static int input_action_end_bpf(struct sk_buff *skb,
 drop:
 	preempt_enable();
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct seg6_action_desc seg6_action_table[] = {
@@ -636,7 +636,7 @@ static int seg6_local_input(struct sk_buff *skb)
 
 	if (skb->protocol != htons(ETH_P_IPV6)) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	slwt = seg6_local_lwtunnel(orig_dst->lwtstate);
@@ -668,10 +668,10 @@ static int parse_nla_srh(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 
 	/* SRH must contain at least one segment */
 	if (len < sizeof(*srh) + sizeof(struct in6_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!seg6_validate_srh(srh, len, false))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slwt->srh = kmemdup(srh, len, GFP_KERNEL);
 	if (!slwt->srh)
@@ -693,7 +693,7 @@ static int put_nla_srh(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 	nla = nla_reserve(skb, SEG6_LOCAL_SRH, len);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), srh, len);
 
@@ -720,7 +720,7 @@ static int parse_nla_table(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 static int put_nla_table(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 {
 	if (nla_put_u32(skb, SEG6_LOCAL_TABLE, slwt->table))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -747,7 +747,7 @@ static int put_nla_nh4(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 	nla = nla_reserve(skb, SEG6_LOCAL_NH4, sizeof(struct in_addr));
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), &slwt->nh4, sizeof(struct in_addr));
 
@@ -773,7 +773,7 @@ static int put_nla_nh6(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 	nla = nla_reserve(skb, SEG6_LOCAL_NH6, sizeof(struct in6_addr));
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), &slwt->nh6, sizeof(struct in6_addr));
 
@@ -795,7 +795,7 @@ static int parse_nla_iif(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 static int put_nla_iif(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 {
 	if (nla_put_u32(skb, SEG6_LOCAL_IIF, slwt->iif))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -818,7 +818,7 @@ static int parse_nla_oif(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 static int put_nla_oif(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 {
 	if (nla_put_u32(skb, SEG6_LOCAL_OIF, slwt->oif))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -852,7 +852,7 @@ static int parse_nla_bpf(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 		return ret;
 
 	if (!tb[SEG6_LOCAL_BPF_PROG] || !tb[SEG6_LOCAL_BPF_PROG_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	slwt->bpf.name = nla_memdup(tb[SEG6_LOCAL_BPF_PROG_NAME], GFP_KERNEL);
 	if (!slwt->bpf.name)
@@ -878,14 +878,14 @@ static int put_nla_bpf(struct sk_buff *skb, struct seg6_local_lwt *slwt)
 
 	nest = nla_nest_start_noflag(skb, SEG6_LOCAL_BPF);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, SEG6_LOCAL_BPF_PROG, slwt->bpf.prog->aux->id))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (slwt->bpf.name &&
 	    nla_put_string(skb, SEG6_LOCAL_BPF_PROG_NAME, slwt->bpf.name))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return nla_nest_end(skb, nest);
 }
@@ -946,10 +946,10 @@ static int parse_nla_action(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 
 	desc = __get_action_desc(slwt->action);
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!desc->input)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	slwt->desc = desc;
 	slwt->headroom += desc->static_headroom;
@@ -957,7 +957,7 @@ static int parse_nla_action(struct nlattr **attrs, struct seg6_local_lwt *slwt)
 	for (i = 0; i < SEG6_LOCAL_MAX + 1; i++) {
 		if (desc->attrs & (1 << i)) {
 			if (!attrs[i])
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			param = &seg6_action_params[i];
 
@@ -981,7 +981,7 @@ static int seg6_local_build_state(struct net *net, struct nlattr *nla,
 	int err;
 
 	if (family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, SEG6_LOCAL_MAX, nla,
 					  seg6_local_policy, extack);
@@ -990,7 +990,7 @@ static int seg6_local_build_state(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[SEG6_LOCAL_ACTION])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newts = lwtunnel_state_alloc(sizeof(*slwt));
 	if (!newts)
@@ -1039,7 +1039,7 @@ static int seg6_local_fill_encap(struct sk_buff *skb,
 	int i, err;
 
 	if (nla_put_u32(skb, SEG6_LOCAL_ACTION, slwt->action))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i < SEG6_LOCAL_MAX + 1; i++) {
 		if (slwt->desc->attrs & (1 << i)) {

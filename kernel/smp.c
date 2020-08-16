@@ -175,7 +175,7 @@ static int generic_exec_single(int cpu, call_single_data_t *csd)
 
 	if ((unsigned)cpu >= nr_cpu_ids || !cpu_online(cpu)) {
 		csd_unlock(csd);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	__smp_call_single_queue(cpu, &csd->llist);
@@ -415,7 +415,7 @@ int smp_call_function_single_async(int cpu, call_single_data_t *csd)
 	preempt_disable();
 
 	if (csd->flags & CSD_FLAG_LOCK) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -868,7 +868,7 @@ int smp_call_on_cpu(unsigned int cpu, int (*func)(void *), void *par, bool phys)
 	INIT_WORK_ONSTACK(&sscs.work, smp_call_on_cpu_callback);
 
 	if (cpu >= nr_cpu_ids || !cpu_online(cpu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	queue_work_on(cpu, system_wq, &sscs.work);
 	wait_for_completion(&sscs.done);

@@ -92,7 +92,7 @@ static int ssi_startup(struct snd_pcm_substream *substream,
 	struct ssi_priv *ssi = &ssi_cpu_data[dai->id];
 	if (ssi->inuse) {
 		pr_debug("ssi: already in use!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	} else
 		ssi->inuse = 1;
 	return 0;
@@ -119,7 +119,7 @@ static int ssi_trigger(struct snd_pcm_substream *substream, int cmd,
 		SSIREG(SSICR) &= ~(CR_DMAEN | CR_EN);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -150,7 +150,7 @@ static int ssi_hw_params(struct snd_pcm_substream *substream,
 	/* channels */
 	if ((channels < 2) || (channels > 8) || (channels & 1)) {
 		pr_debug("ssi: invalid number of channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ssicr |= ((channels >> 1) - 1) << CR_CHNL_SHIFT;
 
@@ -167,7 +167,7 @@ static int ssi_hw_params(struct snd_pcm_substream *substream,
 	case 8:	 break;
 	default:
 		pr_debug("ssi: invalid sample width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -196,7 +196,7 @@ static int ssi_hw_params(struct snd_pcm_substream *substream,
 	case 8:   break;
 	default:
 		pr_debug("ssi: invalid system word length computed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	SSIREG(SSICR) = ssicr;
@@ -236,7 +236,7 @@ static int ssi_set_clkdiv(struct snd_soc_dai *dai, int did, int div)
 	case 1:  break;
 	default:
 		pr_debug("ssi: invalid sck divider %d\n", div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -263,7 +263,7 @@ static int ssi_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		pr_debug("ssi: unsupported format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_CLOCK_MASK) {
@@ -288,7 +288,7 @@ static int ssi_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		pr_debug("ssi: invalid inversion\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -305,7 +305,7 @@ static int ssi_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		pr_debug("ssi: invalid master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	SSIREG(SSICR) = ssicr;

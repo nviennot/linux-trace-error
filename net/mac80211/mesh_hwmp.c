@@ -151,7 +151,7 @@ static int mesh_path_sel_frame_tx(enum mpath_frame_type action, u8 flags,
 		break;
 	default:
 		kfree_skb(skb);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 	*pos++ = ie_len;
 	*pos++ = flags;
@@ -244,7 +244,7 @@ int mesh_path_error_tx(struct ieee80211_sub_if_data *sdata,
 				  u.action.u.mesh_action);
 
 	if (time_before(jiffies, ifmsh->next_perr))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	skb = dev_alloc_skb(local->tx_headroom +
 			    sdata->encrypt_headroom +
@@ -1169,7 +1169,7 @@ int mesh_nexthop_resolve(struct ieee80211_sub_if_data *sdata,
 	if (skb_to_free)
 		mesh_path_discard_frame(sdata, skb_to_free);
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /**
@@ -1192,7 +1192,7 @@ int mesh_nexthop_lookup(struct ieee80211_sub_if_data *sdata,
 
 	mpath = mesh_path_lookup(sdata, target_addr);
 	if (!mpath || !(mpath->flags & MESH_PATH_ACTIVE))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (time_after(jiffies,
 		       mpath->exp_time -
@@ -1210,7 +1210,7 @@ int mesh_nexthop_lookup(struct ieee80211_sub_if_data *sdata,
 		return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 void mesh_path_timer(struct timer_list *t)

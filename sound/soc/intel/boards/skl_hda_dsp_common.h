@@ -57,7 +57,7 @@ static inline int skl_hda_hdmi_build_controls(struct snd_soc_card *card)
 			       head);
 	component = pcm->codec_dai->component;
 	if (!component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return hda_dsp_hdmi_build_controls(card, component);
 }

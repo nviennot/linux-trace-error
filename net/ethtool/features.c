@@ -239,7 +239,7 @@ int ethnl_set_features(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	if (!tb[ETHTOOL_A_FEATURES_WANTED])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = ethnl_parse_header_dev_get(&req_info,
 					 tb[ETHTOOL_A_FEATURES_HEADER],
 					 genl_info_net(info), info->extack,
@@ -257,7 +257,7 @@ int ethnl_set_features(struct sk_buff *skb, struct genl_info *info)
 		goto out_rtnl;
 	if (ethnl_bitmap_to_features(req_mask) & ~NETIF_F_ETHTOOL_BITS) {
 		GENL_SET_ERR_MSG(info, "attempt to change non-ethtool features");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_rtnl;
 	}
 

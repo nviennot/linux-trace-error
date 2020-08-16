@@ -122,7 +122,7 @@ static int pcm_open(struct snd_pcm_substream *substream)
 		if (err < 0)
 			goto err_locked;
 		if (!detect) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_locked;
 		}
 	}
@@ -268,7 +268,7 @@ static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&dg00x->tx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -286,7 +286,7 @@ static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&dg00x->rx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

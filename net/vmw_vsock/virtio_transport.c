@@ -171,13 +171,13 @@ virtio_transport_send_pkt(struct virtio_vsock_pkt *pkt)
 	vsock = rcu_dereference(the_virtio_vsock);
 	if (!vsock) {
 		virtio_transport_free_pkt(pkt);
-		len = -ENODEV;
+		len = -ERR(ENODEV);
 		goto out_rcu;
 	}
 
 	if (le64_to_cpu(pkt->hdr.dst_cid) == vsock->guest_cid) {
 		virtio_transport_free_pkt(pkt);
-		len = -ENODEV;
+		len = -ERR(ENODEV);
 		goto out_rcu;
 	}
 
@@ -206,7 +206,7 @@ virtio_transport_cancel_pkt(struct vsock_sock *vsk)
 	rcu_read_lock();
 	vsock = rcu_dereference(the_virtio_vsock);
 	if (!vsock) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_rcu;
 	}
 
@@ -358,7 +358,7 @@ static void virtio_vsock_reset_sock(struct sock *sk)
 {
 	lock_sock(sk);
 	sk->sk_state = TCP_CLOSE;
-	sk->sk_err = ECONNRESET;
+	sk->sk_err = ERR(ECONNRESET);
 	sk->sk_error_report(sk);
 	release_sock(sk);
 }
@@ -560,7 +560,7 @@ static int virtio_vsock_probe(struct virtio_device *vdev)
 	/* Only one virtio-vsock device per guest is supported */
 	if (rcu_dereference_protected(the_virtio_vsock,
 				lockdep_is_held(&the_virtio_vsock_mutex))) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 

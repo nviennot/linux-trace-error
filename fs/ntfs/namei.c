@@ -138,7 +138,7 @@ static struct dentry *ntfs_lookup(struct inode *dir_ino, struct dentry *dent,
 					dent_ino, MSEQNO(mref),
 					NTFS_I(dent_inode)->seq_no);
 			iput(dent_inode);
-			dent_inode = ERR_PTR(-EIO);
+			dent_inode = ERR_PTR(-ERR(EIO));
 		} else
 			ntfs_error(vol->sb, "ntfs_iget(0x%lx) failed with "
 					"error code %li.", dent_ino,
@@ -205,7 +205,7 @@ handle_name:
 						"namespace counterpart to DOS "
 						"file name. Run chkdsk.");
 				if (err == -ENOENT)
-					err = -EIO;
+					err = -ERR(EIO);
 				goto err_out;
 			}
 			/* Consistency checks. */
@@ -247,7 +247,7 @@ handle_name:
 
 eio_err_out:
 	ntfs_error(vol->sb, "Illegal file name attribute. Run chkdsk.");
-	err = -EIO;
+	err = -ERR(EIO);
 err_out:
 	if (ctx)
 		ntfs_attr_put_search_ctx(ctx);
@@ -343,7 +343,7 @@ static struct inode *ntfs_nfs_get_inode(struct super_block *sb,
 	if (!IS_ERR(inode)) {
 		if (is_bad_inode(inode) || inode->i_generation != generation) {
 			iput(inode);
-			inode = ERR_PTR(-ESTALE);
+			inode = ERR_PTR(-ERR(ESTALE));
 		}
 	}
 

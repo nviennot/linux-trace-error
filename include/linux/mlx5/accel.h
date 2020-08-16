@@ -145,12 +145,12 @@ static inline u32 mlx5_accel_ipsec_device_caps(struct mlx5_core_dev *mdev) { ret
 static inline struct mlx5_accel_esp_xfrm *
 mlx5_accel_esp_create_xfrm(struct mlx5_core_dev *mdev,
 			   const struct mlx5_accel_esp_xfrm_attrs *attrs,
-			   u32 flags) { return ERR_PTR(-EOPNOTSUPP); }
+			   u32 flags) { return ERR_PTR(-ERR(EOPNOTSUPP)); }
 static inline void
 mlx5_accel_esp_destroy_xfrm(struct mlx5_accel_esp_xfrm *xfrm) {}
 static inline int
 mlx5_accel_esp_modify_xfrm(struct mlx5_accel_esp_xfrm *xfrm,
-			   const struct mlx5_accel_esp_xfrm_attrs *attrs) { return -EOPNOTSUPP; }
+			   const struct mlx5_accel_esp_xfrm_attrs *attrs) { return -ERR(EOPNOTSUPP); }
 
 #endif
 #endif

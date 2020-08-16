@@ -161,7 +161,7 @@ static int sti_sas_dac_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupporter master mask 0x%x\n",
 			__func__, fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -206,7 +206,7 @@ static int sti_sas_spdif_set_fmt(struct snd_soc_dai *dai,
 		dev_err(dai->component->dev,
 			"%s: ERROR: Unsupporter master mask 0x%x\n",
 			__func__, fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -237,7 +237,7 @@ static int sti_sas_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 					    SPDIF_BIPHASE_ENABLE_MASK,
 					    0);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -267,7 +267,7 @@ static int sti_sas_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		return 0;
 
 	if (clk_id != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dai->id) {
 	case STI_SAS_DAI_SPDIF_OUT:
@@ -293,13 +293,13 @@ static int sti_sas_prepare(struct snd_pcm_substream *substream,
 	case STI_SAS_DAI_SPDIF_OUT:
 		if ((drvdata->spdif.mclk / runtime->rate) != 128) {
 			dev_err(component->dev, "unexpected mclk-fs ratio\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case STI_SAS_DAI_ANALOG_OUT:
 		if ((drvdata->dac.mclk / runtime->rate) != 256) {
 			dev_err(component->dev, "unexpected mclk-fs ratio\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	}
@@ -428,7 +428,7 @@ static int sti_sas_driver_probe(struct platform_device *pdev)
 	of_id = of_match_node(sti_sas_dev_match, pnode);
 	if (!of_id->data) {
 		dev_err(&pdev->dev, "data associated to device is missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	drvdata->dev_data = (struct sti_sas_dev_data *)of_id->data;

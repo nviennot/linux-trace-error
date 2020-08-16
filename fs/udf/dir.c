@@ -82,7 +82,7 @@ static int udf_readdir(struct file *file, struct dir_context *ctx)
 		if (inode_bmap(dir, nf_pos >> sb->s_blocksize_bits,
 		    &epos, &eloc, &elen, &offset)
 		    != (EXT_RECORDED_ALLOCATED >> 30)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 		block = udf_get_lb_pblock(sb, &eloc, offset);
@@ -97,7 +97,7 @@ static int udf_readdir(struct file *file, struct dir_context *ctx)
 		}
 
 		if (!(fibh.sbh = fibh.ebh = udf_tread(sb, block))) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 

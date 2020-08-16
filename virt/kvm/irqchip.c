@@ -51,7 +51,7 @@ int kvm_send_userspace_msi(struct kvm *kvm, struct kvm_msi *msi)
 	struct kvm_kernel_irq_routing_entry route;
 
 	if (!irqchip_in_kernel(kvm) || (msi->flags & ~KVM_MSI_VALID_DEVID))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	route.msi.address_lo = msi->address_lo;
 	route.msi.address_hi = msi->address_hi;
@@ -142,7 +142,7 @@ static int setup_routing_entry(struct kvm *kvm,
 		if (ei->type != KVM_IRQ_ROUTING_IRQCHIP ||
 		    ue->type != KVM_IRQ_ROUTING_IRQCHIP ||
 		    ue->u.irqchip.irqchip == ei->irqchip.irqchip)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	e->gsi = gsi;
 	e->type = ue->type;
@@ -178,7 +178,7 @@ int kvm_set_irq_routing(struct kvm *kvm,
 
 	for (i = 0; i < nr; ++i) {
 		if (ue[i].gsi >= KVM_MAX_IRQ_ROUTES)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nr_rt_entries = max(nr_rt_entries, ue[i].gsi);
 	}
 
@@ -199,7 +199,7 @@ int kvm_set_irq_routing(struct kvm *kvm,
 		if (!e)
 			goto out;
 
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		switch (ue->type) {
 		case KVM_IRQ_ROUTING_MSI:
 			if (ue->flags & ~KVM_MSI_VALID_DEVID)

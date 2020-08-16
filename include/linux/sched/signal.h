@@ -350,7 +350,7 @@ extern int do_sigaction(int, struct k_sigaction *, struct k_sigaction *);
 static inline int restart_syscall(void)
 {
 	set_tsk_thread_flag(current, TIF_SIGPENDING);
-	return -ERESTARTNOINTR;
+	return -ERR(ERESTARTNOINTR);
 }
 
 static inline int signal_pending(struct task_struct *p)

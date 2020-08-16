@@ -121,7 +121,7 @@ static int switchdev_port_attr_notify(enum switchdev_notifier_type nt,
 	}
 
 	if (!attr_info.handled)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return 0;
 }
@@ -240,7 +240,7 @@ static int switchdev_port_obj_notify(enum switchdev_notifier_type nt,
 		return err;
 	}
 	if (!obj_info.handled)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return 0;
 }
 
@@ -456,7 +456,7 @@ static int __switchdev_handle_port_obj_add(struct net_device *dev,
 	struct netlink_ext_ack *extack;
 	struct net_device *lower_dev;
 	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 
 	extack = switchdev_notifier_info_to_extack(&port_obj_info->info);
 
@@ -513,7 +513,7 @@ static int __switchdev_handle_port_obj_del(struct net_device *dev,
 {
 	struct net_device *lower_dev;
 	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 
 	if (check_cb(dev)) {
 		/* This flag is only checked if the return value is success. */
@@ -566,7 +566,7 @@ static int __switchdev_handle_port_attr_set(struct net_device *dev,
 {
 	struct net_device *lower_dev;
 	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 
 	if (check_cb(dev)) {
 		port_attr_info->handled = true;

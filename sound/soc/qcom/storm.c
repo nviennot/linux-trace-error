@@ -73,14 +73,14 @@ static int storm_parse_of(struct snd_soc_card *card)
 	dai_link->cpus->of_node = of_parse_phandle(np, "cpu", 0);
 	if (!dai_link->cpus->of_node) {
 		dev_err(card->dev, "error getting cpu phandle\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai_link->platforms->of_node = dai_link->cpus->of_node;
 
 	dai_link->codecs->of_node = of_parse_phandle(np, "codec", 0);
 	if (!dai_link->codecs->of_node) {
 		dev_err(card->dev, "error getting codec phandle\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

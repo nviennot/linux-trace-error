@@ -80,7 +80,7 @@ struct audit_fsnotify_mark *audit_alloc_mark(struct audit_krule *krule, char *pa
 	int ret;
 
 	if (pathname[0] != '/' || pathname[len-1] == '/')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	dentry = kern_path_locked(pathname, &path);
 	if (IS_ERR(dentry))

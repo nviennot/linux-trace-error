@@ -79,7 +79,7 @@ static int mmap_violation_check(enum ima_hooks func, struct file *file,
 	int rc = 0;
 
 	if ((func == MMAP_CHECK) && mapping_writably_mapped(file->f_mapping)) {
-		rc = -ETXTBSY;
+		rc = -ERR(ETXTBSY);
 		inode = file_inode(file);
 
 		if (!*pathbuf)	/* ima_rdwr_violation possibly pre-fetched */
@@ -353,7 +353,7 @@ static int process_measurement(struct file *file, const struct cred *cred,
 out_locked:
 	if ((mask & MAY_WRITE) && test_bit(IMA_DIGSIG, &iint->atomic_flags) &&
 	     !(iint->flags & IMA_NEW_FILE))
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 	mutex_unlock(&iint->mutex);
 	kfree(xattr_value);
 	ima_free_modsig(modsig);
@@ -362,7 +362,7 @@ out:
 		__putname(pathbuf);
 	if (must_appraise) {
 		if (rc && (ima_appraise & IMA_APPRAISE_ENFORCE))
-			return -EACCES;
+			return -ERR(EACCES);
 		if (file->f_mode & FMODE_WRITE)
 			set_bit(IMA_UPDATE_XATTR, &iint->atomic_flags);
 	}
@@ -433,7 +433,7 @@ int ima_file_mprotect(struct vm_area_struct *vma, unsigned long prot)
 		return 0;
 
 	if (action & IMA_APPRAISE_SUBMASK)
-		result = -EPERM;
+		result = -ERR(EPERM);
 
 	file = vma->vm_file;
 	pathname = ima_d_path(&file->f_path, &pathbuf, filename);
@@ -520,15 +520,15 @@ int ima_file_hash(struct file *file, char *buf, size_t buf_size)
 	int hash_algo;
 
 	if (!file)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ima_policy_flag)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	inode = file_inode(file);
 	iint = integrity_iint_find(inode);
 	if (!iint)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	mutex_lock(&iint->mutex);
 	if (buf) {
@@ -653,7 +653,7 @@ int ima_post_read_file(struct file *file, void *buf, loff_t size,
 		if ((ima_appraise & IMA_APPRAISE_FIRMWARE) &&
 		    (ima_appraise & IMA_APPRAISE_ENFORCE)) {
 			pr_err("Prevent firmware loading_store.\n");
-			return -EACCES;	/* INTEGRITY_UNKNOWN */
+			return -ERR(EACCES);	/* INTEGRITY_UNKNOWN */
 		}
 		return 0;
 	}
@@ -664,7 +664,7 @@ int ima_post_read_file(struct file *file, void *buf, loff_t size,
 
 	if (!file || !buf || size == 0) { /* should never happen */
 		if (ima_appraise & IMA_APPRAISE_ENFORCE)
-			return -EACCES;
+			return -ERR(EACCES);
 		return 0;
 	}
 
@@ -696,18 +696,18 @@ int ima_load_data(enum kernel_load_data_id id)
 		if (IS_ENABLED(CONFIG_KEXEC_SIG)
 		    && arch_ima_get_secureboot()) {
 			pr_err("impossible to appraise a kernel image without a file descriptor; try using kexec_file_load syscall.\n");
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 
 		if (ima_enforce && (ima_appraise & IMA_APPRAISE_KEXEC)) {
 			pr_err("impossible to appraise a kernel image without a file descriptor; try using kexec_file_load syscall.\n");
-			return -EACCES;	/* INTEGRITY_UNKNOWN */
+			return -ERR(EACCES);	/* INTEGRITY_UNKNOWN */
 		}
 		break;
 	case LOADING_FIRMWARE:
 		if (ima_enforce && (ima_appraise & IMA_APPRAISE_FIRMWARE)) {
 			pr_err("Prevent firmware sysfs fallback loading.\n");
-			return -EACCES;	/* INTEGRITY_UNKNOWN */
+			return -ERR(EACCES);	/* INTEGRITY_UNKNOWN */
 		}
 		break;
 	case LOADING_MODULE:
@@ -716,7 +716,7 @@ int ima_load_data(enum kernel_load_data_id id)
 		if (ima_enforce && (!sig_enforce
 				    && (ima_appraise & IMA_APPRAISE_MODULES))) {
 			pr_err("impossible to appraise a module without a file descriptor. sig_enforce kernel parameter might help\n");
-			return -EACCES;	/* INTEGRITY_UNKNOWN */
+			return -ERR(EACCES);	/* INTEGRITY_UNKNOWN */
 		}
 	default:
 		break;

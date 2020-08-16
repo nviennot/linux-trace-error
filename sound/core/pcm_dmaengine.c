@@ -58,7 +58,7 @@ int snd_hwparams_to_dma_slave_config(const struct snd_pcm_substream *substream,
 
 	bits = params_physical_width(params);
 	if (bits < 8 || bits > 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (bits == 8)
 		buswidth = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	else if (bits == 16)
@@ -209,7 +209,7 @@ int snd_dmaengine_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		dmaengine_terminate_async(prtd->dma_chan);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -300,7 +300,7 @@ int snd_dmaengine_pcm_open(struct snd_pcm_substream *substream,
 	int ret;
 
 	if (!chan)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	ret = snd_pcm_hw_constraint_integer(substream->runtime,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
@@ -399,7 +399,7 @@ int snd_dmaengine_pcm_refine_runtime_hwparams(
 	int ret = 0;
 
 	if (!hw || !chan || !dma_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = dma_get_slave_caps(chan, &dma_caps);
 	if (ret == 0) {

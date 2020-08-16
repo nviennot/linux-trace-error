@@ -51,7 +51,7 @@ static int shadow_and_reallocate_code (struct snd_cs46xx * chip, u32 * data, u32
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(size %2))
-		return -EINVAL;
+		return -ERR(EINVAL);
   
 	while (i < size) {
 		loval = data[i++];
@@ -320,7 +320,7 @@ static int dsp_load_parameter(struct snd_cs46xx *chip,
 	if (snd_cs46xx_download (chip, parameter->data, doffset, dsize)) {
 		dev_err(chip->card->dev,
 			"dsp_spos: failed to download parameter data to DSP\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -346,7 +346,7 @@ static int dsp_load_sample(struct snd_cs46xx *chip,
 	if (snd_cs46xx_download (chip,sample->data,doffset,dsize)) {
 		dev_err(chip->card->dev,
 			"dsp_spos: failed to sample data to DSP\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -426,7 +426,7 @@ int cs46xx_dsp_load_module (struct snd_cs46xx * chip, struct dsp_module_desc * m
 		if (snd_cs46xx_download (chip,(ins->code.data + ins->code.offset),doffset,dsize)) {
 			dev_err(chip->card->dev,
 				"dsp_spos: failed to download code to DSP\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ins->code.offset += code->size;
@@ -1063,35 +1063,35 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 	if (null_algorithm == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol NULLALGORITHM not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	fg_task_tree_header_code = cs46xx_dsp_lookup_symbol(chip, "FGTASKTREEHEADERCODE", SYMBOL_CODE);  
 	if (fg_task_tree_header_code == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol FGTASKTREEHEADERCODE not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	task_tree_header_code = cs46xx_dsp_lookup_symbol(chip, "TASKTREEHEADERCODE", SYMBOL_CODE);  
 	if (task_tree_header_code == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol TASKTREEHEADERCODE not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
   
 	task_tree_thread = cs46xx_dsp_lookup_symbol(chip, "TASKTREETHREAD", SYMBOL_CODE);
 	if (task_tree_thread == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol TASKTREETHREAD not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	magic_snoop_task = cs46xx_dsp_lookup_symbol(chip, "MAGICSNOOPTASK", SYMBOL_CODE);
 	if (magic_snoop_task == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol MAGICSNOOPTASK not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
   
 	{
@@ -1438,7 +1438,7 @@ int cs46xx_dsp_scb_and_task_init (struct snd_cs46xx *chip)
 
  _fail_end:
 	dev_err(chip->card->dev, "dsp_spos: failed to setup SCB's in DSP\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
@@ -1454,20 +1454,20 @@ static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
 	if (s16_async_codec_input_task == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol S16_ASYNCCODECINPUTTASK not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	spdifo_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFOTASK", SYMBOL_CODE);
 	if (spdifo_task == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol SPDIFOTASK not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	spdifi_task = cs46xx_dsp_lookup_symbol(chip, "SPDIFITASK", SYMBOL_CODE);
 	if (spdifi_task == NULL) {
 		dev_err(chip->card->dev,
 			"dsp_spos: symbol SPDIFITASK not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	{
@@ -1580,13 +1580,13 @@ static int cs46xx_dsp_async_init (struct snd_cs46xx *chip,
 		spdifo_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFOSCB",(u32 *)&spdifo_scb,SPDIFO_SCB_INST);
 
 		if (snd_BUG_ON(!spdifo_scb_desc))
-			return -EIO;
+			return -ERR(EIO);
 		spdifi_scb_desc = cs46xx_dsp_create_scb(chip,"SPDIFISCB",(u32 *)&spdifi_scb,SPDIFI_SCB_INST);
 		if (snd_BUG_ON(!spdifi_scb_desc))
-			return -EIO;
+			return -ERR(EIO);
 		async_codec_scb_desc = cs46xx_dsp_create_scb(chip,"AsynCodecInputSCB",(u32 *)&async_codec_input_scb, HFG_TREE_SCB);
 		if (snd_BUG_ON(!async_codec_scb_desc))
-			return -EIO;
+			return -ERR(EIO);
 
 		async_codec_scb_desc->parent_scb_ptr = NULL;
 		async_codec_scb_desc->next_scb_ptr = spdifi_scb_desc;
@@ -1672,9 +1672,9 @@ int cs46xx_dsp_enable_spdif_in (struct snd_cs46xx *chip)
 	chip->amplifier_ctrl(chip, 1);
 
 	if (snd_BUG_ON(ins->asynch_rx_scb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!ins->spdif_in_src))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 
@@ -1730,9 +1730,9 @@ int cs46xx_dsp_disable_spdif_in (struct snd_cs46xx *chip)
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(!ins->asynch_rx_scb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!ins->spdif_in_src))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 
@@ -1758,9 +1758,9 @@ int cs46xx_dsp_enable_pcm_capture (struct snd_cs46xx *chip)
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(ins->pcm_input))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!ins->ref_snoop_scb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 	ins->pcm_input = cs46xx_add_record_source(chip,ins->ref_snoop_scb,PCMSERIALIN_PCM_SCB_ADDR,
@@ -1775,7 +1775,7 @@ int cs46xx_dsp_disable_pcm_capture (struct snd_cs46xx *chip)
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(!ins->pcm_input))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 	cs46xx_dsp_remove_scb (chip,ins->pcm_input);
@@ -1790,9 +1790,9 @@ int cs46xx_dsp_enable_adc_capture (struct snd_cs46xx *chip)
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(ins->adc_input))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(!ins->codec_in_scb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 	ins->adc_input = cs46xx_add_record_source(chip,ins->codec_in_scb,PCMSERIALIN_SCB_ADDR,
@@ -1807,7 +1807,7 @@ int cs46xx_dsp_disable_adc_capture (struct snd_cs46xx *chip)
 	struct dsp_spos_instance * ins = chip->dsp_spos_instance;
 
 	if (snd_BUG_ON(!ins->adc_input))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->spos_mutex);
 	cs46xx_dsp_remove_scb (chip,ins->adc_input);
@@ -1825,7 +1825,7 @@ int cs46xx_poke_via_dsp (struct snd_cs46xx *chip, u32 address, u32 data)
 	/* santiy check the parameters.  (These numbers are not 100% correct.  They are
 	   a rough guess from looking at the controller spec.) */
 	if (address < 0x8000 || address >= 0x9000)
-		return -EINVAL;
+		return -ERR(EINVAL);
         
 	/* initialize the SP_IO_WRITE SCB with the data. */
 	temp = ( address << 16 ) | ( address & 0x0000FFFF);   /* offset 0 <-- address2 : address1 */
@@ -1849,7 +1849,7 @@ int cs46xx_poke_via_dsp (struct snd_cs46xx *chip, u32 address, u32 data)
 	if (i == 25) {
 		dev_err(chip->card->dev,
 			"dsp_spos: SPIOWriteTask not responding\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;

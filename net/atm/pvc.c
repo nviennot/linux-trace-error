@@ -33,14 +33,14 @@ static int pvc_bind(struct socket *sock, struct sockaddr *sockaddr,
 	int error;
 
 	if (sockaddr_len != sizeof(struct sockaddr_atmpvc))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	addr = (struct sockaddr_atmpvc *)sockaddr;
 	if (addr->sap_family != AF_ATMPVC)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	lock_sock(sk);
 	vcc = ATM_SD(sock);
 	if (!test_bit(ATM_VF_HASQOS, &vcc->flags)) {
-		error = -EBADFD;
+		error = -ERR(EBADFD);
 		goto out;
 	}
 	if (test_bit(ATM_VF_PARTIAL, &vcc->flags)) {
@@ -93,7 +93,7 @@ static int pvc_getname(struct socket *sock, struct sockaddr *sockaddr,
 	struct atm_vcc *vcc = ATM_SD(sock);
 
 	if (!vcc->dev || !test_bit(ATM_VF_ADDR, &vcc->flags))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	addr = (struct sockaddr_atmpvc *)sockaddr;
 	memset(addr, 0, sizeof(*addr));
 	addr->sap_family = AF_ATMPVC;
@@ -134,7 +134,7 @@ static int pvc_create(struct net *net, struct socket *sock, int protocol,
 		      int kern)
 {
 	if (net != &init_net)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	sock->ops = &pvc_proto_ops;
 	return vcc_create(net, sock, protocol, PF_ATMPVC, kern);

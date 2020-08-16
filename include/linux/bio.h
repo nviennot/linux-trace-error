@@ -799,7 +799,7 @@ static inline bool bio_integrity_flagged(struct bio *bio, enum bip_flags flag)
 static inline void *bio_integrity_alloc(struct bio * bio, gfp_t gfp,
 								unsigned int nr)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int bio_integrity_add_page(struct bio *bio, struct page *page,

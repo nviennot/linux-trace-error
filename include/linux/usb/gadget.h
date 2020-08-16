@@ -834,9 +834,9 @@ extern void usb_gadget_unmap_request(struct usb_gadget *gadget,
 		struct usb_request *req, int is_in);
 #else /* !CONFIG_HAS_DMA */
 static inline int usb_gadget_map_request_by_dev(struct device *dev,
-		struct usb_request *req, int is_in) { return -ENOSYS; }
+		struct usb_request *req, int is_in) { return -ERR(ENOSYS); }
 static inline int usb_gadget_map_request(struct usb_gadget *gadget,
-		struct usb_request *req, int is_in) { return -ENOSYS; }
+		struct usb_request *req, int is_in) { return -ERR(ENOSYS); }
 
 static inline void usb_gadget_unmap_request_by_dev(struct device *dev,
 		struct usb_request *req, int is_in) { }

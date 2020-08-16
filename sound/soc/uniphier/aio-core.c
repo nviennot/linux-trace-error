@@ -129,7 +129,7 @@ int aio_chip_set_pll(struct uniphier_aio_chip *chip, int pll_id,
 		break;
 	default:
 		dev_err(dev, "PLL(%d) not supported\n", pll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -141,7 +141,7 @@ int aio_chip_set_pll(struct uniphier_aio_chip *chip, int pll_id,
 		break;
 	default:
 		dev_err(dev, "PLL frequency not supported(%d)\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	chip->plls[pll_id].freq = freq;
 
@@ -235,7 +235,7 @@ int aio_init(struct uniphier_aio_sub *sub)
 		break;
 	default:
 		dev_err(dev, "Unknown port type %d.\n", sub->swm->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -302,7 +302,7 @@ static int aio_port_set_ch(struct uniphier_aio_sub *sub)
 		slotsel = slotsel_2ch;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < AUD_MAX_SLOTSEL; i++) {
@@ -376,7 +376,7 @@ static int aio_port_set_rate(struct uniphier_aio_sub *sub, int rate)
 			break;
 		default:
 			dev_err(dev, "Rate not supported(%d)\n", rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(r, OPORTMXCTR1(sub->swm->oport.map),
@@ -424,7 +424,7 @@ static int aio_port_set_rate(struct uniphier_aio_sub *sub, int rate)
 			break;
 		default:
 			dev_err(dev, "Rate not supported(%d)\n", rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(r, IPORTMXCTR1(sub->swm->iport.map),
@@ -466,7 +466,7 @@ static int aio_port_set_fmt(struct uniphier_aio_sub *sub)
 		default:
 			dev_err(dev, "Format is not supported(%d)\n",
 				sub->aio->fmt);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		v |= OPORTMXCTR1_OUTBITSEL_24;
@@ -487,7 +487,7 @@ static int aio_port_set_fmt(struct uniphier_aio_sub *sub)
 		default:
 			dev_err(dev, "Format is not supported(%d)\n",
 				sub->aio->fmt);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		v |= IPORTMXCTR1_OUTBITSEL_24 |
@@ -533,12 +533,12 @@ static int aio_port_set_clk(struct uniphier_aio_sub *sub)
 			if (sub->aio->pll_out >= ARRAY_SIZE(v_pll)) {
 				dev_err(dev, "PLL(%d) is invalid\n",
 					sub->aio->pll_out);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (sub->aio->plldiv >= ARRAY_SIZE(v_div)) {
 				dev_err(dev, "PLL divider(%d) is invalid\n",
 					sub->aio->plldiv);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			v = v_pll[sub->aio->pll_out] |
@@ -564,7 +564,7 @@ static int aio_port_set_clk(struct uniphier_aio_sub *sub)
 			if (sub->aio->pll_out >= ARRAY_SIZE(v_pll)) {
 				dev_err(dev, "PLL(%d) is invalid\n",
 					sub->aio->pll_out);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			v = v_pll[sub->aio->pll_out] |
 				OPORTMXCTR2_MSSEL_MASTER |
@@ -804,7 +804,7 @@ int aio_if_set_param(struct uniphier_aio_sub *sub, int pass_through)
 				memfmt = PBOUTMXCTR0_MEMFMT_8CH;
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			v = PBOUTMXCTR0_ENDIAN_3210 | memfmt;
 		}
@@ -1124,7 +1124,7 @@ int aiodma_rb_set_threshold(struct uniphier_aio_sub *sub, u64 size, u32 th)
 	struct regmap *r = sub->aio->chip->regmap;
 
 	if (size <= th)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_write(r, CDA2D_RBMXBTH(sub->swm->rb.map), th);
 	regmap_write(r, CDA2D_RBMXRTH(sub->swm->rb.map), th);
@@ -1140,7 +1140,7 @@ int aiodma_rb_set_buffer(struct uniphier_aio_sub *sub, u64 start, u64 end,
 	int ret;
 
 	if (end < start || period < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_write(r, CDA2D_RBMXCNFG(sub->swm->rb.map), 0);
 	regmap_write(r, CDA2D_RBMXBGNADRS(sub->swm->rb.map),

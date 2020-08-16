@@ -37,7 +37,7 @@ static int parse_policy_line(struct file *file, char *buf,
 	/* Format of |buf| string should be <UID>:<UID>. */
 	child_str = strchr(buf, ':');
 	if (child_str == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*child_str = '\0';
 	child_str++;
 
@@ -52,7 +52,7 @@ static int parse_policy_line(struct file *file, char *buf,
 	rule->src_uid = make_kuid(file->f_cred->user_ns, parsed_parent);
 	rule->dst_uid = make_kuid(file->f_cred->user_ns, parsed_child);
 	if (!uid_valid(rule->src_uid) || !uid_valid(rule->dst_uid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -93,7 +93,7 @@ static int verify_ruleset(struct setuid_ruleset *pol)
 			pr_warn("insecure policy detected: uid %d is constrained but transitively unconstrained through uid %d\n",
 				__kuid_val(rule->src_uid),
 				__kuid_val(rule->dst_uid));
-			res = -EINVAL;
+			res = -ERR(EINVAL);
 
 			/* fix it up */
 			nrule = kmalloc(sizeof(struct setuid_rule), GFP_KERNEL);
@@ -137,7 +137,7 @@ static ssize_t handle_policy_update(struct file *file,
 
 		end = strchr(p, '\n');
 		if (end == NULL) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_free_buf;
 		}
 		*end = '\0';
@@ -155,7 +155,7 @@ static ssize_t handle_policy_update(struct file *file,
 		if (_setuid_policy_lookup(pol, rule->src_uid, rule->dst_uid) ==
 		    SIDPOL_ALLOWED) {
 			pr_warn("bad policy: duplicate entry\n");
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			goto out_free_rule;
 		}
 
@@ -198,10 +198,10 @@ static ssize_t safesetid_file_write(struct file *file,
 				    loff_t *ppos)
 {
 	if (!file_ns_capable(file, &init_user_ns, CAP_MAC_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return handle_policy_update(file, buf, len);
 }

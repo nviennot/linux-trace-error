@@ -812,7 +812,7 @@ map_smb_to_linux_error(char *buf, bool logErr)
 {
 	struct smb_hdr *smb = (struct smb_hdr *)buf;
 	unsigned int i;
-	int rc = -EIO;	/* if transport error smb error may not be set */
+	int rc = -ERR(EIO);	/* if transport error smb error may not be set */
 	__u8 smberrclass;
 	__u16 smberrcode;
 

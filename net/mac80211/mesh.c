@@ -398,7 +398,7 @@ static int mesh_add_ds_params_ie(struct ieee80211_sub_if_data *sdata,
 	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 	if (WARN_ON(!chanctx_conf)) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	chan = chanctx_conf->def.chan;
 	rcu_read_unlock();
@@ -419,7 +419,7 @@ int mesh_add_ht_cap_ie(struct ieee80211_sub_if_data *sdata,
 
 	sband = ieee80211_get_sband(sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* HT not allowed in 6 GHz */
 	if (sband->band == NL80211_BAND_6GHZ)
@@ -454,7 +454,7 @@ int mesh_add_ht_oper_ie(struct ieee80211_sub_if_data *sdata,
 	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 	if (WARN_ON(!chanctx_conf)) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	channel = chanctx_conf->def.chan;
 	rcu_read_unlock();
@@ -491,7 +491,7 @@ int mesh_add_vht_cap_ie(struct ieee80211_sub_if_data *sdata,
 
 	sband = ieee80211_get_sband(sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* VHT not allowed in 6 GHz */
 	if (sband->band == NL80211_BAND_6GHZ)
@@ -526,7 +526,7 @@ int mesh_add_vht_oper_ie(struct ieee80211_sub_if_data *sdata,
 	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
 	if (WARN_ON(!chanctx_conf)) {
 		rcu_read_unlock();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	channel = chanctx_conf->def.chan;
 	rcu_read_unlock();
@@ -563,7 +563,7 @@ int mesh_add_he_cap_ie(struct ieee80211_sub_if_data *sdata,
 
 	sband = ieee80211_get_sband(sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	he_cap = ieee80211_get_he_iftype_cap(sband, NL80211_IFTYPE_MESH_POINT);
 
@@ -592,7 +592,7 @@ int mesh_add_he_oper_ie(struct ieee80211_sub_if_data *sdata,
 
 	sband = ieee80211_get_sband(sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	he_cap = ieee80211_get_he_iftype_cap(sband, NL80211_IFTYPE_MESH_POINT);
 	if (!he_cap ||
@@ -622,7 +622,7 @@ int mesh_add_he_6ghz_cap_ie(struct ieee80211_sub_if_data *sdata,
 
 	sband = ieee80211_get_sband(sdata);
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iftd = ieee80211_get_sband_iftype_data(sband,
 					       NL80211_IFTYPE_MESH_POINT);
@@ -1343,7 +1343,7 @@ int ieee80211_mesh_finish_csa(struct ieee80211_sub_if_data *sdata)
 		kfree_rcu(tmp_csa_settings, rcu_head);
 	ret = ieee80211_mesh_rebuild_beacon(sdata);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	changed |= BSS_CHANGED_BEACON;
 

@@ -707,7 +707,7 @@ static inline void css_put(struct cgroup_subsys_state *css) {}
 static inline int cgroup_attach_task_all(struct task_struct *from,
 					 struct task_struct *t) { return 0; }
 static inline int cgroupstats_build(struct cgroupstats *stats,
-				    struct dentry *dentry) { return -EINVAL; }
+				    struct dentry *dentry) { return -ERR(EINVAL); }
 
 static inline void cgroup_fork(struct task_struct *p) {}
 static inline int cgroup_can_fork(struct task_struct *p,

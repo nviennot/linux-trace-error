@@ -93,7 +93,7 @@ dump:
 	ubifs_err(c, "bad data node (block %u, inode %lu)",
 		  block, inode->i_ino);
 	ubifs_dump_node(c, dn);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int do_readpage(struct page *page)
@@ -134,7 +134,7 @@ static int do_readpage(struct page *page)
 
 		if (block >= beyond) {
 			/* Reading beyond inode */
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			memset(addr, 0, UBIFS_BLOCK_SIZE);
 		} else {
 			ret = read_block(inode, addr, block, dn);
@@ -434,7 +434,7 @@ static int ubifs_write_begin(struct file *file, struct address_space *mapping,
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 
 	if (unlikely(c->ro_error))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* Try out the fast-path part first */
 	page = grab_cache_page_write_begin(mapping, index, flags);
@@ -703,7 +703,7 @@ out_err:
 	kunmap(page);
 	ubifs_err(c, "bad data node (block %u, inode %lu)",
 		  page_block, inode->i_ino);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -1624,7 +1624,7 @@ static const char *ubifs_get_link(struct dentry *dentry,
 		return ui->data;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	return fscrypt_get_symlink(inode, ui->data, ui->data_len, done);
 }

@@ -367,7 +367,7 @@ static int max98090_get_enab_tlv(struct snd_kcontrol *kcontrol,
 		select = &(max98090->sidetone);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = (val >> mc->shift) & mask;
@@ -408,7 +408,7 @@ static int max98090_put_enab_tlv(struct snd_kcontrol *kcontrol,
 		select = &(max98090->sidetone);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = (val >> mc->shift) & mask;
@@ -758,7 +758,7 @@ static int max98090_micinput_event(struct snd_soc_dapm_widget *w,
 		val = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
@@ -1616,7 +1616,7 @@ static int max98090_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_CBM_CFS:
 		default:
 			dev_err(component->dev, "DAI clock mode unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_write(component, M98090_REG_MASTER_MODE, regval);
 
@@ -1634,7 +1634,7 @@ static int max98090_dai_set_fmt(struct snd_soc_dai *codec_dai,
 			/* Not supported mode */
 		default:
 			dev_err(component->dev, "DAI format unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1651,7 +1651,7 @@ static int max98090_dai_set_fmt(struct snd_soc_dai *codec_dai,
 			break;
 		default:
 			dev_err(component->dev, "DAI invert mode unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/*
@@ -1679,7 +1679,7 @@ static int max98090_set_tdm_slot(struct snd_soc_dai *codec_dai,
 	cdata = &max98090->dai[0];
 
 	if (slots < 0 || slots > 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max98090->tdm_slots = slots;
 	max98090->tdm_width = slot_width;
@@ -1868,7 +1868,7 @@ static int max98090_find_closest_pclk(int pclk)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98090_configure_dmic(struct max98090_priv *max98090,
@@ -1942,7 +1942,7 @@ static int max98090_dai_hw_params(struct snd_pcm_substream *substream,
 			M98090_WS_MASK, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (max98090->master)
@@ -2009,7 +2009,7 @@ static int max98090_dai_set_sysclk(struct snd_soc_dai *dai,
 		max98090->pclk = freq >> 2;
 	} else {
 		dev_err(component->dev, "Invalid master clock frequency\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max98090->sysclk = freq;
@@ -2549,7 +2549,7 @@ static int max98090_i2c_probe(struct i2c_client *i2c,
 					    &i2c->dev);
 		if (!acpi_id) {
 			dev_err(&i2c->dev, "No driver data\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		driver_data = acpi_id->driver_data;
 	} else if (i2c_id) {

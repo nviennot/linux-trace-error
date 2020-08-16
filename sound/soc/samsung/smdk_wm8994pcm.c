@@ -56,7 +56,7 @@ static int smdk_wm8994_pcm_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(cpu_dai->dev, "%s:%d Sampling Rate %u not supported!\n",
 		__func__, __LINE__, params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mclk_freq = params_rate(params) * rfs;

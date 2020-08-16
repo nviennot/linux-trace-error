@@ -455,21 +455,21 @@ int batadv_frag_send_packet(struct sk_buff *skb,
 	max_fragment_size = mtu - header_size;
 
 	if (skb->len == 0 || max_fragment_size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	num_fragments = (skb->len - 1) / max_fragment_size + 1;
 	max_fragment_size = (skb->len - 1) / num_fragments + 1;
 
 	/* Don't even try to fragment, if we need more than 16 fragments */
 	if (num_fragments > BATADV_FRAG_MAX_FRAGMENTS) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto free_skb;
 	}
 
 	bat_priv = orig_node->bat_priv;
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto free_skb;
 	}
 
@@ -499,7 +499,7 @@ int batadv_frag_send_packet(struct sk_buff *skb,
 	while (skb->len > max_fragment_size) {
 		/* The initial check in this function should cover this case */
 		if (unlikely(frag_header.no == BATADV_FRAG_MAX_FRAGMENTS - 1)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto put_primary_if;
 		}
 

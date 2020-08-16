@@ -566,7 +566,7 @@ static int write_buf(struct file *filp, const void *buf, u32 len, loff_t *off)
 		if (ret < 0)
 			return ret;
 		if (ret == 0) {
-			return -EIO;
+			return -ERR(EIO);
 		}
 		pos += ret;
 	}
@@ -581,7 +581,7 @@ static int tlv_put(struct send_ctx *sctx, u16 attr, const void *data, int len)
 	int left = sctx->send_max_size - sctx->send_size;
 
 	if (unlikely(left < total_len))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	hdr = (struct btrfs_tlv_header *) (sctx->send_buf + sctx->send_size);
 	hdr->tlv_type = cpu_to_le16(attr);
@@ -689,7 +689,7 @@ static int begin_cmd(struct send_ctx *sctx, int cmd)
 	struct btrfs_cmd_header *hdr;
 
 	if (WARN_ON(!sctx->send_buf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BUG_ON(sctx->send_size);
 
@@ -836,7 +836,7 @@ static int __get_inode_info(struct btrfs_root *root, struct btrfs_path *path,
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret) {
 		if (ret > 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		return ret;
 	}
 
@@ -1056,12 +1056,12 @@ static int iterate_dir_item(struct btrfs_root *root, struct btrfs_path *path,
 
 		if (type == BTRFS_FT_XATTR) {
 			if (name_len > XATTR_NAME_MAX) {
-				ret = -ENAMETOOLONG;
+				ret = -ERR(ENAMETOOLONG);
 				goto out;
 			}
 			if (name_len + data_len >
 					BTRFS_MAX_XATTR_SIZE(root->fs_info)) {
-				ret = -E2BIG;
+				ret = -ERR(E2BIG);
 				goto out;
 			}
 		} else {
@@ -1069,7 +1069,7 @@ static int iterate_dir_item(struct btrfs_root *root, struct btrfs_path *path,
 			 * Path too long
 			 */
 			if (name_len + data_len > PATH_MAX) {
-				ret = -ENAMETOOLONG;
+				ret = -ERR(ENAMETOOLONG);
 				goto out;
 			}
 		}
@@ -1166,7 +1166,7 @@ static int get_inode_path(struct btrfs_root *root,
 	if (found_key.objectid != ino ||
 	    (found_key.type != BTRFS_INODE_REF_KEY &&
 	     found_key.type != BTRFS_INODE_EXTREF_KEY)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1351,7 +1351,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 			struct btrfs_file_extent_item);
 	extent_type = btrfs_file_extent_type(eb, fi);
 	if (extent_type == BTRFS_FILE_EXTENT_INLINE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	compressed = btrfs_file_extent_compression(eb, fi);
@@ -1359,7 +1359,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 	num_bytes = btrfs_file_extent_num_bytes(eb, fi);
 	disk_byte = btrfs_file_extent_disk_bytenr(eb, fi);
 	if (disk_byte == 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	logical = disk_byte + btrfs_file_extent_offset(eb, fi);
@@ -1372,7 +1372,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 	if (ret < 0)
 		goto out;
 	if (flags & BTRFS_EXTENT_FLAG_TREE_BLOCK) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -1386,7 +1386,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 	 * a certain amount of references.
 	 */
 	if (btrfs_extent_refs(tmp_path->nodes[0], ei) > SEND_MAX_EXTENT_REFS) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	btrfs_release_path(tmp_path);
@@ -1445,7 +1445,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 
 	if (!backref_ctx->found_itself) {
 		/* found a bug in backref code? */
-		ret = -EIO;
+		ret = -ERR(EIO);
 		btrfs_err(fs_info,
 			  "did not find backref in send_root. inode=%llu, offset=%llu, disk_byte=%llu found extent=%llu",
 			  ino, data_offset, disk_byte, found_key.objectid);
@@ -1475,7 +1475,7 @@ static int find_extent_clone(struct send_ctx *sctx,
 		*found = cur_clone_root;
 		ret = 0;
 	} else {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	}
 
 out:
@@ -1519,7 +1519,7 @@ static int read_symlink(struct btrfs_root *root,
 		btrfs_err(root->fs_info,
 			  "Found empty symlink inode %llu at root %llu",
 			  ino, root->root_key.objectid);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -1631,7 +1631,7 @@ static int get_cur_inode_state(struct send_ctx *sctx, u64 ino, u64 gen)
 	left_ret = ret;
 
 	if (!sctx->parent_root) {
-		right_ret = -ENOENT;
+		right_ret = -ERR(ENOENT);
 	} else {
 		ret = get_inode_info(sctx->parent_root, ino, NULL, &right_gen,
 				NULL, NULL, NULL, NULL);
@@ -1654,7 +1654,7 @@ static int get_cur_inode_state(struct send_ctx *sctx, u64 ino, u64 gen)
 			else
 				ret = inode_state_will_delete;
 		} else  {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 	} else if (!left_ret) {
 		if (left_gen == gen) {
@@ -1663,7 +1663,7 @@ static int get_cur_inode_state(struct send_ctx *sctx, u64 ino, u64 gen)
 			else
 				ret = inode_state_will_create;
 		} else {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 	} else if (!right_ret) {
 		if (right_gen == gen) {
@@ -1672,10 +1672,10 @@ static int get_cur_inode_state(struct send_ctx *sctx, u64 ino, u64 gen)
 			else
 				ret = inode_state_will_delete;
 		} else {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 		}
 	} else {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	}
 
 out:
@@ -1724,12 +1724,12 @@ static int lookup_dir_item_inode(struct btrfs_root *root,
 	di = btrfs_lookup_dir_item(NULL, root, path,
 			dir, name, name_len, 0);
 	if (IS_ERR_OR_NULL(di)) {
-		ret = di ? PTR_ERR(di) : -ENOENT;
+		ret = di ? PTR_ERR(di) : -ERR(ENOENT);
 		goto out;
 	}
 	btrfs_dir_item_key_to_cpu(path->nodes[0], di, &key);
 	if (key.type == BTRFS_ROOT_ITEM_KEY) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	*found_inode = key.objectid;
@@ -1771,7 +1771,7 @@ static int get_first_ref(struct btrfs_root *root, u64 ino,
 	if (ret || found_key.objectid != ino ||
 	    (found_key.type != BTRFS_INODE_REF_KEY &&
 	     found_key.type != BTRFS_INODE_EXTREF_KEY)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -2381,7 +2381,7 @@ static int send_subvol_begin(struct send_ctx *sctx)
 	if (ret < 0)
 		goto out;
 	if (ret) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -2389,7 +2389,7 @@ static int send_subvol_begin(struct send_ctx *sctx)
 	btrfs_item_key_to_cpu(leaf, &key, path->slots[0]);
 	if (key.type != BTRFS_ROOT_BACKREF_KEY ||
 	    key.objectid != send_root->root_key.objectid) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	ref = btrfs_item_ptr(leaf, path->slots[0], struct btrfs_root_ref);
@@ -2558,7 +2558,7 @@ static int send_utimes(struct send_ctx *sctx, u64 ino, u64 gen)
 	key.offset = 0;
 	ret = btrfs_search_slot(NULL, sctx->send_root, &key, path, 0, 0);
 	if (ret > 0)
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	if (ret < 0)
 		goto out;
 
@@ -2635,7 +2635,7 @@ static int send_create_inode(struct send_ctx *sctx, u64 ino)
 	} else {
 		btrfs_warn(sctx->send_root->fs_info, "unexpected inode type %o",
 				(int)(mode & S_IFMT));
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -3056,7 +3056,7 @@ static int add_waiting_dir_move(struct send_ctx *sctx, u64 ino, bool orphanized)
 			p = &(*p)->rb_right;
 		} else {
 			kfree(dm);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -4346,7 +4346,7 @@ static int find_iref(struct btrfs_root *root,
 		return ret;
 
 	if (ctx.found_idx == -1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return ctx.found_idx;
 }
@@ -4445,7 +4445,7 @@ static int process_all_refs(struct send_ctx *sctx,
 	} else {
 		btrfs_err(sctx->send_root->fs_info,
 				"Wrong command %d in process_all_refs", cmd);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -4668,7 +4668,7 @@ static int find_xattr(struct btrfs_root *root,
 		return ret;
 
 	if (ctx.found_idx == -1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (data) {
 		*data = ctx.found_data;
 		*data_len = ctx.found_data_len;
@@ -4858,7 +4858,7 @@ static ssize_t fill_read_buf(struct send_ctx *sctx, u64 offset, u32 len)
 			if (!PageUptodate(page)) {
 				unlock_page(page);
 				put_page(page);
-				ret = -EIO;
+				ret = -ERR(EIO);
 				break;
 			}
 		}
@@ -6340,7 +6340,7 @@ static int changed_ref(struct send_ctx *sctx,
 
 	if (sctx->cur_ino != sctx->cmp_key->objectid) {
 		inconsistent_snapshot_error(sctx, result, "reference");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (!sctx->cur_inode_new_gen &&
@@ -6368,7 +6368,7 @@ static int changed_xattr(struct send_ctx *sctx,
 
 	if (sctx->cur_ino != sctx->cmp_key->objectid) {
 		inconsistent_snapshot_error(sctx, result, "xattr");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (!sctx->cur_inode_new_gen && !sctx->cur_inode_deleted) {
@@ -7091,7 +7091,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 	int sort_clone_roots = 0;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * The subvolume must remain read-only during send, protect against
@@ -7101,7 +7101,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 	if (btrfs_root_readonly(send_root) && send_root->dedupe_in_progress) {
 		dedupe_in_progress_warn(send_root);
 		spin_unlock(&send_root->root_item_lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	send_root->send_in_progress++;
 	spin_unlock(&send_root->root_item_lock);
@@ -7111,7 +7111,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 	 * not RO.
 	 */
 	if (!btrfs_root_readonly(send_root)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -7122,12 +7122,12 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 	 */
 	if (arg->clone_sources_count >
 	    ULONG_MAX / sizeof(struct clone_root) - 1) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (arg->flags & ~BTRFS_SEND_FLAG_MASK) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -7146,7 +7146,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 
 	sctx->send_filp = fget(arg->send_fd);
 	if (!sctx->send_filp) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out;
 	}
 
@@ -7156,7 +7156,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 	 * is slow to remove the directory entry, send can still be started
 	 */
 	if (btrfs_root_dead(sctx->send_root)) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -7215,14 +7215,14 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 			    btrfs_root_dead(clone_root)) {
 				spin_unlock(&clone_root->root_item_lock);
 				btrfs_put_root(clone_root);
-				ret = -EPERM;
+				ret = -ERR(EPERM);
 				goto out;
 			}
 			if (clone_root->dedupe_in_progress) {
 				dedupe_in_progress_warn(clone_root);
 				spin_unlock(&clone_root->root_item_lock);
 				btrfs_put_root(clone_root);
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				goto out;
 			}
 			clone_root->send_in_progress++;
@@ -7248,13 +7248,13 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 		if (!btrfs_root_readonly(sctx->parent_root) ||
 				btrfs_root_dead(sctx->parent_root)) {
 			spin_unlock(&sctx->parent_root->root_item_lock);
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			goto out;
 		}
 		if (sctx->parent_root->dedupe_in_progress) {
 			dedupe_in_progress_warn(sctx->parent_root);
 			spin_unlock(&sctx->parent_root->root_item_lock);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 		spin_unlock(&sctx->parent_root->root_item_lock);
@@ -7287,7 +7287,7 @@ long btrfs_ioctl_send(struct file *mnt_file, struct btrfs_ioctl_send_args *arg)
 		mutex_unlock(&fs_info->balance_mutex);
 		btrfs_warn_rl(fs_info,
 		"cannot run send because a balance operation is in progress");
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 	fs_info->send_in_progress++;

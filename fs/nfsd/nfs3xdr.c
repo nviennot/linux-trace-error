@@ -941,7 +941,7 @@ encode_entry(struct readdir_cd *ccd, const char *name, int namlen,
 
 	if (cd->buflen < elen) {
 		cd->common.err = nfserr_toosmall;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* determine which page in rq_respages[] we are currently filling */
@@ -1020,7 +1020,7 @@ encode_entry(struct readdir_cd *ccd, const char *name, int namlen,
 	}
 	else {
 		cd->common.err = nfserr_toosmall;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cd->buflen -= num_entry_words;

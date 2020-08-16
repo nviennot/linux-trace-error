@@ -87,7 +87,7 @@ static int prepare_reply(struct genl_info *info, u8 cmd, struct sk_buff **skbp,
 		reply = genlmsg_put_reply(skb, info, &family, 0, cmd);
 	if (reply == NULL) {
 		nlmsg_free(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*skbp = skb;
@@ -186,7 +186,7 @@ static int fill_stats_for_pid(pid_t pid, struct taskstats *stats)
 
 	tsk = find_get_task_by_vpid(pid);
 	if (!tsk)
-		return -ESRCH;
+		return -ERR(ESRCH);
 	fill_stats(current_user_ns(), task_active_pid_ns(current), tsk, stats);
 	put_task_struct(tsk);
 	return 0;
@@ -196,7 +196,7 @@ static int fill_stats_for_tgid(pid_t tgid, struct taskstats *stats)
 {
 	struct task_struct *tsk, *first;
 	unsigned long flags;
-	int rc = -ESRCH;
+	int rc = -ERR(ESRCH);
 	u64 delta, utime, stime;
 	u64 start_time;
 
@@ -283,13 +283,13 @@ static int add_del_listener(pid_t pid, const struct cpumask *mask, int isadd)
 	int ret = 0;
 
 	if (!cpumask_subset(mask, cpu_possible_mask))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (current_user_ns() != &init_user_ns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (task_active_pid_ns(current) != &init_pid_ns)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (isadd == REGISTER) {
 		for_each_cpu(cpu, mask) {
@@ -344,9 +344,9 @@ static int parse(struct nlattr *na, struct cpumask *mask)
 		return 1;
 	len = nla_len(na);
 	if (len > TASKSTATS_CPUMASK_MAXLEN)
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (len < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	data = kmalloc(len, GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
@@ -398,7 +398,7 @@ static int cgroupstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
 
 	na = info->attrs[CGROUPSTATS_CMD_ATTR_FD];
 	if (!na)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fd = nla_get_u32(info->attrs[CGROUPSTATS_CMD_ATTR_FD]);
 	f = fdget(fd);
@@ -416,7 +416,7 @@ static int cgroupstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
 				sizeof(struct cgroupstats));
 	if (na == NULL) {
 		nlmsg_free(rep_skb);
-		rc = -EMSGSIZE;
+		rc = -ERR(EMSGSIZE);
 		goto err;
 	}
 
@@ -493,7 +493,7 @@ static int cmd_attr_pid(struct genl_info *info)
 	if (rc < 0)
 		return rc;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	pid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_PID]);
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_PID, pid);
 	if (!stats)
@@ -522,7 +522,7 @@ static int cmd_attr_tgid(struct genl_info *info)
 	if (rc < 0)
 		return rc;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	tgid = nla_get_u32(info->attrs[TASKSTATS_CMD_ATTR_TGID]);
 	stats = mk_reply(rep_skb, TASKSTATS_TYPE_TGID, tgid);
 	if (!stats)
@@ -548,7 +548,7 @@ static int taskstats_user_cmd(struct sk_buff *skb, struct genl_info *info)
 	else if (info->attrs[TASKSTATS_CMD_ATTR_TGID])
 		return cmd_attr_tgid(info);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static struct taskstats *taskstats_tgid_alloc(struct task_struct *tsk)
@@ -674,7 +674,7 @@ static int taskstats_pre_doit(const struct genl_ops *ops, struct sk_buff *skb,
 		policy = cgroupstats_cmd_get_policy;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return nlmsg_validate_deprecated(info->nlhdr, GENL_HDRLEN,

@@ -338,7 +338,7 @@ int squashfs_read_metadata(struct super_block *sb, void *buffer,
 	TRACE("Entered squashfs_read_metadata [%llx:%x]\n", *block, *offset);
 
 	if (unlikely(length < 0))
-		return -EIO;
+		return -ERR(EIO);
 
 	while (length) {
 		entry = squashfs_cache_get(sb, msblk->block_cache, *block, 0);
@@ -346,7 +346,7 @@ int squashfs_read_metadata(struct super_block *sb, void *buffer,
 			res = entry->error;
 			goto error;
 		} else if (*offset >= entry->length) {
-			res = -EIO;
+			res = -ERR(EIO);
 			goto error;
 		}
 

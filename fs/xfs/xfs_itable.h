@@ -31,7 +31,7 @@ xfs_ibulk_advance(
 
 	breq->ubuffer = b + bytes;
 	breq->ocount++;
-	return breq->ocount == breq->icount ? -ECANCELED : 0;
+	return breq->ocount == breq->icount ? -ERR(ECANCELED) : 0;
 }
 
 /*

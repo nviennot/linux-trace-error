@@ -164,14 +164,14 @@ ssize_t debugfs_write_file_bool(struct file *file, const char __user *user_buf,
 static inline struct dentry *debugfs_lookup(const char *name,
 					    struct dentry *parent)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *debugfs_create_file(const char *name, umode_t mode,
 					struct dentry *parent, void *data,
 					const struct file_operations *fops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *debugfs_create_file_unsafe(const char *name,
@@ -179,7 +179,7 @@ static inline struct dentry *debugfs_create_file_unsafe(const char *name,
 					void *data,
 					const struct file_operations *fops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void debugfs_create_file_size(const char *name, umode_t mode,
@@ -191,14 +191,14 @@ static inline void debugfs_create_file_size(const char *name, umode_t mode,
 static inline struct dentry *debugfs_create_dir(const char *name,
 						struct dentry *parent)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *debugfs_create_symlink(const char *name,
 						    struct dentry *parent,
 						    const char *dest)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *debugfs_create_automount(const char *name,
@@ -206,7 +206,7 @@ static inline struct dentry *debugfs_create_automount(const char *name,
 					debugfs_automount_t f,
 					void *data)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void debugfs_remove(struct dentry *dentry)
@@ -228,20 +228,20 @@ static inline void debugfs_file_put(struct dentry *dentry)
 static inline ssize_t debugfs_attr_read(struct file *file, char __user *buf,
 					size_t len, loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline ssize_t debugfs_attr_write(struct file *file,
 					const char __user *buf,
 					size_t len, loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct dentry *debugfs_rename(struct dentry *old_dir, struct dentry *old_dentry,
                 struct dentry *new_dir, char *new_name)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void debugfs_create_u8(const char *name, umode_t mode,
@@ -261,7 +261,7 @@ static inline struct dentry *debugfs_create_ulong(const char *name,
 						struct dentry *parent,
 						unsigned long *value)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void debugfs_create_x8(const char *name, umode_t mode,
@@ -289,14 +289,14 @@ static inline struct dentry *debugfs_create_bool(const char *name, umode_t mode,
 						 struct dentry *parent,
 						 bool *value)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *debugfs_create_blob(const char *name, umode_t mode,
 				  struct dentry *parent,
 				  struct debugfs_blob_wrapper *blob)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void debugfs_create_regset32(const char *name, umode_t mode,
@@ -327,21 +327,21 @@ static inline struct dentry *debugfs_create_devm_seqfile(struct device *dev,
 					   int (*read_fn)(struct seq_file *s,
 							  void *data))
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline ssize_t debugfs_read_file_bool(struct file *file,
 					     char __user *user_buf,
 					     size_t count, loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline ssize_t debugfs_write_file_bool(struct file *file,
 					      const char __user *user_buf,
 					      size_t count, loff_t *ppos)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #endif

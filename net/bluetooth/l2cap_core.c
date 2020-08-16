@@ -194,7 +194,7 @@ int l2cap_add_psm(struct l2cap_chan *chan, bdaddr_t *src, __le16 psm)
 	write_lock(&chan_list_lock);
 
 	if (psm && __l2cap_global_chan_by_addr(psm, src, chan->src_type)) {
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		goto done;
 	}
 
@@ -215,7 +215,7 @@ int l2cap_add_psm(struct l2cap_chan *chan, bdaddr_t *src, __le16 psm)
 			incr = 1;
 		}
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		for (p = start; p <= end; p += incr)
 			if (!__l2cap_global_chan_by_addr(cpu_to_le16(p), src,
 							 chan->src_type)) {
@@ -426,12 +426,12 @@ static void l2cap_chan_timeout(struct work_struct *work)
 	l2cap_chan_lock(chan);
 
 	if (chan->state == BT_CONNECTED || chan->state == BT_CONFIG)
-		reason = ECONNREFUSED;
+		reason = ERR(ECONNREFUSED);
 	else if (chan->state == BT_CONNECT &&
 		 chan->sec_level != BT_SECURITY_SDP)
-		reason = ECONNREFUSED;
+		reason = ERR(ECONNREFUSED);
 	else
-		reason = ETIMEDOUT;
+		reason = ERR(ETIMEDOUT);
 
 	l2cap_chan_close(chan, reason);
 
@@ -1800,13 +1800,13 @@ int l2cap_register_user(struct l2cap_conn *conn, struct l2cap_user *user)
 	hci_dev_lock(hdev);
 
 	if (!list_empty(&user->list)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
 	/* conn->hchan is NULL after l2cap_conn_del() was called */
 	if (!conn->hchan) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out_unlock;
 	}
 
@@ -2071,7 +2071,7 @@ static int l2cap_ertm_send(struct l2cap_chan *chan)
 	BT_DBG("chan %p", chan);
 
 	if (chan->state != BT_CONNECTED)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (test_bit(CONN_REMOTE_BUSY, &chan->conn_state))
 		return 0;
@@ -2424,7 +2424,7 @@ static struct sk_buff *l2cap_create_iframe_pdu(struct l2cap_chan *chan,
 	BT_DBG("chan %p len %zu", chan, len);
 
 	if (!conn)
-		return ERR_PTR(-ENOTCONN);
+		return ERR_PTR(-ERR(ENOTCONN));
 
 	hlen = __ertm_hdr_size(chan);
 
@@ -2545,7 +2545,7 @@ static struct sk_buff *l2cap_create_le_flowctl_pdu(struct l2cap_chan *chan,
 	BT_DBG("chan %p len %zu", chan, len);
 
 	if (!conn)
-		return ERR_PTR(-ENOTCONN);
+		return ERR_PTR(-ERR(ENOTCONN));
 
 	hlen = L2CAP_HDR_SIZE;
 
@@ -2635,7 +2635,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 	struct sk_buff_head seg_queue;
 
 	if (!chan->conn)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	/* Connectionless channel */
 	if (chan->chan_type == L2CAP_CHAN_CONN_LESS) {
@@ -2648,7 +2648,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 		 */
 		if (chan->state != BT_CONNECTED) {
 			kfree_skb(skb);
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		}
 
 		l2cap_do_send(chan, skb);
@@ -2660,7 +2660,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 	case L2CAP_MODE_EXT_FLOWCTL:
 		/* Check outgoing MTU */
 		if (len > chan->omtu)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		__skb_queue_head_init(&seg_queue);
 
@@ -2668,7 +2668,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 
 		if (chan->state != BT_CONNECTED) {
 			__skb_queue_purge(&seg_queue);
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 		}
 
 		if (err)
@@ -2688,7 +2688,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 	case L2CAP_MODE_BASIC:
 		/* Check outgoing MTU */
 		if (len > chan->omtu)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		/* Create a basic PDU */
 		skb = l2cap_create_basic_pdu(chan, msg, len);
@@ -2700,7 +2700,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 		 */
 		if (chan->state != BT_CONNECTED) {
 			kfree_skb(skb);
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		}
 
 		l2cap_do_send(chan, skb);
@@ -2711,7 +2711,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 	case L2CAP_MODE_STREAMING:
 		/* Check outgoing MTU */
 		if (len > chan->omtu) {
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			break;
 		}
 
@@ -2728,7 +2728,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 		 */
 		if (chan->state != BT_CONNECTED) {
 			__skb_queue_purge(&seg_queue);
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 		}
 
 		if (err)
@@ -2749,7 +2749,7 @@ int l2cap_chan_send(struct l2cap_chan *chan, struct msghdr *msg, size_t len)
 
 	default:
 		BT_DBG("bad state %1.1x", chan->mode);
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 	}
 
 	return err;
@@ -3617,7 +3617,7 @@ static int l2cap_parse_conf_req(struct l2cap_chan *chan, void *data, size_t data
 			if (olen != 2)
 				break;
 			if (!(chan->conn->local_fixed_chan & L2CAP_FC_A2MP))
-				return -ECONNREFUSED;
+				return -ERR(ECONNREFUSED);
 			set_bit(FLAG_EXT_CTRL, &chan->flags);
 			set_bit(CONF_EWS_RECV, &chan->conf_state);
 			chan->tx_win_max = L2CAP_DEFAULT_EXT_WINDOW;
@@ -3649,11 +3649,11 @@ static int l2cap_parse_conf_req(struct l2cap_chan *chan, void *data, size_t data
 			if (__l2cap_efs_supported(chan->conn))
 				set_bit(FLAG_EFS_ENABLE, &chan->flags);
 			else
-				return -ECONNREFUSED;
+				return -ERR(ECONNREFUSED);
 		}
 
 		if (chan->mode != rfc.mode)
-			return -ECONNREFUSED;
+			return -ERR(ECONNREFUSED);
 
 		break;
 	}
@@ -3664,7 +3664,7 @@ done:
 		rfc.mode = chan->mode;
 
 		if (chan->num_conf_rsp == 1)
-			return -ECONNREFUSED;
+			return -ERR(ECONNREFUSED);
 
 		l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
 				   (unsigned long) &rfc, endptr - ptr);
@@ -3690,7 +3690,7 @@ done:
 				result = L2CAP_CONF_UNACCEPT;
 
 				if (chan->num_conf_req >= 1)
-					return -ECONNREFUSED;
+					return -ERR(ECONNREFUSED);
 
 				l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS,
 						   sizeof(efs),
@@ -3821,7 +3821,7 @@ static int l2cap_parse_conf_rsp(struct l2cap_chan *chan, void *rsp, int len,
 			memcpy(&rfc, (void *)val, olen);
 			if (test_bit(CONF_STATE2_DEVICE, &chan->conf_state) &&
 			    rfc.mode != chan->mode)
-				return -ECONNREFUSED;
+				return -ERR(ECONNREFUSED);
 			chan->fcs = 0;
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_RFC, sizeof(rfc),
 					   (unsigned long) &rfc, endptr - ptr);
@@ -3842,7 +3842,7 @@ static int l2cap_parse_conf_rsp(struct l2cap_chan *chan, void *rsp, int len,
 			if (chan->local_stype != L2CAP_SERV_NOTRAFIC &&
 			    efs.stype != L2CAP_SERV_NOTRAFIC &&
 			    efs.stype != chan->local_stype)
-				return -ECONNREFUSED;
+				return -ERR(ECONNREFUSED);
 			l2cap_add_conf_opt(&ptr, L2CAP_CONF_EFS, sizeof(efs),
 					   (unsigned long) &efs, endptr - ptr);
 			break;
@@ -3859,7 +3859,7 @@ static int l2cap_parse_conf_rsp(struct l2cap_chan *chan, void *rsp, int len,
 	}
 
 	if (chan->mode == L2CAP_MODE_BASIC && chan->mode != rfc.mode)
-		return -ECONNREFUSED;
+		return -ERR(ECONNREFUSED);
 
 	chan->mode = rfc.mode;
 
@@ -4057,7 +4057,7 @@ static inline int l2cap_command_rej(struct l2cap_conn *conn,
 	struct l2cap_cmd_rej_unk *rej = (struct l2cap_cmd_rej_unk *) data;
 
 	if (cmd_len < sizeof(*rej))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	if (rej->reason != L2CAP_REJ_NOT_UNDERSTOOD)
 		return 0;
@@ -4225,7 +4225,7 @@ static int l2cap_connect_req(struct l2cap_conn *conn,
 	struct hci_conn *hcon = conn->hcon;
 
 	if (cmd_len < sizeof(struct l2cap_conn_req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	hci_dev_lock(hdev);
 	if (hci_dev_test_flag(hdev, HCI_MGMT) &&
@@ -4248,7 +4248,7 @@ static int l2cap_connect_create_rsp(struct l2cap_conn *conn,
 	int err;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	scid   = __le16_to_cpu(rsp->scid);
 	dcid   = __le16_to_cpu(rsp->dcid);
@@ -4263,13 +4263,13 @@ static int l2cap_connect_create_rsp(struct l2cap_conn *conn,
 	if (scid) {
 		chan = __l2cap_get_chan_by_scid(conn, scid);
 		if (!chan) {
-			err = -EBADSLT;
+			err = -ERR(EBADSLT);
 			goto unlock;
 		}
 	} else {
 		chan = __l2cap_get_chan_by_ident(conn, cmd->ident);
 		if (!chan) {
-			err = -EBADSLT;
+			err = -ERR(EBADSLT);
 			goto unlock;
 		}
 	}
@@ -4360,7 +4360,7 @@ static inline int l2cap_config_req(struct l2cap_conn *conn,
 	int len, err = 0;
 
 	if (cmd_len < sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	dcid  = __le16_to_cpu(req->dcid);
 	flags = __le16_to_cpu(req->flags);
@@ -4470,7 +4470,7 @@ static inline int l2cap_config_rsp(struct l2cap_conn *conn,
 	int err = 0;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	scid   = __le16_to_cpu(rsp->scid);
 	flags  = __le16_to_cpu(rsp->flags);
@@ -4582,7 +4582,7 @@ static inline int l2cap_disconnect_req(struct l2cap_conn *conn,
 	struct l2cap_chan *chan;
 
 	if (cmd_len != sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	scid = __le16_to_cpu(req->scid);
 	dcid = __le16_to_cpu(req->dcid);
@@ -4628,7 +4628,7 @@ static inline int l2cap_disconnect_rsp(struct l2cap_conn *conn,
 	struct l2cap_chan *chan;
 
 	if (cmd_len != sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	scid = __le16_to_cpu(rsp->scid);
 	dcid = __le16_to_cpu(rsp->dcid);
@@ -4673,7 +4673,7 @@ static inline int l2cap_information_req(struct l2cap_conn *conn,
 	u16 type;
 
 	if (cmd_len != sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	type = __le16_to_cpu(req->type);
 
@@ -4724,7 +4724,7 @@ static inline int l2cap_information_rsp(struct l2cap_conn *conn,
 	u16 type, result;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	type   = __le16_to_cpu(rsp->type);
 	result = __le16_to_cpu(rsp->result);
@@ -4790,10 +4790,10 @@ static int l2cap_create_channel_req(struct l2cap_conn *conn,
 	u16 psm, scid;
 
 	if (cmd_len != sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	if (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	psm = le16_to_cpu(req->psm);
 	scid = le16_to_cpu(req->scid);
@@ -5214,14 +5214,14 @@ static inline int l2cap_move_channel_req(struct l2cap_conn *conn,
 	u16 result = L2CAP_MR_NOT_ALLOWED;
 
 	if (cmd_len != sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	icid = le16_to_cpu(req->icid);
 
 	BT_DBG("icid 0x%4.4x, dest_amp_id %d", icid, req->dest_amp_id);
 
 	if (!(conn->local_fixed_chan & L2CAP_FC_A2MP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chan = l2cap_get_chan_by_dcid(conn, icid);
 	if (!chan) {
@@ -5427,7 +5427,7 @@ static int l2cap_move_channel_rsp(struct l2cap_conn *conn,
 	u16 icid, result;
 
 	if (cmd_len != sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	icid = le16_to_cpu(rsp->icid);
 	result = le16_to_cpu(rsp->result);
@@ -5451,7 +5451,7 @@ static int l2cap_move_channel_confirm(struct l2cap_conn *conn,
 	u16 icid, result;
 
 	if (cmd_len != sizeof(*cfm))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	icid = le16_to_cpu(cfm->icid);
 	result = le16_to_cpu(cfm->result);
@@ -5493,7 +5493,7 @@ static inline int l2cap_move_channel_confirm_rsp(struct l2cap_conn *conn,
 	u16 icid;
 
 	if (cmd_len != sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	icid = le16_to_cpu(rsp->icid);
 
@@ -5530,10 +5530,10 @@ static inline int l2cap_conn_param_update_req(struct l2cap_conn *conn,
 	int err;
 
 	if (hcon->role != HCI_ROLE_MASTER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cmd_len != sizeof(struct l2cap_conn_param_update_req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	req = (struct l2cap_conn_param_update_req *) data;
 	min		= __le16_to_cpu(req->min);
@@ -5580,7 +5580,7 @@ static int l2cap_le_connect_rsp(struct l2cap_conn *conn,
 	int err, sec_level;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	dcid    = __le16_to_cpu(rsp->dcid);
 	mtu     = __le16_to_cpu(rsp->mtu);
@@ -5591,7 +5591,7 @@ static int l2cap_le_connect_rsp(struct l2cap_conn *conn,
 	if (result == L2CAP_CR_LE_SUCCESS && (mtu < 23 || mps < 23 ||
 					   dcid < L2CAP_CID_DYN_START ||
 					   dcid > L2CAP_CID_LE_DYN_END))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	BT_DBG("dcid 0x%4.4x mtu %u mps %u credits %u result 0x%2.2x",
 	       dcid, mtu, mps, credits, result);
@@ -5600,7 +5600,7 @@ static int l2cap_le_connect_rsp(struct l2cap_conn *conn,
 
 	chan = __l2cap_get_chan_by_ident(conn, cmd->ident);
 	if (!chan) {
-		err = -EBADSLT;
+		err = -ERR(EBADSLT);
 		goto unlock;
 	}
 
@@ -5611,7 +5611,7 @@ static int l2cap_le_connect_rsp(struct l2cap_conn *conn,
 	switch (result) {
 	case L2CAP_CR_LE_SUCCESS:
 		if (__l2cap_get_chan_by_dcid(conn, dcid)) {
-			err = -EBADSLT;
+			err = -ERR(EBADSLT);
 			break;
 		}
 
@@ -5729,7 +5729,7 @@ static inline int l2cap_bredr_sig_cmd(struct l2cap_conn *conn,
 
 	default:
 		BT_ERR("Unknown BR/EDR signaling command 0x%2.2x", cmd->code);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -5748,7 +5748,7 @@ static int l2cap_le_connect_req(struct l2cap_conn *conn,
 	u8 result;
 
 	if (cmd_len != sizeof(*req))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	scid = __le16_to_cpu(req->scid);
 	mtu  = __le16_to_cpu(req->mtu);
@@ -5758,7 +5758,7 @@ static int l2cap_le_connect_req(struct l2cap_conn *conn,
 	credits = 0;
 
 	if (mtu < 23 || mps < 23)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	BT_DBG("psm 0x%2.2x scid 0x%4.4x mtu %u mps %u", __le16_to_cpu(psm),
 	       scid, mtu, mps);
@@ -5871,7 +5871,7 @@ static inline int l2cap_le_credits(struct l2cap_conn *conn,
 	u16 cid, credits, max_credits;
 
 	if (cmd_len != sizeof(*pkt))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	pkt = (struct l2cap_le_credits *) data;
 	cid	= __le16_to_cpu(pkt->cid);
@@ -5881,7 +5881,7 @@ static inline int l2cap_le_credits(struct l2cap_conn *conn,
 
 	chan = l2cap_get_chan_by_dcid(conn, cid);
 	if (!chan)
-		return -EBADSLT;
+		return -ERR(EBADSLT);
 
 	max_credits = LE_FLOWCTL_MAX_CREDITS - chan->tx_credits;
 	if (credits > max_credits) {
@@ -5925,7 +5925,7 @@ static inline int l2cap_ecred_conn_req(struct l2cap_conn *conn,
 	bool defer = false;
 
 	if (!enable_ecred)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cmd_len < sizeof(*req) || (cmd_len - sizeof(*req)) % sizeof(u16)) {
 		result = L2CAP_CR_LE_INVALID_PARAMS;
@@ -6057,7 +6057,7 @@ static inline int l2cap_ecred_conn_rsp(struct l2cap_conn *conn,
 	int i = 0;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	mtu     = __le16_to_cpu(rsp->mtu);
 	mps     = __le16_to_cpu(rsp->mps);
@@ -6170,7 +6170,7 @@ static inline int l2cap_ecred_reconf_req(struct l2cap_conn *conn,
 	int i, num_scid;
 
 	if (!enable_ecred)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (cmd_len < sizeof(*req) || cmd_len - sizeof(*req) % sizeof(u16)) {
 		result = L2CAP_CR_LE_INVALID_PARAMS;
@@ -6201,7 +6201,7 @@ static inline int l2cap_ecred_reconf_req(struct l2cap_conn *conn,
 
 		scid = __le16_to_cpu(req->scid[i]);
 		if (!scid)
-			return -EPROTO;
+			return -ERR(EPROTO);
 
 		chan = __l2cap_get_chan_by_dcid(conn, scid);
 		if (!chan)
@@ -6239,7 +6239,7 @@ static inline int l2cap_ecred_reconf_rsp(struct l2cap_conn *conn,
 	u16 result;
 
 	if (cmd_len < sizeof(*rsp))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	result = __le16_to_cpu(rsp->result);
 
@@ -6266,7 +6266,7 @@ static inline int l2cap_le_command_rej(struct l2cap_conn *conn,
 	struct l2cap_chan *chan;
 
 	if (cmd_len < sizeof(*rej))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	mutex_lock(&conn->chan_lock);
 
@@ -6339,7 +6339,7 @@ static inline int l2cap_le_sig_cmd(struct l2cap_conn *conn,
 
 	default:
 		BT_ERR("Unknown LE signaling command 0x%2.2x", cmd->code);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -6449,7 +6449,7 @@ static int l2cap_check_fcs(struct l2cap_chan *chan,  struct sk_buff *skb)
 		our_fcs = crc16(0, skb->data - hdr_size, skb->len + hdr_size);
 
 		if (our_fcs != rcv_fcs)
-			return -EBADMSG;
+			return -ERR(EBADMSG);
 	}
 	return 0;
 }
@@ -6510,7 +6510,7 @@ static void append_skb_frag(struct sk_buff *skb, struct sk_buff *new_frag,
 static int l2cap_reassemble_sdu(struct l2cap_chan *chan, struct sk_buff *skb,
 				struct l2cap_ctrl *control)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	switch (control->sar) {
 	case L2CAP_SAR_UNSEGMENTED:
@@ -6531,7 +6531,7 @@ static int l2cap_reassemble_sdu(struct l2cap_chan *chan, struct sk_buff *skb,
 		skb_pull(skb, L2CAP_SDULEN_SIZE);
 
 		if (chan->sdu_len > chan->imtu) {
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			break;
 		}
 
@@ -7125,7 +7125,7 @@ static int l2cap_rx_state_wait_p(struct l2cap_chan *chan,
 	       event);
 
 	if (!control->poll)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	l2cap_process_reqseq(chan, control->reqseq);
 
@@ -7148,7 +7148,7 @@ static int l2cap_rx_state_wait_p(struct l2cap_chan *chan,
 	l2cap_send_i_or_rr_or_rnr(chan);
 
 	if (event == L2CAP_EV_RECV_IFRAME)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	return l2cap_rx_state_recv(chan, control, NULL, event);
 }
@@ -7160,7 +7160,7 @@ static int l2cap_rx_state_wait_f(struct l2cap_chan *chan,
 	int err;
 
 	if (!control->final)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	clear_bit(CONN_REMOTE_BUSY, &chan->conn_state);
 
@@ -7412,12 +7412,12 @@ static int l2cap_ecred_data_rcv(struct l2cap_chan *chan, struct sk_buff *skb)
 	if (!chan->rx_credits) {
 		BT_ERR("No credits to receive LE L2CAP data");
 		l2cap_send_disconn_req(chan, ECONNRESET);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	if (chan->imtu < skb->len) {
 		BT_ERR("Too big LE L2CAP PDU");
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	chan->rx_credits--;
@@ -7442,13 +7442,13 @@ static int l2cap_ecred_data_rcv(struct l2cap_chan *chan, struct sk_buff *skb)
 
 		if (sdu_len > chan->imtu) {
 			BT_ERR("Too big LE L2CAP SDU length received");
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			goto failed;
 		}
 
 		if (skb->len > sdu_len) {
 			BT_ERR("Too much LE L2CAP data received");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto failed;
 		}
 
@@ -7477,7 +7477,7 @@ static int l2cap_ecred_data_rcv(struct l2cap_chan *chan, struct sk_buff *skb)
 
 	if (chan->sdu->len + skb->len > chan->sdu_len) {
 		BT_ERR("Too much LE L2CAP data received");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto failed;
 	}
 
@@ -7806,23 +7806,23 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 
 	hdev = hci_get_route(dst, &chan->src, chan->src_type);
 	if (!hdev)
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	hci_dev_lock(hdev);
 
 	if (!is_valid_psm(__le16_to_cpu(psm), dst_type) && !cid &&
 	    chan->chan_type != L2CAP_CHAN_RAW) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
 	if (chan->chan_type == L2CAP_CHAN_CONN_ORIENTED && !psm) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
 	if (chan->chan_type == L2CAP_CHAN_FIXED && !cid) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -7833,7 +7833,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 		break;
 	case L2CAP_MODE_EXT_FLOWCTL:
 		if (!enable_ecred) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto done;
 		}
 		break;
@@ -7843,7 +7843,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 			break;
 		/* fall through */
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -7857,7 +7857,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 
 	case BT_CONNECTED:
 		/* Already connected */
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto done;
 
 	case BT_OPEN:
@@ -7866,7 +7866,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 		break;
 
 	default:
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
@@ -7924,7 +7924,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 		/* Check if there isn't too many channels being connected */
 		if (data.count > L2CAP_ECRED_CONN_SCID_MAX) {
 			hci_conn_drop(hcon);
-			err = -EPROTO;
+			err = -ERR(EPROTO);
 			goto done;
 		}
 	}
@@ -7934,7 +7934,7 @@ int l2cap_chan_connect(struct l2cap_chan *chan, __le16 psm, u16 cid,
 
 	if (cid && __l2cap_get_chan_by_dcid(conn, cid)) {
 		hci_conn_drop(hcon);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto chan_unlock;
 	}
 
@@ -7999,7 +7999,7 @@ static void l2cap_ecred_reconfigure(struct l2cap_chan *chan)
 int l2cap_chan_reconfigure(struct l2cap_chan *chan, __u16 mtu)
 {
 	if (chan->imtu > mtu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("chan %p mtu 0x%4.4x", chan, mtu);
 

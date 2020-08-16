@@ -207,7 +207,7 @@ static int hal2_gain_get(struct snd_kcontrol *kcontrol,
 		r = (tmp >> H2I_C2_R_GAIN_SHIFT) & 15;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ucontrol->value.integer.value[0] = l;
 	ucontrol->value.integer.value[1] = r;
@@ -246,7 +246,7 @@ static int hal2_gain_put(struct snd_kcontrol *kcontrol,
 		hal2_i_write32(hal2, H2I_ADC_C2, new);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return old != new;
 }
@@ -557,7 +557,7 @@ static int hal2_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		hal2_stop_dac(hal2);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -646,7 +646,7 @@ static int hal2_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		hal2_stop_adc(hal2);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -759,7 +759,7 @@ static int hal2_detect(struct snd_hal2 *hal2)
 	hal2_i_write16(hal2, H2I_RELAY_C, H2I_RELAY_C_STATE);
 	rev = hal2_read(&hal2->ctl_regs->rev);
 	if (rev & H2_REV_AUDIO_PRESENT)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	board = (rev & H2_REV_BOARD_M) >> 12;
 	major = (rev & H2_REV_MAJOR_CHIP_M) >> 4;
@@ -787,7 +787,7 @@ static int hal2_create(struct snd_card *card, struct snd_hal2 **rchip)
 			"SGI HAL2", hal2)) {
 		printk(KERN_ERR "HAL2: Can't get irq %d\n", SGI_HPCDMA_IRQ);
 		kfree(hal2);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	hal2->ctl_regs = (struct hal2_ctl_regs *)hpc3->pbus_extregs[0];
@@ -797,7 +797,7 @@ static int hal2_create(struct snd_card *card, struct snd_hal2 **rchip)
 
 	if (hal2_detect(hal2) < 0) {
 		kfree(hal2);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	hal2_init_codec(&hal2->dac, hpc3, 0);

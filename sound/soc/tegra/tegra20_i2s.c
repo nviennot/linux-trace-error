@@ -66,7 +66,7 @@ static int tegra20_i2s_set_fmt(struct snd_soc_dai *dai,
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= TEGRA20_I2S_CTRL_MASTER_ENABLE;
@@ -77,7 +77,7 @@ static int tegra20_i2s_set_fmt(struct snd_soc_dai *dai,
 	case SND_SOC_DAIFMT_CBM_CFM:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= TEGRA20_I2S_CTRL_BIT_FORMAT_MASK |
@@ -104,7 +104,7 @@ static int tegra20_i2s_set_fmt(struct snd_soc_dai *dai,
 		val |= TEGRA20_I2S_CTRL_LRCK_L_LOW;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, TEGRA20_I2S_CTRL, mask, val);
@@ -136,7 +136,7 @@ static int tegra20_i2s_hw_params(struct snd_pcm_substream *substream,
 		sample_size = 32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask |= TEGRA20_I2S_CTRL_FIFO_FORMAT_MASK;
@@ -157,7 +157,7 @@ static int tegra20_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	bitcnt = (i2sclock / (2 * srate)) - 1;
 	if (bitcnt < 0 || bitcnt > TEGRA20_I2S_TIMING_CHANNEL_BIT_COUNT_MASK_US)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = bitcnt << TEGRA20_I2S_TIMING_CHANNEL_BIT_COUNT_SHIFT;
 
 	if (i2sclock % (2 * srate))
@@ -221,7 +221,7 @@ static int tegra20_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 			tegra20_i2s_stop_capture(i2s);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -110,7 +110,7 @@ static int ovl_connect_layer(struct dentry *dentry)
 
 	if (WARN_ON(dentry == dentry->d_sb->s_root) ||
 	    WARN_ON(!ovl_dentry_lower(dentry)))
-		return -EIO;
+		return -ERR(EIO);
 
 	origin_layer = OVL_E(dentry)->lowerstack[0].layer->idx;
 	if (ovl_dentry_test_flag(OVL_E_CONNECTED, dentry))
@@ -121,7 +121,7 @@ static int ovl_connect_layer(struct dentry *dentry)
 	for (;;) {
 		parent = dget_parent(next);
 		if (WARN_ON(parent == next)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			break;
 		}
 
@@ -293,7 +293,7 @@ static struct dentry *ovl_obtain_alias(struct super_block *sb,
 
 	/* We get overlay directory dentries with ovl_lookup_real() */
 	if (d_is_dir(upper ?: lower))
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	oip.upperdentry = dget(upper);
 	inode = ovl_get_inode(sb, &oip);
@@ -377,7 +377,7 @@ static struct dentry *ovl_lookup_real_one(struct dentry *connected,
 	 * connected real path from the top.
 	 */
 	inode_lock_nested(dir, I_MUTEX_PARENT);
-	err = -ECHILD;
+	err = -ERR(ECHILD);
 	parent = dget_parent(real);
 	if (ovl_dentry_real_at(connected, layer->idx) != parent)
 		goto fail;
@@ -395,11 +395,11 @@ static struct dentry *ovl_lookup_real_one(struct dentry *connected,
 		goto fail;
 	} else if (!this || !this->d_inode) {
 		dput(this);
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto fail;
 	} else if (ovl_dentry_real_at(this, layer->idx) != real) {
 		dput(this);
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 		goto fail;
 	}
 
@@ -478,7 +478,7 @@ static struct dentry *ovl_lookup_real_inode(struct super_block *sb,
 
 	if (ovl_dentry_real_at(this, layer->idx) != real) {
 		dput(this);
-		this = ERR_PTR(-EIO);
+		this = ERR_PTR(-ERR(EIO));
 	}
 
 	return this;
@@ -493,7 +493,7 @@ static struct dentry *ovl_lookup_real_ancestor(struct super_block *sb,
 					       const struct ovl_layer *layer)
 {
 	struct dentry *next, *parent = NULL;
-	struct dentry *ancestor = ERR_PTR(-EIO);
+	struct dentry *ancestor = ERR_PTR(-ERR(EIO));
 
 	if (real == layer->mnt->mnt_root)
 		return dget(sb->s_root);
@@ -522,7 +522,7 @@ static struct dentry *ovl_lookup_real_ancestor(struct super_block *sb,
 		 * by legit overlay rename, so we return error in that case.
 		 */
 		if (parent == next) {
-			ancestor = ERR_PTR(-EXDEV);
+			ancestor = ERR_PTR(-ERR(EXDEV));
 			break;
 		}
 
@@ -590,7 +590,7 @@ static struct dentry *ovl_lookup_real(struct super_block *sb,
 			 * return error in that case.
 			 */
 			if (parent == next) {
-				err = -EXDEV;
+				err = -ERR(EXDEV);
 				break;
 			}
 
@@ -661,7 +661,7 @@ static struct dentry *ovl_get_dentry(struct super_block *sb,
 
 	/* Removed empty directory? */
 	if ((real->d_flags & DCACHE_DISCONNECTED) || d_unhashed(real))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	/*
 	 * If real dentry is connected and hashed, get a connected overlay
@@ -678,7 +678,7 @@ static struct dentry *ovl_upper_fh_to_d(struct super_block *sb,
 	struct dentry *upper;
 
 	if (!ovl_upper_mnt(ofs))
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	upper = ovl_decode_real_fh(fh, ovl_upper_mnt(ofs), true);
 	if (IS_ERR_OR_NULL(upper))
@@ -779,10 +779,10 @@ static struct ovl_fh *ovl_fid_to_fh(struct fid *fid, int buflen, int fh_type)
 		return (struct ovl_fh *)fid;
 
 	if (fh_type != OVL_FILEID_V0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (buflen <= OVL_FH_WIRE_OFFSET)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	fh = kzalloc(buflen, GFP_KERNEL);
 	if (!fh)
@@ -837,7 +837,7 @@ static struct dentry *ovl_fh_to_parent(struct super_block *sb, struct fid *fid,
 				       int fh_len, int fh_type)
 {
 	pr_warn_ratelimited("connectable file handles not supported; use 'no_subtree_check' exportfs option.\n");
-	return ERR_PTR(-EACCES);
+	return ERR_PTR(-ERR(EACCES));
 }
 
 static int ovl_get_name(struct dentry *parent, char *name,
@@ -848,7 +848,7 @@ static int ovl_get_name(struct dentry *parent, char *name,
 	 * ovl_fh_to_parent() is not implemented, so we should not get here.
 	 */
 	WARN_ON_ONCE(1);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static struct dentry *ovl_get_parent(struct dentry *dentry)
@@ -858,7 +858,7 @@ static struct dentry *ovl_get_parent(struct dentry *dentry)
 	 * should not get here.
 	 */
 	WARN_ON_ONCE(1);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 const struct export_operations ovl_export_operations = {

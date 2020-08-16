@@ -607,7 +607,7 @@ static int batadv_v_ogm_metric_update(struct batadv_priv *bat_priv,
 	struct batadv_orig_ifinfo *orig_ifinfo;
 	struct batadv_neigh_ifinfo *neigh_ifinfo = NULL;
 	bool protection_started = false;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	u32 path_throughput;
 	s32 seq_diff;
 

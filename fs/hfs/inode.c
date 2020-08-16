@@ -439,7 +439,7 @@ int hfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 			return 0;
 		default:
 			BUG();
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -451,7 +451,7 @@ int hfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 
 	if (hfs_find_init(HFS_SB(main_inode->i_sb)->cat_tree, &fd))
 		/* panic? */
-		return -EIO;
+		return -ERR(EIO);
 
 	fd.search_key->cat = HFS_I(main_inode)->cat_key;
 	if (hfs_brec_find(&fd))

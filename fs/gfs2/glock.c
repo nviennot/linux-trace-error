@@ -351,7 +351,7 @@ static void do_error(struct gfs2_glock *gl, const int ret)
 		if (test_bit(HIF_HOLDER, &gh->gh_iflags))
 			continue;
 		if (ret & LM_OUT_ERROR)
-			gh->gh_error = -EIO;
+			gh->gh_error = -ERR(EIO);
 		else if (gh->gh_flags & (LM_FLAG_TRY | LM_FLAG_TRY_1CB))
 			gh->gh_error = GLR_TRYFAILED;
 		else
@@ -1007,7 +1007,7 @@ int gfs2_glock_get(struct gfs2_sbd *sdp, u64 number,
 		return 0;
 	}
 	if (!create)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (glops->go_flags & GLOF_ASPACE)
 		cachep = gfs2_glock_aspace_cachep;
@@ -1202,7 +1202,7 @@ int gfs2_glock_async_wait(unsigned int num_gh, struct gfs2_holder *ghs)
 wait_for_dlm:
 	if (!wait_event_timeout(sdp->sd_async_glock_wait,
 				!glocks_pending(num_gh, ghs), timeout))
-		ret = -ESTALE; /* request timed out. */
+		ret = -ERR(ESTALE); /* request timed out. */
 
 	/*
 	 * If dlm granted all our requests, we need to adjust the glock
@@ -1392,7 +1392,7 @@ int gfs2_glock_nq(struct gfs2_holder *gh)
 	int error = 0;
 
 	if (glock_blocked_by_withdraw(gl) && !(gh->gh_flags & LM_FLAG_NOEXP))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (test_bit(GLF_LRU, &gl->gl_flags))
 		gfs2_glock_remove_from_lru(gl);

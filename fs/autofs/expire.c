@@ -498,7 +498,7 @@ int autofs_expire_wait(const struct path *path, int rcu_walk)
 	if (!(ino->flags & AUTOFS_INF_WANT_EXPIRE))
 		return 0;
 	if (rcu_walk)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 retry:
 	spin_lock(&sbi->fs_lock);
@@ -523,7 +523,7 @@ retry:
 		pr_debug("expire done status=%d\n", status);
 
 		if (d_unhashed(dentry))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		return status;
 	}
@@ -550,7 +550,7 @@ int autofs_expire_run(struct super_block *sb,
 
 	dentry = autofs_expire_indirect(sb, mnt, sbi, 0);
 	if (!dentry)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	pkt.len = dentry->d_name.len;
 	memcpy(pkt.name, dentry->d_name.name, pkt.len);
@@ -576,7 +576,7 @@ int autofs_do_expire_multi(struct super_block *sb, struct vfsmount *mnt,
 			   struct autofs_sb_info *sbi, unsigned int how)
 {
 	struct dentry *dentry;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	if (autofs_type_trigger(sbi->type))
 		dentry = autofs_expire_direct(sb, mnt, sbi, how);

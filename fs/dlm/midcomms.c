@@ -79,7 +79,7 @@ int dlm_process_incoming_buffer(int nodeid, const void *base,
 		msglen = le16_to_cpu(p->header.h_length);
 		lockspace = p->header.h_lockspace;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (msglen < sizeof(struct dlm_header))
 			break;
 		if (p->header.h_cmd == DLM_MSG) {
@@ -89,7 +89,7 @@ int dlm_process_incoming_buffer(int nodeid, const void *base,
 			if (msglen < sizeof(struct dlm_rcom))
 				break;
 		}
-		err = -E2BIG;
+		err = -ERR(E2BIG);
 		if (msglen > dlm_config.ci_buffer_size) {
 			log_print("message size %d from %d too big, buf len %d",
 				  msglen, nodeid, len);

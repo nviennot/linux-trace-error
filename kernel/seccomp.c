@@ -185,7 +185,7 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
 			ftest->code = BPF_LDX | BPF_W | BPF_ABS;
 			/* 32-bit aligned and not out of bounds. */
 			if (k >= sizeof(struct seccomp_data) || k & 3)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			continue;
 		case BPF_LD | BPF_W | BPF_LEN:
 			ftest->code = BPF_LD | BPF_IMM;
@@ -236,7 +236,7 @@ static int seccomp_check_filter(struct sock_filter *filter, unsigned int flen)
 		case BPF_JMP | BPF_JSET | BPF_X:
 			continue;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;
@@ -359,7 +359,7 @@ static inline pid_t seccomp_can_sync_threads(void)
 		failed = task_pid_vnr(thread);
 		/* If the pid cannot be resolved, then return -ESRCH */
 		if (WARN_ON(failed == 0))
-			failed = -ESRCH;
+			failed = -ERR(ESRCH);
 		return failed;
 	}
 
@@ -433,7 +433,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
 	const bool save_orig = IS_ENABLED(CONFIG_CHECKPOINT_RESTORE);
 
 	if (fprog->len == 0 || fprog->len > BPF_MAXINSNS)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	BUG_ON(INT_MAX / fprog->len < sizeof(struct sock_filter));
 
@@ -446,7 +446,7 @@ static struct seccomp_filter *seccomp_prepare_filter(struct sock_fprog *fprog)
 	if (!task_no_new_privs(current) &&
 	    security_capable(current_cred(), current_user_ns(),
 				     CAP_SYS_ADMIN, CAP_OPT_NOAUDIT) != 0)
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	/* Allocate a new seccomp_filter */
 	sfilter = kzalloc(sizeof(*sfilter), GFP_KERNEL | __GFP_NOWARN);
@@ -528,7 +528,7 @@ static long seccomp_attach_filter(unsigned int flags,
 		ret = seccomp_can_sync_threads();
 		if (ret) {
 			if (flags & SECCOMP_FILTER_FLAG_TSYNC_ESRCH)
-				return -ESRCH;
+				return -ERR(ESRCH);
 			else
 				return ret;
 		}
@@ -745,7 +745,7 @@ static int seccomp_do_user_notification(int this_syscall,
 	struct seccomp_knotif n = {};
 
 	mutex_lock(&match->notify_lock);
-	err = -ENOSYS;
+	err = -ERR(ENOSYS);
 	if (!match->notif)
 		goto out;
 
@@ -969,7 +969,7 @@ long prctl_get_seccomp(void)
 static long seccomp_set_mode_strict(void)
 {
 	const unsigned long seccomp_mode = SECCOMP_MODE_STRICT;
-	long ret = -EINVAL;
+	long ret = -ERR(EINVAL);
 
 	spin_lock_irq(&current->sighand->siglock);
 
@@ -1008,7 +1008,7 @@ static int seccomp_notify_release(struct inode *inode, struct file *file)
 			continue;
 
 		knotif->state = SECCOMP_NOTIFY_REPLIED;
-		knotif->error = -ENOSYS;
+		knotif->error = -ERR(ENOSYS);
 		knotif->val = 0;
 
 		complete(&knotif->ready);
@@ -1033,7 +1033,7 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
 	if (ret < 0)
 		return ret;
 	if (!ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&unotif, 0, sizeof(unotif));
 
@@ -1055,7 +1055,7 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
 	 * when we were able to acquire the rw lock.
 	 */
 	if (!knotif) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1108,11 +1108,11 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
 		return -EFAULT;
 
 	if (resp.flags & ~SECCOMP_USER_NOTIF_FLAG_CONTINUE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((resp.flags & SECCOMP_USER_NOTIF_FLAG_CONTINUE) &&
 	    (resp.error || resp.val))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = mutex_lock_interruptible(&filter->notify_lock);
 	if (ret < 0)
@@ -1126,13 +1126,13 @@ static long seccomp_notify_send(struct seccomp_filter *filter,
 	}
 
 	if (!knotif) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
 	/* Allow exactly one reply. */
 	if (knotif->state != SECCOMP_NOTIFY_SENT) {
-		ret = -EINPROGRESS;
+		ret = -ERR(EINPROGRESS);
 		goto out;
 	}
 
@@ -1161,7 +1161,7 @@ static long seccomp_notify_id_valid(struct seccomp_filter *filter,
 	if (ret < 0)
 		return ret;
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	list_for_each_entry(knotif, &filter->notif->notifications, list) {
 		if (knotif->id == id) {
 			if (knotif->state == SECCOMP_NOTIFY_SENT)
@@ -1189,7 +1189,7 @@ static long seccomp_notify_ioctl(struct file *file, unsigned int cmd,
 	case SECCOMP_IOCTL_NOTIF_ID_VALID:
 		return seccomp_notify_id_valid(filter, buf);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1228,7 +1228,7 @@ static const struct file_operations seccomp_notify_ops = {
 
 static struct file *init_listener(struct seccomp_filter *filter)
 {
-	struct file *ret = ERR_PTR(-EBUSY);
+	struct file *ret = ERR_PTR(-ERR(EBUSY));
 	struct seccomp_filter *cur;
 
 	for (cur = current->seccomp.filter; cur; cur = cur->prev) {
@@ -1279,13 +1279,13 @@ static long seccomp_set_mode_filter(unsigned int flags,
 {
 	const unsigned long seccomp_mode = SECCOMP_MODE_FILTER;
 	struct seccomp_filter *prepared = NULL;
-	long ret = -EINVAL;
+	long ret = -ERR(EINVAL);
 	int listener = -1;
 	struct file *listener_f = NULL;
 
 	/* Validate flags. */
 	if (flags & ~SECCOMP_FILTER_FLAG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * In the successful case, NEW_LISTENER returns the new listener fd.
@@ -1297,7 +1297,7 @@ static long seccomp_set_mode_filter(unsigned int flags,
 	if ((flags & SECCOMP_FILTER_FLAG_TSYNC) &&
 	    (flags & SECCOMP_FILTER_FLAG_NEW_LISTENER) &&
 	    ((flags & SECCOMP_FILTER_FLAG_TSYNC_ESRCH) == 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Prepare the new filter before holding any locks. */
 	prepared = seccomp_prepare_user_filter(filter);
@@ -1362,7 +1362,7 @@ out_free:
 static inline long seccomp_set_mode_filter(unsigned int flags,
 					   const char __user *filter)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -1384,7 +1384,7 @@ static long seccomp_get_action_avail(const char __user *uaction)
 	case SECCOMP_RET_ALLOW:
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return 0;
@@ -1411,22 +1411,22 @@ static long do_seccomp(unsigned int op, unsigned int flags,
 	switch (op) {
 	case SECCOMP_SET_MODE_STRICT:
 		if (flags != 0 || uargs != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return seccomp_set_mode_strict();
 	case SECCOMP_SET_MODE_FILTER:
 		return seccomp_set_mode_filter(flags, uargs);
 	case SECCOMP_GET_ACTION_AVAIL:
 		if (flags != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return seccomp_get_action_avail(uargs);
 	case SECCOMP_GET_NOTIF_SIZES:
 		if (flags != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return seccomp_get_notif_sizes(uargs);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1463,7 +1463,7 @@ long prctl_set_seccomp(unsigned long seccomp_mode, void __user *filter)
 		uargs = filter;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* prctl interface doesn't have flags, so they are always zero. */
@@ -1485,7 +1485,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
 
 	if (task->seccomp.mode != SECCOMP_MODE_FILTER) {
 		spin_unlock_irq(&task->sighand->siglock);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	orig = task->seccomp.filter;
@@ -1497,7 +1497,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
 		count++;
 
 	if (filter_off >= count) {
-		filter = ERR_PTR(-ENOENT);
+		filter = ERR_PTR(-ERR(ENOENT));
 		goto out;
 	}
 
@@ -1506,7 +1506,7 @@ static struct seccomp_filter *get_nth_filter(struct task_struct *task,
 		count--;
 
 	if (WARN_ON(count != 1 || !filter)) {
-		filter = ERR_PTR(-ENOENT);
+		filter = ERR_PTR(-ERR(ENOENT));
 		goto out;
 	}
 
@@ -1526,7 +1526,7 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
 
 	if (!capable(CAP_SYS_ADMIN) ||
 	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	filter = get_nth_filter(task, filter_off);
@@ -1539,7 +1539,7 @@ long seccomp_get_filter(struct task_struct *task, unsigned long filter_off,
 		 * every cBPF filter's orig_prog above when
 		 * CONFIG_CHECKPOINT_RESTORE is enabled.
 		 */
-		ret = -EMEDIUMTYPE;
+		ret = -ERR(EMEDIUMTYPE);
 		goto out;
 	}
 
@@ -1564,13 +1564,13 @@ long seccomp_get_metadata(struct task_struct *task,
 
 	if (!capable(CAP_SYS_ADMIN) ||
 	    current->seccomp.mode != SECCOMP_MODE_DISABLED) {
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	size = min_t(unsigned long, size, sizeof(kmd));
 
 	if (size < sizeof(kmd.filter_off))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&kmd.filter_off, data, sizeof(kmd.filter_off)))
 		return -EFAULT;
@@ -1706,7 +1706,7 @@ static int read_actions_logged(struct ctl_table *ro_table, void __user *buffer,
 
 	if (!seccomp_names_from_actions_logged(names, sizeof(names),
 					       seccomp_actions_logged, " "))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	table = *ro_table;
 	table.data = names;
@@ -1722,7 +1722,7 @@ static int write_actions_logged(struct ctl_table *ro_table, void __user *buffer,
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	memset(names, 0, sizeof(names));
 
@@ -1734,10 +1734,10 @@ static int write_actions_logged(struct ctl_table *ro_table, void __user *buffer,
 		return ret;
 
 	if (!seccomp_actions_logged_from_names(actions_logged, table.data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (*actions_logged & SECCOMP_LOG_ALLOW)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	seccomp_actions_logged = *actions_logged;
 	return 0;

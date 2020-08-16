@@ -699,9 +699,9 @@ static unsigned long des_ekey(u32 *pe, const u8 *k)
 int des_expand_key(struct des_ctx *ctx, const u8 *key, unsigned int keylen)
 {
 	if (keylen != DES_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	return des_ekey(ctx->expkey, key) ? 0 : -ENOKEY;
+	return des_ekey(ctx->expkey, key) ? 0 : -ERR(ENOKEY);
 }
 EXPORT_SYMBOL_GPL(des_expand_key);
 
@@ -827,7 +827,7 @@ int des3_ede_expand_key(struct des3_ede_ctx *ctx, const u8 *key,
 	int err;
 
 	if (keylen != DES3_EDE_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = des3_ede_verify_key(key, keylen, true);
 	if (err && err != -ENOKEY)

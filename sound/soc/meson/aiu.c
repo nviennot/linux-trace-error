@@ -50,15 +50,15 @@ int aiu_of_xlate_dai_name(struct snd_soc_component *component,
 	int id;
 
 	if (args->args_count != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (args->args[0] != component_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	id = args->args[1];
 
 	if (id < 0 || id >= component->num_dai)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_component_dais(component, dai) {
 		if (id == 0)
@@ -276,7 +276,7 @@ static int aiu_probe(struct platform_device *pdev)
 
 	aiu->platform = device_get_match_data(dev);
 	if (!aiu->platform)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	platform_set_drvdata(pdev, aiu);
 

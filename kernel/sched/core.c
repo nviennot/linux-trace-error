@@ -1129,7 +1129,7 @@ int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
 
 	if (sysctl_sched_uclamp_util_min > sysctl_sched_uclamp_util_max ||
 	    sysctl_sched_uclamp_util_max > SCHED_CAPACITY_SCALE) {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto undo;
 	}
 
@@ -1176,9 +1176,9 @@ static int uclamp_validate(struct task_struct *p,
 		upper_bound = attr->sched_util_max;
 
 	if (lower_bound > upper_bound)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (upper_bound > SCHED_CAPACITY_SCALE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1273,7 +1273,7 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p) { }
 static inline int uclamp_validate(struct task_struct *p,
 				  const struct sched_attr *attr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static void __setscheduler_uclamp(struct task_struct *p,
 				  const struct sched_attr *attr) { }
@@ -1627,7 +1627,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	 * sched_setaffinity() is not guaranteed to observe the flag.
 	 */
 	if (check && (p->flags & PF_NO_SETAFFINITY)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1641,7 +1641,7 @@ static int __set_cpus_allowed_ptr(struct task_struct *p,
 	 */
 	dest_cpu = cpumask_any_and_distribute(cpu_valid_mask, new_mask);
 	if (dest_cpu >= nr_cpu_ids) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1778,10 +1778,10 @@ static int migrate_swap_stop(void *data)
 {
 	struct migration_swap_arg *arg = data;
 	struct rq *src_rq, *dst_rq;
-	int ret = -EAGAIN;
+	int ret = -ERR(EAGAIN);
 
 	if (!cpu_active(arg->src_cpu) || !cpu_active(arg->dst_cpu))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	src_rq = cpu_rq(arg->src_cpu);
 	dst_rq = cpu_rq(arg->dst_cpu);
@@ -1822,7 +1822,7 @@ int migrate_swap(struct task_struct *cur, struct task_struct *p,
 		int target_cpu, int curr_cpu)
 {
 	struct migration_swap_arg arg;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	arg = (struct migration_swap_arg){
 		.src_task = cur,
@@ -2814,7 +2814,7 @@ int sysctl_numa_balancing(struct ctl_table *table, int write,
 	int state = static_branch_likely(&sched_numa_balancing);
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	t = *table;
 	t.data = &state;
@@ -2889,7 +2889,7 @@ int sysctl_schedstats(struct ctl_table *table, int write, void *buffer,
 	int state = static_branch_likely(&sched_schedstats);
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	t = *table;
 	t.data = &state;
@@ -2949,7 +2949,7 @@ int sched_fork(unsigned long clone_flags, struct task_struct *p)
 	}
 
 	if (dl_prio(p->prio))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	else if (rt_prio(p->prio))
 		p->sched_class = &rt_sched_class;
 	else
@@ -4733,7 +4733,7 @@ SYSCALL_DEFINE1(nice, int, increment)
 
 	nice = clamp_val(nice, MIN_NICE, MAX_NICE);
 	if (increment < 0 && !can_nice(current, nice))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	retval = security_task_setnice(current, nice);
 	if (retval)
@@ -4922,11 +4922,11 @@ recheck:
 		reset_on_fork = !!(attr->sched_flags & SCHED_FLAG_RESET_ON_FORK);
 
 		if (!valid_policy(policy))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (attr->sched_flags & ~(SCHED_FLAG_ALL | SCHED_FLAG_SUGOV))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are
@@ -4935,10 +4935,10 @@ recheck:
 	 */
 	if ((p->mm && attr->sched_priority > MAX_USER_RT_PRIO-1) ||
 	    (!p->mm && attr->sched_priority > MAX_RT_PRIO-1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((dl_policy(policy) && !__checkparam_dl(attr)) ||
 	    (rt_policy(policy) != (attr->sched_priority != 0)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Allow unprivileged RT tasks to decrease priority:
@@ -4947,7 +4947,7 @@ recheck:
 		if (fair_policy(policy)) {
 			if (attr->sched_nice < task_nice(p) &&
 			    !can_nice(p, attr->sched_nice))
-				return -EPERM;
+				return -ERR(EPERM);
 		}
 
 		if (rt_policy(policy)) {
@@ -4956,12 +4956,12 @@ recheck:
 
 			/* Can't set/change the rt policy: */
 			if (policy != p->policy && !rlim_rtprio)
-				return -EPERM;
+				return -ERR(EPERM);
 
 			/* Can't increase priority: */
 			if (attr->sched_priority > p->rt_priority &&
 			    attr->sched_priority > rlim_rtprio)
-				return -EPERM;
+				return -ERR(EPERM);
 		}
 
 		 /*
@@ -4971,7 +4971,7 @@ recheck:
 		  * or reduce their runtime (both ways reducing utilization)
 		  */
 		if (dl_policy(policy))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		/*
 		 * Treat SCHED_IDLE as nice 20. Only allow a switch to
@@ -4979,21 +4979,21 @@ recheck:
 		 */
 		if (task_has_idle_policy(p) && !idle_policy(policy)) {
 			if (!can_nice(p, task_nice(p)))
-				return -EPERM;
+				return -ERR(EPERM);
 		}
 
 		/* Can't change other user's priorities: */
 		if (!check_same_owner(p))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		/* Normal users shall not reset the sched_reset_on_fork flag: */
 		if (p->sched_reset_on_fork && !reset_on_fork)
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	if (user) {
 		if (attr->sched_flags & SCHED_FLAG_SUGOV)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		retval = security_task_setscheduler(p);
 		if (retval)
@@ -5024,7 +5024,7 @@ recheck:
 	 * Changing the policy of the stop threads its a very bad idea:
 	 */
 	if (p == rq->stop) {
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -5057,7 +5057,7 @@ change:
 		if (rt_bandwidth_enabled() && rt_policy(policy) &&
 				task_group(p)->rt_bandwidth.rt_runtime == 0 &&
 				!task_group_is_autogroup(task_group(p))) {
-			retval = -EPERM;
+			retval = -ERR(EPERM);
 			goto unlock;
 		}
 #endif
@@ -5073,7 +5073,7 @@ change:
 			 */
 			if (!cpumask_subset(span, p->cpus_ptr) ||
 			    rq->rd->dl_bw.bw == 0) {
-				retval = -EPERM;
+				retval = -ERR(EPERM);
 				goto unlock;
 			}
 		}
@@ -5095,7 +5095,7 @@ change:
 	 * is available.
 	 */
 	if ((dl_policy(policy) || dl_task(p)) && sched_dl_overflow(p, policy, attr)) {
-		retval = -EBUSY;
+		retval = -ERR(EBUSY);
 		goto unlock;
 	}
 
@@ -5238,12 +5238,12 @@ do_sched_setscheduler(pid_t pid, int policy, struct sched_param __user *param)
 	int retval;
 
 	if (!param || pid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&lparam, param, sizeof(struct sched_param)))
 		return -EFAULT;
 
 	rcu_read_lock();
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	p = find_process_by_pid(pid);
 	if (likely(p))
 		get_task_struct(p);
@@ -5287,7 +5287,7 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
 
 	if ((attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) &&
 	    size < SCHED_ATTR_SIZE_VER1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * XXX: Do we want to be lenient like existing syscalls; or do we want
@@ -5299,7 +5299,7 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
 
 err_size:
 	put_user(sizeof(*attr), &uattr->size);
-	return -E2BIG;
+	return -ERR(E2BIG);
 }
 
 /**
@@ -5313,7 +5313,7 @@ err_size:
 SYSCALL_DEFINE3(sched_setscheduler, pid_t, pid, int, policy, struct sched_param __user *, param)
 {
 	if (policy < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return do_sched_setscheduler(pid, policy, param);
 }
@@ -5344,19 +5344,19 @@ SYSCALL_DEFINE3(sched_setattr, pid_t, pid, struct sched_attr __user *, uattr,
 	int retval;
 
 	if (!uattr || pid < 0 || flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	retval = sched_copy_attr(uattr, &attr);
 	if (retval)
 		return retval;
 
 	if ((int)attr.sched_policy < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (attr.sched_flags & SCHED_FLAG_KEEP_POLICY)
 		attr.sched_policy = SETPARAM_POLICY;
 
 	rcu_read_lock();
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	p = find_process_by_pid(pid);
 	if (likely(p))
 		get_task_struct(p);
@@ -5383,9 +5383,9 @@ SYSCALL_DEFINE1(sched_getscheduler, pid_t, pid)
 	int retval;
 
 	if (pid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	rcu_read_lock();
 	p = find_process_by_pid(pid);
 	if (p) {
@@ -5413,11 +5413,11 @@ SYSCALL_DEFINE2(sched_getparam, pid_t, pid, struct sched_param __user *, param)
 	int retval;
 
 	if (!param || pid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	p = find_process_by_pid(pid);
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	if (!p)
 		goto out_unlock;
 
@@ -5496,11 +5496,11 @@ SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
 
 	if (!uattr || pid < 0 || usize > PAGE_SIZE ||
 	    usize < SCHED_ATTR_SIZE_VER0 || flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	p = find_process_by_pid(pid);
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	if (!p)
 		goto out_unlock;
 
@@ -5543,7 +5543,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	p = find_process_by_pid(pid);
 	if (!p) {
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	/* Prevent p going away */
@@ -5551,7 +5551,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	rcu_read_unlock();
 
 	if (p->flags & PF_NO_SETAFFINITY) {
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		goto out_put_task;
 	}
 	if (!alloc_cpumask_var(&cpus_allowed, GFP_KERNEL)) {
@@ -5562,7 +5562,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 		retval = -ENOMEM;
 		goto out_free_cpus_allowed;
 	}
-	retval = -EPERM;
+	retval = -ERR(EPERM);
 	if (!check_same_owner(p)) {
 		rcu_read_lock();
 		if (!ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE)) {
@@ -5590,7 +5590,7 @@ long sched_setaffinity(pid_t pid, const struct cpumask *in_mask)
 	if (task_has_dl_policy(p) && dl_bandwidth_enabled()) {
 		rcu_read_lock();
 		if (!cpumask_subset(task_rq(p)->rd->span, new_mask)) {
-			retval = -EBUSY;
+			retval = -ERR(EBUSY);
 			rcu_read_unlock();
 			goto out_free_new_mask;
 		}
@@ -5664,7 +5664,7 @@ long sched_getaffinity(pid_t pid, struct cpumask *mask)
 
 	rcu_read_lock();
 
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	p = find_process_by_pid(pid);
 	if (!p)
 		goto out_unlock;
@@ -5699,9 +5699,9 @@ SYSCALL_DEFINE3(sched_getaffinity, pid_t, pid, unsigned int, len,
 	cpumask_var_t mask;
 
 	if ((len * BITS_PER_BYTE) < nr_cpu_ids)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len & (sizeof(unsigned long)-1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
 		return -ENOMEM;
@@ -5857,7 +5857,7 @@ again:
 	 * has only one task, there's absolutely no point in yielding.
 	 */
 	if (rq->nr_running == 1 && p_rq->nr_running == 1) {
-		yielded = -ESRCH;
+		yielded = -ERR(ESRCH);
 		goto out_irq;
 	}
 
@@ -5951,7 +5951,7 @@ EXPORT_SYMBOL(io_schedule);
  */
 SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	switch (policy) {
 	case SCHED_FIFO:
@@ -5978,7 +5978,7 @@ SYSCALL_DEFINE1(sched_get_priority_max, int, policy)
  */
 SYSCALL_DEFINE1(sched_get_priority_min, int, policy)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	switch (policy) {
 	case SCHED_FIFO:
@@ -6003,9 +6003,9 @@ static int sched_rr_get_interval(pid_t pid, struct timespec64 *t)
 	int retval;
 
 	if (pid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	retval = -ESRCH;
+	retval = -ERR(ESRCH);
 	rcu_read_lock();
 	p = find_process_by_pid(pid);
 	if (!p)
@@ -6257,7 +6257,7 @@ int task_can_attach(struct task_struct *p,
 	 * before cpus_mask may be changed.
 	 */
 	if (p->flags & PF_NO_SETAFFINITY) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -6282,7 +6282,7 @@ int migrate_task_to(struct task_struct *p, int target_cpu)
 		return 0;
 
 	if (!cpumask_test_cpu(target_cpu, p->cpus_ptr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* TODO: This is not properly updating schedstats */
 
@@ -6523,7 +6523,7 @@ static int cpuset_cpu_inactive(unsigned int cpu)
 {
 	if (!cpuhp_tasks_frozen) {
 		if (dl_cpu_busy(cpu))
-			return -EBUSY;
+			return -ERR(EBUSY);
 		cpuset_update_active_cpus();
 	} else {
 		num_cpus_frozen++;
@@ -7300,7 +7300,7 @@ static int cpu_cgroup_can_attach(struct cgroup_taskset *tset)
 	cgroup_taskset_for_each(task, css, tset) {
 #ifdef CONFIG_RT_GROUP_SCHED
 		if (!sched_rt_can_attach(css_tg(css), task))
-			return -EINVAL;
+			return -ERR(EINVAL);
 #endif
 		/*
 		 * Serialize against wake_up_new_task() such that if its
@@ -7313,7 +7313,7 @@ static int cpu_cgroup_can_attach(struct cgroup_taskset *tset)
 		 * move wanting to detach+attach while we're not attached yet.
 		 */
 		if (task->state == TASK_NEW)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		raw_spin_unlock_irq(&task->pi_lock);
 
 		if (ret)
@@ -7409,7 +7409,7 @@ capacity_from_percent(char *buf)
 		if (req.ret)
 			return req;
 		if ((u64)req.percent > UCLAMP_PERCENT_SCALE) {
-			req.ret = -ERANGE;
+			req.ret = -ERR(ERANGE);
 			return req;
 		}
 
@@ -7536,7 +7536,7 @@ static int tg_set_cfs_bandwidth(struct task_group *tg, u64 period, u64 quota)
 	struct cfs_bandwidth *cfs_b = &tg->cfs_bandwidth;
 
 	if (tg == &root_task_group)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Ensure we have at some amount of bandwidth every period.  This is
@@ -7544,7 +7544,7 @@ static int tg_set_cfs_bandwidth(struct task_group *tg, u64 period, u64 quota)
 	 * entity_tick() resulting in prolonged exit starvation.
 	 */
 	if (quota < min_cfs_quota_period || period < min_cfs_quota_period)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Likewise, bound things on the otherside by preventing insane quota
@@ -7552,13 +7552,13 @@ static int tg_set_cfs_bandwidth(struct task_group *tg, u64 period, u64 quota)
 	 * feasibility.
 	 */
 	if (period > max_cfs_quota_period)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Bound quota to defend quota against overflow during bandwidth shift.
 	 */
 	if (quota != RUNTIME_INF && quota > max_cfs_runtime)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Prevent race between setting of cfs_rq->runtime_enabled and
@@ -7622,7 +7622,7 @@ static int tg_set_cfs_quota(struct task_group *tg, long cfs_quota_us)
 	else if ((u64)cfs_quota_us <= U64_MAX / NSEC_PER_USEC)
 		quota = (u64)cfs_quota_us * NSEC_PER_USEC;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return tg_set_cfs_bandwidth(tg, period, quota);
 }
@@ -7645,7 +7645,7 @@ static int tg_set_cfs_period(struct task_group *tg, long cfs_period_us)
 	u64 quota, period;
 
 	if ((u64)cfs_period_us > U64_MAX / NSEC_PER_USEC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	period = (u64)cfs_period_us * NSEC_PER_USEC;
 	quota = tg->cfs_bandwidth.quota;
@@ -7741,7 +7741,7 @@ static int tg_cfs_schedulable_down(struct task_group *tg, void *data)
 			if (quota == RUNTIME_INF)
 				quota = parent_quota;
 			else if (parent_quota != RUNTIME_INF && quota > parent_quota)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 	cfs_b->hierarchical_quota = quota;
@@ -7916,7 +7916,7 @@ static int cpu_weight_write_u64(struct cgroup_subsys_state *css,
 	 * the original value over the entire range.
 	 */
 	if (weight < CGROUP_WEIGHT_MIN || weight > CGROUP_WEIGHT_MAX)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	weight = DIV_ROUND_CLOSEST_ULL(weight * 1024, CGROUP_WEIGHT_DFL);
 
@@ -7948,7 +7948,7 @@ static int cpu_weight_nice_write_s64(struct cgroup_subsys_state *css,
 	int idx;
 
 	if (nice < MIN_NICE || nice > MAX_NICE)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	idx = NICE_TO_PRIO(nice) - MAX_RT_PRIO;
 	idx = array_index_nospec(idx, 40);
@@ -7976,7 +7976,7 @@ static int __maybe_unused cpu_period_quota_parse(char *buf,
 	char tok[21];	/* U64_MAX */
 
 	if (sscanf(buf, "%20s %llu", tok, periodp) < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*periodp *= NSEC_PER_USEC;
 
@@ -7985,7 +7985,7 @@ static int __maybe_unused cpu_period_quota_parse(char *buf,
 	else if (!strcmp(tok, "max"))
 		*quotap = RUNTIME_INF;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

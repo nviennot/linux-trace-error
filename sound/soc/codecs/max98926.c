@@ -337,7 +337,7 @@ static int max98926_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "DAI clock mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -354,7 +354,7 @@ static int max98926_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "DAI invert mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(max98926->regmap,
@@ -368,7 +368,7 @@ static int max98926_dai_hw_params(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params,
 		struct snd_soc_dai *dai)
 {
-	int dai_sr = -EINVAL;
+	int dai_sr = -ERR(EINVAL);
 	int rate = params_rate(params), i;
 	struct snd_soc_component *component = dai->component;
 	struct max98926_priv *max98926 = snd_soc_component_get_drvdata(component);
@@ -399,7 +399,7 @@ static int max98926_dai_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_dbg(component->dev, "format unsupported %d\n",
 			params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* BCLK/LRCLK ratio calculation */
@@ -425,7 +425,7 @@ static int max98926_dai_hw_params(struct snd_pcm_substream *substream,
 			MAX98926_DAI_BSEL_64);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* find the closest rate */
@@ -436,7 +436,7 @@ static int max98926_dai_hw_params(struct snd_pcm_substream *substream,
 		}
 	}
 	if (dai_sr < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set DAI_SR to correct LRCLK frequency */
 	regmap_update_bits(max98926->regmap,
@@ -536,14 +536,14 @@ static int max98926_i2c_probe(struct i2c_client *i2c,
 	if (!of_property_read_u32(i2c->dev.of_node, "vmon-slot-no", &value)) {
 		if (value > MAX98926_DAI_VMON_SLOT_1E_1F) {
 			dev_err(&i2c->dev, "vmon slot number is wrong:\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		max98926->v_slot = value;
 	}
 	if (!of_property_read_u32(i2c->dev.of_node, "imon-slot-no", &value)) {
 		if (value > MAX98926_DAI_IMON_SLOT_1E_1F) {
 			dev_err(&i2c->dev, "imon slot number is wrong:\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		max98926->i_slot = value;
 	}

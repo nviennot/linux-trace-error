@@ -1179,7 +1179,7 @@ static int hw_daio_init(struct hw *hw, const struct daio_conf *info)
 	} else {
 		dev_alert(hw->card->dev,
 			  "ERROR!!! Invalid sampling rate!!!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < 8; i++) {
@@ -1345,7 +1345,7 @@ static int hw_pll_init(struct hw *hw, unsigned int rsr)
 	if (i >= 1000) {
 		dev_alert(hw->card->dev,
 			  "PLL initialization failed!!!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -1369,7 +1369,7 @@ static int hw_auto_init(struct hw *hw)
 	}
 	if (!get_field(gctl, GCTL_AID)) {
 		dev_alert(hw->card->dev, "Card Auto-init failed!!!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -1885,7 +1885,7 @@ static int hw_adc_init(struct hw *hw, const struct adc_conf *info)
 		dev_alert(hw->card->dev,
 			  "Invalid master sampling rate (msr %d)!!!\n",
 			  info->msr);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -2042,7 +2042,7 @@ static int hw_card_start(struct hw *hw)
 		hw->mem_base = ioremap(hw->io_base,
 				       pci_resource_len(hw->pci, 2));
 		if (!hw->mem_base) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto error2;
 		}
 	}

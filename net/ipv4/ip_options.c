@@ -109,7 +109,7 @@ int __ip_options_echo(struct net *net, struct ip_options *dopt,
 		memcpy(dptr, sptr+sopt->rr, optlen);
 		if (sopt->rr_needaddr && soffset <= optlen) {
 			if (soffset + 3 > optlen)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			dptr[2] = soffset + 4;
 			dopt->rr_needaddr = 1;
 		}
@@ -124,13 +124,13 @@ int __ip_options_echo(struct net *net, struct ip_options *dopt,
 		if (soffset <= optlen) {
 			if (sopt->ts_needaddr) {
 				if (soffset + 3 > optlen)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				dopt->ts_needaddr = 1;
 				soffset += 4;
 			}
 			if (sopt->ts_needtime) {
 				if (soffset + 3 > optlen)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if ((dptr[3]&0xF) != IPOPT_TS_PRESPEC) {
 					dopt->ts_needtime = 1;
 					soffset += 4;
@@ -471,7 +471,7 @@ eol:
 error:
 	if (info)
 		*info = htonl((pp_ptr-iph)<<24);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(__ip_options_compile);
 
@@ -533,7 +533,7 @@ static int ip_options_get_finish(struct net *net, struct ip_options_rcu **optp,
 	opt->opt.optlen = optlen;
 	if (optlen && ip_options_compile(net, &opt->opt, NULL)) {
 		kfree(opt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	kfree(*optp);
 	*optp = opt;
@@ -629,20 +629,20 @@ int ip_options_rcv_srr(struct sk_buff *skb, struct net_device *dev)
 		return 0;
 
 	if (skb->pkt_type != PACKET_HOST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (rt->rt_type == RTN_UNICAST) {
 		if (!opt->is_strictroute)
 			return 0;
 		icmp_send(skb, ICMP_PARAMETERPROB, 0, htonl(16<<24));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (rt->rt_type != RTN_LOCAL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (srrptr = optptr[2], srrspace = optptr[1]; srrptr <= srrspace; srrptr += 4) {
 		if (srrptr + 3 > srrspace) {
 			icmp_send(skb, ICMP_PARAMETERPROB, 0, htonl((opt->srr+2)<<24));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		memcpy(&nexthop, &optptr[srrptr-1], 4);
 
@@ -653,7 +653,7 @@ int ip_options_rcv_srr(struct sk_buff *skb, struct net_device *dev)
 		if (err || (rt2->rt_type != RTN_UNICAST && rt2->rt_type != RTN_LOCAL)) {
 			skb_dst_drop(skb);
 			skb->_skb_refdst = orefdst;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		refdst_drop(orefdst);
 		if (rt2->rt_type != RTN_LOCAL)

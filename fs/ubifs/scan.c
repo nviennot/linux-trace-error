@@ -296,7 +296,7 @@ struct ubifs_scan_leb *ubifs_scan(const struct ubifs_info *c, int lnum,
 			goto corrupted;
 		default:
 			ubifs_err(c, "unknown");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 
@@ -337,7 +337,7 @@ corrupted:
 		ubifs_scanned_corruption(c, lnum, offs, buf);
 		ubifs_err(c, "LEB %d scanning failed", lnum);
 	}
-	err = -EUCLEAN;
+	err = -ERR(EUCLEAN);
 	ubifs_scan_destroy(sleb);
 	return ERR_PTR(err);
 

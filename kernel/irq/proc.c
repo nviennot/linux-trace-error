@@ -64,7 +64,7 @@ static int show_irq_affinity(int type, struct seq_file *m)
 		break;
 #endif
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (type) {
@@ -124,7 +124,7 @@ static inline int irq_select_affinity_usr(unsigned int irq)
 	 * startup code invokes irq_setup_affinity() which will select
 	 * a online CPU anyway.
 	 */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #else
 /* ALPHA magic affinity auto selector. Keep it for historical reasons. */
@@ -142,7 +142,7 @@ static ssize_t write_irq_affinity(int type, struct file *file,
 	int err;
 
 	if (!irq_can_set_affinity_usr(irq) || no_irq_affinity)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!alloc_cpumask_var(&new_value, GFP_KERNEL))
 		return -ENOMEM;
@@ -164,7 +164,7 @@ static ssize_t write_irq_affinity(int type, struct file *file,
 		 * Special case for empty set - allow the architecture code
 		 * to set default SMP affinity.
 		 */
-		err = irq_select_affinity_usr(irq) ? -EINVAL : count;
+		err = irq_select_affinity_usr(irq) ? -ERR(EINVAL) : count;
 	} else {
 		err = irq_set_affinity(irq, new_value);
 		if (!err)
@@ -251,7 +251,7 @@ static ssize_t default_affinity_write(struct file *file,
 	 * one online CPU still has to be targeted.
 	 */
 	if (!cpumask_intersects(new_value, cpu_online_mask)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

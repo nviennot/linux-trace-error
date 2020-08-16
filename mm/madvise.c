@@ -87,7 +87,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
 		break;
 	case MADV_DOFORK:
 		if (vma->vm_flags & VM_IO) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out;
 		}
 		new_flags &= ~VM_DONTCOPY;
@@ -95,7 +95,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
 	case MADV_WIPEONFORK:
 		/* MADV_WIPEONFORK is only supported on anonymous memory. */
 		if (vma->vm_file || vma->vm_flags & VM_SHARED) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out;
 		}
 		new_flags |= VM_WIPEONFORK;
@@ -108,7 +108,7 @@ static long madvise_behavior(struct vm_area_struct *vma,
 		break;
 	case MADV_DODUMP:
 		if (!is_vm_hugetlb_page(vma) && new_flags & VM_SPECIAL) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out;
 		}
 		new_flags &= ~VM_DONTDUMP;
@@ -175,7 +175,7 @@ out_convert_errno:
 	 * slab, are temporarily unavailable.
 	 */
 	if (error == -ENOMEM)
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 out:
 	return error;
 }
@@ -273,7 +273,7 @@ static long madvise_willneed(struct vm_area_struct *vma,
 	}
 #else
 	if (!file)
-		return -EBADF;
+		return -ERR(EBADF);
 #endif
 
 	if (IS_DAX(file_inode(file))) {
@@ -313,7 +313,7 @@ static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,
 	LIST_HEAD(page_list);
 
 	if (fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 
 #ifdef CONFIG_TRANSPARENT_HUGEPAGE
 	if (pmd_trans_huge(*pmd)) {
@@ -498,7 +498,7 @@ static long madvise_cold(struct vm_area_struct *vma,
 
 	*prev = vma;
 	if (!can_madv_lru_vma(vma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lru_add_drain();
 	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
@@ -547,7 +547,7 @@ static long madvise_pageout(struct vm_area_struct *vma,
 
 	*prev = vma;
 	if (!can_madv_lru_vma(vma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!can_do_pageout(vma))
 		return 0;
@@ -706,14 +706,14 @@ static int madvise_free_single_vma(struct vm_area_struct *vma,
 
 	/* MADV_FREE works for only anon vma at the moment */
 	if (!vma_is_anonymous(vma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	range.start = max(vma->vm_start, start_addr);
 	if (range.start >= vma->vm_end)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	range.end = min(vma->vm_end, end_addr);
 	if (range.end <= vma->vm_start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, vma, mm,
 				range.start, range.end);
 
@@ -765,7 +765,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
 {
 	*prev = vma;
 	if (!can_madv_lru_vma(vma))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!userfaultfd_remove(vma, start, end)) {
 		*prev = NULL; /* mmap_lock has been dropped, prev is stale */
@@ -787,7 +787,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
 			return -ENOMEM;
 		}
 		if (!can_madv_lru_vma(vma))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (end > vma->vm_end) {
 			/*
 			 * Don't fail if end > vma->vm_end. If the old
@@ -811,7 +811,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
 	else if (behavior == MADV_FREE)
 		return madvise_free_single_vma(vma, start, end);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 /*
@@ -829,16 +829,16 @@ static long madvise_remove(struct vm_area_struct *vma,
 	*prev = NULL;	/* tell sys_madvise we drop mmap_lock */
 
 	if (vma->vm_flags & VM_LOCKED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = vma->vm_file;
 
 	if (!f || !f->f_mapping || !f->f_mapping->host) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if ((vma->vm_flags & (VM_SHARED|VM_WRITE)) != (VM_SHARED|VM_WRITE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	offset = (loff_t)(start - vma->vm_start)
 			+ ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
@@ -874,7 +874,7 @@ static int madvise_inject_error(int behavior,
 	unsigned long size;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 
 	for (; start < end; start += size) {
@@ -1056,7 +1056,7 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
 	unsigned long end, tmp;
 	struct vm_area_struct *vma, *prev;
 	int unmapped_error = 0;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	int write;
 	size_t len;
 	struct blk_plug plug;
@@ -1090,7 +1090,7 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
 	write = madvise_need_mmap_write(behavior);
 	if (write) {
 		if (mmap_write_lock_killable(current->mm))
-			return -EINTR;
+			return -ERR(EINTR);
 
 		/*
 		 * We may have stolen the mm from another process
@@ -1106,7 +1106,7 @@ int do_madvise(unsigned long start, size_t len_in, int behavior)
 		 */
 		if (!mmget_still_valid(current->mm)) {
 			mmap_write_unlock(current->mm);
-			return -EINTR;
+			return -ERR(EINTR);
 		}
 	} else {
 		mmap_read_lock(current->mm);

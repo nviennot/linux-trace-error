@@ -188,7 +188,7 @@ static inline int snd_motu_protocol_get_clock_rate(struct snd_motu *motu,
 	else if (motu->spec->protocol_version == SND_MOTU_PROTOCOL_V3)
 		return snd_motu_protocol_v3_get_clock_rate(motu, rate);
 	else
-		return -ENXIO;
+		return -ERR(ENXIO);
 }
 
 static inline int snd_motu_protocol_set_clock_rate(struct snd_motu *motu,
@@ -199,7 +199,7 @@ static inline int snd_motu_protocol_set_clock_rate(struct snd_motu *motu,
 	else if (motu->spec->protocol_version == SND_MOTU_PROTOCOL_V3)
 		return snd_motu_protocol_v3_set_clock_rate(motu, rate);
 	else
-		return -ENXIO;
+		return -ERR(ENXIO);
 }
 
 static inline int snd_motu_protocol_get_clock_source(struct snd_motu *motu,
@@ -210,7 +210,7 @@ static inline int snd_motu_protocol_get_clock_source(struct snd_motu *motu,
 	else if (motu->spec->protocol_version == SND_MOTU_PROTOCOL_V3)
 		return snd_motu_protocol_v3_get_clock_source(motu, source);
 	else
-		return -ENXIO;
+		return -ERR(ENXIO);
 }
 
 static inline int snd_motu_protocol_switch_fetching_mode(struct snd_motu *motu,
@@ -221,7 +221,7 @@ static inline int snd_motu_protocol_switch_fetching_mode(struct snd_motu *motu,
 	else if (motu->spec->protocol_version == SND_MOTU_PROTOCOL_V3)
 		return snd_motu_protocol_v3_switch_fetching_mode(motu, enable);
 	else
-		return -ENXIO;
+		return -ERR(ENXIO);
 }
 
 static inline int snd_motu_protocol_cache_packet_formats(struct snd_motu *motu)
@@ -231,7 +231,7 @@ static inline int snd_motu_protocol_cache_packet_formats(struct snd_motu *motu)
 	else if (motu->spec->protocol_version == SND_MOTU_PROTOCOL_V3)
 		return snd_motu_protocol_v3_cache_packet_formats(motu);
 	else
-		return -ENXIO;
+		return -ERR(ENXIO);
 }
 
 #endif

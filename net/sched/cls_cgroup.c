@@ -85,17 +85,17 @@ static int cls_cgroup_change(struct net *net, struct sk_buff *in_skb,
 	int err;
 
 	if (!tca[TCA_OPTIONS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!head && !handle)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (head && handle != head->handle)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	new = kzalloc(sizeof(*head), GFP_KERNEL);
 	if (!new)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_exts_init(&new->exts, net, TCA_CGROUP_ACT, TCA_CGROUP_POLICE);
 	if (err < 0)
@@ -146,7 +146,7 @@ static void cls_cgroup_destroy(struct tcf_proto *tp, bool rtnl_held,
 static int cls_cgroup_delete(struct tcf_proto *tp, void *arg, bool *last,
 			     bool rtnl_held, struct netlink_ext_ack *extack)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static void cls_cgroup_walk(struct tcf_proto *tp, struct tcf_walker *arg,

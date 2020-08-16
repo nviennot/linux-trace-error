@@ -501,7 +501,7 @@ static int mt8183_da7219_max98357_dev_probe(struct platform_device *pdev)
 					 "mediatek,platform", 0);
 	if (!platform_node) {
 		dev_err(&pdev->dev, "Property 'platform' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for_each_card_prelinks(card, i, dai_link) {
@@ -516,7 +516,7 @@ static int mt8183_da7219_max98357_dev_probe(struct platform_device *pdev)
 	if (!mt8183_da7219_max98357_headset_dev.dlc.of_node) {
 		dev_err(&pdev->dev,
 			"Property 'mediatek,headset-codec' missing/invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);

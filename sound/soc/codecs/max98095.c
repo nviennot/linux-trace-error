@@ -612,7 +612,7 @@ static int max98095_mic_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component, w->reg, M98095_MICPRE_MASK, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -630,7 +630,7 @@ static int max98095_line_pga(struct snd_soc_dapm_widget *w,
 	u8 *state;
 
 	if (WARN_ON(!(channel == 1 || channel == 2)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	state = &max98095->lin_state;
 
@@ -648,7 +648,7 @@ static int max98095_line_pga(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -685,7 +685,7 @@ static int max98095_lineout_event(struct snd_soc_dapm_widget *w,
 			(1 << (w->shift+2)), 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -932,7 +932,7 @@ static int rate_value(int rate, u8 *value)
 		}
 	}
 	*value = rate_table[0].sr;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98095_dai1_hw_params(struct snd_pcm_substream *substream,
@@ -960,11 +960,11 @@ static int max98095_dai1_hw_params(struct snd_pcm_substream *substream,
 			M98095_DAI_WS, M98095_DAI_WS);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rate_value(rate, &regval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, M98095_027_DAI1_CLKMODE,
 		M98095_CLKMODE_MASK, regval);
@@ -974,7 +974,7 @@ static int max98095_dai1_hw_params(struct snd_pcm_substream *substream,
 	if (snd_soc_component_read32(component, M98095_02A_DAI1_FORMAT) & M98095_DAI_MAS) {
 		if (max98095->sysclk == 0) {
 			dev_err(component->dev, "Invalid system clock frequency\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ni = 65536ULL * (rate < 50000 ? 96ULL : 48ULL)
 				* (unsigned long long int)rate;
@@ -1021,11 +1021,11 @@ static int max98095_dai2_hw_params(struct snd_pcm_substream *substream,
 			M98095_DAI_WS, M98095_DAI_WS);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rate_value(rate, &regval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, M98095_031_DAI2_CLKMODE,
 		M98095_CLKMODE_MASK, regval);
@@ -1035,7 +1035,7 @@ static int max98095_dai2_hw_params(struct snd_pcm_substream *substream,
 	if (snd_soc_component_read32(component, M98095_034_DAI2_FORMAT) & M98095_DAI_MAS) {
 		if (max98095->sysclk == 0) {
 			dev_err(component->dev, "Invalid system clock frequency\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ni = 65536ULL * (rate < 50000 ? 96ULL : 48ULL)
 				* (unsigned long long int)rate;
@@ -1082,11 +1082,11 @@ static int max98095_dai3_hw_params(struct snd_pcm_substream *substream,
 			M98095_DAI_WS, M98095_DAI_WS);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rate_value(rate, &regval))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, M98095_03B_DAI3_CLKMODE,
 		M98095_CLKMODE_MASK, regval);
@@ -1096,7 +1096,7 @@ static int max98095_dai3_hw_params(struct snd_pcm_substream *substream,
 	if (snd_soc_component_read32(component, M98095_03E_DAI3_FORMAT) & M98095_DAI_MAS) {
 		if (max98095->sysclk == 0) {
 			dev_err(component->dev, "Invalid system clock frequency\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ni = 65536ULL * (rate < 50000 ? 96ULL : 48ULL)
 				* (unsigned long long int)rate;
@@ -1146,7 +1146,7 @@ static int max98095_dai_set_sysclk(struct snd_soc_dai *dai,
 		snd_soc_component_write(component, M98095_026_SYS_CLK, 0x30);
 	} else {
 		dev_err(component->dev, "Invalid master clock frequency\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dai->dev, "Clock source is %d at %uHz\n", clk_id, freq);
@@ -1184,7 +1184,7 @@ static int max98095_dai1_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_CBM_CFS:
 		default:
 			dev_err(component->dev, "Clock mode unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1194,7 +1194,7 @@ static int max98095_dai1_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_LEFT_J:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1210,7 +1210,7 @@ static int max98095_dai1_set_fmt(struct snd_soc_dai *codec_dai,
 			regval |= M98095_DAI_BCI|M98095_DAI_WCI;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, M98095_02A_DAI1_FORMAT,
@@ -1252,7 +1252,7 @@ static int max98095_dai2_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_CBM_CFS:
 		default:
 			dev_err(component->dev, "Clock mode unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1262,7 +1262,7 @@ static int max98095_dai2_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_LEFT_J:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1278,7 +1278,7 @@ static int max98095_dai2_set_fmt(struct snd_soc_dai *codec_dai,
 			regval |= M98095_DAI_BCI|M98095_DAI_WCI;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, M98095_034_DAI2_FORMAT,
@@ -1321,7 +1321,7 @@ static int max98095_dai3_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_CBM_CFS:
 		default:
 			dev_err(component->dev, "Clock mode unsupported");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1331,7 +1331,7 @@ static int max98095_dai3_set_fmt(struct snd_soc_dai *codec_dai,
 		case SND_SOC_DAIFMT_LEFT_J:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1347,7 +1347,7 @@ static int max98095_dai3_set_fmt(struct snd_soc_dai *codec_dai,
 			regval |= M98095_DAI_BCI|M98095_DAI_WCI;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		snd_soc_component_update_bits(component, M98095_03E_DAI3_FORMAT,
@@ -1485,7 +1485,7 @@ static int max98095_get_eq_channel(const char *name)
 		return 0;
 	if (strcmp(name, "EQ2 Mode") == 0)
 		return 1;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98095_put_eq_enum(struct snd_kcontrol *kcontrol,
@@ -1502,13 +1502,13 @@ static int max98095_put_eq_enum(struct snd_kcontrol *kcontrol,
 	int regmask, regsave;
 
 	if (WARN_ON(channel > 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!pdata || !max98095->eq_textcnt)
 		return 0;
 
 	if (sel >= pdata->eq_cfgcnt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cdata = &max98095->dai[channel];
 	cdata->eq_sel = sel;
@@ -1659,7 +1659,7 @@ static int max98095_put_bq_enum(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (sel >= pdata->bq_cfgcnt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cdata = &max98095->dai[channel];
 	cdata->bq_sel = sel;
@@ -1902,7 +1902,7 @@ int max98095_jack_detect(struct snd_soc_component *component,
 
 	/* only progress if we have at least 1 jack pointer */
 	if (!hp_jack && !mic_jack)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max98095_jack_detect_enable(component);
 

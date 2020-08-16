@@ -51,10 +51,10 @@ int evm_set_key(void *key, size_t keylen)
 {
 	int rc;
 
-	rc = -EBUSY;
+	rc = -ERR(EBUSY);
 	if (test_and_set_bit(EVM_SET_KEY_BUSY, &evm_set_key_flags))
 		goto busy;
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (keylen > MAX_KEY_SIZE)
 		goto inval;
 	memcpy(evmkey, key, keylen);
@@ -79,13 +79,13 @@ static struct shash_desc *init_desc(char type, uint8_t hash_algo)
 	if (type == EVM_XATTR_HMAC) {
 		if (!(evm_initialized & EVM_INIT_HMAC)) {
 			pr_err_once("HMAC key is not set\n");
-			return ERR_PTR(-ENOKEY);
+			return ERR_PTR(-ERR(ENOKEY));
 		}
 		tfm = &hmac_tfm;
 		algo = evm_hmac;
 	} else {
 		if (hash_algo >= HASH_ALGO__LAST)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		tfm = &evm_tfm[hash_algo];
 		algo = hash_algo_name[hash_algo];
@@ -198,7 +198,7 @@ static int evm_calc_hmac_or_hash(struct dentry *dentry,
 
 	if (!(inode->i_opflags & IOP_XATTR) ||
 	    inode->i_sb->s_user_ns != &init_user_ns)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	desc = init_desc(type, data->hdr.algo);
 	if (IS_ERR(desc))
@@ -206,7 +206,7 @@ static int evm_calc_hmac_or_hash(struct dentry *dentry,
 
 	data->hdr.length = crypto_shash_digestsize(desc->tfm);
 
-	error = -ENODATA;
+	error = -ERR(ENODATA);
 	list_for_each_entry_lockless(xattr, &evm_config_xattrnames, list) {
 		bool is_ima = false;
 
@@ -241,7 +241,7 @@ static int evm_calc_hmac_or_hash(struct dentry *dentry,
 
 	/* Portable EVM signatures must include an IMA hash */
 	if (type == EVM_XATTR_PORTABLE_DIGSIG && !ima_present)
-		error = -EPERM;
+		error = -ERR(EPERM);
 out:
 	kfree(xattr_value);
 	kfree(desc);
@@ -312,7 +312,7 @@ int evm_update_evmxattr(struct dentry *dentry, const char *xattr_name,
 	if (rc < 0)
 		return rc;
 	if (rc)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	data.hdr.algo = HASH_ALGO_SHA1;
 	rc = evm_calc_hmac(dentry, xattr_name, xattr_value,
@@ -356,7 +356,7 @@ int evm_init_key(void)
 
 	evm_key = request_key(&key_type_encrypted, EVMKEY, NULL);
 	if (IS_ERR(evm_key))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	down_read(&evm_key->sem);
 	ekp = evm_key->payload.data[0];

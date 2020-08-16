@@ -23,11 +23,11 @@ static int em_ipset_change(struct net *net, void *data, int data_len,
 	ip_set_id_t index;
 
 	if (data_len != sizeof(*set))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	index = ip_set_nfnl_get_byindex(net, set->index);
 	if (index == IPSET_INVALID_ID)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	em->datalen = sizeof(*set);
 	em->data = (unsigned long)kmemdup(data, em->datalen, GFP_KERNEL);

@@ -27,7 +27,7 @@ static int __init test_sort_init(void)
 
 	sort(a, TEST_LEN, sizeof(*a), cmpint, NULL);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	for (i = 0; i < TEST_LEN-1; i++)
 		if (a[i] > a[i+1]) {
 			pr_err("test has failed\n");

@@ -187,7 +187,7 @@ static inline int remove_proc_subtree(const char *name, struct proc_dir_entry *p
 
 static inline struct pid *tgid_pidfd_to_pid(const struct file *file)
 {
-	return ERR_PTR(-EBADF);
+	return ERR_PTR(-ERR(EBADF));
 }
 
 #endif /* CONFIG_PROC_FS */

@@ -133,12 +133,12 @@ static inline bool dmi_get_date(int field, int *yearp, int *monthp, int *dayp)
 		*dayp = 0;
 	return false;
 }
-static inline int dmi_get_bios_year(void) { return -ENXIO; }
+static inline int dmi_get_bios_year(void) { return -ERR(ENXIO); }
 static inline int dmi_name_in_vendors(const char *s) { return 0; }
 static inline int dmi_name_in_serial(const char *s) { return 0; }
 #define dmi_available 0
 static inline int dmi_walk(void (*decode)(const struct dmi_header *, void *),
-	void *private_data) { return -ENXIO; }
+	void *private_data) { return -ERR(ENXIO); }
 static inline bool dmi_match(enum dmi_field f, const char *str)
 	{ return false; }
 static inline void dmi_memdev_name(u16 handle, const char **bank,

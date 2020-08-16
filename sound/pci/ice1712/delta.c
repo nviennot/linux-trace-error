@@ -157,7 +157,7 @@ static int ap_cs8427_probeaddr(struct snd_i2c_bus *bus, unsigned short addr)
 {
 	if (addr == 0x10)
 		return 1;
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static const struct snd_i2c_ops ap_cs8427_i2c_ops = {
@@ -742,7 +742,7 @@ static int snd_ice1712_delta_init(struct snd_ice1712 *ice)
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return err;

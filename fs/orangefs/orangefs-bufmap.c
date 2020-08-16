@@ -106,7 +106,7 @@ static int wait_for_free(struct slot_map *m)
 		else
 			left = t + (left - n);
 		if (signal_pending(current))
-			left = -EINTR;
+			left = -ERR(EINTR);
 	} while (left > 0);
 
 	if (!list_empty(&wait.entry))
@@ -118,7 +118,7 @@ static int wait_for_free(struct slot_map *m)
 	if (likely(left > 0))
 		return 0;
 
-	return left < 0 ? -EINTR : -ETIMEDOUT;
+	return left < 0 ? -ERR(EINTR) : -ERR(ETIMEDOUT);
 }
 
 static int get(struct slot_map *m)
@@ -313,7 +313,7 @@ orangefs_bufmap_map(struct orangefs_bufmap *bufmap,
 int orangefs_bufmap_initialize(struct ORANGEFS_dev_map_desc *user_desc)
 {
 	struct orangefs_bufmap *bufmap;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_BUFMAP_DEBUG,
 		     "orangefs_bufmap_initialize: called (ptr ("
@@ -374,7 +374,7 @@ int orangefs_bufmap_initialize(struct ORANGEFS_dev_map_desc *user_desc)
 	if (__orangefs_bufmap) {
 		spin_unlock(&orangefs_bufmap_lock);
 		gossip_err("orangefs: error: bufmap already initialized.\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unmap_bufmap;
 	}
 	__orangefs_bufmap = bufmap;

@@ -57,14 +57,14 @@ static int wm8998_asrc_ev(struct snd_soc_dapm_widget *w,
 				dev_warn(component->dev,
 					 "Unsupported ASRC rate1 (%s)\n",
 					 arizona_sample_rate_val_to_name(val));
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		default:
 			dev_err(component->dev,
 				"Illegal ASRC rate1 selector (0x%x)\n",
 				val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		val = snd_soc_component_read32(component, ARIZONA_ASRC_RATE2);
@@ -81,18 +81,18 @@ static int wm8998_asrc_ev(struct snd_soc_dapm_widget *w,
 				dev_warn(component->dev,
 					 "Unsupported ASRC rate2 (%s)\n",
 					 arizona_sample_rate_val_to_name(val));
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 		default:
 			dev_err(component->dev,
 				"Illegal ASRC rate2 selector (0x%x)\n",
 				val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -111,7 +111,7 @@ static int wm8998_inmux_put(struct snd_kcontrol *kcontrol,
 
 	mux = ucontrol->value.enumerated.item[0];
 	if (mux > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (e->reg) {
 	case ARIZONA_ADC_DIGITAL_VOLUME_2L:
@@ -1265,7 +1265,7 @@ static int wm8998_set_fll(struct snd_soc_component *component, int fll_id,
 		return arizona_set_fll_refclk(&wm8998->fll[1], source, Fref,
 					      Fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

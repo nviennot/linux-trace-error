@@ -160,7 +160,7 @@ static void evtchnl_free(struct xen_snd_front_info *front_info,
 	channel->state = EVTCHNL_STATE_DISCONNECTED;
 	if (channel->type == EVTCHNL_TYPE_REQ) {
 		/* Release all who still waits for response if any. */
-		channel->u.req.resp_status = -EIO;
+		channel->u.req.resp_status = -ERR(EIO);
 		complete_all(&channel->u.req.completion);
 	}
 

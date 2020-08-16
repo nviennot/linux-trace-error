@@ -546,7 +546,7 @@ static int cs35l36_main_amp_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_dbg(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -577,7 +577,7 @@ static int cs35l36_boost_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		dev_dbg(component->dev, "Invalid event = 0x%x\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -766,7 +766,7 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 		slave_mode = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_TX_PIN_CTRL,
@@ -784,7 +784,7 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 		clk_frc = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_TX_PIN_CTRL,
@@ -802,7 +802,7 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 		asp_fmt = 2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -823,7 +823,7 @@ static int cs35l36_set_dai_fmt(struct snd_soc_dai *component_dai,
 		sclk_fmt = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_ASP_RATE_CTRL,
@@ -889,7 +889,7 @@ static int cs35l36_pcm_hw_params(struct snd_pcm_substream *substream,
 		asp_width = CS35L36_ASP_WIDTH_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -1028,13 +1028,13 @@ static int cs35l36_component_set_sysclk(struct snd_soc_component *component,
 		cs35l36->clksrc = CS35L36_PLLSRC_MCLK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	clk_cfg = cs35l36_get_clk_config(cs35l36, freq);
 	if (clk_cfg == NULL) {
 		dev_err(component->dev, "Invalid CLK Config Freq: %d\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(cs35l36->regmap, CS35L36_PLL_CLK_CTRL,
@@ -1146,7 +1146,7 @@ static int cs35l36_boost_inductor(struct cs35l36_private *cs35l36, int inductor)
 	default:
 		dev_err(cs35l36->dev, "%s Invalid Inductor Value %d uH\n",
 			__func__, inductor);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1445,13 +1445,13 @@ static int cs35l36_handle_of_data(struct i2c_client *i2c_client,
 		if (val < 2550 || val > 12000) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Voltage %d mV\n", val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		pdata->bst_vctl = (((val - 2550) / 100) + 1) << 1;
 	} else {
 		dev_err(&i2c_client->dev,
 			"Unable to find required parameter 'cirrus,boost-ctl-millivolt'");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = of_property_read_u32(np, "cirrus,boost-ctl-select", &val);
@@ -1463,14 +1463,14 @@ static int cs35l36_handle_of_data(struct i2c_client *i2c_client,
 		if (val < 1600 || val > 4500) {
 			dev_err(&i2c_client->dev,
 				"Invalid Boost Peak Current %u mA\n", val);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		pdata->bst_ipk = (val - 1600) / 50;
 	} else {
 		dev_err(&i2c_client->dev,
 			"Unable to find required parameter 'cirrus,boost-peak-milliamp'");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pdata->multi_amp_mode = of_property_read_bool(np,
@@ -1495,7 +1495,7 @@ static int cs35l36_handle_of_data(struct i2c_client *i2c_client,
 		pdata->boost_ind = val;
 	} else {
 		dev_err(&i2c_client->dev, "Inductor not specified.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_property_read_u32(np, "cirrus,irq-drive-select", &val) >= 0)
@@ -1590,7 +1590,7 @@ static int cs35l36_pac(struct cs35l36_private *cs35l36)
 		}
 
 		if (count >= 100)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	regmap_write(cs35l36->regmap, CS35L36_INT4_STATUS,
@@ -1788,7 +1788,7 @@ static int cs35l36_i2c_probe(struct i2c_client *i2c_client,
 	if (reg_id != CS35L36_CHIP_ID) {
 		dev_err(dev, "Device ID (%X). Expected ID %X\n", reg_id,
 			CS35L36_CHIP_ID);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 
@@ -1847,7 +1847,7 @@ static int cs35l36_i2c_probe(struct i2c_client *i2c_client,
 	irq_d = irq_get_irq_data(i2c_client->irq);
 	if (!irq_d) {
 		dev_err(&i2c_client->dev, "Invalid IRQ: %d\n", i2c_client->irq);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 
@@ -1864,7 +1864,7 @@ static int cs35l36_i2c_probe(struct i2c_client *i2c_client,
 		break;
 	default:
 		dev_err(cs35l36->dev, "Invalid IRQ polarity: %d\n", irq_pol);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 

@@ -204,7 +204,7 @@ int em_register_perf_domain(cpumask_t *span, unsigned int nr_states,
 	int cpu, ret = 0;
 
 	if (!span || !nr_states || !cb)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Use a mutex to serialize the registration of performance domains and
@@ -215,7 +215,7 @@ int em_register_perf_domain(cpumask_t *span, unsigned int nr_states,
 	for_each_cpu(cpu, span) {
 		/* Make sure we don't register again an existing domain. */
 		if (READ_ONCE(per_cpu(em_data, cpu))) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto unlock;
 		}
 
@@ -227,7 +227,7 @@ int em_register_perf_domain(cpumask_t *span, unsigned int nr_states,
 		if (prev_cap && prev_cap != cap) {
 			pr_err("CPUs of %*pbl must have the same capacity\n",
 							cpumask_pr_args(span));
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto unlock;
 		}
 		prev_cap = cap;
@@ -236,7 +236,7 @@ int em_register_perf_domain(cpumask_t *span, unsigned int nr_states,
 	/* Create the performance domain and add it to the Energy Model. */
 	pd = em_create_pd(span, nr_states, cb);
 	if (!pd) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto unlock;
 	}
 

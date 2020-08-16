@@ -661,7 +661,7 @@ confused:
 	if (mpd->use_writepage) {
 		ret = mapping->a_ops->writepage(page, wbc);
 	} else {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 	/*

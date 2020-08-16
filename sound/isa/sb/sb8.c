@@ -97,7 +97,7 @@ static int snd_sb8_probe(struct device *pdev, unsigned int dev)
 	/* block the 0x388 port to avoid PnP conflicts */
 	acard->fm_res = request_region(0x388, 4, "SoundBlaster FM");
 	if (!acard->fm_res) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto _err;
 	}
 
@@ -129,7 +129,7 @@ static int snd_sb8_probe(struct device *pdev, unsigned int dev)
 			}
 		}
 		if (i >= ARRAY_SIZE(possible_ports)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto _err;
 		}
 	}
@@ -142,7 +142,7 @@ static int snd_sb8_probe(struct device *pdev, unsigned int dev)
 		else
 			snd_printk(KERN_WARNING "SB 16 chip detected at 0x%lx, try snd-sb16 module\n",
 				   port[dev]);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto _err;
 	}
 

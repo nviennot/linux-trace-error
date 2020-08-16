@@ -178,7 +178,7 @@ static int __init test_min_heap_init(void)
 	err += test_heap_pop_push(false);
 	if (err) {
 		pr_err("test failed with %d errors\n", err);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	pr_info("test passed\n");
 	return 0;

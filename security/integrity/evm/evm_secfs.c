@@ -69,7 +69,7 @@ static ssize_t evm_write_key(struct file *file, const char __user *buf,
 	int i, ret;
 
 	if (!capable(CAP_SYS_ADMIN) || (evm_initialized & EVM_SETUP_COMPLETE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = kstrtoint_from_user(buf, count, 0, &i);
 
@@ -78,7 +78,7 @@ static ssize_t evm_write_key(struct file *file, const char __user *buf,
 
 	/* Reject invalid values */
 	if (!i || (i & ~EVM_INIT_MASK) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Don't allow a request to freshly enable metadata writes if
 	 * keys are loaded.
@@ -86,7 +86,7 @@ static ssize_t evm_write_key(struct file *file, const char __user *buf,
 	if ((i & EVM_ALLOW_METADATA_WRITES) &&
 	    ((evm_initialized & EVM_KEY_MASK) != 0) &&
 	    !(evm_initialized & EVM_ALLOW_METADATA_WRITES))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (i & EVM_INIT_HMAC) {
 		ret = evm_init_key();
@@ -136,7 +136,7 @@ static ssize_t evm_read_xattrs(struct file *filp, char __user *buf,
 
 	rc = mutex_lock_interruptible(&xattr_list_mutex);
 	if (rc)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	list_for_each_entry(xattr, &evm_config_xattrnames, list)
 		size += strlen(xattr->name) + 1;
@@ -179,13 +179,13 @@ static ssize_t evm_write_xattrs(struct file *file, const char __user *buf,
 	struct inode *inode;
 
 	if (!capable(CAP_SYS_ADMIN) || evm_xattrs_locked)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (*ppos != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (count > XATTR_NAME_MAX)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	ab = audit_log_start(audit_context(), GFP_KERNEL,
 			     AUDIT_INTEGRITY_EVM_XATTR);
@@ -228,7 +228,7 @@ static ssize_t evm_write_xattrs(struct file *file, const char __user *buf,
 
 	if (strncmp(xattr->name, XATTR_SECURITY_PREFIX,
 		    XATTR_SECURITY_PREFIX_LEN) != 0) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -243,7 +243,7 @@ static ssize_t evm_write_xattrs(struct file *file, const char __user *buf,
 	mutex_lock(&xattr_list_mutex);
 	list_for_each_entry(tmp, &evm_config_xattrnames, list) {
 		if (strcmp(xattr->name, tmp->name) == 0) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			mutex_unlock(&xattr_list_mutex);
 			goto out;
 		}

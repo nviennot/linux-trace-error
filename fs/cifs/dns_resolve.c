@@ -51,12 +51,12 @@ dns_resolve_server_name_to_ip(const char *unc, char **ip_addr)
 	int len, rc;
 
 	if (!ip_addr || !unc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = strlen(unc);
 	if (len < 3) {
 		cifs_dbg(FYI, "%s: unc is too short: %s\n", __func__, unc);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Discount leading slashes for cifs */

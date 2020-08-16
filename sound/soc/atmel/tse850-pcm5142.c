@@ -79,7 +79,7 @@ static int tse850_put_mux1(struct snd_kcontrol *kctrl,
 	unsigned int val = ucontrol->value.enumerated.item[0];
 
 	if (val >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gpiod_set_value_cansleep(tse850->loop1, val);
 	tse850->loop1_cache = val;
@@ -109,7 +109,7 @@ static int tse850_put_mux2(struct snd_kcontrol *kctrl,
 	unsigned int val = ucontrol->value.enumerated.item[0];
 
 	if (val >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gpiod_set_value_cansleep(tse850->loop2, val);
 	tse850->loop2_cache = val;
@@ -195,7 +195,7 @@ static int tse850_put_ana(struct snd_kcontrol *kctrl,
 	int ret;
 
 	if (uV >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Map enum zero (Low) to 2 volts on the regulator, do this since
@@ -328,13 +328,13 @@ static int tse850_dt_init(struct platform_device *pdev)
 
 	if (!np) {
 		dev_err(&pdev->dev, "only device tree supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cpu_np = of_parse_phandle(np, "axentia,cpu-dai", 0);
 	if (!cpu_np) {
 		dev_err(&pdev->dev, "failed to get cpu dai\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dailink->cpus->of_node = cpu_np;
 	dailink->platforms->of_node = cpu_np;
@@ -343,7 +343,7 @@ static int tse850_dt_init(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "axentia,audio-codec", 0);
 	if (!codec_np) {
 		dev_err(&pdev->dev, "failed to get codec info\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dailink->codecs->of_node = codec_np;
 	of_node_put(codec_np);

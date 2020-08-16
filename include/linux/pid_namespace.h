@@ -65,7 +65,7 @@ static inline struct pid_namespace *copy_pid_ns(unsigned long flags,
 	struct user_namespace *user_ns, struct pid_namespace *ns)
 {
 	if (flags & CLONE_NEWPID)
-		ns = ERR_PTR(-EINVAL);
+		ns = ERR_PTR(-ERR(EINVAL));
 	return ns;
 }
 

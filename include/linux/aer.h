@@ -50,15 +50,15 @@ void pci_restore_aer_state(struct pci_dev *dev);
 #else
 static inline int pci_enable_pcie_error_reporting(struct pci_dev *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int pci_disable_pcie_error_reporting(struct pci_dev *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline int pci_aer_clear_nonfatal_status(struct pci_dev *dev)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void pci_save_aer_state(struct pci_dev *dev) {}
 static inline void pci_restore_aer_state(struct pci_dev *dev) {}

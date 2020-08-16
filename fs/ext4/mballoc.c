@@ -1124,7 +1124,7 @@ int ext4_mb_init_group(struct super_block *sb, ext4_group_t group, gfp_t gfp)
 	if (ret)
 		goto err;
 	if (!PageUptodate(page)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -1143,7 +1143,7 @@ int ext4_mb_init_group(struct super_block *sb, ext4_group_t group, gfp_t gfp)
 	if (ret)
 		goto err;
 	if (!PageUptodate(page)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 err:
@@ -1236,7 +1236,7 @@ ext4_mb_load_buddy_gfp(struct super_block *sb, ext4_group_t group,
 		goto err;
 	}
 	if (!PageUptodate(page)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -1271,7 +1271,7 @@ ext4_mb_load_buddy_gfp(struct super_block *sb, ext4_group_t group,
 		goto err;
 	}
 	if (!PageUptodate(page)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -2652,7 +2652,7 @@ static int ext4_groupinfo_create_slab(size_t size)
 	struct kmem_cache *cachep;
 
 	if (cache_index >= NR_GRPINFO_CACHES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(cache_index < 0))
 		cache_index = 0;
@@ -3074,7 +3074,7 @@ ext4_mb_mark_diskspace_used(struct ext4_allocation_context *ac,
 	if (err)
 		goto out_err;
 
-	err = -EIO;
+	err = -ERR(EIO);
 	gdp = ext4_get_group_desc(sb, ac->ac_b_ex.fe_group, &gdp_bh);
 	if (!gdp)
 		goto out_err;
@@ -4671,7 +4671,7 @@ ext4_fsblk_t ext4_mb_new_blocks(handle_t *handle,
 		}
 		if (!ar->len) {
 			ext4_mb_show_pa(sb);
-			*errp = -ENOSPC;
+			*errp = -ERR(ENOSPC);
 			return 0;
 		}
 		reserv_clstrs = ar->len;
@@ -4689,7 +4689,7 @@ ext4_fsblk_t ext4_mb_new_blocks(handle_t *handle,
 		}
 		inquota = ar->len;
 		if (ar->len == 0) {
-			*errp = -EDQUOT;
+			*errp = -ERR(EDQUOT);
 			goto out;
 		}
 	}
@@ -4752,7 +4752,7 @@ repeat:
 		 * needs to be freed here itself.
 		 */
 		ext4_mb_pa_free(ac);
-		*errp = -ENOSPC;
+		*errp = -ERR(ENOSPC);
 	}
 
 errout:
@@ -5001,7 +5001,7 @@ do_more:
 	}
 	gdp = ext4_get_group_desc(sb, block_group, &gd_bh);
 	if (!gdp) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error_return;
 	}
 
@@ -5180,7 +5180,7 @@ int ext4_group_add_blocks(handle_t *handle, struct super_block *sb,
 	if (bit + cluster_count > EXT4_CLUSTERS_PER_GROUP(sb)) {
 		ext4_warning(sb, "too many blocks added to group %u",
 			     block_group);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error_return;
 	}
 
@@ -5193,7 +5193,7 @@ int ext4_group_add_blocks(handle_t *handle, struct super_block *sb,
 
 	desc = ext4_get_group_desc(sb, block_group, &gd_bh);
 	if (!desc) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error_return;
 	}
 
@@ -5205,7 +5205,7 @@ int ext4_group_add_blocks(handle_t *handle, struct super_block *sb,
 		ext4_error(sb, "Adding blocks in system zones - "
 			   "Block = %llu, count = %lu",
 			   block, count);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error_return;
 	}
 
@@ -5385,7 +5385,7 @@ ext4_trim_all_free(struct super_block *sb, ext4_group_t group,
 		start = next + 1;
 
 		if (fatal_signal_pending(current)) {
-			count = -ERESTARTSYS;
+			count = -ERR(ERESTARTSYS);
 			break;
 		}
 
@@ -5444,7 +5444,7 @@ int ext4_trim_fs(struct super_block *sb, struct fstrim_range *range)
 	if (minlen > EXT4_CLUSTERS_PER_GROUP(sb) ||
 	    start >= max_blks ||
 	    range->len < sb->s_blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (end >= max_blks)
 		end = max_blks - 1;
 	if (end <= first_data_blk)

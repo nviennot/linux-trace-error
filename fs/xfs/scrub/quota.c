@@ -44,15 +44,15 @@ xchk_setup_quota(
 	int			error;
 
 	if (!XFS_IS_QUOTA_RUNNING(sc->mp) || !XFS_IS_QUOTA_ON(sc->mp))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dqtype = xchk_quota_to_dqtype(sc);
 	if (dqtype == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	sc->flags |= XCHK_HAS_QUOTAOFFLOCK;
 	mutex_lock(&sc->mp->m_quotainfo->qi_quotaofflock);
 	if (!xfs_this_quota_on(sc->mp, dqtype))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	error = xchk_setup_fs(sc, ip);
 	if (error)
 		return error;

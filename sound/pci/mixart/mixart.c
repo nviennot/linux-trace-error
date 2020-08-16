@@ -76,7 +76,7 @@ static int mixart_set_pipe_state(struct mixart_mgr *mgr,
 	default:
 		dev_err(&mgr->pci->dev,
 			"error mixart_set_pipe_state called with wrong pipe->status!\n");
-		return -EINVAL;      /* function called with wrong pipe status */
+		return -ERR(EINVAL);      /* function called with wrong pipe status */
 	}
 
 	system_msg_uid = 0x12345678; /* the event ! (take care: the MSB and two LSB's have to be 0) */
@@ -115,7 +115,7 @@ static int mixart_set_pipe_state(struct mixart_mgr *mgr,
 		dev_err(&mgr->pci->dev,
 			"error MSG_STREAM_ST***_STREAM_GRP_PACKET err=%x stat=%x !\n",
 			err, group_state_resp.txx_status);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if(start) {
@@ -128,7 +128,7 @@ static int mixart_set_pipe_state(struct mixart_mgr *mgr,
 			dev_err(&mgr->pci->dev,
 				"error MSG_STREAM_START_STREAM_GRP_PACKET err=%x stat=%x !\n",
 				err, group_state_resp.txx_status);
- 			return -EINVAL;
+ 			return -ERR(EINVAL);
 		}
 
 		/* in case of start send a synchro top */
@@ -143,7 +143,7 @@ static int mixart_set_pipe_state(struct mixart_mgr *mgr,
 			dev_err(&mgr->pci->dev,
 				"error MSG_SYSTEM_SEND_SYNCHRO_CMD err=%x stat=%x !\n",
 				err, stat);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		pipe->status = PIPE_RUNNING;
@@ -177,7 +177,7 @@ static int mixart_set_clock(struct mixart_mgr *mgr,
 			dev_err(&mgr->pci->dev,
 				"error mixart_set_clock(%d) called with wrong pipe->status !\n",
 				rate);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -200,7 +200,7 @@ static int mixart_set_clock(struct mixart_mgr *mgr,
 		dev_err(&mgr->pci->dev,
 			"error MSG_CLOCK_SET_PROPERTIES err=%x stat=%x mod=%x !\n",
 			err, clock_prop_resp.status, clock_prop_resp.clock_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if(rate)  pipe->status = PIPE_CLOCK_SET;
@@ -385,7 +385,7 @@ static int mixart_set_stream_state(struct mixart_stream *stream, int start)
 	struct mixart_msg request;
 
 	if(!stream->substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(&stream_state_req, 0, sizeof(stream_state_req));
 	stream_state_req.stream_count = 1;
@@ -425,7 +425,7 @@ static int snd_mixart_trigger(struct snd_pcm_substream *subs, int cmd)
 
 		/* START_STREAM */
 		if( mixart_set_stream_state(stream, 1) )
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		stream->status = MIXART_STREAM_STATUS_RUNNING;
 
@@ -434,7 +434,7 @@ static int snd_mixart_trigger(struct snd_pcm_substream *subs, int cmd)
 
 		/* STOP_STREAM */
 		if( mixart_set_stream_state(stream, 0) )
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		stream->status = MIXART_STREAM_STATUS_OPEN;
 
@@ -453,7 +453,7 @@ static int snd_mixart_trigger(struct snd_pcm_substream *subs, int cmd)
 		dev_dbg(subs->pcm->card->dev, "SNDRV_PCM_PAUSE_RELEASE\n");
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -465,7 +465,7 @@ static int mixart_sync_nonblock_events(struct mixart_mgr *mgr)
 		if (time_after(jiffies, timeout)) {
 			dev_err(&mgr->pci->dev,
 				"mixart: cannot process nonblock events!\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		schedule_timeout_uninterruptible(1);
 	}
@@ -494,7 +494,7 @@ static int snd_mixart_prepare(struct snd_pcm_substream *subs)
 	/* set the clock only once (first stream) on the same pipe */
 	if(stream->pipe->references == 1) {
 		if( mixart_set_clock(chip->mgr, stream->pipe, subs->runtime->rate) )
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -552,7 +552,7 @@ static int mixart_set_format(struct mixart_stream *stream, snd_pcm_format_t form
 	default:
 		dev_err(chip->card->dev,
 			"error mixart_set_format() : unknown format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(chip->card->dev,
@@ -579,7 +579,7 @@ static int mixart_set_format(struct mixart_stream *stream, snd_pcm_format_t form
 		dev_err(chip->card->dev,
 			"MSG_STREAM_SET_INPUT_STAGE_PARAM err=%x; resp=%x\n",
 			err, resp.error_code);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -735,7 +735,7 @@ static int snd_mixart_playback_open(struct snd_pcm_substream *subs)
 		dev_err(chip->card->dev,
 			"snd_mixart_playback_open C%d/P%d/Sub%d in use\n",
 			chip->chip_idx, pcm_number, subs->number);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto _exit_open;
 	}
 
@@ -743,7 +743,7 @@ static int snd_mixart_playback_open(struct snd_pcm_substream *subs)
 	pipe = snd_mixart_add_ref_pipe(chip, pcm_number, 0, 0);
 
 	if (pipe == NULL) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto _exit_open;
 	}
 
@@ -752,7 +752,7 @@ static int snd_mixart_playback_open(struct snd_pcm_substream *subs)
 	if( err < 0 ) {
 		dev_err(chip->card->dev, "error starting pipe!\n");
 		snd_mixart_kill_ref_pipe(chip->mgr, pipe, 0);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto _exit_open;
 	}
 
@@ -816,7 +816,7 @@ static int snd_mixart_capture_open(struct snd_pcm_substream *subs)
 		dev_err(chip->card->dev,
 			"snd_mixart_capture_open C%d/P%d/Sub%d in use\n",
 			chip->chip_idx, pcm_number, subs->number);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto _exit_open;
 	}
 
@@ -824,7 +824,7 @@ static int snd_mixart_capture_open(struct snd_pcm_substream *subs)
 	pipe = snd_mixart_add_ref_pipe(chip, pcm_number, 1, 0);
 
 	if (pipe == NULL) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto _exit_open;
 	}
 
@@ -833,7 +833,7 @@ static int snd_mixart_capture_open(struct snd_pcm_substream *subs)
 	if( err < 0 ) {
 		dev_err(chip->card->dev, "error starting pipe!\n");
 		snd_mixart_kill_ref_pipe(chip->mgr, pipe, 0);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto _exit_open;
 	}
 
@@ -1237,10 +1237,10 @@ static int snd_mixart_probe(struct pci_dev *pci,
 	/*
 	 */
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (! enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* enable PCI device */
@@ -1253,7 +1253,7 @@ static int snd_mixart_probe(struct pci_dev *pci,
 		dev_err(&pci->dev,
 			"architecture does not support 32bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/*
@@ -1280,7 +1280,7 @@ static int snd_mixart_probe(struct pci_dev *pci,
 			dev_err(&pci->dev, "unable to remap resource 0x%lx\n",
 			       mgr->mem[i].phys);
 			snd_mixart_free(mgr);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -1289,7 +1289,7 @@ static int snd_mixart_probe(struct pci_dev *pci,
 				 KBUILD_MODNAME, mgr)) {
 		dev_err(&pci->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_mixart_free(mgr);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	mgr->irq = pci->irq;
 

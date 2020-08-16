@@ -24,7 +24,7 @@ static int qcom_smd_qrtr_callback(struct rpmsg_device *rpdev,
 	int rc;
 
 	if (!qdev)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	rc = qrtr_endpoint_post(&qdev->ep, data, len);
 	if (rc == -EINVAL) {

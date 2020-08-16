@@ -163,7 +163,7 @@ struct inode *affs_iget(struct super_block *sb, unsigned long ino)
 bad_inode:
 	affs_brelse(bh);
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 int
@@ -183,7 +183,7 @@ affs_write_inode(struct inode *inode, struct writeback_control *wbc)
 	bh = affs_bread(sb, inode->i_ino);
 	if (!bh) {
 		affs_error(sb,"write_inode","Cannot read block %lu",inode->i_ino);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	tail = AFFS_TAIL(sb, bh);
 	if (tail->stype == cpu_to_be32(ST_ROOT)) {
@@ -235,7 +235,7 @@ affs_notify_change(struct dentry *dentry, struct iattr *attr)
 	     (AFFS_SB(inode->i_sb)->s_flags &
 	      (AFFS_MOUNT_SF_SETMODE | AFFS_MOUNT_SF_IMMUTABLE)))) {
 		if (!affs_test_opt(AFFS_SB(inode->i_sb)->s_flags, SF_QUIET))
-			error = -EPERM;
+			error = -ERR(EPERM);
 		goto out;
 	}
 
@@ -358,7 +358,7 @@ affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s3
 	pr_debug("%s(dir=%lu, inode=%lu, \"%pd\", type=%d)\n", __func__,
 		 dir->i_ino, inode->i_ino, dentry, type);
 
-	retval = -EIO;
+	retval = -ERR(EIO);
 	bh = affs_bread(sb, inode->i_ino);
 	if (!bh)
 		goto done;
@@ -367,11 +367,11 @@ affs_add_entry(struct inode *dir, struct inode *inode, struct dentry *dentry, s3
 	switch (type) {
 	case ST_LINKFILE:
 	case ST_LINKDIR:
-		retval = -ENOSPC;
+		retval = -ERR(ENOSPC);
 		block = affs_alloc_block(dir, dir->i_ino);
 		if (!block)
 			goto err;
-		retval = -EIO;
+		retval = -ERR(EIO);
 		inode_bh = bh;
 		bh = affs_getzeroblk(sb, block);
 		if (!bh)

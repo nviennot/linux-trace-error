@@ -283,7 +283,7 @@ static int rpc_wait_bit_killable(struct wait_bit_key *key, int mode)
 {
 	freezable_schedule_unsafe();
 	if (signal_pending_state(mode, current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	return 0;
 }
 
@@ -410,7 +410,7 @@ static void __rpc_sleep_on_priority_timeout(struct rpc_wait_queue *q,
 		__rpc_do_sleep_on_priority(q, task, queue_priority);
 		__rpc_add_timer(q, task, timeout);
 	} else
-		task->tk_status = -ETIMEDOUT;
+		task->tk_status = -ERR(ETIMEDOUT);
 }
 
 static void rpc_set_tk_callback(struct rpc_task *task, rpc_action action)
@@ -423,7 +423,7 @@ static bool rpc_sleep_check_activated(struct rpc_task *task)
 {
 	/* We shouldn't ever put an inactive task to sleep */
 	if (WARN_ON_ONCE(!RPC_IS_ACTIVATED(task))) {
-		task->tk_status = -EIO;
+		task->tk_status = -ERR(EIO);
 		rpc_put_task_async(task);
 		return false;
 	}
@@ -771,7 +771,7 @@ static void __rpc_queue_timer_fn(struct work_struct *work)
 		timeo = task->tk_timeout;
 		if (time_after_eq(now, timeo)) {
 			dprintk("RPC: %5u timeout\n", task->tk_pid);
-			task->tk_status = -ETIMEDOUT;
+			task->tk_status = -ERR(ETIMEDOUT);
 			rpc_wake_up_task_queue_locked(queue, task);
 			continue;
 		}
@@ -922,7 +922,7 @@ static void __rpc_execute(struct rpc_task *task)
 		 * Signalled tasks should exit rather than sleep.
 		 */
 		if (RPC_SIGNALLED(task)) {
-			task->tk_rpc_status = -ERESTARTSYS;
+			task->tk_rpc_status = -ERR(ERESTARTSYS);
 			rpc_exit(task, -ERESTARTSYS);
 		}
 
@@ -960,7 +960,7 @@ static void __rpc_execute(struct rpc_task *task)
 			 */
 			trace_rpc_task_signalled(task, task->tk_action);
 			set_bit(RPC_TASK_SIGNALLED, &task->tk_runstate);
-			task->tk_rpc_status = -ERESTARTSYS;
+			task->tk_rpc_status = -ERR(ERESTARTSYS);
 			rpc_exit(task, -ERESTARTSYS);
 		}
 		dprintk("RPC: %5u sync task resuming\n", task->tk_pid);
@@ -1232,7 +1232,7 @@ static void rpc_release_task(struct rpc_task *task)
 
 int rpciod_up(void)
 {
-	return try_module_get(THIS_MODULE) ? 0 : -EINVAL;
+	return try_module_get(THIS_MODULE) ? 0 : -ERR(EINVAL);
 }
 
 void rpciod_down(void)

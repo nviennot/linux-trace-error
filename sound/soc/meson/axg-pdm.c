@@ -141,7 +141,7 @@ static int axg_pdm_trigger(struct snd_pcm_substream *substream, int cmd,
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -189,7 +189,7 @@ static int axg_pdm_set_sample_pointer(struct axg_pdm *priv)
 
 	/* Check if sysclk is not too fast - should not happen */
 	if (WARN_ON(spmax > PDM_CHAN_CTRL_POINTER_MAX))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Capture the data when we are at 75% of the half period */
 	sp = spmax * 3 / 4;
@@ -239,7 +239,7 @@ static int axg_pdm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "unsupported sample width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(priv->map, PDM_CTRL, PDM_CTRL_OUT_MODE, val);
@@ -362,7 +362,7 @@ static int axg_pdm_set_lpf_filters(struct axg_pdm *priv)
 
 	/* Make sure the coeffs fit in the memory */
 	if (count >= PDM_LPF_MAX_STAGE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Set the initial APB bus register address */
 	regmap_write(priv->map, PDM_COEFF_ADDR, 0);
@@ -596,7 +596,7 @@ static int axg_pdm_probe(struct platform_device *pdev)
 	priv->cfg = of_device_get_match_data(dev);
 	if (!priv->cfg) {
 		dev_err(dev, "failed to match device\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regs = devm_platform_ioremap_resource(pdev, 0);

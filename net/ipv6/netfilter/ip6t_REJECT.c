@@ -82,14 +82,14 @@ static int reject_tg6_check(const struct xt_tgchk_param *par)
 
 	if (rejinfo->with == IP6T_ICMP6_ECHOREPLY) {
 		pr_info_ratelimited("ECHOREPLY is not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (rejinfo->with == IP6T_TCP_RESET) {
 		/* Must specify that it's a TCP packet */
 		if (!(e->ipv6.flags & IP6T_F_PROTO) ||
 		    e->ipv6.proto != IPPROTO_TCP ||
 		    (e->ipv6.invflags & XT_INV_PROTO)) {
 			pr_info_ratelimited("TCP_RESET illegal for non-tcp\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	return 0;

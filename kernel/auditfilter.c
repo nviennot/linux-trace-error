@@ -127,13 +127,13 @@ char *audit_unpack_string(void **bufp, size_t *remain, size_t len)
 	char *str;
 
 	if (!*bufp || (len == 0) || (len > *remain))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* Of the currently implemented string fields, PATH_MAX
 	 * defines the longest valid length.
 	 */
 	if (len > PATH_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	str = kmalloc(len + 1, GFP_KERNEL);
 	if (unlikely(!str))
@@ -154,7 +154,7 @@ static inline int audit_to_inode(struct audit_krule *krule,
 	if (krule->listnr != AUDIT_FILTER_EXIT ||
 	    krule->inode_f || krule->watch || krule->tree ||
 	    (f->op != Audit_equal && f->op != Audit_not_equal))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	krule->inode_f = f;
 	return 0;
@@ -171,13 +171,13 @@ int __init audit_register_class(int class, unsigned *list)
 		unsigned n = *list++;
 		if (n >= AUDIT_BITMASK_SIZE * 32 - AUDIT_SYSCALL_CLASSES) {
 			kfree(p);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		p[AUDIT_WORD(n)] |= AUDIT_BIT(n);
 	}
 	if (class >= AUDIT_SYSCALL_CLASSES || classes[class]) {
 		kfree(p);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	classes[class] = p;
 	return 0;
@@ -238,7 +238,7 @@ static inline struct audit_entry *audit_to_entry_common(struct audit_rule_data *
 	struct audit_entry *entry;
 	int i, err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	listnr = rule->flags & ~AUDIT_FILTER_PREPEND;
 	switch(listnr) {
 	default:
@@ -326,11 +326,11 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
 	case AUDIT_MSGTYPE:
 		if (entry->rule.listnr != AUDIT_FILTER_EXCLUDE &&
 		    entry->rule.listnr != AUDIT_FILTER_USER)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_FSTYPE:
 		if (entry->rule.listnr != AUDIT_FILTER_FS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	}
 
@@ -341,7 +341,7 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
 		case AUDIT_FILTERKEY:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -381,7 +381,7 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
 	case AUDIT_SADDR_FAM:
 		/* bit ops are only useful on syscall args */
 		if (f->op == Audit_bitmask || f->op == Audit_bittest)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_SUBJ_USER:
 	case AUDIT_SUBJ_ROLE:
@@ -401,34 +401,34 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
 	case AUDIT_EXE:
 		/* only equal and not equal valid ops */
 		if (f->op != Audit_not_equal && f->op != Audit_equal)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		/* field not recognized */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check for select valid field values */
 	switch (f->type) {
 	case AUDIT_LOGINUID_SET:
 		if ((f->val != 0) && (f->val != 1))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_PERM:
 		if (f->val & ~15)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_FILETYPE:
 		if (f->val & ~S_IFMT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_FIELD_COMPARE:
 		if (f->val > AUDIT_MAX_FIELD_COMPARE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AUDIT_SADDR_FAM:
 		if (f->val >= AF_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		break;
@@ -458,7 +458,7 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
 		struct audit_field *f = &entry->rule.fields[i];
 		u32 f_val;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 		f->op = audit_to_op(data->fieldflags[i]);
 		if (f->op == Audit_bad)
@@ -478,7 +478,7 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
 		if (err)
 			goto exit_free;
 
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		switch (f->type) {
 		case AUDIT_LOGINUID:
 		case AUDIT_UID:
@@ -950,7 +950,7 @@ static inline int audit_add_rule(struct audit_entry *entry)
 	e = audit_find_rule(entry, &list);
 	if (e) {
 		mutex_unlock(&audit_filter_mutex);
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		/* normally audit_add_tree_rule() will free it on failure */
 		if (tree)
 			audit_put_tree(tree);
@@ -1031,7 +1031,7 @@ int audit_del_rule(struct audit_entry *entry)
 	mutex_lock(&audit_filter_mutex);
 	e = audit_find_rule(entry, &list);
 	if (!e) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1142,7 +1142,7 @@ int audit_rule_change(int type, int seq, void *data, size_t datasz)
 		break;
 	default:
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (err || type == AUDIT_DEL_RULE) {

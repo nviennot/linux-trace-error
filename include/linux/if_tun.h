@@ -38,11 +38,11 @@ struct file;
 struct socket;
 static inline struct socket *tun_get_socket(struct file *f)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline struct ptr_ring *tun_get_tx_ring(struct file *f)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 static inline bool tun_is_xdp_frame(void *ptr)
 {

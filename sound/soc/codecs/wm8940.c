@@ -347,7 +347,7 @@ static int wm8940_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_write(component, WM8940_CLOCK, clk);
 
@@ -626,7 +626,7 @@ static int wm8940_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8940->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8940_set_dai_clkdiv(struct snd_soc_dai *codec_dai,

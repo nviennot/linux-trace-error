@@ -86,7 +86,7 @@ int sst_get_sfreq(struct snd_sst_params *str_param)
 	case SST_CODEC_TYPE_MP3:
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -105,7 +105,7 @@ int sst_get_num_channel(struct snd_sst_params *str_param)
 	case SST_CODEC_TYPE_AAC:
 		return str_param->sparams.uc.aac_params.num_chan;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -123,7 +123,7 @@ int sst_get_stream(struct intel_sst_drv *ctx,
 	/* stream is not allocated, we are allocating */
 	retval = ctx->ops->alloc_stream(ctx, str_param);
 	if (retval <= 0) {
-		return -EIO;
+		return -ERR(EIO);
 	}
 	/* store sampling freq */
 	str_info = &ctx->streams[retval];
@@ -178,7 +178,7 @@ static int sst_open_pcm_stream(struct device *dev,
 	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	if (!str_param)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	retval = sst_get_stream(ctx, str_param);
 	if (retval > 0)
@@ -212,7 +212,7 @@ static int sst_cdev_open(struct device *dev,
 		stream->drain_cb_param = cb->drain_cb_param;
 	} else {
 		dev_err(dev, "stream encountered error during alloc %d\n", str_id);
-		str_id = -EINVAL;
+		str_id = -ERR(EINVAL);
 		sst_pm_runtime_put(ctx);
 	}
 	return str_id;
@@ -227,7 +227,7 @@ static int sst_cdev_close(struct device *dev, unsigned int str_id)
 	stream = get_stream_info(ctx, str_id);
 	if (!stream) {
 		dev_err(dev, "stream info is NULL for str %d!!!\n", str_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	retval = sst_free_stream(ctx, str_id);
@@ -252,7 +252,7 @@ static int sst_cdev_ack(struct device *dev, unsigned int str_id,
 
 	stream = get_stream_info(ctx, str_id);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* update bytes sent */
 	stream->cumm_bytes += bytes;
@@ -283,7 +283,7 @@ static int sst_cdev_set_metadata(struct device *dev,
 
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(dev, "pipe id = %d\n", str_info->pipe_id);
 	retval = sst_prepare_and_post_msg(ctx, str_info->task_id, IPC_CMD,
@@ -316,7 +316,7 @@ static int sst_cdev_stream_start(struct device *dev, unsigned int str_id)
 
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	str_info->prev = str_info->status;
 	str_info->status = STREAM_RUNNING;
 	return sst_start_stream(ctx, str_id);
@@ -359,7 +359,7 @@ static int sst_cdev_tstamp(struct device *dev, unsigned int str_id,
 
 	stream = get_stream_info(ctx, str_id);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dev_dbg(dev, "rb_counter %llu in bytes\n", fw_tstamp.ring_buffer_counter);
 
 	tstamp->copied_total = fw_tstamp.ring_buffer_counter;
@@ -431,7 +431,7 @@ static int sst_cdev_codec_caps(struct snd_compr_codec_caps *codec)
 	else if (codec->codec == SND_AUDIOCODEC_AAC)
 		*codec = caps_aac;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -464,7 +464,7 @@ static int sst_close_pcm_stream(struct device *dev, unsigned int str_id)
 	stream = get_stream_info(ctx, str_id);
 	if (!stream) {
 		dev_err(ctx->dev, "stream info is NULL for str %d!!!\n", str_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	retval = free_stream_context(ctx, str_id);
@@ -526,10 +526,10 @@ static int sst_read_timestamp(struct device *dev, struct pcm_stream_info *info)
 	str_id = info->str_id;
 	stream = get_stream_info(ctx, str_id);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!stream->pcm_substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	substream = stream->pcm_substream;
 
 	addr = (void __iomem *)(ctx->mailbox + ctx->tstamp) +
@@ -549,7 +549,7 @@ static int sst_stream_start(struct device *dev, int str_id)
 		return 0;
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	str_info->prev = str_info->status;
 	str_info->status = STREAM_RUNNING;
 	sst_start_stream(ctx, str_id);
@@ -567,7 +567,7 @@ static int sst_stream_drop(struct device *dev, int str_id)
 
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	str_info->prev = STREAM_UN_INIT;
 	str_info->status = STREAM_INIT;
 	return sst_drop_stream(ctx, str_id);
@@ -583,7 +583,7 @@ static int sst_stream_pause(struct device *dev, int str_id)
 
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return sst_pause_stream(ctx, str_id);
 }
@@ -598,7 +598,7 @@ static int sst_stream_resume(struct device *dev, int str_id)
 
 	str_info = get_stream_info(ctx, str_id);
 	if (!str_info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return sst_resume_stream(ctx, str_id);
 }
 
@@ -615,7 +615,7 @@ static int sst_stream_init(struct device *dev, struct pcm_stream_info *str_info)
 
 	stream = get_stream_info(ctx, str_id);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(ctx->dev, "setting the period ptrs\n");
 	stream->pcm_substream = str_info->arg;
@@ -647,7 +647,7 @@ static int sst_send_byte_stream(struct device *dev,
 	struct intel_sst_drv *ctx = dev_get_drvdata(dev);
 
 	if (NULL == bytes)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret_val = pm_runtime_get_sync(ctx->dev);
 	if (ret_val < 0) {
 		pm_runtime_put_sync(ctx->dev);

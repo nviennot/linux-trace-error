@@ -66,7 +66,7 @@ static int v9fs_lookup_revalidate(struct dentry *dentry, unsigned int flags)
 	struct v9fs_inode *v9inode;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	inode = d_inode(dentry);
 	if (!inode)

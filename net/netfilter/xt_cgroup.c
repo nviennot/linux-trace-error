@@ -28,7 +28,7 @@ static int cgroup_mt_check_v0(const struct xt_mtchk_param *par)
 	struct xt_cgroup_info_v0 *info = par->matchinfo;
 
 	if (info->invert & ~1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -39,16 +39,16 @@ static int cgroup_mt_check_v1(const struct xt_mtchk_param *par)
 	struct cgroup *cgrp;
 
 	if ((info->invert_path & ~1) || (info->invert_classid & ~1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->has_path && !info->has_classid) {
 		pr_info("xt_cgroup: no path or classid specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (info->has_path && info->has_classid) {
 		pr_info_ratelimited("path and classid specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	info->priv = NULL;
@@ -57,7 +57,7 @@ static int cgroup_mt_check_v1(const struct xt_mtchk_param *par)
 		if (IS_ERR(cgrp)) {
 			pr_info_ratelimited("invalid path, errno=%ld\n",
 					    PTR_ERR(cgrp));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		info->priv = cgrp;
 	}
@@ -71,16 +71,16 @@ static int cgroup_mt_check_v2(const struct xt_mtchk_param *par)
 	struct cgroup *cgrp;
 
 	if ((info->invert_path & ~1) || (info->invert_classid & ~1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!info->has_path && !info->has_classid) {
 		pr_info("xt_cgroup: no path or classid specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (info->has_path && info->has_classid) {
 		pr_info_ratelimited("path and classid specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	info->priv = NULL;
@@ -89,7 +89,7 @@ static int cgroup_mt_check_v2(const struct xt_mtchk_param *par)
 		if (IS_ERR(cgrp)) {
 			pr_info_ratelimited("invalid path, errno=%ld\n",
 					    PTR_ERR(cgrp));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		info->priv = cgrp;
 	}

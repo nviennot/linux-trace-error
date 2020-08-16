@@ -124,7 +124,7 @@ static int ipv6header_mt6_check(const struct xt_mtchk_param *par)
 	/* invflags is 0 or 0xff in hard mode */
 	if ((!info->modeflag) && info->invflags != 0x00 &&
 	    info->invflags != 0xFF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

@@ -90,7 +90,7 @@ int hfs_cat_create(u32 cnid, struct inode *dir, const struct qstr *str, struct i
 	hfs_dbg(CAT_MOD, "create_cat: %s,%u(%d)\n",
 		str->name, cnid, inode->i_nlink);
 	if (dir->i_size >= HFS_MAX_VALENCE)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	sb = dir->i_sb;
 	err = hfs_find_init(HFS_SB(sb)->cat_tree, &fd);
@@ -112,7 +112,7 @@ int hfs_cat_create(u32 cnid, struct inode *dir, const struct qstr *str, struct i
 	err = hfs_brec_find(&fd);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto err2;
 	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
@@ -125,7 +125,7 @@ int hfs_cat_create(u32 cnid, struct inode *dir, const struct qstr *str, struct i
 	if (err != -ENOENT) {
 		/* panic? */
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto err1;
 	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
@@ -198,14 +198,14 @@ int hfs_cat_find_brec(struct super_block *sb, u32 cnid,
 	type = rec.type;
 	if (type != HFS_CDR_THD && type != HFS_CDR_FTH) {
 		pr_err("found bad thread record in catalog\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	fd->search_key->cat.ParID = rec.thread.ParID;
 	len = fd->search_key->cat.CName.len = rec.thread.CName.len;
 	if (len > HFS_NAMELEN) {
 		pr_err("bad catalog namelength\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	memcpy(fd->search_key->cat.CName.name, rec.thread.CName.name, len);
 	return hfs_brec_find(fd);
@@ -317,7 +317,7 @@ int hfs_cat_move(u32 cnid, struct inode *src_dir, const struct qstr *src_name,
 	if (err)
 		goto out;
 	if (src_fd.entrylength > sizeof(entry) || src_fd.entrylength < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -329,7 +329,7 @@ int hfs_cat_move(u32 cnid, struct inode *src_dir, const struct qstr *src_name,
 	err = hfs_brec_find(&dst_fd);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -372,7 +372,7 @@ int hfs_cat_move(u32 cnid, struct inode *src_dir, const struct qstr *src_name,
 	err = hfs_brec_find(&dst_fd);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto out;
 	}
 	err = hfs_brec_insert(&dst_fd, &entry, entry_size);

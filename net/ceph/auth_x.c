@@ -85,7 +85,7 @@ static int __ceph_x_decrypt(struct ceph_crypto_key *secret, void *p,
 
 	if (le64_to_cpu(hdr->magic) != CEPHX_ENC_MAGIC) {
 		pr_err("%s bad magic\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return plaintext_len - sizeof(*hdr);
@@ -107,7 +107,7 @@ static int ceph_x_decrypt(struct ceph_crypto_key *secret, void **p, void *end)
 	return ret;
 
 e_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -257,7 +257,7 @@ static int process_one_ticket(struct ceph_auth_client *ac,
 	return 0;
 
 bad:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 out:
 	ceph_crypto_key_destroy(&new_session_key);
 	return ret;
@@ -274,7 +274,7 @@ static int ceph_x_proc_ticket_reply(struct ceph_auth_client *ac,
 
 	ceph_decode_8_safe(&p, end, reply_struct_v, bad);
 	if (reply_struct_v != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ceph_decode_32_safe(&p, end, num, bad);
 	dout("%d tickets\n", num);
@@ -288,7 +288,7 @@ static int ceph_x_proc_ticket_reply(struct ceph_auth_client *ac,
 	return 0;
 
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -429,7 +429,7 @@ static int ceph_x_encode_ticket(struct ceph_x_ticket_handler *th,
 
 	return 0;
 bad:
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 static bool need_key(struct ceph_x_ticket_handler *th)
@@ -507,7 +507,7 @@ static int ceph_x_build_request(struct ceph_auth_client *ac,
 		u64 *u;
 
 		if (p > end)
-			return -ERANGE;
+			return -ERR(ERANGE);
 
 		dout(" get_auth_session_key\n");
 		head->op = cpu_to_le16(CEPHX_GET_AUTH_SESSION_KEY);
@@ -542,7 +542,7 @@ static int ceph_x_build_request(struct ceph_auth_client *ac,
 		struct ceph_x_service_ticket_request *req;
 
 		if (p > end)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		head->op = cpu_to_le16(CEPHX_GET_PRINCIPAL_SESSION_KEY);
 
 		ret = ceph_x_build_authorizer(ac, th, &xi->auth_authorizer);
@@ -578,13 +578,13 @@ static int ceph_x_handle_reply(struct ceph_auth_client *ac, int result,
 		struct ceph_x_server_challenge *sc = buf;
 
 		if (len != sizeof(*sc))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		xi->server_challenge = le64_to_cpu(sc->server_challenge);
 		dout("handle_reply got server challenge %llx\n",
 		     xi->server_challenge);
 		xi->starting = false;
 		xi->have_keys &= ~CEPH_ENTITY_TYPE_AUTH;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	op = le16_to_cpu(head->op);
@@ -606,13 +606,13 @@ static int ceph_x_handle_reply(struct ceph_auth_client *ac, int result,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ret)
 		return ret;
 	if (ac->want_keys == xi->have_keys)
 		return 0;
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void ceph_x_destroy_authorizer(struct ceph_authorizer *a)
@@ -694,7 +694,7 @@ static int decrypt_authorize_challenge(struct ceph_x_authorizer *au,
 		return ret;
 	if (ret < sizeof(*ch)) {
 		pr_err("bad size %d for ceph_x_authorize_challenge\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*server_challenge = le64_to_cpu(ch->server_challenge);
@@ -739,11 +739,11 @@ static int ceph_x_verify_authorizer_reply(struct ceph_auth_client *ac,
 		return ret;
 	if (ret < sizeof(*reply)) {
 		pr_err("bad size %d for ceph_x_authorize_reply\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (au->nonce + 1 != le64_to_cpu(reply->nonce_plus_one))
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	else
 		ret = 0;
 	dout("verify_authorizer_reply nonce %llx got %llx ret %d\n",
@@ -907,7 +907,7 @@ static int ceph_x_check_message_signature(struct ceph_auth_handshake *auth,
 	else
 		dout("ceph_x_check_message_signature %p sender did not set "
 		     "CEPH_MSG_FOOTER_SIGNED\n", msg);
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 }
 
 static const struct ceph_auth_client_ops ceph_x_ops = {
@@ -939,7 +939,7 @@ int ceph_x_init(struct ceph_auth_client *ac)
 	if (!xi)
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!ac->key) {
 		pr_err("no secret set (for auth_x protocol)\n");
 		goto out_nomem;

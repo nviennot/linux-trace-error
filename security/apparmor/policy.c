@@ -584,10 +584,10 @@ static int replacement_allowed(struct aa_profile *profile, int noreplace,
 	if (profile) {
 		if (profile->label.flags & FLAG_IMMUTIBLE) {
 			*info = "cannot replace immutable profile";
-			return -EPERM;
+			return -ERR(EPERM);
 		} else if (noreplace) {
 			*info = "profile already exists";
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	return 0;
@@ -692,11 +692,11 @@ int aa_may_manage_policy(struct aa_label *label, struct aa_ns *ns, u32 mask)
 	/* check if loading policy is locked out */
 	if (aa_g_lock_policy)
 		return audit_policy(label, op, NULL, NULL, "policy_locked",
-				    -EACCES);
+				    -ERR(EACCES));
 
 	if (!policy_admin_capable(ns))
 		return audit_policy(label, op, NULL, NULL, "not policy admin",
-				    -EACCES);
+				    -ERR(EACCES));
 
 	/* TODO: add fine grained mediation of policy loads */
 	return 0;
@@ -883,13 +883,13 @@ ssize_t aa_replace_profiles(struct aa_ns *policy_ns, struct aa_label *label,
 			if (ent->ns_name &&
 			    strcmp(ent->ns_name, ns_name) != 0) {
 				info = "policy load has mixed namespaces";
-				error = -EACCES;
+				error = -ERR(EACCES);
 				goto fail;
 			}
 		} else if (ent->ns_name) {
 			if (count) {
 				info = "policy load has mixed namespaces";
-				error = -EACCES;
+				error = -ERR(EACCES);
 				goto fail;
 			}
 			ns_name = ent->ns_name;
@@ -956,7 +956,7 @@ ssize_t aa_replace_profiles(struct aa_ns *policy_ns, struct aa_label *label,
 			struct aa_profile *p;
 			p = __list_lookup_parent(&lh, ent->new);
 			if (!p) {
-				error = -ENOENT;
+				error = -ERR(ENOENT);
 				info = "parent does not exist";
 				goto fail_lock;
 			}
@@ -1103,7 +1103,7 @@ ssize_t aa_remove_profiles(struct aa_ns *policy_ns, struct aa_label *subj,
 
 	if (*fqname == 0) {
 		info = "no profile specified";
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto fail;
 	}
 
@@ -1116,7 +1116,7 @@ ssize_t aa_remove_profiles(struct aa_ns *policy_ns, struct aa_label *subj,
 				   ns_name, ns_len);
 		if (!ns) {
 			info = "namespace does not exist";
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			goto fail;
 		}
 	} else
@@ -1134,7 +1134,7 @@ ssize_t aa_remove_profiles(struct aa_ns *policy_ns, struct aa_label *subj,
 		mutex_lock_nested(&ns->lock, ns->level);
 		profile = aa_get_profile(__lookup_profile(&ns->base, name));
 		if (!profile) {
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			info = "profile does not exist";
 			goto fail_ns_lock;
 		}

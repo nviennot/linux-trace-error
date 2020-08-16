@@ -503,7 +503,7 @@ static int __init test_rslib_init(void)
 	else
 		pr_info("rslib: test ok\n");
 
-	return -EAGAIN; /* Fail will directly unload the module */
+	return -ERR(EAGAIN); /* Fail will directly unload the module */
 }
 
 static void __exit test_rslib_exit(void)

@@ -2446,7 +2446,7 @@ enum pcpu_fc pcpu_chosen_fc __initdata = PCPU_FC_AUTO;
 static int __init percpu_alloc_setup(char *str)
 {
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (0)
 		/* nada */;
@@ -2733,7 +2733,7 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 				max_distance, VMALLOC_TOTAL);
 #ifdef CONFIG_NEED_PER_CPU_PAGE_FIRST_CHUNK
 		/* and fail if we have fallback */
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_free_areas;
 #endif
 	}
@@ -2826,7 +2826,7 @@ int __init pcpu_page_first_chunk(size_t reserved_size,
 	nr_g0_units = roundup(num_possible_cpus(), upa);
 	if (WARN_ON(ai->groups[0].nr_units != nr_g0_units)) {
 		pcpu_free_alloc_info(ai);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	unit_pages = ai->unit_size >> PAGE_SHIFT;

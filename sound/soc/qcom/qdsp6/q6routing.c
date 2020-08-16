@@ -316,7 +316,7 @@ int q6routing_stream_open(int fedai_id, int perf_mode,
 
 	if (!routing_data) {
 		pr_err("Routing driver not yet ready\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	session = &routing_data->sessions[stream_id - 1];
@@ -339,7 +339,7 @@ int q6routing_stream_open(int fedai_id, int perf_mode,
 
 	if (IS_ERR_OR_NULL(copp)) {
 		mutex_unlock(&routing_data->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	copp_idx = q6adm_get_copp_id(copp);
@@ -936,7 +936,7 @@ static int routing_hw_params(struct snd_soc_component *component,
 		path_type = ADM_PATH_LIVE_REC;
 
 	if (be_id >= AFE_MAX_PORTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	session = &data->port_data[be_id];
 

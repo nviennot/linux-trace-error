@@ -630,7 +630,7 @@ static int nau8822_calc_pll(unsigned int pll_in, unsigned int fs,
 	int i, scal_sel;
 
 	if (pll_in > NAU_PLL_REF_MAX || pll_in < NAU_PLL_REF_MIN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	f2_max = 0;
 	scal_sel = ARRAY_SIZE(nau8822_mclk_scaler);
 
@@ -644,7 +644,7 @@ static int nau8822_calc_pll(unsigned int pll_in, unsigned int fs,
 	}
 
 	if (ARRAY_SIZE(nau8822_mclk_scaler) == scal_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pll_param->mclk_scaler = scal_sel;
 	f2 = f2_max;
 
@@ -701,7 +701,7 @@ static int nau8822_config_clkdiv(struct snd_soc_dai *dai, int div, int rate)
 		if (pll->mclk_scaler != div) {
 			dev_err(component->dev,
 			"master clock prescaler not meet PLL parameters\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_update_bits(component,
 			NAU8822_REG_CLOCKING, NAU8822_MCLKSEL_MASK,
@@ -712,7 +712,7 @@ static int nau8822_config_clkdiv(struct snd_soc_dai *dai, int div, int rate)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -776,7 +776,7 @@ static int nau8822_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl2_val &= ~1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -792,7 +792,7 @@ static int nau8822_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= 0x18;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -808,7 +808,7 @@ static int nau8822_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		ctrl1_val |= 0x80;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component,
@@ -842,7 +842,7 @@ static int nau8822_hw_params(struct snd_pcm_substream *substream,
 		else if (bclk_fs <= 128)
 			bclk_div = NAU8822_BCLKDIV_2;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		snd_soc_component_update_bits(component, NAU8822_REG_CLOCKING,
 				NAU8822_BCLKSEL_MASK, bclk_div);
 	}
@@ -860,7 +860,7 @@ static int nau8822_hw_params(struct snd_pcm_substream *substream,
 		val_len |= NAU8822_WLEN_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_rate(params)) {
@@ -883,7 +883,7 @@ static int nau8822_hw_params(struct snd_pcm_substream *substream,
 	case 48000:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component,

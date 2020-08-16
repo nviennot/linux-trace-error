@@ -64,11 +64,11 @@ struct cgroup_namespace *copy_cgroup_ns(unsigned long flags,
 
 	/* Allow only sysadmin to create cgroup namespace. */
 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	ucounts = inc_cgroup_namespaces(user_ns);
 	if (!ucounts)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	/* It is not safe to take cgroup_mutex here */
 	spin_lock_irq(&css_set_lock);
@@ -102,7 +102,7 @@ static int cgroupns_install(struct nsset *nsset, struct ns_common *ns)
 
 	if (!ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(cgroup_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* Don't need to do anything if we are attaching to our own cgroupns. */
 	if (cgroup_ns == nsproxy->cgroup_ns)

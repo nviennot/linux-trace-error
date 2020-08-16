@@ -204,7 +204,7 @@ static int mt6797_mt6351_dev_probe(struct platform_device *pdev)
 					 "mediatek,platform", 0);
 	if (!platform_node) {
 		dev_err(&pdev->dev, "Property 'platform' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for_each_card_prelinks(card, i, dai_link) {
 		if (dai_link->platforms->name)
@@ -217,7 +217,7 @@ static int mt6797_mt6351_dev_probe(struct platform_device *pdev)
 	if (!codec_node) {
 		dev_err(&pdev->dev,
 			"Property 'audio-codec' missing or invalid\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	for_each_card_prelinks(card, i, dai_link) {
 		if (dai_link->codecs->name)

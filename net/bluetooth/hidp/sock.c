@@ -61,7 +61,7 @@ static int do_hidp_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 	switch (cmd) {
 	case HIDPCONNADD:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&ca, argp, sizeof(ca)))
 			return -EFAULT;
@@ -88,7 +88,7 @@ static int do_hidp_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 
 	case HIDPCONNDEL:
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&cd, argp, sizeof(cd)))
 			return -EFAULT;
@@ -100,7 +100,7 @@ static int do_hidp_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 			return -EFAULT;
 
 		if (cl.cnum <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = hidp_get_connlist(&cl);
 		if (!err && copy_to_user(argp, &cl, sizeof(cl)))
@@ -119,7 +119,7 @@ static int do_hidp_sock_ioctl(struct socket *sock, unsigned int cmd, void __user
 		return err;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hidp_sock_ioctl(struct socket *sock, unsigned int cmd, unsigned long arg)
@@ -160,7 +160,7 @@ static int hidp_sock_compat_ioctl(struct socket *sock, unsigned int cmd, unsigne
 		cl.ci = compat_ptr(uci);
 
 		if (cl.cnum <= 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = hidp_get_connlist(&cl);
 
@@ -175,7 +175,7 @@ static int hidp_sock_compat_ioctl(struct socket *sock, unsigned int cmd, unsigne
 		struct socket *isock;
 
 		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&ca32, (void __user *) arg, sizeof(ca32)))
 			return -EFAULT;
@@ -255,7 +255,7 @@ static int hidp_sock_create(struct net *net, struct socket *sock, int protocol,
 	BT_DBG("sock %p", sock);
 
 	if (sock->type != SOCK_RAW)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sk = sk_alloc(net, PF_BLUETOOTH, GFP_ATOMIC, &hidp_proto, kern);
 	if (!sk)

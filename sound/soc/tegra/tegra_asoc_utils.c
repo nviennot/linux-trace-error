@@ -48,7 +48,7 @@ int tegra_asoc_utils_set_rate(struct tegra_asoc_utils_data *data, int srate,
 			new_baseclock = 368640000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	clk_change = ((new_baseclock != data->set_baseclock) ||
@@ -145,7 +145,7 @@ int tegra_asoc_utils_init(struct tegra_asoc_utils_data *data,
 		data->soc = TEGRA_ASOC_UTILS_SOC_TEGRA124;
 	else {
 		dev_err(data->dev, "SoC unknown to Tegra ASoC utils\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	data->clk_pll_a = devm_clk_get(dev, "pll_a");

@@ -304,7 +304,7 @@ int ndisc_mc_map(const struct in6_addr *addr, char *buf, struct net_device *dev,
 			return 0;
 		}
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(ndisc_mc_map);
 
@@ -330,7 +330,7 @@ static int ndisc_constructor(struct neighbour *neigh)
 
 	in6_dev = in6_dev_get(dev);
 	if (!in6_dev) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	parms = in6_dev->nd_parms;
@@ -375,7 +375,7 @@ static int pndisc_constructor(struct pneigh_entry *n)
 	struct net_device *dev = n->dev;
 
 	if (!dev || !__in6_dev_get(dev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	addrconf_addr_solict_mult(addr, &maddr);
 	ipv6_dev_mc_inc(dev, &maddr);
 	return 0;
@@ -1133,7 +1133,7 @@ static void ndisc_ra_useropt(struct sk_buff *ra, struct nd_opt_hdr *opt)
 
 	skb = nlmsg_new(msg_size, GFP_ATOMIC);
 	if (!skb) {
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		goto errout;
 	}
 
@@ -1160,7 +1160,7 @@ static void ndisc_ra_useropt(struct sk_buff *ra, struct nd_opt_hdr *opt)
 
 nla_put_failure:
 	nlmsg_free(skb);
-	err = -EMSGSIZE;
+	err = -ERR(EMSGSIZE);
 errout:
 	rtnl_set_sk_err(net, RTNLGRP_ND_USEROPT, err);
 }

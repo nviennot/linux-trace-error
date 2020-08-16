@@ -52,14 +52,14 @@ static int cs4341_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -69,7 +69,7 @@ static int cs4341_set_fmt(struct snd_soc_dai *dai, unsigned int format)
 		cs4341->fmt = format & SND_SOC_DAIFMT_FORMAT_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -93,7 +93,7 @@ static int cs4341_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported PCM format 0x%08x.\n",
 			params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cs4341->fmt) {
@@ -109,7 +109,7 @@ static int cs4341_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported DAI format 0x%08x.\n",
 			cs4341->fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_soc_component_update_bits(component, CS4341_REG_MODE2,

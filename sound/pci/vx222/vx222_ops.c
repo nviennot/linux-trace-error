@@ -175,7 +175,7 @@ static int vx2_test_xilinx(struct vx_core *_chip)
 	data = vx_inl(chip, STATUS);
 	if ((data & VX_STATUS_VAL_TEST0_MASK) == VX_STATUS_VAL_TEST0_MASK) {
 		dev_dbg(_chip->card->dev, "bad!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* We write 0 on CDSP.TEST0. We should get 1 on STATUS.TEST0. */
@@ -184,7 +184,7 @@ static int vx2_test_xilinx(struct vx_core *_chip)
 	data = vx_inl(chip, STATUS);
 	if (! (data & VX_STATUS_VAL_TEST0_MASK)) {
 		dev_dbg(_chip->card->dev, "bad! #2\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (_chip->type == VX_TYPE_BOARD) {
@@ -195,7 +195,7 @@ static int vx2_test_xilinx(struct vx_core *_chip)
 		data = vx_inl(chip, STATUS);
 		if ((data & VX_STATUS_VAL_TEST1_MASK) == VX_STATUS_VAL_TEST1_MASK) {
 			dev_dbg(_chip->card->dev, "bad! #3\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		/* We write 0 on CDSP.TEST1. We should get 1 on STATUS.TEST1. */
@@ -204,7 +204,7 @@ static int vx2_test_xilinx(struct vx_core *_chip)
 		data = vx_inl(chip, STATUS);
 		if (! (data & VX_STATUS_VAL_TEST1_MASK)) {
 			dev_dbg(_chip->card->dev, "bad! #4\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 	dev_dbg(_chip->card->dev, "ok, xilinx fine.\n");
@@ -375,7 +375,7 @@ static int vx2_load_xilinx_binary(struct vx_core *chip, const struct firmware *x
 	image = xilinx->data;
 	for (i = 0; i < xilinx->size; i++, image++) {
 		if (put_xilinx_data(chip, port, 8, *image) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* don't take too much time in this loop... */
 		cond_resched();
 	}
@@ -391,7 +391,7 @@ static int vx2_load_xilinx_binary(struct vx_core *chip, const struct firmware *x
 			return 0;
 		dev_err(chip->card->dev,
 			"xilinx test failed after load, GPIOC=0x%x\n", i);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -421,7 +421,7 @@ static int vx2_load_dsp(struct vx_core *vx, int index, const struct firmware *ds
 		return snd_vx_dsp_load(vx, dsp);
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -437,10 +437,10 @@ static int vx2_test_and_ack(struct vx_core *chip)
 {
 	/* not booted yet? */
 	if (! (chip->chip_status & VX_STAT_XILINX_LOADED))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (! (vx_inl(chip, STATUS) & VX_STATUS_MEMIRQ_MASK))
-		return -EIO;
+		return -ERR(EIO);
 	
 	/* ok, interrupts generated, now ack it */
 	/* set ACQUIT bit up and down */
@@ -879,10 +879,10 @@ static int vx_input_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem
 	struct snd_vx222 *chip = to_vx222(_chip);
 	if (ucontrol->value.integer.value[0] < 0 ||
 	    ucontrol->value.integer.value[0] > MIC_LEVEL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ucontrol->value.integer.value[1] < 0 ||
 	    ucontrol->value.integer.value[1] > MIC_LEVEL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&_chip->mixer_mutex);
 	if (chip->input_level[0] != ucontrol->value.integer.value[0] ||
 	    chip->input_level[1] != ucontrol->value.integer.value[1]) {
@@ -920,7 +920,7 @@ static int vx_mic_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 	struct snd_vx222 *chip = to_vx222(_chip);
 	if (ucontrol->value.integer.value[0] < 0 ||
 	    ucontrol->value.integer.value[0] > MIC_LEVEL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&_chip->mixer_mutex);
 	if (chip->mic_level != ucontrol->value.integer.value[0]) {
 		chip->mic_level = ucontrol->value.integer.value[0];

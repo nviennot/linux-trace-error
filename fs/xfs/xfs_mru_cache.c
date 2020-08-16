@@ -328,10 +328,10 @@ xfs_mru_cache_create(
 		*mrup = NULL;
 
 	if (!mrup || !grp_count || !lifetime_ms || !free_func)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(grp_time = msecs_to_jiffies(lifetime_ms) / grp_count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(mru = kmem_zalloc(sizeof(*mru), 0)))
 		return -ENOMEM;
@@ -425,7 +425,7 @@ xfs_mru_cache_insert(
 
 	ASSERT(mru && mru->lists);
 	if (!mru || !mru->lists)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (radix_tree_preload(GFP_NOFS))
 		return -ENOMEM;

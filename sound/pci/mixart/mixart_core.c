@@ -80,7 +80,7 @@ static int get_msg(struct mixart_mgr *mgr, struct mixart_msg *resp,
 	resp->uid.desc      =  readl_be(MIXART_MEM(mgr, msg_frame_address + 12));  /* */
 
 	if( (size < MSG_DESCRIPTOR_SIZE) || (resp->size < (size - MSG_DESCRIPTOR_SIZE))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		dev_err(&mgr->pci->dev,
 			"problem with response size = %d\n", size);
 		goto _clean_exit;
@@ -104,7 +104,7 @@ static int get_msg(struct mixart_mgr *mgr, struct mixart_msg *resp,
 	headptr = readl_be(MIXART_MEM(mgr, MSG_OUTBOUND_FREE_HEAD));
 
 	if( (headptr < MSG_OUTBOUND_FREE_STACK) || ( headptr >= (MSG_OUTBOUND_FREE_STACK+MSG_BOUND_STACK_SIZE))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto _clean_exit;
 	}
 
@@ -140,7 +140,7 @@ static int send_msg( struct mixart_mgr *mgr,
 	int i;
 
 	if (snd_BUG_ON(msg->size % 4))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* get message frame address */
 	tailptr = readl_be(MIXART_MEM(mgr, MSG_INBOUND_FREE_TAIL));
@@ -148,11 +148,11 @@ static int send_msg( struct mixart_mgr *mgr,
 
 	if (tailptr == headptr) {
 		dev_err(&mgr->pci->dev, "error: no message frame available\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if( (tailptr < MSG_INBOUND_FREE_STACK) || (tailptr >= (MSG_INBOUND_FREE_STACK+MSG_BOUND_STACK_SIZE))) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	msg_frame_address = readl_be(MIXART_MEM(mgr, tailptr));
@@ -205,7 +205,7 @@ static int send_msg( struct mixart_mgr *mgr,
 	headptr = readl_be(MIXART_MEM(mgr, MSG_INBOUND_POST_HEAD));
 
 	if( (headptr < MSG_INBOUND_POST_STACK) || (headptr >= (MSG_INBOUND_POST_STACK+MSG_BOUND_STACK_SIZE))) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	writel_be(msg_frame_address, MIXART_MEM(mgr, headptr));
@@ -249,7 +249,7 @@ int snd_mixart_send_msg(struct mixart_mgr *mgr, struct mixart_msg *request, int 
 		/* error - no ack */
 		dev_err(&mgr->pci->dev,
 			"error: no response on msg %x\n", msg_frame);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* retrieve the answer into the same struct mixart_msg */
@@ -275,11 +275,11 @@ int snd_mixart_send_msg_wait_notif(struct mixart_mgr *mgr,
 	long timeout;
 
 	if (snd_BUG_ON(!notif_event))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON((notif_event & MSG_TYPE_MASK) != MSG_TYPE_NOTIFY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(notif_event & MSG_CANCEL_NOTIFY_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	init_waitqueue_entry(&wait, current);
 
@@ -301,7 +301,7 @@ int snd_mixart_send_msg_wait_notif(struct mixart_mgr *mgr,
 		/* error - no ack */
 		dev_err(&mgr->pci->dev,
 			"error: notification %x not received\n", notif_event);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;

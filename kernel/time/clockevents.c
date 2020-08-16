@@ -107,7 +107,7 @@ static int __clockevents_switch_state(struct clock_event_device *dev,
 	case CLOCK_EVT_STATE_PERIODIC:
 		/* Core internal bug */
 		if (!(dev->features & CLOCK_EVT_FEAT_PERIODIC))
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 		if (dev->set_state_periodic)
 			return dev->set_state_periodic(dev);
 		return 0;
@@ -115,7 +115,7 @@ static int __clockevents_switch_state(struct clock_event_device *dev,
 	case CLOCK_EVT_STATE_ONESHOT:
 		/* Core internal bug */
 		if (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 		if (dev->set_state_oneshot)
 			return dev->set_state_oneshot(dev);
 		return 0;
@@ -125,15 +125,15 @@ static int __clockevents_switch_state(struct clock_event_device *dev,
 		if (WARN_ONCE(!clockevent_state_oneshot(dev),
 			      "Current state: %d\n",
 			      clockevent_get_state(dev)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (dev->set_state_oneshot_stopped)
 			return dev->set_state_oneshot_stopped(dev);
 		else
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 
 	default:
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 }
 
@@ -206,7 +206,7 @@ static int clockevents_increase_min_delta(struct clock_event_device *dev)
 		printk_deferred(KERN_WARNING
 				"CE: Reprogramming failure. Giving up\n");
 		dev->next_event = KTIME_MAX;
-		return -ETIME;
+		return -ERR(ETIME);
 	}
 
 	if (dev->min_delta_ns < 5000)
@@ -255,7 +255,7 @@ static int clockevents_program_min_delta(struct clock_event_device *dev)
 			 * delta, if that fails as well get out of here.
 			 */
 			if (clockevents_increase_min_delta(dev))
-				return -ETIME;
+				return -ERR(ETIME);
 			i = 0;
 		}
 	}
@@ -287,7 +287,7 @@ static int clockevents_program_min_delta(struct clock_event_device *dev)
 		if (dev->set_next_event((unsigned long) clc, dev) == 0)
 			return 0;
 	}
-	return -ETIME;
+	return -ERR(ETIME);
 }
 
 #endif /* CONFIG_GENERIC_CLOCKEVENTS_MIN_ADJUST */
@@ -308,7 +308,7 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
 	int rc;
 
 	if (WARN_ON_ONCE(expires < 0))
-		return -ETIME;
+		return -ERR(ETIME);
 
 	dev->next_event = expires;
 
@@ -325,7 +325,7 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
 
 	delta = ktime_to_ns(ktime_sub(expires, ktime_get()));
 	if (delta <= 0)
-		return force ? clockevents_program_min_delta(dev) : -ETIME;
+		return force ? clockevents_program_min_delta(dev) : -ERR(ETIME);
 
 	delta = min(delta, (int64_t) dev->max_delta_ns);
 	delta = max(delta, (int64_t) dev->min_delta_ns);
@@ -378,7 +378,7 @@ static int clockevents_replace(struct clock_event_device *ced)
 		tick_install_replacement(newdev);
 		list_del_init(&ced->list);
 	}
-	return newdev ? 0 : -EBUSY;
+	return newdev ? 0 : -ERR(EBUSY);
 }
 
 /*
@@ -392,7 +392,7 @@ static int __clockevents_try_unbind(struct clock_event_device *ced, int cpu)
 		return 0;
 	}
 
-	return ced == per_cpu(tick_cpu_device, cpu).evtdev ? -EAGAIN : -EBUSY;
+	return ced == per_cpu(tick_cpu_device, cpu).evtdev ? -ERR(EAGAIN) : -ERR(EBUSY);
 }
 
 /*
@@ -696,7 +696,7 @@ static ssize_t sysfs_unbind_tick_dev(struct device *dev,
 	if (ret < 0)
 		return ret;
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	mutex_lock(&clockevents_mutex);
 	raw_spin_lock_irq(&clockevents_lock);
 	list_for_each_entry(ce, &clockevent_devices, list) {

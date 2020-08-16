@@ -72,7 +72,7 @@ static int rps_sock_flow_sysctl(struct ctl_table *table, int write,
 			if (size > 1<<29) {
 				/* Enforce limit to prevent overflow */
 				mutex_unlock(&sock_flow_mutex);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			size = roundup_pow_of_two(size);
 			if (size != orig_size) {
@@ -204,7 +204,7 @@ static int flow_limit_table_len_sysctl(struct ctl_table *table, int write,
 	ret = proc_dointvec(table, write, buffer, lenp, ppos);
 	if (!ret && write && !is_power_of_2(*ptr)) {
 		*ptr = old;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	mutex_unlock(&flow_limit_update_mutex);
@@ -268,7 +268,7 @@ static int proc_dointvec_minmax_bpf_enable(struct ctl_table *table, int write,
 	struct ctl_table tmp = *table;
 
 	if (write && !capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	tmp.data = &jit_enable;
 	ret = proc_dointvec_minmax(&tmp, write, buffer, lenp, ppos);
@@ -279,7 +279,7 @@ static int proc_dointvec_minmax_bpf_enable(struct ctl_table *table, int write,
 			if (jit_enable == 2)
 				pr_warn("bpf_jit_enable = 2 was set! NEVER use this in production, only for JIT debugging!\n");
 		} else {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 		}
 	}
 	return ret;
@@ -291,7 +291,7 @@ proc_dointvec_minmax_bpf_restricted(struct ctl_table *table, int write,
 				    void *buffer, size_t *lenp, loff_t *ppos)
 {
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return proc_dointvec_minmax(table, write, buffer, lenp, ppos);
 }
@@ -302,7 +302,7 @@ proc_dolongvec_minmax_bpf_restricted(struct ctl_table *table, int write,
 				     void *buffer, size_t *lenp, loff_t *ppos)
 {
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return proc_doulongvec_minmax(table, write, buffer, lenp, ppos);
 }

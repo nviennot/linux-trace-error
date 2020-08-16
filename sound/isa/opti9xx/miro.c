@@ -178,7 +178,7 @@ static int aci_busy_wait(struct snd_miro_aci *aci)
 		}
 	}
 	snd_printk(KERN_ERR "aci_busy_wait() time out\n");
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static inline int aci_write(struct snd_miro_aci *aci, unsigned char byte)
@@ -188,7 +188,7 @@ static inline int aci_write(struct snd_miro_aci *aci, unsigned char byte)
 		return 0;
 	} else {
 		snd_printk(KERN_ERR "aci busy, aci_write(0x%x) stopped.\n", byte);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 }
 
@@ -201,7 +201,7 @@ static inline int aci_read(struct snd_miro_aci *aci)
 		return byte;
 	} else {
 		snd_printk(KERN_ERR "aci busy, aci_read() stopped.\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 }
 
@@ -211,7 +211,7 @@ int snd_aci_cmd(struct snd_miro_aci *aci, int write1, int write2, int write3)
 	int value, i;
 
 	if (mutex_lock_interruptible(&aci->aci_mutex))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	for (i=0; i<3; i++) {
 		if (write[i]< 0 || write[i] > 255)
@@ -508,7 +508,7 @@ static int snd_miro_put_double(struct snd_kcontrol *kcontrol,
 
 		if (left < -0x7f || left > 0x7f ||
 		    right < -0x7f || right > 0x7f)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (left_old > 0x80) 
 			left_old = 0x80 - left_old;
@@ -553,7 +553,7 @@ static int snd_miro_put_double(struct snd_kcontrol *kcontrol,
 
 		if (left < 0 || left > 0x20 ||
 		    right < 0 || right > 0x20)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		left_old = 0x20 - left_old;
 		right_old = 0x20 - right_old;
@@ -710,7 +710,7 @@ static int snd_miro_mixer(struct snd_card *card,
 	int err;
 
 	if (snd_BUG_ON(!miro || !card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (miro->hardware) {
 	case OPTi9XX_HW_82C924:
@@ -801,7 +801,7 @@ static int snd_miro_init(struct snd_miro *chip,
 
 	default:
 		snd_printk(KERN_ERR "sorry, no support for %d\n", hardware);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -1018,7 +1018,7 @@ static int snd_miro_configure(struct snd_miro *chip)
 		break;
 	default:
 		snd_printk(KERN_ERR "chip %d not supported\n", chip->hardware);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* PnP resource says it decodes only 10 bits of address */
@@ -1084,7 +1084,7 @@ __skip_base:
 
 	if (chip->dma1 == chip->dma2) {
 		snd_printk(KERN_ERR "don't want to share dmas\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	switch (chip->dma2) {
@@ -1171,7 +1171,7 @@ static int snd_miro_opti_check(struct snd_miro *chip)
 	release_and_free_resource(chip->res_mc_base);
 	chip->res_mc_base = NULL;
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_card_miro_detect(struct snd_card *card,
@@ -1189,7 +1189,7 @@ static int snd_card_miro_detect(struct snd_card *card,
 			return 1;
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_card_miro_aci_detect(struct snd_card *card,
@@ -1219,7 +1219,7 @@ static int snd_card_miro_aci_detect(struct snd_card *card,
 	for (i = 0; i < 3; i++)
 		if (snd_aci_cmd(aci, ACI_ERROR_OP, -1, -1) < 0) {
 			snd_printk(KERN_ERR "can't force aci into known state.\n");
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 
 	aci->aci_vendor = snd_aci_cmd(aci, ACI_READ_IDCODE, -1, -1);
@@ -1227,21 +1227,21 @@ static int snd_card_miro_aci_detect(struct snd_card *card,
 	if (aci->aci_vendor < 0 || aci->aci_product < 0) {
 		snd_printk(KERN_ERR "can't read aci id on 0x%lx.\n",
 			   aci->aci_port);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	aci->aci_version = snd_aci_cmd(aci, ACI_READ_VERSION, -1, -1);
 	if (aci->aci_version < 0) {
 		snd_printk(KERN_ERR "can't read aci version on 0x%lx.\n", 
 			   aci->aci_port);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (snd_aci_cmd(aci, ACI_INIT, -1, -1) < 0 ||
 	    snd_aci_cmd(aci, ACI_ERROR_OP, ACI_ERROR_OP, ACI_ERROR_OP) < 0 ||
 	    snd_aci_cmd(aci, ACI_ERROR_OP, ACI_ERROR_OP, ACI_ERROR_OP) < 0) {
 		snd_printk(KERN_ERR "can't initialize aci.\n"); 
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	return 0;
@@ -1277,7 +1277,7 @@ static int snd_miro_probe(struct snd_card *card)
 	error = snd_card_miro_aci_detect(card, miro);
 	if (error < 0) {
 		snd_printk(KERN_ERR "unable to detect aci chip\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	miro->wss_base = port;
@@ -1414,7 +1414,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 	if (error < 0) {
 		snd_card_free(card);
 		snd_printk(KERN_ERR "unable to detect OPTi9xx chip\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (port == SNDRV_AUTO_PORT) {
@@ -1422,7 +1422,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 		if (port < 0) {
 			snd_card_free(card);
 			snd_printk(KERN_ERR "unable to find a free WSS port\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -1432,7 +1432,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 			snd_card_free(card);
 			snd_printk(KERN_ERR
 				   "unable to find a free MPU401 port\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -1441,7 +1441,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 		if (irq < 0) {
 			snd_card_free(card);
 			snd_printk(KERN_ERR "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (mpu_irq == SNDRV_AUTO_IRQ) {
@@ -1450,7 +1450,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 			snd_card_free(card);
 			snd_printk(KERN_ERR
 				   "unable to find a free MPU401 IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1 == SNDRV_AUTO_DMA) {
@@ -1458,7 +1458,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 		if (dma1 < 0) {
 			snd_card_free(card);
 			snd_printk(KERN_ERR "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma2 == SNDRV_AUTO_DMA) {
@@ -1466,7 +1466,7 @@ static int snd_miro_isa_probe(struct device *devptr, unsigned int n)
 		if (dma2 < 0) {
 			snd_card_free(card);
 			snd_printk(KERN_ERR "unable to find a free DMA2\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -1512,15 +1512,15 @@ static int snd_card_miro_pnp(struct snd_miro *chip,
 
 	pdev = pnp_request_card_device(card, pid->devs[0].id, NULL);
 	if (pdev == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	devmpu = pnp_request_card_device(card, pid->devs[1].id, NULL);
 	if (devmpu == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	devmc = pnp_request_card_device(card, pid->devs[2].id, NULL);
 	if (devmc == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = pnp_activate_dev(pdev);
 	if (err < 0) {
@@ -1570,9 +1570,9 @@ static int snd_miro_pnp_probe(struct pnp_card_link *pcard,
 	struct snd_miro *miro;
 
 	if (snd_miro_pnp_is_probed)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (!isapnp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	err = snd_card_new(&pcard->card->dev, index, id, THIS_MODULE,
 			   sizeof(struct snd_miro), &card);
 	if (err < 0)

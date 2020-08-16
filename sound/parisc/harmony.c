@@ -295,7 +295,7 @@ snd_harmony_playback_trigger(struct snd_pcm_substream *ss, int cmd)
 	struct snd_harmony *h = snd_pcm_substream_chip(ss);
 
 	if (h->st.capturing)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	spin_lock(&h->lock);
 	switch (cmd) {
@@ -318,7 +318,7 @@ snd_harmony_playback_trigger(struct snd_pcm_substream *ss, int cmd)
 	default:
 		spin_unlock(&h->lock);
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	spin_unlock(&h->lock);
 	
@@ -331,7 +331,7 @@ snd_harmony_capture_trigger(struct snd_pcm_substream *ss, int cmd)
         struct snd_harmony *h = snd_pcm_substream_chip(ss);
 
 	if (h->st.playing)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	spin_lock(&h->lock);
         switch (cmd) {
@@ -354,7 +354,7 @@ snd_harmony_capture_trigger(struct snd_pcm_substream *ss, int cmd)
 	default:
 		spin_unlock(&h->lock);
 		snd_BUG();
-                return -EINVAL;
+                return -ERR(EINVAL);
         }
 	spin_unlock(&h->lock);
 		
@@ -398,7 +398,7 @@ snd_harmony_playback_prepare(struct snd_pcm_substream *ss)
 	struct snd_pcm_runtime *rt = ss->runtime;
 	
 	if (h->st.capturing)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	
 	h->pbuf.size = snd_pcm_lib_buffer_bytes(ss);
 	h->pbuf.count = snd_pcm_lib_period_bytes(ss);
@@ -428,7 +428,7 @@ snd_harmony_capture_prepare(struct snd_pcm_substream *ss)
         struct snd_pcm_runtime *rt = ss->runtime;
 
 	if (h->st.playing)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
         h->cbuf.size = snd_pcm_lib_buffer_bytes(ss);
         h->cbuf.count = snd_pcm_lib_period_bytes(ss);
@@ -600,7 +600,7 @@ snd_harmony_pcm_init(struct snd_harmony *h)
 	int err;
 
 	if (snd_BUG_ON(!h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	harmony_disable_interrupts(h);
 	
@@ -835,7 +835,7 @@ snd_harmony_mixer_init(struct snd_harmony *h)
 	int idx, err;
 
 	if (snd_BUG_ON(!h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = h->card;
 	strcpy(card->mixername, "Harmony Gain control interface");
 
@@ -899,7 +899,7 @@ snd_harmony_create(struct snd_card *card,
 	if (h->iobase == NULL) {
 		printk(KERN_ERR PFX "unable to remap hpa 0x%lx\n",
 		       (unsigned long)padev->hpa.start);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto free_and_ret;
 	}
 		

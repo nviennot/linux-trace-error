@@ -85,7 +85,7 @@ static int vx_check_magic(struct vx_core *chip)
 		msleep(10);
 	} while (time_after_eq(end_time, jiffies));
 	snd_printk(KERN_ERR "cannot find xilinx magic word (%x)\n", c);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 
@@ -223,7 +223,7 @@ static int vxp_load_xilinx_binary(struct vx_core *_chip, const struct firmware *
 	vx_outb(chip, RUER, regRUER);
 	chip->regDIALOG &= ~VXP_DLG_XILINX_REPROG_MASK;
 	vx_outb(chip, DIALOG, chip->regDIALOG);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 
@@ -253,7 +253,7 @@ static int vxp_load_dsp(struct vx_core *vx, int index, const struct firmware *fw
 		return snd_vx_dsp_load(vx, fw);
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 		
@@ -271,10 +271,10 @@ static int vxp_test_and_ack(struct vx_core *_chip)
 
 	/* not booted yet? */
 	if (! (_chip->chip_status & VX_STAT_XILINX_LOADED))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (! (vx_inb(chip, DIALOG) & VXP_DLG_MEMIRQ_MASK))
-		return -EIO;
+		return -ERR(EIO);
 	
 	/* ok, interrupts generated, now ack it */
 	/* set ACQUIT bit up and down */

@@ -201,7 +201,7 @@ static struct page *ufs_get_page(struct inode *dir, unsigned long n)
 
 fail:
 	ufs_put_page(page);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /*
@@ -350,10 +350,10 @@ int ufs_add_link(struct dentry *dentry, struct inode *inode)
 			if (de->d_reclen == 0) {
 				ufs_error(dir->i_sb, __func__,
 					  "zero-length directory entry");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out_unlock;
 			}
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (ufs_match(sb, namelen, name, de))
 				goto out_unlock;
 			name_len = UFS_DIR_REC_LEN(ufs_get_de_namlen(sb, de));
@@ -368,7 +368,7 @@ int ufs_add_link(struct dentry *dentry, struct inode *inode)
 		ufs_put_page(page);
 	}
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 got_it:
 	pos = page_offset(page) +
@@ -448,7 +448,7 @@ ufs_readdir(struct file *file, struct dir_context *ctx)
 				  "bad page in #%lu",
 				  inode->i_ino);
 			ctx->pos += PAGE_SIZE - offset;
-			return -EIO;
+			return -ERR(EIO);
 		}
 		kaddr = page_address(page);
 		if (unlikely(need_revalidate)) {
@@ -515,7 +515,7 @@ int ufs_delete_entry(struct inode *inode, struct ufs_dir_entry *dir,
 		if (de->d_reclen == 0) {
 			ufs_error(inode->i_sb, __func__,
 				  "zero-length directory entry");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		pde = de;

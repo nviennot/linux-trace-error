@@ -206,7 +206,7 @@ static int vmap_pte_range(pmd_t *pmd, unsigned long addr,
 		struct page *page = pages[*nr];
 
 		if (WARN_ON(!pte_none(*pte)))
-			return -EBUSY;
+			return -ERR(EBUSY);
 		if (WARN_ON(!page))
 			return -ENOMEM;
 		set_pte_at(&init_mm, addr, pte, mk_pte(page, prot));
@@ -1178,7 +1178,7 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
 	BUG_ON(!is_power_of_2(align));
 
 	if (unlikely(!vmap_initialized))
-		return ERR_PTR(-EBUSY);
+		return ERR_PTR(-ERR(EBUSY));
 
 	might_sleep();
 	gfp_mask = gfp_mask & GFP_RECLAIM_MASK;
@@ -1276,7 +1276,7 @@ overflow:
 			size);
 
 	kmem_cache_free(vmap_area_cachep, va);
-	return ERR_PTR(-EBUSY);
+	return ERR_PTR(-ERR(EBUSY));
 }
 
 int register_vmap_purge_notifier(struct notifier_block *nb)
@@ -3001,23 +3001,23 @@ int remap_vmalloc_range_partial(struct vm_area_struct *vma, unsigned long uaddr,
 	unsigned long end_index;
 
 	if (check_shl_overflow(pgoff, PAGE_SHIFT, &off))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = PAGE_ALIGN(size);
 
 	if (!PAGE_ALIGNED(uaddr) || !PAGE_ALIGNED(kaddr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	area = find_vm_area(kaddr);
 	if (!area)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(area->flags & (VM_USERMAP | VM_DMA_COHERENT)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (check_add_overflow(size, off, &end_index) ||
 	    end_index > get_vm_area_size(area))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	kaddr += off;
 
 	do {

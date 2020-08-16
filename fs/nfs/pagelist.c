@@ -424,7 +424,7 @@ __nfs_create_request(struct nfs_lock_context *l_ctx, struct page *page,
 	struct nfs_open_context *ctx = l_ctx->open_context;
 
 	if (test_bit(NFS_CONTEXT_BAD, &ctx->flags))
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 	/* try to allocate the request struct */
 	req = nfs_page_alloc();
 	if (req == NULL)
@@ -919,7 +919,7 @@ int nfs_generic_pgio(struct nfs_pageio_descriptor *desc,
 	}
 	if (WARN_ON_ONCE(pageused != pagecount)) {
 		nfs_pgio_error(hdr);
-		desc->pg_error = -EINVAL;
+		desc->pg_error = -ERR(EINVAL);
 		return desc->pg_error;
 	}
 
@@ -992,7 +992,7 @@ static void nfs_pageio_setup_mirroring(struct nfs_pageio_descriptor *pgio,
 		return;
 
 	if (!mirror_count || mirror_count > NFS_PAGEIO_DESCRIPTOR_MIRROR_MAX) {
-		pgio->pg_error = -EINVAL;
+		pgio->pg_error = -ERR(EINVAL);
 		return;
 	}
 
@@ -1090,9 +1090,9 @@ nfs_pageio_do_add_request(struct nfs_pageio_descriptor *desc,
 
 	if (desc->pg_maxretrans && req->wb_nio > desc->pg_maxretrans) {
 		if (NFS_SERVER(desc->pg_inode)->flags & NFS_MOUNT_SOFTERR)
-			desc->pg_error = -ETIMEDOUT;
+			desc->pg_error = -ERR(ETIMEDOUT);
 		else
-			desc->pg_error = -EIO;
+			desc->pg_error = -ERR(EIO);
 		return 0;
 	}
 
@@ -1360,7 +1360,7 @@ int nfs_pageio_resend(struct nfs_pageio_descriptor *desc,
 	}
 	nfs_pageio_complete(desc);
 	if (!list_empty(&pages)) {
-		int err = desc->pg_error < 0 ? desc->pg_error : -EIO;
+		int err = desc->pg_error < 0 ? desc->pg_error : -ERR(EIO);
 		hdr->completion_ops->error_cleanup(&pages, err);
 		nfs_set_pgio_error(hdr, err, hdr->io_start);
 		return err;

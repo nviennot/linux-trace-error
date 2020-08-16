@@ -412,7 +412,7 @@ static int fsl_dma_open(struct snd_soc_component *component,
 
 	if (dma->assigned) {
 		dev_err(dev, "dma channel already assigned\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	dma_private = dma_alloc_coherent(dev, sizeof(struct fsl_dma_private),
@@ -600,7 +600,7 @@ static int fsl_dma_hw_params(struct snd_soc_component *component,
 	default:
 		/* We should never get here */
 		dev_err(dev, "unsupported sample size %u\n", sample_bits);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -883,7 +883,7 @@ static int fsl_soc_dma_probe(struct platform_device *pdev)
 	ssi_np = find_ssi_node(np);
 	if (!ssi_np) {
 		dev_err(&pdev->dev, "cannot find parent SSI node\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = of_address_to_resource(ssi_np, 0, &res);

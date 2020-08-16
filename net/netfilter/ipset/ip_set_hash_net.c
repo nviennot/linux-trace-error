@@ -59,7 +59,7 @@ hash_net4_data_equal(const struct hash_net4_elem *ip1,
 static int
 hash_net4_do_data_match(const struct hash_net4_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -121,7 +121,7 @@ hash_net4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
 	if (e.cidr == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (adt == IPSET_TEST)
 		e.cidr = HOST_MASK;
 
@@ -224,7 +224,7 @@ hash_net6_data_equal(const struct hash_net6_elem *ip1,
 static int
 hash_net6_do_data_match(const struct hash_net6_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -289,7 +289,7 @@ hash_net6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	struct ip_set_ext ext = IP_SET_INIT_KEXT(skb, opt, set);
 
 	if (e.cidr == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (adt == IPSET_TEST)
 		e.cidr = HOST_MASK;
 

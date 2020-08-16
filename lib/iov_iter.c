@@ -1736,7 +1736,7 @@ int iov_iter_for_each_range(struct iov_iter *i, size_t bytes,
 			    void *context)
 {
 	struct kvec w;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	if (!bytes)
 		return 0;
 

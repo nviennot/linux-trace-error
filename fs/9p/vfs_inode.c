@@ -270,7 +270,7 @@ int v9fs_init_inode(struct v9fs_session_info *v9ses,
 		} else {
 			p9_debug(P9_DEBUG_ERROR,
 				 "special files without extended mode\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
@@ -303,7 +303,7 @@ int v9fs_init_inode(struct v9fs_session_info *v9ses,
 		if (!v9fs_proto_dotu(v9ses) && !v9fs_proto_dotl(v9ses)) {
 			p9_debug(P9_DEBUG_ERROR,
 				 "extended modes used with legacy protocol\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 
@@ -331,7 +331,7 @@ int v9fs_init_inode(struct v9fs_session_info *v9ses,
 	default:
 		p9_debug(P9_DEBUG_ERROR, "BAD mode 0x%hx S_IFMT 0x%x\n",
 			 mode, mode & S_IFMT);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 error:
@@ -586,7 +586,7 @@ static void v9fs_dec_count(struct inode *inode)
 static int v9fs_remove(struct inode *dir, struct dentry *dentry, int flags)
 {
 	struct inode *inode;
-	int retval = -EOPNOTSUPP;
+	int retval = -ERR(EOPNOTSUPP);
 	struct p9_fid *v9fid, *dfid;
 	struct v9fs_session_info *v9ses;
 
@@ -794,7 +794,7 @@ struct dentry *v9fs_vfs_lookup(struct inode *dir, struct dentry *dentry,
 		 dir, dentry, dentry, flags);
 
 	if (dentry->d_name.len > NAME_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	v9ses = v9fs_inode2v9ses(dir);
 	/* We can walk d_parent because we hold the dir->i_mutex */
@@ -962,7 +962,7 @@ v9fs_vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct p9_wstat wstat;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	p9_debug(P9_DEBUG_VFS, "\n");
 	retval = 0;
@@ -1001,7 +1001,7 @@ v9fs_vfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		 */
 
 		p9_debug(P9_DEBUG_ERROR, "old dir and new dir are different\n");
-		retval = -EXDEV;
+		retval = -ERR(EXDEV);
 		goto clunk_newdir;
 	}
 	v9fs_blank_wstat(&wstat);
@@ -1098,7 +1098,7 @@ static int v9fs_vfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	if (retval)
 		return retval;
 
-	retval = -EPERM;
+	retval = -ERR(EPERM);
 	v9ses = v9fs_dentry2v9ses(dentry);
 	fid = v9fs_fid_lookup(dentry);
 	if(IS_ERR(fid))
@@ -1241,7 +1241,7 @@ static const char *v9fs_vfs_get_link(struct dentry *dentry,
 	char *res;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	v9ses = v9fs_dentry2v9ses(dentry);
 	fid = v9fs_fid_lookup(dentry);
@@ -1251,7 +1251,7 @@ static const char *v9fs_vfs_get_link(struct dentry *dentry,
 		return ERR_CAST(fid);
 
 	if (!v9fs_proto_dotu(v9ses))
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	st = p9_client_stat(fid);
 	if (IS_ERR(st))
@@ -1260,7 +1260,7 @@ static const char *v9fs_vfs_get_link(struct dentry *dentry,
 	if (!(st->mode & P9_DMSYMLINK)) {
 		p9stat_free(st);
 		kfree(st);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	res = st->extension;
 	st->extension = NULL;
@@ -1291,7 +1291,7 @@ static int v9fs_vfs_mkspecial(struct inode *dir, struct dentry *dentry,
 	v9ses = v9fs_inode2v9ses(dir);
 	if (!v9fs_proto_dotu(v9ses)) {
 		p9_debug(P9_DEBUG_ERROR, "not extended\n");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	fid = v9fs_create(v9ses, dir, dentry, (char *) extension, perm,

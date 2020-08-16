@@ -134,7 +134,7 @@ int ext4_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 	struct ext4_sb_info *sbi = EXT4_SB(inode->i_sb);
 
 	if (unlikely(ext4_forced_shutdown(sbi)))
-		return -EIO;
+		return -ERR(EIO);
 
 	J_ASSERT(ext4_journal_current_handle() == NULL);
 
@@ -144,7 +144,7 @@ int ext4_sync_file(struct file *file, loff_t start, loff_t end, int datasync)
 		/* Make sure that we read updated s_mount_flags value */
 		smp_rmb();
 		if (sbi->s_mount_flags & EXT4_MF_FS_ABORTED)
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 		goto out;
 	}
 

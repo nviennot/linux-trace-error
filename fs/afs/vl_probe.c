@@ -262,7 +262,7 @@ stop:
 	kfree(waits);
 
 	if (pref == -1 && signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	if (pref >= 0)
 		vllist->preferred = pref;

@@ -46,7 +46,7 @@ static int current_css_set_read(struct seq_file *seq, void *v)
 	int i, refcnt;
 
 	if (!cgroup_kn_lock_live(of->kn, false))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spin_lock_irq(&css_set_lock);
 	rcu_read_lock();
@@ -211,7 +211,7 @@ static int cgroup_subsys_states_read(struct seq_file *seq, void *v)
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	for_each_subsys(ss, i) {
 		css = rcu_dereference_check(cgrp->subsys[ss->id], true);
@@ -259,7 +259,7 @@ static int cgroup_masks_read(struct seq_file *seq, void *v)
 
 	cgrp = cgroup_kn_lock_live(of->kn, false);
 	if (!cgrp)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	cgroup_masks_read_one(seq, "subtree_control", cgrp->subtree_control);
 	cgroup_masks_read_one(seq, "subtree_ss_mask", cgrp->subtree_ss_mask);

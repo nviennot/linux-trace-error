@@ -238,7 +238,7 @@ int ethnl_put_bitset32(struct sk_buff *skb, int attrtype, const u32 *val,
 
 	nest = nla_nest_start(skb, attrtype);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (!mask && nla_put_flag(skb, ETHTOOL_A_BITSET_NOMASK))
 		goto nla_put_failure;
@@ -299,7 +299,7 @@ int ethnl_put_bitset32(struct sk_buff *skb, int attrtype, const u32 *val,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy bitset_policy[ETHTOOL_A_BITSET_MAX + 1] = {
@@ -339,12 +339,12 @@ int ethnl_bitset_is_compact(const struct nlattr *bitset, bool *compact)
 
 	if (tb[ETHTOOL_A_BITSET_BITS]) {
 		if (tb[ETHTOOL_A_BITSET_VALUE] || tb[ETHTOOL_A_BITSET_MASK])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*compact = false;
 		return 0;
 	}
 	if (!tb[ETHTOOL_A_BITSET_SIZE] || !tb[ETHTOOL_A_BITSET_VALUE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*compact = true;
 	return 0;
@@ -364,7 +364,7 @@ static int ethnl_name_to_idx(ethnl_string_array_t names, unsigned int n_names,
 	unsigned int i;
 
 	if (!names)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	for (i = 0; i < n_names; i++) {
 		/* names[i] may not be null terminated */
@@ -373,7 +373,7 @@ static int ethnl_name_to_idx(ethnl_string_array_t names, unsigned int n_names,
 			return i;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int ethnl_parse_bit(unsigned int *index, bool *val, unsigned int nbits,
@@ -397,7 +397,7 @@ static int ethnl_parse_bit(unsigned int *index, bool *val, unsigned int nbits,
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[ETHTOOL_A_BITSET_BIT_INDEX],
 					    "bit index too high");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 		name = names ? names[idx] : NULL;
 		if (tb[ETHTOOL_A_BITSET_BIT_NAME] && name &&
@@ -405,7 +405,7 @@ static int ethnl_parse_bit(unsigned int *index, bool *val, unsigned int nbits,
 			    nla_len(tb[ETHTOOL_A_BITSET_BIT_NAME]))) {
 			NL_SET_ERR_MSG_ATTR(extack, bit_attr,
 					    "bit index and name mismatch");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (tb[ETHTOOL_A_BITSET_BIT_NAME]) {
 		idx = ethnl_name_to_idx(names, nbits,
@@ -414,12 +414,12 @@ static int ethnl_parse_bit(unsigned int *index, bool *val, unsigned int nbits,
 			NL_SET_ERR_MSG_ATTR(extack,
 					    tb[ETHTOOL_A_BITSET_BIT_NAME],
 					    "bit name not found");
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		}
 	} else {
 		NL_SET_ERR_MSG_ATTR(extack, bit_attr,
 				    "neither bit index nor name specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*index = idx;
@@ -441,12 +441,12 @@ ethnl_update_bitset32_verbose(u32 *bitmap, unsigned int nbits,
 	if (tb[ETHTOOL_A_BITSET_VALUE]) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_VALUE],
 				    "value only allowed in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (tb[ETHTOOL_A_BITSET_MASK]) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_MASK],
 				    "mask only allowed in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	no_mask = tb[ETHTOOL_A_BITSET_NOMASK];
@@ -460,7 +460,7 @@ ethnl_update_bitset32_verbose(u32 *bitmap, unsigned int nbits,
 		if (nla_type(bit_attr) != ETHTOOL_A_BITSET_BITS_BIT) {
 			NL_SET_ERR_MSG_ATTR(extack, bit_attr,
 					    "only ETHTOOL_A_BITSET_BITS_BIT allowed in ETHTOOL_A_BITSET_BITS");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ret = ethnl_parse_bit(&idx, &new_val, nbits, bit_attr, no_mask,
 				      names, extack);
@@ -491,22 +491,22 @@ static int ethnl_compact_sanity_checks(unsigned int nbits,
 	if (no_mask && tb[ETHTOOL_A_BITSET_MASK]) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_MASK],
 				    "mask not allowed in list bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!tb[ETHTOOL_A_BITSET_SIZE]) {
 		NL_SET_ERR_MSG_ATTR(extack, nest,
 				    "missing size in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!tb[ETHTOOL_A_BITSET_VALUE]) {
 		NL_SET_ERR_MSG_ATTR(extack, nest,
 				    "missing value in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!no_mask && !tb[ETHTOOL_A_BITSET_MASK]) {
 		NL_SET_ERR_MSG_ATTR(extack, nest,
 				    "missing mask in compact nonlist bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	attr_nbits = nla_get_u32(tb[ETHTOOL_A_BITSET_SIZE]);
@@ -514,13 +514,13 @@ static int ethnl_compact_sanity_checks(unsigned int nbits,
 	if (nla_len(tb[ETHTOOL_A_BITSET_VALUE]) != attr_nwords * sizeof(u32)) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_VALUE],
 				    "bitset value length does not match size");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (tb[ETHTOOL_A_BITSET_MASK] &&
 	    nla_len(tb[ETHTOOL_A_BITSET_MASK]) != attr_nwords * sizeof(u32)) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_MASK],
 				    "bitset mask length does not match size");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (attr_nbits <= nbits)
 		return 0;
@@ -530,7 +530,7 @@ static int ethnl_compact_sanity_checks(unsigned int nbits,
 	if (ethnl_bitmap32_not_zero(nla_data(test_attr), nbits, attr_nbits)) {
 		NL_SET_ERR_MSG_ATTR(extack, test_attr,
 				    "cannot modify bits past kernel bitset size");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -651,12 +651,12 @@ int ethnl_parse_bitset(unsigned long *val, unsigned long *mask,
 	if (tb[ETHTOOL_A_BITSET_VALUE]) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_VALUE],
 				    "value only allowed in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (tb[ETHTOOL_A_BITSET_MASK]) {
 		NL_SET_ERR_MSG_ATTR(extack, tb[ETHTOOL_A_BITSET_MASK],
 				    "mask only allowed in compact bitset");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bitmap_zero(val, nbits);

@@ -32,7 +32,7 @@ static int debug_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_msglevel)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
@@ -109,7 +109,7 @@ int ethnl_set_debug(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	dev = req_info.dev;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!dev->ethtool_ops->get_msglevel || !dev->ethtool_ops->set_msglevel)
 		goto out_dev;
 

@@ -72,7 +72,7 @@ static int synproxy_tg6_check(const struct xt_tgchk_param *par)
 	if (!(e->ipv6.flags & IP6T_F_PROTO) ||
 	    e->ipv6.proto != IPPROTO_TCP ||
 	    e->ipv6.invflags & XT_INV_PROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nf_ct_netns_get(par->net, par->family);
 	if (err)

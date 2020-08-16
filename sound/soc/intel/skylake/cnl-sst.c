@@ -60,7 +60,7 @@ static int cnl_prepare_fw(struct sst_dsp *ctx, const void *fwdata, u32 fwsize)
 	ret = skl_dsp_core_power_up(ctx, SKL_DSP_CORE0_MASK);
 	if (ret < 0) {
 		dev_err(ctx->dev, "dsp core0 power up failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto base_fw_load_failed;
 	}
 
@@ -72,7 +72,7 @@ static int cnl_prepare_fw(struct sst_dsp *ctx, const void *fwdata, u32 fwsize)
 	ret = skl_dsp_start_core(ctx, SKL_DSP_CORE0_MASK);
 	if (ret < 0) {
 		dev_err(ctx->dev, "Start dsp core failed ret: %d\n", ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto base_fw_load_failed;
 	}
 
@@ -169,7 +169,7 @@ static int cnl_load_base_firmware(struct sst_dsp *ctx)
 	if (ret == 0) {
 		dev_err(ctx->dev, "FW ready timed-out\n");
 		cnl_dsp_disable_core(ctx, SKL_DSP_CORE0_MASK);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto cnl_load_base_firmware_failed;
 	}
 

@@ -927,7 +927,7 @@ static int __tipc_nl_add_nametable_publ(struct tipc_nl_msg *msg,
 			if (p->key == *last_key)
 				break;
 		if (p->key != *last_key)
-			return -EPIPE;
+			return -ERR(EPIPE);
 	} else {
 		p = list_first_entry(&sr->all_publ,
 				     struct publication,
@@ -941,7 +941,7 @@ static int __tipc_nl_add_nametable_publ(struct tipc_nl_msg *msg,
 				  &tipc_genl_family, NLM_F_MULTI,
 				  TIPC_NL_NAME_TABLE_GET);
 		if (!hdr)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_NAME_TABLE);
 		if (!attrs)
@@ -981,7 +981,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int __tipc_nl_service_range_list(struct tipc_nl_msg *msg,

@@ -484,7 +484,7 @@ xfs_attr_copy_value(
 	 */
 	if (args->valuelen < valuelen) {
 		args->valuelen = valuelen;
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	if (!args->value) {
@@ -505,7 +505,7 @@ xfs_attr_copy_value(
 	 * memcpy" warning.
 	 */
 	if (!value)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	memcpy(args->value, value, valuelen);
 	return 0;
 }
@@ -812,7 +812,7 @@ xfs_attr_shortform_lookup(xfs_da_args_t *args)
 				sfe = XFS_ATTR_SF_NEXTENTRY(sfe), i++) {
 		if (xfs_attr_match(args, sfe->namelen, sfe->nameval,
 				sfe->flags))
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 	return -ENOATTR;
 }
@@ -1355,7 +1355,7 @@ xfs_attr3_leaf_add(
 	 * no good and we should just give up.
 	 */
 	if (!ichdr.holes && sum < entsize)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/*
 	 * Compact the entries to coalesce free space.
@@ -1368,7 +1368,7 @@ xfs_attr3_leaf_add(
 	 * free region, in freemap[0].  If it is not big enough, give up.
 	 */
 	if (ichdr.freemap[0].size < (entsize + sizeof(xfs_attr_leaf_entry_t))) {
-		tmp = -ENOSPC;
+		tmp = -ERR(ENOSPC);
 		goto out_log_hdr;
 	}
 
@@ -2392,7 +2392,7 @@ xfs_attr3_leaf_lookup_int(
 					name_loc->nameval, entry->flags))
 				continue;
 			args->index = probe;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		} else {
 			name_rmt = xfs_attr3_leaf_name_remote(leaf, probe);
 			if (!xfs_attr_match(args, name_rmt->namelen,
@@ -2404,7 +2404,7 @@ xfs_attr3_leaf_lookup_int(
 			args->rmtblkcnt = xfs_attr3_rmt_blocks(
 							args->dp->i_mount,
 							args->rmtvaluelen);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	args->index = probe;

@@ -781,7 +781,7 @@ static int __es_insert_extent(struct inode *inode, struct extent_status *newes)
 			p = &(*p)->rb_right;
 		} else {
 			BUG();
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 

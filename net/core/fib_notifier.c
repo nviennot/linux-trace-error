@@ -114,7 +114,7 @@ int register_fib_notifier(struct net *net, struct notifier_block *nb,
 			return 0;
 	} while (++retries < FIB_DUMP_MAX_RETRIES);
 
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 EXPORT_SYMBOL(register_fib_notifier);
 
@@ -134,7 +134,7 @@ static int __fib_notifier_ops_register(struct fib_notifier_ops *ops,
 
 	list_for_each_entry(o, &fn_net->fib_notifier_ops, list)
 		if (ops->family == o->family)
-			return -EEXIST;
+			return -ERR(EEXIST);
 	list_add_tail_rcu(&ops->list, &fn_net->fib_notifier_ops);
 	return 0;
 }

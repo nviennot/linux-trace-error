@@ -42,7 +42,7 @@ const struct file_operations coda_ioctl_operations = {
 /* the coda pioctl inode ops */
 static int coda_ioctl_permission(struct inode *inode, int mask)
 {
-	return (mask & MAY_EXEC) ? -EACCES : 0;
+	return (mask & MAY_EXEC) ? -ERR(EACCES) : 0;
 }
 
 static long coda_pioctl(struct file *filp, unsigned int cmd,
@@ -57,7 +57,7 @@ static long coda_pioctl(struct file *filp, unsigned int cmd,
 
 	/* get the Pioctl data arguments from user space */
 	if (copy_from_user(&data, (void __user *)user_data, sizeof(data)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Look up the pathname. Note that the pathname is in
@@ -72,7 +72,7 @@ static long coda_pioctl(struct file *filp, unsigned int cmd,
 
 	/* return if it is not a Coda inode */
 	if (target_inode->i_sb != inode->i_sb) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 

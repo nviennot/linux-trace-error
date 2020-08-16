@@ -493,7 +493,7 @@ static int acp_dma_stop(void __iomem *acp_mmio, u8 ch_num)
 		}
 		if (--count == 0) {
 			pr_err("Failed to stop ACP DMA channel : %d\n", ch_num);
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 		udelay(100);
 	}
@@ -567,7 +567,7 @@ static int acp_init(void __iomem *acp_mmio, u32 asic_type)
 			break;
 		if (--count == 0) {
 			pr_err("Failed to reset ACP\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 		udelay(100);
 	}
@@ -585,7 +585,7 @@ static int acp_init(void __iomem *acp_mmio, u32 asic_type)
 			break;
 		if (--count == 0) {
 			pr_err("Failed to reset ACP\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 		udelay(100);
 	}
@@ -661,7 +661,7 @@ static int acp_deinit(void __iomem *acp_mmio)
 			break;
 		if (--count == 0) {
 			pr_err("Failed to reset ACP\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 		udelay(100);
 	}
@@ -678,7 +678,7 @@ static int acp_deinit(void __iomem *acp_mmio)
 			break;
 		if (--count == 0) {
 			pr_err("Failed to reset ACP\n");
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		}
 		udelay(100);
 	}
@@ -849,7 +849,7 @@ static int acp_dma_hw_params(struct snd_soc_component *component,
 	rtd = runtime->private_data;
 
 	if (WARN_ON(!rtd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pinfo) {
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -1005,7 +1005,7 @@ static snd_pcm_uframes_t acp_dma_pointer(struct snd_soc_component *component,
 	struct audio_substream_data *rtd = runtime->private_data;
 
 	if (!rtd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 		period_bytes = frames_to_bytes(runtime, runtime->period_size);
@@ -1050,7 +1050,7 @@ static int acp_dma_prepare(struct snd_soc_component *component,
 	u16 ch_acp_sysmem, ch_acp_i2s;
 
 	if (!rtd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rtd->direction == SNDRV_PCM_STREAM_PLAYBACK) {
 		ch_acp_sysmem = rtd->ch1;
@@ -1079,7 +1079,7 @@ static int acp_dma_trigger(struct snd_soc_component *component,
 	struct audio_substream_data *rtd = runtime->private_data;
 
 	if (!rtd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
@@ -1112,7 +1112,7 @@ static int acp_dma_trigger(struct snd_soc_component *component,
 		ret = acp_dma_stop(rtd->acp_mmio, rtd->ch1);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	return ret;
 }
@@ -1219,7 +1219,7 @@ static int acp_audio_probe(struct platform_device *pdev)
 
 	if (!pdata) {
 		dev_err(&pdev->dev, "Missing platform data\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	audio_drv_data = devm_kzalloc(&pdev->dev, sizeof(struct audio_drv_data),
@@ -1247,7 +1247,7 @@ static int acp_audio_probe(struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_IRQ FAILED\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	status = devm_request_irq(&pdev->dev, res->start, dma_irq_handler,

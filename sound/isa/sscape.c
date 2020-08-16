@@ -476,7 +476,7 @@ static int upload_dma_data(struct soundscape *s, const unsigned char *data,
 
 			snd_printk(KERN_ERR
 					"sscape: DMA upload has timed out\n");
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto _release_dma;
 		}
 	} /* while */
@@ -500,11 +500,11 @@ static int upload_dma_data(struct soundscape *s, const unsigned char *data,
 	if (!obp_startup_ack(s, 5000)) {
 		snd_printk(KERN_ERR "sscape: No response "
 				    "from on-board processor after upload\n");
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	} else if (!host_startup_ack(s, 5000)) {
 		snd_printk(KERN_ERR
 				"sscape: SoundScape failed to initialise\n");
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 
 _release_dma:
@@ -552,7 +552,7 @@ static int sscape_upload_bootblock(struct snd_card *card)
 	if (ret == 0 && data > 7) {
 		snd_printk(KERN_ERR
 				"sscape: timeout reading firmware version\n");
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 
 	return (ret == 0) ? data : ret;
@@ -796,7 +796,7 @@ static int mpu401_open(struct snd_mpu401 *mpu)
 	if (!verify_mpu401(mpu)) {
 		snd_printk(KERN_ERR "sscape: MIDI disabled, "
 				    "please load firmware\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -945,7 +945,7 @@ static int create_sscape(int dev, struct snd_card *card)
 	if (!io_res) {
 		snd_printk(KERN_ERR
 			   "sscape: can't grab port 0x%lx\n", port[dev]);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	wss_res = NULL;
 	if (sscape->type == SSCAPE_VIVO) {
@@ -953,7 +953,7 @@ static int create_sscape(int dev, struct snd_card *card)
 		if (!wss_res) {
 			snd_printk(KERN_ERR "sscape: can't grab port 0x%lx\n",
 					    wss_port[dev]);
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto _release_region;
 		}
 	}
@@ -975,7 +975,7 @@ static int create_sscape(int dev, struct snd_card *card)
 	if (!detect_sscape(sscape, wss_port[dev])) {
 		printk(KERN_ERR "sscape: hardware not detected at 0x%x\n",
 			sscape->io_base);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto _release_dma;
 	}
 
@@ -1006,14 +1006,14 @@ static int create_sscape(int dev, struct snd_card *card)
 	irq_cfg = get_irq_config(sscape->type, irq[dev]);
 	if (irq_cfg == INVALID_IRQ) {
 		snd_printk(KERN_ERR "sscape: Invalid IRQ %d\n", irq[dev]);
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto _release_dma;
 	}
 
 	mpu_irq_cfg = get_irq_config(sscape->type, mpu_irq[dev]);
 	if (mpu_irq_cfg == INVALID_IRQ) {
 		snd_printk(KERN_ERR "sscape: Invalid IRQ %d\n", mpu_irq[dev]);
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto _release_dma;
 	}
 
@@ -1225,19 +1225,19 @@ static int sscape_pnp_detect(struct pnp_card_link *pcard,
 	 */
 	idx = get_next_autoindex(idx);
 	if (idx >= SNDRV_CARDS)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/*
 	 * Check that we still have room for another sound card ...
 	 */
 	dev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!pnp_is_active(dev)) {
 		if (pnp_activate_dev(dev) < 0) {
 			snd_printk(KERN_INFO "sscape: device is inactive\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 

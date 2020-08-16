@@ -179,10 +179,10 @@ static int fsl_esai_divisor_cal(struct snd_soc_dai *dai, bool tx, u32 ratio,
 	if (ratio > 2 * 8 * 256 * maxfp || ratio < 2) {
 		dev_err(dai->dev, "the ratio is out of range (2 ~ %d)\n",
 				2 * 8 * 256 * maxfp);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (ratio % 2) {
 		dev_err(dai->dev, "the raio must be even if using upper divider\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ratio /= 2;
@@ -230,7 +230,7 @@ static int fsl_esai_divisor_cal(struct snd_soc_dai *dai, bool tx, u32 ratio,
 
 	if (pm == 999) {
 		dev_err(dai->dev, "failed to calculate proper divisors\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 out:
@@ -274,7 +274,7 @@ static int fsl_esai_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 	if (freq == 0) {
 		dev_err(dai->dev, "%sput freq of HCK%c should not be 0Hz\n",
 			in ? "in" : "out", tx ? 'T' : 'R');
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Bypass divider settings if the requirement doesn't change */
@@ -303,7 +303,7 @@ static int fsl_esai_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		ecr |= esai_priv->synchronous ? ESAI_ECR_ETI : ESAI_ECR_ERI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (IS_ERR(clksrc)) {
@@ -325,7 +325,7 @@ static int fsl_esai_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 	if (ret != 0 && clk_rate / ret < 1000) {
 		dev_err(dai->dev, "failed to derive required HCK%c rate\n",
 				tx ? 'T' : 'R');
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Only EXTAL source can be output directly without using PSR and PM */
@@ -337,7 +337,7 @@ static int fsl_esai_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		/* The ratio should be no less than 2 if using other sources */
 		dev_err(dai->dev, "failed to derive required HCK%c rate\n",
 				tx ? 'T' : 'R');
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = fsl_esai_divisor_cal(dai, tx, ratio, false, 0);
@@ -382,13 +382,13 @@ static int fsl_esai_set_bclk(struct snd_soc_dai *dai, bool tx, u32 freq)
 	if (sub != 0 && hck_rate / sub < 1000) {
 		dev_err(dai->dev, "failed to derive required SCK%c rate\n",
 				tx ? 'T' : 'R');
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The ratio should be contented by FP alone if bypassing PM and PSR */
 	if (!esai_priv->sck_div[tx] && (ratio > 16 || ratio == 0)) {
 		dev_err(dai->dev, "the ratio is out of range (1 ~ 16)\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = fsl_esai_divisor_cal(dai, tx, ratio, true,
@@ -453,7 +453,7 @@ static int fsl_esai_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		xccr |= ESAI_xCCR_xCKP | ESAI_xCCR_xHCKP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock inversion */
@@ -474,7 +474,7 @@ static int fsl_esai_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		xccr ^= ESAI_xCCR_xCKP | ESAI_xCCR_xHCKP | ESAI_xCCR_xFSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	esai_priv->slave_mode = false;
@@ -494,7 +494,7 @@ static int fsl_esai_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		xccr |= ESAI_xCCR_xFSD | ESAI_xCCR_xCKD;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask = ESAI_xCR_xFSL | ESAI_xCR_xFSR | ESAI_xCR_xWA;
@@ -778,7 +778,7 @@ static int fsl_esai_trigger(struct snd_pcm_substream *substream, int cmd,
 		spin_unlock_irqrestore(&esai_priv->lock, lock_flags);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -965,7 +965,7 @@ static int fsl_esai_probe(struct platform_device *pdev)
 	esai_priv->soc = of_device_get_match_data(&pdev->dev);
 	if (!esai_priv->soc) {
 		dev_err(&pdev->dev, "failed to get soc data\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* Get the addresses and IRQ */

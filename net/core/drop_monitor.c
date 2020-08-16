@@ -326,7 +326,7 @@ static int net_dm_hw_entry_put(struct sk_buff *msg,
 
 	attr = nla_nest_start(msg, NET_DM_ATTR_HW_ENTRY);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_string(msg, NET_DM_ATTR_HW_TRAP_NAME, hw_entry->trap_name))
 		goto nla_put_failure;
@@ -340,7 +340,7 @@ static int net_dm_hw_entry_put(struct sk_buff *msg,
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int net_dm_hw_entries_put(struct sk_buff *msg,
@@ -351,7 +351,7 @@ static int net_dm_hw_entries_put(struct sk_buff *msg,
 
 	attr = nla_nest_start(msg, NET_DM_ATTR_HW_ENTRIES);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i < hw_entries->num_entries; i++) {
 		int rc;
@@ -367,7 +367,7 @@ static int net_dm_hw_entries_put(struct sk_buff *msg,
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int
@@ -381,7 +381,7 @@ net_dm_hw_summary_report_fill(struct sk_buff *msg,
 	hdr = genlmsg_put(msg, 0, 0, &net_drop_monitor_family, 0,
 			  NET_DM_CMD_ALERT);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/* We need to put the ancillary header in order not to break user
 	 * space.
@@ -399,7 +399,7 @@ net_dm_hw_summary_report_fill(struct sk_buff *msg,
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void net_dm_hw_summary_work(struct work_struct *work)
@@ -575,7 +575,7 @@ static int net_dm_packet_report_in_port_put(struct sk_buff *msg, int ifindex,
 
 	attr = nla_nest_start(msg, NET_DM_ATTR_IN_PORT);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (ifindex &&
 	    nla_put_u32(msg, NET_DM_ATTR_PORT_NETDEV_IFINDEX, ifindex))
@@ -590,7 +590,7 @@ static int net_dm_packet_report_in_port_put(struct sk_buff *msg, int ifindex,
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int net_dm_packet_report_fill(struct sk_buff *msg, struct sk_buff *skb,
@@ -605,7 +605,7 @@ static int net_dm_packet_report_fill(struct sk_buff *msg, struct sk_buff *skb,
 	hdr = genlmsg_put(msg, 0, 0, &net_drop_monitor_family, 0,
 			  NET_DM_CMD_PACKET_ALERT);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u16(msg, NET_DM_ATTR_ORIGIN, NET_DM_ORIGIN_SW))
 		goto nla_put_failure;
@@ -647,7 +647,7 @@ out:
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 #define NET_DM_MAX_PACKET_SIZE (0xffff - NLA_HDRLEN - NLA_ALIGNTO)
@@ -752,7 +752,7 @@ static int net_dm_hw_packet_report_fill(struct sk_buff *msg,
 	hdr = genlmsg_put(msg, 0, 0, &net_drop_monitor_family, 0,
 			  NET_DM_CMD_PACKET_ALERT);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u16(msg, NET_DM_ATTR_ORIGIN, NET_DM_ORIGIN_HW))
 		goto nla_put_failure;
@@ -807,7 +807,7 @@ out:
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static struct net_dm_hw_metadata *
@@ -1005,14 +1005,14 @@ static int net_dm_hw_monitor_start(struct netlink_ext_ack *extack)
 
 	if (monitor_hw) {
 		NL_SET_ERR_MSG_MOD(extack, "Hardware monitoring already enabled");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	ops = net_dm_alert_ops_arr[net_dm_alert_mode];
 
 	if (!try_module_get(THIS_MODULE)) {
 		NL_SET_ERR_MSG_MOD(extack, "Failed to take reference on module");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	for_each_possible_cpu(cpu) {
@@ -1073,7 +1073,7 @@ static int net_dm_trace_on_set(struct netlink_ext_ack *extack)
 
 	if (!try_module_get(THIS_MODULE)) {
 		NL_SET_ERR_MSG_MOD(extack, "Failed to take reference on module");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	for_each_possible_cpu(cpu) {
@@ -1153,7 +1153,7 @@ static int set_all_monitor_traces(int state, struct netlink_ext_ack *extack)
 
 	if (state == trace_state) {
 		NL_SET_ERR_MSG_MOD(extack, "Trace state already set to requested state");
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	switch (state) {
@@ -1171,7 +1171,7 @@ static int set_all_monitor_traces(int state, struct netlink_ext_ack *extack)
 	if (!rc)
 		trace_state = state;
 	else
-		rc = -EINPROGRESS;
+		rc = -ERR(EINPROGRESS);
 
 	return rc;
 }
@@ -1194,7 +1194,7 @@ static int net_dm_alert_mode_get_from_info(struct genl_info *info,
 		*p_alert_mode = val;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1212,7 +1212,7 @@ static int net_dm_alert_mode_set(struct genl_info *info)
 	rc = net_dm_alert_mode_get_from_info(info, &alert_mode);
 	if (rc) {
 		NL_SET_ERR_MSG_MOD(extack, "Invalid alert mode");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	net_dm_alert_mode = alert_mode;
@@ -1244,7 +1244,7 @@ static int net_dm_cmd_config(struct sk_buff *skb,
 
 	if (net_dm_is_monitoring()) {
 		NL_SET_ERR_MSG_MOD(extack, "Cannot configure drop monitor during monitoring");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	rc = net_dm_alert_mode_set(info);
@@ -1315,7 +1315,7 @@ static int net_dm_cmd_trace(struct sk_buff *skb,
 		return 0;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int net_dm_config_fill(struct sk_buff *msg, struct genl_info *info)
@@ -1325,7 +1325,7 @@ static int net_dm_config_fill(struct sk_buff *msg, struct genl_info *info)
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq,
 			  &net_drop_monitor_family, 0, NET_DM_CMD_CONFIG_NEW);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u8(msg, NET_DM_ATTR_ALERT_MODE, net_dm_alert_mode))
 		goto nla_put_failure;
@@ -1342,7 +1342,7 @@ static int net_dm_config_fill(struct sk_buff *msg, struct genl_info *info)
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int net_dm_cmd_config_get(struct sk_buff *skb, struct genl_info *info)
@@ -1394,7 +1394,7 @@ static int net_dm_stats_put(struct sk_buff *msg)
 
 	attr = nla_nest_start(msg, NET_DM_ATTR_STATS);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u64_64bit(msg, NET_DM_ATTR_STATS_DROPPED,
 			      stats.dropped, NET_DM_ATTR_PAD))
@@ -1406,7 +1406,7 @@ static int net_dm_stats_put(struct sk_buff *msg)
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void net_dm_hw_stats_read(struct net_dm_stats *stats)
@@ -1438,7 +1438,7 @@ static int net_dm_hw_stats_put(struct sk_buff *msg)
 
 	attr = nla_nest_start(msg, NET_DM_ATTR_HW_STATS);
 	if (!attr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u64_64bit(msg, NET_DM_ATTR_STATS_DROPPED,
 			      stats.dropped, NET_DM_ATTR_PAD))
@@ -1450,7 +1450,7 @@ static int net_dm_hw_stats_put(struct sk_buff *msg)
 
 nla_put_failure:
 	nla_nest_cancel(msg, attr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int net_dm_stats_fill(struct sk_buff *msg, struct genl_info *info)
@@ -1461,7 +1461,7 @@ static int net_dm_stats_fill(struct sk_buff *msg, struct genl_info *info)
 	hdr = genlmsg_put(msg, info->snd_portid, info->snd_seq,
 			  &net_drop_monitor_family, 0, NET_DM_CMD_STATS_NEW);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rc = net_dm_stats_put(msg);
 	if (rc)
@@ -1477,7 +1477,7 @@ static int net_dm_stats_fill(struct sk_buff *msg, struct genl_info *info)
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int net_dm_cmd_stats_get(struct sk_buff *skb, struct genl_info *info)
@@ -1665,7 +1665,7 @@ static int __init init_net_drop_monitor(void)
 
 	if (sizeof(void *) > 8) {
 		pr_err("Unable to store program counters on this arch, Drop monitor failed\n");
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	rc = genl_register_family(&net_drop_monitor_family);

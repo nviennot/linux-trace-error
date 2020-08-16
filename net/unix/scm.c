@@ -105,7 +105,7 @@ int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
 	int i;
 
 	if (too_many_unix_fds(current))
-		return -ETOOMANYREFS;
+		return -ERR(ETOOMANYREFS);
 
 	/*
 	 * Need to duplicate file references for the sake of garbage

@@ -165,7 +165,7 @@ int snd_card_new(struct device *parent, int idx, const char *xid,
 	int err;
 
 	if (snd_BUG_ON(!card_ret))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*card_ret = NULL;
 
 	if (extra_size < 0)
@@ -184,12 +184,12 @@ int snd_card_new(struct device *parent, int idx, const char *xid,
 	if (idx < 0) /* if not matched, assign an empty slot */
 		idx = get_slot_from_bitmask(idx, check_empty_slot, module);
 	if (idx < 0)
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	else if (idx < snd_ecards_limit) {
 		if (test_bit(idx, snd_cards_lock))
-			err = -EBUSY;	/* invalid */
+			err = -ERR(EBUSY);	/* invalid */
 	} else if (idx >= SNDRV_CARDS)
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	if (err < 0) {
 		mutex_unlock(&snd_card_mutex);
 		dev_err(parent, "cannot find the slot for index %d (range 0-%i), error: %d\n",
@@ -287,19 +287,19 @@ int snd_card_locked(int card)
 
 static loff_t snd_disconnect_llseek(struct file *file, loff_t offset, int orig)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static ssize_t snd_disconnect_read(struct file *file, char __user *buf,
 				   size_t count, loff_t *offset)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static ssize_t snd_disconnect_write(struct file *file, const char __user *buf,
 				    size_t count, loff_t *offset)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_disconnect_release(struct inode *inode, struct file *file)
@@ -333,17 +333,17 @@ static __poll_t snd_disconnect_poll(struct file * file, poll_table * wait)
 static long snd_disconnect_ioctl(struct file *file,
 				 unsigned int cmd, unsigned long arg)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_disconnect_mmap(struct file *file, struct vm_area_struct *vma)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int snd_disconnect_fasync(int fd, struct file *file, int on)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static const struct file_operations snd_shutdown_f_ops =
@@ -378,7 +378,7 @@ int snd_card_disconnect(struct snd_card *card)
 	struct snd_monitor_file *mfile;
 
 	if (!card)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&card->files_lock);
 	if (card->shutdown) {
@@ -667,14 +667,14 @@ card_id_store_attr(struct device *dev, struct device_attribute *attr,
 	for (idx = 0; idx < copy; idx++) {
 		c = buf[idx];
 		if (!isalnum(c) && c != '_' && c != '-')
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	memcpy(buf1, buf, copy);
 	buf1[copy] = '\0';
 	mutex_lock(&snd_card_mutex);
 	if (!card_id_ok(NULL, buf1)) {
 		mutex_unlock(&snd_card_mutex);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	strcpy(card->id, buf1);
 	snd_info_card_id_change(card);
@@ -724,7 +724,7 @@ int snd_card_add_dev_attr(struct snd_card *card,
 	}
 
 	dev_err(card->dev, "Too many groups assigned\n");
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 EXPORT_SYMBOL_GPL(snd_card_add_dev_attr);
 
@@ -744,7 +744,7 @@ int snd_card_register(struct snd_card *card)
 	int err;
 
 	if (snd_BUG_ON(!card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!card->registered) {
 		err = device_add(&card->card_dev);
@@ -931,7 +931,7 @@ int snd_card_file_add(struct snd_card *card, struct file *file)
 	if (card->shutdown) {
 		spin_unlock(&card->files_lock);
 		kfree(mfile);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	list_add(&mfile->list, &card->files_list);
 	get_device(&card->card_dev);
@@ -975,7 +975,7 @@ int snd_card_file_remove(struct snd_card *card, struct file *file)
 	spin_unlock(&card->files_lock);
 	if (!found) {
 		dev_err(card->dev, "card file remove problem (%p)\n", file);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	kfree(found);
 	put_device(&card->card_dev);
@@ -1005,7 +1005,7 @@ int snd_power_wait(struct snd_card *card, unsigned int power_state)
 	add_wait_queue(&card->power_sleep, &wait);
 	while (1) {
 		if (card->shutdown) {
-			result = -ENODEV;
+			result = -ERR(ENODEV);
 			break;
 		}
 		if (snd_power_get_state(card) == power_state)

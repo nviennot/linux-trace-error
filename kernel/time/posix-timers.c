@@ -142,7 +142,7 @@ static int posix_timer_add(struct k_itimer *timer)
 	struct signal_struct *sig = current->signal;
 	int first_free_id = sig->posix_timer_id;
 	struct hlist_head *head;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	do {
 		spin_lock(&hash_lock);
@@ -155,7 +155,7 @@ static int posix_timer_add(struct k_itimer *timer)
 			sig->posix_timer_id = 0;
 		if ((sig->posix_timer_id == first_free_id) && (ret == -ENOENT))
 			/* Loop over all possible ids completed */
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		spin_unlock(&hash_lock);
 	} while (ret == -ENOENT);
 	return ret;
@@ -504,13 +504,13 @@ static int do_timer_create(clockid_t which_clock, struct sigevent *event,
 	int it_id_set = IT_ID_NOT_SET;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!kc->timer_create)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	new_timer = alloc_posix_timer();
 	if (unlikely(!new_timer))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	spin_lock_init(&new_timer->it_lock);
 	new_timer_id = posix_timer_add(new_timer);
@@ -530,7 +530,7 @@ static int do_timer_create(clockid_t which_clock, struct sigevent *event,
 		new_timer->it_pid = get_pid(good_sigevent(event));
 		rcu_read_unlock();
 		if (!new_timer->it_pid) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out;
 		}
 		new_timer->it_sigev_notify     = event->sigev_notify;
@@ -721,12 +721,12 @@ static int do_timer_gettime(timer_t timer_id,  struct itimerspec64 *setting)
 
 	timr = lock_timer(timer_id, &flags);
 	if (!timr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(setting, 0, sizeof(*setting));
 	kc = timr->kclock;
 	if (WARN_ON_ONCE(!kc || !kc->timer_get))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	else
 		kc->timer_get(timr, setting);
 
@@ -782,7 +782,7 @@ SYSCALL_DEFINE1(timer_getoverrun, timer_t, timer_id)
 
 	timr = lock_timer(timer_id, &flags);
 	if (!timr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	overrun = timer_overrun_to_int(timr, 0);
 	unlock_timer(timr, flags);
@@ -906,7 +906,7 @@ static int do_timer_settime(timer_t timer_id, int tmr_flags,
 
 	if (!timespec64_valid(&new_spec64->it_interval) ||
 	    !timespec64_valid(&new_spec64->it_value))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (old_spec64)
 		memset(old_spec64, 0, sizeof(*old_spec64));
@@ -914,11 +914,11 @@ static int do_timer_settime(timer_t timer_id, int tmr_flags,
 	timr = lock_timer(timer_id, &flags);
 retry:
 	if (!timr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kc = timr->kclock;
 	if (WARN_ON_ONCE(!kc || !kc->timer_set))
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	else
 		error = kc->timer_set(timr, tmr_flags, new_spec64, old_spec64);
 
@@ -944,7 +944,7 @@ SYSCALL_DEFINE4(timer_settime, timer_t, timer_id, int, flags,
 	int error = 0;
 
 	if (!new_setting)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_itimerspec64(&new_spec, new_setting))
 		return -EFAULT;
@@ -967,7 +967,7 @@ SYSCALL_DEFINE4(timer_settime32, timer_t, timer_id, int, flags,
 	int error = 0;
 
 	if (!new)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_old_itimerspec32(&new_spec, new))
 		return -EFAULT;
 
@@ -996,7 +996,7 @@ static inline int timer_delete_hook(struct k_itimer *timer)
 	const struct k_clock *kc = timer->kclock;
 
 	if (WARN_ON_ONCE(!kc || !kc->timer_del))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return kc->timer_del(timer);
 }
 
@@ -1010,7 +1010,7 @@ SYSCALL_DEFINE1(timer_delete, timer_t, timer_id)
 
 retry_delete:
 	if (!timer)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(timer_delete_hook(timer) == TIMER_RETRY)) {
 		/* Unlocks and relocks the timer if it still exists */
@@ -1071,7 +1071,7 @@ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
 	struct timespec64 new_tp;
 
 	if (!kc || !kc->clock_set)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_timespec64(&new_tp, tp))
 		return -EFAULT;
@@ -1087,7 +1087,7 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 	int error;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = kc->clock_get_timespec(which_clock, &kernel_tp);
 
@@ -1102,9 +1102,9 @@ int do_clock_adjtime(const clockid_t which_clock, struct __kernel_timex * ktx)
 	const struct k_clock *kc = clockid_to_kclock(which_clock);
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!kc->clock_adj)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return kc->clock_adj(which_clock, ktx);
 }
@@ -1134,7 +1134,7 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock,
 	int error;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = kc->clock_getres(which_clock, &rtn_tp);
 
@@ -1153,7 +1153,7 @@ SYSCALL_DEFINE2(clock_settime32, clockid_t, which_clock,
 	struct timespec64 ts;
 
 	if (!kc || !kc->clock_set)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_old_timespec32(&ts, tp))
 		return -EFAULT;
@@ -1169,7 +1169,7 @@ SYSCALL_DEFINE2(clock_gettime32, clockid_t, which_clock,
 	int err;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = kc->clock_get_timespec(which_clock, &ts);
 
@@ -1205,7 +1205,7 @@ SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
 	int err;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = kc->clock_getres(which_clock, &ts);
 	if (!err && tp && put_old_timespec32(&ts, tp))
@@ -1250,15 +1250,15 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 	struct timespec64 t;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!kc->nsleep)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (get_timespec64(&t, rqtp))
 		return -EFAULT;
 
 	if (!timespec64_valid(&t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
@@ -1277,15 +1277,15 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
 	struct timespec64 t;
 
 	if (!kc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!kc->nsleep)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (get_old_timespec32(&t, rqtp))
 		return -EFAULT;
 
 	if (!timespec64_valid(&t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;

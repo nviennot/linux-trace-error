@@ -190,7 +190,7 @@ static int __init z2_init(void)
 	int ret;
 
 	if (!machine_is_zipit2())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	z2_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!z2_snd_device)

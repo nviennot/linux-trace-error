@@ -80,7 +80,7 @@ static void sco_sock_timeout(struct timer_list *t)
 	BT_DBG("sock %p state %d", sk, sk->sk_state);
 
 	bh_lock_sock(sk);
-	sk->sk_err = ETIMEDOUT;
+	sk->sk_err = ERR(ETIMEDOUT);
 	sk->sk_state_change(sk);
 	bh_unlock_sock(sk);
 
@@ -203,7 +203,7 @@ static int sco_chan_add(struct sco_conn *conn, struct sock *sk,
 
 	sco_conn_lock(conn);
 	if (conn->sk)
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	else
 		__sco_chan_add(conn, sk, parent);
 
@@ -222,7 +222,7 @@ static int sco_connect(struct sock *sk)
 
 	hdev = hci_get_route(&sco_pi(sk)->dst, &sco_pi(sk)->src, BDADDR_BREDR);
 	if (!hdev)
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	hci_dev_lock(hdev);
 
@@ -233,7 +233,7 @@ static int sco_connect(struct sock *sk)
 
 	if (sco_pi(sk)->setting == BT_VOICE_TRANSPARENT &&
 	    (!lmp_transp_capable(hdev) || !lmp_esco_capable(hdev))) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -280,7 +280,7 @@ static int sco_send_frame(struct sock *sk, struct msghdr *msg, int len)
 
 	/* Check outgoing MTU */
 	if (len > conn->mtu)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("sk %p len %d", sk, len);
 
@@ -504,7 +504,7 @@ static int sco_sock_create(struct net *net, struct socket *sock, int protocol,
 	sock->state = SS_UNCONNECTED;
 
 	if (sock->type != SOCK_SEQPACKET)
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 
 	sock->ops = &sco_sock_ops;
 
@@ -525,19 +525,19 @@ static int sco_sock_bind(struct socket *sock, struct sockaddr *addr,
 
 	if (!addr || addr_len < sizeof(struct sockaddr_sco) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	BT_DBG("sk %p %pMR", sk, &sa->sco_bdaddr);
 
 	lock_sock(sk);
 
 	if (sk->sk_state != BT_OPEN) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
 	if (sk->sk_type != SOCK_SEQPACKET) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -560,13 +560,13 @@ static int sco_sock_connect(struct socket *sock, struct sockaddr *addr, int alen
 
 	if (alen < sizeof(struct sockaddr_sco) ||
 	    addr->sa_family != AF_BLUETOOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (sk->sk_type != SOCK_SEQPACKET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -596,19 +596,19 @@ static int sco_sock_listen(struct socket *sock, int backlog)
 	lock_sock(sk);
 
 	if (sk->sk_state != BT_BOUND) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
 	if (sk->sk_type != SOCK_SEQPACKET) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
 	write_lock(&sco_sk_list.lock);
 
 	if (__sco_get_sock_listen_by_addr(src)) {
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		goto unlock;
 	}
 
@@ -643,7 +643,7 @@ static int sco_sock_accept(struct socket *sock, struct socket *newsock,
 	add_wait_queue_exclusive(sk_sleep(sk), &wait);
 	while (1) {
 		if (sk->sk_state != BT_LISTEN) {
-			err = -EBADFD;
+			err = -ERR(EBADFD);
 			break;
 		}
 
@@ -652,7 +652,7 @@ static int sco_sock_accept(struct socket *sock, struct socket *newsock,
 			break;
 
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		}
 
@@ -711,14 +711,14 @@ static int sco_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 		return err;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
 	if (sk->sk_state == BT_CONNECTED)
 		err = sco_send_frame(sk, msg, len);
 	else
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 
 	release_sock(sk);
 	return err;
@@ -806,7 +806,7 @@ static int sco_sock_setsockopt(struct socket *sock, int level, int optname,
 
 	case BT_DEFER_SETUP:
 		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -824,7 +824,7 @@ static int sco_sock_setsockopt(struct socket *sock, int level, int optname,
 	case BT_VOICE:
 		if (sk->sk_state != BT_OPEN && sk->sk_state != BT_BOUND &&
 		    sk->sk_state != BT_CONNECT2) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -839,7 +839,7 @@ static int sco_sock_setsockopt(struct socket *sock, int level, int optname,
 		/* Explicitly check for these values */
 		if (voice.setting != BT_VOICE_TRANSPARENT &&
 		    voice.setting != BT_VOICE_CVSD_16BIT) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -847,7 +847,7 @@ static int sco_sock_setsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -875,7 +875,7 @@ static int sco_sock_getsockopt_old(struct socket *sock, int optname,
 		if (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
 		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -893,7 +893,7 @@ static int sco_sock_getsockopt_old(struct socket *sock, int optname,
 		if (sk->sk_state != BT_CONNECTED &&
 		    !(sk->sk_state == BT_CONNECT2 &&
 		      test_bit(BT_SK_DEFER_SETUP, &bt_sk(sk)->flags))) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -908,7 +908,7 @@ static int sco_sock_getsockopt_old(struct socket *sock, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -938,7 +938,7 @@ static int sco_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_DEFER_SETUP:
 		if (sk->sk_state != BT_BOUND && sk->sk_state != BT_LISTEN) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 
@@ -959,7 +959,7 @@ static int sco_sock_getsockopt(struct socket *sock, int level, int optname,
 
 	case BT_PHY:
 		if (sk->sk_state != BT_CONNECTED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			break;
 		}
 
@@ -970,7 +970,7 @@ static int sco_sock_getsockopt(struct socket *sock, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 

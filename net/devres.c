@@ -75,7 +75,7 @@ int devm_register_netdev(struct device *dev, struct net_device *ndev)
 	 */
 	if (WARN_ON(!devres_find(dev, devm_free_netdev,
 				 netdev_devres_match, ndev)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dr = devres_alloc(devm_netdev_release, sizeof(*dr), GFP_KERNEL);
 	if (!dr)

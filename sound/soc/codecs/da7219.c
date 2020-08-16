@@ -860,7 +860,7 @@ static int da7219_dai_event(struct snd_soc_dapm_widget *w,
 
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -895,7 +895,7 @@ static int da7219_mixout_event(struct snd_soc_dapm_widget *w,
 		min_gain_mask = DA7219_HP_R_AMP_MIN_GAIN_EN_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -1167,7 +1167,7 @@ static int da7219_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if ((freq < 2000000) || (freq > 54000000)) {
 		dev_err(codec_dai->dev, "Unsupported MCLK value %d\n",
 			freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&da7219->pll_lock);
@@ -1185,7 +1185,7 @@ static int da7219_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	default:
 		dev_err(codec_dai->dev, "Unknown clock source %d\n", clk_id);
 		mutex_unlock(&da7219->pll_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	da7219->clk_src = clk_id;
@@ -1221,7 +1221,7 @@ int da7219_set_pll(struct snd_soc_component *component, int source, unsigned int
 	if (da7219->mclk_rate < 2000000) {
 		dev_err(component->dev, "PLL input clock %d below valid range\n",
 			da7219->mclk_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (da7219->mclk_rate <= 4500000) {
 		indiv_bits = DA7219_PLL_INDIV_2_TO_4_5_MHZ;
 		indiv = DA7219_PLL_INDIV_2_TO_4_5_MHZ_VAL;
@@ -1240,7 +1240,7 @@ int da7219_set_pll(struct snd_soc_component *component, int source, unsigned int
 	} else {
 		dev_err(component->dev, "PLL input clock %d above valid range\n",
 			da7219->mclk_rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	freq_ref = (da7219->mclk_rate / indiv);
 	pll_ctrl = indiv_bits;
@@ -1261,7 +1261,7 @@ int da7219_set_pll(struct snd_soc_component *component, int source, unsigned int
 		break;
 	default:
 		dev_err(component->dev, "Invalid PLL config\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Calculate dividers for PLL */
@@ -1310,7 +1310,7 @@ static int da7219_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		da7219->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1331,7 +1331,7 @@ static int da7219_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 					DA7219_DAI_CLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_DSP_B:
@@ -1349,11 +1349,11 @@ static int da7219_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 			dai_clk_mode |= DA7219_DAI_WCLK_POL_INV;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1370,7 +1370,7 @@ static int da7219_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		dai_ctrl |= DA7219_DAI_FORMAT_DSP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, DA7219_DAI_CLK_MODE,
@@ -1401,7 +1401,7 @@ static int da7219_set_bclks_per_wclk(struct snd_soc_component *component,
 		bclks_per_wclk = DA7219_DAI_BCLKS_PER_WCLK_256;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, DA7219_DAI_CLK_MODE,
@@ -1443,7 +1443,7 @@ static int da7219_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		dev_err(component->dev,
 			"Invalid number of slots, max = %d\n",
 			DA7219_DAI_TDM_MAX_SLOTS);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1453,7 +1453,7 @@ static int da7219_set_dai_tdm_slot(struct snd_soc_dai *dai,
 	offset = slot_offset * slot_width;
 	if (offset > DA7219_DAI_OFFSET_MAX) {
 		dev_err(component->dev, "Invalid frame offset %d\n", offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1539,7 +1539,7 @@ static int da7219_set_sr(struct snd_soc_component *component,
 		fs = DA7219_SR_96000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, DA7219_SR, fs);
@@ -1575,7 +1575,7 @@ static int da7219_hw_params(struct snd_pcm_substream *substream,
 		dai_ctrl |= DA7219_DAI_WORD_LENGTH_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	channels = params_channels(params);
@@ -1583,7 +1583,7 @@ static int da7219_hw_params(struct snd_pcm_substream *substream,
 		dev_err(component->dev,
 			"Invalid number of channels, only 1 to %d supported\n",
 			DA7219_DAI_CH_NUM_MAX);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai_ctrl |= channels << DA7219_DAI_CH_NUM_SHIFT;
 
@@ -1629,7 +1629,7 @@ static int da7219_hw_params(struct snd_pcm_substream *substream,
 			if ((bclk_rate / sr) < frame_size) {
 				dev_err(component->dev,
 					"BCLK rate mismatch against frame size");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			ret = clk_set_rate(bclk, bclk_rate);
@@ -1896,7 +1896,7 @@ static int da7219_wclk_prepare(struct clk_hw *hw)
 	struct snd_soc_component *component = da7219->component;
 
 	if (!da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, DA7219_DAI_CLK_MODE,
 				      DA7219_DAI_CLK_EN_MASK,
@@ -1928,7 +1928,7 @@ static int da7219_wclk_is_prepared(struct clk_hw *hw)
 	u8 clk_reg;
 
 	if (!da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	clk_reg = snd_soc_component_read32(component, DA7219_DAI_CLK_MODE);
 
@@ -1980,7 +1980,7 @@ static long da7219_wclk_round_rate(struct clk_hw *hw, unsigned long rate,
 			     dai_clks_hw[DA7219_DAI_WCLK_IDX]);
 
 	if (!da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rate < 11025)
 		return 8000;
@@ -2015,7 +2015,7 @@ static int da7219_wclk_set_rate(struct clk_hw *hw, unsigned long rate,
 	struct snd_soc_component *component = da7219->component;
 
 	if (!da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return da7219_set_sr(component, rate);
 }
@@ -2069,7 +2069,7 @@ static long da7219_bclk_round_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long factor;
 
 	if (!*parent_rate || !da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We don't allow changing the parent rate as some BCLK rates can be
@@ -2093,7 +2093,7 @@ static int da7219_bclk_set_rate(struct clk_hw *hw, unsigned long rate,
 	unsigned long factor;
 
 	if (!da7219->master)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	factor = da7219_bclk_get_factor(rate, parent_rate);
 
@@ -2153,7 +2153,7 @@ static int da7219_register_dai_clks(struct snd_soc_component *component)
 			break;
 		default:
 			dev_err(dev, "Invalid clock index\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err;
 		}
 

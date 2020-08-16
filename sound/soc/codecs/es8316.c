@@ -408,12 +408,12 @@ static int es8316_set_dai_fmt(struct snd_soc_dai *codec_dai,
 
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
 		dev_err(component->dev, "Codec driver only supports slave mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S) {
 		dev_err(component->dev, "Codec driver only supports I2S format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Clock inversion */
@@ -431,7 +431,7 @@ static int es8316_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		serdata2 |= ES8316_SERDATA2_ADCLRP;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask = ES8316_SERDATA1_MASTER | ES8316_SERDATA1_BCLK_INV;
@@ -481,7 +481,7 @@ static int es8316_pcm_hw_params(struct snd_pcm_substream *substream,
 			break;
 	}
 	if (i == NR_SUPPORTED_MCLK_LRCK_RATIOS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (params_format(params)) {
 	case SNDRV_PCM_FORMAT_S16_LE:
@@ -497,7 +497,7 @@ static int es8316_pcm_hw_params(struct snd_pcm_substream *substream,
 		wordlen = ES8316_SERDATA2_LEN_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, ES8316_SERDATA_DAC,
@@ -819,7 +819,7 @@ static int es8316_i2c_probe(struct i2c_client *i2c_client,
 		disable_irq(es8316->irq);
 	} else {
 		dev_warn(dev, "Failed to get IRQ %d: %d\n", es8316->irq, ret);
-		es8316->irq = -ENXIO;
+		es8316->irq = -ERR(ENXIO);
 	}
 
 	return devm_snd_soc_register_component(&i2c_client->dev,

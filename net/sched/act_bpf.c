@@ -101,12 +101,12 @@ static int tcf_bpf_dump_bpf_info(const struct tcf_bpf *prog,
 	struct nlattr *nla;
 
 	if (nla_put_u16(skb, TCA_ACT_BPF_OPS_LEN, prog->bpf_num_ops))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nla = nla_reserve(skb, TCA_ACT_BPF_OPS, prog->bpf_num_ops *
 			  sizeof(struct sock_filter));
 	if (nla == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), prog->bpf_ops, nla_len(nla));
 
@@ -120,14 +120,14 @@ static int tcf_bpf_dump_ebpf_info(const struct tcf_bpf *prog,
 
 	if (prog->bpf_name &&
 	    nla_put_string(skb, TCA_ACT_BPF_NAME, prog->bpf_name))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (nla_put_u32(skb, TCA_ACT_BPF_ID, prog->filter->aux->id))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	nla = nla_reserve(skb, TCA_ACT_BPF_TAG, sizeof(prog->filter->tag));
 	if (nla == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	memcpy(nla_data(nla), prog->filter->tag, nla_len(nla));
 
@@ -193,11 +193,11 @@ static int tcf_bpf_init_from_ops(struct nlattr **tb, struct tcf_bpf_cfg *cfg)
 
 	bpf_num_ops = nla_get_u16(tb[TCA_ACT_BPF_OPS_LEN]);
 	if (bpf_num_ops	> BPF_MAXINSNS || bpf_num_ops == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bpf_size = bpf_num_ops * sizeof(*bpf_ops);
 	if (bpf_size != nla_len(tb[TCA_ACT_BPF_OPS]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bpf_ops = kmemdup(nla_data(tb[TCA_ACT_BPF_OPS]), bpf_size, GFP_KERNEL);
 	if (bpf_ops == NULL)
@@ -292,7 +292,7 @@ static int tcf_bpf_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nla_parse_nested_deprecated(tb, TCA_ACT_BPF_MAX, nla,
 					  act_bpf_policy, NULL);
@@ -300,7 +300,7 @@ static int tcf_bpf_init(struct net *net, struct nlattr *nla,
 		return ret;
 
 	if (!tb[TCA_ACT_BPF_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_ACT_BPF_PARMS]);
 	index = parm->index;
@@ -321,7 +321,7 @@ static int tcf_bpf_init(struct net *net, struct nlattr *nla,
 
 		if (!replace) {
 			tcf_idr_release(*act, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	} else {
 		return ret;
@@ -335,7 +335,7 @@ static int tcf_bpf_init(struct net *net, struct nlattr *nla,
 	is_ebpf = tb[TCA_ACT_BPF_FD];
 
 	if ((!is_bpf && !is_ebpf) || (is_bpf && is_ebpf)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto put_chain;
 	}
 

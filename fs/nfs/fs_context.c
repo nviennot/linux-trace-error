@@ -807,7 +807,7 @@ static int nfs_parse_source(struct fs_context *fc,
 
 	if (unlikely(!dev_name || !*dev_name)) {
 		dfprintk(MOUNT, "NFS: device name not specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Is the host name protected with square brakcets? */
@@ -858,10 +858,10 @@ out_nomem:
 	return -ENOMEM;
 out_hostname:
 	nfs_errorf(fc, "NFS: server hostname too long");
-	return -ENAMETOOLONG;
+	return -ERR(ENAMETOOLONG);
 out_path:
 	nfs_errorf(fc, "NFS: export pathname too long");
-	return -ENAMETOOLONG;
+	return -ERR(ENAMETOOLONG);
 }
 
 static inline bool is_remount_fc(struct fs_context *fc)
@@ -997,7 +997,7 @@ static int nfs23_parse_monolithic(struct fs_context *fc,
 			if (ret < 0)
 				return ret;
 #else
-			return -EINVAL;
+			return -ERR(EINVAL);
 #endif
 		}
 
@@ -1258,7 +1258,7 @@ out_no_device_name:
 	return nfs_invalf(fc, "NFS: Device name not specified");
 out_v4_not_compiled:
 	nfs_errorf(fc, "NFS: NFSv4 is not compiled into kernel");
-	return -EPROTONOSUPPORT;
+	return -ERR(EPROTONOSUPPORT);
 out_invalid_transport_udp:
 	return nfs_invalf(fc, "NFS: Unsupported transport protocol udp");
 out_no_address:

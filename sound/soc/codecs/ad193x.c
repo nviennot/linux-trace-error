@@ -178,7 +178,7 @@ static int ad193x_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		channels = AD193X_16_CHANNELS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(ad193x->regmap, AD193X_DAC_CTRL1,
@@ -215,7 +215,7 @@ static int ad193x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		if (ad193x_has_adc(ad193x))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -236,7 +236,7 @@ static int ad193x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		dac_fmt |= AD193X_DAC_BCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* For DSP_*, LRCLK's polarity must be inverted */
@@ -261,7 +261,7 @@ static int ad193x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS: /* codec clk & frm slave */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ad193x_has_adc(ad193x)) {
@@ -288,7 +288,7 @@ static int ad193x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	if (clk_id == AD193X_SYSCLK_MCLK) {
 		/* MCLK must be 512 x fs */
 		if (dir == SND_SOC_CLOCK_OUT || freq != 24576000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		regmap_update_bits(ad193x->regmap, AD193X_PLL_CLK_CTRL1,
 				   AD193X_PLL_SRC_MASK,
@@ -306,7 +306,7 @@ static int ad193x_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		ad193x->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int ad193x_hw_params(struct snd_pcm_substream *substream,

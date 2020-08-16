@@ -640,7 +640,7 @@ static inline unsigned int trace_call_bpf(struct trace_event_call *call, void *c
 static inline int
 perf_event_attach_bpf_prog(struct perf_event *event, struct bpf_prog *prog)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void perf_event_detach_bpf_prog(struct perf_event *event) { }
@@ -648,15 +648,15 @@ static inline void perf_event_detach_bpf_prog(struct perf_event *event) { }
 static inline int
 perf_event_query_prog_array(struct perf_event *event, void __user *info)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int bpf_probe_register(struct bpf_raw_event_map *btp, struct bpf_prog *p)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int bpf_probe_unregister(struct bpf_raw_event_map *btp, struct bpf_prog *p)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline struct bpf_raw_event_map *bpf_get_raw_tracepoint(const char *name)
 {
@@ -670,7 +670,7 @@ static inline int bpf_get_perf_event_info(const struct perf_event *event,
 					  const char **buf, u64 *probe_offset,
 					  u64 *probe_addr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 

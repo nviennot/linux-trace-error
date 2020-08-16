@@ -20,12 +20,12 @@ static int handle_get_cmd(struct mbox_request *cmd)
 	default:
 		break;
 	}
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static int handle_set_cmd(struct mbox_request *cmd)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static void loop(void)

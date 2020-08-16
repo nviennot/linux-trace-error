@@ -374,7 +374,7 @@ static int wm8510_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8510_CLOCK, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -395,7 +395,7 @@ static int wm8510_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -412,7 +412,7 @@ static int wm8510_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x00018;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -429,7 +429,7 @@ static int wm8510_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0080;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8510_IFACE, iface);

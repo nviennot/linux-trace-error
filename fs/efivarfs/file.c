@@ -24,13 +24,13 @@ static ssize_t efivarfs_file_write(struct file *file,
 	bool set = false;
 
 	if (count < sizeof(attributes))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(&attributes, userbuf, sizeof(attributes)))
 		return -EFAULT;
 
 	if (attributes & ~(EFI_VARIABLE_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = memdup_user(userbuf + sizeof(attributes), datasize);
 	if (IS_ERR(data))
@@ -40,7 +40,7 @@ static ssize_t efivarfs_file_write(struct file *file,
 					  data, &set);
 	if (!set && bytes) {
 		if (bytes == -ENOENT)
-			bytes = -EIO;
+			bytes = -ERR(EIO);
 		goto out;
 	}
 
@@ -138,13 +138,13 @@ efivarfs_ioc_setxflags(struct file *file, void __user *arg)
 	int error;
 
 	if (!inode_owner_or_capable(inode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (copy_from_user(&flags, arg, sizeof(flags)))
 		return -EFAULT;
 
 	if (flags & ~FS_IMMUTABLE_FL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (flags & FS_IMMUTABLE_FL)
 		i_flags |= S_IMMUTABLE;
@@ -179,7 +179,7 @@ efivarfs_file_ioctl(struct file *file, unsigned int cmd, unsigned long p)
 		return efivarfs_ioc_setxflags(file, arg);
 	}
 
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 const struct file_operations efivarfs_file_operations = {

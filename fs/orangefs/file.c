@@ -198,7 +198,7 @@ populate_shared_memory:
 			 */
 			case OP_VFS_STATE_WAITING:
 				if (*offset == 0)
-					ret = -EINTR;
+					ret = -ERR(EINTR);
 				else
 					ret = 0;
 				break;
@@ -209,7 +209,7 @@ populate_shared_memory:
 			 */
 			case OP_VFS_STATE_INPROGR:
 				if (type == ORANGEFS_IO_READ)
-					ret = -EINTR;
+					ret = -ERR(EINTR);
 				else
 					ret = total_size;
 				break;
@@ -397,7 +397,7 @@ static int orangefs_getflags(struct inode *inode, unsigned long *uval)
 static long orangefs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct inode *inode = file_inode(file);
-	int ret = -ENOTTY;
+	int ret = -ERR(ENOTTY);
 	__u64 val = 0;
 	unsigned long uval;
 
@@ -433,7 +433,7 @@ static long orangefs_ioctl(struct file *file, unsigned int cmd, unsigned long ar
 		if ((uval & ~ORANGEFS_MIRROR_FL) &
 		    (~(FS_IMMUTABLE_FL | FS_APPEND_FL | FS_NOATIME_FL))) {
 			gossip_err("orangefs_ioctl: the FS_IOC_SETFLAGS only supports setting one of FS_IMMUTABLE_FL|FS_APPEND_FL|FS_NOATIME_FL\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ret = orangefs_getflags(inode, &old_uval);
 		if (ret)
@@ -460,7 +460,7 @@ static vm_fault_t orangefs_fault(struct vm_fault *vmf)
 	ret = orangefs_inode_getattr(file->f_mapping->host,
 	    ORANGEFS_GETATTR_SIZE);
 	if (ret == -ESTALE)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	if (ret) {
 		gossip_err("%s: orangefs_inode_getattr failed, "
 		    "ret:%d:.\n", __func__, ret);
@@ -582,7 +582,7 @@ static int orangefs_fsync(struct file *file,
  */
 static loff_t orangefs_file_llseek(struct file *file, loff_t offset, int origin)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	struct inode *inode = file_inode(file);
 
 	if (origin == SEEK_END) {
@@ -594,7 +594,7 @@ static loff_t orangefs_file_llseek(struct file *file, loff_t offset, int origin)
 		ret = orangefs_inode_getattr(file->f_mapping->host,
 		    ORANGEFS_GETATTR_SIZE);
 		if (ret == -ESTALE)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		if (ret) {
 			gossip_debug(GOSSIP_FILE_DEBUG,
 				     "%s:%s:%d calling make bad inode\n",
@@ -621,7 +621,7 @@ static loff_t orangefs_file_llseek(struct file *file, loff_t offset, int origin)
  */
 static int orangefs_lock(struct file *filp, int cmd, struct file_lock *fl)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (ORANGEFS_SB(file_inode(filp)->i_sb)->flags & ORANGEFS_OPT_LOCAL_LOCK) {
 		if (cmd == F_GETLK) {

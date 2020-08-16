@@ -102,14 +102,14 @@ static struct inode *ufs_nfs_get_inode(struct super_block *sb, u64 ino, u32 gene
 	struct inode *inode;
 
 	if (ino < UFS_ROOTINO || ino > uspi->s_ncg * uspi->s_ipg)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	inode = ufs_iget(sb, ino);
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 	if (generation && inode->i_generation != generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return inode;
 }
@@ -133,7 +133,7 @@ static struct dentry *ufs_get_parent(struct dentry *child)
 
 	ino = ufs_inode_by_name(d_inode(child), &dot_dot);
 	if (!ino)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	return d_obtain_alias(ufs_iget(child->d_sb, ino));
 }
 
@@ -788,7 +788,7 @@ static int ufs_fill_super(struct super_block *sb, void *data, int silent)
 	unsigned flags;
 	unsigned super_block_offset;
 	unsigned maxsymlen;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	uspi = NULL;
 	ubh = NULL;
@@ -799,7 +799,7 @@ static int ufs_fill_super(struct super_block *sb, void *data, int silent)
 #ifndef CONFIG_UFS_FS_WRITE
 	if (!sb_rdonly(sb)) {
 		pr_err("ufs was compiled with read-only support, can't be mounted as read-write\n");
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 #endif
 		
@@ -1329,14 +1329,14 @@ static int ufs_remount (struct super_block *sb, int *mount_flags, char *data)
 	ufs_set_opt (new_mount_opt, ONERROR_LOCK);
 	if (!ufs_parse_options (data, &new_mount_opt)) {
 		mutex_unlock(&UFS_SB(sb)->s_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!(new_mount_opt & UFS_MOUNT_UFSTYPE)) {
 		new_mount_opt |= ufstype;
 	} else if ((new_mount_opt & UFS_MOUNT_UFSTYPE) != ufstype) {
 		pr_err("ufstype can't be changed during remount\n");
 		mutex_unlock(&UFS_SB(sb)->s_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((bool)(*mount_flags & SB_RDONLY) == sb_rdonly(sb)) {
@@ -1365,7 +1365,7 @@ static int ufs_remount (struct super_block *sb, int *mount_flags, char *data)
 #ifndef CONFIG_UFS_FS_WRITE
 		pr_err("ufs was compiled with read-only support, can't be mounted as read-write\n");
 		mutex_unlock(&UFS_SB(sb)->s_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 #else
 		if (ufstype != UFS_MOUNT_UFSTYPE_SUN && 
 		    ufstype != UFS_MOUNT_UFSTYPE_SUNOS &&
@@ -1374,12 +1374,12 @@ static int ufs_remount (struct super_block *sb, int *mount_flags, char *data)
 		    ufstype != UFS_MOUNT_UFSTYPE_UFS2) {
 			pr_err("this ufstype is read-only supported\n");
 			mutex_unlock(&UFS_SB(sb)->s_lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (!ufs_read_cylinder_structures(sb)) {
 			pr_err("failed during remounting\n");
 			mutex_unlock(&UFS_SB(sb)->s_lock);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		sb->s_flags &= ~SB_RDONLY;
 #endif

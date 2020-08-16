@@ -98,7 +98,7 @@ static inline
 int register_mii_tstamp_controller(struct device *device,
 				   struct mii_timestamping_ctrl *ctrl)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void unregister_mii_tstamp_controller(struct device *device)

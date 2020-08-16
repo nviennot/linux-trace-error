@@ -33,7 +33,7 @@ task_work_add(struct task_struct *task, struct callback_head *work, int notify)
 	do {
 		head = READ_ONCE(task->task_works);
 		if (unlikely(head == &work_exited))
-			return -ESRCH;
+			return -ERR(ESRCH);
 		work->next = head;
 	} while (cmpxchg(&task->task_works, head, work) != head);
 

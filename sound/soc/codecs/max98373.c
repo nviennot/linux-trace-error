@@ -129,7 +129,7 @@ static int max98373_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "DAI invert mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98373->regmap,
@@ -152,7 +152,7 @@ static int max98373_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		format = MAX98373_PCM_FORMAT_TDM_MODE0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98373->regmap,
@@ -193,7 +193,7 @@ static int max98373_set_clock(struct snd_soc_component *component,
 		if (!value) {
 			dev_err(component->dev, "format unsupported %d\n",
 				params_format(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(max98373->regmap,
@@ -305,7 +305,7 @@ static int max98373_dai_hw_params(struct snd_pcm_substream *substream,
 
 	return max98373_set_clock(component, params);
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98373_dai_tdm_slot(struct snd_soc_dai *dai,
@@ -329,7 +329,7 @@ static int max98373_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (bsel == 0) {
 		dev_err(component->dev, "BCLK %d not supported\n",
 			slots * slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98373->regmap,
@@ -351,7 +351,7 @@ static int max98373_dai_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(component->dev, "format unsupported %d\n",
 			slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98373->regmap,
@@ -957,7 +957,7 @@ static int max98373_i2c_probe(struct i2c_client *i2c,
 		if (ret) {
 			dev_err(&i2c->dev, "%s: Failed to request gpio %d\n",
 				__func__, max98373->reset_gpio);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		gpio_direction_output(max98373->reset_gpio, 0);
 		msleep(50);

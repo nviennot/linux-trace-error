@@ -347,7 +347,7 @@ int nilfs_dat_move(struct inode *dat, __u64 vblocknr, sector_t blocknr)
 			  (unsigned long long)le64_to_cpu(entry->de_end));
 		kunmap_atomic(kaddr);
 		brelse(entry_bh);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	WARN_ON(blocknr == 0);
 	entry->de_blocknr = cpu_to_le64(blocknr);
@@ -405,7 +405,7 @@ int nilfs_dat_translate(struct inode *dat, __u64 vblocknr, sector_t *blocknrp)
 	entry = nilfs_palloc_block_get_entry(dat, vblocknr, entry_bh, kaddr);
 	blocknr = le64_to_cpu(entry->de_blocknr);
 	if (blocknr == 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 	*blocknrp = blocknr;
@@ -473,11 +473,11 @@ int nilfs_dat_read(struct super_block *sb, size_t entry_size,
 	if (entry_size > sb->s_blocksize) {
 		nilfs_msg(sb, KERN_ERR, "too large DAT entry size: %zu bytes",
 			  entry_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else if (entry_size < NILFS_MIN_DAT_ENTRY_SIZE) {
 		nilfs_msg(sb, KERN_ERR, "too small DAT entry size: %zu bytes",
 			  entry_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dat = nilfs_iget_locked(sb, NULL, NILFS_DAT_INO);

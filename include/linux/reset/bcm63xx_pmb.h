@@ -52,15 +52,15 @@ static inline int __bpcm_do_op(void __iomem *master, unsigned int addr,
 			return 0;
 
 		if (cmd & PMC_PMBM_SLAVE_ERR)
-			return -EIO;
+			return -ERR(EIO);
 
 		if (cmd & PMC_PMBM_TIMEOUT)
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 
 		udelay(1);
 	} while (timeout-- > 0);
 
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 
 static inline int bpcm_rd(void __iomem *master, unsigned int addr,

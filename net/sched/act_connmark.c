@@ -109,7 +109,7 @@ static int tcf_connmark_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (!nla)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nla_parse_nested_deprecated(tb, TCA_CONNMARK_MAX, nla,
 					  connmark_policy, NULL);
@@ -117,7 +117,7 @@ static int tcf_connmark_init(struct net *net, struct nlattr *nla,
 		return ret;
 
 	if (!tb[TCA_CONNMARK_PARMS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	parm = nla_data(tb[TCA_CONNMARK_PARMS]);
 	index = parm->index;
@@ -147,7 +147,7 @@ static int tcf_connmark_init(struct net *net, struct nlattr *nla,
 			return 0;
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 		err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch,
 					       extack);

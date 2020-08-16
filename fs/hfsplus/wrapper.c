@@ -79,7 +79,7 @@ int hfsplus_submit_bio(struct super_block *sb, sector_t sector,
 
 		ret = bio_add_page(bio, virt_to_page(buf), len, page_offset);
 		if (ret != len) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		io_size -= len;
@@ -137,14 +137,14 @@ static int hfsplus_get_last_session(struct super_block *sb,
 		struct cdrom_tocentry te;
 
 		if (!cdi)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		te.cdte_track = HFSPLUS_SB(sb)->session;
 		te.cdte_format = CDROM_LBA;
 		if (cdrom_read_tocentry(cdi, &te) ||
 		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) {
 			pr_err("invalid session number or type of track\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		*start = (sector_t)te.cdte_addr.lba << 2;
 	} else if (cdi) {
@@ -168,7 +168,7 @@ int hfsplus_read_wrapper(struct super_block *sb)
 	u32 blocksize;
 	int error = 0;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	blocksize = sb_min_blocksize(sb, HFSPLUS_SECTOR_SIZE);
 	if (!blocksize)
 		goto out;
@@ -191,7 +191,7 @@ reread:
 	if (error)
 		goto out_free_backup_vhdr;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	switch (sbi->s_vhdr->signature) {
 	case cpu_to_be16(HFSPLUS_VOLHEAD_SIGX):
 		set_bit(HFSPLUS_SB_HFSX, &sbi->flags);
@@ -224,7 +224,7 @@ reread:
 	if (error)
 		goto out_free_backup_vhdr;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (sbi->s_backup_vhdr->signature != sbi->s_vhdr->signature) {
 		pr_warn("invalid secondary volume header\n");
 		goto out_free_backup_vhdr;

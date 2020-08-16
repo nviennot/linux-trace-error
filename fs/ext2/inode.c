@@ -264,10 +264,10 @@ static Indirect *ext2_get_branch(struct inode *inode,
 changed:
 	read_unlock(&EXT2_I(inode)->i_meta_lock);
 	brelse(bh);
-	*err = -EAGAIN;
+	*err = -ERR(EAGAIN);
 	goto no_block;
 failure:
-	*err = -EIO;
+	*err = -ERR(EIO);
 no_block:
 	return p;
 }
@@ -643,7 +643,7 @@ static int ext2_get_blocks(struct inode *inode,
 	depth = ext2_block_to_path(inode,iblock,offsets,&blocks_to_boundary);
 
 	if (depth == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	partial = ext2_get_branch(inode, depth, offsets, chain, &err);
 	/* Simplest case - block found, no allocation needed */
@@ -661,7 +661,7 @@ static int ext2_get_blocks(struct inode *inode,
 				 * Handling of that case: forget what we've
 				 * got now, go to reread.
 				 */
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				count = 0;
 				partial = chain + depth - 1;
 				break;
@@ -1288,11 +1288,11 @@ static int ext2_setsize(struct inode *inode, loff_t newsize)
 
 	if (!(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode) ||
 	    S_ISLNK(inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ext2_inode_is_fast_symlink(inode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (IS_APPEND(inode) || IS_IMMUTABLE(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	inode_dio_wait(inode);
 
@@ -1359,13 +1359,13 @@ static struct ext2_inode *ext2_get_inode(struct super_block *sb, ino_t ino,
 Einval:
 	ext2_error(sb, "ext2_get_inode", "bad inode number: %lu",
 		   (unsigned long) ino);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 Eio:
 	ext2_error(sb, "ext2_get_inode",
 		   "unable to read inode block - inode=%lu, block=%lu",
 		   (unsigned long) ino, block);
 Egdp:
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 void ext2_set_inode_flags(struct inode *inode)
@@ -1406,7 +1406,7 @@ struct inode *ext2_iget (struct super_block *sb, unsigned long ino)
 	struct buffer_head * bh = NULL;
 	struct ext2_inode *raw_inode;
 	struct inode *inode;
-	long ret = -EIO;
+	long ret = -ERR(EIO);
 	int n;
 	uid_t i_uid;
 	gid_t i_gid;
@@ -1449,7 +1449,7 @@ struct inode *ext2_iget (struct super_block *sb, unsigned long ino)
 	 */
 	if (inode->i_nlink == 0 && (inode->i_mode == 0 || ei->i_dtime)) {
 		/* this inode is deleted */
-		ret = -ESTALE;
+		ret = -ERR(ESTALE);
 		goto bad_inode;
 	}
 	inode->i_blocks = le32_to_cpu(raw_inode->i_blocks);
@@ -1545,7 +1545,7 @@ static int __ext2_write_inode(struct inode *inode, int do_sync)
 	int err = 0;
 
 	if (IS_ERR(raw_inode))
- 		return -EIO;
+ 		return -ERR(EIO);
 
 	/* For fields not not tracking in the in-memory inode,
 	 * initialise them to zero for new inodes. */
@@ -1628,7 +1628,7 @@ static int __ext2_write_inode(struct inode *inode, int do_sync)
 		if (buffer_req(bh) && !buffer_uptodate(bh)) {
 			printk ("IO error syncing ext2 inode [%s:%08lx]\n",
 				sb->s_id, (unsigned long) ino);
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 	}
 	ei->i_state &= ~EXT2_STATE_NEW;

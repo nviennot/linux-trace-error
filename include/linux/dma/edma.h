@@ -35,7 +35,7 @@ int dw_edma_remove(struct dw_edma_chip *chip);
 #else
 static inline int dw_edma_probe(struct dw_edma_chip *chip)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int dw_edma_remove(struct dw_edma_chip *chip)

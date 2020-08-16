@@ -242,7 +242,7 @@ int balloon_page_migrate(struct address_space *mapping,
 	 * for a user of the MIGRATE_SYNC_NO_COPY mode.
 	 */
 	if (mode == MIGRATE_SYNC_NO_COPY)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	VM_BUG_ON_PAGE(!PageLocked(page), page);
 	VM_BUG_ON_PAGE(!PageLocked(newpage), newpage);

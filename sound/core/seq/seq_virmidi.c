@@ -430,12 +430,12 @@ static int snd_virmidi_dev_register(struct snd_rawmidi *rmidi)
 		break;
 	case SNDRV_VIRMIDI_SEQ_ATTACH:
 		if (rdev->client == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* should check presence of port more strictly.. */
 		break;
 	default:
 		pr_err("ALSA: seq_virmidi: seq_mode is not set: %d\n", rdev->seq_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }

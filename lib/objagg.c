@@ -202,7 +202,7 @@ static int objagg_obj_parent_lookup_assign(struct objagg *objagg,
 		if (!err)
 			return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static void __objagg_obj_put(struct objagg *objagg,
@@ -520,7 +520,7 @@ struct objagg *objagg_create(const struct objagg_ops *ops,
 	if (WARN_ON(!ops || !ops->root_create || !ops->root_destroy ||
 		    !ops->delta_check || !ops->delta_create ||
 		    !ops->delta_destroy))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	objagg = kzalloc(sizeof(*objagg), GFP_KERNEL);
 	if (!objagg)
@@ -969,7 +969,7 @@ struct objagg_hints *objagg_hints_get(struct objagg *objagg,
 		goto err_fillup_hints;
 
 	if (WARN_ON(objagg_hints->node_count != objagg->obj_count)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_node_count_check;
 	}
 

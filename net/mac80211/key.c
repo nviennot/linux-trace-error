@@ -126,7 +126,7 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 {
 	struct ieee80211_sub_if_data *sdata = key->sdata;
 	struct sta_info *sta;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	might_sleep();
 
@@ -145,7 +145,7 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 			increment_tailroom_need_count(sdata);
 
 		key->flags &= ~KEY_FLAG_UPLOADED_TO_HARDWARE;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!key->local->ops->set_key)
@@ -181,7 +181,7 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 	if (key->conf.cipher == WLAN_CIPHER_SUITE_TKIP &&
 	    sdata->hw_80211_encap) {
 		sdata_dbg(sdata, "TKIP is not allowed in hw 80211 encap mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = drv_set_key(key->local, SET_KEY, sdata,
@@ -224,7 +224,7 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 		 * function properly we need cmac/gmac keys.
 		 */
 		if (sdata->hw_80211_encap)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* Fall through */
 
 	case WLAN_CIPHER_SUITE_AES_CMAC:
@@ -235,10 +235,10 @@ static int ieee80211_key_enable_hw_accel(struct ieee80211_key *key)
 		if (ret == 1)
 			return 0;
 		if (ieee80211_hw_check(&key->local->hw, SW_CRYPTO_CONTROL))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -555,7 +555,7 @@ ieee80211_key_alloc(u32 cipher, int idx, size_t key_len,
 	if (WARN_ON(idx < 0 ||
 		    idx >= NUM_DEFAULT_KEYS + NUM_DEFAULT_MGMT_KEYS +
 		    NUM_DEFAULT_BEACON_KEYS))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	key = kzalloc(sizeof(struct ieee80211_key) + key_len, GFP_KERNEL);
 	if (!key)
@@ -694,7 +694,7 @@ ieee80211_key_alloc(u32 cipher, int idx, size_t key_len,
 		if (cs) {
 			if (seq_len && seq_len != cs->pn_len) {
 				kfree(key);
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 			}
 
 			key->conf.iv_len = cs->hdr_len;
@@ -823,7 +823,7 @@ int ieee80211_key_link(struct ieee80211_key *key,
 	 * can cause warnings to appear.
 	 */
 	bool delay_tailroom = sdata->vif.type == NL80211_IFTYPE_STATION;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	mutex_lock(&sdata->local->key_mtx);
 
@@ -1294,10 +1294,10 @@ ieee80211_gtk_rekey_add(struct ieee80211_vif *vif,
 	int err;
 
 	if (WARN_ON(!local->wowlan))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (WARN_ON(vif->type != NL80211_IFTYPE_STATION))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	key = ieee80211_key_alloc(keyconf->cipher, keyconf->keyidx,
 				  keyconf->keylen, keyconf->key,

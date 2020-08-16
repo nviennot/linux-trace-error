@@ -683,7 +683,7 @@ static int snd_cs4281_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 	default:
 		spin_unlock(&chip->reg_lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_cs4281_pokeBA0(chip, dma->regDMR, dma->valDMR);
 	snd_cs4281_pokeBA0(chip, dma->regFCR, dma->valFCR);
@@ -1260,7 +1260,7 @@ static void snd_cs4281_free_gameport(struct cs4281 *chip)
 	}
 }
 #else
-static inline int snd_cs4281_create_gameport(struct cs4281 *chip) { return -ENOSYS; }
+static inline int snd_cs4281_create_gameport(struct cs4281 *chip) { return -ERR(ENOSYS); }
 static inline void snd_cs4281_free_gameport(struct cs4281 *chip) { }
 #endif /* IS_REACHABLE(CONFIG_GAMEPORT) */
 
@@ -1387,7 +1387,7 @@ static int snd_cs4281_chip_init(struct cs4281 *chip)
 		if (tmp != BA0_CFLR_DEFAULT) {
 			dev_err(chip->card->dev,
 				"CFLR setup failed (0x%x)\n", tmp);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -1399,12 +1399,12 @@ static int snd_cs4281_chip_init(struct cs4281 *chip)
 	if ((tmp = snd_cs4281_peekBA0(chip, BA0_SERC1)) != (BA0_SERC1_SO1EN | BA0_SERC1_AC97)) {
 		dev_err(chip->card->dev,
 			"SERC1 AC'97 check failed (0x%x)\n", tmp);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if ((tmp = snd_cs4281_peekBA0(chip, BA0_SERC2)) != (BA0_SERC2_SI1EN | BA0_SERC2_AC97)) {
 		dev_err(chip->card->dev,
 			"SERC2 AC'97 check failed (0x%x)\n", tmp);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* Sound System Power Management */
@@ -1466,7 +1466,7 @@ static int snd_cs4281_chip_init(struct cs4281 *chip)
 	} while (time_after_eq(end_time, jiffies));
 
 	dev_err(chip->card->dev, "DLLRDY not seen\n");
-	return -EIO;
+	return -ERR(EIO);
 
       __ok0:
 
@@ -1494,7 +1494,7 @@ static int snd_cs4281_chip_init(struct cs4281 *chip)
 	dev_err(chip->card->dev,
 		"never read codec ready from AC'97 (0x%x)\n",
 		snd_cs4281_peekBA0(chip, BA0_ACSTS));
-	return -EIO;
+	return -ERR(EIO);
 
       __ok1:
 	if (chip->dual_codec) {
@@ -1536,7 +1536,7 @@ static int snd_cs4281_chip_init(struct cs4281 *chip)
 	if (--retry_count > 0)
 		goto __retry;
 	dev_err(chip->card->dev, "never read ISV3 and ISV4 from AC'97\n");
-	return -EIO;
+	return -ERR(EIO);
 
       __ok2:
 
@@ -1871,10 +1871,10 @@ static int snd_cs4281_probe(struct pci_dev *pci,
 	int err;
 
         if (dev >= SNDRV_CARDS)
-                return -ENODEV;
+                return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

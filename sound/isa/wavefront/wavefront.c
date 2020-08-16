@@ -98,7 +98,7 @@ snd_wavefront_pnp (int dev, snd_wavefront_card_t *acard, struct pnp_card_link *c
 
 	acard->wss = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->wss == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* there is a game port at logical device 1, but we ignore it completely */
 
@@ -114,14 +114,14 @@ snd_wavefront_pnp (int dev, snd_wavefront_card_t *acard, struct pnp_card_link *c
 	if (use_cs4232_midi[dev]) {
 		acard->mpu = pnp_request_card_device(card, id->devs[2].id, NULL);
 		if (acard->mpu == NULL)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	/* The ICS2115 synth is logical device 4 */
 
 	acard->synth = pnp_request_card_device(card, id->devs[3].id, NULL);
 	if (acard->synth == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* PCM/FM initialization */
 
@@ -400,12 +400,12 @@ snd_wavefront_probe (struct snd_card *card, int dev)
 	if (acard->wavefront.res_base == NULL) {
 		snd_printk(KERN_ERR "unable to grab ICS2115 i/o region 0x%lx-0x%lx\n",
 			   ics2115_port[dev], ics2115_port[dev] + 16 - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	if (request_irq(ics2115_irq[dev], snd_wavefront_ics2115_interrupt,
 			0, "ICS2115", acard)) {
 		snd_printk(KERN_ERR "unable to use ICS2115 IRQ %d\n", ics2115_irq[dev]);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	
 	acard->wavefront.irq = ics2115_irq[dev];
@@ -598,7 +598,7 @@ static int snd_wavefront_pnp_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	res = snd_wavefront_card_new(&pcard->card->dev, dev, &card);
 	if (res < 0)
@@ -608,7 +608,7 @@ static int snd_wavefront_pnp_detect(struct pnp_card_link *pcard,
 		if (cs4232_pcm_port[dev] == SNDRV_AUTO_PORT) {
 			snd_printk (KERN_ERR "isapnp detection failed\n");
 			snd_card_free (card);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 

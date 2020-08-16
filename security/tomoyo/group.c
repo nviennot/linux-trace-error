@@ -74,7 +74,7 @@ static bool tomoyo_same_address_group(const struct tomoyo_acl_head *a,
 int tomoyo_write_group(struct tomoyo_acl_param *param, const u8 type)
 {
 	struct tomoyo_group *group = tomoyo_get_group(param, type);
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	if (!group)
 		return -ENOMEM;

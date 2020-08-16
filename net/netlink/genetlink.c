@@ -195,9 +195,9 @@ static int genl_validate_assign_mc_groups(struct genl_family *family)
 		const struct genl_multicast_group *grp = &family->mcgrps[i];
 
 		if (WARN_ON(grp->name[0] == '\0'))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (WARN_ON(memchr(grp->name, '\0', GENL_NAMSIZ) == NULL))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* special-case our own group and hacks */
@@ -291,17 +291,17 @@ static int genl_validate_ops(const struct genl_family *family)
 	int i, j;
 
 	if (WARN_ON(n_ops && !ops))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!n_ops)
 		return 0;
 
 	for (i = 0; i < n_ops; i++) {
 		if (ops[i].dumpit == NULL && ops[i].doit == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		for (j = i + 1; j < n_ops; j++)
 			if (ops[i].cmd == ops[j].cmd)
-				return -EINVAL;
+				return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -331,7 +331,7 @@ int genl_register_family(struct genl_family *family)
 	genl_lock_all();
 
 	if (genl_family_find_byname(family->name)) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto errout_locked;
 	}
 
@@ -394,7 +394,7 @@ int genl_unregister_family(const struct genl_family *family)
 
 	if (!genl_family_find_byid(family->id)) {
 		genl_unlock_all();
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	genl_unregister_mc_groups(family);
@@ -509,7 +509,7 @@ static int genl_start(struct netlink_callback *cb)
 		goto no_attrs;
 
 	if (ctx->nlh->nlmsg_len < nlmsg_msg_size(ctx->hdrlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	attrs = genl_family_rcv_msg_attrs_parse(ctx->family, ctx->nlh, ctx->extack,
 						ops, ctx->hdrlen,
@@ -595,7 +595,7 @@ static int genl_family_rcv_msg_dumpit(const struct genl_family *family,
 	int err;
 
 	if (!ops->dumpit)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ctx.family = family;
 	ctx.nlh = nlh;
@@ -642,7 +642,7 @@ static int genl_family_rcv_msg_doit(const struct genl_family *family,
 	int err;
 
 	if (!ops->doit)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	attrbuf = genl_family_rcv_msg_attrs_parse(family, nlh, extack,
 						  ops, hdrlen,
@@ -689,23 +689,23 @@ static int genl_family_rcv_msg(const struct genl_family *family,
 
 	/* this family doesn't exist in this netns */
 	if (!family->netnsok && !net_eq(net, &init_net))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	hdrlen = GENL_HDRLEN + family->hdrsize;
 	if (nlh->nlmsg_len < nlmsg_msg_size(hdrlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ops = genl_get_cmd(hdr->cmd, family);
 	if (ops == NULL)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if ((ops->flags & GENL_ADMIN_PERM) &&
 	    !netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((ops->flags & GENL_UNS_ADMIN_PERM) &&
 	    !netlink_ns_capable(skb, net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if ((nlh->nlmsg_flags & NLM_F_DUMP) == NLM_F_DUMP)
 		return genl_family_rcv_msg_dumpit(family, skb, nlh, extack,
@@ -723,7 +723,7 @@ static int genl_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	family = genl_family_find_byid(nlh->nlmsg_type);
 	if (family == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!family->parallel_ops)
 		genl_lock();
@@ -833,7 +833,7 @@ static int ctrl_fill_info(const struct genl_family *family, u32 portid, u32 seq,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ctrl_fill_mcgrp_info(const struct genl_family *family,
@@ -874,7 +874,7 @@ static int ctrl_fill_mcgrp_info(const struct genl_family *family,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ctrl_dumpfamily(struct sk_buff *skb, struct netlink_callback *cb)
@@ -912,7 +912,7 @@ static struct sk_buff *ctrl_build_family_msg(const struct genl_family *family,
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (skb == NULL)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	err = ctrl_fill_info(family, portid, seq, 0, skb, cmd);
 	if (err < 0) {
@@ -933,7 +933,7 @@ ctrl_build_mcgrp_msg(const struct genl_family *family,
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (skb == NULL)
-		return ERR_PTR(-ENOBUFS);
+		return ERR_PTR(-ERR(ENOBUFS));
 
 	err = ctrl_fill_mcgrp_info(family, grp, grp_id, portid,
 				   seq, 0, skb, cmd);
@@ -955,12 +955,12 @@ static int ctrl_getfamily(struct sk_buff *skb, struct genl_info *info)
 {
 	struct sk_buff *msg;
 	const struct genl_family *res = NULL;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (info->attrs[CTRL_ATTR_FAMILY_ID]) {
 		u16 id = nla_get_u16(info->attrs[CTRL_ATTR_FAMILY_ID]);
 		res = genl_family_find_byid(id);
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	}
 
 	if (info->attrs[CTRL_ATTR_FAMILY_NAME]) {
@@ -979,7 +979,7 @@ static int ctrl_getfamily(struct sk_buff *skb, struct genl_info *info)
 			res = genl_family_find_byname(name);
 		}
 #endif
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	}
 
 	if (res == NULL)
@@ -987,7 +987,7 @@ static int ctrl_getfamily(struct sk_buff *skb, struct genl_info *info)
 
 	if (!res->netnsok && !net_eq(genl_info_net(info), &init_net)) {
 		/* family doesn't exist here */
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	msg = ctrl_build_family_msg(res, info->snd_portid, info->snd_seq,
@@ -1020,7 +1020,7 @@ static int genl_ctrl_event(int event, const struct genl_family *family,
 		msg = ctrl_build_mcgrp_msg(family, grp, grp_id, 0, 0, event);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (IS_ERR(msg))
@@ -1055,7 +1055,7 @@ static int ctrl_dumppolicy(struct sk_buff *skb, struct netlink_callback *cb)
 			return err;
 
 		if (!tb[CTRL_ATTR_FAMILY_ID] && !tb[CTRL_ATTR_FAMILY_NAME])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (tb[CTRL_ATTR_FAMILY_ID]) {
 			fam_id = nla_get_u16(tb[CTRL_ATTR_FAMILY_ID]);
@@ -1063,17 +1063,17 @@ static int ctrl_dumppolicy(struct sk_buff *skb, struct netlink_callback *cb)
 			rt = genl_family_find_byname(
 				nla_data(tb[CTRL_ATTR_FAMILY_NAME]));
 			if (!rt)
-				return -ENOENT;
+				return -ERR(ENOENT);
 			fam_id = rt->id;
 		}
 	}
 
 	rt = genl_family_find_byid(fam_id);
 	if (!rt)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!rt->policy)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	err = netlink_policy_dump_start(rt->policy, rt->maxattr, &cb->args[1]);
 	if (err)
@@ -1225,7 +1225,7 @@ static int genlmsg_mcast(struct sk_buff *skb, u32 portid, unsigned long group,
 		delivered = true;
 	else if (err != -ESRCH)
 		return err;
-	return delivered ? 0 : -ESRCH;
+	return delivered ? 0 : -ERR(ESRCH);
  error:
 	kfree_skb(skb);
 	return err;
@@ -1236,7 +1236,7 @@ int genlmsg_multicast_allns(const struct genl_family *family,
 			    unsigned int group, gfp_t flags)
 {
 	if (WARN_ON_ONCE(group >= family->n_mcgrps))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	group = family->mcgrp_offset + group;
 	return genlmsg_mcast(skb, portid, group, flags);
 }

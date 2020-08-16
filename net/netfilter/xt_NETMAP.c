@@ -56,7 +56,7 @@ static int netmap_tg6_checkentry(const struct xt_tgchk_param *par)
 	const struct nf_nat_range2 *range = par->targinfo;
 
 	if (!(range->flags & NF_NAT_RANGE_MAP_IPS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return nf_ct_netns_get(par->net, par->family);
 }
 
@@ -107,11 +107,11 @@ static int netmap_tg4_check(const struct xt_tgchk_param *par)
 
 	if (!(mr->range[0].flags & NF_NAT_RANGE_MAP_IPS)) {
 		pr_debug("bad MAP_IPS.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (mr->rangesize != 1) {
 		pr_debug("bad rangesize %u.\n", mr->rangesize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return nf_ct_netns_get(par->net, par->family);
 }

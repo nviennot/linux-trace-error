@@ -291,7 +291,7 @@ req_retry:
 			spin_unlock_irqrestore(&chan->lock, flags);
 			p9_debug(P9_DEBUG_TRANS,
 				 "virtio rpc add_sgs returned failure\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	virtqueue_kick(chan->vq);
@@ -489,7 +489,7 @@ req_retry_pinned:
 			spin_unlock_irqrestore(&chan->lock, flags);
 			p9_debug(P9_DEBUG_TRANS,
 				 "virtio rpc add_sgs returned failure\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto err_out;
 		}
 	}
@@ -559,7 +559,7 @@ static int p9_virtio_probe(struct virtio_device *vdev)
 	if (!vdev->config->get) {
 		dev_err(&vdev->dev, "%s failure: config access disabled\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	chan = kmalloc(sizeof(struct virtio_chan), GFP_KERNEL);
@@ -586,7 +586,7 @@ static int p9_virtio_probe(struct virtio_device *vdev)
 	if (virtio_has_feature(vdev, VIRTIO_9P_MOUNT_TAG)) {
 		virtio_cread(vdev, struct virtio_9p_config, tag_len, &tag_len);
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free_vq;
 	}
 	tag = kzalloc(tag_len + 1, GFP_KERNEL);
@@ -652,11 +652,11 @@ static int
 p9_virtio_create(struct p9_client *client, const char *devname, char *args)
 {
 	struct virtio_chan *chan;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	int found = 0;
 
 	if (devname == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&virtio_9p_lock);
 	list_for_each_entry(chan, &virtio_chan_list, chan_list) {
@@ -666,7 +666,7 @@ p9_virtio_create(struct p9_client *client, const char *devname, char *args)
 				found = 1;
 				break;
 			}
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 		}
 	}
 	mutex_unlock(&virtio_9p_lock);

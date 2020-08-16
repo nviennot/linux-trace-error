@@ -407,28 +407,28 @@ void tpm2_flush_context(struct tpm_chip *chip, u32 handle);
 #else
 static inline int tpm_is_tpm2(struct tpm_chip *chip)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int tpm_pcr_read(struct tpm_chip *chip, int pcr_idx,
 			       struct tpm_digest *digest)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int tpm_pcr_extend(struct tpm_chip *chip, u32 pcr_idx,
 				 struct tpm_digest *digests)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline int tpm_send(struct tpm_chip *chip, void *cmd, size_t buflen)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline struct tpm_chip *tpm_default_chip(void)

@@ -88,7 +88,7 @@ static int coalesce_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_coalesce)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	data->supported_params = dev->ethtool_ops->supported_coalesce_params;
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
@@ -194,7 +194,7 @@ static int coalesce_fill_reply(struct sk_buff *skb,
 			     coal->tx_max_coalesced_frames_high, supported) ||
 	    coalesce_put_u32(skb, ETHTOOL_A_COALESCE_RATE_SAMPLE_INTERVAL,
 			     coal->rate_sample_interval, supported))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -268,7 +268,7 @@ int ethnl_set_coalesce(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!ops->get_coalesce || !ops->set_coalesce)
 		goto out_dev;
 
@@ -276,7 +276,7 @@ int ethnl_set_coalesce(struct sk_buff *skb, struct genl_info *info)
 	supported_params = ops->supported_coalesce_params;
 	for (a = ETHTOOL_A_COALESCE_RX_USECS; a < __ETHTOOL_A_COALESCE_CNT; a++)
 		if (tb[a] && !(supported_params & attr_to_mask(a))) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			NL_SET_ERR_MSG_ATTR(info->extack, tb[a],
 					    "cannot modify an unsupported parameter");
 			goto out_dev;

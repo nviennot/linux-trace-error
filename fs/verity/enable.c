@@ -56,13 +56,13 @@ static int build_merkle_tree_level(struct file *filp, unsigned int level,
 	int err;
 
 	if (WARN_ON(params->block_size != PAGE_SIZE)) /* checked earlier too */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (level < params->num_levels) {
 		dst_block_num = params->level_start[level];
 	} else {
 		if (WARN_ON(num_blocks_to_hash != 1))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		dst_block_num = 0; /* unused */
 	}
 
@@ -134,7 +134,7 @@ static int build_merkle_tree_level(struct file *filp, unsigned int level,
 		}
 
 		if (fatal_signal_pending(current))
-			return -EINTR;
+			return -ERR(EINTR);
 		cond_resched();
 	}
 	return 0;
@@ -248,7 +248,7 @@ static int enable_verity(struct file *filp,
 	 */
 	inode_lock(inode);
 	if (IS_VERITY(inode))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	else
 		err = vops->begin_enable_verity(filp);
 	inode_unlock(inode);
@@ -303,7 +303,7 @@ static int enable_verity(struct file *filp,
 			     vops->end_enable_verity, err);
 		fsverity_free_info(vi);
 	} else if (WARN_ON(!IS_VERITY(inode))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		fsverity_free_info(vi);
 	} else {
 		/* Successfully enabled verity */
@@ -347,20 +347,20 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
 		return -EFAULT;
 
 	if (arg.version != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (arg.__reserved1 ||
 	    memchr_inv(arg.__reserved2, 0, sizeof(arg.__reserved2)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (arg.block_size != PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (arg.salt_size > sizeof_field(struct fsverity_descriptor, salt))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (arg.sig_size > FS_VERITY_MAX_SIGNATURE_SIZE)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/*
 	 * Require a regular file with write access.  But the actual fd must
@@ -374,13 +374,13 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
 		return err;
 
 	if (IS_APPEND(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (S_ISDIR(inode->i_mode))
-		return -EISDIR;
+		return -ERR(EISDIR);
 
 	if (!S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = mnt_want_write_file(filp);
 	if (err) /* -EROFS */

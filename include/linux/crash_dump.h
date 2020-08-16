@@ -111,7 +111,7 @@ int vmcore_add_device_dump(struct vmcoredd_data *data);
 #else
 static inline int vmcore_add_device_dump(struct vmcoredd_data *data)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif /* CONFIG_PROC_VMCORE_DEVICE_DUMP */
 
@@ -124,7 +124,7 @@ static inline ssize_t read_from_oldmem(char *buf, size_t count,
 				       u64 *ppos, int userbuf,
 				       bool encrypted)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif /* CONFIG_PROC_VMCORE */
 

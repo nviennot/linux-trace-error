@@ -108,10 +108,10 @@ static int ams_delta_set_audio_mode(struct snd_kcontrol *kcontrol,
 
 	/* Refuse any mode changes if we are not able to control the codec. */
 	if (!cx20442_codec->card->pop_time)
-		return -EUNATCH;
+		return -ERR(EUNATCH);
 
 	if (ucontrol->value.enumerated.item[0] >= control->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_dapm_mutex_lock(dapm);
 
@@ -196,7 +196,7 @@ static int ams_delta_get_audio_mode(struct snd_kcontrol *kcontrol,
 			break;
 
 	if (mode >= ARRAY_SIZE(ams_delta_audio_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ucontrol->value.enumerated.item[0] = mode;
 
@@ -283,7 +283,7 @@ static int cx81801_open(struct tty_struct *tty)
 	int ret;
 
 	if (!cx20442_codec)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Pass the codec structure pointer for use by other ldisc callbacks,

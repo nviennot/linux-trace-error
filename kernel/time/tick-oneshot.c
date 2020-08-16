@@ -88,7 +88,7 @@ int tick_switch_to_oneshot(void (*handler)(struct clock_event_device *))
 				pr_cont(" %s does not support one-shot mode.\n",
 					dev->name);
 		}
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	td->mode = TICKDEV_MODE_ONESHOT;

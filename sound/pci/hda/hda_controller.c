@@ -112,7 +112,7 @@ static int azx_pcm_hw_params(struct snd_pcm_substream *substream,
 	trace_azx_pcm_hw_params(chip, azx_dev);
 	dsp_lock(azx_dev);
 	if (dsp_is_locked(azx_dev)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto unlock;
 	}
 
@@ -159,7 +159,7 @@ static int azx_pcm_prepare(struct snd_pcm_substream *substream)
 	trace_azx_pcm_prepare(chip, azx_dev);
 	dsp_lock(azx_dev);
 	if (dsp_is_locked(azx_dev)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto unlock;
 	}
 
@@ -173,7 +173,7 @@ static int azx_pcm_prepare(struct snd_pcm_substream *substream)
 		dev_err(chip->card->dev,
 			"invalid format_val, rate=%d, ch=%d, format=%d\n",
 			runtime->rate, runtime->channels, runtime->format);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -220,7 +220,7 @@ static int azx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		sync_reg = AZX_REG_SSYNC;
 
 	if (dsp_is_locked(azx_dev) || !hstr->prepared)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -234,7 +234,7 @@ static int azx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		start = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_group_for_each_entry(s, substream) {
@@ -403,7 +403,7 @@ static int azx_get_sync_time(ktime_t *device,
 
 		if (!timeout) {
 			dev_err(chip->card->dev, "GTSCC capture Timedout!\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/* Read wall clock counter */
@@ -448,7 +448,7 @@ static int azx_get_sync_time(ktime_t *device,
 	if (retry_count == HDA_MAX_CYCLE_READ_RETRY) {
 		dev_err_ratelimited(chip->card->dev,
 			"Error in WALFCC cycle count\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*device = ns_to_ktime(azx_scale64(ll_counter,
@@ -465,7 +465,7 @@ static int azx_get_sync_time(ktime_t *device,
 static int azx_get_sync_time(ktime_t *device,
 		struct system_counterval_t *system, void *ctx)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 #endif
 
@@ -521,7 +521,7 @@ static int azx_get_time_info(struct snd_pcm_substream *substream,
 
 		switch (runtime->tstamp_type) {
 		case SNDRV_PCM_TSTAMP_TYPE_MONOTONIC:
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		case SNDRV_PCM_TSTAMP_TYPE_MONOTONIC_RAW:
 			*system_ts = ktime_to_timespec64(xtstamp.sys_monoraw);
@@ -589,7 +589,7 @@ static int azx_pcm_open(struct snd_pcm_substream *substream)
 	azx_dev = azx_assign_device(chip, substream);
 	trace_azx_pcm_open(chip, azx_dev);
 	if (azx_dev == NULL) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto unlock;
 	}
 	runtime->private_data = azx_dev;
@@ -639,7 +639,7 @@ static int azx_pcm_open(struct snd_pcm_substream *substream)
 	if (hinfo->ops.open)
 		err = hinfo->ops.open(hinfo, apcm->codec, substream);
 	else
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	if (err < 0) {
 		azx_release_device(azx_dev);
 		goto powerdown;
@@ -653,7 +653,7 @@ static int azx_pcm_open(struct snd_pcm_substream *substream)
 		azx_release_device(azx_dev);
 		if (hinfo->ops.close)
 			hinfo->ops.close(hinfo, apcm->codec, substream);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto powerdown;
 	}
 
@@ -726,7 +726,7 @@ int snd_hda_attach_pcm_stream(struct hda_bus *_bus, struct hda_codec *codec,
 		if (apcm->pcm->device == pcm_dev) {
 			dev_err(chip->card->dev, "PCM %d already exists\n",
 				pcm_dev);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	err = snd_pcm_new(chip->card, cpcm->name, pcm_dev,
@@ -792,7 +792,7 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 		return 0;
 
 	if (hbus->no_response_fallback)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!bus->polling_mode) {
 		dev_warn(chip->card->dev,
@@ -808,7 +808,7 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 			 bus->last_cmd[addr]);
 		if (chip->ops->disable_msi_reset_irq &&
 		    chip->ops->disable_msi_reset_irq(chip) < 0)
-			return -EIO;
+			return -ERR(EIO);
 		goto again;
 	}
 
@@ -817,12 +817,12 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 		 * phase, this is likely an access to a non-existing codec
 		 * slot.  Better to return an error and reset the system.
 		 */
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* no fallback mechanism? */
 	if (!chip->fallback_to_single_cmd)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* a fatal communication error; need either to reset or to fallback
 	 * to the single_cmd mode
@@ -832,7 +832,7 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 		dev_err(chip->card->dev,
 			"No response from codec, resetting bus: last cmd=0x%08x\n",
 			bus->last_cmd[addr]);
-		return -EAGAIN; /* give a chance to retry */
+		return -ERR(EAGAIN); /* give a chance to retry */
 	}
 
 	dev_err(chip->card->dev,
@@ -841,7 +841,7 @@ static int azx_rirb_get_response(struct hdac_bus *bus, unsigned int addr,
 	chip->single_cmd = 1;
 	hbus->response_reset = 0;
 	snd_hdac_bus_stop_cmd_io(bus);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -872,7 +872,7 @@ static int azx_single_wait_for_response(struct azx *chip, unsigned int addr)
 		dev_dbg(chip->card->dev, "get_response timeout: IRS=0x%x\n",
 			azx_readw(chip, IRS));
 	azx_bus(chip)->rirb.res[addr] = -1;
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* send a command */
@@ -900,7 +900,7 @@ static int azx_single_send_cmd(struct hdac_bus *bus, u32 val)
 		dev_dbg(chip->card->dev,
 			"send_cmd timeout: IRS=0x%x, val=0x%x\n",
 			azx_readw(chip, IRS), val);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* receive a response */
@@ -1159,7 +1159,7 @@ static int probe_codec(struct azx *chip, int addr)
 	chip->probing = 0;
 	mutex_unlock(&bus->cmd_mutex);
 	if (err < 0 || res == -1)
-		return -EIO;
+		return -ERR(EIO);
 	dev_dbg(chip->card->dev, "codec #%d probed OK\n", addr);
 	return 0;
 }
@@ -1263,7 +1263,7 @@ int azx_probe_codecs(struct azx *chip, unsigned int max_slots)
 	}
 	if (!codecs) {
 		dev_err(chip->card->dev, "no codecs initialized\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	return 0;
 }
@@ -1282,7 +1282,7 @@ int azx_codec_configure(struct azx *chip)
 	}
 
 	if (!azx_bus(chip)->num_codecs)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return 0;
 }
 EXPORT_SYMBOL_GPL(azx_codec_configure);

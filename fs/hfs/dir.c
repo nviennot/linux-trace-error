@@ -36,7 +36,7 @@ static struct dentry *hfs_lookup(struct inode *dir, struct dentry *dentry,
 	} else {
 		inode = hfs_iget(dir->i_sb, &fd.search_key->cat, &rec);
 		if (!inode)
-			inode = ERR_PTR(-EACCES);
+			inode = ERR_PTR(-ERR(EACCES));
 	}
 	hfs_find_exit(&fd);
 	return d_splice_alias(inode, dentry);
@@ -75,14 +75,14 @@ static int hfs_readdir(struct file *file, struct dir_context *ctx)
 	}
 	if (ctx->pos == 1) {
 		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
 		hfs_bnode_read(fd.bnode, &entry, fd.entryoffset, fd.entrylength);
 		if (entry.type != HFS_CDR_THD) {
 			pr_err("bad catalog folder thread\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		//if (fd.entrylength < HFS_MIN_THREAD_SZ) {
@@ -104,12 +104,12 @@ static int hfs_readdir(struct file *file, struct dir_context *ctx)
 	for (;;) {
 		if (be32_to_cpu(fd.key->cat.ParID) != inode->i_ino) {
 			pr_err("walked past end of dir\n");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
 		if (fd.entrylength > sizeof(entry) || fd.entrylength < 0) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
@@ -119,7 +119,7 @@ static int hfs_readdir(struct file *file, struct dir_context *ctx)
 		if (type == HFS_CDR_DIR) {
 			if (fd.entrylength < sizeof(struct hfs_cat_dir)) {
 				pr_err("small dir entry\n");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out;
 			}
 			if (!dir_emit(ctx, strbuf, len,
@@ -128,7 +128,7 @@ static int hfs_readdir(struct file *file, struct dir_context *ctx)
 		} else if (type == HFS_CDR_FIL) {
 			if (fd.entrylength < sizeof(struct hfs_cat_file)) {
 				pr_err("small file entry\n");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out;
 			}
 			if (!dir_emit(ctx, strbuf, len,
@@ -136,7 +136,7 @@ static int hfs_readdir(struct file *file, struct dir_context *ctx)
 				break;
 		} else {
 			pr_err("bad catalog entry type %d\n", type);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		ctx->pos++;
@@ -257,7 +257,7 @@ static int hfs_remove(struct inode *dir, struct dentry *dentry)
 	int res;
 
 	if (S_ISDIR(inode->i_mode) && inode->i_size != 2)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 	res = hfs_cat_delete(inode->i_ino, dir, &dentry->d_name);
 	if (res)
 		return res;
@@ -286,7 +286,7 @@ static int hfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int res;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Unlink destination if it already exists */
 	if (d_really_is_positive(new_dentry)) {

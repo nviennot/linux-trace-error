@@ -9403,24 +9403,24 @@ static int uni2char(const wchar_t uni,
 	int n;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 
 	uni2charset = page_uni2charset[ch];
 	if (uni2charset) {
 		if (boundlen <= 1)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 		out[0] = uni2charset[cl*2];
 		out[1] = uni2charset[cl*2+1];
 		if (out[0] == 0x00 && out[1] == 0x00)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		n = 2;
 	} else if (ch==0 && cl) {
 		out[0] = cl;
 		n = 1;
 	}
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return n;
 }
@@ -9433,7 +9433,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	int n;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (boundlen == 1) {
 		*uni = rawstring[0];
@@ -9447,7 +9447,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	if (charset2uni && cl) {
 		*uni = charset2uni[cl];
 		if (*uni == 0x0000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		n = 2;
 	} else{
 		*uni = ch;

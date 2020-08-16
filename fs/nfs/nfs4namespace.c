@@ -48,7 +48,7 @@ static ssize_t nfs4_pathname_len(const struct nfs4_pathname *pathname)
 	return len;
 
 too_long:
-	return -ENAMETOOLONG;
+	return -ERR(ENAMETOOLONG);
 }
 
 /*
@@ -158,7 +158,7 @@ static int nfs4_validate_fspath(struct dentry *dentry,
 	if (n != 0) {
 		dprintk("%s: path %s does not begin with fsroot %s\n",
 			__func__, path, ctx->nfs_server.export_path);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	return 0;
@@ -237,7 +237,7 @@ static struct rpc_clnt *nfs_find_best_sec(struct rpc_clnt *clnt,
 			}
 		}
 	}
-	return ERR_PTR(-EPERM);
+	return ERR_PTR(-ERR(EPERM));
 }
 
 /**
@@ -285,7 +285,7 @@ static int try_location(struct fs_context *fc,
 	struct nfs_fs_context *ctx = nfs_fc2context(fc);
 	unsigned int len, s;
 	char *export_path, *source, *p;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	/* Allocate a buffer big enough to hold any of the hostnames plus a
 	 * terminating char and also a buffer big enough to hold the hostname
@@ -366,7 +366,7 @@ static int nfs_follow_referral(struct fs_context *fc,
 	int loc, error;
 
 	if (locations == NULL || locations->nlocations <= 0)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	dprintk("%s: referral at %pd2\n", __func__, ctx->clone_data.dentry);
 
@@ -375,7 +375,7 @@ static int nfs_follow_referral(struct fs_context *fc,
 	if (error < 0)
 		return error;
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	for (loc = 0; loc < locations->nlocations; loc++) {
 		const struct nfs4_fs_location *location = &locations->locations[loc];
 
@@ -424,7 +424,7 @@ static int nfs_do_refmount(struct fs_context *fc, struct rpc_clnt *client)
 	if (err != 0)
 		goto out_free_2;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (fs_locations->nlocations <= 0 ||
 	    fs_locations->fs_path.ncomponents <= 0)
 		goto out_free_2;
@@ -484,7 +484,7 @@ static int nfs4_try_replacing_one_location(struct nfs_server *server,
 	if (sap == NULL)
 		return -ENOMEM;
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	for (s = 0; s < location->nservers; s++) {
 		const struct nfs4_string *buf = &location->servers[s];
 		char *hostname;
@@ -534,7 +534,7 @@ int nfs4_replace_transport(struct nfs_server *server,
 	char *page = NULL, *page2 = NULL;
 	int loc, error;
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	if (locations == NULL || locations->nlocations <= 0)
 		goto out;
 

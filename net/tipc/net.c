@@ -187,7 +187,7 @@ static int __tipc_nl_add_net(struct net *net, struct tipc_nl_msg *msg)
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_NET_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_NET);
 	if (!attrs)
@@ -209,7 +209,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_net_dump(struct sk_buff *skb, struct netlink_callback *cb)
@@ -245,7 +245,7 @@ int __tipc_nl_net_set(struct sk_buff *skb, struct genl_info *info)
 	int err;
 
 	if (!info->attrs[TIPC_NLA_NET])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_NET_MAX,
 					  info->attrs[TIPC_NLA_NET],
@@ -256,14 +256,14 @@ int __tipc_nl_net_set(struct sk_buff *skb, struct genl_info *info)
 
 	/* Can't change net id once TIPC has joined a network */
 	if (tipc_own_addr(net))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (attrs[TIPC_NLA_NET_ID]) {
 		u32 val;
 
 		val = nla_get_u32(attrs[TIPC_NLA_NET_ID]);
 		if (val < 1 || val > 9999)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tn->net_id = val;
 	}
@@ -273,7 +273,7 @@ int __tipc_nl_net_set(struct sk_buff *skb, struct genl_info *info)
 
 		addr = nla_get_u32(attrs[TIPC_NLA_NET_ADDR]);
 		if (!addr)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		tn->legacy_addr_format = true;
 		tipc_net_init(net, NULL, addr);
 	}
@@ -284,7 +284,7 @@ int __tipc_nl_net_set(struct sk_buff *skb, struct genl_info *info)
 		u64 *w1 = (u64 *)&node_id[8];
 
 		if (!attrs[TIPC_NLA_NET_NODEID_W1])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*w0 = nla_get_u64(attrs[TIPC_NLA_NET_NODEID]);
 		*w1 = nla_get_u64(attrs[TIPC_NLA_NET_NODEID_W1]);
 		tipc_net_init(net, node_id, 0);
@@ -312,7 +312,7 @@ static int __tipc_nl_addr_legacy_get(struct net *net, struct tipc_nl_msg *msg)
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  0, TIPC_NL_ADDR_LEGACY_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start(msg->skb, TIPC_NLA_NET);
 	if (!attrs)
@@ -332,7 +332,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_net_addr_legacy_get(struct sk_buff *skb, struct genl_info *info)

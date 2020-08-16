@@ -28,7 +28,7 @@ static int x25_add_route(struct x25_address *address, unsigned int sigdigits,
 {
 	struct x25_route *rt;
 	struct list_head *entry;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	write_lock_bh(&x25_route_list_lock);
 
@@ -79,7 +79,7 @@ static int x25_del_route(struct x25_address *address, unsigned int sigdigits,
 {
 	struct x25_route *rt;
 	struct list_head *entry;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	write_lock_bh(&x25_route_list_lock);
 
@@ -178,7 +178,7 @@ int x25_route_ioctl(unsigned int cmd, void __user *arg)
 {
 	struct x25_route_struct rt;
 	struct net_device *dev;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	if (cmd != SIOCADDRT && cmd != SIOCDELRT)
 		goto out;
@@ -187,7 +187,7 @@ int x25_route_ioctl(unsigned int cmd, void __user *arg)
 	if (copy_from_user(&rt, arg, sizeof(rt)))
 		goto out;
 
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	if (rt.sigdigits > 15)
 		goto out;
 

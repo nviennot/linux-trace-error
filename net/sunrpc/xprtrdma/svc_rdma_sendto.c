@@ -316,7 +316,7 @@ int svc_rdma_send(struct svcxprt_rdma *rdma, struct ib_send_wr *wr)
 			wait_event(rdma->sc_send_wait,
 				   atomic_read(&rdma->sc_sq_avail) > 1);
 			if (test_bit(XPT_CLOSE, &rdma->sc_xprt.xpt_flags))
-				return -ENOTCONN;
+				return -ERR(ENOTCONN);
 			trace_svcrdma_sq_retry(rdma);
 			continue;
 		}
@@ -373,7 +373,7 @@ static ssize_t svc_rdma_encode_write_segment(__be32 *src,
 
 	p = xdr_reserve_space(&sctxt->sc_stream, len);
 	if (!p)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	handle = be32_to_cpup(src++);
 	length = be32_to_cpup(src++);
@@ -423,19 +423,19 @@ static ssize_t svc_rdma_encode_write_chunk(__be32 *src,
 	src++;
 	ret = xdr_stream_encode_item_present(&sctxt->sc_stream);
 	if (ret < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	len += ret;
 
 	nsegs = be32_to_cpup(src++);
 	ret = xdr_stream_encode_u32(&sctxt->sc_stream, nsegs);
 	if (ret < 0)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	len += ret;
 
 	for (i = nsegs; i; i--) {
 		ret = svc_rdma_encode_write_segment(src, sctxt, &remaining);
 		if (ret < 0)
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		src += rpcrdma_segment_maxsz;
 		len += ret;
 	}
@@ -525,7 +525,7 @@ static int svc_rdma_dma_map_page(struct svcxprt_rdma *rdma,
 	return 0;
 
 out_maperr:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* ib_dma_map_page() is used here because svc_rdma_dma_unmap()
@@ -825,7 +825,7 @@ static int svc_rdma_send_error_msg(struct svcxprt_rdma *rdma,
 
 	p = xdr_reserve_space(&ctxt->sc_stream, RPCRDMA_HDRLEN_ERR);
 	if (!p)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	*p++ = *rdma_argp;
 	*p++ = *(rdma_argp + 1);
@@ -868,7 +868,7 @@ int svc_rdma_sendto(struct svc_rqst *rqstp)
 	__be32 *p;
 	int ret;
 
-	ret = -ENOTCONN;
+	ret = -ERR(ENOTCONN);
 	if (svc_xprt_is_dead(xprt))
 		goto err0;
 
@@ -940,7 +940,7 @@ int svc_rdma_sendto(struct svc_rqst *rqstp)
  err0:
 	trace_svcrdma_send_failed(rqstp, ret);
 	set_bit(XPT_CLOSE, &xprt->xpt_flags);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 /**

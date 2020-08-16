@@ -387,7 +387,7 @@ static struct rpc_clnt *rpcb_create(struct net *net, const char *nodename,
 		((struct sockaddr_in6 *)srvaddr)->sin6_port = htons(RPCBIND_PORT);
 		break;
 	default:
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 	}
 
 	return rpc_create(&args);
@@ -410,7 +410,7 @@ static int rpcb_register_call(struct sunrpc_net *sn, struct rpc_clnt *clnt, stru
 	}
 
 	if (!result)
-		return -EACCES;
+		return -ERR(EACCES);
 	return 0;
 }
 
@@ -610,7 +610,7 @@ int rpcb_v4_register(struct net *net, const u32 program, const u32 version,
 	struct sunrpc_net *sn = net_generic(net, sunrpc_net_id);
 
 	if (sn->rpcb_local_clnt4 == NULL)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if (address == NULL)
 		return rpcb_unregister_all_protofamilies(sn, &msg);
@@ -622,7 +622,7 @@ int rpcb_v4_register(struct net *net, const u32 program, const u32 version,
 		return rpcb_register_inet6(sn, address, &msg);
 	}
 
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static struct rpc_task *rpcb_call_async(struct rpc_clnt *rpcb_clnt,
@@ -731,14 +731,14 @@ void rpcb_getport_async(struct rpc_task *task)
 		bind_version = rpcb_next_version6[xprt->bind_index].rpc_vers;
 		break;
 	default:
-		status = -EAFNOSUPPORT;
+		status = -ERR(EAFNOSUPPORT);
 		dprintk("RPC: %5u %s: bad address family\n",
 				task->tk_pid, __func__);
 		goto bailout_nofree;
 	}
 	if (proc == NULL) {
 		xprt->bind_index = 0;
-		status = -EPFNOSUPPORT;
+		status = -ERR(EPFNOSUPPORT);
 		dprintk("RPC: %5u %s: no more getport versions available\n",
 			task->tk_pid, __func__);
 		goto bailout_nofree;
@@ -771,7 +771,7 @@ void rpcb_getport_async(struct rpc_task *task)
 	map->r_prot = xprt->prot;
 	map->r_port = 0;
 	map->r_xprt = xprt;
-	map->r_status = -EIO;
+	map->r_status = -ERR(EIO);
 
 	switch (bind_version) {
 	case RPCBVERS_4:
@@ -822,7 +822,7 @@ static void rpcb_getport_done(struct rpc_task *child, void *data)
 
 	/* Garbage reply: retry with a lesser rpcbind version */
 	if (status == -EIO)
-		status = -EPROTONOSUPPORT;
+		status = -ERR(EPROTONOSUPPORT);
 
 	/* rpcbind server doesn't support this rpcbind protocol version */
 	if (status == -EPROTONOSUPPORT)
@@ -834,7 +834,7 @@ static void rpcb_getport_done(struct rpc_task *child, void *data)
 	} else if (map->r_port == 0) {
 		/* Requested RPC service wasn't registered on remote host */
 		xprt->ops->set_port(xprt, 0);
-		status = -EACCES;
+		status = -ERR(EACCES);
 	} else {
 		/* Succeeded */
 		xprt->ops->set_port(xprt, map->r_port);
@@ -881,13 +881,13 @@ static int rpcb_dec_getport(struct rpc_rqst *req, struct xdr_stream *xdr,
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	port = be32_to_cpup(p);
 	dprintk("RPC: %5u PMAP_%s result: %lu\n", req->rq_task->tk_pid,
 			req->rq_task->tk_msg.rpc_proc->p_name, port);
 	if (unlikely(port > USHRT_MAX))
-		return -EIO;
+		return -ERR(EIO);
 
 	rpcb->r_port = port;
 	return 0;
@@ -901,7 +901,7 @@ static int rpcb_dec_set(struct rpc_rqst *req, struct xdr_stream *xdr,
 
 	p = xdr_inline_decode(xdr, 4);
 	if (unlikely(p == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	*boolp = 0;
 	if (*p != xdr_zero)
@@ -996,7 +996,7 @@ out_fail:
 	dprintk("RPC: %5u malformed RPCB_%s reply\n",
 			req->rq_task->tk_pid,
 			req->rq_task->tk_msg.rpc_proc->p_name);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*

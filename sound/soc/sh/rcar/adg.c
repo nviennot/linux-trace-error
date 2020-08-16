@@ -316,7 +316,7 @@ int rsnd_adg_clk_query(struct rsnd_priv *priv, unsigned int rate)
 	if (rate == adg->rbgb_rate_for_48khz)
 		return 0x20;
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int rsnd_adg_ssi_clk_stop(struct rsnd_mod *ssi_mod)

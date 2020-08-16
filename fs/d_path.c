@@ -12,7 +12,7 @@ static int prepend(char **buffer, int *buflen, const char *str, int namelen)
 {
 	*buflen -= namelen;
 	if (*buflen < 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	*buffer -= namelen;
 	memcpy(*buffer, str, namelen);
 	return 0;
@@ -43,7 +43,7 @@ static int prepend_name(char **buffer, int *buflen, const struct qstr *name)
 
 	*buflen -= dlen + 1;
 	if (*buflen < 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	p = *buffer -= dlen + 1;
 	*p++ = '/';
 	while (dlen--) {
@@ -148,7 +148,7 @@ restart:
 
 	if (error >= 0 && bptr == *buffer) {
 		if (--blen < 0)
-			error = -ENAMETOOLONG;
+			error = -ERR(ENAMETOOLONG);
 		else
 			*--bptr = '/';
 	}
@@ -201,7 +201,7 @@ char *d_absolute_path(const struct path *path,
 	error = prepend_path(path, &root, &res, &buflen);
 
 	if (error > 1)
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 	if (error < 0)
 		return ERR_PTR(error);
 	return res;
@@ -302,7 +302,7 @@ char *dynamic_dname(struct dentry *dentry, char *buffer, int buflen,
 	va_end(args);
 
 	if (sz > sizeof(temp) || sz > buflen)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	buffer += buflen - sz;
 	return memcpy(buffer, temp, sz);
@@ -315,7 +315,7 @@ char *simple_dname(struct dentry *dentry, char *buffer, int buflen)
 	if (prepend(&end, &buflen, " (deleted)", 11) ||
 	    prepend(&end, &buflen, dentry->d_name.name, dentry->d_name.len) ||
 	    prepend(&end, &buflen, "/", 1))  
-		end = ERR_PTR(-ENAMETOOLONG);
+		end = ERR_PTR(-ERR(ENAMETOOLONG));
 	return end;
 }
 
@@ -364,7 +364,7 @@ restart:
 		goto Elong;
 	return retval;
 Elong:
-	return ERR_PTR(-ENAMETOOLONG);
+	return ERR_PTR(-ERR(ENAMETOOLONG));
 }
 
 char *dentry_path_raw(struct dentry *dentry, char *buf, int buflen)
@@ -389,7 +389,7 @@ char *dentry_path(struct dentry *dentry, char *buf, int buflen)
 		*p = '/';	/* restore '/' overriden with '\0' */
 	return retval;
 Elong:
-	return ERR_PTR(-ENAMETOOLONG);
+	return ERR_PTR(-ERR(ENAMETOOLONG));
 }
 
 static void get_fs_root_and_pwd_rcu(struct fs_struct *fs, struct path *root,
@@ -434,7 +434,7 @@ SYSCALL_DEFINE2(getcwd, char __user *, buf, unsigned long, size)
 	rcu_read_lock();
 	get_fs_root_and_pwd_rcu(current->fs, &root, &pwd);
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	if (!d_unlinked(pwd.dentry)) {
 		unsigned long len;
 		char *cwd = page + PATH_MAX;
@@ -454,7 +454,7 @@ SYSCALL_DEFINE2(getcwd, char __user *, buf, unsigned long, size)
 				goto out;
 		}
 
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 		len = PATH_MAX + page - cwd;
 		if (len <= size) {
 			error = len;

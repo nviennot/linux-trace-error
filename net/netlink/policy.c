@@ -147,7 +147,7 @@ bool netlink_policy_dump_loop(unsigned long *_state)
 	if (netlink_policy_dump_finished(state)) {
 		kfree(state);
 		/* store end marker instead of freed state */
-		*_state = (unsigned long)ERR_PTR(-ENOENT);
+		*_state = (unsigned long)ERR_PTR(-ERR(ENOENT));
 		return false;
 	}
 
@@ -169,7 +169,7 @@ send_attribute:
 
 	policy = nla_nest_start(skb, state->policy_idx);
 	if (!policy)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	attr = nla_nest_start(skb, state->attr_idx);
 	if (!attr)
@@ -296,7 +296,7 @@ next:
 
 	if (again) {
 		if (netlink_policy_dump_finished(state))
-			return -ENODATA;
+			return -ERR(ENODATA);
 		goto send_attribute;
 	}
 
@@ -304,5 +304,5 @@ next:
 
 nla_put_failure:
 	nla_nest_cancel(skb, policy);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }

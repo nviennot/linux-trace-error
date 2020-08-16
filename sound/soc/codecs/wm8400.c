@@ -875,7 +875,7 @@ static int fll_factors(struct wm8400_priv *wm8400, struct fll_factors *factors,
 			dev_err(wm8400->wm8400->dev,
 				"Unsupported FLL output frequency %uHz\n",
 				Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * factors->outdiv;
@@ -901,7 +901,7 @@ static int fll_factors(struct wm8400_priv *wm8400, struct fll_factors *factors,
 		if (factors->fratio < 1 || factors->fratio > 8) {
 			dev_err(wm8400->wm8400->dev,
 				"Unable to calculate FRATIO\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		factors->n = target / (Fref * factors->fratio);
@@ -1005,7 +1005,7 @@ static int wm8400_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio3 |= WM8400_AIF_MSTR1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	audio1 &= ~WM8400_AIF_FMT_MASK;
@@ -1032,7 +1032,7 @@ static int wm8400_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		audio1 |= WM8400_AIF_FMT_DSP | WM8400_AIF_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8400_AUDIO_INTERFACE_1, audio1);
@@ -1068,7 +1068,7 @@ static int wm8400_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8400_CLOCKING_1, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

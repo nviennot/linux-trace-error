@@ -288,7 +288,7 @@ static int __reserve_bp_slot(struct perf_event *bp, u64 bp_type)
 	/* Basic checks */
 	if (bp_type == HW_BREAKPOINT_EMPTY ||
 	    bp_type == HW_BREAKPOINT_INVALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	type = find_slot_idx(bp_type);
 	weight = hw_breakpoint_weight(bp);
@@ -302,7 +302,7 @@ static int __reserve_bp_slot(struct perf_event *bp, u64 bp_type)
 
 	/* Flexible counters need to keep at least one slot */
 	if (slots.pinned + (!!slots.flexible) > nr_slots[type])
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	ret = arch_reserve_bp_slot(bp);
 	if (ret)
@@ -415,13 +415,13 @@ static int hw_breakpoint_parse(struct perf_event *bp,
 
 	if (arch_check_bp_in_kernelspace(hw)) {
 		if (attr->exclude_kernel)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/*
 		 * Don't let unprivileged users set a breakpoint in the trap
 		 * path to avoid trap recursion attacks.
 		 */
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	return 0;
@@ -490,7 +490,7 @@ modify_user_hw_breakpoint_check(struct perf_event *bp, struct perf_event_attr *a
 		old_attr = bp->attr;
 		hw_breakpoint_copy_attr(&old_attr, attr);
 		if (memcmp(&old_attr, attr, sizeof(*attr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (bp->attr.bp_type != attr->bp_type) {
@@ -618,13 +618,13 @@ static int hw_breakpoint_event_init(struct perf_event *bp)
 	int err;
 
 	if (bp->attr.type != PERF_TYPE_BREAKPOINT)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * no branch sampling for breakpoint events
 	 */
 	if (has_branch_stack(bp))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	err = register_perf_hw_breakpoint(bp);
 	if (err)

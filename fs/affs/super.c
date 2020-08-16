@@ -374,7 +374,7 @@ static int affs_fill_super(struct super_block *sb, void *data, int silent)
 				&blocksize,&sbi->s_prefix,
 				sbi->s_volume, &mount_flags)) {
 		pr_err("Error parsing options\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* N.B. after this point s_prefix must be released */
 
@@ -442,7 +442,7 @@ static int affs_fill_super(struct super_block *sb, void *data, int silent)
 	}
 	if (!silent)
 		pr_err("No valid root block on device %s\n", sb->s_id);
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 	/* N.B. after this point bh must be released */
 got_root:
@@ -454,7 +454,7 @@ got_root:
 	boot_bh = sb_bread(sb, 0);
 	if (!boot_bh) {
 		pr_err("Cannot read boot block\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	memcpy(sig, boot_bh->b_data, 4);
 	brelse(boot_bh);
@@ -504,7 +504,7 @@ got_root:
 	default:
 		pr_err("Unknown filesystem on device %s: %08X\n",
 		       sb->s_id, chksum);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (affs_test_opt(mount_flags, SF_VERBOSE)) {
@@ -574,7 +574,7 @@ affs_remount(struct super_block *sb, int *flags, char *data)
 			   &blocksize, &prefix, volume,
 			   &mount_flags)) {
 		kfree(prefix);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	flush_delayed_work(&sbi->sb_work);

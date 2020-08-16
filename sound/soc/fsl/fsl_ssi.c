@@ -702,7 +702,7 @@ static int fsl_ssi_set_bclk(struct snd_pcm_substream *substream,
 
 	/* Don't apply it to any non-baudclk circumstance */
 	if (IS_ERR(ssi->baudclk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Hardware limitation: The bclk rate must be
@@ -710,7 +710,7 @@ static int fsl_ssi_set_bclk(struct snd_pcm_substream *substream,
 	 */
 	if (freq * 5 > clk_get_rate(ssi->clk)) {
 		dev_err(dai->dev, "bitclk > ipgclk / 5\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	baudclk_is_used = ssi->baudclk_streams & ~(BIT(substream->stream));
@@ -759,7 +759,7 @@ static int fsl_ssi_set_bclk(struct snd_pcm_substream *substream,
 	/* No proper pm found if it is still remaining the initial value */
 	if (pm == 999) {
 		dev_err(dai->dev, "failed to handle the required sysclk\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stccr = SSI_SxCCR_PM(pm + 1) | (div2 ? SSI_SxCCR_DIV2 : 0) |
@@ -774,7 +774,7 @@ static int fsl_ssi_set_bclk(struct snd_pcm_substream *substream,
 		ret = clk_set_rate(ssi->baudclk, baudrate);
 		if (ret) {
 			dev_err(dai->dev, "failed to set baudclk rate\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -891,7 +891,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 			if (IS_ERR(ssi->baudclk)) {
 				dev_err(ssi->dev,
 					"missing baudclk for master mode\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			/* fall through */
 		case SND_SOC_DAIFMT_CBM_CFS:
@@ -901,7 +901,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 			ssi->i2s_net |= SSI_SCR_I2S_MODE_SLAVE;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(ssi->regs, REG_SSI_STCCR,
@@ -929,7 +929,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 		strcr |= SSI_STCR_TEFS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	scr |= ssi->i2s_net;
@@ -953,7 +953,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 		strcr ^= SSI_STCR_TFSI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock master masks */
@@ -971,7 +971,7 @@ static int _fsl_ssi_set_dai_fmt(struct fsl_ssi *ssi, unsigned int fmt)
 		strcr |= SSI_STCR_TFDIR;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stcr = strcr;
@@ -1023,13 +1023,13 @@ static int fsl_ssi_set_dai_tdm_slot(struct snd_soc_dai *dai, u32 tx_mask,
 	/* The word length should be 8, 10, 12, 16, 18, 20, 22 or 24 */
 	if (slot_width & 1 || slot_width < 8 || slot_width > 24) {
 		dev_err(dai->dev, "invalid slot width: %d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The slot number should be >= 2 if using Network mode or I2S mode */
 	if (ssi->i2s_net && slots < 2) {
 		dev_err(dai->dev, "slot number should be >= 2 in I2S or NET\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(regs, REG_SSI_STCCR,
@@ -1090,7 +1090,7 @@ static int fsl_ssi_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1387,7 +1387,7 @@ static int fsl_ssi_probe_from_dt(struct fsl_ssi *ssi)
 
 	of_id = of_match_device(fsl_ssi_ids, dev);
 	if (!of_id || !of_id->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ssi->soc = of_id->data;
 
@@ -1403,7 +1403,7 @@ static int fsl_ssi_probe_from_dt(struct fsl_ssi *ssi)
 		ret = of_property_read_u32(np, "cell-index", &ssi->card_idx);
 		if (ret) {
 			dev_err(dev, "failed to get SSI index property\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		strcpy(ssi->card_name, "ac97-codec");
 	} else if (!of_find_property(np, "fsl,ssi-asynchronous", NULL)) {

@@ -160,11 +160,11 @@ static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 	samplerate = params_rate(params);
 	clk_rate = get_pdm_clk(pdm, samplerate, &clk_src, &clk_out);
 	if (!clk_rate)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = clk_set_rate(pdm->clk, clk_src);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pdm->version == RK_PDM_RK3308) {
 		rational_best_approximation(clk_out, clk_src,
@@ -189,7 +189,7 @@ static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 		else if (clk_div <= 35)
 			val = PDM_CLK_FD_RATIO_35;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 		regmap_update_bits(pdm->regmap, PDM_CLK_CTRL,
 				   PDM_CLK_FD_RATIO_MSK,
 				   val);
@@ -223,7 +223,7 @@ static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 		val |= PDM_VDW(32);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_channels(params)) {
@@ -242,7 +242,7 @@ static int rockchip_pdm_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(pdm->dev, "invalid channel: %d\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(pdm->regmap, PDM_CTRL0,
@@ -270,7 +270,7 @@ static int rockchip_pdm_set_fmt(struct snd_soc_dai *cpu_dai,
 		val = PDM_CKP_INVERTED;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pm_runtime_get_sync(cpu_dai->dev);
@@ -300,7 +300,7 @@ static int rockchip_pdm_trigger(struct snd_pcm_substream *substream, int cmd,
 			rockchip_pdm_rxctrl(pdm, 0);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

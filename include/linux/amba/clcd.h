@@ -253,7 +253,7 @@ static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var
 	    var->upper_margin > 255 ||		/* front porch */
 	    var->vsync_len > 32 ||
 	    var->yres > 1024)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #undef CHECK
 
 	/* single panel mode: PCD = max(PCD, 1) */
@@ -265,7 +265,7 @@ static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var
 	 */
 	if (var->grayscale != fb->fb.var.grayscale ||
 	    (var->vmode & FB_VMODE_MASK) != FB_VMODE_NONINTERLACED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #define CHECK(e) (var->e != fb->fb.var.e)
 	if (fb->panel->fixedtimings &&
@@ -280,7 +280,7 @@ static inline int clcdfb_check(struct clcd_fb *fb, struct fb_var_screeninfo *var
 	     CHECK(hsync_len)		||
 	     CHECK(vsync_len)		||
 	     CHECK(sync)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #undef CHECK
 
 	var->nonstd = 0;

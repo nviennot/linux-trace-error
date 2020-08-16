@@ -73,7 +73,7 @@ static int __gup_benchmark_ioctl(unsigned int cmd,
 	int ret = 0;
 
 	if (gup->size > ULONG_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nr_pages = gup->size / PAGE_SIZE;
 	pages = kvcalloc(nr_pages, sizeof(void *), GFP_KERNEL);
@@ -120,7 +120,7 @@ static int __gup_benchmark_ioctl(unsigned int cmd,
 			break;
 		default:
 			kvfree(pages);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -168,7 +168,7 @@ static long gup_benchmark_ioctl(struct file *filep, unsigned int cmd,
 	case PIN_BENCHMARK:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(&gup, (void __user *)arg, sizeof(gup)))

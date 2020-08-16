@@ -151,16 +151,16 @@ static inline void uprobes_init(void)
 static inline int
 uprobe_register(struct inode *inode, loff_t offset, struct uprobe_consumer *uc)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int uprobe_register_refctr(struct inode *inode, loff_t offset, loff_t ref_ctr_offset, struct uprobe_consumer *uc)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int
 uprobe_apply(struct inode *inode, loff_t offset, struct uprobe_consumer *uc, bool add)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline void
 uprobe_unregister(struct inode *inode, loff_t offset, struct uprobe_consumer *uc)

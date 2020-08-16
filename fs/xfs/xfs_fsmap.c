@@ -102,7 +102,7 @@ xfs_fsmap_owner_to_rmap(
 	case XFS_FMR_OWN_DEFECTIVE:	/* not implemented */
 		/* fall through */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -241,7 +241,7 @@ xfs_getfsmap_helper(
 	int				error;
 
 	if (fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	/*
 	 * Filter out records that start before our startpoint, if the
@@ -277,7 +277,7 @@ xfs_getfsmap_helper(
 	 */
 	if (rec_daddr > info->next_daddr) {
 		if (info->head->fmh_entries >= info->head->fmh_count)
-			return -ECANCELED;
+			return -ERR(ECANCELED);
 
 		fmr.fmr_device = info->dev;
 		fmr.fmr_physical = info->next_daddr;
@@ -296,7 +296,7 @@ xfs_getfsmap_helper(
 
 	/* Fill out the extent we found */
 	if (info->head->fmh_entries >= info->head->fmh_count)
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 
 	trace_xfs_fsmap_mapping(mp, info->dev, info->agno, rec);
 
@@ -828,10 +828,10 @@ xfs_getfsmap(
 	int				error = 0;
 
 	if (head->fmh_iflags & ~FMH_IF_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!xfs_getfsmap_is_valid_device(mp, &head->fmh_keys[0]) ||
 	    !xfs_getfsmap_is_valid_device(mp, &head->fmh_keys[1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	use_rmap = capable(CAP_SYS_ADMIN) &&
 		   xfs_sb_version_hasrmapbt(&mp->m_sb);
@@ -881,14 +881,14 @@ xfs_getfsmap(
 		dkeys[0].fmr_physical += dkeys[0].fmr_length;
 		dkeys[0].fmr_owner = 0;
 		if (dkeys[0].fmr_offset)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else
 		dkeys[0].fmr_offset += dkeys[0].fmr_length;
 	dkeys[0].fmr_length = 0;
 	memset(&dkeys[1], 0xFF, sizeof(struct xfs_fsmap));
 
 	if (!xfs_getfsmap_check_keys(dkeys, &head->fmh_keys[1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info.next_daddr = head->fmh_keys[0].fmr_physical +
 			  head->fmh_keys[0].fmr_length;

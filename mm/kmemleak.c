@@ -1707,11 +1707,11 @@ static int dump_str_object_info(const char *str)
 	unsigned long addr;
 
 	if (kstrtoul(str, 0, &addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	object = find_and_get_object(addr, 0);
 	if (!object) {
 		pr_info("Unknown object at 0x%08lx\n", addr);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	raw_spin_lock_irqsave(&object->lock, flags);
@@ -1789,7 +1789,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
 	}
 
 	if (!kmemleak_enabled) {
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 		goto out;
 	}
 
@@ -1819,7 +1819,7 @@ static ssize_t kmemleak_write(struct file *file, const char __user *user_buf,
 	else if (strncmp(buf, "dump=", 5) == 0)
 		ret = dump_str_object_info(buf + 5);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 out:
 	mutex_unlock(&scan_mutex);
@@ -1909,13 +1909,13 @@ static void kmemleak_disable(void)
 static int __init kmemleak_boot_config(char *str)
 {
 	if (!str)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (strcmp(str, "off") == 0)
 		kmemleak_disable();
 	else if (strcmp(str, "on") == 0)
 		kmemleak_skip_disable = 1;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 early_param("kmemleak", kmemleak_boot_config);

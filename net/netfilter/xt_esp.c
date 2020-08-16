@@ -63,7 +63,7 @@ static int esp_mt_check(const struct xt_mtchk_param *par)
 
 	if (espinfo->invflags & ~XT_ESP_INV_MASK) {
 		pr_debug("unknown flags %X\n", espinfo->invflags);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

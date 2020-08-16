@@ -121,7 +121,7 @@ static int gcov_seq_show(struct seq_file *seq, void *data)
 	struct gcov_iterator *iter = data;
 
 	if (gcov_iter_write(iter, seq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -672,7 +672,7 @@ static int get_info_index(struct gcov_node *node, struct gcov_info *info)
 		if (node->loaded_info[i] == info)
 			return i;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*

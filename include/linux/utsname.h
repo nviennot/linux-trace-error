@@ -59,7 +59,7 @@ static inline struct uts_namespace *copy_utsname(unsigned long flags,
 	struct user_namespace *user_ns, struct uts_namespace *old_ns)
 {
 	if (flags & CLONE_NEWUTS)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return old_ns;
 }

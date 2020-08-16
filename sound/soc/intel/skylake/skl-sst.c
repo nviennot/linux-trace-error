@@ -77,7 +77,7 @@ static int skl_load_base_firmware(struct sst_dsp *ctx)
 		ret = request_firmware(&ctx->fw, ctx->fw_name, ctx->dev);
 		if (ret < 0) {
 			dev_err(ctx->dev, "Request firmware failed %d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -127,7 +127,7 @@ static int skl_load_base_firmware(struct sst_dsp *ctx)
 		reg = sst_dsp_shim_read(ctx, SKL_ADSP_FW_STATUS);
 		dev_err(ctx->dev,
 			"Timeout waiting for ROM init done, reg:0x%x\n", reg);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto transfer_firmware_failed;
 	}
 
@@ -140,7 +140,7 @@ static int skl_load_base_firmware(struct sst_dsp *ctx)
 					msecs_to_jiffies(SKL_IPC_BOOT_MSECS));
 		if (ret == 0) {
 			dev_err(ctx->dev, "DSP boot failed, FW Ready timed-out\n");
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto transfer_firmware_failed;
 		}
 
@@ -259,7 +259,7 @@ static int skl_get_module(struct sst_dsp *ctx, u16 mod_id)
 			return ++module->usage_cnt;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int skl_put_module(struct sst_dsp *ctx, u16 mod_id)
@@ -271,7 +271,7 @@ static int skl_put_module(struct sst_dsp *ctx, u16 mod_id)
 			return --module->usage_cnt;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct skl_module_table *skl_fill_module_table(struct sst_dsp *ctx,
@@ -372,7 +372,7 @@ static int skl_transfer_module(struct sst_dsp *ctx, const void *data,
 				msecs_to_jiffies(SKL_IPC_BOOT_MSECS));
 	if (ret == 0 || !skl->mod_load_status) {
 		dev_err(ctx->dev, "Module Load failed\n");
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 out:
@@ -420,7 +420,7 @@ static int skl_load_module(struct sst_dsp *ctx, u16 mod_id, u8 *guid)
 		module_entry = skl_fill_module_table(ctx, mod_name, mod_id);
 		if (module_entry == NULL) {
 			dev_err(ctx->dev, "Failed to Load module\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -448,7 +448,7 @@ static int skl_unload_module(struct sst_dsp *ctx, u16 mod_id)
 	usage_cnt = skl_put_module(ctx, mod_id);
 	if (usage_cnt < 0) {
 		dev_err(ctx->dev, "Module bad usage cnt!:%d\n", usage_cnt);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* if module is used by others return, no need to unload */

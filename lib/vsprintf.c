@@ -767,7 +767,7 @@ static inline int __ptr_to_hashval(const void *ptr, unsigned long *hashval_out)
 	unsigned long hashval;
 
 	if (static_branch_unlikely(&not_filled_random_ptr_key))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 #ifdef CONFIG_64BIT
 	hashval = (unsigned long)siphash_1u64((u64)ptr, &ptr_key);

@@ -132,7 +132,7 @@ Eoverflow:
 	kvfree(m->buf);
 	m->count = 0;
 	m->buf = seq_buf_alloc(m->size <<= 1);
-	return !m->buf ? -ENOMEM : -EAGAIN;
+	return !m->buf ? -ENOMEM : -ERR(EAGAIN);
 }
 
 /**
@@ -289,7 +289,7 @@ EXPORT_SYMBOL(seq_read);
 loff_t seq_lseek(struct file *file, loff_t offset, int whence)
 {
 	struct seq_file *m = file->private_data;
-	loff_t retval = -EINVAL;
+	loff_t retval = -ERR(EINVAL);
 
 	mutex_lock(&m->lock);
 	switch (whence) {
@@ -479,7 +479,7 @@ int seq_path_root(struct seq_file *m, const struct path *path,
 {
 	char *buf;
 	size_t size = seq_get_buf(m, &buf);
-	int res = -ENAMETOOLONG;
+	int res = -ERR(ENAMETOOLONG);
 
 	if (size) {
 		char *p;
@@ -493,12 +493,12 @@ int seq_path_root(struct seq_file *m, const struct path *path,
 			if (end)
 				res = end - buf;
 			else
-				res = -ENAMETOOLONG;
+				res = -ERR(ENAMETOOLONG);
 		}
 	}
 	seq_commit(m, res);
 
-	return res < 0 && res != -ENAMETOOLONG ? res : 0;
+	return res < 0 && res != -ERR(ENAMETOOLONG) ? res : 0;
 }
 
 /*

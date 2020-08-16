@@ -580,7 +580,7 @@ static int avc_latest_notif_update(struct selinux_avc *avc,
 		if (seqno < avc->avc_cache.latest_notif) {
 			pr_warn("SELinux: avc:  seqno %d < latest_notif %d\n",
 			       seqno, avc->avc_cache.latest_notif);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		}
 	} else {
 		if (seqno > avc->avc_cache.latest_notif)
@@ -761,7 +761,7 @@ noinline int slow_avc_audit(struct selinux_state *state,
 	struct selinux_audit_data sad;
 
 	if (WARN_ON(!tclass || tclass >= ARRAY_SIZE(secclass_map)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!a) {
 		a = &stack_data;
@@ -877,7 +877,7 @@ static int avc_update_node(struct selinux_avc *avc,
 	}
 
 	if (!orig) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		avc_node_kill(avc, node);
 		goto out_unlock;
 	}
@@ -1011,11 +1011,11 @@ static noinline int avc_denied(struct selinux_state *state,
 			       struct av_decision *avd)
 {
 	if (flags & AVC_STRICT)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (enforcing_enabled(state) &&
 	    !(avd->flags & AVD_FLAGS_PERMISSIVE))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	avc_update_node(state->avc, AVC_CALLBACK_GRANT, requested, driver,
 			xperm, ssid, tsid, tclass, avd->seqno, NULL, flags);
@@ -1047,7 +1047,7 @@ int avc_has_extended_perms(struct selinux_state *state,
 
 	xp_node = &local_xp_node;
 	if (WARN_ON(!requested))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	rcu_read_lock();
 
@@ -1138,7 +1138,7 @@ inline int avc_has_perm_noaudit(struct selinux_state *state,
 	u32 denied;
 
 	if (WARN_ON(!requested))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	rcu_read_lock();
 

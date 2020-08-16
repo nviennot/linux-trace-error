@@ -87,7 +87,7 @@ static inline int __must_check
 media_request_lock_for_access(struct media_request *req)
 {
 	unsigned long flags;
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	spin_lock_irqsave(&req->lock, flags);
 	if (req->state == MEDIA_REQUEST_STATE_COMPLETE) {
@@ -140,7 +140,7 @@ media_request_lock_for_update(struct media_request *req)
 		req->state = MEDIA_REQUEST_STATE_UPDATING;
 		req->updating_count++;
 	} else {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	}
 	spin_unlock_irqrestore(&req->lock, flags);
 
@@ -231,7 +231,7 @@ static inline void media_request_put(struct media_request *req)
 static inline struct media_request *
 media_request_get_by_fd(struct media_device *mdev, int request_fd)
 {
-	return ERR_PTR(-EBADR);
+	return ERR_PTR(-ERR(EBADR));
 }
 
 #endif
@@ -382,7 +382,7 @@ void media_request_object_complete(struct media_request_object *obj);
 static inline int __must_check
 media_request_lock_for_access(struct media_request *req)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void media_request_unlock_for_access(struct media_request *req)
@@ -392,7 +392,7 @@ static inline void media_request_unlock_for_access(struct media_request *req)
 static inline int __must_check
 media_request_lock_for_update(struct media_request *req)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void media_request_unlock_for_update(struct media_request *req)

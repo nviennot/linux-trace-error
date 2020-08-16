@@ -465,7 +465,7 @@ static inline int bcma_host_pci_irq_ctl(struct bcma_bus *bus,
 					struct bcma_device *core, bool enable)
 {
 	if (bus->hosttype == BCMA_HOSTTYPE_PCI)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	return 0;
 }
 #endif

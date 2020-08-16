@@ -96,7 +96,7 @@ static int tas571x_reg_write(void *context, unsigned int reg,
 	else if (ret < 0)
 		return ret;
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 static int tas571x_reg_read(void *context, unsigned int reg,
@@ -127,7 +127,7 @@ static int tas571x_reg_read(void *context, unsigned int reg,
 	if (ret < 0)
 		return ret;
 	else if (ret != ARRAY_SIZE(msgs))
-		return -EIO;
+		return -ERR(EIO);
 
 	*value = 0;
 
@@ -167,7 +167,7 @@ static int tas571x_reg_write_multiword(struct i2c_client *client,
 	else if (ret < 0)
 		return ret;
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 /*
@@ -203,7 +203,7 @@ static int tas571x_reg_read_multiword(struct i2c_client *client,
 	if (ret < 0)
 		goto err_ret;
 	else if (ret != ARRAY_SIZE(msgs)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err_ret;
 	}
 
@@ -289,7 +289,7 @@ static int tas571x_hw_params(struct snd_pcm_substream *substream,
 		val = 0x06;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params_width(params) >= 24)
@@ -801,7 +801,7 @@ static int tas571x_i2c_probe(struct i2c_client *client,
 	}
 
 	if (WARN_ON(priv->chip->num_supply_names > TAS571X_MAX_SUPPLIES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (i = 0; i < priv->chip->num_supply_names; i++)
 		priv->supplies[i].supply = priv->chip->supply_names[i];
 

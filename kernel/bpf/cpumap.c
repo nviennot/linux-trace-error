@@ -86,12 +86,12 @@ static struct bpf_map *cpu_map_alloc(union bpf_attr *attr)
 	int ret;
 
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	/* check sanity of attributes */
 	if (attr->max_entries == 0 || attr->key_size != 4 ||
 	    attr->value_size != 4 || attr->map_flags & ~BPF_F_NUMA_NODE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	cmap = kzalloc(sizeof(*cmap), GFP_USER);
 	if (!cmap)
@@ -101,7 +101,7 @@ static struct bpf_map *cpu_map_alloc(union bpf_attr *attr)
 
 	/* Pre-limit array size based on NR_CPUS, not final CPU check */
 	if (cmap->map.max_entries > NR_CPUS) {
-		err = -E2BIG;
+		err = -ERR(E2BIG);
 		goto free_cmap;
 	}
 
@@ -426,7 +426,7 @@ static int cpu_map_delete_elem(struct bpf_map *map, void *key)
 	u32 key_cpu = *(u32 *)key;
 
 	if (key_cpu >= map->max_entries)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* notice caller map_delete_elem() use preempt_disable() */
 	__cpu_map_entry_replace(cmap, key_cpu, NULL);
@@ -445,17 +445,17 @@ static int cpu_map_update_elem(struct bpf_map *map, void *key, void *value,
 	u32 qsize = *(u32 *)value;
 
 	if (unlikely(map_flags > BPF_EXIST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (unlikely(key_cpu >= cmap->map.max_entries))
-		return -E2BIG;
+		return -ERR(E2BIG);
 	if (unlikely(map_flags == BPF_NOEXIST))
-		return -EEXIST;
+		return -ERR(EEXIST);
 	if (unlikely(qsize > 16384)) /* sanity limit on qsize */
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Make sure CPU is a valid possible cpu */
 	if (key_cpu >= nr_cpumask_bits || !cpu_possible(key_cpu))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (qsize == 0) {
 		rcpu = NULL; /* Same as deleting */
@@ -538,7 +538,7 @@ static int cpu_map_get_next_key(struct bpf_map *map, void *key, void *next_key)
 	}
 
 	if (index == cmap->map.max_entries - 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	*next = index + 1;
 	return 0;
 }
@@ -623,7 +623,7 @@ int cpu_map_enqueue(struct bpf_cpu_map_entry *rcpu, struct xdp_buff *xdp,
 
 	xdpf = xdp_convert_buff_to_frame(xdp);
 	if (unlikely(!xdpf))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	/* Info needed when constructing SKB on remote CPU */
 	xdpf->dev_rx = dev_rx;

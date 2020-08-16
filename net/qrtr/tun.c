@@ -55,12 +55,12 @@ static ssize_t qrtr_tun_read_iter(struct kiocb *iocb, struct iov_iter *to)
 
 	while (!(skb = skb_dequeue(&tun->queue))) {
 		if (filp->f_flags & O_NONBLOCK)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		/* Wait until we get data or the endpoint goes away */
 		if (wait_event_interruptible(tun->readq,
 					     !skb_queue_empty(&tun->queue)))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 	}
 
 	count = min_t(size_t, iov_iter_count(to), skb->len);

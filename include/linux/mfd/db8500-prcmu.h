@@ -637,12 +637,12 @@ static inline int db8500_prcmu_stop_temp_sense(void)
 
 static inline int prcmu_abb_read(u8 slave, u8 reg, u8 *value, u8 size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int prcmu_abb_write(u8 slave, u8 reg, u8 *value, u8 size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int prcmu_ac_wake_req(void)

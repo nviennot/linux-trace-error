@@ -325,15 +325,15 @@ static int mchp_i2s_mcc_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	/* We don't support any kind of clock inversion */
 	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We can't generate only FSYNC */
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) == SND_SOC_DAIFMT_CBM_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We can only reconfigure the IP when it's stopped */
 	if (fmt & SND_SOC_DAIFMT_CONT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev->fmt = fmt;
 
@@ -353,13 +353,13 @@ static int mchp_i2s_mcc_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (slots < 0 || slots > MCHP_I2SMCC_MAX_CHANNELS ||
 	    slot_width != MCHP_I2MCC_TDM_SLOT_WIDTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (slots) {
 		/* We do not support daisy chain */
 		if (rx_mask != GENMASK(slots - 1, 0) ||
 		    rx_mask != tx_mask)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	dev->tdm_slots = slots;
@@ -454,7 +454,7 @@ static int mchp_i2s_mcc_config_divs(struct mchp_i2s_mcc_dev *dev,
 	/* check if clocks returned only errors */
 	if (!best_clk) {
 		dev_err(dev->dev, "unable to change rate to clocks\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dev->dev, "source CLK is %s with rate %lu, diff %lu\n",
@@ -505,14 +505,14 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 	case SND_SOC_DAIFMT_I2S:
 		if (dev->tdm_slots) {
 			dev_err(dev->dev, "I2S with TDM is not supported\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		mra |= MCHP_I2SMCC_MRA_FORMAT_I2S;
 		break;
 	case SND_SOC_DAIFMT_LEFT_J:
 		if (dev->tdm_slots) {
 			dev_err(dev->dev, "Left-Justified with TDM is not supported\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		mra |= MCHP_I2SMCC_MRA_FORMAT_LJ;
 		break;
@@ -521,7 +521,7 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dev->dev, "unsupported bus format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dev->fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -545,7 +545,7 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dev->dev, "unsupported master/slave mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (dev->fmt & (SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_LEFT_J)) {
@@ -560,7 +560,7 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 			break;
 		default:
 			dev_err(dev->dev, "unsupported number of audio channels\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (!frame_length)
@@ -622,7 +622,7 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dev->dev, "unsupported size/endianness for audio samples\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (set_divs) {
@@ -647,7 +647,7 @@ static int mchp_i2s_mcc_hw_params(struct snd_pcm_substream *substream,
 		regmap_read(dev->regmap, MCHP_I2SMCC_MRA, &mra_cur);
 		regmap_read(dev->regmap, MCHP_I2SMCC_MRB, &mrb_cur);
 		if (mra != mra_cur || mrb != mrb_cur)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return 0;
 	}
@@ -773,7 +773,7 @@ static int mchp_i2s_mcc_trigger(struct snd_pcm_substream *substream, int cmd,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((cr & MCHP_I2SMCC_CR_CKEN) && dev->gclk_use &&

@@ -37,14 +37,14 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
 			return compat_ksys_semtimedop(first, ptr, second,
 			        (const struct old_timespec32 __user *)fifth);
 		else
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 
 	case SEMGET:
 		return ksys_semget(first, second, third);
 	case SEMCTL: {
 		unsigned long arg;
 		if (!ptr)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(arg, (unsigned long __user *) ptr))
 			return -EFAULT;
 		return ksys_old_semctl(first, second, third, arg);
@@ -58,7 +58,7 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
 		case 0: {
 			struct ipc_kludge tmp;
 			if (!ptr)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (copy_from_user(&tmp,
 					   (struct ipc_kludge __user *) ptr,
@@ -93,7 +93,7 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
 			 * This was the entry point for kernel-originating calls
 			 * from iBCS2 in 2.2 days.
 			 */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	case SHMDT:
 		return ksys_shmdt((char __user *)ptr);
@@ -103,7 +103,7 @@ int ksys_ipc(unsigned int call, int first, unsigned long second,
 		return ksys_old_shmctl(first, second,
 				   (struct shmid_ds __user *) ptr);
 	default:
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 }
 
@@ -142,14 +142,14 @@ int compat_ksys_ipc(u32 call, int first, int second,
 		return ksys_semtimedop(first, compat_ptr(ptr), second, NULL);
 	case SEMTIMEDOP:
 		if (!IS_ENABLED(CONFIG_COMPAT_32BIT_TIME))
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 		return compat_ksys_semtimedop(first, compat_ptr(ptr), second,
 						compat_ptr(fifth));
 	case SEMGET:
 		return ksys_semget(first, second, third);
 	case SEMCTL:
 		if (!ptr)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (get_user(pad, (u32 __user *) compat_ptr(ptr)))
 			return -EFAULT;
 		return compat_ksys_old_semctl(first, second, third, pad);
@@ -161,12 +161,12 @@ int compat_ksys_ipc(u32 call, int first, int second,
 		void __user *uptr = compat_ptr(ptr);
 
 		if (first < 0 || second < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!version) {
 			struct compat_ipc_kludge ipck;
 			if (!uptr)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (copy_from_user(&ipck, uptr, sizeof(ipck)))
 				return -EFAULT;
 			return compat_ksys_msgrcv(first, ipck.msgp, second,
@@ -184,7 +184,7 @@ int compat_ksys_ipc(u32 call, int first, int second,
 		unsigned long raddr;
 
 		if (version == 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = do_shmat(first, compat_ptr(ptr), second, &raddr,
 			       COMPAT_SHMLBA);
 		if (err < 0)
@@ -199,7 +199,7 @@ int compat_ksys_ipc(u32 call, int first, int second,
 		return compat_ksys_old_shmctl(first, second, compat_ptr(ptr));
 	}
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,

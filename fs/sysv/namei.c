@@ -34,7 +34,7 @@ static struct dentry *sysv_lookup(struct inode * dir, struct dentry * dentry, un
 	ino_t ino;
 
 	if (dentry->d_name.len > SYSV_NAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	ino = sysv_inode_by_name(dentry);
 	if (ino)
 		inode = sysv_iget(dir->i_sb, ino);
@@ -47,7 +47,7 @@ static int sysv_mknod(struct inode * dir, struct dentry * dentry, umode_t mode, 
 	int err;
 
 	if (!old_valid_dev(rdev))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode = sysv_new_inode(dir, mode);
 	err = PTR_ERR(inode);
@@ -68,7 +68,7 @@ static int sysv_create(struct inode * dir, struct dentry * dentry, umode_t mode,
 static int sysv_symlink(struct inode * dir, struct dentry * dentry, 
 	const char * symname)
 {
-	int err = -ENAMETOOLONG;
+	int err = -ERR(ENAMETOOLONG);
 	int l = strlen(symname)+1;
 	struct inode * inode;
 
@@ -150,7 +150,7 @@ static int sysv_unlink(struct inode * dir, struct dentry * dentry)
 	struct inode * inode = d_inode(dentry);
 	struct page * page;
 	struct sysv_dir_entry * de;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	de = sysv_find_entry(dentry, &page);
 	if (!de)
@@ -169,7 +169,7 @@ out:
 static int sysv_rmdir(struct inode * dir, struct dentry * dentry)
 {
 	struct inode *inode = d_inode(dentry);
-	int err = -ENOTEMPTY;
+	int err = -ERR(ENOTEMPTY);
 
 	if (sysv_empty_dir(inode)) {
 		err = sysv_unlink(dir, dentry);
@@ -196,17 +196,17 @@ static int sysv_rename(struct inode * old_dir, struct dentry * old_dentry,
 	struct sysv_dir_entry * dir_de = NULL;
 	struct page * old_page;
 	struct sysv_dir_entry * old_de;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old_de = sysv_find_entry(old_dentry, &old_page);
 	if (!old_de)
 		goto out;
 
 	if (S_ISDIR(old_inode->i_mode)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		dir_de = sysv_dotdot(old_inode, &dir_page);
 		if (!dir_de)
 			goto out_old;
@@ -216,11 +216,11 @@ static int sysv_rename(struct inode * old_dir, struct dentry * old_dentry,
 		struct page * new_page;
 		struct sysv_dir_entry * new_de;
 
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 		if (dir_de && !sysv_empty_dir(new_inode))
 			goto out_dir;
 
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		new_de = sysv_find_entry(new_dentry, &new_page);
 		if (!new_de)
 			goto out_dir;

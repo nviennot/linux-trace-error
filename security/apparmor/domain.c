@@ -164,13 +164,13 @@ next:
 	*perms = aa_compute_fperms(profile->file.dfa, state, &cond);
 	aa_apply_modes_to_perms(profile, perms);
 	if ((perms->allow & request) != request)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 
 fail:
 	*perms = nullperms;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 /**
@@ -229,13 +229,13 @@ next:
 	}
 
 	if ((perms->allow & request) != request)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 
 fail:
 	*perms = nullperms;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 /**
@@ -340,7 +340,7 @@ static int aa_xattrs_match(const struct linux_binprm *bprm,
 						 size);
 			perm = dfa_user_allow(profile->xmatch, state);
 			if (!(perm & MAY_EXEC)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 		}
@@ -353,7 +353,7 @@ static int aa_xattrs_match(const struct linux_binprm *bprm,
 			 * was optional.
 			 */
 			if (!state) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			/* don't count missing optional xattr as matched */
@@ -669,7 +669,7 @@ static struct aa_label *profile_transition(struct aa_profile *profile,
 			/* hack ix fallback - improve how this is detected */
 			goto audit;
 		} else if (!new) {
-			error = -EACCES;
+			error = -ERR(EACCES);
 			info = "profile transition not found";
 			/* remove MAY_EXEC to audit as failure */
 			perms.allow &= ~MAY_EXEC;
@@ -684,13 +684,13 @@ static struct aa_label *profile_transition(struct aa_profile *profile,
 			error = -ENOMEM;
 			info = "could not create null profile";
 		} else {
-			error = -EACCES;
+			error = -ERR(EACCES);
 			new = &new_profile->label;
 		}
 		perms.xindex |= AA_X_UNSAFE;
 	} else
 		/* fail exec */
-		error = -EACCES;
+		error = -ERR(EACCES);
 
 	if (!new)
 		goto audit;
@@ -725,7 +725,7 @@ static int profile_onexec(struct aa_profile *profile, struct aa_label *onexec,
 	unsigned int state = profile->file.start;
 	struct aa_perms perms = {};
 	const char *xname = NULL, *info = "change_profile onexec";
-	int error = -EACCES;
+	int error = -ERR(EACCES);
 
 	AA_BUG(!profile);
 	AA_BUG(!onexec);
@@ -916,7 +916,7 @@ int apparmor_bprm_creds_for_exec(struct linux_binprm *bprm)
 	if ((bprm->unsafe & LSM_UNSAFE_NO_NEW_PRIVS) &&
 	    !unconfined(label) &&
 	    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		info = "no new privs";
 		goto audit;
 	}
@@ -995,13 +995,13 @@ static struct aa_label *build_change_hat(struct aa_profile *profile,
 		root = aa_get_profile(profile);
 	} else {
 		info = "conflicting target types";
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto audit;
 	}
 
 	hat = aa_find_child(root, name);
 	if (!hat) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		if (COMPLAIN_MODE(profile)) {
 			hat = aa_new_null_profile(profile, true, name,
 						  GFP_KERNEL);
@@ -1057,7 +1057,7 @@ static struct aa_label *change_hat(struct aa_label *label, const char *hats[],
 				root = aa_get_profile(profile);
 			} else {	/* conflicting change type */
 				info = "conflicting targets types";
-				error = -EPERM;
+				error = -ERR(EPERM);
 				goto fail;
 			}
 			hat = aa_find_child(root, name);
@@ -1068,7 +1068,7 @@ static struct aa_label *change_hat(struct aa_label *label, const char *hats[],
 				/* complain mode succeed as if hat */
 			} else if (!PROFILE_IS_HAT(hat)) {
 				info = "target not hat";
-				error = -EPERM;
+				error = -ERR(EPERM);
 				aa_put_profile(hat);
 				goto fail;
 			}
@@ -1089,12 +1089,12 @@ outer_continue:
 	label_for_each_in_ns(it, labels_ns(label), label, profile) {
 		if (!list_empty(&profile->base.profiles)) {
 			info = "hat not found";
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			goto fail;
 		}
 	}
 	info = "no hats defined";
-	error = -ECHILD;
+	error = -ERR(ECHILD);
 
 fail:
 	label_for_each_in_ns(it, labels_ns(label), label, profile) {
@@ -1170,7 +1170,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 
 	if (unconfined(label)) {
 		info = "unconfined can not change_hat";
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto fail;
 	}
 
@@ -1196,7 +1196,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 		    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG("no_new_privs - change_hat denied");
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto out;
 		}
 
@@ -1217,7 +1217,7 @@ int aa_change_hat(const char *hats[], int count, u64 token, int flags)
 		    !aa_label_is_unconfined_subset(previous, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG("no_new_privs - change_hat denied");
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto out;
 		}
 
@@ -1316,7 +1316,7 @@ int aa_change_profile(const char *fqname, int flags)
 	if (!fqname || !*fqname) {
 		aa_put_label(label);
 		AA_DEBUG("no profile name");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (flags & AA_CHANGE_ONEXEC) {
@@ -1412,7 +1412,7 @@ check:
 		    !aa_label_is_unconfined_subset(new, ctx->nnp)) {
 			/* not an apparmor denial per se, so don't log it */
 			AA_DEBUG("no_new_privs - change_hat denied");
-			error = -EPERM;
+			error = -ERR(EPERM);
 			goto out;
 		}
 	}

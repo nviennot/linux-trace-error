@@ -364,7 +364,7 @@ xchk_validate_inputs(
 	int				error;
 	const struct xchk_meta_ops	*ops;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	/* Check our inputs. */
 	sm->sm_flags &= ~XFS_SCRUB_FLAGS_OUT;
 	if (sm->sm_flags & ~XFS_SCRUB_FLAGS_IN)
@@ -373,7 +373,7 @@ xchk_validate_inputs(
 	if (memchr_inv(sm->sm_reserved, 0, sizeof(sm->sm_reserved)))
 		goto out;
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	/* Do we know about this type of metadata? */
 	if (sm->sm_type >= XFS_SCRUB_TYPE_NR)
 		goto out;
@@ -384,7 +384,7 @@ xchk_validate_inputs(
 	if (ops->has && !ops->has(&mp->m_sb))
 		goto out;
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	/* restricting fields must be appropriate for type */
 	switch (ops->type) {
 	case ST_NONE:
@@ -412,11 +412,11 @@ xchk_validate_inputs(
 	 * repairing an object that doesn't need repairs.
 	 */
 	if (sm->sm_flags & XFS_SCRUB_IFLAG_REPAIR) {
-		error = -EOPNOTSUPP;
+		error = -ERR(EOPNOTSUPP);
 		if (!xfs_sb_version_hascrc(&mp->m_sb))
 			goto out;
 
-		error = -EROFS;
+		error = -ERR(EROFS);
 		if (mp->m_flags & XFS_MOUNT_RDONLY)
 			goto out;
 	}
@@ -475,10 +475,10 @@ xfs_scrub_metadata(
 	trace_xchk_start(ip, sm, error);
 
 	/* Forbidden if we are shut down or mounted norecovery. */
-	error = -ESHUTDOWN;
+	error = -ERR(ESHUTDOWN);
 	if (XFS_FORCED_SHUTDOWN(mp))
 		goto out;
-	error = -ENOTRECOVERABLE;
+	error = -ERR(ENOTRECOVERABLE);
 	if (mp->m_flags & XFS_MOUNT_NORECOVERY)
 		goto out;
 

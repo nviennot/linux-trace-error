@@ -98,7 +98,7 @@ static int tomoyo_write_env(struct tomoyo_acl_param *param)
 	const char *data = tomoyo_read_token(param);
 
 	if (!tomoyo_correct_word(data) || strchr(data, '='))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	e.env = tomoyo_get_name(data);
 	if (!e.env)
 		return error;
@@ -119,5 +119,5 @@ int tomoyo_write_misc(struct tomoyo_acl_param *param)
 {
 	if (tomoyo_str_starts(&param->data, "env "))
 		return tomoyo_write_env(param);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }

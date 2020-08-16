@@ -464,7 +464,7 @@ struct net *copy_net_ns(unsigned long flags,
 
 	ucounts = inc_net_namespaces(user_ns);
 	if (!ucounts)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	net = net_alloc();
 	if (!net) {
@@ -663,7 +663,7 @@ struct net *get_net_ns_by_fd(int fd)
 	if (ns->ops == &netns_operations)
 		net = get_net(container_of(ns, struct net, ns));
 	else
-		net = ERR_PTR(-EINVAL);
+		net = ERR_PTR(-ERR(EINVAL));
 
 	fput(file);
 	return net;
@@ -672,7 +672,7 @@ struct net *get_net_ns_by_fd(int fd)
 #else
 struct net *get_net_ns_by_fd(int fd)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 #endif
 EXPORT_SYMBOL_GPL(get_net_ns_by_fd);
@@ -683,7 +683,7 @@ struct net *get_net_ns_by_pid(pid_t pid)
 	struct net *net;
 
 	/* Lookup the network namespace */
-	net = ERR_PTR(-ESRCH);
+	net = ERR_PTR(-ERR(ESRCH));
 	rcu_read_lock();
 	tsk = find_task_by_vpid(pid);
 	if (tsk) {
@@ -740,7 +740,7 @@ static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
 		return err;
 	if (!tb[NETNSA_NSID]) {
 		NL_SET_ERR_MSG(extack, "nsid is missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	nsid = nla_get_s32(tb[NETNSA_NSID]);
 
@@ -752,7 +752,7 @@ static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
 		nla = tb[NETNSA_FD];
 	} else {
 		NL_SET_ERR_MSG(extack, "Peer netns reference is missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (IS_ERR(peer)) {
 		NL_SET_BAD_ATTR(extack, nla);
@@ -763,7 +763,7 @@ static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
 	spin_lock(&net->nsid_lock);
 	if (__peernet2id(net, peer) >= 0) {
 		spin_unlock(&net->nsid_lock);
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		NL_SET_BAD_ATTR(extack, nla);
 		NL_SET_ERR_MSG(extack,
 			       "Peer netns already has a nsid assigned");
@@ -777,7 +777,7 @@ static int rtnl_net_newid(struct sk_buff *skb, struct nlmsghdr *nlh,
 				  nlh, GFP_KERNEL);
 		err = 0;
 	} else if (err == -ENOSPC && nsid >= 0) {
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		NL_SET_BAD_ATTR(extack, tb[NETNSA_NSID]);
 		NL_SET_ERR_MSG(extack, "The specified nsid is already used");
 	}
@@ -812,7 +812,7 @@ static int rtnl_net_fill(struct sk_buff *skb, struct net_fill_args *args)
 	nlh = nlmsg_put(skb, args->portid, args->seq, args->cmd, sizeof(*rth),
 			args->flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rth = nlmsg_data(nlh);
 	rth->rtgen_family = AF_UNSPEC;
@@ -829,7 +829,7 @@ static int rtnl_net_fill(struct sk_buff *skb, struct net_fill_args *args)
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int rtnl_net_valid_getid_req(struct sk_buff *skb,
@@ -862,7 +862,7 @@ static int rtnl_net_valid_getid_req(struct sk_buff *skb,
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in peer netns getid request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -896,11 +896,11 @@ static int rtnl_net_getid(struct sk_buff *skb, struct nlmsghdr *nlh,
 	} else if (tb[NETNSA_NSID]) {
 		peer = get_net_ns_by_id(net, nla_get_s32(tb[NETNSA_NSID]));
 		if (!peer)
-			peer = ERR_PTR(-ENOENT);
+			peer = ERR_PTR(-ERR(ENOENT));
 		nla = tb[NETNSA_NSID];
 	} else {
 		NL_SET_ERR_MSG(extack, "Peer netns reference is missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (IS_ERR(peer)) {
@@ -1012,7 +1012,7 @@ static int rtnl_valid_dump_net_req(const struct nlmsghdr *nlh, struct sock *sk,
 			NL_SET_BAD_ATTR(extack, tb[i]);
 			NL_SET_ERR_MSG(extack,
 				       "Unsupported attribute in dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1360,7 +1360,7 @@ static int netns_install(struct nsset *nsset, struct ns_common *ns)
 
 	if (!ns_capable(net->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	put_net(nsproxy->net_ns);
 	nsproxy->net_ns = get_net(net);

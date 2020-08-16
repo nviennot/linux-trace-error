@@ -162,7 +162,7 @@ static int set_spdif_rate(struct snd_ac97 *ac97, unsigned short rate)
 	unsigned int sbits;
 
 	if (! (ac97->ext_id & AC97_EI_SPDIF))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* TODO: double rate support */
 	if (ac97->flags & AC97_CS_SPDIF) {
@@ -171,14 +171,14 @@ static int set_spdif_rate(struct snd_ac97 *ac97, unsigned short rate)
 		case 44100: bits = 1 << AC97_SC_SPSR_SHIFT; break;
 		default: /* invalid - disable output */
 			snd_ac97_update_bits(ac97, AC97_EXTENDED_STATUS, AC97_EA_SPDIF, 0);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		reg = AC97_CSR_SPDIF;
 		mask = 1 << AC97_SC_SPSR_SHIFT;
 	} else {
 		if (ac97->id == AC97_ID_CM9739 && rate != 48000) {
 			snd_ac97_update_bits(ac97, AC97_EXTENDED_STATUS, AC97_EA_SPDIF, 0);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		switch (rate) {
 		case 44100: bits = AC97_SC_SPSR_44K; break;
@@ -186,7 +186,7 @@ static int set_spdif_rate(struct snd_ac97 *ac97, unsigned short rate)
 		case 32000: bits = AC97_SC_SPSR_32K; break;
 		default: /* invalid - disable output */
 			snd_ac97_update_bits(ac97, AC97_EXTENDED_STATUS, AC97_EA_SPDIF, 0);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		reg = AC97_SPDIF;
 		mask = AC97_SC_SPSR_MASK;
@@ -248,9 +248,9 @@ int snd_ac97_set_rate(struct snd_ac97 *ac97, int reg, unsigned int rate)
 	dbl = rate > 48000;
 	if (dbl) {
 		if (!(ac97->flags & AC97_DOUBLE_RATE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (reg != AC97_PCM_FRONT_DAC_RATE)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	snd_ac97_update_power(ac97, reg, 1);
@@ -258,33 +258,33 @@ int snd_ac97_set_rate(struct snd_ac97 *ac97, int reg, unsigned int rate)
 	case AC97_PCM_MIC_ADC_RATE:
 		if ((ac97->regs[AC97_EXTENDED_STATUS] & AC97_EA_VRM) == 0)	/* MIC VRA */
 			if (rate != 48000)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		break;
 	case AC97_PCM_FRONT_DAC_RATE:
 	case AC97_PCM_LR_ADC_RATE:
 		if ((ac97->regs[AC97_EXTENDED_STATUS] & AC97_EA_VRA) == 0)	/* VRA */
 			if (rate != 48000 && rate != 96000)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		break;
 	case AC97_PCM_SURR_DAC_RATE:
 		if (! (ac97->scaps & AC97_SCAP_SURROUND_DAC))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AC97_PCM_LFE_DAC_RATE:
 		if (! (ac97->scaps & AC97_SCAP_CENTER_LFE_DAC))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case AC97_SPDIF:
 		/* special case */
 		return set_spdif_rate(ac97, rate);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (dbl)
 		rate /= 2;
 	tmp = (rate * ac97->bus->clock) / 48000;
 	if (tmp > 65535)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((ac97->ext_id & AC97_EI_DRA) && reg == AC97_PCM_FRONT_DAC_RATE)
 		snd_ac97_update_bits(ac97, AC97_EXTENDED_STATUS,
 				     AC97_EA_DRA, dbl ? AC97_EA_DRA : 0);
@@ -579,7 +579,7 @@ int snd_ac97_pcm_open(struct ac97_pcm *pcm, unsigned int rate,
 		for (cidx = 0; cidx < 4; cidx++) {
 			if (bus->used_slots[pcm->stream][cidx] & (1 << i)) {
 				spin_unlock_irq(&pcm->bus->bus_lock);
-				err = -EBUSY;
+				err = -ERR(EBUSY);
 				goto error;
 			}
 			if (pcm->r[r].rslots[cidx] & (1 << i)) {
@@ -592,7 +592,7 @@ int snd_ac97_pcm_open(struct ac97_pcm *pcm, unsigned int rate,
 			dev_err(bus->card->dev,
 				"cannot find configuration for AC97 slot %i\n",
 				i);
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto error;
 		}
 	}

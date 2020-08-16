@@ -302,13 +302,13 @@ static int nfnl_osf_add_callback(struct net *net, struct sock *ctnl,
 	int err = 0;
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!osf_attrs[OSF_ATTR_FINGER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(nlh->nlmsg_flags & NLM_F_CREATE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = nla_data(osf_attrs[OSF_ATTR_FINGER]);
 
@@ -326,7 +326,7 @@ static int nfnl_osf_add_callback(struct net *net, struct sock *ctnl,
 		kf = NULL;
 
 		if (nlh->nlmsg_flags & NLM_F_EXCL)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		break;
 	}
 
@@ -347,13 +347,13 @@ static int nfnl_osf_remove_callback(struct net *net, struct sock *ctnl,
 {
 	struct nf_osf_user_finger *f;
 	struct nf_osf_finger *sf;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!osf_attrs[OSF_ATTR_FINGER])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = nla_data(osf_attrs[OSF_ATTR_FINGER]);
 
@@ -396,7 +396,7 @@ static const struct nfnetlink_subsystem nfnl_osf_subsys = {
 
 static int __init nfnl_osf_init(void)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(nf_osf_fingers); ++i)

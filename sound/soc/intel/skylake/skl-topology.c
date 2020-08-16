@@ -321,7 +321,7 @@ static int skl_tplg_update_be_blob(struct snd_soc_dapm_widget *w,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* update the blob based on virtual bus_id and default params */
@@ -335,7 +335,7 @@ static int skl_tplg_update_be_blob(struct snd_soc_dapm_widget *w,
 					m_cfg->vbus_id, link_type, dir);
 		dev_err(skl->dev, "PCM: ch %d, freq %d, fmt %d\n",
 					ch, s_freq, s_fmt);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -486,7 +486,7 @@ skl_tplg_init_pipe_modules(struct skl_dev *skl, struct skl_pipe *pipe)
 			dev_err(skl->dev,
 					"module %pUL id not populated\n",
 					(guid_t *)mconfig->guid);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		cfg_idx = mconfig->pipe->cur_config_idx;
@@ -563,7 +563,7 @@ static int skl_tplg_unload_pipe_modules(struct skl_dev *skl,
 			ret = skl->dsp->fw_ops.unload_mod(skl->dsp,
 						mconfig->id.module_id);
 			if (ret < 0)
-				return -EIO;
+				return -ERR(EIO);
 		}
 		skl_put_pvt_id(skl, uuid_mod, &mconfig->id.pvt_id);
 
@@ -674,7 +674,7 @@ skl_tplg_get_pipe_config(struct skl_dev *skl, struct skl_module_cfg *mconfig)
 
 	dev_err(skl->dev, "Invalid pipe config: %d %d %d for pipe: %d\n",
 		params->ch, params->s_freq, params->s_fmt, pipe->ppl_id);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -760,7 +760,7 @@ static int skl_fill_sink_instance_id(struct skl_dev *skl, u32 *params,
 			pvt_id = skl_get_pvt_instance_id_map(skl, inst->mod_id,
 								inst->inst_id);
 			if (pvt_id < 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			inst->inst_id = pvt_id;
 			inst++;
@@ -847,7 +847,7 @@ static int skl_get_module_id(struct skl_dev *skl, guid_t *uuid)
 			return module->id;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int skl_tplg_find_moduleid_from_uuid(struct skl_dev *skl,
@@ -874,7 +874,7 @@ static int skl_tplg_find_moduleid_from_uuid(struct skl_dev *skl,
 				&uuid_params->u.map_uuid[i].mod_uuid);
 			if (module_id < 0) {
 				devm_kfree(bus->dev, params);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			params->u.map[i].mod_id = module_id;
@@ -1214,7 +1214,7 @@ static int skl_tplg_mixer_dapm_post_pmd_event(struct snd_soc_dapm_widget *w,
 	struct skl_module_deferred_bind *modules, *tmp;
 
 	if (s_pipe->state == SKL_PIPE_INVALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(w_module, &s_pipe->w_list, node) {
 		if (list_empty(&skl->bind_list))
@@ -1369,10 +1369,10 @@ static int skl_tplg_multi_config_set_get(struct snd_kcontrol *kcontrol,
 	u32 *pipe_id;
 
 	if (!ec)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (is_set && ucontrol->value.enumerated.item[0] > ec->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pipe_id = ec->dobj.private;
 
@@ -1383,7 +1383,7 @@ static int skl_tplg_multi_config_set_get(struct snd_kcontrol *kcontrol,
 		}
 	}
 	if (!pipe)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (is_set)
 		pipe->pipe_config_idx = ucontrol->value.enumerated.item[0];
@@ -1470,7 +1470,7 @@ static int skl_tplg_tlv_control_set(struct snd_kcontrol *kcontrol,
 		data += 2;
 
 		if (size > ac->max)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ac->size = size;
 
 		if (copy_from_user(ac->params, data, size))
@@ -1547,28 +1547,28 @@ static int skl_tplg_mic_control_set(struct snd_kcontrol *kcontrol,
 	switch (ch_type) {
 	case SKL_CH_MONO:
 		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_mono_list))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		list = &mic_mono_list[index];
 		break;
 
 	case SKL_CH_STEREO:
 		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_stereo_list))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		list = mic_stereo_list[index];
 		break;
 
 	case SKL_CH_TRIO:
 		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_trio_list))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		list = mic_trio_list[index];
 		break;
 
 	case SKL_CH_QUATRO:
 		if (mconfig->dmic_ch_combo_index > ARRAY_SIZE(mic_quatro_list))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		list = mic_quatro_list[index];
 		break;
@@ -1577,7 +1577,7 @@ static int skl_tplg_mic_control_set(struct snd_kcontrol *kcontrol,
 		dev_err(w->dapm->dev,
 				"Invalid channel %d for mic_select module\n",
 				ch_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 
@@ -1676,7 +1676,7 @@ int skl_tplg_update_pipe_params(struct device *dev,
 	default:
 		dev_err(dev, "Invalid bit depth %x for pipe\n",
 				format->valid_bit_depth);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (params->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -1858,7 +1858,7 @@ static int skl_tplg_be_fill_pipe_params(struct snd_soc_dai *dai,
 					params->stream);
 		dev_err(dai->dev, "PCM: ch %d, freq %d, fmt %d\n",
 				 params->ch, params->s_freq, params->s_fmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1869,7 +1869,7 @@ static int skl_tplg_be_set_src_pipe_params(struct snd_soc_dai *dai,
 				struct skl_pipe_params *params)
 {
 	struct snd_soc_dapm_path *p;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	snd_soc_dapm_widget_for_each_source_path(w, p) {
 		if (p->connect && is_skl_dsp_widget_type(p->source, dai->dev) &&
@@ -1894,7 +1894,7 @@ static int skl_tplg_be_set_sink_pipe_params(struct snd_soc_dai *dai,
 	struct snd_soc_dapm_widget *w, struct skl_pipe_params *params)
 {
 	struct snd_soc_dapm_path *p = NULL;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	snd_soc_dapm_widget_for_each_sink_path(w, p) {
 		if (p->connect && is_skl_dsp_widget_type(p->sink, dai->dev) &&
@@ -1986,7 +1986,7 @@ static int skl_tplg_fill_pipe_cfg(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	config = &pipe->configs[conf_idx];
@@ -2010,7 +2010,7 @@ static int skl_tplg_fill_pipe_cfg(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid token config: %d\n", tkn);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2048,7 +2048,7 @@ static int skl_tplg_fill_pipe_tkn(struct device *dev,
 
 	default:
 		dev_err(dev, "Token not handled %d\n", tkn);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2069,7 +2069,7 @@ static int skl_tplg_add_pipe(struct device *dev,
 	list_for_each_entry(ppl, &skl->ppl_list, node) {
 		if (ppl->pipe->ppl_id == tkn_elem->value) {
 			mconfig->pipe = ppl->pipe;
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -2108,7 +2108,7 @@ static int skl_tplg_get_uuid(struct device *dev, guid_t *guid,
 
 	dev_err(dev, "Not an UUID token %d\n", uuid_tkn->token);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int skl_tplg_fill_pin(struct device *dev,
@@ -2137,7 +2137,7 @@ static int skl_tplg_fill_pin(struct device *dev,
 
 	default:
 		dev_err(dev, "%d Not a pin token\n", tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2166,7 +2166,7 @@ static int skl_tplg_fill_pins_info(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid direction value\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = skl_tplg_fill_pin(dev, tkn_elem, m_pin, pin_count);
@@ -2222,7 +2222,7 @@ static int skl_tplg_fill_fmt(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid token %d\n", tkn);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2235,7 +2235,7 @@ static int skl_tplg_widget_fill_fmt(struct device *dev,
 	struct skl_module_fmt *dst_fmt;
 
 	if (!fmt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dir) {
 	case SKL_DIR_IN:
@@ -2248,7 +2248,7 @@ static int skl_tplg_widget_fill_fmt(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return skl_tplg_fill_fmt(dev, dst_fmt, tkn, val);
@@ -2284,7 +2284,7 @@ static int skl_tplg_manifest_pin_res_tkn(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid pin direction: %d\n", dir);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (tkn_elem->token) {
@@ -2298,7 +2298,7 @@ static int skl_tplg_manifest_pin_res_tkn(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid token: %d\n", tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2316,7 +2316,7 @@ static int skl_tplg_fill_res_tkn(struct device *dev,
 	int ret, tkn_count = 0;
 
 	if (!res)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (tkn_elem->token) {
 	case SKL_TKN_MM_U32_DMA_SIZE:
@@ -2354,7 +2354,7 @@ static int skl_tplg_fill_res_tkn(struct device *dev,
 
 	default:
 		dev_err(dev, "Not a res type token: %d", tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 	tkn_count++;
@@ -2389,7 +2389,7 @@ static int skl_tplg_get_token(struct device *dev,
 	}
 
 	if (tkn_elem->token > SKL_TKN_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (tkn_elem->token) {
 	case SKL_TKN_U8_IN_QUEUE_COUNT:
@@ -2604,7 +2604,7 @@ static int skl_tplg_get_token(struct device *dev,
 	default:
 		dev_err(dev, "Token %d not handled\n",
 				tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tkn_count++;
@@ -2627,7 +2627,7 @@ static int skl_tplg_get_tokens(struct device *dev,
 	bool is_module_guid = true;
 
 	if (block_size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (tuple_size < block_size) {
 		array = (struct snd_soc_tplg_vendor_array *)(pvt_data + off);
@@ -2701,7 +2701,7 @@ static int skl_tplg_get_desc_blocks(struct device *dev,
 		break;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Functions to parse private data from configuration file format v4 */
@@ -3047,7 +3047,7 @@ bind_event:
 	if (ret) {
 		dev_err(bus->dev, "%s: No matching event handlers found for %d\n",
 					__func__, tplg_w->event_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -3163,7 +3163,7 @@ static int skl_tplg_fill_str_mfest_tkn(struct device *dev,
 	case SKL_TKN_STR_LIB_NAME:
 		if (ref_count > skl->lib_count - 1) {
 			ref_count = 0;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		strncpy(skl->lib_info[ref_count].name,
@@ -3212,7 +3212,7 @@ static int skl_tplg_manifest_fill_fmt(struct device *dev,
 	int ret;
 
 	if (!fmt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (dir) {
 	case SKL_DIR_IN:
@@ -3225,7 +3225,7 @@ static int skl_tplg_manifest_fill_fmt(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid direction: %d\n", dir);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mod_fmt = &dst_fmt->fmt;
@@ -3252,7 +3252,7 @@ static int skl_tplg_fill_mod_info(struct device *dev,
 {
 
 	if (!mod)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (tkn_elem->token) {
 	case SKL_TKN_U8_IN_PIN_TYPE:
@@ -3281,7 +3281,7 @@ static int skl_tplg_fill_mod_info(struct device *dev,
 
 	default:
 		dev_err(dev, "Invalid mod info token %d", tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -3335,13 +3335,13 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 	case SKL_TKN_U32_ASTATE_COUNT:
 		if (astate_table != NULL) {
 			dev_err(dev, "More than one entry for A-State count");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (tkn_elem->value > SKL_MAX_ASTATE_CFG) {
 			dev_err(dev, "Invalid A-State count %d\n",
 				tkn_elem->value);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		size = struct_size(skl->cfg.astate_cfg, astate_table,
@@ -3358,7 +3358,7 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 		if (tkn_elem->value >= count) {
 			dev_err(dev, "Invalid A-State index %d\n",
 				tkn_elem->value);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		astate_cfg_idx = tkn_elem->value;
@@ -3390,7 +3390,7 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 
 	case SKL_TKN_MM_U32_RES_ID:
 		if (!res)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		res->id = tkn_elem->value;
 		res_val_idx = tkn_elem->value;
@@ -3398,7 +3398,7 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 
 	case SKL_TKN_MM_U32_FMT_ID:
 		if (!fmt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		fmt->fmt_idx = tkn_elem->value;
 		intf_val_idx = tkn_elem->value;
@@ -3420,14 +3420,14 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 
 	case SKL_TKN_MM_U32_NUM_IN_FMT:
 		if (!fmt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		res->nr_input_pins = tkn_elem->value;
 		break;
 
 	case SKL_TKN_MM_U32_NUM_OUT_FMT:
 		if (!fmt)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		res->nr_output_pins = tkn_elem->value;
 		break;
@@ -3449,7 +3449,7 @@ static int skl_tplg_get_int_tkn(struct device *dev,
 
 	default:
 		dev_err(dev, "Not a manifest token %d\n", tkn_elem->token);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	tkn_count++;
 
@@ -3471,7 +3471,7 @@ static int skl_tplg_get_manifest_tkn(struct device *dev,
 	struct snd_soc_tplg_vendor_value_elem *tkn_elem;
 
 	if (block_size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (tuple_size < block_size) {
 		array = (struct snd_soc_tplg_vendor_array *)(pvt_data + off);
@@ -3492,11 +3492,11 @@ static int skl_tplg_get_manifest_tkn(struct device *dev,
 			if (array->uuid->token != SKL_TKN_UUID) {
 				dev_err(dev, "Not an UUID token: %d\n",
 					array->uuid->token);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (uuid_index >= skl->nr_modules) {
 				dev_err(dev, "Too many UUID tokens\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			import_guid(&skl->modules[uuid_index++]->uuid,
 				    array->uuid->uuid);
@@ -3581,7 +3581,7 @@ static int skl_tplg_get_manifest_data(struct snd_soc_tplg_manifest *manifest,
 
 			--num_blocks;
 		} else {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		off += ret;
 	}
@@ -3604,7 +3604,7 @@ static int skl_manifest_load(struct snd_soc_component *cmpnt, int index,
 	if (skl->lib_count > SKL_MAX_LIB) {
 		dev_err(bus->dev, "Exceeding max Library count. Got:%d\n",
 					skl->lib_count);
-		return  -EINVAL;
+		return  -ERR(EINVAL);
 	}
 
 	return 0;

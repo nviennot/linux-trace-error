@@ -55,7 +55,7 @@ struct dentry *fault_create_debugfs_attr(const char *name,
 static inline struct dentry *fault_create_debugfs_attr(const char *name,
 			struct dentry *parent, struct fault_attr *attr)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 #endif /* CONFIG_FAULT_INJECTION_DEBUG_FS */

@@ -585,13 +585,13 @@ int rsnd_dai_connect(struct rsnd_mod *mod,
 	struct device *dev;
 
 	if (!mod)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (io->mod[type] == mod)
 		return 0;
 
 	if (io->mod[type])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv = rsnd_mod_to_priv(mod);
 	dev = rsnd_priv_to_dev(priv);
@@ -746,7 +746,7 @@ static int rsnd_soc_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 dai_trigger_end:
@@ -768,7 +768,7 @@ static int rsnd_soc_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rdai->clk_master = 1; /* codec is slave, cpu is master */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set format */
@@ -847,7 +847,7 @@ static int rsnd_soc_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dev, "unsupported TDM slots (%d)\n", slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1347,7 +1347,7 @@ static int rsnd_dai_probe(struct rsnd_priv *priv)
 		nr = of_get_child_count(dai_node);
 
 	if (!nr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rdrv = devm_kcalloc(dev, nr, sizeof(*rdrv), GFP_KERNEL);
 	rdai = devm_kcalloc(dev, nr, sizeof(*rdai), GFP_KERNEL);
@@ -1624,7 +1624,7 @@ int rsnd_kctrl_new(struct rsnd_mod *mod,
 	}
 
 	if (size > RSND_MAX_CHANNELS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kctrl = snd_ctl_new1(&knew, cfg);
 	if (!kctrl)
@@ -1732,7 +1732,7 @@ static int rsnd_probe(struct platform_device *pdev)
 	 */
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	priv->pdev	= pdev;
 	priv->flags	= (unsigned long)of_device_get_match_data(dev);

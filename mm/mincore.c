@@ -261,7 +261,7 @@ SYSCALL_DEFINE3(mincore, unsigned long, start, size_t, len,
 
 	/* Check the start address: needs to be page-aligned.. */
 	if (start & ~PAGE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ..and we need to be passed a valid user-space range */
 	if (!access_ok((void __user *) start, len))
@@ -276,7 +276,7 @@ SYSCALL_DEFINE3(mincore, unsigned long, start, size_t, len,
 
 	tmp = (void *) __get_free_page(GFP_USER);
 	if (!tmp)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	retval = 0;
 	while (pages) {

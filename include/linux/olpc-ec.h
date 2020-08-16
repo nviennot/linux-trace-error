@@ -59,7 +59,7 @@ extern bool olpc_ec_wakeup_available(void);
 #else
 
 static inline int olpc_ec_cmd(u8 cmd, u8 *inbuf, size_t inlen, u8 *outbuf,
-		size_t outlen) { return -ENODEV; }
+		size_t outlen) { return -ERR(ENODEV); }
 
 static inline void olpc_ec_wakeup_set(u16 value) { }
 static inline void olpc_ec_wakeup_clear(u16 value) { }

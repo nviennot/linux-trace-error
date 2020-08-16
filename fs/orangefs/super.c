@@ -91,7 +91,7 @@ static int parse_mount_options(struct super_block *sb, char *options,
 fail:
 	if (!silent)
 		gossip_err("Error: mount option [%s] is not supported.\n", p);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void orangefs_inode_cache_ctor(void *req)
@@ -245,7 +245,7 @@ static int orangefs_remount_fs(struct super_block *sb, int *flags, char *data)
 int orangefs_remount(struct orangefs_sb_info_s *orangefs_sb)
 {
 	struct orangefs_kernel_op_s *new_op;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_SUPER_DEBUG, "orangefs_remount: called\n");
 
@@ -475,10 +475,10 @@ struct dentry *orangefs_mount(struct file_system_type *fst,
 			   const char *devname,
 			   void *data)
 {
-	int ret = -EINVAL;
-	struct super_block *sb = ERR_PTR(-EINVAL);
+	int ret = -ERR(EINVAL);
+	struct super_block *sb = ERR_PTR(-ERR(EINVAL));
 	struct orangefs_kernel_op_s *new_op;
-	struct dentry *d = ERR_PTR(-EINVAL);
+	struct dentry *d = ERR_PTR(-ERR(EINVAL));
 
 	gossip_debug(GOSSIP_SUPER_DEBUG,
 		     "orangefs_mount: called with devname %s\n",
@@ -486,7 +486,7 @@ struct dentry *orangefs_mount(struct file_system_type *fst,
 
 	if (!devname) {
 		gossip_err("ERROR: device name not specified.\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_FS_MOUNT);
@@ -509,7 +509,7 @@ struct dentry *orangefs_mount(struct file_system_type *fst,
 
 	if (new_op->downcall.resp.fs_mount.fs_id == ORANGEFS_FS_ID_NULL) {
 		gossip_err("ERROR: Retrieved null fs_id\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto free_op;
 	}
 

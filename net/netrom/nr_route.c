@@ -329,13 +329,13 @@ static int nr_del_node(ax25_address *callsign, ax25_address *neighbour, struct n
 	nr_node = nr_node_get(callsign);
 
 	if (nr_node == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nr_neigh = nr_neigh_get_dev(neighbour, dev);
 
 	if (nr_neigh == NULL) {
 		nr_node_put(nr_node);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nr_node_lock(nr_node);
@@ -373,7 +373,7 @@ static int nr_del_node(ax25_address *callsign, ax25_address *neighbour, struct n
 	nr_node_unlock(nr_node);
 	nr_node_put(nr_node);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -433,7 +433,7 @@ static int nr_del_neigh(ax25_address *callsign, struct net_device *dev, unsigned
 
 	nr_neigh = nr_neigh_get_dev(callsign, dev);
 
-	if (nr_neigh == NULL) return -EINVAL;
+	if (nr_neigh == NULL) return -ERR(EINVAL);
 
 	nr_neigh->quality = quality;
 	nr_neigh->locked  = 0;
@@ -640,13 +640,13 @@ int nr_rt_ioctl(unsigned int cmd, void __user *arg)
 		if (copy_from_user(&nr_route, arg, sizeof(struct nr_route_struct)))
 			return -EFAULT;
 		if (nr_route.ndigis > AX25_MAX_DIGIS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if ((dev = nr_ax25_dev_get(nr_route.device)) == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		switch (nr_route.type) {
 		case NETROM_NODE:
 			if (strnlen(nr_route.mnemonic, 7) == 7) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				break;
 			}
 
@@ -665,7 +665,7 @@ int nr_rt_ioctl(unsigned int cmd, void __user *arg)
 				dev, nr_route.quality);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		dev_put(dev);
 		return ret;
@@ -674,7 +674,7 @@ int nr_rt_ioctl(unsigned int cmd, void __user *arg)
 		if (copy_from_user(&nr_route, arg, sizeof(struct nr_route_struct)))
 			return -EFAULT;
 		if ((dev = nr_ax25_dev_get(nr_route.device)) == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		switch (nr_route.type) {
 		case NETROM_NODE:
 			ret = nr_del_node(&nr_route.callsign,
@@ -685,7 +685,7 @@ int nr_rt_ioctl(unsigned int cmd, void __user *arg)
 				dev, nr_route.quality);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 		dev_put(dev);
 		return ret;
@@ -694,7 +694,7 @@ int nr_rt_ioctl(unsigned int cmd, void __user *arg)
 		return nr_dec_obs();
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

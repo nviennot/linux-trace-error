@@ -226,7 +226,7 @@ static int hr222_set_hw_playback_level(struct pcxhr_mgr *mgr,
 	if (idx > 1 ||
 	    level < 0 ||
 	    level >= ARRAY_SIZE(g_hr222_p_level))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (idx == 0)
 		cmd = AKM_LEFT_LEVEL_CMD;
@@ -249,7 +249,7 @@ static int hr222_set_hw_capture_level(struct pcxhr_mgr *mgr,
 	int i;
 
 	if (!mgr->capture_chips)
-		return -EINVAL;	/* no PCX22 */
+		return -ERR(EINVAL);	/* no PCX22 */
 
 	data  = ((level_mic & 0xff) << 24);	/* micro is mono, but apply */
 	data |= ((level_mic & 0xff) << 16);	/* level on both channels */
@@ -314,7 +314,7 @@ static int hr222_pll_freq_register(unsigned int freq,
 	unsigned int reg;
 
 	if (freq < 6900 || freq > 219000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	reg = (28224000 * 2) / freq;
 	reg = (reg - 1) / 2;
 	if (reg < 0x100)
@@ -358,13 +358,13 @@ int hr222_sub_set_clock(struct pcxhr_mgr *mgr,
 		break;
 	case HR22_CLOCK_TYPE_AES_1:
 		if (!mgr->board_has_aes1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		mgr->xlx_cfg |= (PCXHR_CFG_CLOCKIN_SEL_MASK |
 				 PCXHR_CFG_CLOCK_UER1_SEL_MASK);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	hr222_config_akm(mgr, AKM_MUTE_CMD);
 
@@ -423,7 +423,7 @@ int hr222_get_external_clock(struct pcxhr_mgr *mgr,
 		dev_dbg(&mgr->pci->dev,
 			"get_external_clock : type %d not supported\n",
 			    clock_type);
-		return -EINVAL; /* other clocks not supported */
+		return -ERR(EINVAL); /* other clocks not supported */
 	}
 
 	if ((PCXHR_INPB(mgr, PCXHR_XLX_CSUER) & mask) != mask) {

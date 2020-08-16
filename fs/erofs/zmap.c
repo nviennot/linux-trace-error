@@ -40,7 +40,7 @@ static int z_erofs_fill_inode_lazy(struct inode *inode)
 		return 0;
 
 	if (wait_on_bit_lock(&vi->flags, EROFS_I_BL_Z_BIT, TASK_KILLABLE))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	err = 0;
 	if (test_bit(EROFS_I_Z_INITED_BIT, &vi->flags))
@@ -66,7 +66,7 @@ static int z_erofs_fill_inode_lazy(struct inode *inode)
 	if (vi->z_algorithmtype[0] >= Z_EROFS_COMPRESSION_MAX) {
 		erofs_err(sb, "unknown compression format %u for nid %llu, please upgrade kernel",
 			  vi->z_algorithmtype[0], vi->nid);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto unmap_done;
 	}
 
@@ -77,7 +77,7 @@ static int z_erofs_fill_inode_lazy(struct inode *inode)
 	if (vi->z_physical_clusterbits[0] != LOG_BLOCK_SIZE) {
 		erofs_err(sb, "unsupported physical clusterbits %u for nid %llu, please upgrade kernel",
 			  vi->z_physical_clusterbits[0], vi->nid);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto unmap_done;
 	}
 
@@ -175,7 +175,7 @@ static int legacy_load_cluster_from_disk(struct z_erofs_maprecorder *m,
 		break;
 	default:
 		DBG_BUGON(1);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	m->type = type;
 	return 0;
@@ -208,7 +208,7 @@ static int unpack_compacted_index(struct z_erofs_maprecorder *m,
 	else if (1 << amortizedshift == 2 && lclusterbits == 12)
 		vcnt = 16;
 	else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	encodebits = ((vcnt << amortizedshift) - sizeof(__le32)) * 8 / vcnt;
 	base = round_down(eofs, vcnt << amortizedshift);
@@ -272,10 +272,10 @@ static int compacted_load_cluster_from_disk(struct z_erofs_maprecorder *m,
 	int err;
 
 	if (lclusterbits != 12)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (lcn >= totalidx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	m->lcn = lcn;
 	/* used to align to 32-byte (compacted_2b) alignment */
@@ -322,7 +322,7 @@ static int z_erofs_load_cluster_from_disk(struct z_erofs_maprecorder *m,
 	if (datamode == EROFS_INODE_FLAT_COMPRESSION)
 		return compacted_load_cluster_from_disk(m, lcn);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int z_erofs_extent_lookback(struct z_erofs_maprecorder *m,
@@ -368,7 +368,7 @@ static int z_erofs_extent_lookback(struct z_erofs_maprecorder *m,
 			  "unknown type %u @ lcn %lu of nid %llu",
 			  m->type, lcn, vi->nid);
 		DBG_BUGON(1);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 	return 0;
 }
@@ -444,7 +444,7 @@ int z_erofs_map_blocks_iter(struct inode *inode,
 		erofs_err(inode->i_sb,
 			  "unknown type %u @ offset %llu of nid %llu",
 			  m.type, ofs, vi->nid);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto unmap_out;
 	}
 

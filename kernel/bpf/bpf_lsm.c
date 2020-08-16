@@ -32,14 +32,14 @@ int bpf_lsm_verify_prog(struct bpf_verifier_log *vlog,
 	if (!prog->gpl_compatible) {
 		bpf_log(vlog,
 			"LSM programs must have a GPL compatible license\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (strncmp(BPF_LSM_SYM_PREFX, prog->aux->attach_func_name,
 		    sizeof(BPF_LSM_SYM_PREFX) - 1)) {
 		bpf_log(vlog, "attach_btf_id %u points to wrong type name %s\n",
 			prog->aux->attach_btf_id, prog->aux->attach_func_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -114,7 +114,7 @@ static int __init osk_soc_init(void)
 	struct device *dev;
 
 	if (!(machine_is_omap_osk()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	osk_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!osk_snd_device)
@@ -141,7 +141,7 @@ static int __init osk_soc_init(void)
 	if (curRate != CODEC_CLOCK) {
 		if (clk_set_rate(tlv320aic23_mclk, CODEC_CLOCK)) {
 			printk(KERN_ERR "Cannot set MCLK for AIC23 CODEC\n");
-			err = -ECANCELED;
+			err = -ERR(ECANCELED);
 			goto err3;
 		}
 	}

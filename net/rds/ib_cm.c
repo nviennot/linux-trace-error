@@ -524,7 +524,7 @@ static int rds_ib_setup_qp(struct rds_connection *conn)
 	 */
 	rds_ibdev = rds_ib_get_client_data(dev);
 	if (!rds_ibdev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* The fr_queue_space is currently set to 512, to add extra space on
 	 * completion queue and send queue. This extra space is used for FRWR
@@ -828,7 +828,7 @@ int rds_ib_cm_handle_connect(struct rdma_cm_id *cm_id,
 			ifindex = __rds_find_ifindex(&init_net, daddr6);
 			/* No index found...  Need to bail out. */
 			if (ifindex == 0) {
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 				goto out;
 			}
 		} else if (ipv6_addr_type(saddr6) & IPV6_ADDR_LINKLOCAL) {
@@ -836,12 +836,12 @@ int rds_ib_cm_handle_connect(struct rdma_cm_id *cm_id,
 			ifindex = __rds_find_ifindex(&init_net, daddr6);
 			/* No index found...  Need to bail out. */
 			if (ifindex == 0) {
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 				goto out;
 			}
 		}
 #else
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 #endif
 	} else {

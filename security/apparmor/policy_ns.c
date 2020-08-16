@@ -292,7 +292,7 @@ struct aa_ns *__aa_find_or_create_ns(struct aa_ns *parent, const char *name,
 	if (!ns)
 		ns = __aa_create_ns(parent, name, dir);
 	else
-		ns = ERR_PTR(-EEXIST);
+		ns = ERR_PTR(-ERR(EEXIST));
 
 	/* return ref */
 	return ns;

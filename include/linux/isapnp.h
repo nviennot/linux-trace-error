@@ -87,8 +87,8 @@ struct pnp_dev *pnp_find_dev(struct pnp_card *card,
 
 /* lowlevel configuration */
 static inline int isapnp_present(void) { return 0; }
-static inline int isapnp_cfg_begin(int csn, int device) { return -ENODEV; }
-static inline int isapnp_cfg_end(void) { return -ENODEV; }
+static inline int isapnp_cfg_begin(int csn, int device) { return -ERR(ENODEV); }
+static inline int isapnp_cfg_end(void) { return -ERR(ENODEV); }
 static inline unsigned char isapnp_read_byte(unsigned char idx) { return 0xff; }
 static inline void isapnp_write_byte(unsigned char idx, unsigned char val) { ; }
 

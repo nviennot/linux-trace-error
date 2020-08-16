@@ -376,17 +376,17 @@ xfs_getbmap(
 	struct xfs_iext_cursor	icur;
 
 	if (bmv->bmv_iflags & ~BMV_IF_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #ifndef DEBUG
 	/* Only allow CoW fork queries if we're debugging. */
 	if (iflags & BMV_IF_COWFORK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 	if ((iflags & BMV_IF_ATTRFORK) && (iflags & BMV_IF_COWFORK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bmv->bmv_length < -1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	bmv->bmv_entries = 0;
 	if (bmv->bmv_length == 0)
 		return 0;
@@ -457,7 +457,7 @@ xfs_getbmap(
 		/* Local format inode forks report no extents. */
 		goto out_unlock_ilock;
 	default:
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_unlock_ilock;
 	}
 
@@ -737,14 +737,14 @@ xfs_alloc_file_space(
 	trace_xfs_alloc_file_space(ip);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_qm_dqattach(ip);
 	if (error)
 		return error;
 
 	if (len <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rt = XFS_IS_REALTIME_INODE(ip);
 	extsz = xfs_get_extsz_hint(ip);
@@ -841,7 +841,7 @@ xfs_alloc_file_space(
 		allocated_fsb = imapp->br_blockcount;
 
 		if (nimaps == 0) {
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 			break;
 		}
 
@@ -1218,19 +1218,19 @@ xfs_swap_extents_check_format(
 	    (!uid_eq(VFS_I(ip)->i_uid, VFS_I(tip)->i_uid) ||
 	     !gid_eq(VFS_I(ip)->i_gid, VFS_I(tip)->i_gid) ||
 	     ip->i_d.di_projid != tip->i_d.di_projid))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Should never get a local format */
 	if (ifp->if_format == XFS_DINODE_FMT_LOCAL ||
 	    tifp->if_format == XFS_DINODE_FMT_LOCAL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * if the target inode has less extents that then temporary inode then
 	 * why did userspace call us?
 	 */
 	if (ifp->if_nextents < tifp->if_nextents)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If we have to use the (expensive) rmap swap method, we can
@@ -1246,17 +1246,17 @@ xfs_swap_extents_check_format(
 	 */
 	if (ifp->if_format == XFS_DINODE_FMT_EXTENTS &&
 	    tifp->if_format == XFS_DINODE_FMT_BTREE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check temp in extent form to max in target */
 	if (tifp->if_format == XFS_DINODE_FMT_EXTENTS &&
 	    tifp->if_nextents > XFS_IFORK_MAXEXT(ip, XFS_DATA_FORK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Check target in extent form to max in temp */
 	if (ifp->if_format == XFS_DINODE_FMT_EXTENTS &&
 	    ifp->if_nextents > XFS_IFORK_MAXEXT(tip, XFS_DATA_FORK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * If we are in a btree format, check that the temp root block will fit
@@ -1270,18 +1270,18 @@ xfs_swap_extents_check_format(
 	if (tifp->if_format == XFS_DINODE_FMT_BTREE) {
 		if (XFS_IFORK_Q(ip) &&
 		    XFS_BMAP_BMDR_SPACE(tifp->if_broot) > XFS_IFORK_BOFF(ip))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (tifp->if_nextents <= XFS_IFORK_MAXEXT(ip, XFS_DATA_FORK))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Reciprocal target->temp btree format checks */
 	if (ifp->if_format == XFS_DINODE_FMT_BTREE) {
 		if (XFS_IFORK_Q(tip) &&
 		    XFS_BMAP_BMDR_SPACE(ip->i_df.if_broot) > XFS_IFORK_BOFF(tip))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (ifp->if_nextents <= XFS_IFORK_MAXEXT(tip, XFS_DATA_FORK))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1300,7 +1300,7 @@ xfs_swap_extent_flush(
 
 	/* Verify O_DIRECT for ftmp */
 	if (VFS_I(ip)->i_mapping->nrpages)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -1580,13 +1580,13 @@ xfs_swap_extents(
 
 	/* Verify that both files have the same format */
 	if ((VFS_I(ip)->i_mode & S_IFMT) != (VFS_I(tip)->i_mode & S_IFMT)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
 	/* Verify both files are either real-time or non-realtime */
 	if (XFS_IS_REALTIME_INODE(ip) != XFS_IS_REALTIME_INODE(tip)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -1685,7 +1685,7 @@ xfs_swap_extents(
 	    (sbp->bs_ctime.tv_nsec != VFS_I(ip)->i_ctime.tv_nsec) ||
 	    (sbp->bs_mtime.tv_sec != VFS_I(ip)->i_mtime.tv_sec) ||
 	    (sbp->bs_mtime.tv_nsec != VFS_I(ip)->i_mtime.tv_nsec)) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out_trans_cancel;
 	}
 

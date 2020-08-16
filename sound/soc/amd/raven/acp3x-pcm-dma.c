@@ -222,7 +222,7 @@ static int acp3x_dma_open(struct snd_soc_component *component,
 	adata = dev_get_drvdata(component->dev);
 	i2s_data = kzalloc(sizeof(*i2s_data), GFP_KERNEL);
 	if (!i2s_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		runtime->hw = acp3x_pcm_hardware_playback;
@@ -264,7 +264,7 @@ static int acp3x_dma_hw_params(struct snd_soc_component *component,
 	adata = dev_get_drvdata(component->dev);
 	rtd = substream->runtime->private_data;
 	if (!rtd)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pinfo) {
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -349,7 +349,7 @@ static int acp3x_dma_close(struct snd_soc_component *component,
 	adata = dev_get_drvdata(component->dev);
 	ins = substream->runtime->private_data;
 	if (!ins)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		switch (ins->i2s_instance) {
@@ -399,14 +399,14 @@ static int acp3x_audio_probe(struct platform_device *pdev)
 
 	if (!pdev->dev.platform_data) {
 		dev_err(&pdev->dev, "platform_data not retrieved\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	irqflags = *((unsigned int *)(pdev->dev.platform_data));
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_MEM FAILED\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	adata = devm_kzalloc(&pdev->dev, sizeof(*adata), GFP_KERNEL);
@@ -421,7 +421,7 @@ static int acp3x_audio_probe(struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
 	if (!res) {
 		dev_err(&pdev->dev, "IORESOURCE_IRQ FAILED\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	adata->i2s_irq = res->start;
@@ -432,13 +432,13 @@ static int acp3x_audio_probe(struct platform_device *pdev)
 						 NULL, 0);
 	if (status) {
 		dev_err(&pdev->dev, "Fail to register acp i2s component\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	status = devm_request_irq(&pdev->dev, adata->i2s_irq, i2s_irq_handler,
 				  irqflags, "ACP3x_I2S_IRQ", adata);
 	if (status) {
 		dev_err(&pdev->dev, "ACP3x I2S IRQ request failed\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	pm_runtime_set_autosuspend_delay(&pdev->dev, 2000);

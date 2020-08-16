@@ -585,7 +585,7 @@ static int wm9090_i2c_probe(struct i2c_client *i2c,
 
 	if (reg != 0x9093) {
 		dev_err(&i2c->dev, "Device is not a WM9090, ID=%x\n", reg);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = regmap_write(wm9090->regmap, WM9090_SOFTWARE_RESET, 0);

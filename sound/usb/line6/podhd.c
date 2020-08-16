@@ -270,7 +270,7 @@ static int podhd_init(struct usb_line6 *line6,
 		if (!intf) {
 			dev_err(pod->line6.ifcdev, "interface %d not found\n",
 				pod->line6.properties->ctrl_if);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		err = usb_driver_claim_interface(&podhd_driver, intf, NULL);

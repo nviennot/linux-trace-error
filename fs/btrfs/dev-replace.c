@@ -163,7 +163,7 @@ no_valid_dev_replace_entry_found:
 		 */
 		if (!dev_replace->srcdev &&
 		    !btrfs_test_opt(fs_info, DEGRADED)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			btrfs_warn(fs_info,
 			   "cannot mount because device replace operation is ongoing and");
 			btrfs_warn(fs_info,
@@ -172,7 +172,7 @@ no_valid_dev_replace_entry_found:
 		}
 		if (!dev_replace->tgtdev &&
 		    !btrfs_test_opt(fs_info, DEGRADED)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			btrfs_warn(fs_info,
 			   "cannot mount because device replace operation is ongoing and");
 			btrfs_warn(fs_info,
@@ -232,7 +232,7 @@ static int btrfs_init_dev_replace_tgtdev(struct btrfs_fs_info *fs_info,
 	*device_out = NULL;
 	if (fs_info->fs_devices->seeding) {
 		btrfs_err(fs_info, "the filesystem is a seed filesystem!");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bdev = blkdev_get_by_path(device_path, FMODE_WRITE | FMODE_EXCL,
@@ -249,7 +249,7 @@ static int btrfs_init_dev_replace_tgtdev(struct btrfs_fs_info *fs_info,
 		if (device->bdev == bdev) {
 			btrfs_err(fs_info,
 				  "target device is in the filesystem!");
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto error;
 		}
 	}
@@ -259,7 +259,7 @@ static int btrfs_init_dev_replace_tgtdev(struct btrfs_fs_info *fs_info,
 	    btrfs_device_get_total_bytes(srcdev)) {
 		btrfs_err(fs_info,
 			  "target device is smaller than source device!");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -451,7 +451,7 @@ static int btrfs_dev_replace_start(struct btrfs_fs_info *fs_info,
 		btrfs_warn_in_rcu(fs_info,
 	  "cannot replace device %s (devid %llu) due to active swapfile",
 			btrfs_dev_name(src_device), src_device->devid);
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 	}
 
 	/*
@@ -560,12 +560,12 @@ int btrfs_dev_replace_by_ioctl(struct btrfs_fs_info *fs_info,
 	case BTRFS_IOCTL_DEV_REPLACE_CONT_READING_FROM_SRCDEV_MODE_AVOID:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((args->start.srcdevid == 0 && args->start.srcdev_name[0] == '\0') ||
 	    args->start.tgtdev_name[0] == '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = btrfs_dev_replace_start(fs_info, args->start.tgtdev_name,
 					args->start.srcdevid,
@@ -843,7 +843,7 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 	int ret;
 
 	if (sb_rdonly(fs_info->sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	mutex_lock(&dev_replace->lock_finishing_cancel_unmount);
 	down_write(&dev_replace->rwsem);
@@ -912,7 +912,7 @@ int btrfs_dev_replace_cancel(struct btrfs_fs_info *fs_info)
 		break;
 	default:
 		up_write(&dev_replace->rwsem);
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 
 	mutex_unlock(&dev_replace->lock_finishing_cancel_unmount);

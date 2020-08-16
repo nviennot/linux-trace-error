@@ -42,7 +42,7 @@ ssize_t pci_p2pdma_enable_show(char *page, struct pci_dev *p2p_dev,
 static inline int pci_p2pdma_add_resource(struct pci_dev *pdev, int bar,
 		size_t size, u64 offset)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int pci_p2pdma_distance_many(struct pci_dev *provider,
 	struct device **clients, int num_clients, bool verbose)

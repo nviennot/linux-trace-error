@@ -84,7 +84,7 @@ static int cs4349_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		cs4349->mode = format & SND_SOC_DAIFMT_FORMAT_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -116,11 +116,11 @@ static int cs4349_pcm_hw_params(struct snd_pcm_substream *substream,
 			fmt = DIF_RGHT_JST24;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component, CS4349_MODE, DIF_MASK,

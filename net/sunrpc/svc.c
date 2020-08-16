@@ -59,7 +59,7 @@ param_set_pool_mode(const char *val, const struct kernel_param *kp)
 
 	mutex_lock(&svc_pool_map_mutex);
 
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	if (m->count)
 		goto out;
 
@@ -73,7 +73,7 @@ param_set_pool_mode(const char *val, const struct kernel_param *kp)
 	else if (!strncmp(val, "pernode", 7))
 		*ip = SVC_POOL_PERNODE;
 	else
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 out:
 	mutex_unlock(&svc_pool_map_mutex);
@@ -900,7 +900,7 @@ static int __svc_rpcb_register4(struct net *net, const u32 program,
 		netid = RPCBIND_NETID_TCP;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	error = rpcb_v4_register(net, program, version,
@@ -948,7 +948,7 @@ static int __svc_rpcb_register6(struct net *net, const u32 program,
 		netid = RPCBIND_NETID_TCP6;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	error = rpcb_v4_register(net, program, version,
@@ -959,7 +959,7 @@ static int __svc_rpcb_register6(struct net *net, const u32 program,
 	 * use a PF_INET6 listener.
 	 */
 	if (error == -EPROTONOSUPPORT)
-		error = -EAFNOSUPPORT;
+		error = -ERR(EAFNOSUPPORT);
 
 	return error;
 }
@@ -977,7 +977,7 @@ static int __svc_register(struct net *net, const char *progname,
 			  const unsigned short protocol,
 			  const unsigned short port)
 {
-	int error = -EAFNOSUPPORT;
+	int error = -ERR(EAFNOSUPPORT);
 
 	switch (family) {
 	case PF_INET:
@@ -1059,7 +1059,7 @@ int svc_register(const struct svc_serv *serv, struct net *net,
 
 	WARN_ON_ONCE(proto == 0 && port == 0);
 	if (proto == 0 && port == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (progp = serv->sv_program; progp; progp = progp->pg_next) {
 		for (i = 0; i < progp->pg_nvers; i++) {
@@ -1586,7 +1586,7 @@ bc_svc_process(struct svc_serv *serv, struct rpc_rqst *req,
 	if (!proc_error) {
 		/* Processing error: drop the request */
 		xprt_free_bc_request(req);
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out;
 	}
 	/* Finally, send the reply synchronously */
@@ -1695,7 +1695,7 @@ char *svc_fill_symlink_pathname(struct svc_rqst *rqstp, struct kvec *first,
 
 	result = kmalloc(total + 1, GFP_KERNEL);
 	if (!result)
-		return ERR_PTR(-ESERVERFAULT);
+		return ERR_PTR(-ERR(ESERVERFAULT));
 
 	dst = result;
 	remaining = total;
@@ -1720,7 +1720,7 @@ char *svc_fill_symlink_pathname(struct svc_rqst *rqstp, struct kvec *first,
 	 */
 	if (strlen(result) != total) {
 		kfree(result);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	return result;
 }

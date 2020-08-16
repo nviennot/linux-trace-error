@@ -639,7 +639,7 @@ xchk_agfl_block(
 	xchk_agfl_block_xref(sc, agbno);
 
 	if (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 
 	return 0;
 }

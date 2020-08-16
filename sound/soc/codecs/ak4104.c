@@ -78,12 +78,12 @@ static int ak4104_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "invalid dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* This device can only be slave */
 	if ((format & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = regmap_update_bits(ak4104->regmap, AK4104_REG_CONTROL1,
 				 AK4104_CONTROL1_DIF0 | AK4104_CONTROL1_DIF1,
@@ -138,7 +138,7 @@ static int ak4104_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unsupported sampling rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_write(ak4104->regmap, AK4104_REG_CHN_STATUS(3), val);
@@ -305,7 +305,7 @@ static int ak4104_spi_probe(struct spi_device *spi)
 	if (ret != 0)
 		return ret;
 	if (val != AK4104_RESERVED_VAL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	spi_set_drvdata(spi, ak4104);
 

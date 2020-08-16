@@ -129,7 +129,7 @@ static ssize_t dpcm_state_read_file(struct file *file, char __user *user_buf,
 	if (fe->num_cpus > 1) {
 		dev_err(fe->dev,
 			"%s doesn't support Multi CPU yet\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	buf = kmalloc(out_count, GFP_KERNEL);
@@ -380,7 +380,7 @@ static int soc_pcm_params_symmetry(struct snd_pcm_substream *substream,
 			if (cpu_dai->rate && cpu_dai->rate != rate) {
 				dev_err(rtd->dev, "ASoC: unmatched rate symmetry: %d - %d\n",
 					cpu_dai->rate, rate);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -396,7 +396,7 @@ static int soc_pcm_params_symmetry(struct snd_pcm_substream *substream,
 			    cpu_dai->channels != channels) {
 				dev_err(rtd->dev, "ASoC: unmatched channel symmetry: %d - %d\n",
 					cpu_dai->channels, channels);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -412,7 +412,7 @@ static int soc_pcm_params_symmetry(struct snd_pcm_substream *substream,
 			    cpu_dai->sample_bits != sample_bits) {
 				dev_err(rtd->dev, "ASoC: unmatched sample bits symmetry: %d - %d\n",
 					cpu_dai->sample_bits, sample_bits);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -559,7 +559,7 @@ int snd_soc_runtime_calc_hw(struct snd_soc_pcm_runtime *rtd,
 
 	/* Verify both a valid CPU DAI and a valid CODEC DAI were found */
 	if (!chan_min || !cpu_chan_min)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * chan min/max cannot be enforced if there are multiple CODEC DAIs
@@ -766,7 +766,7 @@ static int soc_pcm_open(struct snd_pcm_substream *substream)
 	if (soc_pcm_has_symmetry(substream))
 		runtime->hw.info |= SNDRV_PCM_INFO_JOINT_DUPLEX;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!runtime->hw.rates) {
 		printk(KERN_ERR "ASoC: %s <-> %s No matching rates\n",
 			codec_dai_name, cpu_dai_name);
@@ -1162,7 +1162,7 @@ static int soc_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		ret = soc_pcm_trigger_stop(substream, cmd);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1377,7 +1377,7 @@ int dpcm_path_get(struct snd_soc_pcm_runtime *fe,
 	if (fe->num_cpus > 1) {
 		dev_err(fe->dev,
 			"%s doesn't support Multi CPU yet\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* get number of valid DAI paths and their widgets */
@@ -2337,7 +2337,7 @@ static int dpcm_fe_dai_do_trigger(struct snd_pcm_substream *substream, int cmd)
 			ret = dpcm_dai_trigger_fe_be(substream, cmd, false);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		break;
@@ -2354,7 +2354,7 @@ static int dpcm_fe_dai_do_trigger(struct snd_pcm_substream *substream, int cmd)
 			ret = dpcm_dai_trigger_fe_be(substream, cmd, true);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		break;
@@ -2369,7 +2369,7 @@ static int dpcm_fe_dai_do_trigger(struct snd_pcm_substream *substream, int cmd)
 	default:
 		dev_err(fe->dev, "ASoC: invalid trigger cmd %d for %s\n", cmd,
 				fe->dai_link->name);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2467,7 +2467,7 @@ static int dpcm_fe_dai_prepare(struct snd_pcm_substream *substream)
 	if (list_empty(&fe->dpcm[stream].be_clients)) {
 		dev_err(fe->dev, "ASoC: no backend DAIs enabled for %s\n",
 				fe->dai_link->name);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2550,7 +2550,7 @@ static int dpcm_run_update_startup(struct snd_soc_pcm_runtime *fe, int stream)
 	/* Only start the BE if the FE is ready */
 	if (fe->dpcm[stream].state == SND_SOC_DPCM_STATE_HW_FREE ||
 		fe->dpcm[stream].state == SND_SOC_DPCM_STATE_CLOSE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* startup must always be called for new BEs */
 	ret = dpcm_be_dai_startup(fe, stream);
@@ -2636,7 +2636,7 @@ static int soc_dpcm_fe_runtime_update(struct snd_soc_pcm_runtime *fe, int new)
 	if (fe->num_cpus > 1) {
 		dev_err(fe->dev,
 			"%s doesn't support Multi CPU yet\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* only check active links */
@@ -2795,7 +2795,7 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 	if (rtd->dai_link->dynamic && rtd->num_cpus > 1) {
 		dev_err(rtd->dev,
 			"DPCM doesn't support Multi CPU for Front-Ends yet\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rtd->dai_link->dynamic || rtd->dai_link->no_pcm) {
@@ -2809,7 +2809,7 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 						"CPU DAI %s for rtd %s does not support playback\n",
 						cpu_dai->name,
 						rtd->dai_link->stream_name);
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			playback = 1;
 		}
@@ -2823,7 +2823,7 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 						"CPU DAI %s for rtd %s does not support capture\n",
 						cpu_dai->name,
 						rtd->dai_link->stream_name);
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 			capture = 1;
 		}
@@ -2842,7 +2842,7 @@ int soc_new_pcm(struct snd_soc_pcm_runtime *rtd, int num)
 			} else {
 				dev_err(rtd->card->dev,
 					"N cpus to M codecs link is not supported yet\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			if (snd_soc_dai_stream_valid(codec_dai, SNDRV_PCM_STREAM_PLAYBACK) &&

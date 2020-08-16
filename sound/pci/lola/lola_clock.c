@@ -87,7 +87,7 @@ int lola_set_granularity(struct lola *chip, unsigned int val, bool force)
 #endif
 		if (!check_gran_clock_compatibility(chip, val,
 						    chip->clock.cur_freq))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	chip->granularity = val;
@@ -131,7 +131,7 @@ int lola_init_clock_widget(struct lola *chip, int nid)
 	if (chip->clock.items > MAX_SAMPLE_CLOCK_COUNT) {
 		dev_err(chip->card->dev, "CLOCK_LIST too big: %d\n",
 		       chip->clock.items);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nitems = chip->clock.items;
@@ -146,7 +146,7 @@ int lola_init_clock_widget(struct lola *chip, int nid)
 				      idx, 0, &val, &res_ex);
 		if (err < 0) {
 			dev_err(chip->card->dev, "Can't read CLOCK_LIST\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		items[0] = val & 0xfff;
@@ -212,7 +212,7 @@ int lola_enable_clock_events(struct lola *chip)
 	if (res) {
 		dev_warn(chip->card->dev, "error in enable_clock_events %d\n",
 		       res);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -230,7 +230,7 @@ int lola_set_clock_index(struct lola *chip, unsigned int idx)
 		return err;
 	if (res) {
 		dev_warn(chip->card->dev, "error in set_clock %d\n", res);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -274,10 +274,10 @@ int lola_set_clock(struct lola *chip, int idx)
 	}
 
 	if (!freq || !valid)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!check_gran_clock_compatibility(chip, chip->granularity, freq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (idx != chip->clock.cur_index) {
 		int err = lola_set_clock_index(chip, idx);
@@ -304,7 +304,7 @@ int lola_set_sample_rate(struct lola *chip, int rate)
 			break;
 	}
 	if (i >= chip->clock.items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return lola_set_clock(chip, i);
 }
 

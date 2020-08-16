@@ -259,7 +259,7 @@ static int test_no_shared_qgroup(struct btrfs_root *root,
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
 				nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	old_roots = NULL;
 	new_roots = NULL;
@@ -274,7 +274,7 @@ static int test_no_shared_qgroup(struct btrfs_root *root,
 
 	ret = remove_extent_item(root, nodesize, nodesize);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &new_roots,
 			false);
@@ -289,12 +289,12 @@ static int test_no_shared_qgroup(struct btrfs_root *root,
 					  new_roots);
 	if (ret) {
 		test_err("couldn't account space for a qgroup %d", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID, 0, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -360,7 +360,7 @@ static int test_multiple_refs(struct btrfs_root *root,
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
 				       nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
@@ -395,13 +395,13 @@ static int test_multiple_refs(struct btrfs_root *root,
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
 					nodesize, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
 					nodesize, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = btrfs_find_all_roots(&trans, fs_info, nodesize, 0, &old_roots,
@@ -436,13 +436,13 @@ static int test_multiple_refs(struct btrfs_root *root,
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FIRST_FREE_OBJECTID,
 					0, 0)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (btrfs_verify_qgroup_counts(fs_info, BTRFS_FS_TREE_OBJECTID,
 					nodesize, nodesize)) {
 		test_err("qgroup counts didn't match expected values");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

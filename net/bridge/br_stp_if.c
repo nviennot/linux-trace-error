@@ -147,7 +147,7 @@ static int br_stp_call_user(struct net_bridge *br, char *arg)
 
 static void br_stp_start(struct net_bridge *br)
 {
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	if (net_eq(dev_net(br->dev), &init_net))
 		err = br_stp_call_user(br, "start");
@@ -204,7 +204,7 @@ int br_stp_set_enabled(struct net_bridge *br, unsigned long val,
 	if (br_mrp_enabled(br)) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "STP can't be enabled if MRP is already enabled");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (val) {
@@ -311,7 +311,7 @@ int br_stp_set_port_priority(struct net_bridge_port *p, unsigned long newprio)
 	port_id new_port_id;
 
 	if (newprio > BR_MAX_PORT_PRIORITY)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	new_port_id = br_make_port_id(newprio, p->port_no);
 	if (br_is_designated_port(p))
@@ -333,7 +333,7 @@ int br_stp_set_path_cost(struct net_bridge_port *p, unsigned long path_cost)
 {
 	if (path_cost < BR_MIN_PATH_COST ||
 	    path_cost > BR_MAX_PATH_COST)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	p->flags |= BR_ADMIN_COST;
 	p->path_cost = path_cost;

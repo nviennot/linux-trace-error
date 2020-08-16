@@ -16,7 +16,7 @@ ceph_decode_entity_addr_versioned(void **p, void *end,
 	if (ret)
 		goto bad;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	struct_end = *p + struct_len;
 
 	ceph_decode_copy_safe(p, end, &addr->type, sizeof(addr->type), bad);
@@ -46,7 +46,7 @@ static int
 ceph_decode_entity_addr_legacy(void **p, void *end,
 			       struct ceph_entity_addr *addr)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/* Skip rest of type field */
 	ceph_decode_skip_n(p, end, 3, bad);
@@ -78,7 +78,7 @@ ceph_decode_entity_addr(void **p, void *end, struct ceph_entity_addr *addr)
 	else if (marker == 0)
 		return ceph_decode_entity_addr_legacy(p, end, addr);
 bad:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(ceph_decode_entity_addr);
 

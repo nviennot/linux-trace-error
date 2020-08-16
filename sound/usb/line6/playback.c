@@ -157,7 +157,7 @@ static int submit_audio_out_urb(struct snd_line6_pcm *line6pcm)
 
 	if (index < 0 || index >= line6pcm->line6->iso_buffers) {
 		dev_err(line6pcm->line6->ifcdev, "no free URB found\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	urb_out = line6pcm->out.urbs[index];
@@ -190,7 +190,7 @@ static int submit_audio_out_urb(struct snd_line6_pcm *line6pcm)
 	if (urb_size == 0) {
 		/* can't determine URB size */
 		dev_err(line6pcm->line6->ifcdev, "driver bug: urb_size = 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	urb_frames = urb_size / bytes_per_frame;
@@ -432,7 +432,7 @@ int line6_create_audio_out_urbs(struct snd_line6_pcm *line6pcm)
 		urb->error_count = 0;
 		urb->complete = audio_out_callback;
 		if (usb_urb_ep_type_check(urb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;

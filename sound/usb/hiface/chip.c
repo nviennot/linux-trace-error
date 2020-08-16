@@ -113,7 +113,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 	ret = usb_set_interface(device, 0, 0);
 	if (ret != 0) {
 		dev_err(&device->dev, "can't set first interface for " CARD_NAME " device.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* check whether the card is already registered */
@@ -126,7 +126,7 @@ static int hiface_chip_probe(struct usb_interface *intf,
 
 	if (i >= SNDRV_CARDS) {
 		dev_err(&device->dev, "no available " CARD_NAME " audio device\n");
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto err;
 	}
 

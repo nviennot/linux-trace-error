@@ -286,7 +286,7 @@ static loff_t pde_lseek(struct proc_dir_entry *pde, struct file *file, loff_t of
 static loff_t proc_reg_llseek(struct file *file, loff_t offset, int whence)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	loff_t rv = -EINVAL;
+	loff_t rv = -ERR(EINVAL);
 
 	if (pde_is_permanent(pde)) {
 		return pde_lseek(pde, file, offset, whence);
@@ -310,7 +310,7 @@ static ssize_t pde_read(struct proc_dir_entry *pde, struct file *file, char __us
 static ssize_t proc_reg_read(struct file *file, char __user *buf, size_t count, loff_t *ppos)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	ssize_t rv = -EIO;
+	ssize_t rv = -ERR(EIO);
 
 	if (pde_is_permanent(pde)) {
 		return pde_read(pde, file, buf, count, ppos);
@@ -334,7 +334,7 @@ static ssize_t pde_write(struct proc_dir_entry *pde, struct file *file, const ch
 static ssize_t proc_reg_write(struct file *file, const char __user *buf, size_t count, loff_t *ppos)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	ssize_t rv = -EIO;
+	ssize_t rv = -ERR(EIO);
 
 	if (pde_is_permanent(pde)) {
 		return pde_write(pde, file, buf, count, ppos);
@@ -382,7 +382,7 @@ static long pde_ioctl(struct proc_dir_entry *pde, struct file *file, unsigned in
 static long proc_reg_unlocked_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	long rv = -ENOTTY;
+	long rv = -ERR(ENOTTY);
 
 	if (pde_is_permanent(pde)) {
 		return pde_ioctl(pde, file, cmd, arg);
@@ -407,7 +407,7 @@ static long pde_compat_ioctl(struct proc_dir_entry *pde, struct file *file, unsi
 static long proc_reg_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	long rv = -ENOTTY;
+	long rv = -ERR(ENOTTY);
 	if (pde_is_permanent(pde)) {
 		return pde_compat_ioctl(pde, file, cmd, arg);
 	} else if (use_pde(pde)) {
@@ -431,7 +431,7 @@ static int pde_mmap(struct proc_dir_entry *pde, struct file *file, struct vm_are
 static int proc_reg_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	int rv = -EIO;
+	int rv = -ERR(EIO);
 
 	if (pde_is_permanent(pde)) {
 		return pde_mmap(pde, file, vma);
@@ -465,7 +465,7 @@ proc_reg_get_unmapped_area(struct file *file, unsigned long orig_addr,
 			   unsigned long flags)
 {
 	struct proc_dir_entry *pde = PDE(file_inode(file));
-	unsigned long rv = -EIO;
+	unsigned long rv = -ERR(EIO);
 
 	if (pde_is_permanent(pde)) {
 		return pde_get_unmapped_area(pde, file, orig_addr, len, pgoff, flags);
@@ -606,7 +606,7 @@ static const char *proc_get_link(struct dentry *dentry,
 {
 	struct proc_dir_entry *pde = PDE(inode);
 	if (!use_pde(pde))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	set_delayed_call(done, proc_put_link, pde);
 	return pde->data;
 }

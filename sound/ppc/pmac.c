@@ -194,7 +194,7 @@ static int snd_pmac_pcm_prepare(struct snd_pmac *chip, struct pmac_stream *rec, 
 	/* set up constraints */
 	astr = snd_pmac_get_stream(chip, another_stream(rec->stream));
 	if (! astr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	astr->cur_freqs = 1 << rate_index;
 	astr->cur_formats = 1 << runtime->format;
 	chip->rate_index = rate_index;
@@ -250,7 +250,7 @@ static int snd_pmac_pcm_trigger(struct snd_pmac *chip, struct pmac_stream *rec,
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 		if (rec->running)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		command = (subs->stream == SNDRV_PCM_STREAM_PLAYBACK ?
 			   OUTPUT_MORE : INPUT_MORE) + INTR_ALWAYS;
 		spin_lock(&chip->reg_lock);
@@ -277,7 +277,7 @@ static int snd_pmac_pcm_trigger(struct snd_pmac *chip, struct pmac_stream *rec,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -608,7 +608,7 @@ static int snd_pmac_pcm_close(struct snd_pmac *chip, struct pmac_stream *rec,
 
 	astr = snd_pmac_get_stream(chip, another_stream(rec->stream));
 	if (! astr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* reset constraints */
 	astr->cur_freqs = chip->freqs_ok;
@@ -900,7 +900,7 @@ static int snd_pmac_detect(struct snd_pmac *chip)
 	struct macio_chip* macio;
 
 	if (!machine_is(powermac))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	chip->subframe = 0;
 	chip->revision = 0;
@@ -945,7 +945,7 @@ static int snd_pmac_detect(struct snd_pmac *chip)
 		}
 	}
 	if (! chip->node)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!sound) {
 		for_each_node_by_name(sound, "sound")
@@ -955,7 +955,7 @@ static int snd_pmac_detect(struct snd_pmac *chip)
 	if (! sound) {
 		of_node_put(chip->node);
 		chip->node = NULL;
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	prop = of_get_property(sound, "sub-frame", NULL);
 	if (prop && *prop < 16)
@@ -970,7 +970,7 @@ static int snd_pmac_detect(struct snd_pmac *chip)
 		of_node_put(sound);
 		of_node_put(chip->node);
 		chip->node = NULL;
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* This should be verified on older screamers */
 	if (of_device_is_compatible(sound, "screamer")) {
@@ -1181,7 +1181,7 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 						   &chip->rsrc[i])) {
 				printk(KERN_ERR "snd: can't translate rsrc "
 				       " %d (%s)\n", i, rnames[i]);
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto __error;
 			}
 			if (request_mem_region(chip->rsrc[i].start,
@@ -1190,7 +1190,7 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 				printk(KERN_ERR "snd: can't request rsrc "
 				       " %d (%s: %pR)\n",
 				       i, rnames[i], &chip->rsrc[i]);
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto __error;
 			}
 			chip->requested |= (1 << i);
@@ -1206,7 +1206,7 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 						   &chip->rsrc[i])) {
 				printk(KERN_ERR "snd: can't translate rsrc "
 				       " %d (%s)\n", i, rnames[i]);
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto __error;
 			}
 			if (request_mem_region(chip->rsrc[i].start,
@@ -1215,7 +1215,7 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 				printk(KERN_ERR "snd: can't request rsrc "
 				       " %d (%s: %pR)\n",
 				       i, rnames[i], &chip->rsrc[i]);
-				err = -ENODEV;
+				err = -ERR(ENODEV);
 				goto __error;
 			}
 			chip->requested |= (1 << i);
@@ -1234,7 +1234,7 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 				"PMac", (void*)chip)) {
 			snd_printk(KERN_ERR "pmac: unable to grab IRQ %d\n",
 				   irq);
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto __error;
 		}
 		chip->irq = irq;
@@ -1242,14 +1242,14 @@ int snd_pmac_new(struct snd_card *card, struct snd_pmac **chip_return)
 	irq = irq_of_parse_and_map(np, 1);
 	if (request_irq(irq, snd_pmac_tx_intr, 0, "PMac Output", (void*)chip)){
 		snd_printk(KERN_ERR "pmac: unable to grab IRQ %d\n", irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto __error;
 	}
 	chip->tx_irq = irq;
 	irq = irq_of_parse_and_map(np, 2);
 	if (request_irq(irq, snd_pmac_rx_intr, 0, "PMac Input", (void*)chip)) {
 		snd_printk(KERN_ERR "pmac: unable to grab IRQ %d\n", irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto __error;
 	}
 	chip->rx_irq = irq;

@@ -121,7 +121,7 @@ static int can_create(struct net *net, struct socket *sock, int protocol,
 	sock->state = SS_UNCONNECTED;
 
 	if (protocol < 0 || protocol >= CAN_NPROTO)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cp = can_get_proto(protocol);
 
@@ -146,10 +146,10 @@ static int can_create(struct net *net, struct socket *sock, int protocol,
 	/* check for available protocol and correct usage */
 
 	if (!cp)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	if (cp->type != sock->type) {
-		err = -EPROTOTYPE;
+		err = -ERR(EPROTOTYPE);
 		goto errout;
 	}
 
@@ -201,7 +201,7 @@ int can_send(struct sk_buff *skb, int loop)
 	struct sk_buff *newskb = NULL;
 	struct canfd_frame *cfd = (struct canfd_frame *)skb->data;
 	struct can_pkg_stats *pkg_stats = dev_net(skb->dev)->can.pkg_stats;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	if (skb->len == CAN_MTU) {
 		skb->protocol = htons(ETH_P_CAN);
@@ -220,17 +220,17 @@ int can_send(struct sk_buff *skb, int loop)
 	 * CAN FD frames to legacy CAN drivers as long as the length is <= 8
 	 */
 	if (unlikely(skb->len > skb->dev->mtu && cfd->len > CAN_MAX_DLEN)) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto inval_skb;
 	}
 
 	if (unlikely(skb->dev->type != ARPHRD_CAN)) {
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto inval_skb;
 	}
 
 	if (unlikely(!(skb->dev->flags & IFF_UP))) {
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		goto inval_skb;
 	}
 
@@ -451,10 +451,10 @@ int can_rx_register(struct net *net, struct net_device *dev, canid_t can_id,
 	/* insert new receiver  (dev,canid,mask) -> (func,data) */
 
 	if (dev && dev->type != ARPHRD_CAN)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (dev && !net_eq(net, dev_net(dev)))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	rcv = kmem_cache_alloc(rcv_cache, GFP_KERNEL);
 	if (!rcv)
@@ -723,7 +723,7 @@ int can_proto_register(const struct can_proto *cp)
 
 	if (proto < 0 || proto >= CAN_NPROTO) {
 		pr_err("can: protocol number %d out of range\n", proto);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = proto_register(cp->prot, 0);
@@ -734,7 +734,7 @@ int can_proto_register(const struct can_proto *cp)
 
 	if (rcu_access_pointer(proto_tab[proto])) {
 		pr_err("can: protocol %d already registered\n", proto);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	} else {
 		RCU_INIT_POINTER(proto_tab[proto], cp);
 	}

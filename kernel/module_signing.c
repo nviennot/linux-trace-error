@@ -26,7 +26,7 @@ int mod_verify_sig(const void *mod, struct load_info *info)
 	pr_devel("==>%s(,%zu)\n", __func__, modlen);
 
 	if (modlen <= sizeof(ms))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	memcpy(&ms, mod + (modlen - sizeof(ms)), sizeof(ms));
 

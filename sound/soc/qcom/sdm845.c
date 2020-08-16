@@ -98,7 +98,7 @@ static int sdm845_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(rtd->dev, "%s: invalid param format 0x%x\n",
 				__func__, params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	channels = params_channels(params);

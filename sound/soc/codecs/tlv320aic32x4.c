@@ -101,7 +101,7 @@ static int aic32x4_set_mfp2_gpio(struct snd_kcontrol *kcontrol,
 	if (gpio_check != AIC32X4_MFP_GPIO_ENABLED) {
 		printk(KERN_ERR "%s: MFP2 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ucontrol->value.integer.value[0] == (val & AIC32X4_MFP2_GPIO_OUT_HIGH))
@@ -142,7 +142,7 @@ static int aic32x4_set_mfp4_gpio(struct snd_kcontrol *kcontrol,
 	if (gpio_check != AIC32X4_MFP_GPIO_ENABLED) {
 		printk(KERN_ERR "%s: MFP4 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ucontrol->value.integer.value[0] == (val & AIC32X4_MFP5_GPIO_OUT_HIGH))
@@ -182,7 +182,7 @@ static int aic32x4_set_mfp5_gpio(struct snd_kcontrol *kcontrol,
 	if (gpio_check != AIC32X4_MFP5_GPIO_OUTPUT) {
 		printk(KERN_ERR "%s: MFP5 is not configure as a GPIO output\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ucontrol->value.integer.value[0] == (val & 0x1))
@@ -597,7 +597,7 @@ static int aic32x4_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		printk(KERN_ERR "aic32x4: invalid DAI master/slave interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -624,7 +624,7 @@ static int aic32x4_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		printk(KERN_ERR "aic32x4: invalid DAI interface format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIC32X4_IFACE1,
@@ -656,7 +656,7 @@ static int aic32x4_set_processing_blocks(struct snd_soc_component *component,
 						u8 r_block, u8 p_block)
 {
 	if (r_block > 18 || p_block > 25)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_write(component, AIC32X4_ADCSPB, r_block);
 	snd_soc_component_write(component, AIC32X4_DACSPB, p_block);
@@ -708,7 +708,7 @@ static int aic32x4_setup_clocks(struct snd_soc_component *component,
 		aic32x4_set_processing_blocks(component, 13, 19);
 	} else {
 		dev_err(component->dev, "Sampling rate not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	madc = DIV_ROUND_UP((32 * adc_resource_class), aosr);
@@ -763,7 +763,7 @@ static int aic32x4_setup_clocks(struct snd_soc_component *component,
 
 	dev_err(component->dev,
 		"Could not set clocks to support sample rate.\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int aic32x4_hw_params(struct snd_pcm_substream *substream,
@@ -1041,7 +1041,7 @@ static int aic32x4_parse_dt(struct aic32x4_priv *aic32x4,
 
 	ret = of_property_match_string(np, "clock-names", "mclk");
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	aic32x4->mclk_name = of_clk_get_parent_name(np, ret);
 
 	aic32x4->swapdacs = false;

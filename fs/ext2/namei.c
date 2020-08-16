@@ -59,7 +59,7 @@ static struct dentry *ext2_lookup(struct inode * dir, struct dentry *dentry, uns
 	ino_t ino;
 	
 	if (dentry->d_name.len > EXT2_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	ino = ext2_inode_by_name(dir, &dentry->d_name);
 	inode = NULL;
@@ -69,7 +69,7 @@ static struct dentry *ext2_lookup(struct inode * dir, struct dentry *dentry, uns
 			ext2_error(dir->i_sb, __func__,
 					"deleted inode referenced: %lu",
 					(unsigned long) ino);
-			return ERR_PTR(-EIO);
+			return ERR_PTR(-ERR(EIO));
 		}
 	}
 	return d_splice_alias(inode, dentry);
@@ -80,7 +80,7 @@ struct dentry *ext2_get_parent(struct dentry *child)
 	struct qstr dotdot = QSTR_INIT("..", 2);
 	unsigned long ino = ext2_inode_by_name(d_inode(child), &dotdot);
 	if (!ino)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	return d_obtain_alias(ext2_iget(child->d_sb, ino));
 } 
 
@@ -147,7 +147,7 @@ static int ext2_symlink (struct inode * dir, struct dentry * dentry,
 	const char * symname)
 {
 	struct super_block * sb = dir->i_sb;
-	int err = -ENAMETOOLONG;
+	int err = -ERR(ENAMETOOLONG);
 	unsigned l = strlen(symname)+1;
 	struct inode * inode;
 
@@ -276,7 +276,7 @@ static int ext2_unlink(struct inode * dir, struct dentry *dentry)
 
 	de = ext2_find_entry (dir, &dentry->d_name, &page);
 	if (!de) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -294,7 +294,7 @@ out:
 static int ext2_rmdir (struct inode * dir, struct dentry *dentry)
 {
 	struct inode * inode = d_inode(dentry);
-	int err = -ENOTEMPTY;
+	int err = -ERR(ENOTEMPTY);
 
 	if (ext2_empty_dir(inode)) {
 		err = ext2_unlink(dir, dentry);
@@ -320,7 +320,7 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 	int err;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = dquot_initialize(old_dir);
 	if (err)
@@ -332,12 +332,12 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 
 	old_de = ext2_find_entry (old_dir, &old_dentry->d_name, &old_page);
 	if (!old_de) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (S_ISDIR(old_inode->i_mode)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		dir_de = ext2_dotdot(old_inode, &dir_page);
 		if (!dir_de)
 			goto out_old;
@@ -347,11 +347,11 @@ static int ext2_rename (struct inode * old_dir, struct dentry * old_dentry,
 		struct page *new_page;
 		struct ext2_dir_entry_2 *new_de;
 
-		err = -ENOTEMPTY;
+		err = -ERR(ENOTEMPTY);
 		if (dir_de && !ext2_empty_dir (new_inode))
 			goto out_dir;
 
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		new_de = ext2_find_entry (new_dir, &new_dentry->d_name, &new_page);
 		if (!new_de)
 			goto out_dir;

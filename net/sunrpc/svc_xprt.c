@@ -76,7 +76,7 @@ static LIST_HEAD(svc_xprt_class_list);
 int svc_reg_xprt_class(struct svc_xprt_class *xcl)
 {
 	struct svc_xprt_class *cl;
-	int res = -EEXIST;
+	int res = -ERR(EEXIST);
 
 	dprintk("svc: Adding svc transport class '%s'\n", xcl->xcl_name);
 
@@ -223,7 +223,7 @@ static struct svc_xprt *__svc_xpo_create(struct svc_xprt_class *xcl,
 		break;
 #endif
 	default:
-		return ERR_PTR(-EAFNOSUPPORT);
+		return ERR_PTR(-ERR(EAFNOSUPPORT));
 	}
 
 	xprt = xcl->xcl_ops->xpo_create(serv, net, sap, len, flags);
@@ -300,7 +300,7 @@ static int _svc_create_xprt(struct svc_serv *serv, const char *xprt_name,
 	spin_unlock(&svc_xprt_class_lock);
 	/* This errno is exposed to user space.  Provide a reasonable
 	 * perror msg for a bad transport. */
-	return -EPROTONOSUPPORT;
+	return -ERR(EPROTONOSUPPORT);
 }
 
 int svc_create_xprt(struct svc_serv *serv, const char *xprt_name,
@@ -661,7 +661,7 @@ static int svc_alloc_arg(struct svc_rqst *rqstp)
 				set_current_state(TASK_INTERRUPTIBLE);
 				if (signalled() || kthread_should_stop()) {
 					set_current_state(TASK_RUNNING);
-					return -EINTR;
+					return -ERR(EINTR);
 				}
 				schedule_timeout(msecs_to_jiffies(500));
 			}
@@ -746,8 +746,8 @@ static struct svc_xprt *svc_get_next_xprt(struct svc_rqst *rqstp, long timeout)
 		atomic_long_inc(&pool->sp_stats.threads_timedout);
 
 	if (signalled() || kthread_should_stop())
-		return ERR_PTR(-EINTR);
-	return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EINTR));
+	return ERR_PTR(-ERR(EAGAIN));
 out_found:
 	/* Normally we will wait up to 5 seconds for any required
 	 * cache information to be provided.
@@ -843,7 +843,7 @@ int svc_recv(struct svc_rqst *rqstp, long timeout)
 
 	try_to_freeze();
 	cond_resched();
-	err = -EINTR;
+	err = -ERR(EINTR);
 	if (signalled() || kthread_should_stop())
 		goto out;
 
@@ -856,7 +856,7 @@ int svc_recv(struct svc_rqst *rqstp, long timeout)
 	len = svc_handle_xprt(rqstp, xprt);
 
 	/* No data, incomplete (TCP) read, or accept() */
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	if (len <= 0)
 		goto out_release;
 
@@ -1308,7 +1308,7 @@ static int svc_one_xprt_name(const struct svc_xprt *xprt,
 			xprt->xpt_class->xcl_name,
 			svc_xprt_local_port(xprt));
 	if (len >= remaining)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	return len;
 }
 

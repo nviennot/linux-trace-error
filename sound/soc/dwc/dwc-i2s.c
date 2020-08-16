@@ -191,11 +191,11 @@ static int dw_i2s_startup(struct snd_pcm_substream *substream,
 
 	if (!(dev->capability & DWC_I2S_RECORD) &&
 			(substream->stream == SNDRV_PCM_STREAM_CAPTURE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!(dev->capability & DWC_I2S_PLAY) &&
 			(substream->stream == SNDRV_PCM_STREAM_PLAYBACK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dma_data = &dev->play_dma_data;
@@ -261,7 +261,7 @@ static int dw_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(dev->dev, "designware-i2s: unsupported PCM fmt");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	config->chan_nr = params_channels(params);
@@ -274,7 +274,7 @@ static int dw_i2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dev->dev, "channel not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dw_i2s_config(dev, substream->stream);
@@ -345,7 +345,7 @@ static int dw_i2s_trigger(struct snd_pcm_substream *substream,
 		i2s_stop(dev, substream);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -361,21 +361,21 @@ static int dw_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 		if (dev->capability & DW_I2S_SLAVE)
 			ret = 0;
 		else
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		break;
 	case SND_SOC_DAIFMT_CBS_CFS:
 		if (dev->capability & DW_I2S_MASTER)
 			ret = 0;
 		else
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		break;
 	case SND_SOC_DAIFMT_CBM_CFS:
 	case SND_SOC_DAIFMT_CBS_CFM:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	default:
 		dev_dbg(dev->dev, "dwc : Invalid master/slave format\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -505,7 +505,7 @@ static int dw_configure_dai(struct dw_i2s_dev *dev,
 		dev_dbg(dev->dev, " designware: play supported\n");
 		idx = COMP1_TX_WORDSIZE_0(comp1);
 		if (WARN_ON(idx >= ARRAY_SIZE(formats)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dev->quirks & DW_I2S_QUIRK_16BIT_IDX_OVERRIDE)
 			idx = 1;
 		dw_i2s_dai->playback.channels_min = MIN_CHANNEL_NUM;
@@ -519,7 +519,7 @@ static int dw_configure_dai(struct dw_i2s_dev *dev,
 		dev_dbg(dev->dev, "designware: record supported\n");
 		idx = COMP2_RX_WORDSIZE_0(comp2);
 		if (WARN_ON(idx >= ARRAY_SIZE(formats)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dev->quirks & DW_I2S_QUIRK_16BIT_IDX_OVERRIDE)
 			idx = 1;
 		dw_i2s_dai->capture.channels_min = MIN_CHANNEL_NUM;
@@ -551,7 +551,7 @@ static int dw_configure_dai_by_pd(struct dw_i2s_dev *dev,
 	int ret;
 
 	if (WARN_ON(idx >= ARRAY_SIZE(bus_widths)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = dw_configure_dai(dev, dw_i2s_dai, pdata->snd_rates);
 	if (ret < 0)
@@ -586,7 +586,7 @@ static int dw_configure_dai_by_dt(struct dw_i2s_dev *dev,
 	int ret;
 
 	if (WARN_ON(idx >= ARRAY_SIZE(bus_widths)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = dw_configure_dai(dev, dw_i2s_dai, SNDRV_PCM_RATE_8000_192000);
 	if (ret < 0)
@@ -676,7 +676,7 @@ static int dw_i2s_probe(struct platform_device *pdev)
 			dev->i2s_clk_cfg = pdata->i2s_clk_cfg;
 			if (!dev->i2s_clk_cfg) {
 				dev_err(&pdev->dev, "no clock configure method\n");
-				return -ENODEV;
+				return -ERR(ENODEV);
 			}
 		}
 		dev->clk = devm_clk_get(&pdev->dev, clk_id);

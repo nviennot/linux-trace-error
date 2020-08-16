@@ -100,7 +100,7 @@ static __always_inline const struct vdso_data *__arch_get_timens_vdso_data(void)
 static int do_hres_timens(const struct vdso_data *vdns, clockid_t clk,
 			  struct __kernel_timespec *ts)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

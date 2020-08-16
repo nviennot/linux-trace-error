@@ -59,7 +59,7 @@ static int sysfs_init_fs_context(struct fs_context *fc)
 
 	if (!(fc->sb_flags & SB_KERNMOUNT)) {
 		if (!kobj_ns_current_may_mount(KOBJ_NS_TYPE_NET))
-			return -EPERM;
+			return -ERR(EPERM);
 	}
 
 	kfc = kzalloc(sizeof(struct kernfs_fs_context), GFP_KERNEL);

@@ -25,7 +25,7 @@ static int ip_metrics_convert(struct net *net, struct nlattr *fc_mx,
 			continue;
 		if (type > RTAX_MAX) {
 			NL_SET_ERR_MSG(extack, "Invalid metric type");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (type == RTAX_CC_ALGO) {
@@ -35,13 +35,13 @@ static int ip_metrics_convert(struct net *net, struct nlattr *fc_mx,
 			val = tcp_ca_get_key_by_name(net, tmp, &ecn_ca);
 			if (val == TCP_CA_UNSPEC) {
 				NL_SET_ERR_MSG(extack, "Unknown tcp congestion algorithm");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		} else {
 			if (nla_len(nla) != sizeof(u32)) {
 				NL_SET_ERR_MSG_ATTR(extack, nla,
 						    "Invalid attribute in metrics");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			val = nla_get_u32(nla);
 		}
@@ -53,7 +53,7 @@ static int ip_metrics_convert(struct net *net, struct nlattr *fc_mx,
 			val = 255;
 		if (type == RTAX_FEATURES && (val & ~RTAX_FEATURE_MASK)) {
 			NL_SET_ERR_MSG(extack, "Unknown flag set in feature mask in metrics attribute");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		metrics[type - 1] = val;
 	}

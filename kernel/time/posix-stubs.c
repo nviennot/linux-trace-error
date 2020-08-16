@@ -27,7 +27,7 @@ asmlinkage long sys_ni_posix_timers(void)
 	pr_err_once("process %d (%s) attempted a POSIX timer syscall "
 		    "while CONFIG_POSIX_TIMERS is not set\n",
 		    current->pid, current->comm);
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #ifndef SYS_NI
@@ -63,7 +63,7 @@ SYSCALL_DEFINE2(clock_settime, const clockid_t, which_clock,
 	struct timespec64 new_tp;
 
 	if (which_clock != CLOCK_REALTIME)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_timespec64(&new_tp, tp))
 		return -EFAULT;
 
@@ -85,7 +85,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
 		timens_add_boottime(tp);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -120,7 +120,7 @@ SYSCALL_DEFINE2(clock_getres, const clockid_t, which_clock, struct __kernel_time
 			return -EFAULT;
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -137,13 +137,13 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
 	case CLOCK_BOOTTIME:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (get_timespec64(&t, rqtp))
 		return -EFAULT;
 	if (!timespec64_valid(&t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
@@ -175,7 +175,7 @@ SYSCALL_DEFINE2(clock_settime32, const clockid_t, which_clock,
 	struct timespec64 new_tp;
 
 	if (which_clock != CLOCK_REALTIME)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_old_timespec32(&new_tp, tp))
 		return -EFAULT;
 
@@ -213,7 +213,7 @@ SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
 			return -EFAULT;
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -230,13 +230,13 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
 	case CLOCK_BOOTTIME:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (get_old_timespec32(&t, rqtp))
 		return -EFAULT;
 	if (!timespec64_valid(&t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (flags & TIMER_ABSTIME)
 		rmtp = NULL;
 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;

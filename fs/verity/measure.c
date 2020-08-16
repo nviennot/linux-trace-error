@@ -30,7 +30,7 @@ int fsverity_ioctl_measure(struct file *filp, void __user *_uarg)
 
 	vi = fsverity_get_info(inode);
 	if (!vi)
-		return -ENODATA; /* not a verity file */
+		return -ERR(ENODATA); /* not a verity file */
 	hash_alg = vi->tree_params.hash_alg;
 
 	/*
@@ -42,7 +42,7 @@ int fsverity_ioctl_measure(struct file *filp, void __user *_uarg)
 	if (get_user(arg.digest_size, &uarg->digest_size))
 		return -EFAULT;
 	if (arg.digest_size < hash_alg->digest_size)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	memset(&arg, 0, sizeof(arg));
 	arg.digest_algorithm = hash_alg - fsverity_hash_algs;

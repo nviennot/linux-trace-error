@@ -92,17 +92,17 @@ static inline bool kvm_arm_support_pmu_v3(void) { return false; }
 static inline int kvm_arm_pmu_v3_set_attr(struct kvm_vcpu *vcpu,
 					  struct kvm_device_attr *attr)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline int kvm_arm_pmu_v3_get_attr(struct kvm_vcpu *vcpu,
 					  struct kvm_device_attr *attr)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline int kvm_arm_pmu_v3_has_attr(struct kvm_vcpu *vcpu,
 					  struct kvm_device_attr *attr)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 static inline int kvm_arm_pmu_v3_enable(struct kvm_vcpu *vcpu)
 {

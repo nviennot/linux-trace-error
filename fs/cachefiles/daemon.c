@@ -88,11 +88,11 @@ static int cachefiles_daemon_open(struct inode *inode, struct file *file)
 
 	/* only the superuser may do this */
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/* the cachefiles device may only be open once at a time */
 	if (xchg(&cachefiles_open, 1) == 1)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* allocate a cache record */
 	cache = kzalloc(sizeof(struct cachefiles_cache), GFP_KERNEL);
@@ -197,7 +197,7 @@ static ssize_t cachefiles_daemon_read(struct file *file, char __user *_buffer,
 		     b_released);
 
 	if (n > buflen)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (copy_to_user(_buffer, buffer, n) != 0)
 		return -EFAULT;
@@ -223,17 +223,17 @@ static ssize_t cachefiles_daemon_write(struct file *file,
 	ASSERT(cache);
 
 	if (test_bit(CACHEFILES_DEAD, &cache->flags))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (datalen < 0 || datalen > PAGE_SIZE - 1)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* drag the command string into the kernel so we can parse it */
 	data = memdup_user_nul(_data, datalen);
 	if (IS_ERR(data))
 		return PTR_ERR(data);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (memchr(data, '\0', datalen))
 		goto error;
 
@@ -247,7 +247,7 @@ static ssize_t cachefiles_daemon_write(struct file *file,
 	}
 
 	/* parse the command */
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 
 	for (args = data; *args; args++)
 		if (isspace(*args))
@@ -272,7 +272,7 @@ error:
 found_command:
 	mutex_lock(&cache->daemon_mutex);
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	if (!test_bit(CACHEFILES_DEAD, &cache->flags))
 		ret = cmd->handler(cache, args);
 
@@ -314,7 +314,7 @@ static int cachefiles_daemon_range_error(struct cachefiles_cache *cache,
 {
 	pr_err("Free space limits must be in range 0%%<=stop<cull<run<100%%\n");
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -328,11 +328,11 @@ static int cachefiles_daemon_frun(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	frun = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (frun <= cache->fcull_percent || frun >= 100)
 		return cachefiles_daemon_range_error(cache, args);
@@ -352,11 +352,11 @@ static int cachefiles_daemon_fcull(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fcull = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (fcull <= cache->fstop_percent || fcull >= cache->frun_percent)
 		return cachefiles_daemon_range_error(cache, args);
@@ -376,11 +376,11 @@ static int cachefiles_daemon_fstop(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fstop = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (fstop < 0 || fstop >= cache->fcull_percent)
 		return cachefiles_daemon_range_error(cache, args);
@@ -400,11 +400,11 @@ static int cachefiles_daemon_brun(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	brun = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (brun <= cache->bcull_percent || brun >= 100)
 		return cachefiles_daemon_range_error(cache, args);
@@ -424,11 +424,11 @@ static int cachefiles_daemon_bcull(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bcull = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bcull <= cache->bstop_percent || bcull >= cache->brun_percent)
 		return cachefiles_daemon_range_error(cache, args);
@@ -448,11 +448,11 @@ static int cachefiles_daemon_bstop(struct cachefiles_cache *cache, char *args)
 	_enter(",%s", args);
 
 	if (!*args)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bstop = simple_strtoul(args, &args, 10);
 	if (args[0] != '%' || args[1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (bstop < 0 || bstop >= cache->bcull_percent)
 		return cachefiles_daemon_range_error(cache, args);
@@ -473,12 +473,12 @@ static int cachefiles_daemon_dir(struct cachefiles_cache *cache, char *args)
 
 	if (!*args) {
 		pr_err("Empty directory specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cache->rootdirname) {
 		pr_err("Second cache directory specified\n");
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	dir = kstrdup(args, GFP_KERNEL);
@@ -501,12 +501,12 @@ static int cachefiles_daemon_secctx(struct cachefiles_cache *cache, char *args)
 
 	if (!*args) {
 		pr_err("Empty security context specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cache->secctx) {
 		pr_err("Second security context specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	secctx = kstrdup(args, GFP_KERNEL);
@@ -529,11 +529,11 @@ static int cachefiles_daemon_tag(struct cachefiles_cache *cache, char *args)
 
 	if (!*args) {
 		pr_err("Empty tag specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cache->tag)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	tag = kstrdup(args, GFP_KERNEL);
 	if (!tag)
@@ -560,12 +560,12 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 
 	if (!test_bit(CACHEFILES_READY, &cache->flags)) {
 		pr_err("cull applied to unready cache\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (test_bit(CACHEFILES_DEAD, &cache->flags)) {
 		pr_err("cull applied to dead cache\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* extract the directory dentry from the cwd */
@@ -585,11 +585,11 @@ static int cachefiles_daemon_cull(struct cachefiles_cache *cache, char *args)
 notdir:
 	path_put(&path);
 	pr_err("cull command requires dirfd to be a directory\n");
-	return -ENOTDIR;
+	return -ERR(ENOTDIR);
 
 inval:
 	pr_err("cull command requires dirfd and filename\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -612,7 +612,7 @@ static int cachefiles_daemon_debug(struct cachefiles_cache *cache, char *args)
 
 inval:
 	pr_err("debug command requires mask\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -632,12 +632,12 @@ static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
 
 	if (!test_bit(CACHEFILES_READY, &cache->flags)) {
 		pr_err("inuse applied to unready cache\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (test_bit(CACHEFILES_DEAD, &cache->flags)) {
 		pr_err("inuse applied to dead cache\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* extract the directory dentry from the cwd */
@@ -657,11 +657,11 @@ static int cachefiles_daemon_inuse(struct cachefiles_cache *cache, char *args)
 notdir:
 	path_put(&path);
 	pr_err("inuse command requires dirfd to be a directory\n");
-	return -ENOTDIR;
+	return -ERR(ENOTDIR);
 
 inval:
 	pr_err("inuse command requires dirfd and filename\n");
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -715,7 +715,7 @@ int cachefiles_has_space(struct cachefiles_cache *cache,
 	else
 		stats.f_bavail = 0;
 
-	ret = -ENOBUFS;
+	ret = -ERR(ENOBUFS);
 	if (stats.f_ffree < cache->fstop ||
 	    stats.f_bavail < cache->bstop)
 		goto begin_cull;

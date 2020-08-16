@@ -138,11 +138,11 @@ static int kernfs_path_from_node_locked(struct kernfs_node *kn_to,
 		return strlcpy(buf, "/", buflen);
 
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	common = kernfs_common_ancestor(kn_from, kn_to);
 	if (WARN_ON(!common))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	depth_to = kernfs_depth(common, kn_to);
 	depth_from = kernfs_depth(common, kn_from);
@@ -362,7 +362,7 @@ static int kernfs_link_sibling(struct kernfs_node *kn)
 		else if (result > 0)
 			node = &pos->rb.rb_right;
 		else
-			return -EEXIST;
+			return -ERR(EEXIST);
 	}
 
 	/* add new node and rebalance the tree */
@@ -553,7 +553,7 @@ static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
 	struct kernfs_node *kn;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	/* Always perform fresh lookup for negatives */
 	if (d_really_is_negative(dentry))
@@ -766,7 +766,7 @@ int kernfs_add_one(struct kernfs_node *kn)
 
 	mutex_lock(&kernfs_mutex);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	has_ns = kernfs_ns_enabled(parent);
 	if (WARN(has_ns != (bool)kn->ns, KERN_WARNING "kernfs: ns %s in '%s' for '%s'\n",
 		 has_ns ? "required" : "invalid", parent->name, kn->name))
@@ -775,7 +775,7 @@ int kernfs_add_one(struct kernfs_node *kn)
 	if (kernfs_type(parent) != KERNFS_DIR)
 		goto out_unlock;
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (parent->flags & KERNFS_EMPTY_DIR)
 		goto out_unlock;
 
@@ -1119,10 +1119,10 @@ static int kernfs_iop_mkdir(struct inode *dir, struct dentry *dentry,
 	int ret;
 
 	if (!scops || !scops->mkdir)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!kernfs_get_active(parent))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = scops->mkdir(parent, dentry->d_name.name, mode);
 
@@ -1137,10 +1137,10 @@ static int kernfs_iop_rmdir(struct inode *dir, struct dentry *dentry)
 	int ret;
 
 	if (!scops || !scops->rmdir)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!kernfs_get_active(kn))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = scops->rmdir(kn);
 
@@ -1158,17 +1158,17 @@ static int kernfs_iop_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int ret;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!scops || !scops->rename)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!kernfs_get_active(kn))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!kernfs_get_active(new_parent)) {
 		kernfs_put_active(kn);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	ret = scops->rename(kn, new_parent, new_dentry->d_name.name);
@@ -1506,7 +1506,7 @@ int kernfs_remove_by_name_ns(struct kernfs_node *parent, const char *name,
 	if (!parent) {
 		WARN(1, KERN_WARNING "kernfs: can not remove '%s', no directory\n",
 			name);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	mutex_lock(&kernfs_mutex);
@@ -1520,7 +1520,7 @@ int kernfs_remove_by_name_ns(struct kernfs_node *parent, const char *name,
 	if (kn)
 		return 0;
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 }
 
 /**
@@ -1539,11 +1539,11 @@ int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
 
 	/* can't move or rename root */
 	if (!kn->parent)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&kernfs_mutex);
 
-	error = -ENOENT;
+	error = -ERR(ENOENT);
 	if (!kernfs_active(kn) || !kernfs_active(new_parent) ||
 	    (new_parent->flags & KERNFS_EMPTY_DIR))
 		goto out;
@@ -1553,7 +1553,7 @@ int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
 	    (strcmp(kn->name, new_name) == 0))
 		goto out;	/* nothing to rename */
 
-	error = -EEXIST;
+	error = -ERR(EEXIST);
 	if (kernfs_find_ns(new_parent, new_name, new_ns))
 		goto out;
 

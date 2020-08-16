@@ -42,7 +42,7 @@ static int br_mrp_instance_parse(struct net_bridge *br, struct nlattr *attr,
 	    !tb[IFLA_BRIDGE_MRP_INSTANCE_S_IFINDEX]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or P_IFINDEX or S_IFINDEX");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&inst, 0, sizeof(inst));
@@ -84,7 +84,7 @@ static int br_mrp_port_state_parse(struct net_bridge_port *p,
 
 	if (!tb[IFLA_BRIDGE_MRP_PORT_STATE_STATE]) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing attribute: STATE");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	state = nla_get_u32(tb[IFLA_BRIDGE_MRP_PORT_STATE_STATE]);
@@ -113,7 +113,7 @@ static int br_mrp_port_role_parse(struct net_bridge_port *p,
 
 	if (!tb[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing attribute: ROLE");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	role = nla_get_u32(tb[IFLA_BRIDGE_MRP_PORT_ROLE_ROLE]);
@@ -144,7 +144,7 @@ static int br_mrp_ring_state_parse(struct net_bridge *br, struct nlattr *attr,
 	    !tb[IFLA_BRIDGE_MRP_RING_STATE_STATE]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or STATE");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&state, 0x0, sizeof(state));
@@ -178,7 +178,7 @@ static int br_mrp_ring_role_parse(struct net_bridge *br, struct nlattr *attr,
 	    !tb[IFLA_BRIDGE_MRP_RING_ROLE_ROLE]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or ROLE");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&role, 0x0, sizeof(role));
@@ -217,7 +217,7 @@ static int br_mrp_start_test_parse(struct net_bridge *br, struct nlattr *attr,
 	    !tb[IFLA_BRIDGE_MRP_START_TEST_PERIOD]) {
 		NL_SET_ERR_MSG_MOD(extack,
 				   "Missing attribute: RING_ID or INTERVAL or MAX_MISS or PERIOD");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&test, 0x0, sizeof(test));
@@ -249,7 +249,7 @@ int br_mrp_parse(struct net_bridge *br, struct net_bridge_port *p,
 
 	if (br->stp_enabled != BR_NO_STP) {
 		NL_SET_ERR_MSG_MOD(extack, "MRP can't be enabled if STP is already enabled");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested(tb, IFLA_BRIDGE_MRP_MAX, attr,
@@ -311,7 +311,7 @@ int br_mrp_port_open(struct net_device *dev, u8 loc)
 
 	p = br_port_get_rcu(dev);
 	if (!p) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

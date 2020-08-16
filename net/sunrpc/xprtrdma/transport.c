@@ -248,7 +248,7 @@ xprt_rdma_connect_worker(struct work_struct *work)
 		xprt->stat.connect_time += (long)jiffies -
 					   xprt->stat.connect_start;
 		xprt_set_connected(xprt);
-		rc = -EAGAIN;
+		rc = -ERR(EAGAIN);
 	} else {
 		/* Force a call to xprt_rdma_close to clean up */
 		spin_lock(&xprt->transport_lock);
@@ -317,10 +317,10 @@ xprt_setup_rdma(struct xprt_create *args)
 	int rc;
 
 	if (args->addrlen > sizeof(xprt->addr))
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 
 	if (!try_module_get(THIS_MODULE))
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	xprt = xprt_alloc(args->net, sizeof(struct rpcrdma_xprt), 0,
 			  xprt_rdma_slot_table_entries);
@@ -523,7 +523,7 @@ xprt_rdma_alloc_slot(struct rpc_xprt *xprt, struct rpc_task *task)
 out_sleep:
 	set_bit(XPRT_CONGESTED, &xprt->state);
 	rpc_sleep_on(&xprt->backlog, task, NULL);
-	task->tk_status = -EAGAIN;
+	task->tk_status = -ERR(EAGAIN);
 }
 
 /**
@@ -649,10 +649,10 @@ xprt_rdma_send_request(struct rpc_rqst *rqst)
 #endif	/* CONFIG_SUNRPC_BACKCHANNEL */
 
 	if (!xprt_connected(xprt))
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (!xprt_request_get_cong(xprt, rqst))
-		return -EBADSLT;
+		return -ERR(EBADSLT);
 
 	rc = rpcrdma_marshal_req(r_xprt, rqst);
 	if (rc < 0)
@@ -680,7 +680,7 @@ failed_marshal:
 		return rc;
 drop_connection:
 	xprt_rdma_close(xprt);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 void xprt_rdma_print_stats(struct rpc_xprt *xprt, struct seq_file *seq)

@@ -166,18 +166,18 @@ static int pn_socket_bind(struct socket *sock, struct sockaddr *addr, int len)
 		return sk->sk_prot->bind(sk, addr, len);
 
 	if (len < sizeof(struct sockaddr_pn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (spn->spn_family != AF_PHONET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	handle = pn_sockaddr_get_object((struct sockaddr_pn *)addr);
 	saddr = pn_addr(handle);
 	if (saddr && phonet_address_lookup(sock_net(sk), saddr))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	lock_sock(sk);
 	if (sk->sk_state != TCP_CLOSE || pn_port(pn->sobject)) {
-		err = -EINVAL; /* attempt to rebind */
+		err = -ERR(EINVAL); /* attempt to rebind */
 		goto out;
 	}
 	WARN_ON(sk_hashed(sk));
@@ -225,26 +225,26 @@ static int pn_socket_connect(struct socket *sock, struct sockaddr *addr,
 	int err;
 
 	if (pn_socket_autobind(sock))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	if (len < sizeof(struct sockaddr_pn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (spn->spn_family != AF_PHONET)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	lock_sock(sk);
 
 	switch (sock->state) {
 	case SS_UNCONNECTED:
 		if (sk->sk_state != TCP_CLOSE) {
-			err = -EISCONN;
+			err = -ERR(EISCONN);
 			goto out;
 		}
 		break;
 	case SS_CONNECTING:
-		err = -EALREADY;
+		err = -ERR(EALREADY);
 		goto out;
 	default:
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out;
 	}
 
@@ -263,7 +263,7 @@ static int pn_socket_connect(struct socket *sock, struct sockaddr *addr,
 		DEFINE_WAIT(wait);
 
 		if (!timeo) {
-			err = -EINPROGRESS;
+			err = -ERR(EINPROGRESS);
 			goto out;
 		}
 		if (signal_pending(tsk)) {
@@ -282,9 +282,9 @@ static int pn_socket_connect(struct socket *sock, struct sockaddr *addr,
 	if ((1 << sk->sk_state) & (TCPF_SYN_RECV|TCPF_ESTABLISHED))
 		err = 0;
 	else if (sk->sk_state == TCP_CLOSE_WAIT)
-		err = -ECONNRESET;
+		err = -ERR(ECONNRESET);
 	else
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 	sock->state = err ? SS_UNCONNECTED : SS_CONNECTED;
 out:
 	release_sock(sk);
@@ -299,7 +299,7 @@ static int pn_socket_accept(struct socket *sock, struct socket *newsock,
 	int err;
 
 	if (unlikely(sk->sk_state != TCP_LISTEN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newsk = sk->sk_prot->accept(sk, flags, &err, kern);
 	if (!newsk)
@@ -382,7 +382,7 @@ static int pn_socket_ioctl(struct socket *sock, unsigned int cmd,
 		if (dev)
 			dev_put(dev);
 		if (saddr == PN_NO_ADDR)
-			return -EHOSTUNREACH;
+			return -ERR(EHOSTUNREACH);
 
 		handle = pn_object(saddr, pn_port(pn->sobject));
 		return put_user(handle, (__u16 __user *)arg);
@@ -397,11 +397,11 @@ static int pn_socket_listen(struct socket *sock, int backlog)
 	int err = 0;
 
 	if (pn_socket_autobind(sock))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	lock_sock(sk);
 	if (sock->state != SS_UNCONNECTED) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -421,7 +421,7 @@ static int pn_socket_sendmsg(struct socket *sock, struct msghdr *m,
 	struct sock *sk = sock->sk;
 
 	if (pn_socket_autobind(sock))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	return sk->sk_prot->sendmsg(sk, m, total_len);
 }
@@ -518,7 +518,7 @@ int pn_sock_get_port(struct sock *sk, unsigned short sport)
 			sock_put(tmpsk);
 	}
 	/* the port must be in use already */
-	return -EADDRINUSE;
+	return -ERR(EADDRINUSE);
 
 found:
 	pn->sobject = pn_object(pn_addr(pn->sobject), sport);
@@ -641,14 +641,14 @@ static DEFINE_MUTEX(resource_mutex);
 
 int pn_sock_bind_res(struct sock *sk, u8 res)
 {
-	int ret = -EADDRINUSE;
+	int ret = -ERR(EADDRINUSE);
 
 	if (!net_eq(sock_net(sk), &init_net))
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (pn_socket_autobind(sk->sk_socket))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	mutex_lock(&resource_mutex);
 	if (pnres.sk[res] == NULL) {
@@ -662,10 +662,10 @@ int pn_sock_bind_res(struct sock *sk, u8 res)
 
 int pn_sock_unbind_res(struct sock *sk, u8 res)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	mutex_lock(&resource_mutex);
 	if (pnres.sk[res] == sk) {

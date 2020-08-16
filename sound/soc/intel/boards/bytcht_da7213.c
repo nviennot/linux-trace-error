@@ -118,7 +118,7 @@ static int aif1_hw_params(struct snd_pcm_substream *substream,
 			DA7213_SYSCLK_PLL_SRM, 0, DA7213_PLL_FREQ_OUT_98304000);
 	if (ret < 0) {
 		dev_err(codec_dai->dev, "failed to start PLL: %d\n", ret);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return ret;
@@ -134,7 +134,7 @@ static int aif1_hw_free(struct snd_pcm_substream *substream)
 				  DA7213_SYSCLK_MCLK, 0, 0);
 	if (ret < 0) {
 		dev_err(codec_dai->dev, "failed to stop PLL: %d\n", ret);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return ret;

@@ -67,7 +67,7 @@ static int irqsoff_display_graph(struct trace_array *tr, int set);
 #else
 static inline int irqsoff_display_graph(struct trace_array *tr, int set)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 # define is_graph(tr) false
 #endif
@@ -555,7 +555,7 @@ static bool irqsoff_busy;
 static int __irqsoff_tracer_init(struct trace_array *tr)
 {
 	if (irqsoff_busy)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	save_flags = tr->trace_flags;
 

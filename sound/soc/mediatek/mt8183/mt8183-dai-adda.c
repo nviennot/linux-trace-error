@@ -215,7 +215,7 @@ static int mt8183_adda_dmic_set(struct snd_kcontrol *kcontrol,
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 
 	if (ucontrol->value.enumerated.item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	afe_priv->mtkaif_dmic = ucontrol->value.integer.value[0];
 

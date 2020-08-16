@@ -178,7 +178,7 @@ activate_next:
 		return;
 
 	if (WARN_ON_ONCE(j1939_session_activate(first))) {
-		first->err = -EBUSY;
+		first->err = -ERR(EBUSY);
 		goto activate_next;
 	} else {
 		/* Give receiver some time (arbitrary chosen) to recover */
@@ -405,16 +405,16 @@ static int j1939_sk_init(struct sock *sk)
 static int j1939_sk_sanity_check(struct sockaddr_can *addr, int len)
 {
 	if (!addr)
-		return -EDESTADDRREQ;
+		return -ERR(EDESTADDRREQ);
 	if (len < J1939_MIN_NAMELEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (addr->can_family != AF_CAN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!addr->can_ifindex)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
 	    !j1939_pgn_is_clean_pdu(addr->can_addr.j1939.pgn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -444,7 +444,7 @@ static int j1939_sk_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 		 * supported.
 		 */
 		if (jsk->ifindex != addr->can_ifindex) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_release_sock;
 		}
 
@@ -456,13 +456,13 @@ static int j1939_sk_bind(struct socket *sock, struct sockaddr *uaddr, int len)
 
 		ndev = dev_get_by_index(net, addr->can_ifindex);
 		if (!ndev) {
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto out_release_sock;
 		}
 
 		if (ndev->type != ARPHRD_CAN) {
 			dev_put(ndev);
-			ret = -ENODEV;
+			ret = -ERR(ENODEV);
 			goto out_release_sock;
 		}
 
@@ -518,13 +518,13 @@ static int j1939_sk_connect(struct socket *sock, struct sockaddr *uaddr,
 
 	/* bind() before connect() is mandatory */
 	if (!(jsk->state & J1939_SOCK_BOUND)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_release_sock;
 	}
 
 	/* A connect() to a different interface is not supported. */
 	if (jsk->ifindex != addr->can_ifindex) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_release_sock;
 	}
 
@@ -532,7 +532,7 @@ static int j1939_sk_connect(struct socket *sock, struct sockaddr *uaddr,
 	    addr->can_addr.j1939.addr == J1939_NO_ADDR &&
 	    !sock_flag(&jsk->sk, SOCK_BROADCAST)) {
 		/* broadcast, but SO_BROADCAST not set */
-		ret = -EACCES;
+		ret = -ERR(EACCES);
 		goto out_release_sock;
 	}
 
@@ -576,7 +576,7 @@ static int j1939_sk_getname(struct socket *sock, struct sockaddr *uaddr,
 	lock_sock(sk);
 
 	if (peer && !(jsk->state & J1939_SOCK_CONNECTED)) {
-		ret = -EADDRNOTAVAIL;
+		ret = -ERR(EADDRNOTAVAIL);
 		goto failure;
 	}
 
@@ -633,7 +633,7 @@ static int j1939_sk_setsockopt_flag(struct j1939_sock *jsk, char __user *optval,
 	int tmp;
 
 	if (optlen != sizeof(tmp))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&tmp, optval, optlen))
 		return -EFAULT;
 	lock_sock(&jsk->sk);
@@ -654,7 +654,7 @@ static int j1939_sk_setsockopt(struct socket *sock, int level, int optname,
 	struct j1939_filter *filters = NULL, *ofilters;
 
 	if (level != SOL_CAN_J1939)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case SO_J1939_FILTER:
@@ -663,11 +663,11 @@ static int j1939_sk_setsockopt(struct socket *sock, int level, int optname,
 			int c;
 
 			if (optlen % sizeof(*filters) != 0)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			if (optlen > J1939_FILTER_MAX *
 			    sizeof(struct j1939_filter))
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			count = optlen / sizeof(*filters);
 			filters = memdup_user(optval, optlen);
@@ -702,19 +702,19 @@ static int j1939_sk_setsockopt(struct socket *sock, int level, int optname,
 		return ret;
 	case SO_J1939_SEND_PRIO:
 		if (optlen != sizeof(tmp))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (copy_from_user(&tmp, optval, optlen))
 			return -EFAULT;
 		if (tmp < 0 || tmp > 7)
-			return -EDOM;
+			return -ERR(EDOM);
 		if (tmp < 2 && !capable(CAP_NET_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		lock_sock(&jsk->sk);
 		jsk->sk.sk_priority = j1939_to_sk_priority(tmp);
 		release_sock(&jsk->sk);
 		return 0;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 }
 
@@ -730,11 +730,11 @@ static int j1939_sk_getsockopt(struct socket *sock, int level, int optname,
 	void *val = &tmp;
 
 	if (level != SOL_CAN_J1939)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_user(ulen, optlen))
 		return -EFAULT;
 	if (ulen < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(&jsk->sk);
 	switch (optname) {
@@ -748,7 +748,7 @@ static int j1939_sk_getsockopt(struct socket *sock, int level, int optname,
 		tmp = j1939_prio(jsk->sk.sk_priority);
 		break;
 	default:
-		ret = -ENOPROTOOPT;
+		ret = -ERR(ENOPROTOOPT);
 		goto no_copy;
 	}
 
@@ -778,7 +778,7 @@ static int j1939_sk_recvmsg(struct socket *sock, struct msghdr *msg,
 	int ret = 0;
 
 	if (flags & ~(MSG_DONTWAIT | MSG_ERRQUEUE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & MSG_ERRQUEUE)
 		return sock_recv_errqueue(sock->sk, msg, size, SOL_CAN_J1939,
@@ -952,7 +952,7 @@ void j1939_sk_errqueue(struct j1939_session *session,
 			return;
 		}
 
-		serr->ee.ee_errno = ENOMSG;
+		serr->ee.ee_errno = ERR(ENOMSG);
 		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 		serr->ee.ee_info = SCM_TSTAMP_ACK;
 		state = "ACK";
@@ -963,7 +963,7 @@ void j1939_sk_errqueue(struct j1939_session *session,
 			return;
 		}
 
-		serr->ee.ee_errno = ENOMSG;
+		serr->ee.ee_errno = ERR(ENOMSG);
 		serr->ee.ee_origin = SO_EE_ORIGIN_TIMESTAMPING;
 		serr->ee.ee_info = SCM_TSTAMP_SCHED;
 		state = "SCH";
@@ -1010,7 +1010,7 @@ static int j1939_sk_send_loop(struct j1939_priv *priv,  struct sock *sk,
 	if (session &&
 	    session->total_message_size != session->total_queued_size + size) {
 		j1939_session_put(session);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	todo_size = size;
@@ -1046,7 +1046,7 @@ static int j1939_sk_send_loop(struct j1939_priv *priv,  struct sock *sk,
 				if (!j1939_session_activate(session)) {
 					j1939_tp_schedule_txtimer(session, 0);
 				} else {
-					ret = -EBUSY;
+					ret = -ERR(EBUSY);
 					session->err = ret;
 					j1939_sk_queue_drop_all(priv, jsk,
 								EBUSY);
@@ -1071,7 +1071,7 @@ static int j1939_sk_send_loop(struct j1939_priv *priv,  struct sock *sk,
 		ret = size;
 		break;
 	case -ERESTARTSYS:
-		ret = -EINTR;
+		ret = -ERR(EINTR);
 		/* fall through */
 	case -EAGAIN: /* OK */
 		if (todo_size != size)
@@ -1103,7 +1103,7 @@ static int j1939_sk_sendmsg(struct socket *sock, struct msghdr *msg,
 	lock_sock(sock->sk);
 	/* various socket state tests */
 	if (!(jsk->state & J1939_SOCK_BOUND)) {
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto sendmsg_done;
 	}
 
@@ -1112,7 +1112,7 @@ static int j1939_sk_sendmsg(struct socket *sock, struct msghdr *msg,
 
 	if (!jsk->addr.src_name && jsk->addr.sa == J1939_NO_ADDR) {
 		/* no source address assigned yet */
-		ret = -EBADFD;
+		ret = -ERR(EBADFD);
 		goto sendmsg_done;
 	}
 
@@ -1121,23 +1121,23 @@ static int j1939_sk_sendmsg(struct socket *sock, struct msghdr *msg,
 		struct sockaddr_can *addr = msg->msg_name;
 
 		if (msg->msg_namelen < J1939_MIN_NAMELEN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto sendmsg_done;
 		}
 
 		if (addr->can_family != AF_CAN) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto sendmsg_done;
 		}
 
 		if (addr->can_ifindex && addr->can_ifindex != ifindex) {
-			ret = -EBADFD;
+			ret = -ERR(EBADFD);
 			goto sendmsg_done;
 		}
 
 		if (j1939_pgn_is_valid(addr->can_addr.j1939.pgn) &&
 		    !j1939_pgn_is_clean_pdu(addr->can_addr.j1939.pgn)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto sendmsg_done;
 		}
 
@@ -1145,14 +1145,14 @@ static int j1939_sk_sendmsg(struct socket *sock, struct msghdr *msg,
 		    addr->can_addr.j1939.addr == J1939_NO_ADDR &&
 		    !sock_flag(sk, SOCK_BROADCAST)) {
 			/* broadcast, but SO_BROADCAST not set */
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 			goto sendmsg_done;
 		}
 	} else {
 		if (!jsk->addr.dst_name && jsk->addr.da == J1939_NO_ADDR &&
 		    !sock_flag(sk, SOCK_BROADCAST)) {
 			/* broadcast, but SO_BROADCAST not set */
-			ret = -EACCES;
+			ret = -ERR(EACCES);
 			goto sendmsg_done;
 		}
 	}
@@ -1168,7 +1168,7 @@ sendmsg_done:
 void j1939_sk_netdev_event_netdown(struct j1939_priv *priv)
 {
 	struct j1939_sock *jsk;
-	int error_code = ENETDOWN;
+	int error_code = ERR(ENETDOWN);
 
 	spin_lock_bh(&priv->j1939_socks_lock);
 	list_for_each_entry(jsk, &priv->j1939_socks, list) {
@@ -1185,7 +1185,7 @@ static int j1939_sk_no_ioctlcmd(struct socket *sock, unsigned int cmd,
 				unsigned long arg)
 {
 	/* no ioctls for socket layer -> hand it down to NIC layer */
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static const struct proto_ops j1939_ops = {

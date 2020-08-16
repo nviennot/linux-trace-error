@@ -48,7 +48,7 @@ static int quota_mt_check(const struct xt_mtchk_param *par)
 	struct xt_quota_info *q = par->matchinfo;
 
 	if (q->flags & ~XT_QUOTA_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	q->master = kmalloc(sizeof(*q->master), GFP_KERNEL);
 	if (q->master == NULL)

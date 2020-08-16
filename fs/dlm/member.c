@@ -687,7 +687,7 @@ int dlm_ls_start(struct dlm_ls *ls)
 	if (!dlm_locking_stopped(ls)) {
 		spin_unlock(&ls->ls_recover_lock);
 		log_error(ls, "start ignored: lockspace running");
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto fail;
 	}
 

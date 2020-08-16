@@ -50,7 +50,7 @@ static int test_check_nonzero_user(char *kmem, char __user *umem, size_t size)
 	size_t start, end, i, zero_start, zero_end;
 
 	if (test(size < 2 * PAGE_SIZE, "buffer too small"))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We want to cross a page boundary to exercise the code more
@@ -315,7 +315,7 @@ static int __init test_user_copy_init(void)
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 module_init(test_user_copy_init);

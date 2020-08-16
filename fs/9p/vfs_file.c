@@ -122,7 +122,7 @@ static int v9fs_file_lock(struct file *filp, int cmd, struct file_lock *fl)
 
 	/* No mandatory locks */
 	if (__mandatory_lock(inode) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+		return -ERR(ENOLCK);
 
 	if ((IS_SETLK(cmd) || IS_SETLKW(cmd)) && fl->fl_type != F_UNLCK) {
 		filemap_write_and_wait(inode->i_mapping);
@@ -209,14 +209,14 @@ static int v9fs_file_do_lock(struct file *filp, int cmd, struct file_lock *fl)
 		res = 0;
 		break;
 	case P9_LOCK_BLOCKED:
-		res = -EAGAIN;
+		res = -ERR(EAGAIN);
 		break;
 	default:
 		WARN_ONCE(1, "unknown lock status code: %d\n", status);
 		/* fall through */
 	case P9_LOCK_ERROR:
 	case P9_LOCK_GRACE:
-		res = -ENOLCK;
+		res = -ERR(ENOLCK);
 		break;
 	}
 
@@ -306,7 +306,7 @@ out:
 static int v9fs_file_lock_dotl(struct file *filp, int cmd, struct file_lock *fl)
 {
 	struct inode *inode = file_inode(filp);
-	int ret = -ENOLCK;
+	int ret = -ERR(ENOLCK);
 
 	p9_debug(P9_DEBUG_VFS, "filp: %p cmd:%d lock: %p name: %pD\n",
 		 filp, cmd, fl, filp);
@@ -325,7 +325,7 @@ static int v9fs_file_lock_dotl(struct file *filp, int cmd, struct file_lock *fl)
 	else if (IS_GETLK(cmd))
 		ret = v9fs_file_getlock(filp, fl);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 out_err:
 	return ret;
 }
@@ -342,7 +342,7 @@ static int v9fs_file_flock_dotl(struct file *filp, int cmd,
 	struct file_lock *fl)
 {
 	struct inode *inode = file_inode(filp);
-	int ret = -ENOLCK;
+	int ret = -ERR(ENOLCK);
 
 	p9_debug(P9_DEBUG_VFS, "filp: %p cmd:%d lock: %p name: %pD\n",
 		 filp, cmd, fl, filp);
@@ -365,7 +365,7 @@ static int v9fs_file_flock_dotl(struct file *filp, int cmd,
 	if (IS_SETLK(cmd) | IS_SETLKW(cmd))
 		ret = v9fs_file_do_lock(filp, cmd, fl);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 out_err:
 	return ret;
 }

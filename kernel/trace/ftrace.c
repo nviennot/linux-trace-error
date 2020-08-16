@@ -305,10 +305,10 @@ static void ftrace_update_trampoline(struct ftrace_ops *ops);
 int __register_ftrace_function(struct ftrace_ops *ops)
 {
 	if (ops->flags & FTRACE_OPS_FL_DELETED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(ops->flags & FTRACE_OPS_FL_ENABLED))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 #ifndef CONFIG_DYNAMIC_FTRACE_WITH_REGS
 	/*
@@ -318,13 +318,13 @@ int __register_ftrace_function(struct ftrace_ops *ops)
 	 */
 	if (ops->flags & FTRACE_OPS_FL_SAVE_REGS &&
 	    !(ops->flags & FTRACE_OPS_FL_SAVE_REGS_IF_SUPPORTED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ops->flags & FTRACE_OPS_FL_SAVE_REGS_IF_SUPPORTED)
 		ops->flags |= FTRACE_OPS_FL_SAVE_REGS;
 #endif
 	if (!ftrace_enabled && (ops->flags & FTRACE_OPS_FL_PERMANENT))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!core_kernel_data((unsigned long)ops))
 		ops->flags |= FTRACE_OPS_FL_DYNAMIC;
@@ -350,7 +350,7 @@ int __unregister_ftrace_function(struct ftrace_ops *ops)
 	int ret;
 
 	if (WARN_ON(!(ops->flags & FTRACE_OPS_FL_ENABLED)))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ret = remove_ftrace_ops(&ftrace_ops_list, ops);
 
@@ -518,7 +518,7 @@ static int function_stat_show(struct seq_file *m, void *v)
 
 	/* we raced with function_profile_reset() */
 	if (unlikely(rec->counter == 0)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -1420,7 +1420,7 @@ ftrace_hash_move(struct ftrace_ops *ops, int enable,
 
 	/* Reject setting notrace hash on IPMODIFY ftrace_ops */
 	if (ops->flags & FTRACE_OPS_FL_IPMODIFY && !enable)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_hash = __ftrace_hash_move(src);
 	if (!new_hash)
@@ -1880,7 +1880,7 @@ static int __ftrace_hash_update_ipmodify(struct ftrace_ops *ops,
 	 * allow ftrace_ops to set all functions to new hash.
 	 */
 	if (!new_hash || !old_hash)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Update rec->flags */
 	do_for_each_ftrace_rec(pg, rec) {
@@ -1929,7 +1929,7 @@ rollback:
 	} while_for_each_ftrace_rec();
 
 err_out:
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int ftrace_hash_ipmodify_enable(struct ftrace_ops *ops)
@@ -2789,7 +2789,7 @@ int ftrace_startup(struct ftrace_ops *ops, int command)
 	int ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = __register_ftrace_function(ops);
 	if (ret)
@@ -2831,7 +2831,7 @@ int ftrace_shutdown(struct ftrace_ops *ops, int command)
 	int ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = __unregister_ftrace_function(ops);
 	if (ret)
@@ -3080,7 +3080,7 @@ static int ftrace_allocate_records(struct ftrace_page *pg, int count)
 	int cnt;
 
 	if (WARN_ON(!count))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	order = get_count_order(DIV_ROUND_UP(count, ENTRIES_PER_PAGE));
 
@@ -3305,7 +3305,7 @@ t_probe_show(struct seq_file *m, struct ftrace_iterator *iter)
 	probe_entry = iter->probe_entry;
 
 	if (WARN_ON_ONCE(!probe || !probe_entry))
-		return -EIO;
+		return -ERR(EIO);
 
 	probe_ops = probe->probe_ops;
 
@@ -3380,7 +3380,7 @@ t_mod_show(struct seq_file *m, struct ftrace_iterator *iter)
 	if (WARN_ON_ONCE(!iter->mod_list) ||
 			 iter->mod_list == &tr->mod_trace ||
 			 iter->mod_list == &tr->mod_notrace)
-		return -EIO;
+		return -ERR(EIO);
 
 	ftrace_mod = list_entry(iter->mod_list, struct ftrace_mod_load, list);
 
@@ -3624,7 +3624,7 @@ ftrace_avail_open(struct inode *inode, struct file *file)
 		return ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	iter = __seq_open_private(file, &show_ftrace_seq_ops, sizeof(*iter));
 	if (!iter)
@@ -3690,10 +3690,10 @@ ftrace_regex_open(struct ftrace_ops *ops, int flag,
 	ftrace_ops_init(ops);
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (tracing_check_open_get_tr(tr))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	iter = kzalloc(sizeof(*iter), GFP_KERNEL);
 	if (!iter)
@@ -4065,7 +4065,7 @@ static int cache_mod(struct trace_array *tr,
 	/* We do not cache inverse filters */
 	if (func[0] == '!') {
 		func++;
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 		/* Look to remove this hash */
 		list_for_each_entry_safe(ftrace_mod, n, head, list) {
@@ -4084,7 +4084,7 @@ static int cache_mod(struct trace_array *tr,
 		goto out;
 	}
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	/* We only care about modules that have not been loaded yet */
 	if (module_exists(module))
 		goto out;
@@ -4326,7 +4326,7 @@ int ftrace_func_mapper_add_ip(struct ftrace_func_mapper *mapper,
 
 	entry = ftrace_lookup_ip(&mapper->hash, ip);
 	if (entry)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	map = kmalloc(sizeof(*map), GFP_KERNEL);
 	if (!map)
@@ -4452,11 +4452,11 @@ register_ftrace_function_probe(char *glob, struct trace_array *tr,
 	int i;
 
 	if (WARN_ON(!tr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We do not support '!' for function probes */
 	if (WARN_ON(glob[0] == '!'))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 
 	mutex_lock(&ftrace_lock);
@@ -4501,7 +4501,7 @@ register_ftrace_function_probe(char *glob, struct trace_array *tr,
 
 	/* Nothing found? */
 	if (!ret)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	if (ret < 0)
 		goto out;
@@ -4536,7 +4536,7 @@ register_ftrace_function_probe(char *glob, struct trace_array *tr,
 
 	if (!count) {
 		/* Nothing was added? */
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -4594,7 +4594,7 @@ unregister_ftrace_function_probe_func(char *glob, struct trace_array *tr,
 	struct hlist_head hhd;
 	char str[KSYM_SYMBOL_LEN];
 	int count = 0;
-	int i, ret = -ENODEV;
+	int i, ret = -ERR(ENODEV);
 	int size;
 
 	if (!glob || !strlen(glob) || !strcmp(glob, "*"))
@@ -4608,7 +4608,7 @@ unregister_ftrace_function_probe_func(char *glob, struct trace_array *tr,
 
 		/* we do not support '!' for function probes */
 		if (WARN_ON(not))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	mutex_lock(&ftrace_lock);
@@ -4620,7 +4620,7 @@ unregister_ftrace_function_probe_func(char *glob, struct trace_array *tr,
 	if (&probe->list == &tr->func_probes)
 		goto err_unlock_ftrace;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!(probe->ops.flags & FTRACE_OPS_FL_INITIALIZED))
 		goto err_unlock_ftrace;
 
@@ -4665,7 +4665,7 @@ unregister_ftrace_function_probe_func(char *glob, struct trace_array *tr,
 
 	/* Nothing found? */
 	if (!count) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -4731,7 +4731,7 @@ __init int register_ftrace_command(struct ftrace_func_command *cmd)
 	mutex_lock(&ftrace_cmd_mutex);
 	list_for_each_entry(p, &ftrace_commands, list) {
 		if (strcmp(cmd->name, p->name) == 0) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out_unlock;
 		}
 	}
@@ -4749,7 +4749,7 @@ __init int register_ftrace_command(struct ftrace_func_command *cmd)
 __init int unregister_ftrace_command(struct ftrace_func_command *cmd)
 {
 	struct ftrace_func_command *p, *n;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	mutex_lock(&ftrace_cmd_mutex);
 	list_for_each_entry_safe(p, n, &ftrace_commands, list) {
@@ -4772,14 +4772,14 @@ static int ftrace_process_regex(struct ftrace_iterator *iter,
 	struct trace_array *tr = iter->ops->private;
 	char *func, *command, *next = buff;
 	struct ftrace_func_command *p;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	func = strsep(&next, ":");
 
 	if (!next) {
 		ret = ftrace_match_records(hash, func, len);
 		if (!ret)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		if (ret < 0)
 			return ret;
 		return 0;
@@ -4820,7 +4820,7 @@ ftrace_regex_write(struct file *file, const char __user *ubuf,
 		iter = file->private_data;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* iter->hash is a local copy, so we don't need regex_lock */
 
@@ -4861,12 +4861,12 @@ ftrace_match_addr(struct ftrace_hash *hash, unsigned long ip, int remove)
 	struct ftrace_func_entry *entry;
 
 	if (!ftrace_location(ip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (remove) {
 		entry = ftrace_lookup_ip(hash, ip);
 		if (!entry)
-			return -ENOENT;
+			return -ERR(ENOENT);
 		free_hash_entry(hash, entry);
 		return 0;
 	}
@@ -4883,7 +4883,7 @@ ftrace_set_hash(struct ftrace_ops *ops, unsigned char *buf, int len,
 	int ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mutex_lock(&ops->func_hash->regex_lock);
 
@@ -4903,7 +4903,7 @@ ftrace_set_hash(struct ftrace_ops *ops, unsigned char *buf, int len,
 	}
 
 	if (buf && !ftrace_match_records(hash, buf, len)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_regex_unlock;
 	}
 	if (ip) {
@@ -4994,7 +4994,7 @@ int register_ftrace_direct(unsigned long ip, unsigned long addr)
 	struct ftrace_func_entry *entry;
 	struct ftrace_hash *free_hash = NULL;
 	struct dyn_ftrace *rec;
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	mutex_lock(&direct_mutex);
 
@@ -5002,7 +5002,7 @@ int register_ftrace_direct(unsigned long ip, unsigned long addr)
 	if (ftrace_find_rec_direct(ip))
 		goto out_unlock;
 
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	rec = lookup_rec(ip, ip);
 	if (!rec)
 		goto out_unlock;
@@ -5128,7 +5128,7 @@ int unregister_ftrace_direct(unsigned long ip, unsigned long addr)
 {
 	struct ftrace_direct_func *direct;
 	struct ftrace_func_entry *entry;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	mutex_lock(&direct_mutex);
 
@@ -5257,7 +5257,7 @@ int modify_ftrace_direct(unsigned long ip,
 {
 	struct ftrace_func_entry *entry;
 	struct dyn_ftrace *rec;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	mutex_lock(&direct_mutex);
 
@@ -5266,7 +5266,7 @@ int modify_ftrace_direct(unsigned long ip,
 	if (!entry)
 		goto out_unlock;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (entry->direct != old_addr)
 		goto out_unlock;
 
@@ -5771,7 +5771,7 @@ ftrace_graph_open(struct inode *inode, struct file *file)
 	int ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	fgd = kmalloc(sizeof(*fgd), GFP_KERNEL);
 	if (fgd == NULL)
@@ -5799,7 +5799,7 @@ ftrace_graph_notrace_open(struct inode *inode, struct file *file)
 	int ret;
 
 	if (unlikely(ftrace_disabled))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	fgd = kmalloc(sizeof(*fgd), GFP_KERNEL);
 	if (fgd == NULL)
@@ -5909,7 +5909,7 @@ ftrace_graph_set_hash(struct ftrace_hash *hash, char *buffer)
 
 	if (unlikely(ftrace_disabled)) {
 		mutex_unlock(&ftrace_lock);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	do_for_each_ftrace_rec(pg, rec) {
@@ -5939,7 +5939,7 @@ out:
 	mutex_unlock(&ftrace_lock);
 
 	if (fail)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -6541,7 +6541,7 @@ int ftrace_mod_get_kallsym(unsigned int symnum, unsigned long *value,
 		break;
 	}
 	preempt_enable();
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 #else
@@ -7154,7 +7154,7 @@ static int pid_open(struct inode *inode, struct file *file, int type)
 	default:
 		trace_array_put(tr);
 		WARN_ON_ONCE(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = seq_open(file, seq_ops);
@@ -7234,7 +7234,7 @@ pid_write(struct file *filp, const char __user *ubuf,
 					     lockdep_is_held(&ftrace_lock));
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		WARN_ON_ONCE(1);
 		goto out;
 	}
@@ -7421,7 +7421,7 @@ ftrace_enable_sysctl(struct ctl_table *table, int write,
 		     void __user *buffer, size_t *lenp,
 		     loff_t *ppos)
 {
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 
 	mutex_lock(&ftrace_lock);
 
@@ -7445,7 +7445,7 @@ ftrace_enable_sysctl(struct ctl_table *table, int write,
 	} else {
 		if (is_permanent_ops_registered()) {
 			ftrace_enabled = true;
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 

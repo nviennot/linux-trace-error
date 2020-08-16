@@ -420,7 +420,7 @@ int cifs_get_inode_info_unix(struct inode **pinode,
 		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
 		    CIFS_I(*pinode)->uniqueid != fattr.cf_uniqueid)) {
 			CIFS_I(*pinode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto cgiiu_exit;
 		}
 
@@ -428,7 +428,7 @@ int cifs_get_inode_info_unix(struct inode **pinode,
 		if (unlikely(((*pinode)->i_mode & S_IFMT) !=
 		    (fattr.cf_mode & S_IFMT))) {
 			CIFS_I(*pinode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto cgiiu_exit;
 		}
 
@@ -466,7 +466,7 @@ cifs_sfu_type(struct cifs_fattr *fattr, const char *path,
 	} else if (fattr->cf_eof < 8) {
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-		return -EINVAL;	 /* EOPNOTSUPP? */
+		return -ERR(EINVAL);	 /* EOPNOTSUPP? */
 	}
 
 	tlink = cifs_sb_tlink(cifs_sb);
@@ -535,12 +535,12 @@ cifs_sfu_type(struct cifs_fattr *fattr, const char *path,
 		} else {
 			fattr->cf_mode |= S_IFREG; /* file? */
 			fattr->cf_dtype = DT_REG;
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 		}
 	} else {
 		fattr->cf_mode |= S_IFREG; /* then it is a file */
 		fattr->cf_dtype = DT_REG;
-		rc = -EOPNOTSUPP; /* or some unknown SFU type */
+		rc = -ERR(EOPNOTSUPP); /* or some unknown SFU type */
 	}
 
 	tcon->ses->server->ops->close(xid, tcon, &fid);
@@ -572,7 +572,7 @@ static int cifs_sfu_mode(struct cifs_fattr *fattr, const unsigned char *path,
 
 	if (tcon->ses->server->ops->query_all_EAs == NULL) {
 		cifs_put_tlink(tlink);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	rc = tcon->ses->server->ops->query_all_EAs(xid, tcon, path,
@@ -592,7 +592,7 @@ static int cifs_sfu_mode(struct cifs_fattr *fattr, const unsigned char *path,
 
 	return 0;
 #else
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 #endif
 }
 
@@ -734,7 +734,7 @@ cifs_get_file_info(struct file *filp)
 	struct TCP_Server_Info *server = tcon->ses->server;
 
 	if (!server->ops->query_file_info)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	xid = get_xid();
 	rc = server->ops->query_file_info(xid, tcon, &cfile->fid, &find_data);
@@ -1059,7 +1059,7 @@ handle_mnt_opt:
 		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
 		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) {
 			CIFS_I(*inode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto out;
 		}
 
@@ -1067,7 +1067,7 @@ handle_mnt_opt:
 		if (unlikely(((*inode)->i_mode & S_IFMT) !=
 		    (fattr.cf_mode & S_IFMT))) {
 			CIFS_I(*inode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto out;
 		}
 
@@ -1174,7 +1174,7 @@ smb311_posix_get_inode_info(struct inode **inode,
 		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
 		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) {
 			CIFS_I(*inode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto out;
 		}
 
@@ -1182,7 +1182,7 @@ smb311_posix_get_inode_info(struct inode **inode,
 		if (unlikely(((*inode)->i_mode & S_IFMT) !=
 		    (fattr.cf_mode & S_IFMT))) {
 			CIFS_I(*inode)->time = 0; /* force reval */
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto out;
 		}
 
@@ -1380,11 +1380,11 @@ cifs_set_file_info(struct inode *inode, struct iattr *attrs, unsigned int xid,
 	FILE_BASIC_INFO	info_buf;
 
 	if (attrs == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	server = cifs_sb_master_tcon(cifs_sb)->ses->server;
 	if (!server->ops->set_file_info)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	info_buf.Pad = 0;
 
@@ -1452,7 +1452,7 @@ cifs_rename_pending_delete(const char *full_path, struct dentry *dentry,
 	 * CAP_INFOLEVEL_PASSTHRU
 	 */
 	if (!(tcon->ses->capabilities & CAP_INFOLEVEL_PASSTHRU)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -1501,7 +1501,7 @@ cifs_rename_pending_delete(const char *full_path, struct dentry *dentry,
 				   cifs_sb->local_nls,
 				   cifs_remap(cifs_sb));
 	if (rc != 0) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto undo_setattr;
 	}
 
@@ -1520,7 +1520,7 @@ cifs_rename_pending_delete(const char *full_path, struct dentry *dentry,
 		if (rc == -ENOENT)
 			rc = 0;
 		else if (rc != 0) {
-			rc = -EBUSY;
+			rc = -ERR(EBUSY);
 			goto undo_rename;
 		}
 		set_bit(CIFS_INO_DELETE_PENDING, &cifsInode->flags);
@@ -1595,7 +1595,7 @@ int cifs_unlink(struct inode *dir, struct dentry *dentry)
 	xid = get_xid();
 
 	if (tcon->nodelete) {
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 		goto unlink_out;
 	}
 
@@ -1619,7 +1619,7 @@ int cifs_unlink(struct inode *dir, struct dentry *dentry)
 
 retry_std_delete:
 	if (!server->ops->unlink) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto psx_del_no_retry;
 	}
 
@@ -1866,7 +1866,7 @@ int cifs_mkdir(struct inode *inode, struct dentry *direntry, umode_t mode)
 	}
 
 	if (!server->ops->mkdir) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto mkdir_out;
 	}
 
@@ -1924,13 +1924,13 @@ int cifs_rmdir(struct inode *inode, struct dentry *direntry)
 	server = tcon->ses->server;
 
 	if (!server->ops->rmdir) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		cifs_put_tlink(tlink);
 		goto rmdir_exit;
 	}
 
 	if (tcon->nodelete) {
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 		cifs_put_tlink(tlink);
 		goto rmdir_exit;
 	}
@@ -1985,7 +1985,7 @@ cifs_do_rename(const unsigned int xid, struct dentry *from_dentry,
 	server = tcon->ses->server;
 
 	if (!server->ops->rename)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	/* try path-based rename first */
 	rc = server->ops->rename(xid, tcon, from_path, to_path, cifs_sb);
@@ -2046,7 +2046,7 @@ cifs_rename2(struct inode *source_dir, struct dentry *source_dentry,
 	int rc, tmprc;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_sb = CIFS_SB(source_dir->i_sb);
 	tlink = cifs_sb_tlink(cifs_sb);
@@ -2205,7 +2205,7 @@ cifs_wait_bit_killable(struct wait_bit_key *key, int mode)
 {
 	freezable_schedule_unsafe();
 	if (signal_pending_state(mode, current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	return 0;
 }
 
@@ -2271,7 +2271,7 @@ int cifs_revalidate_dentry_attr(struct dentry *dentry)
 	int count = 0;
 
 	if (inode == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!cifs_inode_needs_reval(inode))
 		return rc;
@@ -2428,7 +2428,7 @@ int cifs_fiemap(struct inode *inode, struct fiemap_extent_info *fei, u64 start,
 
 	cfile = find_readable_file(cifs_i, false);
 	if (cfile == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (server->ops->fiemap) {
 		rc = server->ops->fiemap(tcon, cfile, fei, start, len);
@@ -2437,7 +2437,7 @@ int cifs_fiemap(struct inode *inode, struct fiemap_extent_info *fei, u64 start,
 	}
 
 	cifsFileInfo_put(cfile);
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 int cifs_truncate_page(struct address_space *mapping, loff_t from)
@@ -2499,11 +2499,11 @@ cifs_set_file_size(struct inode *inode, struct iattr *attrs,
 			rc = server->ops->set_file_size(xid, tcon, open_file,
 							attrs->ia_size, false);
 		else
-			rc = -ENOSYS;
+			rc = -ERR(ENOSYS);
 		cifsFileInfo_put(open_file);
 		cifs_dbg(FYI, "SetFSize for attrs rc = %d\n", rc);
 	} else
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 
 	if (!rc)
 		goto set_size_out;
@@ -2525,7 +2525,7 @@ cifs_set_file_size(struct inode *inode, struct iattr *attrs,
 		rc = server->ops->set_path_size(xid, tcon, full_path,
 						attrs->ia_size, cifs_sb, false);
 	else
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 	cifs_dbg(FYI, "SetEOF by path (setattrs) rc = %d\n", rc);
 
 	if (tlink)
@@ -2595,7 +2595,7 @@ cifs_setattr_unix(struct dentry *direntry, struct iattr *attrs)
 	 */
 	rc = filemap_write_and_wait(inode->i_mapping);
 	if (is_interrupt_error(rc)) {
-		rc = -ERESTARTSYS;
+		rc = -ERR(ERESTARTSYS);
 		goto out;
 	}
 
@@ -2707,7 +2707,7 @@ cifs_setattr_nounix(struct dentry *direntry, struct iattr *attrs)
 	struct cifsFileInfo *wfile;
 	struct cifs_tcon *tcon;
 	char *full_path = NULL;
-	int rc = -EACCES;
+	int rc = -ERR(EACCES);
 	__u32 dosattr = 0;
 	__u64 mode = NO_CHANGE_64;
 
@@ -2744,7 +2744,7 @@ cifs_setattr_nounix(struct dentry *direntry, struct iattr *attrs)
 	if (attrs->ia_valid & (ATTR_MTIME | ATTR_SIZE | ATTR_CTIME)) {
 		rc = filemap_write_and_wait(inode->i_mapping);
 		if (is_interrupt_error(rc)) {
-			rc = -ERESTARTSYS;
+			rc = -ERR(ERESTARTSYS);
 			goto cifs_setattr_exit;
 		}
 		mapping_set_error(inode->i_mapping, rc);

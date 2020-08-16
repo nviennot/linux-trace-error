@@ -66,7 +66,7 @@ nul_marshal(struct rpc_task *task, struct xdr_stream *xdr)
 
 	p = xdr_reserve_space(xdr, 4 * sizeof(*p));
 	if (!p)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	/* Credential */
 	*p++ = rpc_auth_null;
 	*p++ = xdr_zero;
@@ -93,11 +93,11 @@ nul_validate(struct rpc_task *task, struct xdr_stream *xdr)
 
 	p = xdr_inline_decode(xdr, 2 * sizeof(*p));
 	if (!p)
-		return -EIO;
+		return -ERR(EIO);
 	if (*p++ != rpc_auth_null)
-		return -EIO;
+		return -ERR(EIO);
 	if (*p != xdr_zero)
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 

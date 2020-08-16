@@ -343,18 +343,18 @@ static inline struct coresight_device *
 coresight_register(struct coresight_desc *desc) { return NULL; }
 static inline void coresight_unregister(struct coresight_device *csdev) {}
 static inline int
-coresight_enable(struct coresight_device *csdev) { return -ENOSYS; }
+coresight_enable(struct coresight_device *csdev) { return -ERR(ENOSYS); }
 static inline void coresight_disable(struct coresight_device *csdev) {}
 static inline int coresight_timeout(void __iomem *addr, u32 offset,
 				     int position, int value) { return 1; }
 static inline int coresight_claim_device_unlocked(void __iomem *base)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int coresight_claim_device(void __iomem *base)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void coresight_disclaim_device(void __iomem *base) {}

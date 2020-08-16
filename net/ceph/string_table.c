@@ -70,7 +70,7 @@ retry:
 	} else if (!kref_get_unless_zero(&exist->kref)) {
 		rb_erase(&exist->node, &string_tree);
 		RB_CLEAR_NODE(&exist->node);
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	}
 	spin_unlock(&string_tree_lock);
 	if (ret == -EAGAIN)

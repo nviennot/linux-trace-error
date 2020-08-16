@@ -142,12 +142,12 @@ static inline struct ts_ops *lookup_ts_algo(const char *name)
  */
 int textsearch_register(struct ts_ops *ops)
 {
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 	struct ts_ops *o;
 
 	if (ops->name == NULL || ops->find == NULL || ops->init == NULL ||
 	    ops->get_pattern == NULL || ops->get_pattern_len == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&ts_mod_lock);
 	list_for_each_entry(o, &ts_ops, list) {
@@ -188,7 +188,7 @@ int textsearch_unregister(struct ts_ops *ops)
 		}
 	}
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 out:
 	spin_unlock(&ts_mod_lock);
 	return err;
@@ -263,12 +263,12 @@ EXPORT_SYMBOL(textsearch_find_continuous);
 struct ts_config *textsearch_prepare(const char *algo, const void *pattern,
 				     unsigned int len, gfp_t gfp_mask, int flags)
 {
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	struct ts_config *conf;
 	struct ts_ops *ops;
 	
 	if (len == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ops = lookup_ts_algo(algo);
 #ifdef CONFIG_MODULES

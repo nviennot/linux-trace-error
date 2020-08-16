@@ -49,88 +49,88 @@ int bt_to_errno(__u16 code)
 		return 0;
 
 	case 0x01:
-		return EBADRQC;
+		return ERR(EBADRQC);
 
 	case 0x02:
-		return ENOTCONN;
+		return ERR(ENOTCONN);
 
 	case 0x03:
-		return EIO;
+		return ERR(EIO);
 
 	case 0x04:
 	case 0x3c:
-		return EHOSTDOWN;
+		return ERR(EHOSTDOWN);
 
 	case 0x05:
-		return EACCES;
+		return ERR(EACCES);
 
 	case 0x06:
-		return EBADE;
+		return ERR(EBADE);
 
 	case 0x07:
 		return ENOMEM;
 
 	case 0x08:
-		return ETIMEDOUT;
+		return ERR(ETIMEDOUT);
 
 	case 0x09:
-		return EMLINK;
+		return ERR(EMLINK);
 
 	case 0x0a:
-		return EMLINK;
+		return ERR(EMLINK);
 
 	case 0x0b:
-		return EALREADY;
+		return ERR(EALREADY);
 
 	case 0x0c:
-		return EBUSY;
+		return ERR(EBUSY);
 
 	case 0x0d:
 	case 0x0e:
 	case 0x0f:
-		return ECONNREFUSED;
+		return ERR(ECONNREFUSED);
 
 	case 0x10:
-		return ETIMEDOUT;
+		return ERR(ETIMEDOUT);
 
 	case 0x11:
 	case 0x27:
 	case 0x29:
 	case 0x20:
-		return EOPNOTSUPP;
+		return ERR(EOPNOTSUPP);
 
 	case 0x12:
-		return EINVAL;
+		return ERR(EINVAL);
 
 	case 0x13:
 	case 0x14:
 	case 0x15:
-		return ECONNRESET;
+		return ERR(ECONNRESET);
 
 	case 0x16:
-		return ECONNABORTED;
+		return ERR(ECONNABORTED);
 
 	case 0x17:
-		return ELOOP;
+		return ERR(ELOOP);
 
 	case 0x18:
-		return EACCES;
+		return ERR(EACCES);
 
 	case 0x1a:
-		return EPROTONOSUPPORT;
+		return ERR(EPROTONOSUPPORT);
 
 	case 0x1b:
-		return ECONNREFUSED;
+		return ERR(ECONNREFUSED);
 
 	case 0x19:
 	case 0x1e:
 	case 0x23:
 	case 0x24:
 	case 0x25:
-		return EPROTO;
+		return ERR(EPROTO);
 
 	default:
-		return ENOSYS;
+		return ERR(ENOSYS);
 	}
 }
 EXPORT_SYMBOL(bt_to_errno);

@@ -232,7 +232,7 @@ static int afs_parse_source(struct fs_context *fc, struct fs_parameter *param)
 
 	if (!name) {
 		printk(KERN_ERR "kAFS: no volume name specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((name[0] != '%' && name[0] != '#') || !name[1]) {
@@ -242,7 +242,7 @@ static int afs_parse_source(struct fs_context *fc, struct fs_parameter *param)
 			return 0;
 		}
 		printk(KERN_ERR "kAFS: unparsable volume name\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* determine the type of volume we're looking for */
@@ -338,7 +338,7 @@ static int afs_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	_leave(" = 0");
@@ -359,12 +359,12 @@ static int afs_validate_fc(struct fs_context *fc)
 	if (!ctx->dyn_root) {
 		if (ctx->no_cell) {
 			pr_warn("kAFS: Can only specify source 'none' with -o dyn\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (!ctx->cell) {
 			pr_warn("kAFS: No cell specified\n");
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 		}
 
 	reget_key:

@@ -54,9 +54,9 @@ struct afs_cell *afs_lookup_cell_rcu(struct afs_net *net,
 	_enter("%*.*s", namesz, namesz, name);
 
 	if (name && namesz == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (namesz > AFS_MAXCELLNAME)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	do {
 		/* Unfortunately, rbtree walking doesn't give reliable results
@@ -66,7 +66,7 @@ struct afs_cell *afs_lookup_cell_rcu(struct afs_net *net,
 		if (cell)
 			afs_put_cell(net, cell);
 		cell = NULL;
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 
 		read_seqbegin_or_lock(&net->cells_lock, &seq);
 
@@ -77,7 +77,7 @@ struct afs_cell *afs_lookup_cell_rcu(struct afs_net *net,
 				ret = 0;
 				break;
 			}
-			ret = -EDESTADDRREQ;
+			ret = -ERR(EDESTADDRREQ);
 			continue;
 		}
 
@@ -129,21 +129,21 @@ static struct afs_cell *afs_alloc_cell(struct afs_net *net,
 
 	ASSERT(name);
 	if (namelen == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (namelen > AFS_MAXCELLNAME) {
 		_leave(" = -ENAMETOOLONG");
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 	}
 
 	/* Prohibit cell names that contain unprintable chars, '/' and '@' or
 	 * that begin with a dot.  This also precludes "@cell".
 	 */
 	if (name[0] == '.')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	for (i = 0; i < namelen; i++) {
 		char ch = name[i];
 		if (!isprint(ch) || ch == '/' || ch == '@')
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 	}
 
 	_enter("%*.*s,%s", namelen, namelen, name, addresses);
@@ -318,7 +318,7 @@ cell_already_exists:
 	_debug("cell exists");
 	cell = cursor;
 	if (excl) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	} else {
 		afs_get_cell(cursor);
 		ret = 0;

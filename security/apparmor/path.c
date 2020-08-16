@@ -26,7 +26,7 @@ static int prepend(char **buffer, int buflen, const char *str, int namelen)
 {
 	buflen -= namelen;
 	if (buflen < 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	*buffer -= namelen;
 	memcpy(*buffer, str, namelen);
 	return 0;
@@ -56,7 +56,7 @@ static int disconnect(const struct path *path, char *buf, char **name,
 		/* disconnected path, don't return pathname starting
 		 * with '/'
 		 */
-		error = -EACCES;
+		error = -ERR(EACCES);
 		if (**name == '/')
 			*name = *name + 1;
 	} else {
@@ -132,7 +132,7 @@ static int d_namespace_path(const struct path *path, char *buf, char **name,
 	 */
 	if (!res || IS_ERR(res)) {
 		if (PTR_ERR(res) == -ENAMETOOLONG) {
-			error = -ENAMETOOLONG;
+			error = -ERR(ENAMETOOLONG);
 			*name = buf;
 			goto out;
 		}
@@ -159,7 +159,7 @@ static int d_namespace_path(const struct path *path, char *buf, char **name,
 	 */
 	if (d_unlinked(path->dentry) && d_is_positive(path->dentry) &&
 	    !(flags & (PATH_MEDIATE_DELETED | PATH_DELEGATE_DELETED))) {
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			goto out;
 	}
 

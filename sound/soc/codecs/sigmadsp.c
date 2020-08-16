@@ -205,7 +205,7 @@ static int sigma_fw_load_control(struct sigmadsp *sigmadsp,
 	int ret;
 
 	if (length <= sizeof(*ctrl_chunk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctrl_chunk = (const struct sigma_fw_chunk_control *)chunk;
 
@@ -215,7 +215,7 @@ static int sigma_fw_load_control(struct sigmadsp *sigmadsp,
 
 	/* Make sure there are no non-displayable characaters in the string */
 	if (!sigma_fw_validate_control_name(ctrl_chunk->name, name_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	num_bytes = le16_to_cpu(ctrl_chunk->num_bytes);
 	ctrl = kzalloc(sizeof(*ctrl) + num_bytes, GFP_KERNEL);
@@ -252,7 +252,7 @@ static int sigma_fw_load_data(struct sigmadsp *sigmadsp,
 	struct sigmadsp_data *data;
 
 	if (length <= sizeof(*data_chunk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data_chunk = (struct sigma_fw_chunk_data *)chunk;
 
@@ -284,11 +284,11 @@ static int sigma_fw_load_samplerates(struct sigmadsp *sigmadsp,
 	num_rates = (length - sizeof(*rate_chunk)) / sizeof(__le32);
 
 	if (num_rates > 32 || num_rates == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* We only allow one samplerates block per file */
 	if (sigmadsp->rate_constraints.count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rates = kcalloc(num_rates, sizeof(*rates), GFP_KERNEL);
 	if (!rates)
@@ -325,7 +325,7 @@ static int sigmadsp_fw_load_v2(struct sigmadsp *sigmadsp,
 		length = le32_to_cpu(chunk->length);
 
 		if (length > fw->size - pos || length < sizeof(*chunk))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (le32_to_cpu(chunk->tag)) {
 		case SIGMA_FW_CHUNK_TYPE_DATA:
@@ -399,7 +399,7 @@ static int process_sigma_action(struct sigmadsp *sigmadsp,
 	case SIGMA_ACTION_WRITESINGLE:
 	case SIGMA_ACTION_WRITESAFELOAD:
 		if (len < 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		data = kzalloc(sizeof(*data) + len - 2, GFP_KERNEL);
 		if (!data)
@@ -413,7 +413,7 @@ static int process_sigma_action(struct sigmadsp *sigmadsp,
 	case SIGMA_ACTION_END:
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 1;
@@ -445,7 +445,7 @@ static int sigmadsp_fw_load_v1(struct sigmadsp *sigmadsp,
 	}
 
 	if (pos != fw->size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -487,7 +487,7 @@ static int sigmadsp_firmware_load(struct sigmadsp *sigmadsp, const char *name)
 	}
 
 	/* then verify the header */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 
 	/*
 	 * Reject too small or unreasonable large files. The upper limit has been
@@ -526,7 +526,7 @@ static int sigmadsp_firmware_load(struct sigmadsp *sigmadsp, const char *name)
 		dev_err(sigmadsp->dev,
 			"Failed to load firmware: Invalid version %d. Supported firmware versions: 1, 2\n",
 			ssfw_head->version);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -594,7 +594,7 @@ static int sigmadsp_rate_to_index(struct sigmadsp *sigmadsp, unsigned int rate)
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static unsigned int sigmadsp_get_samplerate_mask(struct sigmadsp *sigmadsp,
@@ -745,7 +745,7 @@ int sigmadsp_setup(struct sigmadsp *sigmadsp, unsigned int samplerate)
 
 	samplerate_mask = sigmadsp_get_samplerate_mask(sigmadsp, samplerate);
 	if (samplerate_mask == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(data, &sigmadsp->data_list, head) {
 		if (!sigmadsp_samplerate_valid(data->samplerates,

@@ -60,7 +60,7 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
 		return 0;
 
 	if (argv->v_size > PAGE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Reject pairs of a start item position (argv->v_index) and a
@@ -68,7 +68,7 @@ static int nilfs_ioctl_wrap_copy(struct the_nilfs *nilfs,
 	 * overflow by the increment at the end of the loop.
 	 */
 	if (argv->v_index > ~(__u64)0 - argv->v_nmembs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = (void *)__get_free_pages(GFP_NOFS, 0);
 	if (unlikely(!buf))
@@ -133,7 +133,7 @@ static int nilfs_ioctl_setflags(struct inode *inode, struct file *filp,
 	int ret;
 
 	if (!inode_owner_or_capable(inode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (get_user(flags, (int __user *)argp))
 		return -EFAULT;
@@ -208,7 +208,7 @@ static int nilfs_ioctl_change_cpmode(struct inode *inode, struct file *filp,
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -263,7 +263,7 @@ nilfs_ioctl_delete_checkpoint(struct inode *inode, struct file *filp,
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -520,7 +520,7 @@ static int nilfs_ioctl_get_bdescs(struct inode *inode, struct file *filp,
 		return -EFAULT;
 
 	if (argv.v_size != sizeof(struct nilfs_bdesc))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd),
 				    nilfs_ioctl_do_get_bdescs);
@@ -589,7 +589,7 @@ static int nilfs_ioctl_move_inode_block(struct inode *inode,
 			  (unsigned long long)vdesc->vd_blocknr,
 			  (unsigned long long)vdesc->vd_vblocknr);
 		brelse(bh);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 	list_add_tail(&bh->b_assoc_buffers, buffers);
 	return 0;
@@ -874,7 +874,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
 	int n, ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -884,7 +884,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
 	if (copy_from_user(argv, argp, sizeof(argv)))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	nsegs = argv[4].v_nmembs;
 	if (argv[4].v_size != argsz[4])
 		goto out;
@@ -905,7 +905,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
 	nilfs = inode->i_sb->s_fs_info;
 
 	for (n = 0; n < 4; n++) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		if (argv[n].v_size != argsz[n])
 			goto out_free;
 
@@ -941,7 +941,7 @@ static int nilfs_ioctl_clean_segments(struct inode *inode, struct file *filp,
 	 * nilfs_ioctl_move_blocks should be atomic operation.
 	 */
 	if (test_and_set_bit(THE_NILFS_GC_RUNNING, &nilfs->ns_flags)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_free;
 	}
 
@@ -1033,7 +1033,7 @@ static int nilfs_ioctl_resize(struct inode *inode, struct file *filp,
 			      void __user *argp)
 {
 	__u64 newsize;
-	int ret = -EPERM;
+	int ret = -ERR(EPERM);
 
 	if (!capable(CAP_SYS_ADMIN))
 		goto out;
@@ -1073,10 +1073,10 @@ static int nilfs_ioctl_trim_fs(struct inode *inode, void __user *argp)
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!blk_queue_discard(q))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (copy_from_user(&range, argp, sizeof(range)))
 		return -EFAULT;
@@ -1113,7 +1113,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
 	__u64 range[2];
 	__u64 minseg, maxseg;
 	unsigned long segbytes;
-	int ret = -EPERM;
+	int ret = -ERR(EPERM);
 
 	if (!capable(CAP_SYS_ADMIN))
 		goto out;
@@ -1122,7 +1122,7 @@ static int nilfs_ioctl_set_alloc_range(struct inode *inode, void __user *argp)
 	if (copy_from_user(range, argp, sizeof(__u64[2])))
 		goto out;
 
-	ret = -ERANGE;
+	ret = -ERR(ERANGE);
 	if (range[1] > i_size_read(inode->i_sb->s_bdev->bd_inode))
 		goto out;
 
@@ -1177,7 +1177,7 @@ static int nilfs_ioctl_get_info(struct inode *inode, struct file *filp,
 		return -EFAULT;
 
 	if (argv.v_size < membsz)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nilfs_ioctl_wrap_copy(nilfs, &argv, _IOC_DIR(cmd), dofunc);
 	if (ret < 0)
@@ -1224,7 +1224,7 @@ static int nilfs_ioctl_set_suinfo(struct inode *inode, struct file *filp,
 	int ret;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -1234,7 +1234,7 @@ static int nilfs_ioctl_set_suinfo(struct inode *inode, struct file *filp,
 	if (copy_from_user(&argv, argp, sizeof(argv)))
 		goto out;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (argv.v_size < sizeof(struct nilfs_suinfo_update))
 		goto out;
 
@@ -1324,7 +1324,7 @@ long nilfs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case FITRIM:
 		return nilfs_ioctl_trim_fs(inode, argp);
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -1357,7 +1357,7 @@ long nilfs_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case FITRIM:
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 	return nilfs_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
 }

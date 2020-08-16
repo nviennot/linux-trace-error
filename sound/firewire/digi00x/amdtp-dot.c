@@ -117,7 +117,7 @@ int amdtp_dot_set_parameters(struct amdtp_stream *s, unsigned int rate,
 	int err;
 
 	if (amdtp_stream_running(s))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/*
 	 * A first data channel is for MIDI messages, the rest is Multi Bit

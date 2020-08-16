@@ -93,7 +93,7 @@ batadv_mcast_mesh_info_put(struct sk_buff *msg, struct batadv_priv *bat_priv)
 static inline int batadv_mcast_flags_dump(struct sk_buff *msg,
 					  struct netlink_callback *cb)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void batadv_mcast_free(struct batadv_priv *bat_priv)

@@ -618,11 +618,11 @@ static int atm_mpoa_vcc_attach(struct atm_vcc *vcc, void __user *arg)
 	}
 	ipaddr = ioc_data.ipaddr;
 	if (ioc_data.dev_num < 0 || ioc_data.dev_num >= MAX_LEC_ITF)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mpc = find_mpc_by_itfnum(ioc_data.dev_num);
 	if (mpc == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ioc_data.type == MPC_SOCKET_INGRESS) {
 		in_entry = mpc->in_ops->get(ipaddr, mpc);
@@ -632,7 +632,7 @@ static int atm_mpoa_vcc_attach(struct atm_vcc *vcc, void __user *arg)
 				mpc->dev->name);
 			if (in_entry != NULL)
 				mpc->in_ops->put(in_entry);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		pr_info("(%s) attaching ingress SVC, entry = %pI4\n",
 			mpc->dev->name, &in_entry->ctrl_info.in_dst_ip);
@@ -821,7 +821,7 @@ static int atm_mpoa_mpoad_attach(struct atm_vcc *vcc, int arg)
 	}
 	if (mpc->mpoad_vcc) {
 		pr_info("mpoad is already present for itf %d\n", arg);
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 	}
 
 	if (mpc->dev) { /* check if the lec is LANE2 capable */
@@ -979,7 +979,7 @@ int msg_to_mpoad(struct k_message *mesg, struct mpoa_client *mpc)
 
 	if (mpc == NULL || !mpc->mpoad_vcc) {
 		pr_info("mesg %d to a non-existent mpoad\n", mesg->type);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	skb = alloc_skb(sizeof(struct k_message), GFP_ATOMIC);
@@ -1448,10 +1448,10 @@ static int atm_mpoa_ioctl(struct socket *sock, unsigned int cmd,
 	struct atm_vcc *vcc = ATM_SD(sock);
 
 	if (cmd != ATMMPC_CTRL && cmd != ATMMPC_DATA)
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	switch (cmd) {
 	case ATMMPC_CTRL:

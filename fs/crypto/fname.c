@@ -125,7 +125,7 @@ int fscrypt_fname_encrypt(const struct inode *inode, const struct qstr *iname,
 	 * pad it with the needed number of NUL bytes.
 	 */
 	if (WARN_ON(olen < iname->len))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	memcpy(out, iname->name, iname->len);
 	memset(out + iname->len, 0, olen - iname->len);
 
@@ -359,7 +359,7 @@ int fscrypt_fname_disk_to_usr(const struct inode *inode,
 	}
 
 	if (iname->len < FS_CRYPTO_BLOCK_SIZE)
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	if (fscrypt_has_encryption_key(inode))
 		return fname_decrypt(inode, iname, oname);
@@ -444,7 +444,7 @@ int fscrypt_setup_filename(struct inode *dir, const struct qstr *iname,
 		if (!fscrypt_fname_encrypted_size(dir, iname->len,
 						  dir->i_sb->s_cop->max_namelen,
 						  &fname->crypto_buf.len))
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 		fname->crypto_buf.name = kmalloc(fname->crypto_buf.len,
 						 GFP_NOFS);
 		if (!fname->crypto_buf.name)
@@ -459,7 +459,7 @@ int fscrypt_setup_filename(struct inode *dir, const struct qstr *iname,
 		return 0;
 	}
 	if (!lookup)
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 	fname->is_ciphertext_name = true;
 
 	/*
@@ -468,7 +468,7 @@ int fscrypt_setup_filename(struct inode *dir, const struct qstr *iname,
 	 */
 
 	if (iname->len > BASE64_CHARS(FSCRYPT_NOKEY_NAME_MAX))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	fname->crypto_buf.name = kmalloc(FSCRYPT_NOKEY_NAME_MAX, GFP_KERNEL);
 	if (fname->crypto_buf.name == NULL)
@@ -478,7 +478,7 @@ int fscrypt_setup_filename(struct inode *dir, const struct qstr *iname,
 	if (ret < (int)offsetof(struct fscrypt_nokey_name, bytes[1]) ||
 	    (ret > offsetof(struct fscrypt_nokey_name, sha256) &&
 	     ret != FSCRYPT_NOKEY_NAME_MAX)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto errout;
 	}
 	fname->crypto_buf.len = ret;
@@ -589,7 +589,7 @@ static int fscrypt_d_revalidate(struct dentry *dentry, unsigned int flags)
 	 */
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	dir = dget_parent(dentry);
 	err = fscrypt_get_encryption_info(d_inode(dir));

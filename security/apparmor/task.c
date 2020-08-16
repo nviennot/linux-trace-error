@@ -50,7 +50,7 @@ int aa_replace_current_label(struct aa_label *label)
 		return 0;
 
 	if (current_cred() != current_real_cred())
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	new  = prepare_creds();
 	if (!new)
@@ -131,7 +131,7 @@ int aa_set_current_hat(struct aa_label *label, u64 token)
 	} else {
 		/* previous_profile && ctx->token != token */
 		abort_creds(new);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	set_cred_label(new, aa_get_newest_label(label));
@@ -158,7 +158,7 @@ int aa_restore_previous_label(u64 token)
 	struct cred *new;
 
 	if (ctx->token != token)
-		return -EACCES;
+		return -ERR(EACCES);
 	/* ignore restores when there is no saved label */
 	if (!ctx->previous)
 		return 0;

@@ -114,7 +114,7 @@ static int page_cache_pipe_buf_confirm(struct pipe_inode_info *pipe,
 		 * splice, if this is the first page.
 		 */
 		if (!page->mapping) {
-			err = -ENODATA;
+			err = -ERR(ENODATA);
 			goto error;
 		}
 
@@ -122,7 +122,7 @@ static int page_cache_pipe_buf_confirm(struct pipe_inode_info *pipe,
 		 * Uh oh, read-error from disk.
 		 */
 		if (!PageUptodate(page)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 
@@ -194,7 +194,7 @@ ssize_t splice_to_pipe(struct pipe_inode_info *pipe,
 
 	if (unlikely(!pipe->readers)) {
 		send_sig(SIGPIPE, current, 0);
-		ret = -EPIPE;
+		ret = -ERR(EPIPE);
 		goto out;
 	}
 
@@ -218,7 +218,7 @@ ssize_t splice_to_pipe(struct pipe_inode_info *pipe,
 	}
 
 	if (!ret)
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 
 out:
 	while (page_nr < spd_pages)
@@ -237,9 +237,9 @@ ssize_t add_to_pipe(struct pipe_inode_info *pipe, struct pipe_buffer *buf)
 
 	if (unlikely(!pipe->readers)) {
 		send_sig(SIGPIPE, current, 0);
-		ret = -EPIPE;
+		ret = -ERR(EPIPE);
 	} else if (pipe_full(head, tail, pipe->max_usage)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 	} else {
 		pipe->bufs[head & mask] = *buf;
 		pipe->head = head + 1;
@@ -322,7 +322,7 @@ ssize_t generic_file_splice_read(struct file *in, loff_t *ppos,
 		 * "can't put anything in there", rather than -EFAULT.
 		 */
 		if (ret == -EFAULT)
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 	}
 
 	return ret;
@@ -372,7 +372,7 @@ static ssize_t default_file_splice_read(struct file *in, loff_t *ppos,
 	int i;
 
 	if (pipe_full(pipe->head, pipe->tail, pipe->max_usage))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	/*
 	 * Try to keep page boundaries matching to source pagecache ones -
@@ -437,7 +437,7 @@ static int pipe_to_sendpage(struct pipe_inode_info *pipe,
 	int more;
 
 	if (!likely(file->f_op->sendpage))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	more = (sd->flags & SPLICE_F_MORE) ? MSG_MORE : 0;
 
@@ -543,7 +543,7 @@ static int splice_from_pipe_next(struct pipe_inode_info *pipe, struct splice_des
 	 * always buffers available
 	 */
 	if (signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	while (pipe_empty(pipe->head, pipe->tail)) {
 		if (!pipe->writers)
@@ -553,10 +553,10 @@ static int splice_from_pipe_next(struct pipe_inode_info *pipe, struct splice_des
 			return 0;
 
 		if (sd->flags & SPLICE_F_NONBLOCK)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 
 		if (sd->need_wakeup) {
 			wakeup_pipe_writers(pipe);
@@ -857,7 +857,7 @@ static long do_splice_to(struct file *in, loff_t *ppos,
 	int ret;
 
 	if (unlikely(!(in->f_mode & FMODE_READ)))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	ret = rw_verify_area(READ, in, ppos, len);
 	if (unlikely(ret < 0))
@@ -900,7 +900,7 @@ ssize_t splice_direct_to_actor(struct file *in, struct splice_desc *sd,
 	 */
 	i_mode = file_inode(in)->i_mode;
 	if (unlikely(!S_ISREG(i_mode) && !S_ISBLK(i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * neither in nor out is a pipe, setup an internal pipe attached to
@@ -1047,10 +1047,10 @@ long do_splice_direct(struct file *in, loff_t *ppos, struct file *out,
 	long ret;
 
 	if (unlikely(!(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (unlikely(out->f_flags & O_APPEND))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = rw_verify_area(WRITE, out, opos, len);
 	if (unlikely(ret < 0))
@@ -1069,14 +1069,14 @@ static int wait_for_space(struct pipe_inode_info *pipe, unsigned flags)
 	for (;;) {
 		if (unlikely(!pipe->readers)) {
 			send_sig(SIGPIPE, current, 0);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		if (!pipe_full(pipe->head, pipe->tail, pipe->max_usage))
 			return 0;
 		if (flags & SPLICE_F_NONBLOCK)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		pipe_wait(pipe);
 	}
 }
@@ -1099,18 +1099,18 @@ long do_splice(struct file *in, loff_t __user *off_in,
 
 	if (unlikely(!(in->f_mode & FMODE_READ) ||
 		     !(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	ipipe = get_pipe_info(in, true);
 	opipe = get_pipe_info(out, true);
 
 	if (ipipe && opipe) {
 		if (off_in || off_out)
-			return -ESPIPE;
+			return -ERR(ESPIPE);
 
 		/* Splicing to self would be fun, but... */
 		if (ipipe == opipe)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if ((in->f_flags | out->f_flags) & O_NONBLOCK)
 			flags |= SPLICE_F_NONBLOCK;
@@ -1120,10 +1120,10 @@ long do_splice(struct file *in, loff_t __user *off_in,
 
 	if (ipipe) {
 		if (off_in)
-			return -ESPIPE;
+			return -ERR(ESPIPE);
 		if (off_out) {
 			if (!(out->f_mode & FMODE_PWRITE))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (copy_from_user(&offset, off_out, sizeof(loff_t)))
 				return -EFAULT;
 		} else {
@@ -1131,7 +1131,7 @@ long do_splice(struct file *in, loff_t __user *off_in,
 		}
 
 		if (unlikely(out->f_flags & O_APPEND))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = rw_verify_area(WRITE, out, &offset, len);
 		if (unlikely(ret < 0))
@@ -1154,10 +1154,10 @@ long do_splice(struct file *in, loff_t __user *off_in,
 
 	if (opipe) {
 		if (off_out)
-			return -ESPIPE;
+			return -ERR(ESPIPE);
 		if (off_in) {
 			if (!(in->f_mode & FMODE_PREAD))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (copy_from_user(&offset, off_in, sizeof(loff_t)))
 				return -EFAULT;
 		} else {
@@ -1189,7 +1189,7 @@ long do_splice(struct file *in, loff_t __user *off_in,
 		return ret;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int iter_to_pipe(struct iov_iter *from,
@@ -1261,7 +1261,7 @@ static long vmsplice_to_user(struct file *file, struct iov_iter *iter,
 	long ret = 0;
 
 	if (!pipe)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (sd.total_len) {
 		pipe_lock(pipe);
@@ -1289,7 +1289,7 @@ static long vmsplice_to_pipe(struct file *file, struct iov_iter *iter,
 
 	pipe = get_pipe_info(file, true);
 	if (!pipe)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	pipe_lock(pipe);
 	ret = wait_for_space(pipe, flags);
@@ -1304,14 +1304,14 @@ static long vmsplice_to_pipe(struct file *file, struct iov_iter *iter,
 static int vmsplice_type(struct fd f, int *type)
 {
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 	if (f.file->f_mode & FMODE_WRITE) {
 		*type = WRITE;
 	} else if (f.file->f_mode & FMODE_READ) {
 		*type = READ;
 	} else {
 		fdput(f);
-		return -EBADF;
+		return -ERR(EBADF);
 	}
 	return 0;
 }
@@ -1335,7 +1335,7 @@ static int vmsplice_type(struct fd f, int *type)
 static long do_vmsplice(struct file *f, struct iov_iter *iter, unsigned int flags)
 {
 	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!iov_iter_count(iter))
 		return 0;
@@ -1409,9 +1409,9 @@ SYSCALL_DEFINE6(splice, int, fd_in, loff_t __user *, off_in,
 		return 0;
 
 	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	in = fdget(fd_in);
 	if (in.file) {
 		out = fdget(fd_out);
@@ -1445,13 +1445,13 @@ static int ipipe_prep(struct pipe_inode_info *pipe, unsigned int flags)
 
 	while (pipe_empty(pipe->head, pipe->tail)) {
 		if (signal_pending(current)) {
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			break;
 		}
 		if (!pipe->writers)
 			break;
 		if (flags & SPLICE_F_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 		pipe_wait(pipe);
@@ -1482,15 +1482,15 @@ static int opipe_prep(struct pipe_inode_info *pipe, unsigned int flags)
 	while (pipe_full(pipe->head, pipe->tail, pipe->max_usage)) {
 		if (!pipe->readers) {
 			send_sig(SIGPIPE, current, 0);
-			ret = -EPIPE;
+			ret = -ERR(EPIPE);
 			break;
 		}
 		if (flags & SPLICE_F_NONBLOCK) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			break;
 		}
 		if (signal_pending(current)) {
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			break;
 		}
 		pipe_wait(pipe);
@@ -1542,7 +1542,7 @@ retry:
 		if (!opipe->readers) {
 			send_sig(SIGPIPE, current, 0);
 			if (!ret)
-				ret = -EPIPE;
+				ret = -ERR(EPIPE);
 			break;
 		}
 
@@ -1563,7 +1563,7 @@ retry:
 				break;
 
 			if (flags & SPLICE_F_NONBLOCK) {
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				break;
 			}
 
@@ -1666,7 +1666,7 @@ static int link_pipe(struct pipe_inode_info *ipipe,
 		if (!opipe->readers) {
 			send_sig(SIGPIPE, current, 0);
 			if (!ret)
-				ret = -EPIPE;
+				ret = -ERR(EPIPE);
 			break;
 		}
 
@@ -1735,11 +1735,11 @@ long do_tee(struct file *in, struct file *out, size_t len, unsigned int flags)
 {
 	struct pipe_inode_info *ipipe = get_pipe_info(in, true);
 	struct pipe_inode_info *opipe = get_pipe_info(out, true);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (unlikely(!(in->f_mode & FMODE_READ) ||
 		     !(out->f_mode & FMODE_WRITE)))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	/*
 	 * Duplicate the contents of ipipe to opipe without actually
@@ -1770,12 +1770,12 @@ SYSCALL_DEFINE4(tee, int, fdin, int, fdout, size_t, len, unsigned int, flags)
 	int error;
 
 	if (unlikely(flags & ~SPLICE_F_ALL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(!len))
 		return 0;
 
-	error = -EBADF;
+	error = -ERR(EBADF);
 	in = fdget(fdin);
 	if (in.file) {
 		out = fdget(fdout);

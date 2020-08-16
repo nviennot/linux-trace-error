@@ -20,7 +20,7 @@ int fuse_setxattr(struct inode *inode, const char *name, const void *value,
 	int err;
 
 	if (fc->no_setxattr)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(&inarg, 0, sizeof(inarg));
 	inarg.size = size;
@@ -37,7 +37,7 @@ int fuse_setxattr(struct inode *inode, const char *name, const void *value,
 	err = fuse_simple_request(fc, &args);
 	if (err == -ENOSYS) {
 		fc->no_setxattr = 1;
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 	if (!err) {
 		fuse_invalidate_attr(inode);
@@ -56,7 +56,7 @@ ssize_t fuse_getxattr(struct inode *inode, const char *name, void *value,
 	ssize_t ret;
 
 	if (fc->no_getxattr)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(&inarg, 0, sizeof(inarg));
 	inarg.size = size;
@@ -82,7 +82,7 @@ ssize_t fuse_getxattr(struct inode *inode, const char *name, void *value,
 		ret = min_t(ssize_t, outarg.size, XATTR_SIZE_MAX);
 	if (ret == -ENOSYS) {
 		fc->no_getxattr = 1;
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	}
 	return ret;
 }
@@ -95,7 +95,7 @@ static int fuse_verify_xattr_list(char *list, size_t size)
 		size_t thislen = strnlen(list, size);
 
 		if (!thislen || thislen == size)
-			return -EIO;
+			return -ERR(EIO);
 
 		size -= thislen + 1;
 		list += thislen + 1;
@@ -114,10 +114,10 @@ ssize_t fuse_listxattr(struct dentry *entry, char *list, size_t size)
 	ssize_t ret;
 
 	if (!fuse_allow_current_process(fc))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	if (fc->no_listxattr)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(&inarg, 0, sizeof(inarg));
 	inarg.size = size;
@@ -143,7 +143,7 @@ ssize_t fuse_listxattr(struct dentry *entry, char *list, size_t size)
 		ret = fuse_verify_xattr_list(list, ret);
 	if (ret == -ENOSYS) {
 		fc->no_listxattr = 1;
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 	}
 	return ret;
 }
@@ -155,7 +155,7 @@ int fuse_removexattr(struct inode *inode, const char *name)
 	int err;
 
 	if (fc->no_removexattr)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	args.opcode = FUSE_REMOVEXATTR;
 	args.nodeid = get_node_id(inode);
@@ -165,7 +165,7 @@ int fuse_removexattr(struct inode *inode, const char *name)
 	err = fuse_simple_request(fc, &args);
 	if (err == -ENOSYS) {
 		fc->no_removexattr = 1;
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 	if (!err) {
 		fuse_invalidate_attr(inode);
@@ -201,7 +201,7 @@ static int no_xattr_get(const struct xattr_handler *handler,
 			struct dentry *dentry, struct inode *inode,
 			const char *name, void *value, size_t size)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int no_xattr_set(const struct xattr_handler *handler,
@@ -209,7 +209,7 @@ static int no_xattr_set(const struct xattr_handler *handler,
 			const char *name, const void *value,
 			size_t size, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static const struct xattr_handler fuse_xattr_handler = {

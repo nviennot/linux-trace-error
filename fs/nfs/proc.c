@@ -413,7 +413,7 @@ nfs_proc_symlink(struct inode *dir, struct dentry *dentry, struct page *page,
 		.rpc_proc	= &nfs_procedures[NFSPROC_SYMLINK],
 		.rpc_argp	= &arg,
 	};
-	int status = -ENAMETOOLONG;
+	int status = -ERR(ENAMETOOLONG);
 
 	dprintk("NFS call  symlink %pd\n", dentry);
 
@@ -683,7 +683,7 @@ static int nfs_lock_check_bounds(const struct file_lock *fl)
 		goto out_einval;
 	return 0;
 out_einval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int nfs_have_delegation(struct inode *inode, fmode_t flags)

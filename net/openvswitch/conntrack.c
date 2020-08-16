@@ -284,20 +284,20 @@ int ovs_ct_put_key(const struct sw_flow_key *swkey,
 		   const struct sw_flow_key *output, struct sk_buff *skb)
 {
 	if (nla_put_u32(skb, OVS_KEY_ATTR_CT_STATE, output->ct_state))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    nla_put_u16(skb, OVS_KEY_ATTR_CT_ZONE, output->ct_zone))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
 	    nla_put_u32(skb, OVS_KEY_ATTR_CT_MARK, output->ct.mark))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
 	    nla_put(skb, OVS_KEY_ATTR_CT_LABELS, sizeof(output->ct.labels),
 		    &output->ct.labels))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (swkey->ct_orig_proto) {
 		if (swkey->eth.type == htons(ETH_P_IP)) {
@@ -310,7 +310,7 @@ int ovs_ct_put_key(const struct sw_flow_key *swkey,
 			};
 			if (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4,
 				    sizeof(orig), &orig))
-				return -EMSGSIZE;
+				return -ERR(EMSGSIZE);
 		} else if (swkey->eth.type == htons(ETH_P_IPV6)) {
 			struct ovs_key_ct_tuple_ipv6 orig = {
 				IN6_ADDR_INITIALIZER(output->ipv6.ct_orig.src),
@@ -321,7 +321,7 @@ int ovs_ct_put_key(const struct sw_flow_key *swkey,
 			};
 			if (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6,
 				    sizeof(orig), &orig))
-				return -EMSGSIZE;
+				return -ERR(EMSGSIZE);
 		}
 	}
 
@@ -344,7 +344,7 @@ static int ovs_ct_set_mark(struct nf_conn *ct, struct sw_flow_key *key,
 
 	return 0;
 #else
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 #endif
 }
 
@@ -380,7 +380,7 @@ static int ovs_ct_init_labels(struct nf_conn *ct, struct sw_flow_key *key,
 
 	cl = ovs_ct_get_conn_labels(ct);
 	if (!cl)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* Inherit the master's labels, if any. */
 	if (master_cl)
@@ -415,7 +415,7 @@ static int ovs_ct_set_labels(struct nf_conn *ct, struct sw_flow_key *key,
 
 	cl = ovs_ct_get_conn_labels(ct);
 	if (!cl)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	err = nf_connlabels_replace(ct, labels->ct_labels_32,
 				    mask->ct_labels_32,
@@ -522,7 +522,7 @@ static int handle_fragments(struct net *net, struct sw_flow_key *key,
 #endif
 	} else {
 		kfree_skb(skb);
-		return -EPFNOSUPPORT;
+		return -ERR(EPFNOSUPPORT);
 	}
 
 	/* The key extracted from the fragment that completed this datagram
@@ -968,7 +968,7 @@ static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
 
 		err = nf_conntrack_in(skb, &state);
 		if (err != NF_ACCEPT)
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		/* Clear CT state NAT flags to mark that we have not yet done
 		 * NAT after the nf_conntrack_in() call.  We can actually clear
@@ -997,7 +997,7 @@ static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
 		if (info->nat && !(key->ct_state & OVS_CS_F_NAT_MASK) &&
 		    (nf_ct_is_confirmed(ct) || info->commit) &&
 		    ovs_ct_nat(net, key, info, skb, ct, ctinfo) != NF_ACCEPT) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* Userspace may decide to perform a ct lookup without a helper
@@ -1016,7 +1016,7 @@ static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
 			/* helper installed, add seqadj if NAT is required */
 			if (info->nat && !nfct_seqadj(ct)) {
 				if (!nfct_seqadj_ext_add(ct))
-					return -EINVAL;
+					return -ERR(EINVAL);
 			}
 		}
 
@@ -1029,7 +1029,7 @@ static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
 		if ((nf_ct_is_confirmed(ct) ? !cached || add_helper :
 					      info->commit) &&
 		    ovs_ct_helper(skb, info->family) != NF_ACCEPT) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1242,7 +1242,7 @@ static int ovs_ct_commit(struct net *net, struct sw_flow_key *key,
 	 * is already confirmed.
 	 */
 	if (nf_conntrack_confirm(skb) != NF_ACCEPT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1335,7 +1335,7 @@ static int ovs_ct_add_helper(struct ovs_conntrack_info *info, const char *name,
 						    key->ip.proto);
 	if (!helper) {
 		OVS_NLERR(log, "Unknown helper \"%s\"", name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	help = nf_ct_helper_ext_add(info->ct, GFP_KERNEL);
@@ -1390,14 +1390,14 @@ static int parse_nat(const struct nlattr *attr,
 		if (type > OVS_NAT_ATTR_MAX) {
 			OVS_NLERR(log, "Unknown NAT attribute (type=%d, max=%d)",
 				  type, OVS_NAT_ATTR_MAX);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (nla_len(a) != ovs_nat_attr_lens[type][ip_vers]) {
 			OVS_NLERR(log, "NAT attribute type %d has unexpected length (%d != %d)",
 				  type, nla_len(a),
 				  ovs_nat_attr_lens[type][ip_vers]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (type) {
@@ -1405,7 +1405,7 @@ static int parse_nat(const struct nlattr *attr,
 		case OVS_NAT_ATTR_DST:
 			if (info->nat) {
 				OVS_NLERR(log, "Only one type of NAT may be specified");
-				return -ERANGE;
+				return -ERR(ERANGE);
 			}
 			info->nat |= OVS_CT_NAT;
 			info->nat |= ((type == OVS_NAT_ATTR_SRC)
@@ -1450,13 +1450,13 @@ static int parse_nat(const struct nlattr *attr,
 
 		default:
 			OVS_NLERR(log, "Unknown nat attribute (%d)", type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	if (rem > 0) {
 		OVS_NLERR(log, "NAT attribute has %d unknown bytes", rem);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (!info->nat) {
 		/* Do not allow flags if no type is given. */
@@ -1464,14 +1464,14 @@ static int parse_nat(const struct nlattr *attr,
 			OVS_NLERR(log,
 				  "NAT flags may be given only when NAT range (SRC or DST) is also specified."
 				  );
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		info->nat = OVS_CT_NAT;   /* NAT existing connections. */
 	} else if (!info->commit) {
 		OVS_NLERR(log,
 			  "NAT attributes may be specified only when CT COMMIT flag is also specified."
 			  );
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* Allow missing IP_MAX. */
 	if (info->range.flags & NF_NAT_RANGE_MAP_IPS && !have_ip_max) {
@@ -1523,7 +1523,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 			OVS_NLERR(log,
 				  "Unknown conntrack attr (type=%d, max=%d)",
 				  type, OVS_CT_ATTR_MAX);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		maxlen = ovs_ct_attr_lens[type].maxlen;
@@ -1532,7 +1532,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 			OVS_NLERR(log,
 				  "Conntrack attr type has unexpected length (type=%d, length=%d, expected=%d)",
 				  type, nla_len(a), maxlen);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (type) {
@@ -1553,7 +1553,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 
 			if (!mark->mask) {
 				OVS_NLERR(log, "ct_mark mask cannot be 0");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			info->mark = *mark;
 			break;
@@ -1565,7 +1565,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 
 			if (!labels_nonzero(&labels->mask)) {
 				OVS_NLERR(log, "ct_labels mask cannot be 0");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			info->labels = *labels;
 			break;
@@ -1575,7 +1575,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 			*helper = nla_data(a);
 			if (!memchr(*helper, '\0', nla_len(a))) {
 				OVS_NLERR(log, "Invalid conntrack helper");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 #if IS_ENABLED(CONFIG_NF_NAT)
@@ -1596,7 +1596,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 			memcpy(info->timeout, nla_data(a), nla_len(a));
 			if (!memchr(info->timeout, '\0', nla_len(a))) {
 				OVS_NLERR(log, "Invalid conntrack timeout");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			break;
 #endif
@@ -1604,7 +1604,7 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 		default:
 			OVS_NLERR(log, "Unknown conntrack attr (%d)",
 				  type);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1612,19 +1612,19 @@ static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
 	if (!info->commit && info->mark.mask) {
 		OVS_NLERR(log,
 			  "Setting conntrack mark requires 'commit' flag.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 #ifdef CONFIG_NF_CONNTRACK_LABELS
 	if (!info->commit && labels_nonzero(&info->labels.mask)) {
 		OVS_NLERR(log,
 			  "Setting conntrack labels requires 'commit' flag.");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 #endif
 	if (rem > 0) {
 		OVS_NLERR(log, "Conntrack attr has %d unknown bytes", rem);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1662,7 +1662,7 @@ int ovs_ct_copy_action(struct net *net, const struct nlattr *attr,
 	family = key_to_nfproto(key);
 	if (family == NFPROTO_UNSPEC) {
 		OVS_NLERR(log, "ct family unspecified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(&ct_info, 0, sizeof(ct_info));
@@ -1787,40 +1787,40 @@ int ovs_ct_action_to_attr(const struct ovs_conntrack_info *ct_info,
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_CT);
 	if (!start)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (ct_info->commit && nla_put_flag(skb, ct_info->force
 					    ? OVS_CT_ATTR_FORCE_COMMIT
 					    : OVS_CT_ATTR_COMMIT))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    nla_put_u16(skb, OVS_CT_ATTR_ZONE, ct_info->zone.id))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) && ct_info->mark.mask &&
 	    nla_put(skb, OVS_CT_ATTR_MARK, sizeof(ct_info->mark),
 		    &ct_info->mark))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
 	    labels_nonzero(&ct_info->labels.mask) &&
 	    nla_put(skb, OVS_CT_ATTR_LABELS, sizeof(ct_info->labels),
 		    &ct_info->labels))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (ct_info->helper) {
 		if (nla_put_string(skb, OVS_CT_ATTR_HELPER,
 				   ct_info->helper->name))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 	if (ct_info->have_eventmask &&
 	    nla_put_u32(skb, OVS_CT_ATTR_EVENTMASK, ct_info->eventmask))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (ct_info->timeout[0]) {
 		if (nla_put_string(skb, OVS_CT_ATTR_TIMEOUT, ct_info->timeout))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 
 #if IS_ENABLED(CONFIG_NF_NAT)
 	if (ct_info->nat && !ovs_ct_nat_to_attr(ct_info, skb))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 #endif
 	nla_nest_end(skb, start);
 
@@ -1920,7 +1920,7 @@ ovs_ct_limit_cmd_reply_start(struct genl_info *info, u8 cmd,
 
 	if (!*ovs_reply_header) {
 		nlmsg_free(skb);
-		return ERR_PTR(-EMSGSIZE);
+		return ERR_PTR(-ERR(EMSGSIZE));
 	}
 	(*ovs_reply_header)->dp_ifindex = ovs_header->dp_ifindex;
 
@@ -2134,7 +2134,7 @@ static int ovs_ct_limit_cmd_set(struct sk_buff *skb, struct genl_info *info)
 		return PTR_ERR(reply);
 
 	if (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto exit_err;
 	}
 
@@ -2168,7 +2168,7 @@ static int ovs_ct_limit_cmd_del(struct sk_buff *skb, struct genl_info *info)
 		return PTR_ERR(reply);
 
 	if (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto exit_err;
 	}
 
@@ -2203,7 +2203,7 @@ static int ovs_ct_limit_cmd_get(struct sk_buff *skb, struct genl_info *info)
 
 	nla_reply = nla_nest_start_noflag(reply, OVS_CT_LIMIT_ATTR_ZONE_LIMIT);
 	if (!nla_reply) {
-		err = -EMSGSIZE;
+		err = -ERR(EMSGSIZE);
 		goto exit_err;
 	}
 

@@ -30,7 +30,7 @@ static inline int mm_pkey_alloc(struct mm_struct *mm)
 
 static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,

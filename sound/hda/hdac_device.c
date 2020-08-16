@@ -85,7 +85,7 @@ int snd_hdac_device_init(struct hdac_device *codec, struct hdac_bus *bus,
 	setup_fg_nodes(codec);
 	if (!codec->afg && !codec->mfg) {
 		dev_err(dev, "no AFG or MFG node found\n");
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto error;
 	}
 
@@ -333,7 +333,7 @@ int snd_hdac_override_parm(struct hdac_device *codec, hda_nid_t nid,
 	int err;
 
 	if (!codec->regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	codec->caps_overwriting = true;
 	err = snd_hdac_regmap_write_raw(codec, verb, val);
@@ -413,7 +413,7 @@ int snd_hdac_refresh_widgets(struct hdac_device *codec)
 	if (!start_nid || nums <= 0 || nums >= 0xff) {
 		dev_err(&codec->dev, "cannot read sub nodes for FG 0x%02x\n",
 			codec->afg);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -510,7 +510,7 @@ int snd_hdac_get_connections(struct hdac_device *codec, hda_nid_t nid,
 					    AC_VERB_GET_CONNECT_LIST, i,
 					    &parm);
 			if (err < 0)
-				return -EIO;
+				return -ERR(EIO);
 		}
 		range_val = !!(parm & (1 << (shift-1))); /* ranges */
 		val = parm & mask;
@@ -532,7 +532,7 @@ int snd_hdac_get_connections(struct hdac_device *codec, hda_nid_t nid,
 			for (n = prev_nid + 1; n <= val; n++) {
 				if (conn_list) {
 					if (conns >= max_conns)
-						return -ENOSPC;
+						return -ERR(ENOSPC);
 					conn_list[conns] = n;
 				}
 				conns++;
@@ -540,7 +540,7 @@ int snd_hdac_get_connections(struct hdac_device *codec, hda_nid_t nid,
 		} else {
 			if (conn_list) {
 				if (conns >= max_conns)
-					return -ENOSPC;
+					return -ERR(ENOSPC);
 				conn_list[conns] = val;
 			}
 			conns++;
@@ -839,7 +839,7 @@ int snd_hdac_query_supported_pcm(struct hdac_device *codec, hda_nid_t nid,
 				"rates == 0 (nid=0x%x, val=0x%x, ovrd=%i)\n",
 				nid, val,
 				(wcaps & AC_WCAP_FORMAT_OVRD) ? 1 : 0);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		*ratesp = rates;
 	}
@@ -850,7 +850,7 @@ int snd_hdac_query_supported_pcm(struct hdac_device *codec, hda_nid_t nid,
 
 		streams = query_stream_param(codec, nid);
 		if (!streams)
-			return -EIO;
+			return -ERR(EIO);
 
 		bps = 0;
 		if (streams & AC_SUPFMT_PCM) {
@@ -903,7 +903,7 @@ int snd_hdac_query_supported_pcm(struct hdac_device *codec, hda_nid_t nid,
 				nid, val,
 				(wcaps & AC_WCAP_FORMAT_OVRD) ? 1 : 0,
 				streams);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (formatsp)
 			*formatsp = formats;

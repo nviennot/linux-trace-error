@@ -63,19 +63,19 @@ int amdtp_am824_set_parameters(struct amdtp_stream *s, unsigned int rate,
 	int err;
 
 	if (amdtp_stream_running(s))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pcm_channels > AM824_MAX_CHANNELS_FOR_PCM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	midi_channels = DIV_ROUND_UP(midi_ports, 8);
 	if (midi_channels > AM824_MAX_CHANNELS_FOR_MIDI)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(amdtp_stream_running(s)) ||
 	    WARN_ON(pcm_channels > AM824_MAX_CHANNELS_FOR_PCM) ||
 	    WARN_ON(midi_channels > AM824_MAX_CHANNELS_FOR_MIDI))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = amdtp_stream_set_parameters(s, rate,
 					  pcm_channels + midi_channels);

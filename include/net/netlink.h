@@ -712,7 +712,7 @@ static inline int __nlmsg_parse(const struct nlmsghdr *nlh, int hdrlen,
 {
 	if (nlh->nlmsg_len < nlmsg_msg_size(hdrlen)) {
 		NL_SET_ERR_MSG(extack, "Invalid header length");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return __nla_parse(tb, maxtype, nlmsg_attrdata(nlh, hdrlen),
@@ -855,7 +855,7 @@ static inline int nlmsg_validate_deprecated(const struct nlmsghdr *nlh,
 					    struct netlink_ext_ack *extack)
 {
 	if (nlh->nlmsg_len < nlmsg_msg_size(hdrlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return __nla_validate(nlmsg_attrdata(nlh, hdrlen),
 			      nlmsg_attrlen(nlh, hdrlen), maxtype,
@@ -1193,7 +1193,7 @@ static inline int nla_parse_nested(struct nlattr *tb[], int maxtype,
 {
 	if (!(nla->nla_type & NLA_F_NESTED)) {
 		NL_SET_ERR_MSG_ATTR(extack, nla, "NLA_F_NESTED is missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return __nla_parse(tb, maxtype, nla_data(nla), nla_len(nla), policy,
@@ -1879,7 +1879,7 @@ static inline int nla_align_64bit(struct sk_buff *skb, int padattr)
 {
 	if (nla_need_padding_for_64bit(skb) &&
 	    !nla_reserve(skb, padattr, 0))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

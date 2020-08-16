@@ -25,7 +25,7 @@ static int adfs_fplus_validate_header(const struct adfs_bigdirheader *h)
 	    h->bigdirversion[2] != 0 ||
 	    h->bigdirstartname != cpu_to_le32(BIGDIRSTARTNAME) ||
 	    !size || size & 2047 || size > SZ_4M)
-		return -EIO;
+		return -ERR(EIO);
 
 	size -= sizeof(struct adfs_bigdirtail) +
 		offsetof(struct adfs_bigdirheader, bigdirname);
@@ -33,14 +33,14 @@ static int adfs_fplus_validate_header(const struct adfs_bigdirheader *h)
 	/* Check that bigdirnamelen fits within the directory */
 	len = ALIGN(le32_to_cpu(h->bigdirnamelen), 4);
 	if (len > size)
-		return -EIO;
+		return -ERR(EIO);
 
 	size -= len;
 
 	/* Check that bigdirnamesize fits within the directory */
 	len = le32_to_cpu(h->bigdirnamesize);
 	if (len > size)
-		return -EIO;
+		return -ERR(EIO);
 
 	size -= len;
 
@@ -51,7 +51,7 @@ static int adfs_fplus_validate_header(const struct adfs_bigdirheader *h)
 	len = le32_to_cpu(h->bigdirentries);
 	if (len > SZ_4M / sizeof(struct adfs_bigdirentry) ||
 	    len * sizeof(struct adfs_bigdirentry) > size)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -62,7 +62,7 @@ static int adfs_fplus_validate_tail(const struct adfs_bigdirheader *h,
 	if (t->bigdirendname != cpu_to_le32(BIGDIRENDNAME) ||
 	    t->bigdirendmasseq != h->startmasseq ||
 	    t->reserved[0] != 0 || t->reserved[1] != 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -158,7 +158,7 @@ out:
 static int
 adfs_fplus_setpos(struct adfs_dir *dir, unsigned int fpos)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (fpos <= le32_to_cpu(dir->bighead->bigdirentries)) {
 		dir->pos = fpos;
@@ -177,7 +177,7 @@ adfs_fplus_getnext(struct adfs_dir *dir, struct object_info *obj)
 	int ret;
 
 	if (dir->pos >= le32_to_cpu(h->bigdirentries))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	offset = adfs_fplus_offset(h, dir->pos);
 
@@ -240,12 +240,12 @@ static int adfs_fplus_update(struct adfs_dir *dir, struct object_info *obj)
 		offset += sizeof(bde);
 		if (offset >= end) {
 			adfs_error(dir->sb, "unable to locate entry to update");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		ret = adfs_dir_copyfrom(&bde, dir, offset, sizeof(bde));
 		if (ret) {
 			adfs_error(dir->sb, "error reading directory entry");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	} while (le32_to_cpu(bde.bigdirindaddr) != obj->indaddr);
 

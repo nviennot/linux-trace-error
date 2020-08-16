@@ -149,7 +149,7 @@ static int do_verify_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_dat
 	if (rc || readlen != sizeof(rx)) {
 		JFFS2_WARNING("jffs2_flash_read()=%d, req=%zu, read=%zu at %#08x\n",
 			      rc, sizeof(rx), readlen, offset);
-		return rc ? rc : -EIO;
+		return rc ? rc : -ERR(EIO);
 	}
 	crc = crc32(0, &rx, sizeof(rx) - 4);
 	if (crc != je32_to_cpu(rx.node_crc)) {
@@ -224,7 +224,7 @@ static int do_load_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum
 		JFFS2_WARNING("jffs2_flash_read() returned %d, request=%d, readlen=%zu, at %#08x\n",
 			      ret, length, readlen, ref_offset(xd->node));
 		kfree(data);
-		return ret ? ret : -EIO;
+		return ret ? ret : -ERR(EIO);
 	}
 
 	data[xd->name_len] = '\0';
@@ -318,7 +318,7 @@ static int save_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *x
 	if (rc || totlen != length) {
 		JFFS2_WARNING("jffs2_flash_writev()=%d, req=%u, wrote=%zu, at %#08x\n",
 			      rc, totlen, length, phys_ofs);
-		rc = rc ? rc : -EIO;
+		rc = rc ? rc : -ERR(EIO);
 		if (length)
 			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(totlen), NULL);
 
@@ -460,7 +460,7 @@ static int verify_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref
 	if (rc || sizeof(rr) != readlen) {
 		JFFS2_WARNING("jffs2_flash_read()=%d, req=%zu, read=%zu, at %#08x\n",
 			      rc, sizeof(rr), readlen, offset);
-		return rc ? rc : -EIO;
+		return rc ? rc : -ERR(EIO);
 	}
 	/* obsolete node */
 	crc = crc32(0, &rr, sizeof(rr) - 4);
@@ -532,7 +532,7 @@ static int save_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref)
 	if (ret || sizeof(rr) != length) {
 		JFFS2_WARNING("jffs2_flash_write() returned %d, request=%zu, retlen=%zu, at %#08x\n",
 			      ret, sizeof(rr), length, phys_ofs);
-		ret = ret ? ret : -EIO;
+		ret = ret ? ret : -ERR(EIO);
 		if (length)
 			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(sizeof(rr)), NULL);
 
@@ -1007,7 +1007,7 @@ ssize_t jffs2_listxattr(struct dentry *dentry, char *buffer, size_t size)
 
 		if (buffer) {
 			if (rc > size - len) {
-				rc = -ERANGE;
+				rc = -ERR(ERANGE);
 				goto out;
 			}
 			memcpy(buffer, prefix, prefix_len);
@@ -1072,7 +1072,7 @@ int do_jffs2_getxattr(struct inode *inode, int xprefix, const char *xname,
 			rc = xd->value_len;
 			if (buffer) {
 				if (size < rc) {
-					rc = -ERANGE;
+					rc = -ERR(ERANGE);
 				} else {
 					memcpy(buffer, xd->xvalue, rc);
 				}
@@ -1080,7 +1080,7 @@ int do_jffs2_getxattr(struct inode *inode, int xprefix, const char *xname,
 			goto out;
 		}
 	}
-	rc = -ENODATA;
+	rc = -ERR(ENODATA);
  out:
 	if (!retry) {
 		up_read(&c->xattr_sem);
@@ -1131,7 +1131,7 @@ int do_jffs2_setxattr(struct inode *inode, int xprefix, const char *xname,
 		}
 		if (!strcmp(xd->xname, xname)) {
 			if (flags & XATTR_CREATE) {
-				rc = -EEXIST;
+				rc = -ERR(EEXIST);
 				goto out;
 			}
 			if (!buffer) {
@@ -1158,11 +1158,11 @@ int do_jffs2_setxattr(struct inode *inode, int xprefix, const char *xname,
 	}
 	/* not found */
 	if (flags & XATTR_REPLACE) {
-		rc = -ENODATA;
+		rc = -ERR(ENODATA);
 		goto out;
 	}
 	if (!buffer) {
-		rc = -ENODATA;
+		rc = -ERR(ENODATA);
 		goto out;
 	}
  found:

@@ -62,10 +62,10 @@ int hfs_part_find(struct super_block *sb,
 	__be16 *data;
 	int i, size, res;
 
-	res = -ENOENT;
+	res = -ERR(ENOENT);
 	bh = sb_bread512(sb, *part_start + HFS_PMAP_BLK, data);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (be16_to_cpu(*data)) {
 	case HFS_OLD_PMAP_MAGIC:
@@ -104,7 +104,7 @@ int hfs_part_find(struct super_block *sb,
 			brelse(bh);
 			bh = sb_bread512(sb, *part_start + HFS_PMAP_BLK + ++i, pm);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 			if (pm->pmSig != cpu_to_be16(HFS_NEW_PMAP_MAGIC))
 				break;
 		}

@@ -106,7 +106,7 @@ static int mc13783_pcm_hw_params_dac(struct snd_pcm_substream *substream,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int mc13783_pcm_hw_params_codec(struct snd_pcm_substream *substream,
@@ -125,7 +125,7 @@ static int mc13783_pcm_hw_params_codec(struct snd_pcm_substream *substream,
 		val = AUDIO_CODEC_CDCFS8K16K;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, MC13783_AUDIO_CODEC, AUDIO_CODEC_CDCFS8K16K,
@@ -162,7 +162,7 @@ static int mc13783_set_fmt(struct snd_soc_dai *dai, unsigned int fmt,
 		val |= AUDIO_CFS(1);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAI clock inversion */
@@ -190,7 +190,7 @@ static int mc13783_set_fmt(struct snd_soc_dai *dai, unsigned int fmt,
 		break;
 	case SND_SOC_DAIFMT_CBM_CFS:
 	case SND_SOC_DAIFMT_CBS_CFM:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val |= AUDIO_C_RESET;
@@ -255,7 +255,7 @@ static int mc13783_set_sysclk(struct snd_soc_dai *dai,
 	}
 
 	if (clk == ARRAY_SIZE(mc13783_sysclk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (clk_id == MC13783_CLK_CLIB)
 		val |= AUDIO_CLK_SEL;
@@ -311,7 +311,7 @@ static int mc13783_set_tdm_slot_dac(struct snd_soc_dai *dai,
 		val |= SSI_NETWORK_DAC_SLOTS_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rx_mask) {
@@ -328,7 +328,7 @@ static int mc13783_set_tdm_slot_dac(struct snd_soc_dai *dai,
 		val |= SSI_NETWORK_DAC_RXSLOT_6_7;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, MC13783_SSI_NETWORK, mask, val);
@@ -345,10 +345,10 @@ static int mc13783_set_tdm_slot_codec(struct snd_soc_dai *dai,
 	unsigned int mask = 0x3f;
 
 	if (slots != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tx_mask != 0x3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	val |= (0x00 << 2);	/* primary timeslot RX/TX(?) is 0 */
 	val |= (0x01 << 4);	/* secondary timeslot TX is 1 */
@@ -748,7 +748,7 @@ static int __init mc13783_codec_probe(struct platform_device *pdev)
 	} else {
 		np = of_get_child_by_name(pdev->dev.parent->of_node, "codec");
 		if (!np)
-			return -ENOSYS;
+			return -ERR(ENOSYS);
 
 		ret = of_property_read_u32(np, "adc-port", &priv->adc_ssi_port);
 		if (ret) {

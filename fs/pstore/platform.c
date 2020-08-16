@@ -531,7 +531,7 @@ static int pstore_write_user_compat(struct pstore_record *record,
 	int ret = 0;
 
 	if (record->buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	record->buf = memdup_user(buf, record->size);
 	if (IS_ERR(record->buf)) {
@@ -559,21 +559,21 @@ int pstore_register(struct pstore_info *psi)
 {
 	if (backend && strcmp(backend, psi->name)) {
 		pr_warn("ignoring unexpected backend '%s'\n", psi->name);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	/* Sanity check flags. */
 	if (!psi->flags) {
 		pr_warn("backend '%s' must support at least one frontend\n",
 			psi->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check for required functions. */
 	if (!psi->read || !psi->write) {
 		pr_warn("backend '%s' must implement read() and write()\n",
 			psi->name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&psinfo_lock);
@@ -581,7 +581,7 @@ int pstore_register(struct pstore_info *psi)
 		pr_warn("backend '%s' already loaded: ignoring '%s'\n",
 			psinfo->name, psi->name);
 		mutex_unlock(&psinfo_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!psi->write_user)

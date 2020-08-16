@@ -124,7 +124,7 @@ static int tomoyo_mount_acl(struct tomoyo_request_info *r,
 	} else {
 		fstype = get_fs_type(type);
 		if (!fstype) {
-			error = -ENODEV;
+			error = -ERR(ENODEV);
 			goto out;
 		}
 		if (fstype->fs_flags & FS_REQUIRES_DEV)
@@ -134,13 +134,13 @@ static int tomoyo_mount_acl(struct tomoyo_request_info *r,
 	if (need_dev) {
 		/* Get mount point or device file. */
 		if (!dev_name || kern_path(dev_name, LOOKUP_FOLLOW, &path)) {
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			goto out;
 		}
 		obj.path1 = path;
 		requested_dev_name = tomoyo_realpath_from_path(&path);
 		if (!requested_dev_name) {
-			error = -ENOENT;
+			error = -ERR(ENOENT);
 			goto out;
 		}
 	} else {
@@ -209,22 +209,22 @@ int tomoyo_mount_permission(const char *dev_name, const struct path *path,
 		flags &= ~MS_BIND;
 	} else if (flags & MS_SHARED) {
 		if (flags & (MS_PRIVATE | MS_SLAVE | MS_UNBINDABLE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		type = tomoyo_mounts[TOMOYO_MOUNT_MAKE_SHARED];
 		flags &= ~MS_SHARED;
 	} else if (flags & MS_PRIVATE) {
 		if (flags & (MS_SHARED | MS_SLAVE | MS_UNBINDABLE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		type = tomoyo_mounts[TOMOYO_MOUNT_MAKE_PRIVATE];
 		flags &= ~MS_PRIVATE;
 	} else if (flags & MS_SLAVE) {
 		if (flags & (MS_SHARED | MS_PRIVATE | MS_UNBINDABLE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		type = tomoyo_mounts[TOMOYO_MOUNT_MAKE_SLAVE];
 		flags &= ~MS_SLAVE;
 	} else if (flags & MS_UNBINDABLE) {
 		if (flags & (MS_SHARED | MS_PRIVATE | MS_SLAVE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		type = tomoyo_mounts[TOMOYO_MOUNT_MAKE_UNBINDABLE];
 		flags &= ~MS_UNBINDABLE;
 	} else if (flags & MS_MOVE) {

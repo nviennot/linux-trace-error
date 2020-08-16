@@ -57,7 +57,7 @@ static int ceph_auth_none_build_authorizer(struct ceph_auth_client *ac,
 	return 0;
 
 e_range:
-	return -ERANGE;
+	return -ERR(ERANGE);
 }
 
 static int build_request(struct ceph_auth_client *ac, void *buf, void *end)

@@ -33,7 +33,7 @@ int iw_handler_set_spy(struct net_device *	dev,
 
 	/* Make sure driver is not buggy or using the old API */
 	if (!spydata)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Disable spy collection while we copy the addresses.
 	 * While we copy addresses, any call to wireless_spy_update()
@@ -82,7 +82,7 @@ int iw_handler_get_spy(struct net_device *	dev,
 
 	/* Make sure driver is not buggy or using the old API */
 	if (!spydata)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	wrqu->data.length = spydata->spy_number;
 
@@ -117,7 +117,7 @@ int iw_handler_set_thrspy(struct net_device *	dev,
 
 	/* Make sure driver is not buggy or using the old API */
 	if (!spydata)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Just do it */
 	memcpy(&(spydata->spy_thr_low), &(threshold->low),
@@ -144,7 +144,7 @@ int iw_handler_get_thrspy(struct net_device *	dev,
 
 	/* Make sure driver is not buggy or using the old API */
 	if (!spydata)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Just do it */
 	memcpy(&(threshold->low), &(spydata->spy_thr_low),

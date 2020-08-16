@@ -60,7 +60,7 @@ int imx_dsp_ring_doorbell(struct imx_dsp_ipc *dsp, unsigned int chan_idx);
 static inline int imx_dsp_ring_doorbell(struct imx_dsp_ipc *ipc,
 					unsigned int chan_idx)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif

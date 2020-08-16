@@ -1080,7 +1080,7 @@ hash_delegation_locked(struct nfs4_delegation *dp, struct nfs4_file *fp)
 	lockdep_assert_held(&fp->fi_lock);
 
 	if (nfs4_delegation_exists(clp, fp))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	refcount_inc(&dp->dl_stid.sc_count);
 	dp->dl_stid.sc_type = NFS4_DELEG_STID;
 	list_add(&dp->dl_perfile, &fp->fi_delegations);
@@ -2347,7 +2347,7 @@ static int client_info_show(struct seq_file *m, void *v)
 
 	clp = get_nfsdfs_clp(inode);
 	if (!clp)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	memcpy(&clid, &clp->cl_clientid, sizeof(clid));
 	seq_printf(m, "clientid: 0x%llx\n", clid);
 	seq_printf(m, "address: \"%pISpc\"\n", (struct sockaddr *)&clp->cl_addr);
@@ -2607,7 +2607,7 @@ static int client_states_open(struct inode *inode, struct file *file)
 
 	clp = get_nfsdfs_clp(inode);
 	if (!clp)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	ret = seq_open(file, &states_seq_ops);
 	if (ret)
@@ -2672,10 +2672,10 @@ static ssize_t client_ctl_write(struct file *file, const char __user *buf,
 	if (IS_ERR(data))
 		return PTR_ERR(data);
 	if (size != 7 || 0 != memcmp(data, "expire\n", 7))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	clp = get_nfsdfs_clp(file_inode(file));
 	if (!clp)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	force_expire_client(clp);
 	drop_client(clp);
 	return 7;
@@ -4608,7 +4608,7 @@ nfsd_change_deleg_cb(struct file_lock *onlist, int arg,
 	if (arg & F_UNLCK)
 		return lease_modify(onlist, arg, dispose);
 	else
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 }
 
 static const struct lock_manager_operations nfsd_lease_mng_ops = {
@@ -4955,18 +4955,18 @@ nfs4_set_delegation(struct nfs4_client *clp, struct svc_fh *fh,
 	 * the end:
 	 */
 	if (fp->fi_had_conflict)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 
 	nf = find_readable_file(fp);
 	if (!nf) {
 		/* We should always have a readable file here */
 		WARN_ON_ONCE(1);
-		return ERR_PTR(-EBADF);
+		return ERR_PTR(-ERR(EBADF));
 	}
 	spin_lock(&state_lock);
 	spin_lock(&fp->fi_lock);
 	if (nfs4_delegation_exists(clp, fp))
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 	else if (!fp->fi_deleg_file) {
 		fp->fi_deleg_file = nf;
 		/* increment early to prevent fi_deleg_file from being
@@ -5000,7 +5000,7 @@ nfs4_set_delegation(struct nfs4_client *clp, struct svc_fh *fh,
 	spin_lock(&state_lock);
 	spin_lock(&fp->fi_lock);
 	if (fp->fi_had_conflict)
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 	else
 		status = hash_delegation_locked(dp, fp);
 	spin_unlock(&fp->fi_lock);

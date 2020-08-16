@@ -81,7 +81,7 @@ int log_policy = SMACK_AUDIT_DENIED;
 int smk_access_entry(char *subject_label, char *object_label,
 			struct list_head *rule_list)
 {
-	int may = -ENOENT;
+	int may = -ERR(ENOENT);
 	struct smack_rule *srp;
 
 	list_for_each_entry_rcu(srp, rule_list, list) {
@@ -126,7 +126,7 @@ int smk_access(struct smack_known *subject, struct smack_known *object,
 	 * A star subject can't access any object.
 	 */
 	if (subject == &smack_known_star) {
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 		goto out_audit;
 	}
 	/*
@@ -171,7 +171,7 @@ int smk_access(struct smack_known *subject, struct smack_known *object,
 	rcu_read_unlock();
 
 	if (may <= 0 || (request & may) != request) {
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 		goto out_audit;
 	}
 #ifdef CONFIG_SECURITY_SMACK_BRINGUP
@@ -239,7 +239,7 @@ int smk_tskacc(struct task_smack *tsp, struct smack_known *obj_known,
 			goto out_audit;
 		if ((mode & may) == mode)
 			goto out_audit;
-		rc = -EACCES;
+		rc = -ERR(EACCES);
 	}
 
 	/*
@@ -455,7 +455,7 @@ char *smk_parse_smack(const char *string, int len)
 	 * including /smack/cipso and /smack/cipso2
 	 */
 	if (string[0] == '-')
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	for (i = 0; i < len; i++)
 		if (string[i] > '~' || string[i] <= ' ' || string[i] == '/' ||
@@ -463,7 +463,7 @@ char *smk_parse_smack(const char *string, int len)
 			break;
 
 	if (i == 0 || i >= SMK_LONGLABEL)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	smack = kzalloc(i + 1, GFP_NOFS);
 	if (smack == NULL)

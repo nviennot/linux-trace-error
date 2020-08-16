@@ -100,12 +100,12 @@ int snd_soc_put_enum_double(struct snd_kcontrol *kcontrol,
 	unsigned int mask;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
 	mask = e->mask << e->shift_l;
 	if (e->shift_l != e->shift_r) {
 		if (item[1] >= e->items)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		val |= snd_soc_enum_item_to_val(e, item[1]) << e->shift_r;
 		mask |= e->mask << e->shift_r;
 	}
@@ -594,11 +594,11 @@ int snd_soc_limit_volume(struct snd_soc_card *card,
 {
 	struct snd_kcontrol *kctl;
 	struct soc_mixer_control *mc;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/* Sanity check for name and max */
 	if (unlikely(!name || max <= 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	kctl = snd_soc_card_get_kcontrol(card, name);
 	if (kctl) {
@@ -637,7 +637,7 @@ int snd_soc_bytes_get(struct snd_kcontrol *kcontrol,
 				      ucontrol->value.bytes.data,
 				      params->num_regs * component->val_bytes);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	/* Hide any masked bytes to ensure consistent data reporting */
 	if (ret == 0 && params->mask) {
@@ -654,7 +654,7 @@ int snd_soc_bytes_get(struct snd_kcontrol *kcontrol,
 				&= cpu_to_be32(~params->mask);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -672,7 +672,7 @@ int snd_soc_bytes_put(struct snd_kcontrol *kcontrol,
 	void *data;
 
 	if (!component->regmap || !params->num_regs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = params->num_regs * component->val_bytes;
 
@@ -730,7 +730,7 @@ int snd_soc_bytes_put(struct snd_kcontrol *kcontrol,
 			((u32 *)data)[0] |= val;
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -762,7 +762,7 @@ int snd_soc_bytes_tlv_callback(struct snd_kcontrol *kcontrol, int op_flag,
 {
 	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
 	unsigned int count = size < params->max ? size : params->max;
-	int ret = -ENXIO;
+	int ret = -ERR(ENXIO);
 
 	switch (op_flag) {
 	case SNDRV_CTL_TLV_OP_READ:

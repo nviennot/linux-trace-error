@@ -56,7 +56,7 @@ static int ieee802154_nl_start_confirm(struct net_device *dev, u8 status)
 
 	msg = ieee802154_nl_create(0, IEEE802154_START_CONF);
 	if (!msg)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if (nla_put_string(msg, IEEE802154_ATTR_DEV_NAME, dev->name) ||
 	    nla_put_u32(msg, IEEE802154_ATTR_DEV_INDEX, dev->ifindex) ||
@@ -68,7 +68,7 @@ static int ieee802154_nl_start_confirm(struct net_device *dev, u8 status)
 
 nla_put_failure:
 	nlmsg_free(msg);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static int ieee802154_nl_fill_iface(struct sk_buff *msg, u32 portid,
@@ -138,7 +138,7 @@ nla_put_failure:
 	wpan_phy_put(phy);
 	genlmsg_cancel(msg, hdr);
 out:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* Requests from userspace */
@@ -175,18 +175,18 @@ int ieee802154_associate_req(struct sk_buff *skb, struct genl_info *info)
 	struct net_device *dev;
 	struct ieee802154_addr addr;
 	u8 page;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (!info->attrs[IEEE802154_ATTR_CHANNEL] ||
 	    !info->attrs[IEEE802154_ATTR_COORD_PAN_ID] ||
 	    (!info->attrs[IEEE802154_ATTR_COORD_HW_ADDR] &&
 		!info->attrs[IEEE802154_ATTR_COORD_SHORT_ADDR]) ||
 	    !info->attrs[IEEE802154_ATTR_CAPABILITY])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!ieee802154_mlme_ops(dev)->assoc_req)
 		goto out;
 
@@ -221,16 +221,16 @@ int ieee802154_associate_resp(struct sk_buff *skb, struct genl_info *info)
 {
 	struct net_device *dev;
 	struct ieee802154_addr addr;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if (!info->attrs[IEEE802154_ATTR_STATUS] ||
 	    !info->attrs[IEEE802154_ATTR_DEST_HW_ADDR] ||
 	    !info->attrs[IEEE802154_ATTR_DEST_SHORT_ADDR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!ieee802154_mlme_ops(dev)->assoc_resp)
 		goto out;
 
@@ -254,16 +254,16 @@ int ieee802154_disassociate_req(struct sk_buff *skb, struct genl_info *info)
 {
 	struct net_device *dev;
 	struct ieee802154_addr addr;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 
 	if ((!info->attrs[IEEE802154_ATTR_DEST_HW_ADDR] &&
 	    !info->attrs[IEEE802154_ATTR_DEST_SHORT_ADDR]) ||
 	    !info->attrs[IEEE802154_ATTR_REASON])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!ieee802154_mlme_ops(dev)->disassoc_req)
 		goto out;
 
@@ -300,7 +300,7 @@ int ieee802154_start_req(struct sk_buff *skb, struct genl_info *info)
 	u8 channel, bcn_ord, sf_ord;
 	u8 page;
 	int pan_coord, blx, coord_realign;
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	if (!info->attrs[IEEE802154_ATTR_COORD_PAN_ID] ||
 	    !info->attrs[IEEE802154_ATTR_COORD_SHORT_ADDR] ||
@@ -311,17 +311,17 @@ int ieee802154_start_req(struct sk_buff *skb, struct genl_info *info)
 	    !info->attrs[IEEE802154_ATTR_BAT_EXT] ||
 	    !info->attrs[IEEE802154_ATTR_COORD_REALIGN]
 	 )
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (netif_running(dev))
 		goto out;
 
 	if (!ieee802154_mlme_ops(dev)->start_req) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -346,7 +346,7 @@ int ieee802154_start_req(struct sk_buff *skb, struct genl_info *info)
 	if (addr.short_addr == cpu_to_le16(IEEE802154_ADDR_BROADCAST)) {
 		ieee802154_nl_start_confirm(dev, IEEE802154_NO_SHORT_ADDRESS);
 		dev_put(dev);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rtnl_lock();
@@ -367,7 +367,7 @@ out:
 int ieee802154_scan_req(struct sk_buff *skb, struct genl_info *info)
 {
 	struct net_device *dev;
-	int ret = -EOPNOTSUPP;
+	int ret = -ERR(EOPNOTSUPP);
 	u8 type;
 	u32 channels;
 	u8 duration;
@@ -376,11 +376,11 @@ int ieee802154_scan_req(struct sk_buff *skb, struct genl_info *info)
 	if (!info->attrs[IEEE802154_ATTR_SCAN_TYPE] ||
 	    !info->attrs[IEEE802154_ATTR_CHANNELS] ||
 	    !info->attrs[IEEE802154_ATTR_DURATION])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!ieee802154_mlme_ops(dev)->scan_req)
 		goto out;
 
@@ -408,13 +408,13 @@ int ieee802154_list_iface(struct sk_buff *skb, struct genl_info *info)
 	 */
 	struct sk_buff *msg;
 	struct net_device *dev = NULL;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 
 	pr_debug("%s\n", __func__);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
 	if (!msg)
@@ -467,23 +467,23 @@ int ieee802154_set_macparams(struct sk_buff *skb, struct genl_info *info)
 	struct ieee802154_mlme_ops *ops;
 	struct ieee802154_mac_params params;
 	struct wpan_phy *phy;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	pr_debug("%s\n", __func__);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = ieee802154_mlme_ops(dev);
 
 	if (!ops->get_mac_params || !ops->set_mac_params) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (netif_running(dev)) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out;
 	}
 
@@ -546,7 +546,7 @@ ieee802154_llsec_parse_key_id(struct genl_info *info,
 	memset(desc, 0, sizeof(*desc));
 
 	if (!info->attrs[IEEE802154_ATTR_LLSEC_KEY_MODE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	desc->mode = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_KEY_MODE]);
 
@@ -554,7 +554,7 @@ ieee802154_llsec_parse_key_id(struct genl_info *info,
 		if (!info->attrs[IEEE802154_ATTR_PAN_ID] &&
 		    !(info->attrs[IEEE802154_ATTR_SHORT_ADDR] ||
 		      info->attrs[IEEE802154_ATTR_HW_ADDR]))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		desc->device_addr.pan_id = nla_get_shortaddr(info->attrs[IEEE802154_ATTR_PAN_ID]);
 
@@ -569,15 +569,15 @@ ieee802154_llsec_parse_key_id(struct genl_info *info,
 
 	if (desc->mode != IEEE802154_SCF_KEY_IMPLICIT &&
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (desc->mode == IEEE802154_SCF_KEY_SHORT_INDEX &&
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_SOURCE_SHORT])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (desc->mode == IEEE802154_SCF_KEY_HW_INDEX &&
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_SOURCE_EXTENDED])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (desc->mode != IEEE802154_SCF_KEY_IMPLICIT)
 		desc->id = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_KEY_ID]);
@@ -603,38 +603,38 @@ ieee802154_llsec_fill_key_id(struct sk_buff *msg,
 			     const struct ieee802154_llsec_key_id *desc)
 {
 	if (nla_put_u8(msg, IEEE802154_ATTR_LLSEC_KEY_MODE, desc->mode))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (desc->mode == IEEE802154_SCF_KEY_IMPLICIT) {
 		if (nla_put_shortaddr(msg, IEEE802154_ATTR_PAN_ID,
 				      desc->device_addr.pan_id))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		if (desc->device_addr.mode == IEEE802154_ADDR_SHORT &&
 		    nla_put_shortaddr(msg, IEEE802154_ATTR_SHORT_ADDR,
 				      desc->device_addr.short_addr))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 
 		if (desc->device_addr.mode == IEEE802154_ADDR_LONG &&
 		    nla_put_hwaddr(msg, IEEE802154_ATTR_HW_ADDR,
 				   desc->device_addr.extended_addr,
 				   IEEE802154_ATTR_PAD))
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 	}
 
 	if (desc->mode != IEEE802154_SCF_KEY_IMPLICIT &&
 	    nla_put_u8(msg, IEEE802154_ATTR_LLSEC_KEY_ID, desc->id))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (desc->mode == IEEE802154_SCF_KEY_SHORT_INDEX &&
 	    nla_put_u32(msg, IEEE802154_ATTR_LLSEC_KEY_SOURCE_SHORT,
 			le32_to_cpu(desc->short_source)))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (desc->mode == IEEE802154_SCF_KEY_HW_INDEX &&
 	    nla_put_hwaddr(msg, IEEE802154_ATTR_LLSEC_KEY_SOURCE_EXTENDED,
 			   desc->extended_source, IEEE802154_ATTR_PAD))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -643,7 +643,7 @@ int ieee802154_llsec_getparams(struct sk_buff *skb, struct genl_info *info)
 {
 	struct sk_buff *msg;
 	struct net_device *dev = NULL;
-	int rc = -ENOBUFS;
+	int rc = -ERR(ENOBUFS);
 	struct ieee802154_mlme_ops *ops;
 	void *hdr;
 	struct ieee802154_llsec_params params;
@@ -652,11 +652,11 @@ int ieee802154_llsec_getparams(struct sk_buff *skb, struct genl_info *info)
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ops = ieee802154_mlme_ops(dev);
 	if (!ops->llsec) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out_dev;
 	}
 
@@ -695,7 +695,7 @@ out_dev:
 int ieee802154_llsec_setparams(struct sk_buff *skb, struct genl_info *info)
 {
 	struct net_device *dev = NULL;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 	struct ieee802154_mlme_ops *ops;
 	struct ieee802154_llsec_params params;
 	int changed = 0;
@@ -704,7 +704,7 @@ int ieee802154_llsec_setparams(struct sk_buff *skb, struct genl_info *info)
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!info->attrs[IEEE802154_ATTR_LLSEC_ENABLED] &&
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_MODE] &&
@@ -713,7 +713,7 @@ int ieee802154_llsec_setparams(struct sk_buff *skb, struct genl_info *info)
 
 	ops = ieee802154_mlme_ops(dev);
 	if (!ops->llsec) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -812,14 +812,14 @@ ieee802154_nl_llsec_change(struct sk_buff *skb, struct genl_info *info,
 			   int (*fn)(struct net_device*, struct genl_info*))
 {
 	struct net_device *dev = NULL;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	dev = ieee802154_nl_get_dev(info);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!ieee802154_mlme_ops(dev)->llsec)
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 	else
 		rc = fn(dev, info);
 
@@ -838,12 +838,12 @@ ieee802154_llsec_parse_key(struct genl_info *info,
 
 	if (!info->attrs[IEEE802154_ATTR_LLSEC_KEY_USAGE_FRAME_TYPES] ||
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_BYTES])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	frames = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_KEY_USAGE_FRAME_TYPES]);
 	if ((frames & BIT(IEEE802154_FC_TYPE_MAC_CMD)) &&
 	    !info->attrs[IEEE802154_ATTR_LLSEC_KEY_USAGE_COMMANDS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->attrs[IEEE802154_ATTR_LLSEC_KEY_USAGE_COMMANDS]) {
 		nla_memcpy(commands,
@@ -853,7 +853,7 @@ ieee802154_llsec_parse_key(struct genl_info *info,
 		if (commands[0] || commands[1] || commands[2] || commands[3] ||
 		    commands[4] || commands[5] || commands[6] ||
 		    commands[7] >= BIT(IEEE802154_CMD_GTS_REQ + 1))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		key->cmd_frame_ids = commands[7];
 	}
@@ -874,7 +874,7 @@ static int llsec_add_key(struct net_device *dev, struct genl_info *info)
 
 	if (ieee802154_llsec_parse_key(info, &key) ||
 	    ieee802154_llsec_parse_key_id(info, &id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ops->llsec->add_key(dev, &id, &key);
 }
@@ -883,7 +883,7 @@ int ieee802154_llsec_add_key(struct sk_buff *skb, struct genl_info *info)
 {
 	if ((info->nlhdr->nlmsg_flags & (NLM_F_CREATE | NLM_F_EXCL)) !=
 	    (NLM_F_CREATE | NLM_F_EXCL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ieee802154_nl_llsec_change(skb, info, llsec_add_key);
 }
@@ -894,7 +894,7 @@ static int llsec_remove_key(struct net_device *dev, struct genl_info *info)
 	struct ieee802154_llsec_key_id id;
 
 	if (ieee802154_llsec_parse_key_id(info, &id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ops->llsec->del_key(dev, &id);
 }
@@ -942,7 +942,7 @@ ieee802154_nl_fill_key(struct sk_buff *msg, u32 portid, u32 seq,
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
 out:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int llsec_iter_keys(struct llsec_dump_data *data)
@@ -956,7 +956,7 @@ static int llsec_iter_keys(struct llsec_dump_data *data)
 
 		if (ieee802154_nl_fill_key(data->skb, data->portid,
 					   data->nlmsg_seq, pos, data->dev)) {
-			rc = -EMSGSIZE;
+			rc = -ERR(EMSGSIZE);
 			break;
 		}
 
@@ -983,7 +983,7 @@ llsec_parse_dev(struct genl_info *info,
 	    !info->attrs[IEEE802154_ATTR_LLSEC_DEV_KEY_MODE] ||
 	    (!!info->attrs[IEEE802154_ATTR_PAN_ID] !=
 	     !!info->attrs[IEEE802154_ATTR_SHORT_ADDR]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->attrs[IEEE802154_ATTR_PAN_ID]) {
 		dev->pan_id = nla_get_shortaddr(info->attrs[IEEE802154_ATTR_PAN_ID]);
@@ -998,7 +998,7 @@ llsec_parse_dev(struct genl_info *info,
 	dev->key_mode = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_DEV_KEY_MODE]);
 
 	if (dev->key_mode >= __IEEE802154_LLSEC_DEVKEY_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1009,7 +1009,7 @@ static int llsec_add_dev(struct net_device *dev, struct genl_info *info)
 	struct ieee802154_llsec_device desc;
 
 	if (llsec_parse_dev(info, &desc))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ops->llsec->add_dev(dev, &desc);
 }
@@ -1018,7 +1018,7 @@ int ieee802154_llsec_add_dev(struct sk_buff *skb, struct genl_info *info)
 {
 	if ((info->nlhdr->nlmsg_flags & (NLM_F_CREATE | NLM_F_EXCL)) !=
 	    (NLM_F_CREATE | NLM_F_EXCL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ieee802154_nl_llsec_change(skb, info, llsec_add_dev);
 }
@@ -1029,7 +1029,7 @@ static int llsec_del_dev(struct net_device *dev, struct genl_info *info)
 	__le64 devaddr;
 
 	if (!info->attrs[IEEE802154_ATTR_HW_ADDR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	devaddr = nla_get_hwaddr(info->attrs[IEEE802154_ATTR_HW_ADDR]);
 
@@ -1073,7 +1073,7 @@ ieee802154_nl_fill_dev(struct sk_buff *msg, u32 portid, u32 seq,
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
 out:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int llsec_iter_devs(struct llsec_dump_data *data)
@@ -1087,7 +1087,7 @@ static int llsec_iter_devs(struct llsec_dump_data *data)
 
 		if (ieee802154_nl_fill_dev(data->skb, data->portid,
 					   data->nlmsg_seq, pos, data->dev)) {
-			rc = -EMSGSIZE;
+			rc = -ERR(EMSGSIZE);
 			break;
 		}
 
@@ -1111,7 +1111,7 @@ static int llsec_add_devkey(struct net_device *dev, struct genl_info *info)
 	if (!info->attrs[IEEE802154_ATTR_LLSEC_FRAME_COUNTER] ||
 	    !info->attrs[IEEE802154_ATTR_HW_ADDR] ||
 	    ieee802154_llsec_parse_key_id(info, &key.key_id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	devaddr = nla_get_hwaddr(info->attrs[IEEE802154_ATTR_HW_ADDR]);
 	key.frame_counter = nla_get_u32(info->attrs[IEEE802154_ATTR_LLSEC_FRAME_COUNTER]);
@@ -1123,7 +1123,7 @@ int ieee802154_llsec_add_devkey(struct sk_buff *skb, struct genl_info *info)
 {
 	if ((info->nlhdr->nlmsg_flags & (NLM_F_CREATE | NLM_F_EXCL)) !=
 	    (NLM_F_CREATE | NLM_F_EXCL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ieee802154_nl_llsec_change(skb, info, llsec_add_devkey);
 }
@@ -1136,7 +1136,7 @@ static int llsec_del_devkey(struct net_device *dev, struct genl_info *info)
 
 	if (!info->attrs[IEEE802154_ATTR_HW_ADDR] ||
 	    ieee802154_llsec_parse_key_id(info, &key.key_id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	devaddr = nla_get_hwaddr(info->attrs[IEEE802154_ATTR_HW_ADDR]);
 
@@ -1176,7 +1176,7 @@ ieee802154_nl_fill_devkey(struct sk_buff *msg, u32 portid, u32 seq,
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
 out:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int llsec_iter_devkeys(struct llsec_dump_data *data)
@@ -1199,7 +1199,7 @@ static int llsec_iter_devkeys(struct llsec_dump_data *data)
 						      data->nlmsg_seq,
 						      dpos->hwaddr, kpos,
 						      data->dev)) {
-				return rc = -EMSGSIZE;
+				return rc = -ERR(EMSGSIZE);
 			}
 
 			data->s_idx2++;
@@ -1226,12 +1226,12 @@ llsec_parse_seclevel(struct genl_info *info,
 	if (!info->attrs[IEEE802154_ATTR_LLSEC_FRAME_TYPE] ||
 	    !info->attrs[IEEE802154_ATTR_LLSEC_SECLEVELS] ||
 	    !info->attrs[IEEE802154_ATTR_LLSEC_DEV_OVERRIDE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sl->frame_type = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_FRAME_TYPE]);
 	if (sl->frame_type == IEEE802154_FC_TYPE_MAC_CMD) {
 		if (!info->attrs[IEEE802154_ATTR_LLSEC_CMD_FRAME_ID])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sl->cmd_frame_id = nla_get_u8(info->attrs[IEEE802154_ATTR_LLSEC_CMD_FRAME_ID]);
 	}
@@ -1248,7 +1248,7 @@ static int llsec_add_seclevel(struct net_device *dev, struct genl_info *info)
 	struct ieee802154_llsec_seclevel sl;
 
 	if (llsec_parse_seclevel(info, &sl))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ops->llsec->add_seclevel(dev, &sl);
 }
@@ -1257,7 +1257,7 @@ int ieee802154_llsec_add_seclevel(struct sk_buff *skb, struct genl_info *info)
 {
 	if ((info->nlhdr->nlmsg_flags & (NLM_F_CREATE | NLM_F_EXCL)) !=
 	    (NLM_F_CREATE | NLM_F_EXCL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ieee802154_nl_llsec_change(skb, info, llsec_add_seclevel);
 }
@@ -1268,7 +1268,7 @@ static int llsec_del_seclevel(struct net_device *dev, struct genl_info *info)
 	struct ieee802154_llsec_seclevel sl;
 
 	if (llsec_parse_seclevel(info, &sl))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return ops->llsec->del_seclevel(dev, &sl);
 }
@@ -1309,7 +1309,7 @@ ieee802154_nl_fill_seclevel(struct sk_buff *msg, u32 portid, u32 seq,
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
 out:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int llsec_iter_seclevels(struct llsec_dump_data *data)
@@ -1324,7 +1324,7 @@ static int llsec_iter_seclevels(struct llsec_dump_data *data)
 		if (ieee802154_nl_fill_seclevel(data->skb, data->portid,
 						data->nlmsg_seq, pos,
 						data->dev)) {
-			rc = -EMSGSIZE;
+			rc = -ERR(EMSGSIZE);
 			break;
 		}
 

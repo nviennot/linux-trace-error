@@ -25,13 +25,13 @@ isofs_export_iget(struct super_block *sb,
 	struct inode *inode;
 
 	if (block == 0)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	inode = isofs_iget(sb, block, offset);
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 	if (generation && inode->i_generation != generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return d_obtain_alias(inode);
 }
@@ -55,7 +55,7 @@ static struct dentry *isofs_export_get_parent(struct dentry *child)
 	if (!S_ISDIR(child_inode->i_mode)) {
 		printk(KERN_ERR "isofs: isofs_export_get_parent(): "
 		       "child is not a directory!\n");
-		rv = ERR_PTR(-EACCES);
+		rv = ERR_PTR(-ERR(EACCES));
 		goto out;
 	}
 
@@ -65,7 +65,7 @@ static struct dentry *isofs_export_get_parent(struct dentry *child)
 	if (e_child_inode->i_iget5_offset != 0) {
 		printk(KERN_ERR "isofs: isofs_export_get_parent(): "
 		       "child directory not normalized!\n");
-		rv = ERR_PTR(-EACCES);
+		rv = ERR_PTR(-ERR(EACCES));
 		goto out;
 	}
 
@@ -77,7 +77,7 @@ static struct dentry *isofs_export_get_parent(struct dentry *child)
 	/* Get the block in question. */
 	bh = sb_bread(child_inode->i_sb, parent_block);
 	if (bh == NULL) {
-		rv = ERR_PTR(-EACCES);
+		rv = ERR_PTR(-ERR(EACCES));
 		goto out;
 	}
 
@@ -92,7 +92,7 @@ static struct dentry *isofs_export_get_parent(struct dentry *child)
 	if ((isonum_711(de->name_len) != 1) || (de->name[0] != 1)) {
 		printk(KERN_ERR "isofs: Unable to find the \"..\" "
 		       "directory for NFS.\n");
-		rv = ERR_PTR(-EACCES);
+		rv = ERR_PTR(-ERR(EACCES));
 		goto out;
 	}
 

@@ -30,7 +30,7 @@ struct irq_domain *partition_get_domain(struct partition_desc *dsc);
 static inline int partition_translate_id(struct partition_desc *desc,
 					 void *partition_id)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline

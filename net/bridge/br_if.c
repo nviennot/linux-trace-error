@@ -176,15 +176,15 @@ int nbp_backup_change(struct net_bridge_port *p,
 
 	if (backup_dev) {
 		if (!netif_is_bridge_port(backup_dev))
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		backup_p = br_port_get_rtnl(backup_dev);
 		if (backup_p->br != p->br)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (p == backup_p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (old_backup == backup_p)
 		return 0;
@@ -403,7 +403,7 @@ static int find_portno(struct net_bridge *br)
 	index = find_first_zero_bit(inuse, BR_MAX_PORTS);
 	bitmap_free(inuse);
 
-	return (index >= BR_MAX_PORTS) ? -EXFULL : index;
+	return (index >= BR_MAX_PORTS) ? -ERR(EXFULL) : index;
 }
 
 /* called with RTNL but without bridge lock */
@@ -469,16 +469,16 @@ int br_del_bridge(struct net *net, const char *name)
 	rtnl_lock();
 	dev = __dev_get_by_name(net, name);
 	if (dev == NULL)
-		ret =  -ENXIO; 	/* Could not find device */
+		ret =  -ERR(ENXIO); 	/* Could not find device */
 
 	else if (!(dev->priv_flags & IFF_EBRIDGE)) {
 		/* Attempt to delete non bridge device! */
-		ret = -EPERM;
+		ret = -ERR(EPERM);
 	}
 
 	else if (dev->flags & IFF_UP) {
 		/* Not shutdown yet. */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	}
 
 	else
@@ -567,7 +567,7 @@ int br_add_if(struct net_bridge *br, struct net_device *dev,
 	if ((dev->flags & IFF_LOOPBACK) ||
 	    dev->type != ARPHRD_ETHER || dev->addr_len != ETH_ALEN ||
 	    !is_valid_ether_addr(dev->dev_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Also don't allow bridging of net devices that are DSA masters, since
 	 * the bridge layer rx_handler prevents the DSA fake ethertype handler
@@ -584,7 +584,7 @@ int br_add_if(struct net_bridge *br, struct net_device *dev,
 			if (!netdev_port_same_parent_id(dev, p->dev)) {
 				NL_SET_ERR_MSG(extack,
 					       "Cannot do software bridging with a DSA master");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -593,18 +593,18 @@ int br_add_if(struct net_bridge *br, struct net_device *dev,
 	if (dev->netdev_ops->ndo_start_xmit == br_dev_xmit) {
 		NL_SET_ERR_MSG(extack,
 			       "Can not enslave a bridge to a bridge");
-		return -ELOOP;
+		return -ERR(ELOOP);
 	}
 
 	/* Device has master upper dev */
 	if (netdev_master_upper_dev_get(dev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* No bridging devices that dislike that (e.g. wireless) */
 	if (dev->priv_flags & IFF_DONT_BRIDGE) {
 		NL_SET_ERR_MSG(extack,
 			       "Device does not allow enslaving to a bridge");
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	p = new_nbp(br, dev);
@@ -728,7 +728,7 @@ int br_del_if(struct net_bridge *br, struct net_device *dev)
 
 	p = br_port_get_rtnl(dev);
 	if (!p || p->br != br)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Since more than one interface can be attached to a bridge,
 	 * there still maybe an alternate path for netconsole to use;

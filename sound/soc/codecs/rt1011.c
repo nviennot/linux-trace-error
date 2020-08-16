@@ -1136,7 +1136,7 @@ static int rt1011_bq_drc_coeff_get(struct snd_kcontrol *kcontrol,
 	else if (strstr(ucontrol->id.name, "AdvanceMode SmartBoost Coeff"))
 		mode_idx = RT1011_ADVMODE_SMARTBOOST_COEFF;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pr_info("%s, id.name=%s, mode_idx=%d\n", __func__,
 		ucontrol->id.name, mode_idx);
@@ -1173,7 +1173,7 @@ static int rt1011_bq_drc_coeff_put(struct snd_kcontrol *kcontrol,
 	else if (strstr(ucontrol->id.name, "AdvanceMode SmartBoost Coeff"))
 		mode_idx = RT1011_ADVMODE_SMARTBOOST_COEFF;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bq_drc_info = rt1011->bq_drc_params[mode_idx];
 	memset(bq_drc_info, 0,
@@ -1243,7 +1243,7 @@ static int rt1011_r0_cali_put(struct snd_kcontrol *kcontrol,
 static int rt1011_r0_load(struct rt1011_priv *rt1011)
 {
 	if (!rt1011->r0_reg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* write R0 to register */
 	regmap_write(rt1011->regmap, RT1011_INIT_RECIPROCAL_REG_24_16,
@@ -1278,7 +1278,7 @@ static int rt1011_r0_load_mode_put(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (ucontrol->value.integer.value[0] == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = regmap_get_device(rt1011->regmap);
 	if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
@@ -1513,14 +1513,14 @@ static int rt1011_get_clk_info(int sclk, int rate)
 	static const int pd[] = {1, 2, 3, 4, 6, 8, 12, 16};
 
 	if (sclk <= 0 || rate <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rate = rate << 8;
 	for (i = 0; i < ARRAY_SIZE(pd); i++)
 		if (sclk == rate * pd[i])
 			return i;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int rt1011_hw_params(struct snd_pcm_substream *substream,
@@ -1545,7 +1545,7 @@ static int rt1011_hw_params(struct snd_pcm_substream *substream,
 	if (frame_size < 0) {
 		dev_err(component->dev, "Unsupported frame size: %d\n",
 			frame_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk_ms = frame_size > 32;
@@ -1589,7 +1589,7 @@ static int rt1011_hw_params(struct snd_pcm_substream *substream,
 		ch_len |= RT1011_I2S_CH_RX_LEN_8B;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -1606,7 +1606,7 @@ static int rt1011_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component,
@@ -1629,7 +1629,7 @@ static int rt1011_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT1011_I2S_TDM_MS_S;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_fmt_err_;
 	}
 
@@ -1640,7 +1640,7 @@ static int rt1011_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_bclk_inv |= RT1011_TDM_INV_BCLK;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_fmt_err_;
 	}
 
@@ -1657,7 +1657,7 @@ static int rt1011_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		reg_val |= RT1011_I2S_TDM_DF_PCM_B;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_fmt_err_;
 	}
 
@@ -1673,7 +1673,7 @@ static int rt1011_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 _set_fmt_err_:
@@ -1711,7 +1711,7 @@ static int rt1011_set_component_sysclk(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, RT1011_CLK_2,
 		RT1011_FS_SYS_PRE_MASK, reg_val);
@@ -1767,7 +1767,7 @@ static int rt1011_set_component_pll(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Unknown PLL Source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -1823,7 +1823,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 	case 2:
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_tdm_err_;
 	}
 
@@ -1843,7 +1843,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 	case 16:
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_tdm_err_;
 	}
 
@@ -1851,7 +1851,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 	rx_slotnum = hweight_long(rx_mask);
 	first_bit = find_next_bit((unsigned long *)&rx_mask, 32, 0);
 	if (rx_slotnum > 1 || rx_slotnum == 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_dbg(component->dev, "too many rx slots or zero slot\n");
 		goto _set_tdm_err_;
 	}
@@ -1886,7 +1886,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 			(first_bit << RT1011_TDM_I2S_TX_R_DAC1_1_SFT));
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto _set_tdm_err_;
 	}
 
@@ -1895,7 +1895,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 	first_bit = find_next_bit((unsigned long *)&tx_mask, 32, 0);
 	last_bit = find_last_bit((unsigned long *)&tx_mask, 32);
 	if (tx_slotnum > 2 || (last_bit-first_bit) > 1) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_dbg(component->dev, "too many tx slots or tx slot location error\n");
 		goto _set_tdm_err_;
 	}
@@ -1950,7 +1950,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 				RT1011_TDM_I2S_RX_ADC4_1_MASK, 0);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			dev_dbg(component->dev,
 				"tx slot location error\n");
 			goto _set_tdm_err_;
@@ -1968,7 +1968,7 @@ static int rt1011_set_tdm_slot(struct snd_soc_dai *dai,
 				RT1011_TDM_I2S_DOCK_ADCDAT_2CH | first_bit);
 			break;
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			dev_dbg(component->dev,
 				"tx slot location should be paired and start from slot0/2/4/6\n");
 			goto _set_tdm_err_;
@@ -2277,7 +2277,7 @@ static int rt1011_calibrate(struct rt1011_priv *rt1011, unsigned char cali_flag)
 		}
 		if (count > chk_cnt) {
 			dev_err(dev, "Calibrate R0 Failure\n");
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 		} else {
 			format = 2147483648U; /* 2^24 * 128 */
 			r0_integer = format / r0[0] / 128;
@@ -2417,7 +2417,7 @@ static int rt1011_i2c_probe(struct i2c_client *i2c,
 	if (val != RT1011_DEVICE_ID_NUM) {
 		dev_err(&i2c->dev,
 			"Device with ID register %x is not rt1011\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	INIT_WORK(&rt1011->cali_work, rt1011_calibration_work);

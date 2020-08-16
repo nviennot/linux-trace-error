@@ -348,7 +348,7 @@ static inline int omap_request_dma(int dev_id, const char *dev_name,
 			void (*callback)(int lch, u16 ch_status, void *data),
 			void *data, int *dma_ch)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void omap_free_dma(int ch) { }

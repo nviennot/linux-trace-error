@@ -62,7 +62,7 @@ int user_preparse(struct key_preparsed_payload *prep)
 	size_t datalen = prep->datalen;
 
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	upayload = kmalloc(sizeof(*upayload) + datalen, GFP_KERNEL);
 	if (!upayload)
@@ -197,11 +197,11 @@ static int logon_vet_description(const char *desc)
 	/* require a "qualified" description string */
 	p = strchr(desc, ':');
 	if (!p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* also reject description with ':' as first char */
 	if (p == desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

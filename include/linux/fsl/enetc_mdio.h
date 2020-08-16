@@ -43,12 +43,12 @@ struct enetc_hw *enetc_hw_alloc(struct device *dev, void __iomem *port_regs);
 #else
 
 static inline int enetc_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
-{ return -EINVAL; }
+{ return -ERR(EINVAL); }
 static inline int enetc_mdio_write(struct mii_bus *bus, int phy_id, int regnum,
 				   u16 value)
-{ return -EINVAL; }
+{ return -ERR(EINVAL); }
 struct enetc_hw *enetc_hw_alloc(struct device *dev, void __iomem *port_regs)
-{ return ERR_PTR(-EINVAL); }
+{ return ERR_PTR(-ERR(EINVAL)); }
 
 #endif
 

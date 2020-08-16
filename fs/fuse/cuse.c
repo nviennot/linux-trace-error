@@ -128,7 +128,7 @@ static int cuse_open(struct inode *inode, struct file *file)
 
 	/* dead? */
 	if (!cc)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Generic permission check is already done against the chrdev
@@ -226,7 +226,7 @@ static int cuse_parse_one(char **pp, char *end, char **keyp, char **valp)
 
 	if (end[-1] != '\0') {
 		pr_err("info not properly terminated\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	key = val = p;
@@ -243,7 +243,7 @@ static int cuse_parse_one(char **pp, char *end, char **keyp, char **valp)
 
 	if (!strlen(key)) {
 		pr_err("zero length info key specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*pp = p;
@@ -287,7 +287,7 @@ static int cuse_parse_devinfo(char *p, size_t len, struct cuse_devinfo *devinfo)
 
 	if (!devinfo->name || !strlen(devinfo->name)) {
 		pr_err("DEVNAME unspecified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

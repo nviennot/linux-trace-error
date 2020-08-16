@@ -1038,11 +1038,11 @@ static inline int ip_vs_proc_seqopt(__u8 *p, unsigned int plen,
 
 	if (plen != sizeof(struct ip_vs_sync_conn_options)) {
 		IP_VS_DBG(2, "BACKUP, bogus conn options length\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (*opt_flags & IPVS_OPT_F_SEQ_DATA) {
 		IP_VS_DBG(2, "BACKUP, conn options found twice\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ntoh_seq(&topt->in_seq, &opt->in_seq);
 	ntoh_seq(&topt->out_seq, &opt->out_seq);
@@ -1056,11 +1056,11 @@ static int ip_vs_proc_str(__u8 *p, unsigned int plen, unsigned int *data_len,
 {
 	if (plen > maxlen) {
 		IP_VS_DBG(2, "BACKUP, bogus par.data len > %d\n", maxlen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (*opt_flags & flag) {
 		IP_VS_DBG(2, "BACKUP, Par.data found twice 0x%x\n", flag);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*data_len = plen;
 	*data = p;
@@ -1364,7 +1364,7 @@ static int set_mcast_if(struct sock *sk, struct net_device *dev)
 	struct inet_sock *inet = inet_sk(sk);
 
 	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	inet->mc_index = dev->ifindex;
@@ -1398,7 +1398,7 @@ join_mcast_group(struct sock *sk, struct in_addr *addr, struct net_device *dev)
 	memcpy(&mreq.imr_multiaddr, addr, sizeof(struct in_addr));
 
 	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mreq.imr_ifindex = dev->ifindex;
 
@@ -1416,7 +1416,7 @@ static int join_mcast_group6(struct sock *sk, struct in6_addr *addr,
 	int ret;
 
 	if (sk->sk_bound_dev_if && dev->ifindex != sk->sk_bound_dev_if)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	ret = ipv6_sock_mc_join(sk, dev->ifindex, addr);
@@ -1768,7 +1768,7 @@ int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
 
 	/* increase the module use count */
 	if (!ip_vs_use_count_inc())
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	/* Do not hold one mutex and then to block on another */
 	for (;;) {
@@ -1800,7 +1800,7 @@ int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
 	dev = __dev_get_by_name(ipvs->net, c->mcast_ifn);
 	if (!dev) {
 		pr_err("Unknown mcast interface: %s\n", c->mcast_ifn);
-		result = -ENODEV;
+		result = -ERR(ENODEV);
 		goto out_early;
 	}
 	hlen = (AF_INET6 == c->mcast_af) ?
@@ -1818,7 +1818,7 @@ int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
 		c->sync_maxlen = mtu - hlen;
 
 	if (state == IP_VS_STATE_MASTER) {
-		result = -EEXIST;
+		result = -ERR(EEXIST);
 		if (ipvs->ms)
 			goto out_early;
 
@@ -1826,7 +1826,7 @@ int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
 		name = "ipvs-m:%d:%d";
 		threadfn = sync_thread_master;
 	} else if (state == IP_VS_STATE_BACKUP) {
-		result = -EEXIST;
+		result = -ERR(EEXIST);
 		if (ipvs->backup_tinfo)
 			goto out_early;
 
@@ -1834,7 +1834,7 @@ int start_sync_thread(struct netns_ipvs *ipvs, struct ipvs_sync_daemon_cfg *c,
 		name = "ipvs-b:%d:%d";
 		threadfn = sync_thread_backup;
 	} else {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_early;
 	}
 
@@ -1948,13 +1948,13 @@ int stop_sync_thread(struct netns_ipvs *ipvs, int state)
 {
 	struct ip_vs_sync_thread_data *ti, *tinfo;
 	int id;
-	int retc = -EINVAL;
+	int retc = -ERR(EINVAL);
 
 	IP_VS_DBG(7, "%s(): pid %d\n", __func__, task_pid_nr(current));
 
 	mutex_lock(&ipvs->sync_mutex);
 	if (state == IP_VS_STATE_MASTER) {
-		retc = -ESRCH;
+		retc = -ERR(ESRCH);
 		if (!ipvs->ms)
 			goto err;
 		ti = ipvs->master_tinfo;
@@ -1988,7 +1988,7 @@ int stop_sync_thread(struct netns_ipvs *ipvs, int state)
 		ipvs->ms = NULL;
 		ipvs->master_tinfo = NULL;
 	} else if (state == IP_VS_STATE_BACKUP) {
-		retc = -ESRCH;
+		retc = -ERR(ESRCH);
 		if (!ipvs->backup_tinfo)
 			goto err;
 		ti = ipvs->backup_tinfo;

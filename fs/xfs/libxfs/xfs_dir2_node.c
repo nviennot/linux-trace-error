@@ -529,7 +529,7 @@ xfs_dir2_leafn_add(
 
 	if (leafhdr.count == args->geo->leaf_max_ents) {
 		if (!leafhdr.stale)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		compact = leafhdr.stale > 1;
 	} else
 		compact = 0;
@@ -767,7 +767,7 @@ out:
 	 * Return the index, that will be the insertion point.
 	 */
 	*indexp = index;
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*
@@ -897,7 +897,7 @@ xfs_dir2_leafn_lookup_for_entry(
 			curbp->b_ops = &xfs_dir3_data_buf_ops;
 			xfs_trans_buf_set_type(tp, curbp, XFS_BLFT_DIR_DATA_BUF);
 			if (cmp == XFS_CMP_EXACT)
-				return -EEXIST;
+				return -ERR(EEXIST);
 		}
 	}
 	ASSERT(index == leafhdr.count || (args->op_flags & XFS_DA_OP_OKNOENT));
@@ -920,7 +920,7 @@ xfs_dir2_leafn_lookup_for_entry(
 		state->extravalid = 0;
 	}
 	*indexp = index;
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /*
@@ -1694,7 +1694,7 @@ xfs_dir2_node_add_datablk(
 
 	/* Not allowed to allocate, return failure. */
 	if (args->total == 0)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* Allocate and initialize the new data block.  */
 	error = xfs_dir2_grow_inode(args, XFS_DIR2_DATA_SPACE, dbno);
@@ -1926,7 +1926,7 @@ xfs_dir2_node_addname_int(
 	 */
 	if (args->op_flags & XFS_DA_OP_JUSTCHECK) {
 		if (dbno == -1)
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 		return 0;
 	}
 

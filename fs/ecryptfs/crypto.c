@@ -298,7 +298,7 @@ static int crypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 
 	if (!crypt_stat || !crypt_stat->tfm
 	       || !(crypt_stat->flags & ECRYPTFS_STRUCT_INITIALIZED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(ecryptfs_verbosity > 0)) {
 		ecryptfs_printk(KERN_DEBUG, "Key size [%zd]; key:\n",
@@ -329,7 +329,7 @@ static int crypt_scatterlist(struct ecryptfs_crypt_stat *crypt_stat,
 					"Error setting key; rc = [%d]\n",
 					rc);
 			mutex_unlock(&crypt_stat->cs_tfm_mutex);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 		crypt_stat->flags |= ECRYPTFS_KEY_SET;
@@ -558,7 +558,7 @@ out:
 int ecryptfs_init_crypt_ctx(struct ecryptfs_crypt_stat *crypt_stat)
 {
 	char *full_alg_name;
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	ecryptfs_printk(KERN_DEBUG,
 			"Initializing cipher [%s]; strlen = [%d]; "
@@ -641,7 +641,7 @@ int ecryptfs_compute_root_iv(struct ecryptfs_crypt_stat *crypt_stat)
 	BUG_ON(crypt_stat->iv_bytes > MD5_DIGEST_SIZE);
 	BUG_ON(crypt_stat->iv_bytes <= 0);
 	if (!(crypt_stat->flags & ECRYPTFS_KEY_VALID)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		ecryptfs_printk(KERN_WARNING, "Session key not valid; "
 				"cannot generate root IV\n");
 		goto out;
@@ -827,7 +827,7 @@ static int ecryptfs_validate_marker(char *data)
 			MAGIC_ECRYPTFS_MARKER);
 	ecryptfs_printk(KERN_DEBUG, "(m_1 ^ MAGIC_ECRYPTFS_MARKER) = "
 			"[0x%.8x]\n", (m_1 ^ MAGIC_ECRYPTFS_MARKER));
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct ecryptfs_flag_map_elem {
@@ -975,7 +975,7 @@ int ecryptfs_cipher_code_to_string(char *str, u8 cipher_code)
 	if (str[0] == '\0') {
 		ecryptfs_printk(KERN_WARNING, "Cipher code not recognized: "
 				"[%d]\n", cipher_code);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 	}
 	return rc;
 }
@@ -991,7 +991,7 @@ int ecryptfs_read_and_validate_header_region(struct inode *inode)
 	if (rc < 0)
 		return rc;
 	else if (rc < ECRYPTFS_SIZE_AND_MARKER_BYTES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rc = ecryptfs_validate_marker(marker);
 	if (!rc)
 		ecryptfs_i_size_init(file_size, inode);
@@ -1105,7 +1105,7 @@ ecryptfs_write_metadata_to_xattr(struct dentry *ecryptfs_dentry,
 	struct inode *lower_inode = d_inode(lower_dentry);
 
 	if (!(lower_inode->i_opflags & IOP_XATTR)) {
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -1157,13 +1157,13 @@ int ecryptfs_write_metadata(struct dentry *ecryptfs_dentry,
 	if (likely(crypt_stat->flags & ECRYPTFS_ENCRYPTED)) {
 		if (!(crypt_stat->flags & ECRYPTFS_KEY_VALID)) {
 			printk(KERN_ERR "Key is invalid; bailing out\n");
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
 		printk(KERN_WARNING "%s: Encrypted flag not set\n",
 		       __func__);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	virt_len = crypt_stat->metadata_size;
@@ -1219,7 +1219,7 @@ static int parse_header_metadata(struct ecryptfs_crypt_stat *crypt_stat,
 	if ((validate_header_size == ECRYPTFS_VALIDATE_HEADER_SIZE)
 	    && (crypt_stat->metadata_size
 		< ECRYPTFS_MINIMUM_HEADER_EXTENT_SIZE)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_WARNING "Invalid header size: [%zd]\n",
 		       crypt_stat->metadata_size);
 	}
@@ -1296,7 +1296,7 @@ static int ecryptfs_read_headers_virt(char *page_virt,
 				"version of eCryptfs\n",
 				crypt_stat->file_version,
 				ECRYPTFS_SUPPORTED_FILE_VERSION);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	offset += bytes_read;
@@ -1342,7 +1342,7 @@ int ecryptfs_read_xattr_region(char *page_virt, struct inode *ecryptfs_inode)
 			printk(KERN_INFO "Error attempting to read the [%s] "
 			       "xattr from the lower file; return value = "
 			       "[%zd]\n", ECRYPTFS_XATTR_NAME, size);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 out:
@@ -1363,7 +1363,7 @@ int ecryptfs_read_and_validate_xattr_region(struct dentry *dentry,
 	if (rc < 0)
 		return rc;
 	else if (rc < ECRYPTFS_SIZE_AND_MARKER_BYTES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rc = ecryptfs_validate_marker(marker);
 	if (!rc)
 		ecryptfs_i_size_init(file_size, inode);
@@ -1415,7 +1415,7 @@ int ecryptfs_read_metadata(struct dentry *ecryptfs_dentry)
 			printk(KERN_DEBUG "Valid eCryptfs headers not found in "
 			       "file header region or xattr region, inode %lu\n",
 				ecryptfs_inode->i_ino);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 		rc = ecryptfs_read_headers_virt(page_virt, crypt_stat,
@@ -1425,7 +1425,7 @@ int ecryptfs_read_metadata(struct dentry *ecryptfs_dentry)
 			printk(KERN_DEBUG "Valid eCryptfs headers not found in "
 			       "file xattr region either, inode %lu\n",
 				ecryptfs_inode->i_ino);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		}
 		if (crypt_stat->mount_crypt_stat->flags
 		    & ECRYPTFS_XATTR_METADATA_ENABLED) {
@@ -1437,7 +1437,7 @@ int ecryptfs_read_metadata(struct dentry *ecryptfs_dentry)
 			       "xattr support enabled. eCryptfs will not treat "
 			       "this like an encrypted file, inode %lu\n",
 				ecryptfs_inode->i_ino);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		}
 	}
 out:
@@ -1508,7 +1508,7 @@ ecryptfs_encrypt_filename(struct ecryptfs_filename *filename,
 	} else {
 		printk(KERN_ERR "%s: No support for requested filename "
 		       "encryption method in this release\n", __func__);
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 out:
@@ -1555,7 +1555,7 @@ ecryptfs_process_key_cipher(struct crypto_skcipher **key_tfm,
 
 	*key_tfm = NULL;
 	if (*key_size > ECRYPTFS_MAX_KEY_BYTES) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		printk(KERN_ERR "Requested key size is [%zd] bytes; maximum "
 		      "allowable is [%d]\n", *key_size, ECRYPTFS_MAX_KEY_BYTES);
 		goto out;
@@ -1580,7 +1580,7 @@ ecryptfs_process_key_cipher(struct crypto_skcipher **key_tfm,
 		printk(KERN_ERR "Error attempting to set key of size [%zd] for "
 		       "cipher [%s]; rc = [%d]\n", *key_size, full_alg_name,
 		       rc);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 out:
@@ -1957,7 +1957,7 @@ int ecryptfs_encrypt_and_encode_filename(
 				 + encoded_name_no_prefix_size);
 			(*encoded_name)[(*encoded_name_size)] = '\0';
 		} else {
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 		}
 		if (rc) {
 			printk(KERN_ERR "%s: Error attempting to encode "
@@ -2024,7 +2024,7 @@ int ecryptfs_decode_and_decrypt_filename(char **plaintext_name,
 		if (name_size <= ECRYPTFS_FNEK_ENCRYPTED_FILENAME_PREFIX_SIZE ||
 		    strncmp(name, ECRYPTFS_FNEK_ENCRYPTED_FILENAME_PREFIX,
 			    ECRYPTFS_FNEK_ENCRYPTED_FILENAME_PREFIX_SIZE)) {
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out;
 		}
 

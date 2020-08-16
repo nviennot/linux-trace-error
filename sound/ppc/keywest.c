@@ -43,10 +43,10 @@ static int keywest_attach_adapter(struct i2c_adapter *adapter)
 	struct i2c_client *client;
 
 	if (! keywest_ctx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strncmp(adapter->name, "mac-io", 6))
-		return -EINVAL; /* ignored */
+		return -ERR(EINVAL); /* ignored */
 
 	memset(&info, 0, sizeof(struct i2c_board_info));
 	strlcpy(info.type, "keywest", I2C_NAME_SIZE);
@@ -64,7 +64,7 @@ static int keywest_attach_adapter(struct i2c_adapter *adapter)
 	if (!keywest_ctx->client->dev.driver) {
 		i2c_unregister_device(keywest_ctx->client);
 		keywest_ctx->client = NULL;
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	
 	/*
@@ -117,7 +117,7 @@ int snd_pmac_tumbler_post_init(void)
 	int err;
 	
 	if (!keywest_ctx || !keywest_ctx->client)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if ((err = keywest_ctx->init_client(keywest_ctx)) < 0) {
 		snd_printk(KERN_ERR "tumbler: %i :cannot initialize the MCS\n", err);
@@ -133,7 +133,7 @@ int snd_pmac_keywest_init(struct pmac_keywest *i2c)
 	int err, i = 0;
 
 	if (keywest_ctx)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	adap = i2c_get_adapter(0);
 	if (!adap)
@@ -161,5 +161,5 @@ int snd_pmac_keywest_init(struct pmac_keywest *i2c)
 		adap = i2c_get_adapter(++i);
 	}
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }

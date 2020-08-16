@@ -39,7 +39,7 @@ static struct vfio_group *kvm_vfio_group_get_external_user(struct file *filep)
 
 	fn = symbol_get(vfio_group_get_external_user);
 	if (!fn)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	vfio_group = fn(filep);
 
@@ -110,7 +110,7 @@ static bool kvm_vfio_group_is_coherent(struct vfio_group *vfio_group)
 static int kvm_vfio_external_user_iommu_id(struct vfio_group *vfio_group)
 {
 	int (*fn)(struct vfio_group *);
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	fn = symbol_get(vfio_external_user_iommu_id);
 	if (!fn)
@@ -198,7 +198,7 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 
 		f = fdget(fd);
 		if (!f.file)
-			return -EBADF;
+			return -ERR(EBADF);
 
 		vfio_group = kvm_vfio_group_get_external_user(f.file);
 		fdput(f);
@@ -212,7 +212,7 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 			if (kvg->vfio_group == vfio_group) {
 				mutex_unlock(&kv->lock);
 				kvm_vfio_group_put_external_user(vfio_group);
-				return -EEXIST;
+				return -ERR(EEXIST);
 			}
 		}
 
@@ -242,9 +242,9 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 
 		f = fdget(fd);
 		if (!f.file)
-			return -EBADF;
+			return -ERR(EBADF);
 
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 
 		mutex_lock(&kv->lock);
 
@@ -289,7 +289,7 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 
 		f = fdget(param.groupfd);
 		if (!f.file)
-			return -EBADF;
+			return -ERR(EBADF);
 
 		vfio_group = kvm_vfio_group_get_external_user(f.file);
 		fdput(f);
@@ -300,10 +300,10 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 		grp = kvm_vfio_group_get_iommu_group(vfio_group);
 		if (WARN_ON_ONCE(!grp)) {
 			kvm_vfio_group_put_external_user(vfio_group);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 
 		mutex_lock(&kv->lock);
 
@@ -326,7 +326,7 @@ static int kvm_vfio_set_group(struct kvm_device *dev, long attr, u64 arg)
 #endif /* CONFIG_SPAPR_TCE_IOMMU */
 	}
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static int kvm_vfio_set_attr(struct kvm_device *dev,
@@ -337,7 +337,7 @@ static int kvm_vfio_set_attr(struct kvm_device *dev,
 		return kvm_vfio_set_group(dev, attr->attr, attr->addr);
 	}
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static int kvm_vfio_has_attr(struct kvm_device *dev,
@@ -357,7 +357,7 @@ static int kvm_vfio_has_attr(struct kvm_device *dev,
 		break;
 	}
 
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 static void kvm_vfio_destroy(struct kvm_device *dev)
@@ -400,7 +400,7 @@ static int kvm_vfio_create(struct kvm_device *dev, u32 type)
 	/* Only one VFIO "device" per VM */
 	list_for_each_entry(tmp, &dev->kvm->devices, vm_node)
 		if (tmp->ops == &kvm_vfio_ops)
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 	kv = kzalloc(sizeof(*kv), GFP_KERNEL_ACCOUNT);
 	if (!kv)

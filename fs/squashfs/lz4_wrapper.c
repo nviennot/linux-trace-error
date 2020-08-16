@@ -36,13 +36,13 @@ static void *lz4_comp_opts(struct squashfs_sb_info *msblk,
 
 	/* LZ4 compressed filesystems always have compression options */
 	if (comp_opts == NULL || len < sizeof(*comp_opts))
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 
 	if (le32_to_cpu(comp_opts->version) != LZ4_LEGACY) {
 		/* LZ4 format currently used by the kernel is the 'legacy'
 		 * format */
 		ERROR("Unknown LZ4 version\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return NULL;
@@ -112,7 +112,7 @@ static int lz4_uncompress(struct squashfs_sb_info *msblk, void *strm,
 		length, output->length);
 
 	if (res < 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	bytes = res;
 	data = squashfs_first_page(output);

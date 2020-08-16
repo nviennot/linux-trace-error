@@ -190,7 +190,7 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 	struct device_node *codec_np = NULL;
 	struct mpc8610_hpcd_data *machine_data;
 	struct snd_soc_dai_link_component *comp;
-	int ret = -ENODEV;
+	int ret = -ERR(ENODEV);
 	const char *sprop;
 	const u32 *iprop;
 
@@ -198,7 +198,7 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 	codec_np = of_parse_phandle(np, "codec-handle", 0);
 	if (!codec_np) {
 		dev_err(dev, "invalid codec node\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	machine_data = kzalloc(sizeof(struct mpc8610_hpcd_data), GFP_KERNEL);
@@ -249,7 +249,7 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 	iprop = of_get_property(np, "cell-index", NULL);
 	if (!iprop) {
 		dev_err(&pdev->dev, "cell-index property not found\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 	machine_data->ssi_id = be32_to_cpup(iprop);
@@ -258,7 +258,7 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 	sprop = of_get_property(np, "fsl,mode", NULL);
 	if (!sprop) {
 		dev_err(&pdev->dev, "fsl,mode property not found\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -276,7 +276,7 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 		if (!iprop || !*iprop) {
 			dev_err(&pdev->dev, "codec bus-frequency "
 				"property is missing or invalid\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 		machine_data->clk_frequency = be32_to_cpup(iprop);
@@ -318,13 +318,13 @@ static int mpc8610_hpcd_probe(struct platform_device *pdev)
 	} else {
 		dev_err(&pdev->dev,
 			"unrecognized fsl,mode property '%s'\n", sprop);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
 	if (!machine_data->clk_frequency) {
 		dev_err(&pdev->dev, "unknown clock frequency\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -426,7 +426,7 @@ static int __init mpc8610_hpcd_init(void)
 	guts_np = of_find_compatible_node(NULL, NULL, "fsl,mpc8610-guts");
 	if (of_address_to_resource(guts_np, 0, &res)) {
 		pr_err("mpc8610-hpcd: missing/invalid global utilities node\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	guts_phys = res.start;
 

@@ -173,13 +173,13 @@ static inline int integrity_digsig_verify(const unsigned int id,
 					  const char *sig, int siglen,
 					  const char *digest, int digestlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int integrity_modsig_verify(unsigned int id,
 					  const struct modsig *modsig)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int integrity_init_keyring(const unsigned int id)
@@ -203,7 +203,7 @@ int asymmetric_verify(struct key *keyring, const char *sig,
 static inline int asymmetric_verify(struct key *keyring, const char *sig,
 				    int siglen, const char *data, int datalen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -213,7 +213,7 @@ int ima_modsig_verify(struct key *keyring, const struct modsig *modsig);
 static inline int ima_modsig_verify(struct key *keyring,
 				    const struct modsig *modsig)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 

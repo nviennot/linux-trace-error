@@ -85,7 +85,7 @@ static int profile_setrlimit(struct aa_profile *profile, unsigned int resource,
 
 	if (profile->rlimits.mask & (1 << resource) && new_rlim->rlim_max >
 	    profile->rlimits.limits[resource].rlim_max)
-		e = -EACCES;
+		e = -ERR(EACCES);
 	return audit_resource(profile, resource, new_rlim->rlim_max, NULL, NULL,
 			      e);
 }
@@ -124,7 +124,7 @@ int aa_task_setrlimit(struct aa_label *label, struct task_struct *task,
 		error = fn_for_each(label, profile,
 				audit_resource(profile, resource,
 					       new_rlim->rlim_max, peer,
-					       "cap_sys_resource", -EACCES));
+					       "cap_sys_resource", -ERR(EACCES)));
 	else
 		error = fn_for_each_confined(label, profile,
 				profile_setrlimit(profile, resource, new_rlim));

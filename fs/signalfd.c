@@ -175,7 +175,7 @@ static ssize_t signalfd_dequeue(struct signalfd_ctx *ctx, kernel_siginfo_t *info
 	case 0:
 		if (!nonblock)
 			break;
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		/* fall through */
 	default:
 		spin_unlock_irq(&current->sighand->siglock);
@@ -189,7 +189,7 @@ static ssize_t signalfd_dequeue(struct signalfd_ctx *ctx, kernel_siginfo_t *info
 		if (ret != 0)
 			break;
 		if (signal_pending(current)) {
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			break;
 		}
 		spin_unlock_irq(&current->sighand->siglock);
@@ -220,7 +220,7 @@ static ssize_t signalfd_read(struct file *file, char __user *buf, size_t count,
 
 	count /= sizeof(struct signalfd_siginfo);
 	if (!count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	siginfo = (struct signalfd_siginfo __user *) buf;
 	do {
@@ -269,7 +269,7 @@ static int do_signalfd4(int ufd, sigset_t *mask, int flags)
 	BUILD_BUG_ON(SFD_NONBLOCK != O_NONBLOCK);
 
 	if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sigdelsetmask(mask, sigmask(SIGKILL) | sigmask(SIGSTOP));
 	signotset(mask);
@@ -292,11 +292,11 @@ static int do_signalfd4(int ufd, sigset_t *mask, int flags)
 	} else {
 		struct fd f = fdget(ufd);
 		if (!f.file)
-			return -EBADF;
+			return -ERR(EBADF);
 		ctx = f.file->private_data;
 		if (f.file->f_op != &signalfd_fops) {
 			fdput(f);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		spin_lock_irq(&current->sighand->siglock);
 		ctx->sigmask = *mask;
@@ -316,7 +316,7 @@ SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
 
 	if (sizemask != sizeof(sigset_t) ||
 	    copy_from_user(&mask, user_mask, sizeof(mask)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return do_signalfd4(ufd, &mask, flags);
 }
 
@@ -327,7 +327,7 @@ SYSCALL_DEFINE3(signalfd, int, ufd, sigset_t __user *, user_mask,
 
 	if (sizemask != sizeof(sigset_t) ||
 	    copy_from_user(&mask, user_mask, sizeof(mask)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return do_signalfd4(ufd, &mask, 0);
 }
 
@@ -339,7 +339,7 @@ static long do_compat_signalfd4(int ufd,
 	sigset_t mask;
 
 	if (sigsetsize != sizeof(compat_sigset_t))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (get_compat_sigset(&mask, user_mask))
 		return -EFAULT;
 	return do_signalfd4(ufd, &mask, flags);

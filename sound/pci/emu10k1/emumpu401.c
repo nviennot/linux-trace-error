@@ -146,7 +146,7 @@ static int snd_emu10k1_midi_input_open(struct snd_rawmidi_substream *substream)
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1_MIDI_MODE_INPUT;
 	midi->substream_input = substream;
@@ -162,7 +162,7 @@ static int snd_emu10k1_midi_input_open(struct snd_rawmidi_substream *substream)
 	return 0;
 
 error_out:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_emu10k1_midi_output_open(struct snd_rawmidi_substream *substream)
@@ -173,7 +173,7 @@ static int snd_emu10k1_midi_output_open(struct snd_rawmidi_substream *substream)
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	midi->midi_mode |= EMU10K1_MIDI_MODE_OUTPUT;
 	midi->substream_output = substream;
@@ -189,7 +189,7 @@ static int snd_emu10k1_midi_output_open(struct snd_rawmidi_substream *substream)
 	return 0;
 
 error_out:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_emu10k1_midi_input_close(struct snd_rawmidi_substream *substream)
@@ -201,7 +201,7 @@ static int snd_emu10k1_midi_input_close(struct snd_rawmidi_substream *substream)
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1_intr_disable(emu, midi->rx_enable);
 	midi->midi_mode &= ~EMU10K1_MIDI_MODE_INPUT;
@@ -224,7 +224,7 @@ static int snd_emu10k1_midi_output_close(struct snd_rawmidi_substream *substream
 
 	emu = midi->emu;
 	if (snd_BUG_ON(!emu))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	spin_lock_irqsave(&midi->open_lock, flags);
 	snd_emu10k1_intr_disable(emu, midi->tx_enable);
 	midi->midi_mode &= ~EMU10K1_MIDI_MODE_OUTPUT;

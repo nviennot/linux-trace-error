@@ -299,7 +299,7 @@ int selinux_netlbl_sctp_assoc_request(struct sctp_endpoint *ep,
 		addr6.sin6_addr = ipv6_hdr(skb)->saddr;
 		rc = netlbl_conn_setattr(ep->base.sk, (void *)&addr6, &secattr);
 	} else {
-		rc = -EAFNOSUPPORT;
+		rc = -ERR(EAFNOSUPPORT);
 	}
 
 	if (rc == 0)
@@ -518,7 +518,7 @@ int selinux_netlbl_socket_setsockopt(struct socket *sock,
 		rc = netlbl_sock_getattr(sk, &secattr);
 		release_sock(sk);
 		if (rc == 0)
-			rc = -EACCES;
+			rc = -ERR(EACCES);
 		else if (rc == -ENOMSG)
 			rc = 0;
 		netlbl_secattr_destroy(&secattr);

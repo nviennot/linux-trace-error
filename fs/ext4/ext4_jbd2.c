@@ -68,10 +68,10 @@ static int ext4_journal_check_start(struct super_block *sb)
 	might_sleep();
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (sb_rdonly(sb))
-		return -EROFS;
+		return -ERR(EROFS);
 	WARN_ON(sb->s_writers.frozen == SB_FREEZE_COMPLETE);
 	journal = EXT4_SB(sb)->s_journal;
 	/*
@@ -81,7 +81,7 @@ static int ext4_journal_check_start(struct super_block *sb)
 	 */
 	if (journal && is_journal_aborted(journal)) {
 		ext4_abort(sb, -journal->j_errno, "Detected aborted journal");
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 	return 0;
 }
@@ -341,7 +341,7 @@ int __ext4_handle_dirty_metadata(const char *where, unsigned int line,
 				ext4_error_inode_err(inode, where, line,
 						     bh->b_blocknr, EIO,
 					"IO error syncing itable block");
-				err = -EIO;
+				err = -ERR(EIO);
 			}
 		}
 	}

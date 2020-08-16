@@ -73,7 +73,7 @@ int lwtunnel_encap_add_ops(const struct lwtunnel_encap_ops *ops,
 			   unsigned int num)
 {
 	if (num > LWTUNNEL_ENCAP_MAX)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return !cmpxchg((const struct lwtunnel_encap_ops **)
 			&lwtun_encaps[num],
@@ -88,7 +88,7 @@ int lwtunnel_encap_del_ops(const struct lwtunnel_encap_ops *ops,
 
 	if (encap_type == LWTUNNEL_ENCAP_NONE ||
 	    encap_type > LWTUNNEL_ENCAP_MAX)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ret = (cmpxchg((const struct lwtunnel_encap_ops **)
 		       &lwtun_encaps[encap_type],
@@ -107,7 +107,7 @@ int lwtunnel_build_state(struct net *net, u16 encap_type,
 {
 	const struct lwtunnel_encap_ops *ops;
 	bool found = false;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (encap_type == LWTUNNEL_ENCAP_NONE ||
 	    encap_type > LWTUNNEL_ENCAP_MAX) {
@@ -116,7 +116,7 @@ int lwtunnel_build_state(struct net *net, u16 encap_type,
 		return ret;
 	}
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[encap_type]);
 	if (likely(ops && ops->build_state && try_module_get(ops->owner)))
@@ -142,7 +142,7 @@ EXPORT_SYMBOL_GPL(lwtunnel_build_state);
 int lwtunnel_valid_encap_type(u16 encap_type, struct netlink_ext_ack *extack)
 {
 	const struct lwtunnel_encap_ops *ops;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (encap_type == LWTUNNEL_ENCAP_NONE ||
 	    encap_type > LWTUNNEL_ENCAP_MAX) {
@@ -168,7 +168,7 @@ int lwtunnel_valid_encap_type(u16 encap_type, struct netlink_ext_ack *extack)
 		}
 	}
 #endif
-	ret = ops ? 0 : -EOPNOTSUPP;
+	ret = ops ? 0 : -ERR(EOPNOTSUPP);
 	if (ret < 0)
 		NL_SET_ERR_MSG(extack, "lwt encapsulation type not supported");
 
@@ -196,7 +196,7 @@ int lwtunnel_valid_encap_type_attr(struct nlattr *attr, int remaining,
 
 				if (lwtunnel_valid_encap_type(encap_type,
 							      extack) != 0)
-					return -EOPNOTSUPP;
+					return -ERR(EOPNOTSUPP);
 			}
 		}
 		rtnh = rtnh_next(rtnh, &remaining);
@@ -236,9 +236,9 @@ int lwtunnel_fill_encap(struct sk_buff *skb, struct lwtunnel_state *lwtstate,
 
 	nest = nla_nest_start_noflag(skb, encap_attr);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
 	if (likely(ops && ops->fill_encap))
@@ -257,7 +257,7 @@ int lwtunnel_fill_encap(struct sk_buff *skb, struct lwtunnel_state *lwtstate,
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
 
-	return (ret == -EOPNOTSUPP ? 0 : ret);
+	return (ret == -ERR(EOPNOTSUPP) ? 0 : ret);
 }
 EXPORT_SYMBOL_GPL(lwtunnel_fill_encap);
 
@@ -316,7 +316,7 @@ int lwtunnel_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	struct dst_entry *dst = skb_dst(skb);
 	const struct lwtunnel_encap_ops *ops;
 	struct lwtunnel_state *lwtstate;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!dst)
 		goto drop;
@@ -326,7 +326,7 @@ int lwtunnel_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
 		return 0;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
 	if (likely(ops && ops->output))
@@ -350,7 +350,7 @@ int lwtunnel_xmit(struct sk_buff *skb)
 	struct dst_entry *dst = skb_dst(skb);
 	const struct lwtunnel_encap_ops *ops;
 	struct lwtunnel_state *lwtstate;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!dst)
 		goto drop;
@@ -361,7 +361,7 @@ int lwtunnel_xmit(struct sk_buff *skb)
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
 		return 0;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
 	if (likely(ops && ops->xmit))
@@ -385,7 +385,7 @@ int lwtunnel_input(struct sk_buff *skb)
 	struct dst_entry *dst = skb_dst(skb);
 	const struct lwtunnel_encap_ops *ops;
 	struct lwtunnel_state *lwtstate;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!dst)
 		goto drop;
@@ -395,7 +395,7 @@ int lwtunnel_input(struct sk_buff *skb)
 	    lwtstate->type > LWTUNNEL_ENCAP_MAX)
 		return 0;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	rcu_read_lock();
 	ops = rcu_dereference(lwtun_encaps[lwtstate->type]);
 	if (likely(ops && ops->input))

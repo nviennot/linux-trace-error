@@ -46,7 +46,7 @@ int jffs2_read_dnode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 		jffs2_free_raw_inode(ri);
 		pr_warn("Short read from 0x%08x: wanted 0x%zx bytes, got 0x%zx\n",
 			ref_offset(fd->raw), sizeof(*ri), readlen);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	crc = crc32(0, ri, sizeof(*ri)-8);
 
@@ -57,7 +57,7 @@ int jffs2_read_dnode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 	if (crc != je32_to_cpu(ri->node_crc)) {
 		pr_warn("Node CRC %08x != calculated CRC %08x for node at %08x\n",
 			je32_to_cpu(ri->node_crc), crc, ref_offset(fd->raw));
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_ri;
 	}
 	/* There was a bug where we wrote hole nodes out with csize/dsize
@@ -116,7 +116,7 @@ int jffs2_read_dnode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 			       je32_to_cpu(ri->csize), &readlen, readbuf);
 
 	if (!ret && readlen != je32_to_cpu(ri->csize))
-		ret = -EIO;
+		ret = -ERR(EIO);
 	if (ret)
 		goto out_decomprbuf;
 
@@ -124,7 +124,7 @@ int jffs2_read_dnode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 	if (crc != je32_to_cpu(ri->data_crc)) {
 		pr_warn("Data CRC %08x != calculated CRC %08x for node at %08x\n",
 			je32_to_cpu(ri->data_crc), crc, ref_offset(fd->raw));
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out_decomprbuf;
 	}
 	jffs2_dbg(2, "Data CRC matches calculated CRC %08x\n", crc);

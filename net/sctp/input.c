@@ -594,7 +594,7 @@ int sctp_v4_err(struct sk_buff *skb, __u32 info)
 	skb->transport_header = savesctp;
 	if (!sk) {
 		__ICMP_INC_STATS(net, ICMP_MIB_INERRORS);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	/* Warning:  The sock lock is held.  Remember to call
 	 * sctp_err_finish!
@@ -602,7 +602,7 @@ int sctp_v4_err(struct sk_buff *skb, __u32 info)
 
 	switch (type) {
 	case ICMP_PARAMETERPROB:
-		err = EPROTO;
+		err = ERR(EPROTO);
 		break;
 	case ICMP_DEST_UNREACH:
 		if (code > NR_ICMP_UNREACH)
@@ -629,7 +629,7 @@ int sctp_v4_err(struct sk_buff *skb, __u32 info)
 		if (ICMP_EXC_FRAGTIME == code)
 			goto out_unlock;
 
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		break;
 	case ICMP_REDIRECT:
 		sctp_icmp_redirect(sk, transport, skb);
@@ -949,7 +949,7 @@ int sctp_hash_transport(struct sctp_transport *t)
 	rhl_for_each_entry_rcu(transport, tmp, list, node)
 		if (transport->asoc->ep == t->asoc->ep) {
 			rcu_read_unlock();
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	rcu_read_unlock();
 

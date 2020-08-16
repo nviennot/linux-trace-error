@@ -252,7 +252,7 @@ static inline int ipv6_ipgre_mc_map(const struct in6_addr *addr,
 		/* v4mapped? */
 		if ((addr->s6_addr32[0] | addr->s6_addr32[1] |
 		     (addr->s6_addr32[2] ^ htonl(0x0000ffff))) != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(buf, &addr->s6_addr32[3], 4);
 	}
 	return 0;

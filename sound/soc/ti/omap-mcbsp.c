@@ -66,12 +66,12 @@ static int omap2_mcbsp_set_clks_src(struct omap_mcbsp *mcbsp, u8 fck_src_id)
 	else if (fck_src_id == MCBSP_CLKS_PRCM_SRC)
 		src = "prcm_fck";
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fck_src = clk_get(mcbsp->dev, src);
 	if (IS_ERR(fck_src)) {
 		dev_err(mcbsp->dev, "CLKS: could not clk_get() %s\n", src);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pm_runtime_put_sync(mcbsp->dev);
@@ -299,7 +299,7 @@ static int omap_mcbsp_request(struct omap_mcbsp *mcbsp)
 	spin_lock(&mcbsp->lock);
 	if (!mcbsp->free) {
 		dev_err(mcbsp->dev, "McBSP%d is currently in use\n", mcbsp->id);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_kfree;
 	}
 
@@ -583,7 +583,7 @@ static ssize_t dma_op_mode_store(struct device *dev,
 
 	spin_lock_irq(&mcbsp->lock);
 	if (!mcbsp->free) {
-		size = -EBUSY;
+		size = -ERR(EBUSY);
 		goto unlock;
 	}
 	mcbsp->dma_op_mode = i;
@@ -661,7 +661,7 @@ static int omap_mcbsp_init(struct platform_device *pdev)
 		res = platform_get_resource_byname(pdev, IORESOURCE_DMA, "tx");
 		if (!res) {
 			dev_err(&pdev->dev, "invalid tx DMA channel\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		mcbsp->dma_req[0] = res->start;
 		mcbsp->dma_data[0].filter_data = &mcbsp->dma_req[0];
@@ -669,7 +669,7 @@ static int omap_mcbsp_init(struct platform_device *pdev)
 		res = platform_get_resource_byname(pdev, IORESOURCE_DMA, "rx");
 		if (!res) {
 			dev_err(&pdev->dev, "invalid rx DMA channel\n");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 		mcbsp->dma_req[1] = res->start;
 		mcbsp->dma_data[1].filter_data = &mcbsp->dma_req[1];
@@ -886,7 +886,7 @@ static int omap_mcbsp_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 		mcbsp->active--;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -944,7 +944,7 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 		wlen = 32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (buffer_size) {
 		int latency;
@@ -972,7 +972,7 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 				divider < period_words)
 				divider++;
 			if (divider == period_words)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			pkt_size = period_words / divider;
 		} else if (channels > 1) {
@@ -1032,7 +1032,7 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		/* Unsupported PCM format */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* In McBSP master modes, FRAME (i.e. sample rate) is generated
@@ -1045,7 +1045,7 @@ static int omap_mcbsp_dai_hw_params(struct snd_pcm_substream *substream,
 		if (framesize < wlen * channels) {
 			printk(KERN_ERR "%s: not enough bandwidth for desired rate and "
 					"channels\n", __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else
 		framesize = wlen * channels;
@@ -1134,7 +1134,7 @@ static int omap_mcbsp_dai_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		/* Unsupported data format */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1155,7 +1155,7 @@ static int omap_mcbsp_dai_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		/* Unsupported master/slave configuration */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set bit clock (CLKX/CLKR) and FS polarities */
@@ -1178,7 +1178,7 @@ static int omap_mcbsp_dai_set_dai_fmt(struct snd_soc_dai *cpu_dai,
 	case SND_SOC_DAIFMT_IB_IF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (inv_fs)
 		regs->pcr0 ^= FSXP | FSRP;
@@ -1193,7 +1193,7 @@ static int omap_mcbsp_dai_set_clkdiv(struct snd_soc_dai *cpu_dai,
 	struct omap_mcbsp_reg_cfg *regs = &mcbsp->cfg_regs;
 
 	if (div_id != OMAP_MCBSP_CLKGDV)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mcbsp->clk_div = div;
 	regs->srgr1	&= ~CLKGDV(0xff);
@@ -1214,7 +1214,7 @@ static int omap_mcbsp_dai_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		if (freq == mcbsp->in_freq)
 			return 0;
 		else
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	mcbsp->in_freq = freq;
@@ -1227,7 +1227,7 @@ static int omap_mcbsp_dai_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		break;
 	case OMAP_MCBSP_SYSCLK_CLKS_FCLK:
 		if (mcbsp_omap1()) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			break;
 		}
 		err = omap2_mcbsp_set_clks_src(mcbsp,
@@ -1259,7 +1259,7 @@ static int omap_mcbsp_dai_set_dai_sysclk(struct snd_soc_dai *cpu_dai,
 		regs->pcr0	&= ~CLKRM;
 		break;
 	default:
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 	}
 
 	return err;
@@ -1393,7 +1393,7 @@ static int asoc_mcbsp_probe(struct platform_device *pdev)
 			pdata->force_ick_on = pdata_quirk->force_ick_on;
 	} else if (!pdata) {
 		dev_err(&pdev->dev, "missing platform data.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	mcbsp = devm_kzalloc(&pdev->dev, sizeof(struct omap_mcbsp), GFP_KERNEL);
 	if (!mcbsp)

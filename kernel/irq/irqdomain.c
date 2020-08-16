@@ -523,11 +523,11 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 
 	if (WARN(hwirq >= domain->hwirq_max,
 		 "error: hwirq 0x%x is too large for %s\n", (int)hwirq, domain->name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN(!irq_data, "error: virq%i is not allocated", virq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN(irq_data->domain, "error: virq%i is already associated", virq))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&irq_domain_mutex);
 	irq_data->hwirq = hwirq;
@@ -914,7 +914,7 @@ int irq_domain_xlate_onecell(struct irq_domain *d, struct device_node *ctrlr,
 			     unsigned long *out_hwirq, unsigned int *out_type)
 {
 	if (WARN_ON(intsize < 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*out_hwirq = intspec[0];
 	*out_type = IRQ_TYPE_NONE;
 	return 0;
@@ -956,7 +956,7 @@ int irq_domain_xlate_onetwocell(struct irq_domain *d,
 				unsigned long *out_hwirq, unsigned int *out_type)
 {
 	if (WARN_ON(intsize < 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*out_hwirq = intspec[0];
 	if (intsize > 1)
 		*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
@@ -981,7 +981,7 @@ int irq_domain_translate_onecell(struct irq_domain *d,
 				 unsigned int *out_type)
 {
 	if (WARN_ON(fwspec->param_count < 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*out_hwirq = fwspec->param[0];
 	*out_type = IRQ_TYPE_NONE;
 	return 0;
@@ -1002,7 +1002,7 @@ int irq_domain_translate_twocell(struct irq_domain *d,
 				 unsigned int *out_type)
 {
 	if (WARN_ON(fwspec->param_count < 2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*out_hwirq = fwspec->param[0];
 	*out_type = fwspec->param[1] & IRQ_TYPE_SENSE_MASK;
 	return 0;
@@ -1212,7 +1212,7 @@ int irq_domain_set_hwirq_and_chip(struct irq_domain *domain, unsigned int virq,
 	struct irq_data *irq_data = irq_domain_get_irq_data(domain, virq);
 
 	if (!irq_data)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	irq_data->hwirq = hwirq;
 	irq_data->chip = chip ? chip : &no_irq_chip;
@@ -1297,7 +1297,7 @@ int irq_domain_alloc_irqs_hierarchy(struct irq_domain *domain,
 {
 	if (!domain->ops->alloc) {
 		pr_debug("domain->ops->alloc() is NULL\n");
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	}
 
 	return domain->ops->alloc(domain, irq_base, nr_irqs, arg);
@@ -1334,7 +1334,7 @@ int __irq_domain_alloc_irqs(struct irq_domain *domain, int irq_base,
 	if (domain == NULL) {
 		domain = irq_default_domain;
 		if (WARN(!domain, "domain is NULL; cannot allocate IRQ\n"))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (realloc && irq_base >= 0) {
@@ -1419,21 +1419,21 @@ int irq_domain_push_irq(struct irq_domain *domain, int virq, void *arg)
 	 */
 	desc = irq_to_desc(virq);
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN_ON(desc->action))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (domain == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(!irq_domain_is_hierarchy(domain)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!root_irq_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (domain->parent != root_irq_data->domain)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	child_irq_data = kzalloc_node(sizeof(*child_irq_data), GFP_KERNEL,
 				      irq_data_get_node(root_irq_data));
@@ -1501,28 +1501,28 @@ int irq_domain_pop_irq(struct irq_domain *domain, int virq)
 	 */
 	desc = irq_to_desc(virq);
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (WARN_ON(desc->action))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (domain == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!root_irq_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tmp_irq_data = irq_domain_get_irq_data(domain, virq);
 
 	/* We can only "pop" if this domain is at the top of the list */
 	if (WARN_ON(root_irq_data != tmp_irq_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(root_irq_data->domain != domain))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	child_irq_data = root_irq_data->parent_data;
 	if (WARN_ON(!child_irq_data))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&irq_domain_mutex);
 
@@ -1582,7 +1582,7 @@ int irq_domain_alloc_irqs_parent(struct irq_domain *domain,
 				 void *arg)
 {
 	if (!domain->parent)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	return irq_domain_alloc_irqs_hierarchy(domain->parent, irq_base,
 					       nr_irqs, arg);

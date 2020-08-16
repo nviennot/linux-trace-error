@@ -93,7 +93,7 @@ static int ext4_getfsmap_helper(struct super_block *sb,
 	int error;
 
 	if (fatal_signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	/*
 	 * Filter out records that start before our startpoint, if the
@@ -631,10 +631,10 @@ int ext4_getfsmap(struct super_block *sb, struct ext4_fsmap_head *head,
 	int error = 0;
 
 	if (head->fmh_iflags & ~FMH_IF_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!ext4_getfsmap_is_valid_device(sb, &head->fmh_keys[0]) ||
 	    !ext4_getfsmap_is_valid_device(sb, &head->fmh_keys[1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	head->fmh_entries = 0;
 
@@ -669,7 +669,7 @@ int ext4_getfsmap(struct super_block *sb, struct ext4_fsmap_head *head,
 	memset(&dkeys[1], 0xFF, sizeof(struct ext4_fsmap));
 
 	if (!ext4_getfsmap_check_keys(dkeys, &head->fmh_keys[1]))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info.gfi_next_fsblk = head->fmh_keys[0].fmr_physical +
 			  head->fmh_keys[0].fmr_length;

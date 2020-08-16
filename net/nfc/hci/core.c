@@ -25,9 +25,9 @@ int nfc_hci_result_to_errno(u8 result)
 	case NFC_HCI_ANY_OK:
 		return 0;
 	case NFC_HCI_ANY_E_REG_PAR_UNKNOWN:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	case NFC_HCI_ANY_E_TIMEOUT:
-		return -ETIME;
+		return -ERR(ETIME);
 	default:
 		return -1;
 	}
@@ -308,14 +308,14 @@ int nfc_hci_target_discovered(struct nfc_hci_dev *hdev, u8 gate)
 			goto exit;
 
 		if (atqa_skb->len != 2 || sak_skb->len != 1) {
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 			goto exit;
 		}
 
 		targets->supported_protocols =
 				nfc_hci_sak_to_protocol(sak_skb->data[0]);
 		if (targets->supported_protocols == 0xffffffff) {
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 			goto exit;
 		}
 
@@ -328,7 +328,7 @@ int nfc_hci_target_discovered(struct nfc_hci_dev *hdev, u8 gate)
 			goto exit;
 
 		if (uid_skb->len == 0 || uid_skb->len > NFC_NFCID1_MAXSIZE) {
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 			goto exit;
 		}
 
@@ -349,7 +349,7 @@ int nfc_hci_target_discovered(struct nfc_hci_dev *hdev, u8 gate)
 		if (hdev->ops->target_from_gate)
 			r = hdev->ops->target_from_gate(hdev, gate, targets);
 		else
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 		if (r < 0)
 			goto exit;
 
@@ -404,7 +404,7 @@ void nfc_hci_event_received(struct nfc_hci_dev *hdev, u8 pipe, u8 event,
 	switch (event) {
 	case NFC_HCI_EVT_TARGET_DISCOVERED:
 		if (skb->len < 1) {	/* no status data? */
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 			goto exit;
 		}
 
@@ -419,7 +419,7 @@ void nfc_hci_event_received(struct nfc_hci_dev *hdev, u8 pipe, u8 event,
 		}
 
 		if (skb->data[0] != 0) {
-			r = -EPROTO;
+			r = -ERR(EPROTO);
 			goto exit;
 		}
 
@@ -427,7 +427,7 @@ void nfc_hci_event_received(struct nfc_hci_dev *hdev, u8 pipe, u8 event,
 		break;
 	default:
 		pr_info("Discarded unknown event %x to gate %x\n", event, gate);
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		break;
 	}
 
@@ -467,7 +467,7 @@ static int hci_dev_session_init(struct nfc_hci_dev *hdev)
 	int r;
 
 	if (hdev->init_data.gates[0].gate != NFC_HCI_ADMIN_GATE)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	r = nfc_hci_connect_gate(hdev, NFC_HCI_HOST_CONTROLLER_ID,
 				 hdev->init_data.gates[0].gate,
@@ -533,7 +533,7 @@ static int hci_dev_version(struct nfc_hci_dev *hdev)
 
 	if (skb->len != 3) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hdev->sw_romlib = (skb->data[0] & 0xf0) >> 4;
@@ -550,7 +550,7 @@ static int hci_dev_version(struct nfc_hci_dev *hdev)
 
 	if (skb->len != 3) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hdev->hw_derivative = (skb->data[0] & 0xe0) >> 5;
@@ -753,9 +753,9 @@ static int hci_transceive(struct nfc_dev *nfc_dev, struct nfc_target *target,
 			r = hdev->ops->im_transceive(hdev, target, skb, cb,
 						     cb_context);
 			if (r == 1)
-				r = -ENOTSUPP;
+				r = -ERR(ENOTSUPP);
 		} else {
-			r = -ENOTSUPP;
+			r = -ERR(ENOTSUPP);
 		}
 		break;
 	}
@@ -771,7 +771,7 @@ static int hci_tm_send(struct nfc_dev *nfc_dev, struct sk_buff *skb)
 
 	if (!hdev->ops->tm_send) {
 		kfree_skb(skb);
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	return hdev->ops->tm_send(hdev, skb);
@@ -923,7 +923,7 @@ static int hci_fw_download(struct nfc_dev *nfc_dev, const char *firmware_name)
 	struct nfc_hci_dev *hdev = nfc_get_drvdata(nfc_dev);
 
 	if (!hdev->ops->fw_download)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	return hdev->ops->fw_download(hdev, firmware_name);
 }

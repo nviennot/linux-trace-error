@@ -44,12 +44,12 @@
 int llc_build_and_send_pkt(struct sock *sk, struct sk_buff *skb)
 {
 	struct llc_conn_state_ev *ev;
-	int rc = -ECONNABORTED;
+	int rc = -ERR(ECONNABORTED);
 	struct llc_sock *llc = llc_sk(sk);
 
 	if (unlikely(llc->state == LLC_CONN_STATE_ADM))
 		goto out_free;
-	rc = -EBUSY;
+	rc = -ERR(EBUSY);
 	if (unlikely(llc_data_accept_state(llc->state) || /* data_conn_refuse */
 		     llc->p_flag)) {
 		llc->failed_data_req = 1;
@@ -82,7 +82,7 @@ out_free:
  */
 int llc_establish_connection(struct sock *sk, u8 *lmac, u8 *dmac, u8 dsap)
 {
-	int rc = -EISCONN;
+	int rc = -ERR(EISCONN);
 	struct llc_addr laddr, daddr;
 	struct sk_buff *skb;
 	struct llc_sock *llc = llc_sk(sk);

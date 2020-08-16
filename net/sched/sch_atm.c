@@ -92,7 +92,7 @@ static int atm_tc_graft(struct Qdisc *sch, unsigned long arg,
 	pr_debug("atm_tc_graft(sch %p,[qdisc %p],flow %p,new %p,old %p)\n",
 		sch, p, flow, new, old);
 	if (list_empty(&flow->list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!new)
 		new = &noop_qdisc;
 	*old = flow->q;
@@ -211,7 +211,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 	 * The concept of parents doesn't apply for this qdisc.
 	 */
 	if (parent && parent != TC_H_ROOT && parent != sch->handle)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/*
 	 * ATM classes cannot be changed. In order to change properties of the
 	 * ATM connection, that socket needs to be modified directly (via the
@@ -220,9 +220,9 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 	 * later.)
 	 */
 	if (flow)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = nla_parse_nested_deprecated(tb, TCA_ATM_MAX, opt, atm_policy,
 					    NULL);
@@ -230,7 +230,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 		return error;
 
 	if (!tb[TCA_ATM_FD])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fd = nla_get_u32(tb[TCA_ATM_FD]);
 	pr_debug("atm_tc_change: fd %d\n", fd);
 	if (tb[TCA_ATM_HDR]) {
@@ -246,7 +246,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 		excess = (struct atm_flow_data *)
 			atm_tc_find(sch, nla_get_u32(tb[TCA_ATM_EXCESS]));
 		if (!excess)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 	pr_debug("atm_tc_change: type %d, payload %d, hdr_len %d\n",
 		 opt->nla_type, nla_len(opt), hdr_len);
@@ -255,7 +255,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 		return error;	/* f_count++ */
 	pr_debug("atm_tc_change: f_count %ld\n", file_count(sock->file));
 	if (sock->ops->family != PF_ATMSVC && sock->ops->family != PF_ATMPVC) {
-		error = -EPROTOTYPE;
+		error = -ERR(EPROTOTYPE);
 		goto err_out;
 	}
 	/* @@@ should check if the socket is really operational or we'll crash
@@ -263,7 +263,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 	if (classid) {
 		if (TC_H_MAJ(classid ^ sch->handle)) {
 			pr_debug("atm_tc_change: classid mismatch\n");
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto err_out;
 		}
 	} else {
@@ -281,7 +281,7 @@ static int atm_tc_change(struct Qdisc *sch, u32 classid, u32 parent,
 	flow = kzalloc(sizeof(struct atm_flow_data) + hdr_len, GFP_KERNEL);
 	pr_debug("atm_tc_change: flow %p\n", flow);
 	if (!flow) {
-		error = -ENOBUFS;
+		error = -ERR(ENOBUFS);
 		goto err_out;
 	}
 
@@ -327,19 +327,19 @@ static int atm_tc_delete(struct Qdisc *sch, unsigned long arg)
 
 	pr_debug("atm_tc_delete(sch %p,[qdisc %p],flow %p)\n", sch, p, flow);
 	if (list_empty(&flow->list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (rcu_access_pointer(flow->filter_list) || flow == &p->link)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	/*
 	 * Reference count must be 2: one for "keepalive" (set at class
 	 * creation), and one for the reference held when calling delete.
 	 */
 	if (flow->ref < 2) {
 		pr_err("atm_tc_delete: flow->ref == %d\n", flow->ref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (flow->ref > 2)
-		return -EBUSY;	/* catch references via excess, etc. */
+		return -ERR(EBUSY);	/* catch references via excess, etc. */
 	atm_tc_put(sch, arg);
 	return 0;
 }
@@ -607,7 +607,7 @@ static int atm_tc_dump_class(struct Qdisc *sch, unsigned long cl,
 	pr_debug("atm_tc_dump_class(sch %p,[qdisc %p],flow %p,skb %p,tcm %p)\n",
 		sch, p, flow, skb, tcm);
 	if (list_empty(&flow->list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	tcm->tcm_handle = flow->common.classid;
 	tcm->tcm_info = flow->q->handle;
 

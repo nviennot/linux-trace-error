@@ -342,7 +342,7 @@ static inline bool pm_suspend_no_platform(void) { return false; }
 static inline bool pm_suspend_default_s2idle(void) { return false; }
 
 static inline void suspend_set_ops(const struct platform_suspend_ops *ops) {}
-static inline int pm_suspend(suspend_state_t state) { return -ENOSYS; }
+static inline int pm_suspend(suspend_state_t state) { return -ERR(ENOSYS); }
 static inline bool sync_on_suspend_enabled(void) { return true; }
 static inline bool idle_should_enter_s2idle(void) { return false; }
 static inline void __init pm_states_init(void) {}
@@ -461,7 +461,7 @@ static inline void swsusp_set_page_free(struct page *p) {}
 static inline void swsusp_unset_page_free(struct page *p) {}
 
 static inline void hibernation_set_ops(const struct platform_hibernation_ops *ops) {}
-static inline int hibernate(void) { return -ENOSYS; }
+static inline int hibernate(void) { return -ERR(ENOSYS); }
 static inline bool system_entering_hibernation(void) { return false; }
 static inline bool hibernation_available(void) { return false; }
 #endif /* CONFIG_HIBERNATION */

@@ -90,12 +90,12 @@ static int snd_card_ad1816a_pnp(int dev, struct pnp_card_link *card,
 
 	pdev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (pdev == NULL)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = pnp_activate_dev(pdev);
 	if (err < 0) {
 		printk(KERN_ERR PFX "AUDIO PnP configure failure\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	port[dev] = pnp_port_start(pdev, 2);
@@ -222,7 +222,7 @@ static int snd_ad1816a_pnp_detect(struct pnp_card_link *card,
 		ad1816a_devices++;
 		return 0;
 	}
-        return -ENODEV;
+        return -ERR(ENODEV);
 }
 
 static void snd_ad1816a_pnp_remove(struct pnp_card_link *pcard)
@@ -277,7 +277,7 @@ static int __init alsa_card_ad1816a_init(void)
 #ifdef MODULE
 		printk(KERN_ERR "no AD1816A based soundcards found.\n");
 #endif	/* MODULE */
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

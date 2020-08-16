@@ -41,7 +41,7 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 {
 	struct inode *inode = file_inode(file);
 	bool shared = false;
-	int res = -ENOTDIR;
+	int res = -ERR(ENOTDIR);
 	if (file->f_op->iterate_shared)
 		shared = true;
 	else if (!file->f_op->iterate)
@@ -58,7 +58,7 @@ int iterate_dir(struct file *file, struct dir_context *ctx)
 	if (res)
 		goto out;
 
-	res = -ENOENT;
+	res = -ERR(ENOENT);
 	if (!IS_DEADDIR(inode)) {
 		ctx->pos = file->f_pos;
 		if (shared)
@@ -110,9 +110,9 @@ EXPORT_SYMBOL(iterate_dir);
 static int verify_dirent_name(const char *name, int len)
 {
 	if (len <= 0 || len >= PATH_MAX)
-		return -EIO;
+		return -ERR(EIO);
 	if (memchr(name, '/', len))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -149,11 +149,11 @@ static int fillonedir(struct dir_context *ctx, const char *name, int namlen,
 	unsigned long d_ino;
 
 	if (buf->result)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	d_ino = ino;
 	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
-		buf->result = -EOVERFLOW;
-		return -EOVERFLOW;
+		buf->result = -ERR(EOVERFLOW);
+		return -ERR(EOVERFLOW);
 	}
 	buf->result++;
 	dirent = buf->dirent;
@@ -185,7 +185,7 @@ SYSCALL_DEFINE3(old_readdir, unsigned int, fd,
 	};
 
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	error = iterate_dir(f.file, &buf.ctx);
 	if (buf.result)
@@ -230,17 +230,17 @@ static int filldir(struct dir_context *ctx, const char *name, int namlen,
 	buf->error = verify_dirent_name(name, namlen);
 	if (unlikely(buf->error))
 		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
+	buf->error = -ERR(EINVAL);	/* only used if we fail.. */
 	if (reclen > buf->count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	d_ino = ino;
 	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
-		buf->error = -EOVERFLOW;
-		return -EOVERFLOW;
+		buf->error = -ERR(EOVERFLOW);
+		return -ERR(EOVERFLOW);
 	}
 	prev_reclen = buf->prev_reclen;
 	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 	dirent = buf->current_dir;
 	prev = (void __user *) dirent - prev_reclen;
 	if (!user_write_access_begin(prev, reclen + prev_reclen))
@@ -278,7 +278,7 @@ SYSCALL_DEFINE3(getdents, unsigned int, fd,
 
 	f = fdget_pos(fd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	error = iterate_dir(f.file, &buf.ctx);
 	if (error >= 0)
@@ -317,12 +317,12 @@ static int filldir64(struct dir_context *ctx, const char *name, int namlen,
 	buf->error = verify_dirent_name(name, namlen);
 	if (unlikely(buf->error))
 		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
+	buf->error = -ERR(EINVAL);	/* only used if we fail.. */
 	if (reclen > buf->count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	prev_reclen = buf->prev_reclen;
 	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 	dirent = buf->current_dir;
 	prev = (void __user *)dirent - prev_reclen;
 	if (!user_write_access_begin(prev, reclen + prev_reclen))
@@ -361,7 +361,7 @@ int ksys_getdents64(unsigned int fd, struct linux_dirent64 __user *dirent,
 
 	f = fdget_pos(fd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	error = iterate_dir(f.file, &buf.ctx);
 	if (error >= 0)
@@ -411,11 +411,11 @@ static int compat_fillonedir(struct dir_context *ctx, const char *name,
 	compat_ulong_t d_ino;
 
 	if (buf->result)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	d_ino = ino;
 	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
-		buf->result = -EOVERFLOW;
-		return -EOVERFLOW;
+		buf->result = -ERR(EOVERFLOW);
+		return -ERR(EOVERFLOW);
 	}
 	buf->result++;
 	dirent = buf->dirent;
@@ -486,17 +486,17 @@ static int compat_filldir(struct dir_context *ctx, const char *name, int namlen,
 	buf->error = verify_dirent_name(name, namlen);
 	if (unlikely(buf->error))
 		return buf->error;
-	buf->error = -EINVAL;	/* only used if we fail.. */
+	buf->error = -ERR(EINVAL);	/* only used if we fail.. */
 	if (reclen > buf->count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	d_ino = ino;
 	if (sizeof(d_ino) < sizeof(ino) && d_ino != ino) {
-		buf->error = -EOVERFLOW;
-		return -EOVERFLOW;
+		buf->error = -ERR(EOVERFLOW);
+		return -ERR(EOVERFLOW);
 	}
 	prev_reclen = buf->prev_reclen;
 	if (prev_reclen && signal_pending(current))
-		return -EINTR;
+		return -ERR(EINTR);
 	dirent = buf->current_dir;
 	prev = (void __user *) dirent - prev_reclen;
 	if (!user_write_access_begin(prev, reclen + prev_reclen))

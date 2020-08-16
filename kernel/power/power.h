@@ -195,7 +195,7 @@ extern int suspend_devices_and_enter(suspend_state_t state);
 
 static inline int suspend_devices_and_enter(suspend_state_t state)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* !CONFIG_SUSPEND */
 

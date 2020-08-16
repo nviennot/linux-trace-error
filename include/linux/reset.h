@@ -76,7 +76,7 @@ static inline void reset_control_put(struct reset_control *rstc)
 
 static inline int __device_reset(struct device *dev, bool optional)
 {
-	return optional ? 0 : -ENOTSUPP;
+	return optional ? 0 : -ERR(ENOTSUPP);
 }
 
 static inline struct reset_control *__of_reset_control_get(
@@ -84,7 +84,7 @@ static inline struct reset_control *__of_reset_control_get(
 					const char *id, int index, bool shared,
 					bool optional, bool acquired)
 {
-	return optional ? NULL : ERR_PTR(-ENOTSUPP);
+	return optional ? NULL : ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct reset_control *__reset_control_get(
@@ -92,7 +92,7 @@ static inline struct reset_control *__reset_control_get(
 					int index, bool shared, bool optional,
 					bool acquired)
 {
-	return optional ? NULL : ERR_PTR(-ENOTSUPP);
+	return optional ? NULL : ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct reset_control *__devm_reset_control_get(
@@ -100,25 +100,25 @@ static inline struct reset_control *__devm_reset_control_get(
 					int index, bool shared, bool optional,
 					bool acquired)
 {
-	return optional ? NULL : ERR_PTR(-ENOTSUPP);
+	return optional ? NULL : ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct reset_control *
 devm_reset_control_array_get(struct device *dev, bool shared, bool optional)
 {
-	return optional ? NULL : ERR_PTR(-ENOTSUPP);
+	return optional ? NULL : ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline struct reset_control *
 of_reset_control_array_get(struct device_node *np, bool shared, bool optional,
 			   bool acquired)
 {
-	return optional ? NULL : ERR_PTR(-ENOTSUPP);
+	return optional ? NULL : ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline int reset_control_get_count(struct device *dev)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 #endif /* CONFIG_RESET_CONTROLLER */

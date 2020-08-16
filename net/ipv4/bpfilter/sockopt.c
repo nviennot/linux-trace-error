@@ -34,7 +34,7 @@ static int bpfilter_mbox_request(struct sock *sk, int optname,
 		mutex_lock(&bpfilter_ops.lock);
 
 		if (!bpfilter_ops.sockopt) {
-			err = -ENOPROTOOPT;
+			err = -ERR(ENOPROTOOPT);
 			goto out;
 		}
 	}

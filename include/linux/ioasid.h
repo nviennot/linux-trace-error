@@ -60,7 +60,7 @@ static inline void *ioasid_find(struct ioasid_set *set, ioasid_t ioasid,
 
 static inline int ioasid_register_allocator(struct ioasid_allocator_ops *allocator)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void ioasid_unregister_allocator(struct ioasid_allocator_ops *allocator)
@@ -69,7 +69,7 @@ static inline void ioasid_unregister_allocator(struct ioasid_allocator_ops *allo
 
 static inline int ioasid_set_data(ioasid_t ioasid, void *data)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 #endif /* CONFIG_IOASID */

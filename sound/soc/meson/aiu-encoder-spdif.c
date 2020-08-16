@@ -63,7 +63,7 @@ aiu_encoder_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -114,7 +114,7 @@ static int aiu_encoder_spdif_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "Unsupport physical width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, AIU_958_MISC,

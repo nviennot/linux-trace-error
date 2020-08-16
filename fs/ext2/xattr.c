@@ -207,18 +207,18 @@ ext2_xattr_get(struct inode *inode, int name_index, const char *name,
 		  name_index, name, buffer, (long)buffer_size);
 
 	if (name == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name_len = strlen(name);
 	if (name_len > 255)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	down_read(&EXT2_I(inode)->xattr_sem);
-	error = -ENODATA;
+	error = -ERR(ENODATA);
 	if (!EXT2_I(inode)->i_file_acl)
 		goto cleanup;
 	ea_idebug(inode, "reading block %d", EXT2_I(inode)->i_file_acl);
 	bh = sb_bread(inode->i_sb, EXT2_I(inode)->i_file_acl);
-	error = -EIO;
+	error = -ERR(EIO);
 	if (!bh)
 		goto cleanup;
 	ea_bdebug(bh, "b_count=%d, refcount=%d",
@@ -229,7 +229,7 @@ bad_block:
 		ext2_error(inode->i_sb, "ext2_xattr_get",
 			"inode %ld: bad block %d", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto cleanup;
 	}
 
@@ -251,14 +251,14 @@ bad_block:
 	}
 	if (ext2_xattr_cache_insert(ea_block_cache, bh))
 		ea_idebug(inode, "cache insert failed");
-	error = -ENODATA;
+	error = -ERR(ENODATA);
 	goto cleanup;
 found:
 	size = le32_to_cpu(entry->e_value_size);
 	if (ext2_xattr_cache_insert(ea_block_cache, bh))
 		ea_idebug(inode, "cache insert failed");
 	if (buffer) {
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 		if (size > buffer_size)
 			goto cleanup;
 		/* return value of attribute */
@@ -304,7 +304,7 @@ ext2_xattr_list(struct dentry *dentry, char *buffer, size_t buffer_size)
 		goto cleanup;
 	ea_idebug(inode, "reading block %d", EXT2_I(inode)->i_file_acl);
 	bh = sb_bread(inode->i_sb, EXT2_I(inode)->i_file_acl);
-	error = -EIO;
+	error = -ERR(EIO);
 	if (!bh)
 		goto cleanup;
 	ea_bdebug(bh, "b_count=%d, refcount=%d",
@@ -315,7 +315,7 @@ bad_block:
 		ext2_error(inode->i_sb, "ext2_xattr_list",
 			"inode %ld: bad block %d", inode->i_ino,
 			EXT2_I(inode)->i_file_acl);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto cleanup;
 	}
 
@@ -343,7 +343,7 @@ bad_block:
 
 			if (buffer) {
 				if (size > rest) {
-					error = -ERANGE;
+					error = -ERR(ERANGE);
 					goto cleanup;
 				}
 				memcpy(buffer, prefix, prefix_len);
@@ -433,15 +433,15 @@ ext2_xattr_set(struct inode *inode, int name_index, const char *name,
 	if (value == NULL)
 		value_len = 0;
 	if (name == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	name_len = strlen(name);
 	if (name_len > 255 || value_len > sb->s_blocksize)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	down_write(&EXT2_I(inode)->xattr_sem);
 	if (EXT2_I(inode)->i_file_acl) {
 		/* The inode already has an extended attribute block. */
 		bh = sb_bread(sb, EXT2_I(inode)->i_file_acl);
-		error = -EIO;
+		error = -ERR(EIO);
 		if (!bh)
 			goto cleanup;
 		ea_bdebug(bh, "b_count=%d, refcount=%d",
@@ -454,7 +454,7 @@ bad_block:
 			ext2_error(sb, "ext2_xattr_set",
 				"inode %ld: bad block %d", inode->i_ino, 
 				   EXT2_I(inode)->i_file_acl);
-			error = -EIO;
+			error = -ERR(EIO);
 			goto cleanup;
 		}
 		/*
@@ -493,7 +493,7 @@ bad_block:
 
 	if (not_found) {
 		/* Request to remove a nonexistent attribute? */
-		error = -ENODATA;
+		error = -ERR(ENODATA);
 		if (flags & XATTR_REPLACE)
 			goto cleanup;
 		error = 0;
@@ -501,13 +501,13 @@ bad_block:
 			goto cleanup;
 	} else {
 		/* Request to create an existing attribute? */
-		error = -EEXIST;
+		error = -ERR(EEXIST);
 		if (flags & XATTR_CREATE)
 			goto cleanup;
 		free += EXT2_XATTR_SIZE(le32_to_cpu(here->e_value_size));
 		free += EXT2_XATTR_LEN(name_len);
 	}
-	error = -ENOSPC;
+	error = -ERR(ENOSPC);
 	if (free < EXT2_XATTR_LEN(name_len) + EXT2_XATTR_SIZE(value_len))
 		goto cleanup;
 
@@ -713,7 +713,7 @@ ext2_xattr_set2(struct inode *inode, struct buffer_head *old_bh,
 		mark_buffer_dirty(new_bh);
 		if (IS_SYNC(inode)) {
 			sync_dirty_buffer(new_bh);
-			error = -EIO;
+			error = -ERR(EIO);
 			if (buffer_req(new_bh) && !buffer_uptodate(new_bh))
 				goto cleanup;
 		}
@@ -907,7 +907,7 @@ ext2_xattr_cmp(struct ext2_xattr_header *header1,
 		    memcmp(entry1->e_name, entry2->e_name, entry1->e_name_len))
 			return 1;
 		if (entry1->e_value_block != 0 || entry2->e_value_block != 0)
-			return -EIO;
+			return -ERR(EIO);
 		if (memcmp((char *)header1 + le16_to_cpu(entry1->e_value_offs),
 			   (char *)header2 + le16_to_cpu(entry2->e_value_offs),
 			   le32_to_cpu(entry1->e_value_size)))

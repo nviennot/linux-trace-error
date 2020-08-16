@@ -223,7 +223,7 @@ static int ocfs2_slot_map_physical_size(struct ocfs2_super *osb,
 		mlog(ML_ERROR,
 		     "Slot map file is too small!  (size %llu, needed %llu)\n",
 		     i_size_read(inode), bytes_needed);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	*bytes = bytes_needed;
@@ -235,7 +235,7 @@ static int ocfs2_slot_map_physical_size(struct ocfs2_super *osb,
 static int __ocfs2_node_num_to_slot(struct ocfs2_slot_info *si,
 				    unsigned int node_num)
 {
-	int i, ret = -ENOENT;
+	int i, ret = -ERR(ENOENT);
 
 	for(i = 0; i < si->si_num_slots; i++) {
 		if (si->si_slots[i].sl_valid &&
@@ -251,7 +251,7 @@ static int __ocfs2_node_num_to_slot(struct ocfs2_slot_info *si,
 static int __ocfs2_find_empty_slot(struct ocfs2_slot_info *si,
 				   int preferred)
 {
-	int i, ret = -ENOSPC;
+	int i, ret = -ERR(ENOSPC);
 
 	if ((preferred >= 0) && (preferred < si->si_num_slots)) {
 		if (!si->si_slots[preferred].sl_valid ||
@@ -295,7 +295,7 @@ int ocfs2_slot_to_node_num_locked(struct ocfs2_super *osb, int slot_num,
 	BUG_ON(slot_num >= osb->max_slots);
 
 	if (!si->si_slots[slot_num].sl_valid)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*node_num = si->si_slots[slot_num].sl_node_num;
 	return 0;
@@ -419,7 +419,7 @@ int ocfs2_init_slot_info(struct ocfs2_super *osb)
 	inode = ocfs2_get_system_file_inode(osb, SLOT_MAP_SYSTEM_INODE,
 					    OCFS2_INVALID_SLOT);
 	if (!inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -474,7 +474,7 @@ int ocfs2_find_slot(struct ocfs2_super *osb)
 			if (slot < 0) {
 				spin_unlock(&osb->osb_lock);
 				mlog(ML_ERROR, "no free slots available!\n");
-				status = -EINVAL;
+				status = -ERR(EINVAL);
 				goto bail;
 			}
 		} else

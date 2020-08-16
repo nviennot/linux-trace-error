@@ -24,7 +24,7 @@ static int sysfs_do_create_link_sd(struct kernfs_node *parent,
 	struct kernfs_node *kn, *target = NULL;
 
 	if (WARN_ON(!name || !parent))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * We don't own @target_kobj and it may be removed at any time.
@@ -39,7 +39,7 @@ static int sysfs_do_create_link_sd(struct kernfs_node *parent,
 	spin_unlock(&sysfs_symlink_target_lock);
 
 	if (!target)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kn = kernfs_create_link(parent, name, target);
 	kernfs_put(target);
@@ -178,12 +178,12 @@ int sysfs_rename_link_ns(struct kobject *kobj, struct kobject *targ,
 	if (targ->sd)
 		old_ns = targ->sd->ns;
 
-	result = -ENOENT;
+	result = -ERR(ENOENT);
 	kn = kernfs_find_and_get_ns(parent, old, old_ns);
 	if (!kn)
 		goto out;
 
-	result = -EINVAL;
+	result = -ERR(EINVAL);
 	if (kernfs_type(kn) != KERNFS_LINK)
 		goto out;
 	if (kn->symlink.target_kn->priv != targ)

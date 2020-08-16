@@ -655,11 +655,11 @@ int tipc_node_add_conn(struct net *net, u32 dnode, u32 port, u32 peer_port)
 	node = tipc_node_find(net, dnode);
 	if (!node) {
 		pr_warn("Connecting sock to node 0x%x failed\n", dnode);
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 	}
 	conn = kmalloc(sizeof(*conn), GFP_ATOMIC);
 	if (!conn) {
-		err = -EHOSTUNREACH;
+		err = -ERR(EHOSTUNREACH);
 		goto exit;
 	}
 	conn->peer_node = dnode;
@@ -1521,7 +1521,7 @@ int tipc_node_get_linkname(struct net *net, u32 bearer_id, u32 addr,
 			   char *linkname, size_t len)
 {
 	struct tipc_link *link;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct tipc_node *node = tipc_node_find(net, addr);
 
 	if (!node)
@@ -1551,7 +1551,7 @@ static int __tipc_nl_add_node(struct tipc_nl_msg *msg, struct tipc_node *node)
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  NLM_F_MULTI, TIPC_NL_NODE_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_NODE);
 	if (!attrs)
@@ -1573,7 +1573,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void tipc_lxc_xmit(struct net *peer_net, struct sk_buff_head *list)
@@ -1656,7 +1656,7 @@ int tipc_node_xmit(struct net *net, struct sk_buff_head *list,
 	n = tipc_node_find(net, dnode);
 	if (unlikely(!n)) {
 		__skb_queue_purge(list);
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 	}
 
 	tipc_node_read_lock(n);
@@ -1676,7 +1676,7 @@ int tipc_node_xmit(struct net *net, struct sk_buff_head *list,
 		tipc_node_read_unlock(n);
 		tipc_node_put(n);
 		__skb_queue_purge(list);
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 	}
 
 	__skb_queue_head_init(&xmitq);
@@ -2172,7 +2172,7 @@ int tipc_nl_peer_rm(struct sk_buff *skb, struct genl_info *info)
 
 	/* We identify the peer by its net */
 	if (!info->attrs[TIPC_NLA_NET])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_NET_MAX,
 					  info->attrs[TIPC_NLA_NET],
@@ -2181,25 +2181,25 @@ int tipc_nl_peer_rm(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_NET_ADDR])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	addr = nla_get_u32(attrs[TIPC_NLA_NET_ADDR]);
 
 	if (in_own_node(net, addr))
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	spin_lock_bh(&tn->node_list_lock);
 	peer = tipc_node_find(net, addr);
 	if (!peer) {
 		spin_unlock_bh(&tn->node_list_lock);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	tipc_node_write_lock(peer);
 	if (peer->state != SELF_DOWN_PEER_DOWN &&
 	    peer->state != SELF_DOWN_PEER_LEAVING) {
 		tipc_node_write_unlock(peer);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_out;
 	}
 
@@ -2251,7 +2251,7 @@ int tipc_nl_node_dump(struct sk_buff *skb, struct netlink_callback *cb)
 			 * changed while we released the lock.
 			 */
 			cb->prev_seq = 1;
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		tipc_node_put(node);
 	}
@@ -2338,7 +2338,7 @@ int tipc_nl_node_set_link(struct sk_buff *skb, struct genl_info *info)
 	__skb_queue_head_init(&xmitq);
 
 	if (!info->attrs[TIPC_NLA_LINK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_LINK_MAX,
 					  info->attrs[TIPC_NLA_LINK],
@@ -2347,7 +2347,7 @@ int tipc_nl_node_set_link(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_LINK_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(attrs[TIPC_NLA_LINK_NAME]);
 
@@ -2356,13 +2356,13 @@ int tipc_nl_node_set_link(struct sk_buff *skb, struct genl_info *info)
 
 	node = tipc_node_find_by_name(net, name, &bearer_id);
 	if (!node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tipc_node_read_lock(node);
 
 	link = node->links[bearer_id].link;
 	if (!link) {
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2416,7 +2416,7 @@ int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 	msg.seq = info->snd_seq;
 
 	if (!info->attrs[TIPC_NLA_LINK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_LINK_MAX,
 					  info->attrs[TIPC_NLA_LINK],
@@ -2425,7 +2425,7 @@ int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_LINK_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	name = nla_data(attrs[TIPC_NLA_LINK_NAME]);
 
@@ -2444,7 +2444,7 @@ int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 
 		node = tipc_node_find_by_name(net, name, &bearer_id);
 		if (!node) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_free;
 		}
 
@@ -2452,7 +2452,7 @@ int tipc_nl_node_get_link(struct sk_buff *skb, struct genl_info *info)
 		link = node->links[bearer_id].link;
 		if (!link) {
 			tipc_node_read_unlock(node);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_free;
 		}
 
@@ -2482,7 +2482,7 @@ int tipc_nl_node_reset_link_stats(struct sk_buff *skb, struct genl_info *info)
 	struct tipc_link_entry *le;
 
 	if (!info->attrs[TIPC_NLA_LINK])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_LINK_MAX,
 					  info->attrs[TIPC_NLA_LINK],
@@ -2491,11 +2491,11 @@ int tipc_nl_node_reset_link_stats(struct sk_buff *skb, struct genl_info *info)
 		return err;
 
 	if (!attrs[TIPC_NLA_LINK_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	link_name = nla_data(attrs[TIPC_NLA_LINK_NAME]);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!strcmp(link_name, tipc_bclink_name)) {
 		err = tipc_bclink_reset_stats(net, tipc_bc_sndlink(net));
 		if (err)
@@ -2519,7 +2519,7 @@ int tipc_nl_node_reset_link_stats(struct sk_buff *skb, struct genl_info *info)
 
 	node = tipc_node_find_by_name(net, link_name, &bearer_id);
 	if (!node)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	le = &node->links[bearer_id];
 	tipc_node_read_lock(node);
@@ -2528,7 +2528,7 @@ int tipc_nl_node_reset_link_stats(struct sk_buff *skb, struct genl_info *info)
 	if (!link) {
 		spin_unlock_bh(&le->lock);
 		tipc_node_read_unlock(node);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	tipc_link_reset_stats(link);
 	spin_unlock_bh(&le->lock);
@@ -2596,7 +2596,7 @@ int tipc_nl_node_dump_link(struct sk_buff *skb, struct netlink_callback *cb)
 			if (unlikely(err))
 				return err;
 			if (unlikely(!link[TIPC_NLA_LINK_BROADCAST]))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			bc_link = true;
 		}
 	}
@@ -2666,7 +2666,7 @@ int tipc_nl_node_set_monitor(struct sk_buff *skb, struct genl_info *info)
 	int err;
 
 	if (!info->attrs[TIPC_NLA_MON])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(attrs, TIPC_NLA_MON_MAX,
 					  info->attrs[TIPC_NLA_MON],
@@ -2696,7 +2696,7 @@ static int __tipc_nl_add_monitor_prop(struct net *net, struct tipc_nl_msg *msg)
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  0, TIPC_NL_MON_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_MON);
 	if (!attrs)
@@ -2717,7 +2717,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_node_get_monitor(struct sk_buff *skb, struct genl_info *info)
@@ -2783,7 +2783,7 @@ int tipc_nl_node_dump_monitor_peer(struct sk_buff *skb,
 		struct nlattr *mon[TIPC_NLA_MON_MAX + 1];
 
 		if (!attrs[TIPC_NLA_MON])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = nla_parse_nested_deprecated(mon, TIPC_NLA_MON_MAX,
 						  attrs[TIPC_NLA_MON],
@@ -2793,12 +2793,12 @@ int tipc_nl_node_dump_monitor_peer(struct sk_buff *skb,
 			return err;
 
 		if (!mon[TIPC_NLA_MON_REF])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		bearer_id = nla_get_u32(mon[TIPC_NLA_MON_REF]);
 
 		if (bearer_id >= MAX_BEARERS)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (done)
@@ -2828,11 +2828,11 @@ static int tipc_nl_retrieve_key(struct nlattr **attrs,
 	struct nlattr *attr = attrs[TIPC_NLA_NODE_KEY];
 
 	if (!attr)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	*key = (struct tipc_aead_key *)nla_data(attr);
 	if (nla_len(attr) < tipc_aead_key_size(*key))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -2842,10 +2842,10 @@ static int tipc_nl_retrieve_nodeid(struct nlattr **attrs, u8 **node_id)
 	struct nlattr *attr = attrs[TIPC_NLA_NODE_ID];
 
 	if (!attr)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (nla_len(attr) < TIPC_NODEID_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*node_id = (u8 *)nla_data(attr);
 	return 0;
@@ -2863,7 +2863,7 @@ static int __tipc_nl_node_set_key(struct sk_buff *skb, struct genl_info *info)
 	int rc = 0;
 
 	if (!info->attrs[TIPC_NLA_NODE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = nla_parse_nested(attrs, TIPC_NLA_NODE_MAX,
 			      info->attrs[TIPC_NLA_NODE],
@@ -2873,7 +2873,7 @@ static int __tipc_nl_node_set_key(struct sk_buff *skb, struct genl_info *info)
 
 	own_id = tipc_own_id(net);
 	if (!own_id) {
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 		goto exit;
 	}
 

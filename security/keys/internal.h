@@ -276,7 +276,7 @@ extern unsigned persistent_keyring_expiry;
 #else
 static inline long keyctl_get_persistent(uid_t uid, key_serial_t destring)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -297,7 +297,7 @@ static inline long keyctl_dh_compute(struct keyctl_dh_params __user *params,
 				     char __user *buffer, size_t buflen,
 				     struct keyctl_kdf_params __user *kdf)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #ifdef CONFIG_COMPAT
@@ -306,7 +306,7 @@ static inline long compat_keyctl_dh_compute(
 				char __user *buffer, size_t buflen,
 				struct keyctl_kdf_params __user *kdf)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 #endif
@@ -329,7 +329,7 @@ static inline long keyctl_pkey_query(key_serial_t id,
 				     const char __user *_info,
 				     struct keyctl_pkey_query __user *_res)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline long keyctl_pkey_verify(const struct keyctl_pkey_params __user *params,
@@ -337,7 +337,7 @@ static inline long keyctl_pkey_verify(const struct keyctl_pkey_params __user *pa
 				      const void __user *_in,
 				      const void __user *_in2)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline long keyctl_pkey_e_d_s(int op,
@@ -346,7 +346,7 @@ static inline long keyctl_pkey_e_d_s(int op,
 				     const void __user *_in,
 				     void __user *_out)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 
@@ -357,7 +357,7 @@ extern long keyctl_watch_key(key_serial_t, int, int);
 #else
 static inline long keyctl_watch_key(key_serial_t key_id, int watch_fd, int watch_id)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif
 

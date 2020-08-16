@@ -59,7 +59,7 @@ static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
 	int curbh, curpage;
 
 	if (block_size > deflateBound(1UL << zisofs_block_shift)) {
-		*errp = -EIO;
+		*errp = -ERR(EIO);
 		return 0;
 	}
 	/* Empty block? */
@@ -98,7 +98,7 @@ static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
 
 	wait_on_buffer(bhs[0]);
 	if (!buffer_uptodate(bhs[0])) {
-		*errp = -EIO;
+		*errp = -ERR(EIO);
 		goto b_eio;
 	}
 
@@ -110,7 +110,7 @@ static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
 		if (zerr == Z_MEM_ERROR)
 			*errp = -ENOMEM;
 		else
-			*errp = -EIO;
+			*errp = -ERR(EIO);
 		printk(KERN_DEBUG "zisofs: zisofs_inflateInit returned %d\n",
 			       zerr);
 		goto z_eio;
@@ -132,7 +132,7 @@ static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
 		if (!stream.avail_in) {
 			wait_on_buffer(bhs[curbh]);
 			if (!buffer_uptodate(bhs[curbh])) {
-				*errp = -EIO;
+				*errp = -ERR(EIO);
 				break;
 			}
 			stream.next_in  = bhs[curbh]->b_data +
@@ -164,7 +164,7 @@ static loff_t zisofs_uncompress_block(struct inode *inode, loff_t block_start,
 					       zerr, inode->i_ino, curpage,
 					       curbh, stream.avail_in,
 					       stream.avail_out);
-					*errp = -EIO;
+					*errp = -ERR(EIO);
 				}
 				goto inflate_out;
 			}
@@ -237,7 +237,7 @@ static int zisofs_fill_pages(struct inode *inode, int full_page, int pcount,
 	blockptr = (header_size + cstart_block) << 2;
 	bh = isofs_bread(inode, blockptr >> blkbits);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	block_start = le32_to_cpu(*(__le32 *)
 				(bh->b_data + (blockptr & (blksize - 1))));
 
@@ -250,13 +250,13 @@ static int zisofs_fill_pages(struct inode *inode, int full_page, int pcount,
 
 			bh = isofs_bread(inode, blockptr >> blkbits);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 		}
 		block_end = le32_to_cpu(*(__le32 *)
 				(bh->b_data + (blockptr & (blksize - 1))));
 		if (block_start > block_end) {
 			brelse(bh);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		err = 0;
 		ret = zisofs_uncompress_block(inode, block_start, block_end,

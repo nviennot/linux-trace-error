@@ -124,7 +124,7 @@ static int __init percpu_test_init(void)
 	preempt_enable();
 
 	pr_info("percpu test done\n");
-	return -EAGAIN;  /* Fail will directly unload the module */
+	return -ERR(EAGAIN);  /* Fail will directly unload the module */
 }
 
 static void __exit percpu_test_exit(void)

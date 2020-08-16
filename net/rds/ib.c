@@ -134,11 +134,11 @@ static int rds_ib_add_one(struct ib_device *device)
 
 	/* Only handle IB (no iWARP) devices */
 	if (device->node_type != RDMA_NODE_IB_CA)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Device must support FRWR */
 	if (!(device->attrs.device_cap_flags & IB_DEVICE_MEM_MGT_EXTENSIONS))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	rds_ibdev = kzalloc_node(sizeof(struct rds_ib_device), GFP_KERNEL,
 				 ibdev_to_node(device));
@@ -456,7 +456,7 @@ static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
 			struct net_device *dev;
 
 			if (scope_id == 0) {
-				ret = -EADDRNOTAVAIL;
+				ret = -ERR(EADDRNOTAVAIL);
 				goto out;
 			}
 
@@ -465,18 +465,18 @@ static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
 			 */
 			dev = dev_get_by_index(&init_net, scope_id);
 			if (!dev) {
-				ret = -EADDRNOTAVAIL;
+				ret = -ERR(EADDRNOTAVAIL);
 				goto out;
 			}
 			if (!ipv6_chk_addr(&init_net, addr, dev, 1)) {
 				dev_put(dev);
-				ret = -EADDRNOTAVAIL;
+				ret = -ERR(EADDRNOTAVAIL);
 				goto out;
 			}
 			dev_put(dev);
 		}
 #else
-		ret = -EADDRNOTAVAIL;
+		ret = -ERR(EADDRNOTAVAIL);
 		goto out;
 #endif
 	}
@@ -487,7 +487,7 @@ static int rds_ib_laddr_check(struct net *net, const struct in6_addr *addr,
 	   check node_type. */
 	if (ret || !cm_id->device ||
 	    cm_id->device->node_type != RDMA_NODE_IB_CA)
-		ret = -EADDRNOTAVAIL;
+		ret = -ERR(EADDRNOTAVAIL);
 
 	rdsdebug("addr %pI6c%%%u ret %d node type %d\n",
 		 addr, scope_id, ret,

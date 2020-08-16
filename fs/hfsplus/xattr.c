@@ -157,11 +157,11 @@ check_attr_tree_state_again:
 		 * here. Really, it means that first try to set of xattr
 		 * fails with error but second attempt will have success.
 		 */
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	case HFSPLUS_VALID_ATTR_TREE:
 		return 0;
 	case HFSPLUS_FAILED_ATTR_TREE:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	default:
 		BUG();
 	}
@@ -186,7 +186,7 @@ check_attr_tree_state_again:
 	mutex_unlock(&hip->extents_lock);
 
 	if (sbi->free_blocks <= (hip->clump_blocks << 1)) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto end_attr_file_creation;
 	}
 
@@ -270,7 +270,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 	if ((!S_ISREG(inode->i_mode) &&
 			!S_ISDIR(inode->i_mode)) ||
 				HFSPLUS_IS_RSRC(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (value == NULL)
 		return hfsplus_removexattr(inode, name);
@@ -290,7 +290,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 	if (!strcmp_xattr_finder_info(name)) {
 		if (flags & XATTR_CREATE) {
 			pr_err("xattr exists yet\n");
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto end_setxattr;
 		}
 		hfs_bnode_read(cat_fd.bnode, &entry, cat_fd.entryoffset,
@@ -305,7 +305,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 				hfsplus_mark_inode_dirty(inode,
 						HFSPLUS_I_CAT_DIRTY);
 			} else {
-				err = -ERANGE;
+				err = -ERR(ERANGE);
 				goto end_setxattr;
 			}
 		} else if (be16_to_cpu(entry.type) == HFSPLUS_FILE) {
@@ -318,11 +318,11 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 				hfsplus_mark_inode_dirty(inode,
 						HFSPLUS_I_CAT_DIRTY);
 			} else {
-				err = -ERANGE;
+				err = -ERR(ERANGE);
 				goto end_setxattr;
 			}
 		} else {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto end_setxattr;
 		}
 		goto end_setxattr;
@@ -337,7 +337,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 	if (hfsplus_attr_exists(inode, name)) {
 		if (flags & XATTR_CREATE) {
 			pr_err("xattr exists yet\n");
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto end_setxattr;
 		}
 		err = hfsplus_delete_attr(inode, name);
@@ -349,7 +349,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 	} else {
 		if (flags & XATTR_REPLACE) {
 			pr_err("cannot replace xattr\n");
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto end_setxattr;
 		}
 		err = hfsplus_create_attr(inode, name, value, size);
@@ -382,7 +382,7 @@ int __hfsplus_setxattr(struct inode *inode, const char *name,
 		hfsplus_mark_inode_dirty(inode, HFSPLUS_I_CAT_DIRTY);
 	} else {
 		pr_err("invalid catalog entry type\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end_setxattr;
 	}
 
@@ -475,11 +475,11 @@ static ssize_t hfsplus_getxattr_finder_info(struct inode *inode,
 			memcpy(value, file_finder_info, file_rec_len);
 			res = file_rec_len;
 		} else {
-			res = -EOPNOTSUPP;
+			res = -ERR(EOPNOTSUPP);
 			goto end_getxattr_finder_info;
 		}
 	} else
-		res = size ? -ERANGE : record_len;
+		res = size ? -ERR(ERANGE) : record_len;
 
 end_getxattr_finder_info:
 	if (size >= record_len)
@@ -500,13 +500,13 @@ ssize_t __hfsplus_getxattr(struct inode *inode, const char *name,
 	if ((!S_ISREG(inode->i_mode) &&
 			!S_ISDIR(inode->i_mode)) ||
 				HFSPLUS_IS_RSRC(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!strcmp_xattr_finder_info(name))
 		return hfsplus_getxattr_finder_info(inode, value, size);
 
 	if (!HFSPLUS_SB(inode->i_sb)->attr_tree)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	entry = hfsplus_alloc_attr_entry();
 	if (!entry) {
@@ -523,7 +523,7 @@ ssize_t __hfsplus_getxattr(struct inode *inode, const char *name,
 	res = hfsplus_find_attr(inode->i_sb, inode->i_ino, name, &fd);
 	if (res) {
 		if (res == -ENOENT)
-			res = -ENODATA;
+			res = -ERR(ENODATA);
 		else
 			pr_err("xattr searching failed\n");
 		goto out;
@@ -539,17 +539,17 @@ ssize_t __hfsplus_getxattr(struct inode *inode, const char *name,
 				length));
 		if (record_length > HFSPLUS_MAX_INLINE_DATA_SIZE) {
 			pr_err("invalid xattr record size\n");
-			res = -EIO;
+			res = -ERR(EIO);
 			goto out;
 		}
 	} else if (record_type == HFSPLUS_ATTR_FORK_DATA ||
 			record_type == HFSPLUS_ATTR_EXTENTS) {
 		pr_err("only inline data xattr are supported\n");
-		res = -EOPNOTSUPP;
+		res = -ERR(EOPNOTSUPP);
 		goto out;
 	} else {
 		pr_err("invalid xattr record\n");
-		res = -EIO;
+		res = -ERR(EIO);
 		goto out;
 	}
 
@@ -563,7 +563,7 @@ ssize_t __hfsplus_getxattr(struct inode *inode, const char *name,
 		memcpy(value, entry->inline_data.raw_bytes, record_length);
 		res = record_length;
 	} else
-		res = size ? -ERANGE : record_length;
+		res = size ? -ERR(ERANGE) : record_length;
 
 out:
 	hfs_find_exit(&fd);
@@ -642,7 +642,7 @@ static ssize_t hfsplus_listxattr_finder_info(struct dentry *dentry,
 				len);
 		found_bit = find_first_bit((void *)file_finder_info, len*8);
 	} else {
-		res = -EOPNOTSUPP;
+		res = -ERR(EOPNOTSUPP);
 		goto end_listxattr_finder_info;
 	}
 
@@ -657,7 +657,7 @@ static ssize_t hfsplus_listxattr_finder_info(struct dentry *dentry,
 				res = xattr_name_len;
 		} else if (can_list(HFSPLUS_XATTR_FINDER_INFO_NAME)) {
 			if (size < xattr_name_len)
-				res = -ERANGE;
+				res = -ERR(ERANGE);
 			else {
 				res = copy_name(buffer,
 						HFSPLUS_XATTR_FINDER_INFO_NAME,
@@ -686,13 +686,13 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 	if ((!S_ISREG(inode->i_mode) &&
 			!S_ISDIR(inode->i_mode)) ||
 				HFSPLUS_IS_RSRC(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	res = hfsplus_listxattr_finder_info(dentry, buffer, size);
 	if (res < 0)
 		return res;
 	else if (!HFSPLUS_SB(inode->i_sb)->attr_tree)
-		return (res == 0) ? -EOPNOTSUPP : res;
+		return (res == 0) ? -ERR(EOPNOTSUPP) : res;
 
 	err = hfs_find_init(HFSPLUS_SB(inode->i_sb)->attr_tree, &fd);
 	if (err) {
@@ -711,7 +711,7 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 	if (err) {
 		if (err == -ENOENT) {
 			if (res == 0)
-				res = -ENODATA;
+				res = -ERR(ENODATA);
 			goto end_listxattr;
 		} else {
 			res = err;
@@ -723,7 +723,7 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 		key_len = hfs_bnode_read_u16(fd.bnode, fd.keyoffset);
 		if (key_len == 0 || key_len > fd.tree->max_key_len) {
 			pr_err("invalid xattr key length: %d\n", key_len);
-			res = -EIO;
+			res = -ERR(EIO);
 			goto end_listxattr;
 		}
 
@@ -738,7 +738,7 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 			(const struct hfsplus_unistr *)&fd.key->attr.key_name,
 					strbuf, &xattr_name_len)) {
 			pr_err("unicode conversion failed\n");
-			res = -EIO;
+			res = -ERR(EIO);
 			goto end_listxattr;
 		}
 
@@ -747,7 +747,7 @@ ssize_t hfsplus_listxattr(struct dentry *dentry, char *buffer, size_t size)
 				res += name_len(strbuf, xattr_name_len);
 		} else if (can_list(strbuf)) {
 			if (size < (res + name_len(strbuf, xattr_name_len))) {
-				res = -ERANGE;
+				res = -ERR(ERANGE);
 				goto end_listxattr;
 			} else
 				res += copy_name(buffer + res,
@@ -775,10 +775,10 @@ static int hfsplus_removexattr(struct inode *inode, const char *name)
 	int is_all_xattrs_deleted = 0;
 
 	if (!HFSPLUS_SB(inode->i_sb)->attr_tree)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!strcmp_xattr_finder_info(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	err = hfs_find_init(HFSPLUS_SB(inode->i_sb)->cat_tree, &cat_fd);
 	if (err) {
@@ -828,7 +828,7 @@ static int hfsplus_removexattr(struct inode *inode, const char *name)
 		hfsplus_mark_inode_dirty(inode, HFSPLUS_I_CAT_DIRTY);
 	} else {
 		pr_err("invalid catalog entry type\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto end_removexattr;
 	}
 
@@ -846,7 +846,7 @@ static int hfsplus_osx_getxattr(const struct xattr_handler *handler,
 	 * by prepending them with "osx."
 	 */
 	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * osx is the namespace we use to indicate an unprefixed
@@ -867,7 +867,7 @@ static int hfsplus_osx_setxattr(const struct xattr_handler *handler,
 	 * by prepending them with "osx."
 	 */
 	if (is_known_namespace(name))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * osx is the namespace we use to indicate an unprefixed

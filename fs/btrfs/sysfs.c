@@ -170,10 +170,10 @@ static ssize_t btrfs_feature_attr_store(struct kobject *kobj,
 
 	fs_info = to_fs_info(kobj);
 	if (!fs_info)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (sb_rdonly(fs_info->sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	ret = kstrtoul(skip_spaces(buf), 0, &val);
 	if (ret)
@@ -202,7 +202,7 @@ static ssize_t btrfs_feature_attr_store(struct kobject *kobj,
 		btrfs_info(fs_info,
 			"%sabling feature %s on mounted fs is not supported.",
 			val ? "En" : "Dis", fa->kobj_attr.attr.name);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	btrfs_info(fs_info, "%s %s feature flag",
@@ -420,7 +420,7 @@ static ssize_t btrfs_discard_iops_limit_store(struct kobject *kobj,
 
 	ret = kstrtou32(buf, 10, &iops_limit);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WRITE_ONCE(discard_ctl->iops_limit, iops_limit);
 
@@ -450,7 +450,7 @@ static ssize_t btrfs_discard_kbps_limit_store(struct kobject *kobj,
 
 	ret = kstrtou32(buf, 10, &kbps_limit);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WRITE_ONCE(discard_ctl->kbps_limit, kbps_limit);
 
@@ -480,7 +480,7 @@ static ssize_t btrfs_discard_max_discard_size_store(struct kobject *kobj,
 
 	ret = kstrtou64(buf, 10, &max_discard_size);
 	if (ret)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WRITE_ONCE(discard_ctl->max_discard_size, max_discard_size);
 
@@ -684,10 +684,10 @@ static ssize_t btrfs_label_store(struct kobject *kobj,
 	size_t p_len;
 
 	if (!fs_info)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (sb_rdonly(fs_info->sb))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/*
 	 * p_len is the len until the first occurrence of either
@@ -696,7 +696,7 @@ static ssize_t btrfs_label_store(struct kobject *kobj,
 	p_len = strcspn(buf, "\n");
 
 	if (p_len >= BTRFS_LABEL_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&fs_info->super_lock);
 	memset(fs_info->super_copy->label, 0, BTRFS_LABEL_SIZE);
@@ -763,16 +763,16 @@ static ssize_t quota_override_store(struct kobject *kobj,
 	int err;
 
 	if (!fs_info)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!capable(CAP_SYS_RESOURCE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	err = kstrtoul(buf, 10, &knob);
 	if (err)
 		return err;
 	if (knob > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (knob)
 		set_bit(BTRFS_FS_QUOTA_OVERRIDE, &fs_info->flags);
@@ -1155,7 +1155,7 @@ int btrfs_sysfs_remove_devices_dir(struct btrfs_fs_devices *fs_devices,
 	struct kobject *disk_kobj;
 
 	if (!fs_devices->devices_kobj)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (one_device) {
 		if (one_device->bdev) {

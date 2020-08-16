@@ -42,14 +42,14 @@ static int hfs_get_last_session(struct super_block *sb,
 		struct cdrom_tocentry te;
 	
 		if (!cdi)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		te.cdte_track = HFS_SB(sb)->session;
 		te.cdte_format = CDROM_LBA;
 		if (cdrom_read_tocentry(cdi, &te) ||
 		    (te.cdte_ctrl & CDROM_DATA_TRACK) != 4) {
 			pr_err("invalid session number or type of track\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		*start = (sector_t)te.cdte_addr.lba << 2;
@@ -84,10 +84,10 @@ int hfs_mdb_get(struct super_block *sb)
 	/* set the device driver to 512-byte blocks */
 	size = sb_min_blocksize(sb, HFS_SECTOR_SIZE);
 	if (!size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (hfs_get_last_session(sb, &part_start, &part_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	while (1) {
 		/* See if this is an HFS filesystem */
 		bh = sb_bread512(sb, part_start + HFS_MDB_BLK, mdb);
@@ -234,7 +234,7 @@ out_bh:
 	brelse(bh);
 out:
 	hfs_mdb_put(sb);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*

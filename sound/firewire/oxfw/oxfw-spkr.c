@@ -62,12 +62,12 @@ static int avc_audio_feature_mute(struct fw_unit *unit, u8 fb_id, bool *value,
 		goto error;
 	if (err < 11) {
 		dev_err(&unit->device, "short FCP response\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 	if (buf[0] != response_ok) {
 		dev_err(&unit->device, "mute command failed\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 	if (action == CTL_READ)
@@ -123,12 +123,12 @@ static int avc_audio_feature_volume(struct fw_unit *unit, u8 fb_id, s16 *value,
 		goto error;
 	if (err < 12) {
 		dev_err(&unit->device, "short FCP response\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 	if (buf[0] != response_ok) {
 		dev_err(&unit->device, "volume command failed\n");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto error;
 	}
 	if (action == CTL_READ)
@@ -217,7 +217,7 @@ static int spkr_volume_put(struct snd_kcontrol *control,
 	for (i = 0; i < spkr->mixer_channels; ++i) {
 		if (value->value.integer.value[i] < spkr->volume_min ||
 		    value->value.integer.value[i] > spkr->volume_max)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (value->value.integer.value[i] !=
 		    value->value.integer.value[0])
 			equal_values = false;

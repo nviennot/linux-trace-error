@@ -68,11 +68,11 @@ int ima_read_modsig(enum ima_hooks func, const void *buf, loff_t buf_len,
 	int rc;
 
 	if (buf_len <= marker_len + sizeof(*sig))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	p = buf + buf_len - marker_len;
 	if (memcmp(p, MODULE_SIG_STRING, marker_len))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	buf_len -= marker_len;
 	sig = (const struct module_signature *)(p - sizeof(*sig));

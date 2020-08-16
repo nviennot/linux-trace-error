@@ -61,10 +61,10 @@ static int nft_ng_inc_init(const struct nft_ctx *ctx,
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_NG_MODULUS]));
 	if (priv->modulus == 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	priv->dreg = nft_parse_register(tb[NFTA_NG_DREG]);
 	atomic_set(&priv->counter, priv->modulus - 1);
@@ -133,10 +133,10 @@ static int nft_ng_random_init(const struct nft_ctx *ctx,
 
 	priv->modulus = ntohl(nla_get_be32(tb[NFTA_NG_MODULUS]));
 	if (priv->modulus == 0)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (priv->offset + priv->modulus - 1 < priv->offset)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	prandom_init_once(&nft_numgen_prandom_state);
 
@@ -179,7 +179,7 @@ nft_ng_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 	if (!tb[NFTA_NG_DREG]	 ||
 	    !tb[NFTA_NG_MODULUS] ||
 	    !tb[NFTA_NG_TYPE])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	type = ntohl(nla_get_be32(tb[NFTA_NG_TYPE]));
 
@@ -190,7 +190,7 @@ nft_ng_select_ops(const struct nft_ctx *ctx, const struct nlattr * const tb[])
 		return &nft_ng_random_ops;
 	}
 
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static struct nft_expr_type nft_ng_type __read_mostly = {

@@ -42,7 +42,7 @@ static int pdiag_put_mclist(const struct packet_sock *po, struct sk_buff *nlskb)
 
 	mca = nla_nest_start_noflag(nlskb, PACKET_DIAG_MCLIST);
 	if (!mca)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rtnl_lock();
 	for (ml = po->mclist; ml; ml = ml->next) {
@@ -52,7 +52,7 @@ static int pdiag_put_mclist(const struct packet_sock *po, struct sk_buff *nlskb)
 		if (!dml) {
 			rtnl_unlock();
 			nla_nest_cancel(nlskb, mca);
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 
 		dml->pdmc_index = ml->ifindex;
@@ -138,7 +138,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 
 	nlh = nlmsg_put(skb, portid, seq, SOCK_DIAG_BY_FAMILY, sizeof(*rp), flags);
 	if (!nlh)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	rp = nlmsg_data(nlh);
 	rp->pdiag_family = AF_PACKET;
@@ -182,7 +182,7 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb,
 
 out_nlmsg_trim:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int packet_diag_dump(struct sk_buff *skb, struct netlink_callback *cb)
@@ -228,12 +228,12 @@ static int packet_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
 	struct packet_diag_req *req;
 
 	if (nlmsg_len(h) < hdrlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	req = nlmsg_data(h);
 	/* Make it possible to support protocol filtering later */
 	if (req->sdiag_protocol)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (h->nlmsg_flags & NLM_F_DUMP) {
 		struct netlink_dump_control c = {
@@ -241,7 +241,7 @@ static int packet_diag_handler_dump(struct sk_buff *skb, struct nlmsghdr *h)
 		};
 		return netlink_dump_start(net->diag_nlsk, skb, h, &c);
 	} else
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 }
 
 static const struct sock_diag_handler packet_diag_handler = {

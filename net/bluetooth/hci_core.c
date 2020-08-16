@@ -84,14 +84,14 @@ static ssize_t dut_mode_write(struct file *file, const char __user *user_buf,
 	int err;
 
 	if (!test_bit(HCI_UP, &hdev->flags))
-		return -ENETDOWN;
+		return -ERR(ENETDOWN);
 
 	err = kstrtobool_from_user(user_buf, count, &enable);
 	if (err)
 		return err;
 
 	if (enable == hci_dev_test_flag(hdev, HCI_DUT_MODE))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	hci_req_sync_lock(hdev);
 	if (enable)
@@ -1305,25 +1305,25 @@ int hci_inquiry(void __user *arg)
 
 	hdev = hci_dev_get(ir.dev_id);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto done;
 	}
 
 	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
 	if (hdev->dev_type != HCI_PRIMARY) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
 	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -1348,7 +1348,7 @@ int hci_inquiry(void __user *arg)
 		 */
 		if (wait_on_bit(&hdev->flags, HCI_INQUIRY,
 				TASK_INTERRUPTIBLE))
-			return -EINTR;
+			return -ERR(EINTR);
 	}
 
 	/* for unlimited number of responses we will use buffer with
@@ -1421,7 +1421,7 @@ static int hci_dev_do_open(struct hci_dev *hdev)
 	hci_req_sync_lock(hdev);
 
 	if (hci_dev_test_flag(hdev, HCI_UNREGISTER)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto done;
 	}
 
@@ -1431,7 +1431,7 @@ static int hci_dev_do_open(struct hci_dev *hdev)
 		 * proceed (which in itself doesn't cause any RF activity).
 		 */
 		if (hci_dev_test_flag(hdev, HCI_RFKILLED)) {
-			ret = -ERFKILL;
+			ret = -ERR(ERFKILL);
 			goto done;
 		}
 
@@ -1451,18 +1451,18 @@ static int hci_dev_do_open(struct hci_dev *hdev)
 		    hdev->dev_type == HCI_PRIMARY &&
 		    !bacmp(&hdev->bdaddr, BDADDR_ANY) &&
 		    !bacmp(&hdev->static_addr, BDADDR_ANY)) {
-			ret = -EADDRNOTAVAIL;
+			ret = -ERR(EADDRNOTAVAIL);
 			goto done;
 		}
 	}
 
 	if (test_bit(HCI_UP, &hdev->flags)) {
-		ret = -EALREADY;
+		ret = -ERR(EALREADY);
 		goto done;
 	}
 
 	if (hdev->open(hdev)) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto done;
 	}
 
@@ -1547,7 +1547,7 @@ setup_failed:
 		    hdev->set_bdaddr)
 			ret = hdev->set_bdaddr(hdev, &hdev->public_addr);
 		else
-			ret = -EADDRNOTAVAIL;
+			ret = -ERR(EADDRNOTAVAIL);
 	}
 
 	if (!ret) {
@@ -1626,7 +1626,7 @@ int hci_dev_open(__u16 dev)
 
 	hdev = hci_dev_get(dev);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Devices that are marked as unconfigured can only be powered
 	 * up as user channel. Trying to bring them up as normal devices
@@ -1639,7 +1639,7 @@ int hci_dev_open(__u16 dev)
 	 */
 	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED) &&
 	    !hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -1829,10 +1829,10 @@ int hci_dev_close(__u16 dev)
 
 	hdev = hci_dev_get(dev);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto done;
 	}
 
@@ -1887,20 +1887,20 @@ int hci_dev_reset(__u16 dev)
 
 	hdev = hci_dev_get(dev);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!test_bit(HCI_UP, &hdev->flags)) {
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		goto done;
 	}
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto done;
 	}
 
 	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -1918,15 +1918,15 @@ int hci_dev_reset_stat(__u16 dev)
 
 	hdev = hci_dev_get(dev);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto done;
 	}
 
 	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -1984,25 +1984,25 @@ int hci_dev_cmd(unsigned int cmd, void __user *arg)
 
 	hdev = hci_dev_get(dr.dev_id);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto done;
 	}
 
 	if (hci_dev_test_flag(hdev, HCI_UNCONFIGURED)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
 	if (hdev->dev_type != HCI_PRIMARY) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
 	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto done;
 	}
 
@@ -2014,7 +2014,7 @@ int hci_dev_cmd(unsigned int cmd, void __user *arg)
 
 	case HCISETENCRYPT:
 		if (!lmp_encrypt_capable(hdev)) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 
@@ -2070,7 +2070,7 @@ int hci_dev_cmd(unsigned int cmd, void __user *arg)
 		break;
 
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -2091,7 +2091,7 @@ int hci_get_dev_list(void __user *arg)
 		return -EFAULT;
 
 	if (!dev_num || dev_num > (PAGE_SIZE * 2) / sizeof(*dr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = sizeof(*dl) + dev_num * sizeof(*dr);
 
@@ -2141,7 +2141,7 @@ int hci_get_dev_info(void __user *arg)
 
 	hdev = hci_dev_get(di.dev_id);
 	if (!hdev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* When the auto-off is configured it means the transport
 	 * is running, but in that case still indicate that the
@@ -2191,7 +2191,7 @@ static int hci_rfkill_set_block(void *data, bool blocked)
 	BT_DBG("%p name %s blocked %d", hdev, hdev->name, blocked);
 
 	if (hci_dev_test_flag(hdev, HCI_USER_CHANNEL))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (blocked) {
 		hci_dev_set_flag(hdev, HCI_RFKILLED);
@@ -2650,7 +2650,7 @@ int hci_remove_link_key(struct hci_dev *hdev, bdaddr_t *bdaddr)
 
 	key = hci_find_link_key(hdev, bdaddr);
 	if (!key)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	BT_DBG("%s removing %pMR", hdev->name, bdaddr);
 
@@ -2676,7 +2676,7 @@ int hci_remove_ltk(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 bdaddr_type)
 		removed++;
 	}
 
-	return removed ? 0 : -ENOENT;
+	return removed ? 0 : -ERR(ENOENT);
 }
 
 void hci_remove_irk(struct hci_dev *hdev, bdaddr_t *bdaddr, u8 addr_type)
@@ -2775,7 +2775,7 @@ int hci_remove_remote_oob_data(struct hci_dev *hdev, bdaddr_t *bdaddr,
 
 	data = hci_find_remote_oob_data(hdev, bdaddr, bdaddr_type);
 	if (!data)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	BT_DBG("%s removing %pMR (%u)", hdev->name, bdaddr, bdaddr_type);
 
@@ -2878,7 +2878,7 @@ int hci_remove_adv_instance(struct hci_dev *hdev, u8 instance)
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
 	if (!adv_instance)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	BT_DBG("%s removing %dMR", hdev->name, instance);
 
@@ -2955,7 +2955,7 @@ int hci_add_adv_instance(struct hci_dev *hdev, u8 instance, u32 flags,
 	} else {
 		if (hdev->adv_instance_cnt >= hdev->le_num_of_adv_sets ||
 		    instance < 1 || instance > HCI_MAX_ADV_INSTANCES)
-			return -EOVERFLOW;
+			return -ERR(EOVERFLOW);
 
 		adv_instance = kzalloc(sizeof(*adv_instance), GFP_KERNEL);
 		if (!adv_instance)
@@ -3038,10 +3038,10 @@ int hci_bdaddr_list_add(struct list_head *list, bdaddr_t *bdaddr, u8 type)
 	struct bdaddr_list *entry;
 
 	if (!bacmp(bdaddr, BDADDR_ANY))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (hci_bdaddr_list_lookup(list, bdaddr, type))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
 	if (!entry)
@@ -3061,10 +3061,10 @@ int hci_bdaddr_list_add_with_irk(struct list_head *list, bdaddr_t *bdaddr,
 	struct bdaddr_list_with_irk *entry;
 
 	if (!bacmp(bdaddr, BDADDR_ANY))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (hci_bdaddr_list_lookup(list, bdaddr, type))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
 	if (!entry)
@@ -3095,7 +3095,7 @@ int hci_bdaddr_list_del(struct list_head *list, bdaddr_t *bdaddr, u8 type)
 
 	entry = hci_bdaddr_list_lookup(list, bdaddr, type);
 	if (!entry)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	list_del(&entry->list);
 	kfree(entry);
@@ -3115,7 +3115,7 @@ int hci_bdaddr_list_del_with_irk(struct list_head *list, bdaddr_t *bdaddr,
 
 	entry = hci_bdaddr_list_lookup_with_irk(list, bdaddr, type);
 	if (!entry)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	list_del(&entry->list);
 	kfree(entry);
@@ -3296,7 +3296,7 @@ static int hci_suspend_wait_event(struct hci_dev *hdev)
 			clear_bit(i, hdev->suspend_tasks);
 		}
 
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	} else {
 		ret = 0;
 	}
@@ -3365,7 +3365,7 @@ static int hci_suspend_notifier(struct notifier_block *nb, unsigned long action,
 		hci_change_suspend_state(hdev, BT_RUNNING);
 
 done:
-	return ret ? notifier_from_errno(-EBUSY) : NOTIFY_STOP;
+	return ret ? notifier_from_errno(-ERR(EBUSY)) : NOTIFY_STOP;
 }
 
 /* Alloc HCI device */
@@ -3482,7 +3482,7 @@ int hci_register_dev(struct hci_dev *hdev)
 	int id, error;
 
 	if (!hdev->open || !hdev->close || !hdev->send)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Do not allow HCI_AMP devices to register at index 0,
 	 * so the index can be used as the AMP controller ID.
@@ -3495,7 +3495,7 @@ int hci_register_dev(struct hci_dev *hdev)
 		id = ida_simple_get(&hci_index_ida, 1, 0, GFP_KERNEL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (id < 0)
@@ -3697,7 +3697,7 @@ int hci_recv_frame(struct hci_dev *hdev, struct sk_buff *skb)
 	if (!hdev || (!test_bit(HCI_UP, &hdev->flags)
 		      && !test_bit(HCI_INIT, &hdev->flags))) {
 		kfree_skb(skb);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	if (hci_skb_pkt_type(skb) != HCI_EVENT_PKT &&
@@ -3705,7 +3705,7 @@ int hci_recv_frame(struct hci_dev *hdev, struct sk_buff *skb)
 	    hci_skb_pkt_type(skb) != HCI_SCODATA_PKT &&
 	    hci_skb_pkt_type(skb) != HCI_ISODATA_PKT) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Incoming skb */
@@ -3858,7 +3858,7 @@ int __hci_cmd_send(struct hci_dev *hdev, u16 opcode, u32 plen,
 		 * unresponded commands for such cases only.
 		 */
 		bt_dev_err(hdev, "unresponded command not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	skb = hci_prepare_cmd(hdev, opcode, plen, param);
@@ -3899,7 +3899,7 @@ struct sk_buff *hci_cmd_sync(struct hci_dev *hdev, u16 opcode, u32 plen,
 	struct sk_buff *skb;
 
 	if (!test_bit(HCI_UP, &hdev->flags))
-		return ERR_PTR(-ENETDOWN);
+		return ERR_PTR(-ERR(ENETDOWN));
 
 	bt_dev_dbg(hdev, "opcode 0x%4.4x plen %d", opcode, plen);
 

@@ -497,15 +497,15 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 	 */
 	if (!old_len && !(vma->vm_flags & (VM_SHARED | VM_MAYSHARE))) {
 		pr_warn_once("%s (%d): attempted to duplicate a private mapping with mremap.  This is not supported.\n", current->comm, current->pid);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	if (flags & MREMAP_DONTUNMAP && (!vma_is_anonymous(vma) ||
 			vma->vm_flags & VM_SHARED))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (is_vm_hugetlb_page(vma))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	/* We can't remap across vm area boundaries */
 	if (old_len > vma->vm_end - addr)
@@ -518,7 +518,7 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 	pgoff = (addr - vma->vm_start) >> PAGE_SHIFT;
 	pgoff += vma->vm_pgoff;
 	if (pgoff + (new_len >> PAGE_SHIFT) < pgoff)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (vma->vm_flags & (VM_DONTEXPAND | VM_PFNMAP))
 		return ERR_PTR(-EFAULT);
@@ -529,7 +529,7 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
 		lock_limit = rlimit(RLIMIT_MEMLOCK);
 		locked += new_len - old_len;
 		if (locked > lock_limit && !capable(CAP_IPC_LOCK))
-			return ERR_PTR(-EAGAIN);
+			return ERR_PTR(-ERR(EAGAIN));
 	}
 
 	if (!may_expand_vm(mm, vma->vm_flags,
@@ -554,7 +554,7 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
-	unsigned long ret = -EINVAL;
+	unsigned long ret = -ERR(EINVAL);
 	unsigned long charged = 0;
 	unsigned long map_flags = 0;
 
@@ -666,7 +666,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 {
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
-	unsigned long ret = -EINVAL;
+	unsigned long ret = -ERR(EINVAL);
 	unsigned long charged = 0;
 	bool locked = false;
 	bool downgraded = false;
@@ -716,7 +716,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 		return ret;
 
 	if (mmap_write_lock_killable(current->mm))
-		return -EINTR;
+		return -ERR(EINTR);
 
 	if (flags & (MREMAP_FIXED | MREMAP_DONTUNMAP)) {
 		ret = mremap_to(addr, old_len, new_addr, new_len,

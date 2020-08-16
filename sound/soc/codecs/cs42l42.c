@@ -641,7 +641,7 @@ static int cs42l42_pll_config(struct snd_soc_component *component)
 					"Unsupported sclk %d/sample rate %d\n",
 					cs42l42->sclk,
 					cs42l42->srate);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			/* Set the LRCLK period */
 			snd_soc_component_update_bits(component,
@@ -764,7 +764,7 @@ static int cs42l42_pll_config(struct snd_soc_component *component)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cs42l42_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
@@ -782,7 +782,7 @@ static int cs42l42_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 				CS42L42_ASP_MODE_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -791,7 +791,7 @@ static int cs42l42_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_LEFT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Bitclock/frame inversion */
@@ -1827,7 +1827,7 @@ static int cs42l42_i2c_probe(struct i2c_client *i2c_client,
 	devid |= (reg & 0xF0) >> 4;
 
 	if (devid != CS42L42_CHIP_ID) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c_client->dev,
 			"CS42L42 Device ID (%X). Expected %X\n",
 			devid, CS42L42_CHIP_ID);

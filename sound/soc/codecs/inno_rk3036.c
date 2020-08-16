@@ -213,7 +213,7 @@ static int rk3036_codec_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "invalid fmt\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -231,7 +231,7 @@ static int rk3036_codec_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "set dai format failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -253,7 +253,7 @@ static int rk3036_codec_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "set dai format failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, INNO_R01, INNO_R01_I2SMODE_MSK |
@@ -286,7 +286,7 @@ static int rk3036_codec_dai_hw_params(struct snd_pcm_substream *substream,
 		reg02_val |= INNO_R02_VWL_32BIT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg02_val |= INNO_R02_LRCP_NORMAL;

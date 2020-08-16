@@ -132,7 +132,7 @@ static int sample_rate_to_pll_freq_out(int sample_rate)
 	case 96000:
 		return 122880000;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -159,7 +159,7 @@ static int write_coeff_ram(struct snd_soc_component *component, u8 *coeff_ram,
 		}
 
 		if (trys == DACCRSTAT_MAX_TRYS) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			dev_err(component->dev,
 				"dac coefficient write error (%d)\n", ret);
 			return ret;
@@ -204,7 +204,7 @@ static int power_up_audio_plls(struct snd_soc_component *component)
 		val = RV_PLLCTL1C_PDB_PLL2_ENABLE;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev,
 				"Unrecognized PLL output freq (%d)\n", ret);
 		return ret;
@@ -220,7 +220,7 @@ static int power_up_audio_plls(struct snd_soc_component *component)
 
 	if (!plls_locked(component)) {
 		dev_err(component->dev, "Failed to lock plls\n");
-		ret = -ENOMSG;
+		ret = -ERR(ENOMSG);
 		goto exit;
 	}
 
@@ -830,7 +830,7 @@ static int setup_sample_format(struct snd_soc_component *component,
 		width = RV_AIC1_WL_32;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported format width (%d)\n", ret);
 		return ret;
 	}
@@ -895,7 +895,7 @@ static int setup_sample_rate(struct snd_soc_component *component,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported sample rate %d\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* DAC and ADC share bit and frame clock */
@@ -1065,7 +1065,7 @@ static int set_pll_ctl_from_input_freq(struct snd_soc_component *component,
 
 	pll_ctl = get_pll_ctl(input_freq);
 	if (!pll_ctl) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "No PLL input entry for %d (%d)\n",
 			input_freq, ret);
 		return ret;
@@ -1209,7 +1209,7 @@ static int tscs42xx_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		}
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported format (%d)\n", ret);
 		return ret;
 	}
@@ -1237,7 +1237,7 @@ static int tscs42xx_set_dai_bclk_ratio(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported bclk ratio (%d)\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(component,
@@ -1328,7 +1328,7 @@ static int set_sysclk(struct snd_soc_component *component)
 		break;
 	default:
 		dev_err(component->dev, "pll src is unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	freq = clk_get_rate(tscs42xx->sysclk);
@@ -1436,7 +1436,7 @@ static int tscs42xx_i2c_probe(struct i2c_client *i2c,
 		}
 	}
 	if (src == TSCS42XX_PLL_SRC_CNT) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(&i2c->dev, "Failed to get a valid clock name (%d)\n",
 				ret);
 		return ret;
@@ -1455,7 +1455,7 @@ static int tscs42xx_i2c_probe(struct i2c_client *i2c,
 	ret = part_is_valid(tscs42xx);
 	if (ret <= 0) {
 		dev_err(&i2c->dev, "No valid part (%d)\n", ret);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		return ret;
 	}
 

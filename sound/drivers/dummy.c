@@ -489,7 +489,7 @@ static int dummy_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 		return get_dummy_ops(substream)->stop(substream);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int dummy_pcm_prepare(struct snd_pcm_substream *substream)
@@ -822,7 +822,7 @@ static int snd_dummy_iobox_put(struct snd_kcontrol *kcontrol,
 	int changed;
 
 	if (value->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	changed = value->value.enumerated.item[0] != dummy->iobox;
 	if (changed) {
@@ -1181,7 +1181,7 @@ static int __init alsa_card_dummy_init(void)
 		printk(KERN_ERR "Dummy soundcard not found or device busy\n");
 #endif
 		snd_dummy_unregister_all();
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

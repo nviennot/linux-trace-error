@@ -107,7 +107,7 @@ xfs_readlink(
 	ASSERT(!(ip->i_df.if_flags & XFS_IFINLINE));
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	xfs_ilock(ip, XFS_ILOCK_SHARED);
 
@@ -166,14 +166,14 @@ xfs_symlink(
 	trace_xfs_symlink(dp, link_name);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * Check component lengths of the target path name.
 	 */
 	pathlen = strlen(target_path);
 	if (pathlen >= XFS_SYMLINK_MAXLEN)      /* total string too long */
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	ASSERT(pathlen > 0);
 
 	prid = xfs_get_initial_prid(dp);
@@ -208,7 +208,7 @@ xfs_symlink(
 	 * Check whether the directory allows new symlinks or not.
 	 */
 	if (dp->i_d.di_flags & XFS_DIFLAG_NOSYMLINKS) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto out_trans_cancel;
 	}
 
@@ -473,7 +473,7 @@ xfs_inactive_symlink(
 	trace_xfs_inactive_symlink(ip);
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	xfs_ilock(ip, XFS_ILOCK_EXCL);
 	pathlen = (int)ip->i_d.di_size;

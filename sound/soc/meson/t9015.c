@@ -67,14 +67,14 @@ static int t9015_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, BLOCK_EN, I2S_MODE, val);
 
 	if (((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S) &&
 	    ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_LEFT_J))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

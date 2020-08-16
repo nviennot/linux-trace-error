@@ -72,7 +72,7 @@ static int kernfs_get_target_path(struct kernfs_node *parent,
 			break;
 
 		if ((s - path) + 3 >= PATH_MAX)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 
 		strcpy(s, "../");
 		s += 3;
@@ -88,10 +88,10 @@ static int kernfs_get_target_path(struct kernfs_node *parent,
 
 	/* check limits */
 	if (len < 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	len--;
 	if ((s - path) + len >= PATH_MAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	/* reverse fillup of target string from target to base */
 	kn = target;
@@ -131,7 +131,7 @@ static const char *kernfs_iop_get_link(struct dentry *dentry,
 	int error;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 	body = kzalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!body)
 		return ERR_PTR(-ENOMEM);

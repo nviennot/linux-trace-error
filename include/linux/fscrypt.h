@@ -261,7 +261,7 @@ static inline struct page *fscrypt_encrypt_pagecache_blocks(struct page *page,
 							    unsigned int offs,
 							    gfp_t gfp_flags)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline int fscrypt_encrypt_block_inplace(const struct inode *inode,
@@ -270,14 +270,14 @@ static inline int fscrypt_encrypt_block_inplace(const struct inode *inode,
 						unsigned int offs, u64 lblk_num,
 						gfp_t gfp_flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_decrypt_pagecache_blocks(struct page *page,
 						   unsigned int len,
 						   unsigned int offs)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_decrypt_block_inplace(const struct inode *inode,
@@ -285,7 +285,7 @@ static inline int fscrypt_decrypt_block_inplace(const struct inode *inode,
 						unsigned int len,
 						unsigned int offs, u64 lblk_num)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline bool fscrypt_is_bounce_page(struct page *page)
@@ -296,7 +296,7 @@ static inline bool fscrypt_is_bounce_page(struct page *page)
 static inline struct page *fscrypt_pagecache_page(struct page *bounce_page)
 {
 	WARN_ON_ONCE(1);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline void fscrypt_free_bounce_page(struct page *bounce_page)
@@ -307,23 +307,23 @@ static inline void fscrypt_free_bounce_page(struct page *bounce_page)
 static inline int fscrypt_ioctl_set_policy(struct file *filp,
 					   const void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_get_policy_ex(struct file *filp,
 					      void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_get_nonce(struct file *filp, void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_has_permitted_context(struct inode *parent,
@@ -336,7 +336,7 @@ static inline int fscrypt_inherit_context(struct inode *parent,
 					  struct inode *child,
 					  void *fs_data, bool preload)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 struct fscrypt_dummy_context {
@@ -360,30 +360,30 @@ static inline void fscrypt_sb_free(struct super_block *sb)
 
 static inline int fscrypt_ioctl_add_key(struct file *filp, void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_remove_key(struct file *filp, void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_remove_key_all_users(struct file *filp,
 						     void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_ioctl_get_key_status(struct file *filp,
 					       void __user *arg)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* keysetup.c */
 static inline int fscrypt_get_encryption_info(struct inode *inode)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void fscrypt_put_encryption_info(struct inode *inode)
@@ -406,7 +406,7 @@ static inline int fscrypt_setup_filename(struct inode *dir,
 					 int lookup, struct fscrypt_name *fname)
 {
 	if (IS_ENCRYPTED(dir))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(fname, 0, sizeof(*fname));
 	fname->usr_fname = iname;
@@ -424,7 +424,7 @@ static inline int fscrypt_fname_alloc_buffer(const struct inode *inode,
 					     u32 max_encrypted_len,
 					     struct fscrypt_str *crypto_str)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void fscrypt_fname_free_buffer(struct fscrypt_str *crypto_str)
@@ -437,7 +437,7 @@ static inline int fscrypt_fname_disk_to_usr(const struct inode *inode,
 					    const struct fscrypt_str *iname,
 					    struct fscrypt_str *oname)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline bool fscrypt_match_name(const struct fscrypt_name *fname,
@@ -464,7 +464,7 @@ static inline void fscrypt_decrypt_bio(struct bio *bio)
 static inline int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
 					sector_t pblk, unsigned int len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 /* hooks.c */
@@ -472,14 +472,14 @@ static inline int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
 static inline int fscrypt_file_open(struct inode *inode, struct file *filp)
 {
 	if (IS_ENCRYPTED(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	return 0;
 }
 
 static inline int __fscrypt_prepare_link(struct inode *inode, struct inode *dir,
 					 struct dentry *dentry)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int __fscrypt_prepare_rename(struct inode *old_dir,
@@ -488,14 +488,14 @@ static inline int __fscrypt_prepare_rename(struct inode *old_dir,
 					   struct dentry *new_dentry,
 					   unsigned int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int __fscrypt_prepare_lookup(struct inode *dir,
 					   struct dentry *dentry,
 					   struct fscrypt_name *fname)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int fscrypt_prepare_setflags(struct inode *inode,
@@ -510,7 +510,7 @@ static inline int __fscrypt_prepare_symlink(struct inode *dir,
 					    unsigned int max_len,
 					    struct fscrypt_str *disk_link)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 
@@ -519,7 +519,7 @@ static inline int __fscrypt_encrypt_symlink(struct inode *inode,
 					    unsigned int len,
 					    struct fscrypt_str *disk_link)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline const char *fscrypt_get_symlink(struct inode *inode,
@@ -527,7 +527,7 @@ static inline const char *fscrypt_get_symlink(struct inode *inode,
 					      unsigned int max_size,
 					      struct delayed_call *done)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline void fscrypt_set_ops(struct super_block *sb,
@@ -558,7 +558,7 @@ static inline int fscrypt_require_key(struct inode *inode)
 		if (err)
 			return err;
 		if (!fscrypt_has_encryption_key(inode))
-			return -ENOKEY;
+			return -ERR(ENOKEY);
 	}
 	return 0;
 }
@@ -720,7 +720,7 @@ static inline int fscrypt_prepare_symlink(struct inode *dir,
 	disk_link->name = (unsigned char *)target;
 	disk_link->len = len + 1;
 	if (disk_link->len > max_len)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	return 0;
 }
 

@@ -62,7 +62,7 @@ int tcp_register_ulp(struct tcp_ulp_ops *ulp)
 
 	spin_lock(&tcp_ulp_list_lock);
 	if (tcp_ulp_find(ulp->name))
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	else
 		list_add_tail_rcu(&ulp->list, &tcp_ulp_list);
 	spin_unlock(&tcp_ulp_list_lock);
@@ -132,7 +132,7 @@ static int __tcp_set_ulp(struct sock *sk, const struct tcp_ulp_ops *ulp_ops)
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	int err;
 
-	err = -EEXIST;
+	err = -ERR(EEXIST);
 	if (icsk->icsk_ulp_ops)
 		goto out_err;
 
@@ -155,7 +155,7 @@ int tcp_set_ulp(struct sock *sk, const char *name)
 
 	ulp_ops = __tcp_ulp_find_autoload(name);
 	if (!ulp_ops)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return __tcp_set_ulp(sk, ulp_ops);
 }

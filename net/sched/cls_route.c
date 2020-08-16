@@ -244,7 +244,7 @@ static int route4_init(struct tcf_proto *tp)
 
 	head = kzalloc(sizeof(struct route4_head), GFP_KERNEL);
 	if (head == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	rcu_assign_pointer(tp->root, head);
 	return 0;
@@ -320,7 +320,7 @@ static int route4_delete(struct tcf_proto *tp, void *arg, bool *last,
 	int i, h1;
 
 	if (!head || !f)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	h = f->handle;
 	b = f->bkt;
@@ -396,24 +396,24 @@ static int route4_set_parms(struct net *net, struct tcf_proto *tp,
 
 	if (tb[TCA_ROUTE4_TO]) {
 		if (new && handle & 0x8000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		to = nla_get_u32(tb[TCA_ROUTE4_TO]);
 		if (to > 0xFF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nhandle = to;
 	}
 
 	if (tb[TCA_ROUTE4_FROM]) {
 		if (tb[TCA_ROUTE4_IIF])
-			return -EINVAL;
+			return -ERR(EINVAL);
 		id = nla_get_u32(tb[TCA_ROUTE4_FROM]);
 		if (id > 0xFF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nhandle |= id << 16;
 	} else if (tb[TCA_ROUTE4_IIF]) {
 		id = nla_get_u32(tb[TCA_ROUTE4_IIF]);
 		if (id > 0x7FFF)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		nhandle |= (id | 0x8000) << 16;
 	} else
 		nhandle |= 0xFFFF << 16;
@@ -421,7 +421,7 @@ static int route4_set_parms(struct net *net, struct tcf_proto *tp,
 	if (handle && new) {
 		nhandle |= handle & 0x7F00;
 		if (nhandle != handle)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	h1 = to_hash(nhandle);
@@ -429,7 +429,7 @@ static int route4_set_parms(struct net *net, struct tcf_proto *tp,
 	if (!b) {
 		b = kzalloc(sizeof(struct route4_bucket), GFP_KERNEL);
 		if (b == NULL)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 
 		rcu_assign_pointer(head->table[h1], b);
 	} else {
@@ -439,7 +439,7 @@ static int route4_set_parms(struct net *net, struct tcf_proto *tp,
 		     fp;
 		     fp = rtnl_dereference(fp->next))
 			if (fp->handle == f->handle)
-				return -EEXIST;
+				return -ERR(EEXIST);
 	}
 
 	if (tb[TCA_ROUTE4_TO])
@@ -478,7 +478,7 @@ static int route4_change(struct net *net, struct sk_buff *in_skb,
 	bool new = true;
 
 	if (opt == NULL)
-		return handle ? -EINVAL : 0;
+		return handle ? -ERR(EINVAL) : 0;
 
 	err = nla_parse_nested_deprecated(tb, TCA_ROUTE4_MAX, opt,
 					  route4_policy, NULL);
@@ -487,9 +487,9 @@ static int route4_change(struct net *net, struct sk_buff *in_skb,
 
 	fold = *arg;
 	if (fold && handle && fold->handle != handle)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
-	err = -ENOBUFS;
+	err = -ERR(ENOBUFS);
 	f = kzalloc(sizeof(struct route4_filter), GFP_KERNEL);
 	if (!f)
 		goto errout;

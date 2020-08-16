@@ -178,23 +178,23 @@ static int tracefs_parse_options(char *data, struct tracefs_mount_opts *opts)
 		switch (token) {
 		case Opt_uid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			uid = make_kuid(current_user_ns(), option);
 			if (!uid_valid(uid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->uid = uid;
 			break;
 		case Opt_gid:
 			if (match_int(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			gid = make_kgid(current_user_ns(), option);
 			if (!gid_valid(gid))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->gid = gid;
 			break;
 		case Opt_mode:
 			if (match_octal(&args[0], &option))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			opts->mode = option & S_IALLUGO;
 			break;
 		/*
@@ -331,12 +331,12 @@ static struct dentry *start_creating(const char *name, struct dentry *parent)
 
 	inode_lock(parent->d_inode);
 	if (unlikely(IS_DEADDIR(parent->d_inode)))
-		dentry = ERR_PTR(-ENOENT);
+		dentry = ERR_PTR(-ERR(ENOENT));
 	else
 		dentry = lookup_one_len(name, parent, strlen(name));
 	if (!IS_ERR(dentry) && dentry->d_inode) {
 		dput(dentry);
-		dentry = ERR_PTR(-EEXIST);
+		dentry = ERR_PTR(-ERR(EEXIST));
 	}
 
 	if (IS_ERR(dentry)) {
@@ -539,7 +539,7 @@ static int __init tracefs_init(void)
 
 	retval = sysfs_create_mount_point(kernel_kobj, "tracing");
 	if (retval)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	retval = register_filesystem(&trace_fs_type);
 	if (!retval)

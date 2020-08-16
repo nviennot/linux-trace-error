@@ -207,7 +207,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 		file_extent_err(leaf, slot,
 "unaligned file_offset for file extent, have %llu should be aligned to %u",
 			key->offset, sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -217,7 +217,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 	 * INODE_ITEM.
 	 */
 	if (!check_prev_ino(leaf, key, slot, prev_key))
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 
@@ -230,14 +230,14 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 				"invalid item size, have %u expect [%zu, %u)",
 				item_size, BTRFS_FILE_EXTENT_INLINE_DATA_START,
 				SZ_4K);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_file_extent_type(leaf, fi) >= BTRFS_NR_FILE_EXTENT_TYPES) {
 		file_extent_err(leaf, slot,
 		"invalid type for file extent, have %u expect range [0, %u]",
 			btrfs_file_extent_type(leaf, fi),
 			BTRFS_NR_FILE_EXTENT_TYPES - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -249,13 +249,13 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 	"invalid compression for file extent, have %u expect range [0, %u]",
 			btrfs_file_extent_compression(leaf, fi),
 			BTRFS_NR_COMPRESS_TYPES - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_file_extent_encryption(leaf, fi)) {
 		file_extent_err(leaf, slot,
 			"invalid encryption for file extent, have %u expect 0",
 			btrfs_file_extent_encryption(leaf, fi));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_file_extent_type(leaf, fi) == BTRFS_FILE_EXTENT_INLINE) {
 		/* Inline extent must have 0 as key offset */
@@ -263,7 +263,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 			file_extent_err(leaf, slot,
 		"invalid file_offset for inline file extent, have %llu expect 0",
 				key->offset);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* Compressed inline extent has no on-disk size, skip it */
@@ -278,7 +278,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 	"invalid ram_bytes for uncompressed inline extent, have %u expect %llu",
 				item_size, BTRFS_FILE_EXTENT_INLINE_DATA_START +
 				btrfs_file_extent_ram_bytes(leaf, fi));
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		return 0;
 	}
@@ -288,14 +288,14 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 		file_extent_err(leaf, slot,
 	"invalid item size for reg/prealloc file extent, have %u expect %zu",
 			item_size, sizeof(*fi));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (CHECK_FE_ALIGNED(leaf, slot, fi, ram_bytes, sectorsize) ||
 	    CHECK_FE_ALIGNED(leaf, slot, fi, disk_bytenr, sectorsize) ||
 	    CHECK_FE_ALIGNED(leaf, slot, fi, disk_num_bytes, sectorsize) ||
 	    CHECK_FE_ALIGNED(leaf, slot, fi, offset, sectorsize) ||
 	    CHECK_FE_ALIGNED(leaf, slot, fi, num_bytes, sectorsize))
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 
 	/* Catch extent end overflow */
 	if (check_add_overflow(btrfs_file_extent_num_bytes(leaf, fi),
@@ -304,7 +304,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 	"extent end overflow, have file offset %llu extent num bytes %llu",
 				key->offset,
 				btrfs_file_extent_num_bytes(leaf, fi));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -324,7 +324,7 @@ static int check_extent_data_item(struct extent_buffer *leaf,
 			file_extent_err(leaf, slot - 1,
 "file extent end range (%llu) goes beyond start offset (%llu) of the next file extent",
 					prev_end, key->offset);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	}
 
@@ -342,19 +342,19 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		generic_err(leaf, slot,
 		"invalid key objectid for csum item, have %llu expect %llu",
 			key->objectid, BTRFS_EXTENT_CSUM_OBJECTID);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!IS_ALIGNED(key->offset, sectorsize)) {
 		generic_err(leaf, slot,
 	"unaligned key offset for csum item, have %llu should be aligned to %u",
 			key->offset, sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!IS_ALIGNED(btrfs_item_size_nr(leaf, slot), csumsize)) {
 		generic_err(leaf, slot,
 	"unaligned item size for csum item, have %u should be aligned to %u",
 			btrfs_item_size_nr(leaf, slot), csumsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (slot > 0 && prev_key->type == BTRFS_EXTENT_CSUM_KEY) {
 		u64 prev_csum_end;
@@ -367,7 +367,7 @@ static int check_csum_item(struct extent_buffer *leaf, struct btrfs_key *key,
 			generic_err(leaf, slot - 1,
 "csum end range (%llu) goes beyond the start range (%llu) of the next csum item",
 				    prev_csum_end, key->offset);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	}
 	return 0;
@@ -389,7 +389,7 @@ static int check_inode_key(struct extent_buffer *leaf, struct btrfs_key *key,
 	/* For XATTR_ITEM, location key should be all 0 */
 	if (item_key.type == BTRFS_XATTR_ITEM_KEY) {
 		if (key->type != 0 || key->objectid != 0 || key->offset != 0)
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		return 0;
 	}
 
@@ -412,7 +412,7 @@ static int check_inode_key(struct extent_buffer *leaf, struct btrfs_key *key,
 				BTRFS_LAST_FREE_OBJECTID,
 				BTRFS_FREE_INO_OBJECTID);
 		}
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (key->offset != 0) {
 		if (is_inode_item)
@@ -423,7 +423,7 @@ static int check_inode_key(struct extent_buffer *leaf, struct btrfs_key *key,
 			dir_item_err(leaf, slot,
 				"invalid location key offset:has %llu expect 0",
 				key->offset);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -444,7 +444,7 @@ static int check_root_key(struct extent_buffer *leaf, struct btrfs_key *key,
 		else
 			dir_item_err(leaf, slot,
 				     "invalid location key root id 0");
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* DIR_ITEM/INDEX/INODE_REF is not allowed to point to non-fs trees */
@@ -453,7 +453,7 @@ static int check_root_key(struct extent_buffer *leaf, struct btrfs_key *key,
 		"invalid location key objectid, have %llu expect [%llu, %llu]",
 				key->objectid, BTRFS_FIRST_FREE_OBJECTID,
 				BTRFS_LAST_FREE_OBJECTID);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -466,7 +466,7 @@ static int check_root_key(struct extent_buffer *leaf, struct btrfs_key *key,
 	 */
 	if (key->objectid == BTRFS_TREE_RELOC_OBJECTID && key->offset == 0) {
 		generic_err(leaf, slot, "invalid root id 0 for reloc tree");
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -481,7 +481,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 	u32 cur = 0;
 
 	if (!check_prev_ino(leaf, key, slot, prev_key))
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	di = btrfs_item_ptr(leaf, slot, struct btrfs_dir_item);
 	while (cur < item_size) {
 		struct btrfs_key location_key;
@@ -498,7 +498,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 			dir_item_err(leaf, slot,
 		"dir item header crosses item boundary, have %zu boundary %u",
 				cur + sizeof(*di), item_size);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* Location key check */
@@ -517,7 +517,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 			"invalid location key type, have %u, expect %u or %u",
 				     location_key.type, BTRFS_ROOT_ITEM_KEY,
 				     BTRFS_INODE_ITEM_KEY);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* dir type check */
@@ -526,7 +526,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 			dir_item_err(leaf, slot,
 			"invalid dir item type, have %u expect [0, %u)",
 				dir_type, BTRFS_FT_MAX);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		if (key->type == BTRFS_XATTR_ITEM_KEY &&
@@ -534,13 +534,13 @@ static int check_dir_item(struct extent_buffer *leaf,
 			dir_item_err(leaf, slot,
 		"invalid dir item type for XATTR key, have %u expect %u",
 				dir_type, BTRFS_FT_XATTR);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		if (dir_type == BTRFS_FT_XATTR &&
 		    key->type != BTRFS_XATTR_ITEM_KEY) {
 			dir_item_err(leaf, slot,
 			"xattr dir type found for non-XATTR key");
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		if (dir_type == BTRFS_FT_XATTR)
 			max_name_len = XATTR_NAME_MAX;
@@ -554,21 +554,21 @@ static int check_dir_item(struct extent_buffer *leaf,
 			dir_item_err(leaf, slot,
 			"dir item name len too long, have %u max %u",
 				name_len, max_name_len);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		if (name_len + data_len > BTRFS_MAX_XATTR_SIZE(fs_info)) {
 			dir_item_err(leaf, slot,
 			"dir item name and data len too long, have %u max %u",
 				name_len + data_len,
 				BTRFS_MAX_XATTR_SIZE(fs_info));
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		if (data_len && dir_type != BTRFS_FT_XATTR) {
 			dir_item_err(leaf, slot,
 			"dir item with invalid data len, have %u expect 0",
 				data_len);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		total_size = sizeof(*di) + name_len + data_len;
@@ -578,7 +578,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 			dir_item_err(leaf, slot,
 		"dir item data crosses item boundary, have %u boundary %u",
 				cur + total_size, item_size);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/*
@@ -596,7 +596,7 @@ static int check_dir_item(struct extent_buffer *leaf,
 				dir_item_err(leaf, slot,
 		"name hash mismatch with key, have 0x%016x expect 0x%016llx",
 					name_hash, key->offset);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 		}
 		cur += total_size;
@@ -644,14 +644,14 @@ static int check_block_group_item(struct extent_buffer *leaf,
 	if (key->offset == 0) {
 		block_group_err(leaf, slot,
 				"invalid block group size 0");
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	if (item_size != sizeof(bgi)) {
 		block_group_err(leaf, slot,
 			"invalid item size, have %u expect %zu",
 				item_size, sizeof(bgi));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	read_extent_buffer(leaf, &bgi, btrfs_item_ptr_offset(leaf, slot),
@@ -662,14 +662,14 @@ static int check_block_group_item(struct extent_buffer *leaf,
 		"invalid block group chunk objectid, have %llu expect %llu",
 				btrfs_stack_block_group_chunk_objectid(&bgi),
 				BTRFS_FIRST_CHUNK_TREE_OBJECTID);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	if (btrfs_stack_block_group_used(&bgi) > key->offset) {
 		block_group_err(leaf, slot,
 			"invalid block group used, have %llu expect [0, %llu)",
 				btrfs_stack_block_group_used(&bgi), key->offset);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	flags = btrfs_stack_block_group_flags(&bgi);
@@ -678,7 +678,7 @@ static int check_block_group_item(struct extent_buffer *leaf,
 "invalid profile flags, have 0x%llx (%lu bits set) expect no more than 1 bit set",
 			flags & BTRFS_BLOCK_GROUP_PROFILE_MASK,
 			hweight64(flags & BTRFS_BLOCK_GROUP_PROFILE_MASK));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	type = flags & BTRFS_BLOCK_GROUP_TYPE_MASK;
@@ -693,7 +693,7 @@ static int check_block_group_item(struct extent_buffer *leaf,
 			BTRFS_BLOCK_GROUP_DATA, BTRFS_BLOCK_GROUP_METADATA,
 			BTRFS_BLOCK_GROUP_SYSTEM,
 			BTRFS_BLOCK_GROUP_METADATA | BTRFS_BLOCK_GROUP_DATA);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -770,31 +770,31 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 	if (!num_stripes) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk num_stripes, have %u", num_stripes);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!IS_ALIGNED(logical, fs_info->sectorsize)) {
 		chunk_err(leaf, chunk, logical,
 		"invalid chunk logical, have %llu should aligned to %u",
 			  logical, fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_chunk_sector_size(leaf, chunk) != fs_info->sectorsize) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk sectorsize, have %u expect %u",
 			  btrfs_chunk_sector_size(leaf, chunk),
 			  fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!length || !IS_ALIGNED(length, fs_info->sectorsize)) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk length, have %llu", length);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!is_power_of_2(stripe_len) || stripe_len != BTRFS_STRIPE_LEN) {
 		chunk_err(leaf, chunk, logical,
 			  "invalid chunk stripe length: %llu",
 			  stripe_len);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (~(BTRFS_BLOCK_GROUP_TYPE_MASK | BTRFS_BLOCK_GROUP_PROFILE_MASK) &
 	    type) {
@@ -803,7 +803,7 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 			  ~(BTRFS_BLOCK_GROUP_TYPE_MASK |
 			    BTRFS_BLOCK_GROUP_PROFILE_MASK) &
 			  btrfs_chunk_type(leaf, chunk));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	if (!has_single_bit_set(type & BTRFS_BLOCK_GROUP_PROFILE_MASK) &&
@@ -811,13 +811,13 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 		chunk_err(leaf, chunk, logical,
 		"invalid chunk profile flag: 0x%llx, expect 0 or 1 bit set",
 			  type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if ((type & BTRFS_BLOCK_GROUP_TYPE_MASK) == 0) {
 		chunk_err(leaf, chunk, logical,
 	"missing chunk type flag, have 0x%llx one bit must be set in 0x%llx",
 			  type, BTRFS_BLOCK_GROUP_TYPE_MASK);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	if ((type & BTRFS_BLOCK_GROUP_SYSTEM) &&
@@ -825,7 +825,7 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 		chunk_err(leaf, chunk, logical,
 			  "system chunk with data or metadata type: 0x%llx",
 			  type);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	features = btrfs_super_incompat_flags(fs_info->super_copy);
@@ -837,7 +837,7 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 		    (type & BTRFS_BLOCK_GROUP_DATA)) {
 			chunk_err(leaf, chunk, logical,
 			"mixed chunk type in non-mixed mode: 0x%llx", type);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	}
 
@@ -851,7 +851,7 @@ int btrfs_check_chunk_valid(struct extent_buffer *leaf,
 			"invalid num_stripes:sub_stripes %u:%u for profile %llu",
 			num_stripes, sub_stripes,
 			type & BTRFS_BLOCK_GROUP_PROFILE_MASK);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	return 0;
@@ -875,7 +875,7 @@ static int check_leaf_chunk_item(struct extent_buffer *leaf,
 			btrfs_item_size_nr(leaf, slot),
 			sizeof(struct btrfs_chunk),
 			BTRFS_LEAF_DATA_SIZE(leaf->fs_info));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	num_stripes = btrfs_chunk_num_stripes(leaf, chunk);
@@ -889,7 +889,7 @@ static int check_leaf_chunk_item(struct extent_buffer *leaf,
 			"invalid chunk item size: have %u expect %lu",
 			btrfs_item_size_nr(leaf, slot),
 			btrfs_chunk_item_size(num_stripes));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 out:
 	return btrfs_check_chunk_valid(leaf, chunk, key->offset);
@@ -927,14 +927,14 @@ static int check_dev_item(struct extent_buffer *leaf,
 		dev_item_err(leaf, slot,
 			     "invalid objectid: has=%llu expect=%llu",
 			     key->objectid, BTRFS_DEV_ITEMS_OBJECTID);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	ditem = btrfs_item_ptr(leaf, slot, struct btrfs_dev_item);
 	if (btrfs_device_id(leaf, ditem) != key->offset) {
 		dev_item_err(leaf, slot,
 			     "devid mismatch: key has=%llu item has=%llu",
 			     key->offset, btrfs_device_id(leaf, ditem));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -948,7 +948,7 @@ static int check_dev_item(struct extent_buffer *leaf,
 			     "invalid bytes used: have %llu expect [0, %llu]",
 			     btrfs_device_bytes_used(leaf, ditem),
 			     btrfs_device_total_bytes(leaf, ditem));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	/*
 	 * Remaining members like io_align/type/gen/dev_group aren't really
@@ -979,14 +979,14 @@ static int check_inode_item(struct extent_buffer *leaf,
 			"invalid inode generation: has %llu expect (0, %llu]",
 			       btrfs_inode_generation(leaf, iitem),
 			       super_gen + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	/* Note for ROOT_TREE_DIR_ITEM, mkfs could set its transid 0 */
 	if (btrfs_inode_transid(leaf, iitem) > super_gen + 1) {
 		inode_item_err(leaf, slot,
 			"invalid inode generation: has %llu expect [0, %llu]",
 			       btrfs_inode_transid(leaf, iitem), super_gen + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -999,7 +999,7 @@ static int check_inode_item(struct extent_buffer *leaf,
 		inode_item_err(leaf, slot,
 			       "unknown mode bit detected: 0x%x",
 			       mode & ~valid_mask);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -1012,21 +1012,21 @@ static int check_inode_item(struct extent_buffer *leaf,
 			inode_item_err(leaf, slot,
 			"invalid mode: has 0%o expect valid S_IF* bit(s)",
 				       mode & S_IFMT);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	}
 	if (S_ISDIR(mode) && btrfs_inode_nlink(leaf, iitem) > 1) {
 		inode_item_err(leaf, slot,
 		       "invalid nlink: has %u expect no more than 1 for dir",
 			btrfs_inode_nlink(leaf, iitem));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_inode_flags(leaf, iitem) & ~BTRFS_INODE_FLAG_MASK) {
 		inode_item_err(leaf, slot,
 			       "unknown flags detected: 0x%llx",
 			       btrfs_inode_flags(leaf, iitem) &
 			       ~BTRFS_INODE_FLAG_MASK);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -1060,7 +1060,7 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 			"invalid root generation, have %llu expect (0, %llu]",
 			    btrfs_root_generation(&ri),
 			    btrfs_super_generation(fs_info->super_copy) + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_root_generation_v2(&ri) >
 	    btrfs_super_generation(fs_info->super_copy) + 1) {
@@ -1068,7 +1068,7 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		"invalid root v2 generation, have %llu expect (0, %llu]",
 			    btrfs_root_generation_v2(&ri),
 			    btrfs_super_generation(fs_info->super_copy) + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_root_last_snapshot(&ri) >
 	    btrfs_super_generation(fs_info->super_copy) + 1) {
@@ -1076,7 +1076,7 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		"invalid root last_snapshot, have %llu expect (0, %llu]",
 			    btrfs_root_last_snapshot(&ri),
 			    btrfs_super_generation(fs_info->super_copy) + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* Alignment and level check */
@@ -1084,19 +1084,19 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		generic_err(leaf, slot,
 		"invalid root bytenr, have %llu expect to be aligned to %u",
 			    btrfs_root_bytenr(&ri), fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (btrfs_root_level(&ri) >= BTRFS_MAX_LEVEL) {
 		generic_err(leaf, slot,
 			    "invalid root level, have %u expect [0, %u]",
 			    btrfs_root_level(&ri), BTRFS_MAX_LEVEL - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (ri.drop_level >= BTRFS_MAX_LEVEL) {
 		generic_err(leaf, slot,
 			    "invalid root level, have %u expect [0, %u]",
 			    ri.drop_level, BTRFS_MAX_LEVEL - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* Flags check */
@@ -1104,7 +1104,7 @@ static int check_root_item(struct extent_buffer *leaf, struct btrfs_key *key,
 		generic_err(leaf, slot,
 			    "invalid root flags, have 0x%llx expect mask 0x%llx",
 			    btrfs_root_flags(&ri), valid_root_flags);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -1158,14 +1158,14 @@ static int check_extent_item(struct extent_buffer *leaf,
 	    !btrfs_fs_incompat(fs_info, SKINNY_METADATA)) {
 		generic_err(leaf, slot,
 "invalid key type, METADATA_ITEM type invalid when SKINNY_METADATA feature disabled");
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	/* key->objectid is the bytenr for both key types */
 	if (!IS_ALIGNED(key->objectid, fs_info->sectorsize)) {
 		generic_err(leaf, slot,
 		"invalid key objectid, have %llu expect to be aligned to %u",
 			   key->objectid, fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* key->offset is tree level for METADATA_ITEM_KEY */
@@ -1174,7 +1174,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 		extent_err(leaf, slot,
 			   "invalid tree level, have %llu expect [0, %u]",
 			   key->offset, BTRFS_MAX_LEVEL - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -1201,7 +1201,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 			   "invalid item size, have %u expect [%zu, %u)",
 			   item_size, sizeof(*ei),
 			   BTRFS_LEAF_DATA_SIZE(fs_info));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	end = item_size + btrfs_item_ptr_offset(leaf, slot);
 
@@ -1215,7 +1215,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 			   "invalid generation, have %llu expect (0, %llu]",
 			   generation,
 			   btrfs_super_generation(fs_info->super_copy) + 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!has_single_bit_set(flags & (BTRFS_EXTENT_FLAG_DATA |
 					 BTRFS_EXTENT_FLAG_TREE_BLOCK))) {
@@ -1223,7 +1223,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 		"invalid extent flag, have 0x%llx expect 1 bit set in 0x%llx",
 			flags, BTRFS_EXTENT_FLAG_DATA |
 			BTRFS_EXTENT_FLAG_TREE_BLOCK);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	is_tree_block = !!(flags & BTRFS_EXTENT_FLAG_TREE_BLOCK);
 	if (is_tree_block) {
@@ -1232,20 +1232,20 @@ static int check_extent_item(struct extent_buffer *leaf,
 			extent_err(leaf, slot,
 				   "invalid extent length, have %llu expect %u",
 				   key->offset, fs_info->nodesize);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	} else {
 		if (key->type != BTRFS_EXTENT_ITEM_KEY) {
 			extent_err(leaf, slot,
 			"invalid key type, have %u expect %u for data backref",
 				   key->type, BTRFS_EXTENT_ITEM_KEY);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		if (!IS_ALIGNED(key->offset, fs_info->sectorsize)) {
 			extent_err(leaf, slot,
 			"invalid extent length, have %llu expect aligned to %u",
 				   key->offset, fs_info->sectorsize);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 	}
 	ptr = (unsigned long)(struct btrfs_extent_item *)(ei + 1);
@@ -1260,7 +1260,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 			"invalid tree block info level, have %u expect [0, %u]",
 				   btrfs_tree_block_level(leaf, info),
 				   BTRFS_MAX_LEVEL - 1);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		ptr = (unsigned long)(struct btrfs_tree_block_info *)(info + 1);
 	}
@@ -1278,7 +1278,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 			extent_err(leaf, slot,
 "inline ref item overflows extent item, ptr %lu iref size %zu end %lu",
 				   ptr, sizeof(*iref), end);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		iref = (struct btrfs_extent_inline_ref *)ptr;
 		inline_type = btrfs_extent_inline_ref_type(leaf, iref);
@@ -1287,7 +1287,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 			extent_err(leaf, slot,
 "inline ref item overflows extent item, ptr %lu iref size %u end %lu",
 				   ptr, inline_type, end);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		switch (inline_type) {
@@ -1301,7 +1301,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 				extent_err(leaf, slot,
 		"invalid tree parent bytenr, have %llu expect aligned to %u",
 					   inline_offset, fs_info->sectorsize);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 			inline_refs++;
 			break;
@@ -1316,7 +1316,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 				extent_err(leaf, slot,
 		"invalid data ref offset, have %llu expect aligned to %u",
 					   dref_offset, fs_info->sectorsize);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 			inline_refs += btrfs_extent_data_ref_count(leaf, dref);
 			break;
@@ -1327,14 +1327,14 @@ static int check_extent_item(struct extent_buffer *leaf,
 				extent_err(leaf, slot,
 		"invalid data parent bytenr, have %llu expect aligned to %u",
 					   inline_offset, fs_info->sectorsize);
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 			}
 			inline_refs += btrfs_shared_data_ref_count(leaf, sref);
 			break;
 		default:
 			extent_err(leaf, slot, "unknown inline ref type: %u",
 				   inline_type);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		ptr += btrfs_extent_inline_ref_size(inline_type);
 	}
@@ -1342,7 +1342,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 	if (ptr != end) {
 		extent_err(leaf, slot,
 			   "invalid extent item size, padding bytes found");
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/* Finally, check the inline refs against total refs */
@@ -1350,7 +1350,7 @@ static int check_extent_item(struct extent_buffer *leaf,
 		extent_err(leaf, slot,
 			"invalid extent refs, have %llu expect >= inline %llu",
 			   total_refs, inline_refs);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -1368,20 +1368,20 @@ static int check_simple_keyed_refs(struct extent_buffer *leaf,
 		"invalid item size, have %u expect %u for key type %u",
 			    btrfs_item_size_nr(leaf, slot),
 			    expect_item_size, key->type);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (!IS_ALIGNED(key->objectid, leaf->fs_info->sectorsize)) {
 		generic_err(leaf, slot,
 "invalid key objectid for shared block ref, have %llu expect aligned to %u",
 			    key->objectid, leaf->fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (key->type != BTRFS_TREE_BLOCK_REF_KEY &&
 	    !IS_ALIGNED(key->offset, leaf->fs_info->sectorsize)) {
 		extent_err(leaf, slot,
 		"invalid tree parent bytenr, have %llu expect aligned to %u",
 			   key->offset, leaf->fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	return 0;
 }
@@ -1403,7 +1403,7 @@ static int check_extent_data_ref(struct extent_buffer *leaf,
 		generic_err(leaf, slot,
 "invalid key objectid for shared block ref, have %llu expect aligned to %u",
 			    key->objectid, leaf->fs_info->sectorsize);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	for (; ptr < end; ptr += sizeof(*dref)) {
 		u64 root_objectid;
@@ -1420,7 +1420,7 @@ static int check_extent_data_ref(struct extent_buffer *leaf,
 			extent_err(leaf, slot,
 	"invalid extent data ref hash, item has 0x%016llx key has 0x%016llx",
 				   hash, key->offset);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		if (!IS_ALIGNED(offset, leaf->fs_info->sectorsize)) {
 			extent_err(leaf, slot,
@@ -1442,14 +1442,14 @@ static int check_inode_ref(struct extent_buffer *leaf,
 	unsigned long end;
 
 	if (!check_prev_ino(leaf, key, slot, prev_key))
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	/* namelen can't be 0, so item_size == sizeof() is also invalid */
 	if (btrfs_item_size_nr(leaf, slot) <= sizeof(*iref)) {
 		inode_ref_err(leaf, slot,
 			"invalid item size, have %u expect (%zu, %u)",
 			btrfs_item_size_nr(leaf, slot),
 			sizeof(*iref), BTRFS_LEAF_DATA_SIZE(leaf->fs_info));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	ptr = btrfs_item_ptr_offset(leaf, slot);
@@ -1461,7 +1461,7 @@ static int check_inode_ref(struct extent_buffer *leaf,
 			inode_ref_err(leaf, slot,
 			"inode ref overflow, ptr %lu end %lu inode_ref_size %zu",
 				ptr, end, sizeof(iref));
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		iref = (struct btrfs_inode_ref *)ptr;
@@ -1470,7 +1470,7 @@ static int check_inode_ref(struct extent_buffer *leaf,
 			inode_ref_err(leaf, slot,
 				"inode ref overflow, ptr %lu end %lu namelen %u",
 				ptr, end, namelen);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/*
@@ -1553,7 +1553,7 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 		generic_err(leaf, 0,
 			"invalid level for leaf, have %d expect 0",
 			btrfs_header_level(leaf));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	/*
@@ -1577,13 +1577,13 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 			generic_err(leaf, 0,
 			"invalid root, root %llu must never be empty",
 				    owner);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		/* Unknown tree */
 		if (owner == 0) {
 			generic_err(leaf, 0,
 				"invalid owner, root 0 is not defined");
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 		return 0;
 	}
@@ -1615,7 +1615,7 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 				prev_key.objectid, prev_key.type,
 				prev_key.offset, key.objectid, key.type,
 				key.offset);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/*
@@ -1633,7 +1633,7 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 				"unexpected item end, have %u expect %u",
 				btrfs_item_end_nr(leaf, slot),
 				item_end_expected);
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/*
@@ -1647,7 +1647,7 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 			"slot end outside of leaf, have %u expect range [0, %u]",
 				btrfs_item_end_nr(leaf, slot),
 				BTRFS_LEAF_DATA_SIZE(fs_info));
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		/* Also check if the item pointer overlaps with btrfs item. */
@@ -1658,7 +1658,7 @@ static int check_leaf(struct extent_buffer *leaf, bool check_item_data)
 				btrfs_item_nr_offset(slot) +
 				sizeof(struct btrfs_item),
 				btrfs_item_ptr_offset(leaf, slot));
-			return -EUCLEAN;
+			return -ERR(EUCLEAN);
 		}
 
 		if (check_item_data) {
@@ -1704,7 +1704,7 @@ int btrfs_check_node(struct extent_buffer *node)
 		generic_err(node, 0,
 			"invalid level for node, have %d expect [1, %d]",
 			level, BTRFS_MAX_LEVEL - 1);
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 	if (nr == 0 || nr > BTRFS_NODEPTRS_PER_BLOCK(fs_info)) {
 		btrfs_crit(fs_info,
@@ -1712,7 +1712,7 @@ int btrfs_check_node(struct extent_buffer *node)
 			   btrfs_header_owner(node), node->start,
 			   nr == 0 ? "small" : "large", nr,
 			   BTRFS_NODEPTRS_PER_BLOCK(fs_info));
-		return -EUCLEAN;
+		return -ERR(EUCLEAN);
 	}
 
 	for (slot = 0; slot < nr - 1; slot++) {
@@ -1723,14 +1723,14 @@ int btrfs_check_node(struct extent_buffer *node)
 		if (!bytenr) {
 			generic_err(node, slot,
 				"invalid NULL node pointer");
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			goto out;
 		}
 		if (!IS_ALIGNED(bytenr, fs_info->sectorsize)) {
 			generic_err(node, slot,
 			"unaligned pointer, have %llu should be aligned to %u",
 				bytenr, fs_info->sectorsize);
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			goto out;
 		}
 
@@ -1740,7 +1740,7 @@ int btrfs_check_node(struct extent_buffer *node)
 				key.objectid, key.type, key.offset,
 				next_key.objectid, next_key.type,
 				next_key.offset);
-			ret = -EUCLEAN;
+			ret = -ERR(EUCLEAN);
 			goto out;
 		}
 	}

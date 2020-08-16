@@ -1834,7 +1834,7 @@ static int free_pool_huge_page(struct hstate *h, nodemask_t *nodes_allowed,
  */
 int dissolve_free_huge_page(struct page *page)
 {
-	int rc = -EBUSY;
+	int rc = -ERR(EBUSY);
 
 	/* Not to disrupt normal path by vainly holding hugetlb_lock */
 	if (!PageHuge(page))
@@ -2389,7 +2389,7 @@ struct page *alloc_huge_page(struct vm_area_struct *vma,
 		gbl_chg = hugepage_subpool_get_pages(spool, 1);
 		if (gbl_chg < 0) {
 			vma_end_reservation(h, vma, addr);
-			return ERR_PTR(-ENOSPC);
+			return ERR_PTR(-ERR(ENOSPC));
 		}
 
 		/*
@@ -2479,7 +2479,7 @@ out_subpool_put:
 	if (map_chg || avoid_reserve)
 		hugepage_subpool_put_pages(spool, 1);
 	vma_end_reservation(h, vma, addr);
-	return ERR_PTR(-ENOSPC);
+	return ERR_PTR(-ERR(ENOSPC));
 }
 
 int alloc_bootmem_huge_page(struct hstate *h)
@@ -2742,7 +2742,7 @@ static int set_max_huge_pages(struct hstate *h, unsigned long count, int nid,
 		if (count > persistent_huge_pages(h)) {
 			spin_unlock(&hugetlb_lock);
 			NODEMASK_FREE(node_alloc_noretry);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/* Fall through to decrease pool */
 	}
@@ -2871,7 +2871,7 @@ static ssize_t __nr_hugepages_store_common(bool obey_mempolicy,
 	nodemask_t nodes_allowed, *n_mask;
 
 	if (hstate_is_gigantic(h) && !gigantic_page_runtime_supported())
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nid == NUMA_NO_NODE) {
 		/*
@@ -2962,7 +2962,7 @@ static ssize_t nr_overcommit_hugepages_store(struct kobject *kobj,
 	struct hstate *h = kobj_to_hstate(kobj, NULL);
 
 	if (hstate_is_gigantic(h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = kstrtoul(buf, 10, &input);
 	if (err)
@@ -3478,7 +3478,7 @@ static int hugetlb_sysctl_handler_common(bool obey_mempolicy,
 	int ret;
 
 	if (!hugepages_supported())
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	table->data = &tmp;
 	table->maxlen = sizeof(unsigned long);
@@ -3518,12 +3518,12 @@ int hugetlb_overcommit_handler(struct ctl_table *table, int write,
 	int ret;
 
 	if (!hugepages_supported())
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	tmp = h->nr_overcommit_huge_pages;
 
 	if (write && hstate_is_gigantic(h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	table->data = &tmp;
 	table->maxlen = sizeof(unsigned long);
@@ -3709,7 +3709,7 @@ static void hugetlb_vm_op_close(struct vm_area_struct *vma)
 static int hugetlb_vm_op_split(struct vm_area_struct *vma, unsigned long addr)
 {
 	if (addr & ~(huge_page_mask(hstate_vma(vma))))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -4703,7 +4703,7 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm,
 
 		/* fallback to copy_from_user outside mmap_lock */
 		if (unlikely(ret)) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			*pagep = page;
 			/* don't free the page */
 			goto out;
@@ -4760,7 +4760,7 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm,
 	if (idx >= size)
 		goto out_release_unlock;
 
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (!huge_pte_none(huge_ptep_get(dst_pte)))
 		goto out_release_unlock;
 
@@ -5094,7 +5094,7 @@ int hugetlb_reserve_pages(struct inode *inode,
 	/* This should never happen */
 	if (from > to) {
 		VM_WARN(1, "%s called with a negative range\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -5160,7 +5160,7 @@ int hugetlb_reserve_pages(struct inode *inode,
 	 */
 	gbl_reserve = hugepage_subpool_get_pages(spool, chg);
 	if (gbl_reserve < 0) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out_uncharge_cgroup;
 	}
 
@@ -5516,7 +5516,7 @@ struct page * __weak
 follow_huge_addr(struct mm_struct *mm, unsigned long address,
 			      int write)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 struct page * __weak

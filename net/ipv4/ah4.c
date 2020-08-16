@@ -94,7 +94,7 @@ static int ip_clear_mutable_options(const struct iphdr *iph, __be32 *daddr)
 		}
 		optlen = optptr[1];
 		if (optlen<2 || optlen>l)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		switch (*optptr) {
 		case IPOPT_SEC:
 		case 0x85:	/* Some "Extended Security" crap. */
@@ -105,7 +105,7 @@ static int ip_clear_mutable_options(const struct iphdr *iph, __be32 *daddr)
 		case IPOPT_LSRR:
 		case IPOPT_SSRR:
 			if (optlen < 6)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			memcpy(daddr, optptr+optlen-4, 4);
 			fallthrough;
 		default:
@@ -281,7 +281,7 @@ static void ah_input_done(struct crypto_async_request *base, int err)
 	auth_data = ah_tmp_auth(work_iph, ihl);
 	icv = ah_tmp_icv(ahp->ahash, auth_data, ahp->icv_trunc_len);
 
-	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
+	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -ERR(EBADMSG) : 0;
 	if (err)
 		goto out;
 
@@ -419,7 +419,7 @@ static int ah_input(struct xfrm_state *x, struct sk_buff *skb)
 		goto out_free;
 	}
 
-	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -EBADMSG : 0;
+	err = crypto_memneq(icv, auth_data, ahp->icv_trunc_len) ? -ERR(EBADMSG) : 0;
 	if (err)
 		goto out_free;
 
@@ -533,7 +533,7 @@ error:
 		crypto_free_ahash(ahp->ahash);
 		kfree(ahp);
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void ah_destroy(struct xfrm_state *x)
@@ -576,12 +576,12 @@ static int __init ah4_init(void)
 {
 	if (xfrm_register_type(&ah_type, AF_INET) < 0) {
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	if (xfrm4_protocol_register(&ah4_protocol, IPPROTO_AH) < 0) {
 		pr_info("%s: can't add protocol\n", __func__);
 		xfrm_unregister_type(&ah_type, AF_INET);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	return 0;
 }

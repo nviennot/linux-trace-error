@@ -1177,7 +1177,7 @@ static int aic3x_hw_params(struct snd_pcm_substream *substream,
 
 	if (last_clk == 0) {
 		printk(KERN_ERR "%s(): unable to setup PLL\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 found:
@@ -1280,7 +1280,7 @@ static int aic3x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface_areg &= ~BIT_CLK_MASTER;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1302,7 +1302,7 @@ static int aic3x_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface_breg |= (0x03 << 6);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	aic3x->dai_fmt = fmt & SND_SOC_DAIFMT_FORMAT_MASK;
@@ -1324,19 +1324,19 @@ static int aic3x_set_dai_tdm_slot(struct snd_soc_dai *codec_dai,
 
 	if (tx_mask != rx_mask) {
 		dev_err(component->dev, "tx and rx masks must be symmetric\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (unlikely(!tx_mask)) {
 		dev_err(component->dev, "tx and rx masks need to be non 0\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* TDM based on DSP mode requires slots to be adjacent */
 	lsb = __ffs(tx_mask);
 	if ((lsb + 1) != __fls(tx_mask)) {
 		dev_err(component->dev, "Invalid mask, slots must be adjacent\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (slot_width) {
@@ -1347,7 +1347,7 @@ static int aic3x_set_dai_tdm_slot(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported slot width %d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 

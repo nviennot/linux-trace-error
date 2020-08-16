@@ -102,7 +102,7 @@ int rds_tcp_conn_path_connect(struct rds_conn_path *cp)
 	 * the handshake probe has determined the number of paths.
 	 */
 	if (cp->cp_index > 0 && cp->cp_conn->c_npaths < 2)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	mutex_lock(&tc->t_conn_path_lock);
 

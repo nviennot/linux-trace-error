@@ -159,9 +159,9 @@ static inline int __hfs_ext_read_extent(struct hfs_find_data *fd, struct hfs_ext
 		return res;
 	if (fd->key->ext.FNum != fd->search_key->ext.FNum ||
 	    fd->key->ext.FkType != fd->search_key->ext.FkType)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (fd->entrylength != sizeof(hfs_extent_rec))
-		return -EIO;
+		return -ERR(EIO);
 	hfs_bnode_read(fd->bnode, extent, fd->entryoffset, sizeof(hfs_extent_rec));
 	return 0;
 }
@@ -230,7 +230,7 @@ static int hfs_add_extent(struct hfs_extent *extent, u16 offset,
 			start = be16_to_cpu(extent->block);
 			if (alloc_block != start + count) {
 				if (++i >= 3)
-					return -ENOSPC;
+					return -ERR(ENOSPC);
 				extent++;
 				extent->block = cpu_to_be16(alloc_block);
 			} else
@@ -242,7 +242,7 @@ static int hfs_add_extent(struct hfs_extent *extent, u16 offset,
 		offset -= count;
 	}
 	/* panic? */
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int hfs_free_extents(struct super_block *sb, struct hfs_extent *extent,
@@ -261,7 +261,7 @@ static int hfs_free_extents(struct super_block *sb, struct hfs_extent *extent,
 		offset -= count;
 	}
 	/* panic? */
-	return -EIO;
+	return -ERR(EIO);
 found:
 	for (;;) {
 		start = be16_to_cpu(extent->block);
@@ -348,7 +348,7 @@ int hfs_get_block(struct inode *inode, sector_t block,
 		if (!create)
 			return 0;
 		if (block > HFS_I(inode)->fs_blocks)
-			return -EIO;
+			return -ERR(EIO);
 		if (ablock >= HFS_I(inode)->alloc_blocks) {
 			res = hfs_extend_file(inode);
 			if (res)
@@ -369,7 +369,7 @@ int hfs_get_block(struct inode *inode, sector_t block,
 					    ablock - HFS_I(inode)->cached_start);
 	else {
 		mutex_unlock(&HFS_I(inode)->extents_lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	mutex_unlock(&HFS_I(inode)->extents_lock);
 
@@ -407,7 +407,7 @@ int hfs_extend_file(struct inode *inode)
 	len = HFS_I(inode)->clump_blocks;
 	start = hfs_vbm_search_free(sb, goal, &len);
 	if (!len) {
-		res = -ENOSPC;
+		res = -ERR(ENOSPC);
 		goto out;
 	}
 

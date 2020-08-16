@@ -775,7 +775,7 @@ void __init ima_init_policy(void)
 int ima_check_policy(void)
 {
 	if (list_empty(&ima_temp_rules))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return 0;
 }
 
@@ -873,7 +873,7 @@ static int ima_lsm_rule_init(struct ima_rule_entry *entry,
 	int result;
 
 	if (entry->lsm[lsm_rule].rule)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	entry->lsm[lsm_rule].args_p = match_strdup(args);
 	if (!entry->lsm[lsm_rule].args_p)
@@ -890,7 +890,7 @@ static int ima_lsm_rule_init(struct ima_rule_entry *entry,
 
 		if (ima_rules == &ima_default_rules) {
 			kfree(entry->lsm[lsm_rule].args_p);
-			result = -EINVAL;
+			result = -ERR(EINVAL);
 		} else
 			result = 0;
 	}
@@ -982,7 +982,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "measure");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = MEASURE;
 			break;
@@ -990,7 +990,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "dont_measure");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = DONT_MEASURE;
 			break;
@@ -998,7 +998,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "appraise");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = APPRAISE;
 			break;
@@ -1006,7 +1006,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "dont_appraise");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = DONT_APPRAISE;
 			break;
@@ -1014,7 +1014,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "audit");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = AUDIT;
 			break;
@@ -1022,7 +1022,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "hash");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = HASH;
 			break;
@@ -1030,7 +1030,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "action", "dont_hash");
 
 			if (entry->action != UNKNOWN)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			entry->action = DONT_HASH;
 			break;
@@ -1038,7 +1038,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "func", args[0].from);
 
 			if (entry->func)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			if (strcmp(args[0].from, "FILE_CHECK") == 0)
 				entry->func = FILE_CHECK;
@@ -1069,7 +1069,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			else if (strcmp(args[0].from, "KEY_CHECK") == 0)
 				entry->func = KEY_CHECK;
 			else
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 			if (!result)
 				entry->flags |= IMA_FUNC;
 			break;
@@ -1077,7 +1077,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "mask", args[0].from);
 
 			if (entry->mask)
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 
 			from = args[0].from;
 			if (*from == '^')
@@ -1092,7 +1092,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			else if (strcmp(from, "MAY_APPEND") == 0)
 				entry->mask = MAY_APPEND;
 			else
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 			if (!result)
 				entry->flags |= (*args[0].from == '^')
 				     ? IMA_INMASK : IMA_MASK;
@@ -1101,7 +1101,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "fsmagic", args[0].from);
 
 			if (entry->fsmagic) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1129,7 +1129,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			    (entry->action != MEASURE) ||
 			    (entry->func != KEY_CHECK) ||
 			    (keyrings_len < 2)) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1162,7 +1162,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			ima_log_string(ab, "fsuuid", args[0].from);
 
 			if (!uuid_is_null(&entry->fsuuid)) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1189,7 +1189,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 					  args[0].from, entry->uid_op);
 
 			if (uid_valid(entry->uid)) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1199,7 +1199,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 						       (uid_t) lnum);
 				if (!uid_valid(entry->uid) ||
 				    (uid_t)lnum != lnum)
-					result = -EINVAL;
+					result = -ERR(EINVAL);
 				else
 					entry->flags |= uid_token
 					    ? IMA_UID : IMA_EUID;
@@ -1217,7 +1217,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 					  entry->fowner_op);
 
 			if (uid_valid(entry->fowner)) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1225,7 +1225,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			if (!result) {
 				entry->fowner = make_kuid(current_user_ns(), (uid_t)lnum);
 				if (!uid_valid(entry->fowner) || (((uid_t)lnum) != lnum))
-					result = -EINVAL;
+					result = -ERR(EINVAL);
 				else
 					entry->flags |= IMA_FOWNER;
 			}
@@ -1268,7 +1268,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			break;
 		case Opt_appraise_type:
 			if (entry->action != APPRAISE) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1280,7 +1280,7 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 				entry->flags |= IMA_DIGSIG_REQUIRED |
 						IMA_MODSIG_ALLOWED;
 			else
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 			break;
 		case Opt_appraise_flag:
 			ima_log_string(ab, "appraise_flag", args[0].from);
@@ -1292,14 +1292,14 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			break;
 		case Opt_pcr:
 			if (entry->action != MEASURE) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 			ima_log_string(ab, "pcr", args[0].from);
 
 			result = kstrtoint(args[0].from, 10, &entry->pcr);
 			if (result || INVALID_PCR(entry->pcr))
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 			else
 				entry->flags |= IMA_PCR;
 
@@ -1307,12 +1307,12 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 		case Opt_template:
 			ima_log_string(ab, "template", args[0].from);
 			if (entry->action != MEASURE) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 			template_desc = lookup_template_desc(args[0].from);
 			if (!template_desc || entry->template) {
-				result = -EINVAL;
+				result = -ERR(EINVAL);
 				break;
 			}
 
@@ -1328,12 +1328,12 @@ static int ima_parse_rule(char *rule, struct ima_rule_entry *entry)
 			break;
 		case Opt_err:
 			ima_log_string(ab, "UNKNOWN", p);
-			result = -EINVAL;
+			result = -ERR(EINVAL);
 			break;
 		}
 	}
 	if (!result && (entry->action == UNKNOWN))
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	else if (entry->action == APPRAISE)
 		temp_ima_appraise |= ima_appraise_flag(entry->func);
 

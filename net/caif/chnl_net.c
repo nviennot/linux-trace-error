@@ -77,7 +77,7 @@ static int chnl_recv_cb(struct cflayer *layr, struct cfpkt *pkt)
 
 	priv = container_of(layr, struct chnl_net, chnl);
 	if (!priv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb = (struct sk_buff *) cfpkt_tonative(pkt);
 
@@ -93,7 +93,7 @@ static int chnl_recv_cb(struct cflayer *layr, struct cfpkt *pkt)
 	ip_version = skb_header_pointer(skb, 0, 1, &buf);
 	if (!ip_version) {
 		kfree_skb(skb);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (*ip_version >> 4) {
@@ -106,7 +106,7 @@ static int chnl_recv_cb(struct cflayer *layr, struct cfpkt *pkt)
 	default:
 		kfree_skb(skb);
 		priv->netdev->stats.rx_errors++;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* If we change the header in loop mode, the checksum is corrupted. */
@@ -267,7 +267,7 @@ static int chnl_net_open(struct net_device *dev)
 	priv = netdev_priv(dev);
 	if (!priv) {
 		pr_debug("chnl_net_open: no priv\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (priv->state != CAIF_CONNECTING) {
@@ -287,7 +287,7 @@ static int chnl_net_open(struct net_device *dev)
 
 		if (lldev == NULL) {
 			pr_debug("no interface?\n");
-			result = -ENODEV;
+			result = -ERR(ENODEV);
 			goto error;
 		}
 
@@ -308,7 +308,7 @@ static int chnl_net_open(struct net_device *dev)
 
 		if (mtu < 100) {
 			pr_warn("CAIF Interface MTU too small (%d)\n", mtu);
-			result = -ENODEV;
+			result = -ERR(ENODEV);
 			goto error;
 		}
 	}
@@ -323,7 +323,7 @@ static int chnl_net_open(struct net_device *dev)
 
 	if (result == -ERESTARTSYS) {
 		pr_debug("wait_event_interruptible woken by a signal\n");
-		result = -ERESTARTSYS;
+		result = -ERR(ERESTARTSYS);
 		goto error;
 	}
 
@@ -332,13 +332,13 @@ static int chnl_net_open(struct net_device *dev)
 		caif_disconnect_client(dev_net(dev), &priv->chnl);
 		priv->state = CAIF_DISCONNECTED;
 		pr_debug("state disconnected\n");
-		result = -ETIMEDOUT;
+		result = -ERR(ETIMEDOUT);
 		goto error;
 	}
 
 	if (priv->state != CAIF_CONNECTED) {
 		pr_debug("connect failed\n");
-		result = -ECONNREFUSED;
+		result = -ERR(ECONNREFUSED);
 		goto error;
 	}
 	pr_debug("CAIF Netdevice connected\n");
@@ -435,7 +435,7 @@ static int ipcaif_fill_info(struct sk_buff *skb, const struct net_device *dev)
 		goto nla_put_failure;
 	return 0;
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 
 }
 

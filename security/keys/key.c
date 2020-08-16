@@ -232,7 +232,7 @@ struct key *key_alloc(struct key_type *type, const char *desc,
 	size_t desclen, quotalen;
 	int ret;
 
-	key = ERR_PTR(-EINVAL);
+	key = ERR_PTR(-ERR(EINVAL));
 	if (!desc || !*desc)
 		goto error;
 
@@ -351,7 +351,7 @@ no_memory_1:
 no_quota:
 	spin_unlock(&user->lock);
 	key_user_put(user);
-	key = ERR_PTR(-EDQUOT);
+	key = ERR_PTR(-ERR(EDQUOT));
 	goto error;
 }
 EXPORT_SYMBOL(key_alloc);
@@ -384,7 +384,7 @@ int key_payload_reserve(struct key *key, size_t datalen)
 		if (delta > 0 &&
 		    (key->user->qnbytes + delta > maxbytes ||
 		     key->user->qnbytes + delta < key->user->qnbytes)) {
-			ret = -EDQUOT;
+			ret = -ERR(EDQUOT);
 		}
 		else {
 			key->user->qnbytes += delta;
@@ -431,7 +431,7 @@ static int __key_instantiate_and_link(struct key *key,
 	key_check(keyring);
 
 	awaken = 0;
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 
 	mutex_lock(&key_construction_mutex);
 
@@ -581,11 +581,11 @@ int key_reject_and_link(struct key *key,
 	key_check(keyring);
 
 	awaken = 0;
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 
 	if (keyring) {
 		if (keyring->restrict_link)
-			return -EPERM;
+			return -ERR(EPERM);
 
 		link_ret = __key_link_lock(keyring, &key->index_key);
 		if (link_ret == 0) {
@@ -676,7 +676,7 @@ struct key *key_lookup(key_serial_t id)
 	}
 
 not_found:
-	key = ERR_PTR(-ENOKEY);
+	key = ERR_PTR(-ERR(ENOKEY));
 	goto error;
 
 found:
@@ -711,7 +711,7 @@ struct key_type *key_type_lookup(const char *type)
 	}
 
 	up_read(&key_types_sem);
-	ktype = ERR_PTR(-ENOKEY);
+	ktype = ERR_PTR(-ERR(ENOKEY));
 
 found_kernel_type:
 	return ktype;
@@ -759,7 +759,7 @@ static inline key_ref_t __key_update(key_ref_t key_ref,
 	if (ret < 0)
 		goto error;
 
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (!key->type->update)
 		goto error;
 
@@ -833,11 +833,11 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	 * types */
 	index_key.type = key_type_lookup(type);
 	if (IS_ERR(index_key.type)) {
-		key_ref = ERR_PTR(-ENODEV);
+		key_ref = ERR_PTR(-ERR(ENODEV));
 		goto error;
 	}
 
-	key_ref = ERR_PTR(-EINVAL);
+	key_ref = ERR_PTR(-ERR(EINVAL));
 	if (!index_key.type->instantiate ||
 	    (!index_key.description && !index_key.type->preparse))
 		goto error_put_type;
@@ -849,7 +849,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 	if (!(flags & KEY_ALLOC_BYPASS_RESTRICTION))
 		restrict_link = keyring->restrict_link;
 
-	key_ref = ERR_PTR(-ENOTDIR);
+	key_ref = ERR_PTR(-ERR(ENOTDIR));
 	if (keyring->type != &key_type_keyring)
 		goto error_put_type;
 
@@ -866,7 +866,7 @@ key_ref_t key_create_or_update(key_ref_t keyring_ref,
 		}
 		if (!index_key.description)
 			index_key.description = prep.description;
-		key_ref = ERR_PTR(-EINVAL);
+		key_ref = ERR_PTR(-ERR(EINVAL));
 		if (!index_key.description)
 			goto error_free_prep;
 	}
@@ -1011,7 +1011,7 @@ int key_update(key_ref_t key_ref, const void *payload, size_t plen)
 
 	/* attempt to update it if supported */
 	if (!key->type->update)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(&prep, 0, sizeof(prep));
 	prep.data = payload;
@@ -1151,7 +1151,7 @@ int register_key_type(struct key_type *ktype)
 
 	memset(&ktype->lock_class, 0, sizeof(ktype->lock_class));
 
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	down_write(&key_types_sem);
 
 	/* disallow key types with the same name */

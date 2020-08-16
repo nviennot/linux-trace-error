@@ -34,7 +34,7 @@ static __le32 sctp_gso_make_checksum(struct sk_buff *skb)
 static struct sk_buff *sctp_gso_segment(struct sk_buff *skb,
 					netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	struct sctphdr *sh;
 
 	if (!skb_is_gso_sctp(skb))

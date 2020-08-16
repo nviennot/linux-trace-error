@@ -26,7 +26,7 @@
 static int dummy_ipv6_recv_error(struct sock *sk, struct msghdr *msg, int len,
 				 int *addr_len)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 static void dummy_ip6_datagram_recv_ctl(struct sock *sk, struct msghdr *msg,
 				       struct sk_buff *skb)
@@ -34,7 +34,7 @@ static void dummy_ip6_datagram_recv_ctl(struct sock *sk, struct msghdr *msg,
 }
 static int dummy_icmpv6_err_convert(u8 type, u8 code, int *err)
 {
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 static void dummy_ipv6_icmp_error(struct sock *sk, struct sk_buff *skb, int err,
 				  __be16 port, u32 info, u8 *payload) {}
@@ -69,16 +69,16 @@ static int ping_v6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	if (msg->msg_name) {
 		DECLARE_SOCKADDR(struct sockaddr_in6 *, u, msg->msg_name);
 		if (msg->msg_namelen < sizeof(*u))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (u->sin6_family != AF_INET6) {
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 		}
 		daddr = &(u->sin6_addr);
 		if (__ipv6_addr_needs_scope_id(ipv6_addr_type(daddr)))
 			oif = u->sin6_scope_id;
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 		daddr = &sk->sk_v6_daddr;
 	}
 
@@ -97,7 +97,7 @@ static int ping_v6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	if ((__ipv6_addr_needs_scope_id(addr_type) && !oif) ||
 	    (addr_type & IPV6_ADDR_MAPPED) ||
 	    (oif && sk->sk_bound_dev_if && oif != sk->sk_bound_dev_if))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* TODO: use ip6_datagram_send_ctl to get options from cmsg */
 

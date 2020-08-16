@@ -120,7 +120,7 @@ static int mall_replace_hw_filter(struct tcf_proto *tp,
 	}
 
 	if (skip_sw && !(head->flags & TCA_CLS_FLAGS_IN_HW))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -193,10 +193,10 @@ static int mall_change(struct net *net, struct sk_buff *in_skb,
 	int err;
 
 	if (!tca[TCA_OPTIONS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (head)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	err = nla_parse_nested_deprecated(tb, TCA_MATCHALL_MAX,
 					  tca[TCA_OPTIONS], mall_policy, NULL);
@@ -206,12 +206,12 @@ static int mall_change(struct net *net, struct sk_buff *in_skb,
 	if (tb[TCA_MATCHALL_FLAGS]) {
 		flags = nla_get_u32(tb[TCA_MATCHALL_FLAGS]);
 		if (!tc_flags_valid(flags))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	new = kzalloc(sizeof(*new), GFP_KERNEL);
 	if (!new)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_exts_init(&new->exts, net, TCA_MATCHALL_ACT, 0);
 	if (err)

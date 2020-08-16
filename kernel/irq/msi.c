@@ -144,7 +144,7 @@ static int msi_domain_alloc(struct irq_domain *domain, unsigned int virq,
 	int i, ret;
 
 	if (irq_find_mapping(domain, hwirq) > 0)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (domain->parent) {
 		ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs, arg);
@@ -323,7 +323,7 @@ int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
 	for_each_msi_entry(desc, dev) {
 		/* Don't even try the multi-MSI brain damage. */
 		if (WARN_ON(!desc->irq || desc->nvec_used != 1)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -418,7 +418,7 @@ int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
 					       dev_to_node(dev), &arg, false,
 					       desc->affinity);
 		if (virq < 0) {
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 			if (ops->handle_error)
 				ret = ops->handle_error(domain, desc, ret);
 			if (ops->msi_finish)

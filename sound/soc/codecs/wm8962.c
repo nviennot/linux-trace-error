@@ -1849,7 +1849,7 @@ static int cp_event(struct snd_soc_dapm_widget *w,
 
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1941,7 +1941,7 @@ static int hp_event(struct snd_soc_dapm_widget *w,
 
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	
 	}
 
@@ -1970,7 +1970,7 @@ static int out_pga_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Invalid shift %d\n", w->shift);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (event) {
@@ -1978,7 +1978,7 @@ static int out_pga_event(struct snd_soc_dapm_widget *w,
 		return snd_soc_component_write(component, reg, snd_soc_component_read32(component, reg));
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -2001,7 +2001,7 @@ static int dsp2_event(struct snd_soc_dapm_widget *w,
 
 	default:
 		WARN(1, "Invalid event %d\n", event);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2571,7 +2571,7 @@ static int wm8962_hw_params(struct snd_pcm_substream *substream,
 	}
 	if (i == ARRAY_SIZE(sr_vals)) {
 		dev_err(component->dev, "Unsupported rate %dHz\n", wm8962->lrclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wm8962->lrclk % 8000 == 0)
@@ -2590,7 +2590,7 @@ static int wm8962_hw_params(struct snd_pcm_substream *substream,
 		aif0 |= 0xc;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8962_AUDIO_INTERFACE_0,
@@ -2625,7 +2625,7 @@ static int wm8962_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		src = 1 << WM8962_SYSCLK_SRC_SHIFT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8962_CLOCKING2, WM8962_SYSCLK_SRC_MASK,
@@ -2653,7 +2653,7 @@ static int wm8962_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		case SND_SOC_DAIFMT_IB_NF:
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 
@@ -2666,7 +2666,7 @@ static int wm8962_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif0 |= 2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -2682,7 +2682,7 @@ static int wm8962_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		aif0 |= WM8962_BCLK_INV | WM8962_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -2692,7 +2692,7 @@ static int wm8962_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8962_AUDIO_INTERFACE_0,
@@ -2746,7 +2746,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 4) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2762,7 +2762,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 64) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * div;
@@ -2780,7 +2780,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fll_div->n = target / (fratio * Fref);
@@ -2854,7 +2854,7 @@ static int wm8962_set_fll(struct snd_soc_component *component, int fll_id, int s
 		break;
 	default:
 		dev_err(component->dev, "Unknown FLL source %d\n", ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fll_div.theta)
@@ -2907,7 +2907,7 @@ static int wm8962_set_fll(struct snd_soc_component *component, int fll_id, int s
 		snd_soc_component_update_bits(component, WM8962_FLL_CONTROL_1,
 				    WM8962_FLL_ENA, 0);
 		pm_runtime_put(component->dev);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	wm8962->fll_fref = Fref;
@@ -3320,7 +3320,7 @@ static int wm8962_gpio_request(struct gpio_chip *chip, unsigned offset)
 	case 6:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm8962_set_gpio_mode(wm8962, offset + 1);
@@ -3607,7 +3607,7 @@ static int wm8962_i2c_probe(struct i2c_client *i2c,
 	if (reg != 0x6243) {
 		dev_err(&i2c->dev,
 			"Device is not a WM8962, ID %x != 0x6243\n", reg);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_enable;
 	}
 

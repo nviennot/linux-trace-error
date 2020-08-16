@@ -253,7 +253,7 @@ static int atmel_ssc_hw_rule_rate(struct snd_pcm_hw_params *params,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -315,7 +315,7 @@ static int atmel_ssc_startup(struct snd_pcm_substream *substream,
 	snd_soc_dai_set_dma_data(dai, substream, dma_params);
 
 	if (ssc_p->dir_mask & dir_mask)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ssc_p->dir_mask |= dir_mask;
 
@@ -405,7 +405,7 @@ static int atmel_ssc_set_dai_clkdiv(struct snd_soc_dai *cpu_dai,
 			ssc_p->cmr_div = div;
 		else
 			if (div != ssc_p->cmr_div)
-				return -EBUSY;
+				return -ERR(EBUSY);
 		ssc_p->forced_divider |= BIT(ATMEL_SSC_CMR_DIV);
 		break;
 
@@ -420,7 +420,7 @@ static int atmel_ssc_set_dai_clkdiv(struct snd_soc_dai *cpu_dai,
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -544,7 +544,7 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		printk(KERN_WARNING "atmel_ssc_dai: unsupported PCM format");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -594,7 +594,7 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 	default:
 		printk(KERN_WARNING "atmel_ssc_dai: unsupported DAI format 0x%x\n",
 			ssc_p->daifmt);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!atmel_ssc_cfs(ssc_p)) {
@@ -657,7 +657,7 @@ static int atmel_ssc_hw_params(struct snd_pcm_substream *substream,
 	if (fslen_ext && !ssc->pdata->has_fslen_ext) {
 		dev_err(dai->dev, "sample size %d is too large for SSC device\n",
 			bits);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pr_debug("atmel_ssc_hw_params: "

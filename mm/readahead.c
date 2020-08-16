@@ -637,7 +637,7 @@ ssize_t ksys_readahead(int fd, loff_t offset, size_t count)
 	ssize_t ret;
 	struct fd f;
 
-	ret = -EBADF;
+	ret = -ERR(EBADF);
 	f = fdget(fd);
 	if (!f.file || !(f.file->f_mode & FMODE_READ))
 		goto out;
@@ -647,7 +647,7 @@ ssize_t ksys_readahead(int fd, loff_t offset, size_t count)
 	 * that can execute readahead. If readahead is not possible
 	 * on this file, then we must return -EINVAL.
 	 */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!f.file->f_mapping || !f.file->f_mapping->a_ops ||
 	    !S_ISREG(file_inode(f.file)->i_mode))
 		goto out;

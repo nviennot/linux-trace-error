@@ -245,11 +245,11 @@ int snmp6_register_dev(struct inet6_dev *idev)
 	struct net *net;
 
 	if (!idev || !idev->dev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	net = dev_net(idev->dev);
 	if (!net->mib.proc_net_devsnmp6)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	p = proc_create_single_data(idev->dev->name, 0444,
 			net->mib.proc_net_devsnmp6, snmp6_dev_seq_show, idev);
@@ -264,9 +264,9 @@ int snmp6_unregister_dev(struct inet6_dev *idev)
 {
 	struct net *net = dev_net(idev->dev);
 	if (!net->mib.proc_net_devsnmp6)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (!idev->stats.proc_dir_entry)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	proc_remove(idev->stats.proc_dir_entry);
 	idev->stats.proc_dir_entry = NULL;
 	return 0;

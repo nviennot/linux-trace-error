@@ -60,7 +60,7 @@ static struct buffer_head *ext4_append(handle_t *handle,
 	if (unlikely(EXT4_SB(inode->i_sb)->s_max_dir_size_kb &&
 		     ((inode->i_size >> 10) >=
 		      EXT4_SB(inode->i_sb)->s_max_dir_size_kb)))
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	*block = inode->i_size >> inode->i_sb->s_blocksize_bits;
 
@@ -110,7 +110,7 @@ static struct buffer_head *__ext4_read_dirblock(struct inode *inode,
 	int is_dx_block = 0;
 
 	if (ext4_simulate_fail(inode->i_sb, EXT4_SIM_DIRBLOCK_EIO))
-		bh = ERR_PTR(-EIO);
+		bh = ERR_PTR(-ERR(EIO));
 	else
 		bh = ext4_bread(NULL, inode, block, 0);
 	if (IS_ERR(bh)) {
@@ -1153,7 +1153,7 @@ int ext4_htree_fill_tree(struct file *dir_file, __u32 start_hash,
 
 	while (1) {
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto errout;
 		}
 		cond_resched();
@@ -1300,7 +1300,7 @@ int ext4_ci_compare(const struct inode *parent, const struct qstr *name,
 		 * or as an opaque byte sequence.
 		 */
 		if (ext4_has_strict_mode(sbi))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (name->len != entry->len)
 			return 1;
@@ -1536,7 +1536,7 @@ restart:
 					     "reading directory lblock %lu",
 					     (unsigned long) block);
 			brelse(bh);
-			ret = ERR_PTR(-EIO);
+			ret = ERR_PTR(-ERR(EIO));
 			goto cleanup_and_exit;
 		}
 		if (!buffer_verified(bh) &&
@@ -1686,7 +1686,7 @@ static struct dentry *ext4_lookup(struct inode *dir, struct dentry *dentry, unsi
 	struct buffer_head *bh;
 
 	if (dentry->d_name.len > EXT4_NAME_LEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	bh = ext4_lookup_entry(dir, dentry, &de);
 	if (IS_ERR(bh))
@@ -1718,7 +1718,7 @@ static struct dentry *ext4_lookup(struct inode *dir, struct dentry *dentry, unsi
 				     "Inconsistent encryption contexts: %lu/%lu",
 				     dir->i_ino, inode->i_ino);
 			iput(inode);
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 		}
 	}
 
@@ -1747,7 +1747,7 @@ struct dentry *ext4_get_parent(struct dentry *child)
 	if (IS_ERR(bh))
 		return ERR_CAST(bh);
 	if (!bh)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	ino = le32_to_cpu(de->inode);
 	brelse(bh);
 
@@ -1939,7 +1939,7 @@ int ext4_find_dest_de(struct inode *dir, struct inode *inode,
 					 buf, buf_size, offset))
 			return -EFSCORRUPTED;
 		if (ext4_match(dir, fname, de))
-			return -EEXIST;
+			return -ERR(EEXIST);
 		nlen = EXT4_DIR_REC_LEN(de->name_len);
 		rlen = ext4_rec_len_from_disk(de->rec_len, buf_size);
 		if ((de->inode ? rlen - nlen : rlen) >= reclen)
@@ -1948,7 +1948,7 @@ int ext4_find_dest_de(struct inode *dir, struct inode *inode,
 		offset += rlen;
 	}
 	if ((char *) de > top)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	*dest_de = de;
 	return 0;
@@ -2187,13 +2187,13 @@ static int ext4_add_entry(handle_t *handle, struct dentry *dentry,
 	sb = dir->i_sb;
 	blocksize = sb->s_blocksize;
 	if (!dentry->d_name.len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_UNICODE
 	sbi = EXT4_SB(sb);
 	if (ext4_has_strict_mode(sbi) && IS_CASEFOLDED(dir) &&
 	    sbi->s_encoding && utf8_validate(sbi->s_encoding, &dentry->d_name))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	retval = ext4_fname_setup_filename(dir, &dentry->d_name, 0, &fname);
@@ -2348,7 +2348,7 @@ again:
 						 "not enabled on this "
 						 "filesystem");
 			}
-			err = -ENOSPC;
+			err = -ERR(ENOSPC);
 			goto cleanup;
 		}
 		icount = dx_get_count(entries);
@@ -2491,7 +2491,7 @@ int ext4_generic_delete_entry(handle_t *handle,
 		pde = de;
 		de = ext4_next_entry(de, blocksize);
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int ext4_delete_entry(handle_t *handle,
@@ -2780,7 +2780,7 @@ static int ext4_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 	int err, err2 = 0, credits, retries = 0;
 
 	if (EXT4_DIR_LINK_MAX(dir))
-		return -EMLINK;
+		return -ERR(EMLINK);
 
 	err = dquot_initialize(dir);
 	if (err)
@@ -3097,7 +3097,7 @@ static int ext4_rmdir(struct inode *dir, struct dentry *dentry)
 	handle_t *handle = NULL;
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(dir->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Initialize quotas before so that eventual writes go in
 	 * separate transaction */
@@ -3108,7 +3108,7 @@ static int ext4_rmdir(struct inode *dir, struct dentry *dentry)
 	if (retval)
 		return retval;
 
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	bh = ext4_find_entry(dir, &dentry->d_name, &de, NULL);
 	if (IS_ERR(bh))
 		return PTR_ERR(bh);
@@ -3121,7 +3121,7 @@ static int ext4_rmdir(struct inode *dir, struct dentry *dentry)
 	if (le32_to_cpu(de->inode) != inode->i_ino)
 		goto end_rmdir;
 
-	retval = -ENOTEMPTY;
+	retval = -ERR(ENOTEMPTY);
 	if (!ext4_empty_dir(inode))
 		goto end_rmdir;
 
@@ -3186,7 +3186,7 @@ static int ext4_unlink(struct inode *dir, struct dentry *dentry)
 	handle_t *handle = NULL;
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(dir->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	trace_ext4_unlink_enter(dir, dentry);
 	/* Initialize quotas before so that eventual writes go
@@ -3198,7 +3198,7 @@ static int ext4_unlink(struct inode *dir, struct dentry *dentry)
 	if (retval)
 		return retval;
 
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	bh = ext4_find_entry(dir, &dentry->d_name, &de, NULL);
 	if (IS_ERR(bh))
 		return PTR_ERR(bh);
@@ -3269,7 +3269,7 @@ static int ext4_symlink(struct inode *dir,
 	struct fscrypt_str disk_link;
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(dir->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	err = fscrypt_prepare_symlink(dir, symname, len, dir->i_sb->s_blocksize,
 				      &disk_link);
@@ -3396,7 +3396,7 @@ static int ext4_link(struct dentry *old_dentry,
 	int err, retries = 0;
 
 	if (inode->i_nlink >= EXT4_LINK_MAX)
-		return -EMLINK;
+		return -ERR(EMLINK);
 
 	err = fscrypt_prepare_link(old_dentry, dir, dentry);
 	if (err)
@@ -3405,7 +3405,7 @@ static int ext4_link(struct dentry *old_dentry,
 	if ((ext4_test_inode_flag(dir, EXT4_INODE_PROJINHERIT)) &&
 	    (!projid_eq(EXT4_I(dir)->i_projid,
 			EXT4_I(old_dentry->d_inode)->i_projid)))
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	err = dquot_initialize(dir);
 	if (err)
@@ -3569,7 +3569,7 @@ static int ext4_setent(handle_t *handle, struct ext4_renament *ent,
 static int ext4_find_delete_entry(handle_t *handle, struct inode *dir,
 				  const struct qstr *d_name)
 {
-	int retval = -ENOENT;
+	int retval = -ERR(ENOENT);
 	struct buffer_head *bh;
 	struct ext4_dir_entry_2 *de;
 
@@ -3697,7 +3697,7 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	if ((ext4_test_inode_flag(new_dir, EXT4_INODE_PROJINHERIT)) &&
 	    (!projid_eq(EXT4_I(new_dir)->i_projid,
 			EXT4_I(old_dentry->d_inode)->i_projid)))
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	retval = dquot_initialize(old.dir);
 	if (retval)
@@ -3723,7 +3723,7 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 	 *  and merrily kill the link to whatever was created under the
 	 *  same name. Goodbye sticky bit ;-<
 	 */
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	if (!old.bh || le32_to_cpu(old.de->inode) != old.inode->i_ino)
 		goto end_rename;
 
@@ -3766,11 +3766,11 @@ static int ext4_rename(struct inode *old_dir, struct dentry *old_dentry,
 
 	if (S_ISDIR(old.inode->i_mode)) {
 		if (new.inode) {
-			retval = -ENOTEMPTY;
+			retval = -ERR(ENOTEMPTY);
 			if (!ext4_empty_dir(new.inode))
 				goto end_rename;
 		} else {
-			retval = -EMLINK;
+			retval = -ERR(EMLINK);
 			if (new.dir != old.dir && EXT4_DIR_LINK_MAX(new.dir))
 				goto end_rename;
 		}
@@ -3908,7 +3908,7 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
 	    (ext4_test_inode_flag(old_dir, EXT4_INODE_PROJINHERIT) &&
 	     !projid_eq(EXT4_I(old_dir)->i_projid,
 			EXT4_I(new_dentry->d_inode)->i_projid)))
-		return -EXDEV;
+		return -ERR(EXDEV);
 
 	retval = dquot_initialize(old.dir);
 	if (retval)
@@ -3927,7 +3927,7 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
 	 *  and merrily kill the link to whatever was created under the
 	 *  same name. Goodbye sticky bit ;-<
 	 */
-	retval = -ENOENT;
+	retval = -ERR(ENOENT);
 	if (!old.bh || le32_to_cpu(old.de->inode) != old.inode->i_ino)
 		goto end_rename;
 
@@ -3975,7 +3975,7 @@ static int ext4_cross_rename(struct inode *old_dir, struct dentry *old_dentry,
 	if (old.dir != new.dir && old.is_dir != new.is_dir) {
 		old.dir_nlink_delta = old.is_dir ? -1 : 1;
 		new.dir_nlink_delta = -old.dir_nlink_delta;
-		retval = -EMLINK;
+		retval = -ERR(EMLINK);
 		if ((old.dir_nlink_delta > 0 && EXT4_DIR_LINK_MAX(old.dir)) ||
 		    (new.dir_nlink_delta > 0 && EXT4_DIR_LINK_MAX(new.dir)))
 			goto end_rename;
@@ -4035,10 +4035,10 @@ static int ext4_rename2(struct inode *old_dir, struct dentry *old_dentry,
 	int err;
 
 	if (unlikely(ext4_forced_shutdown(EXT4_SB(old_dir->i_sb))))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (flags & ~(RENAME_NOREPLACE | RENAME_EXCHANGE | RENAME_WHITEOUT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = fscrypt_prepare_rename(old_dir, old_dentry, new_dir, new_dentry,
 				     flags);

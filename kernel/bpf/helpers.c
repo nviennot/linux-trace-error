@@ -172,7 +172,7 @@ BPF_CALL_0(bpf_get_current_pid_tgid)
 	struct task_struct *task = current;
 
 	if (unlikely(!task))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return (u64) task->tgid << 32 | task->pid;
 }
@@ -190,7 +190,7 @@ BPF_CALL_0(bpf_get_current_uid_gid)
 	kgid_t gid;
 
 	if (unlikely(!task))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	current_uid_gid(&uid, &gid);
 	return (u64) from_kgid(&init_user_ns, gid) << 32 |
@@ -416,13 +416,13 @@ static int __bpf_strtoull(const char *buf, size_t buf_len, u64 flags,
 	char str[64];
 
 	if (!buf || !buf_len || !res || !is_negative)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (base != 0 && base != 8 && base != 10 && base != 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (flags & ~BPF_STRTOX_BASE_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (cur_buf < buf + buf_len && isspace(*cur_buf))
 		++cur_buf;
@@ -434,7 +434,7 @@ static int __bpf_strtoull(const char *buf, size_t buf_len, u64 flags,
 	consumed = cur_buf - buf;
 	cur_len -= consumed;
 	if (!cur_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cur_len = min(cur_len, sizeof(str) - 1);
 	memcpy(str, cur_buf, cur_len);
@@ -445,10 +445,10 @@ static int __bpf_strtoull(const char *buf, size_t buf_len, u64 flags,
 	val_len = _parse_integer(cur_buf, base, res);
 
 	if (val_len & KSTRTOX_OVERFLOW)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (val_len == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cur_buf += val_len;
 	consumed += cur_buf - str;
@@ -468,11 +468,11 @@ static int __bpf_strtoll(const char *buf, size_t buf_len, u64 flags,
 		return err;
 	if (is_negative) {
 		if ((long long)-_res > 0)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		*res = -_res;
 	} else {
 		if ((long long)_res < 0)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		*res = _res;
 	}
 	return err;

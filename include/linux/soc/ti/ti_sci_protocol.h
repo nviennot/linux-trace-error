@@ -561,32 +561,32 @@ devm_ti_sci_get_of_resource(const struct ti_sci_handle *handle,
 
 static inline const struct ti_sci_handle *ti_sci_get_handle(struct device *dev)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline int ti_sci_put_handle(const struct ti_sci_handle *handle)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline
 const struct ti_sci_handle *devm_ti_sci_get_handle(struct device *dev)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline
 const struct ti_sci_handle *ti_sci_get_by_phandle(struct device_node *np,
 						  const char *property)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline
 const struct ti_sci_handle *devm_ti_sci_get_by_phandle(struct device *dev,
 						       const char *property)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 
 static inline u16 ti_sci_get_free_resource(struct ti_sci_resource *res)
@@ -607,7 +607,7 @@ static inline struct ti_sci_resource *
 devm_ti_sci_get_of_resource(const struct ti_sci_handle *handle,
 			    struct device *dev, u32 dev_id, char *of_prop)
 {
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 #endif	/* CONFIG_TI_SCI_PROTOCOL */
 

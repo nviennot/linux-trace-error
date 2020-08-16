@@ -362,7 +362,7 @@ static int __init mod_init(void)
 {
 	if (!IS_ENABLED(CONFIG_CRYPTO_MANAGER_DISABLE_TESTS) &&
 	    WARN_ON(!chacha20poly1305_selftest()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 	return 0;
 }
 

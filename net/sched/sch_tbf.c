@@ -353,7 +353,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 	if (err < 0)
 		return err;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[TCA_TBF_PARMS] == NULL)
 		goto done;
 
@@ -389,7 +389,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 		if (peak.rate_bytes_ps <= rate.rate_bytes_ps) {
 			pr_warn_ratelimited("sch_tbf: peakrate %llu is lower than or equals to rate %llu !\n",
 					peak.rate_bytes_ps, rate.rate_bytes_ps);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto done;
 		}
 
@@ -410,7 +410,7 @@ static int tbf_change(struct Qdisc *sch, struct nlattr *opt,
 				    psched_mtu(qdisc_dev(sch)));
 
 	if (!max_size) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -469,7 +469,7 @@ static int tbf_init(struct Qdisc *sch, struct nlattr *opt,
 	q->qdisc = &noop_qdisc;
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	q->t_c = ktime_get_ns();
 

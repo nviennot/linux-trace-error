@@ -480,7 +480,7 @@ int dquot_commit(struct dquot *dquot)
 	if (test_bit(DQ_ACTIVE_B, &dquot->dq_flags))
 		ret = dqopt->ops[dquot->dq_id.type]->commit_dqblk(dquot);
 	else
-		ret = -EIO;
+		ret = -ERR(EIO);
 out_lock:
 	mutex_unlock(&dquot->dq_lock);
 	return ret;
@@ -849,17 +849,17 @@ struct dquot *dqget(struct super_block *sb, struct kqid qid)
 	struct dquot *dquot, *empty = NULL;
 
 	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
         if (!sb_has_quota_active(sb, qid.type))
-		return ERR_PTR(-ESRCH);
+		return ERR_PTR(-ERR(ESRCH));
 we_slept:
 	spin_lock(&dq_list_lock);
 	spin_lock(&dq_state_lock);
 	if (!sb_has_quota_active(sb, qid.type)) {
 		spin_unlock(&dq_state_lock);
 		spin_unlock(&dq_list_lock);
-		dquot = ERR_PTR(-ESRCH);
+		dquot = ERR_PTR(-ERR(ESRCH));
 		goto out;
 	}
 	spin_unlock(&dq_state_lock);
@@ -1278,7 +1278,7 @@ static int dquot_add_inodes(struct dquot *dquot, qsize_t inodes,
 	    newinodes > dquot->dq_dqb.dqb_ihardlimit &&
             !ignore_hardlimit(dquot)) {
 		prepare_warning(warn, dquot, QUOTA_NL_IHARDWARN);
-		ret = -EDQUOT;
+		ret = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -1288,7 +1288,7 @@ static int dquot_add_inodes(struct dquot *dquot, qsize_t inodes,
 	    ktime_get_real_seconds() >= dquot->dq_dqb.dqb_itime &&
             !ignore_hardlimit(dquot)) {
 		prepare_warning(warn, dquot, QUOTA_NL_ISOFTLONGWARN);
-		ret = -EDQUOT;
+		ret = -ERR(EDQUOT);
 		goto out;
 	}
 
@@ -1328,7 +1328,7 @@ static int dquot_add_space(struct dquot *dquot, qsize_t space,
             !ignore_hardlimit(dquot)) {
 		if (flags & DQUOT_SPACE_WARN)
 			prepare_warning(warn, dquot, QUOTA_NL_BHARDWARN);
-		ret = -EDQUOT;
+		ret = -ERR(EDQUOT);
 		goto finish;
 	}
 
@@ -1339,7 +1339,7 @@ static int dquot_add_space(struct dquot *dquot, qsize_t space,
             !ignore_hardlimit(dquot)) {
 		if (flags & DQUOT_SPACE_WARN)
 			prepare_warning(warn, dquot, QUOTA_NL_BSOFTLONGWARN);
-		ret = -EDQUOT;
+		ret = -ERR(EDQUOT);
 		goto finish;
 	}
 
@@ -1355,7 +1355,7 @@ static int dquot_add_space(struct dquot *dquot, qsize_t space,
 			 * We don't allow preallocation to exceed softlimit so exceeding will
 			 * be always printed
 			 */
-			ret = -EDQUOT;
+			ret = -ERR(EDQUOT);
 			goto finish;
 		}
 	}
@@ -2126,9 +2126,9 @@ int dquot_get_next_id(struct super_block *sb, struct kqid *qid)
 	struct quota_info *dqopt = sb_dqopt(sb);
 
 	if (!sb_has_quota_active(sb, qid->type))
-		return -ESRCH;
+		return -ERR(ESRCH);
 	if (!dqopt->ops[qid->type]->get_next_id)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	return dqopt->ops[qid->type]->get_next_id(sb, qid);
 }
 EXPORT_SYMBOL(dquot_get_next_id);
@@ -2195,7 +2195,7 @@ int dquot_disable(struct super_block *sb, int type, unsigned int flags)
 	if ((flags & DQUOT_USAGE_ENABLED && !(flags & DQUOT_LIMITS_ENABLED))
 	    || (flags & DQUOT_SUSPENDED && flags & (DQUOT_LIMITS_ENABLED |
 	    DQUOT_USAGE_ENABLED)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Skip everything if there's nothing to do. We have to do this because
@@ -2304,15 +2304,15 @@ static int vfs_setup_quota_inode(struct inode *inode, int type)
 	struct quota_info *dqopt = sb_dqopt(sb);
 
 	if (!S_ISREG(inode->i_mode))
-		return -EACCES;
+		return -ERR(EACCES);
 	if (IS_RDONLY(inode))
-		return -EROFS;
+		return -ERR(EROFS);
 	if (sb_has_quota_loaded(sb, type))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dqopt->files[type] = igrab(inode);
 	if (!dqopt->files[type])
-		return -EIO;
+		return -ERR(EIO);
 	if (!(dqopt->flags & DQUOT_QUOTA_SYS_FILE)) {
 		/* We don't want quota and atime on quota files (deadlocks
 		 * possible) Also nobody should write to the file - we use
@@ -2343,24 +2343,24 @@ int dquot_load_quota_sb(struct super_block *sb, int type, int format_id,
 		up_read(&sb->s_umount);
 
 	if (!fmt)
-		return -ESRCH;
+		return -ERR(ESRCH);
 	if (!sb->s_op->quota_write || !sb->s_op->quota_read ||
 	    (type == PRJQUOTA && sb->dq_op->get_projid == NULL)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_fmt;
 	}
 	/* Filesystems outside of init_user_ns not yet supported */
 	if (sb->s_user_ns != &init_user_ns) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_fmt;
 	}
 	/* Usage always has to be set... */
 	if (!(flags & DQUOT_USAGE_ENABLED)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto out_fmt;
 	}
 	if (sb_has_quota_loaded(sb, type)) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto out_fmt;
 	}
 
@@ -2375,7 +2375,7 @@ int dquot_load_quota_sb(struct super_block *sb, int type, int format_id,
 		invalidate_bdev(sb->s_bdev);
 	}
 
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (!fmt->qf_ops->check_quota_file(sb, type))
 		goto out_fmt;
 
@@ -2469,7 +2469,7 @@ int dquot_quota_on(struct super_block *sb, int type, int format_id,
 		return error;
 	/* Quota file not on the same filesystem? */
 	if (path->dentry->d_sb != sb)
-		error = -EXDEV;
+		error = -ERR(EXDEV);
 	else
 		error = dquot_load_quota_inode(d_inode(path->dentry), type,
 					     format_id, DQUOT_USAGE_ENABLED |
@@ -2509,21 +2509,21 @@ static int dquot_quota_enable(struct super_block *sb, unsigned int flags)
 	struct quota_info *dqopt = sb_dqopt(sb);
 
 	if (!(dqopt->flags & DQUOT_QUOTA_SYS_FILE))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	/* Accounting cannot be turned on while fs is mounted */
 	flags &= ~(FS_QUOTA_UDQ_ACCT | FS_QUOTA_GDQ_ACCT | FS_QUOTA_PDQ_ACCT);
 	if (!flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	for (type = 0; type < MAXQUOTAS; type++) {
 		if (!(flags & qtype_enforce_flag(type)))
 			continue;
 		/* Can't enforce without accounting */
 		if (!sb_has_quota_usage_enabled(sb, type)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_err;
 		}
 		if (sb_has_quota_limits_enabled(sb, type)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out_err;
 		}
 		spin_lock(&dq_state_lock);
@@ -2539,7 +2539,7 @@ out_err:
 	}
 	/* Error code translation for better compatibility with XFS */
 	if (ret == -EBUSY)
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	return ret;
 }
 
@@ -2550,7 +2550,7 @@ static int dquot_quota_disable(struct super_block *sb, unsigned int flags)
 	struct quota_info *dqopt = sb_dqopt(sb);
 
 	if (!(dqopt->flags & DQUOT_QUOTA_SYS_FILE))
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	/*
 	 * We don't support turning off accounting via quotactl. In principle
 	 * quota infrastructure can do this but filesystems don't expect
@@ -2558,7 +2558,7 @@ static int dquot_quota_disable(struct super_block *sb, unsigned int flags)
 	 */
 	if (flags &
 		  (FS_QUOTA_UDQ_ACCT | FS_QUOTA_GDQ_ACCT | FS_QUOTA_PDQ_ACCT))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* Filter out limits not enabled */
 	for (type = 0; type < MAXQUOTAS; type++)
@@ -2566,7 +2566,7 @@ static int dquot_quota_disable(struct super_block *sb, unsigned int flags)
 			flags &= ~qtype_enforce_flag(type);
 	/* Nothing left? */
 	if (!flags)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	for (type = 0; type < MAXQUOTAS; type++) {
 		if (flags & qtype_enforce_flag(type)) {
 			ret = dquot_disable(sb, type, DQUOT_LIMITS_ENABLED);
@@ -2628,7 +2628,7 @@ int dquot_get_next_dqblk(struct super_block *sb, struct kqid *qid,
 	int err;
 
 	if (!sb->dq_op->get_next_id)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	err = sb->dq_op->get_next_id(sb, qid);
 	if (err < 0)
 		return err;
@@ -2655,7 +2655,7 @@ static int do_set_dqblk(struct dquot *dquot, struct qc_dqblk *di)
 	struct mem_dqinfo *dqi = &sb_dqopt(dquot->dq_sb)->info[dquot->dq_id.type];
 
 	if (di->d_fieldmask & ~VFS_QC_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (((di->d_fieldmask & QC_SPC_SOFT) &&
 	     di->d_spc_softlimit > dqi->dqi_max_spc_limit) ||
@@ -2665,7 +2665,7 @@ static int do_set_dqblk(struct dquot *dquot, struct qc_dqblk *di)
 	     (di->d_ino_softlimit > dqi->dqi_max_ino_limit)) ||
 	    ((di->d_fieldmask & QC_INO_HARD) &&
 	     (di->d_ino_hardlimit > dqi->dqi_max_ino_limit)))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	spin_lock(&dquot->dq_dqb_lock);
 	if (di->d_fieldmask & QC_SPACE) {
@@ -2800,14 +2800,14 @@ int dquot_set_dqinfo(struct super_block *sb, int type, struct qc_info *ii)
 
 	if ((ii->i_fieldmask & QC_WARNS_MASK) ||
 	    (ii->i_fieldmask & QC_RT_SPC_TIMER))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!sb_has_quota_active(sb, type))
-		return -ESRCH;
+		return -ERR(ESRCH);
 	mi = sb_dqopt(sb)->info + type;
 	if (ii->i_fieldmask & QC_FLAGS) {
 		if ((ii->i_flags & QCI_ROOT_SQUASH &&
 		     mi->dqi_format->qf_fmt_id != QFMT_VFS_OLD))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	spin_lock(&dq_data_lock);
 	if (ii->i_fieldmask & QC_SPC_TIMER)

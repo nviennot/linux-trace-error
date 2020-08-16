@@ -397,7 +397,7 @@ static inline struct ip6_flowlabel *fl6_sock_lookup(struct sock *sk,
 						    __be32 label)
 {
 	if (static_branch_unlikely(&ipv6_flowlabel_exclusive.key))
-		return __fl6_sock_lookup(sk, label) ? : ERR_PTR(-ENOENT);
+		return __fl6_sock_lookup(sk, label) ? : ERR_PTR(-ERR(ENOENT));
 
 	return NULL;
 }
@@ -1181,7 +1181,7 @@ int ipv6_sock_mc_drop(struct sock *sk, int ifindex,
 static inline int ip6_sock_set_v6only(struct sock *sk)
 {
 	if (inet_sk(sk)->inet_num)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	lock_sock(sk);
 	sk->sk_ipv6only = true;
 	release_sock(sk);
@@ -1221,7 +1221,7 @@ static inline int __ip6_sock_set_addr_preferences(struct sock *sk, int val)
 	case 0:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check HOME/COA conflicts */
@@ -1235,7 +1235,7 @@ static inline int __ip6_sock_set_addr_preferences(struct sock *sk, int val)
 	case 0:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check CGA/NONCGA conflicts */
@@ -1245,7 +1245,7 @@ static inline int __ip6_sock_set_addr_preferences(struct sock *sk, int val)
 	case 0:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	inet6_sk(sk)->srcprefs = (inet6_sk(sk)->srcprefs & prefmask) | pref;

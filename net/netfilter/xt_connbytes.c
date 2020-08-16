@@ -103,12 +103,12 @@ static int connbytes_mt_check(const struct xt_mtchk_param *par)
 	if (sinfo->what != XT_CONNBYTES_PKTS &&
 	    sinfo->what != XT_CONNBYTES_BYTES &&
 	    sinfo->what != XT_CONNBYTES_AVGPKT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sinfo->direction != XT_CONNBYTES_DIR_ORIGINAL &&
 	    sinfo->direction != XT_CONNBYTES_DIR_REPLY &&
 	    sinfo->direction != XT_CONNBYTES_DIR_BOTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = nf_ct_netns_get(par->net, par->family);
 	if (ret < 0)

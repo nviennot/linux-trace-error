@@ -206,13 +206,13 @@ check_name(struct dentry *direntry, struct cifs_tcon *tcon)
 	if (unlikely(tcon->fsAttrInfo.MaxPathNameComponentLength &&
 		     direntry->d_name.len >
 		     le32_to_cpu(tcon->fsAttrInfo.MaxPathNameComponentLength)))
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_POSIX_PATHS)) {
 		for (i = 0; i < direntry->d_name.len; i++) {
 			if (direntry->d_name.name[i] == '\\') {
 				cifs_dbg(FYI, "Invalid file name\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -227,7 +227,7 @@ cifs_do_create(struct inode *inode, struct dentry *direntry, unsigned int xid,
 	       struct tcon_link *tlink, unsigned oflags, umode_t mode,
 	       __u32 *oplock, struct cifs_fid *fid)
 {
-	int rc = -ENOENT;
+	int rc = -ERR(ENOENT);
 	int create_options = CREATE_NOT_DIR;
 	int desired_access;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
@@ -262,7 +262,7 @@ cifs_do_create(struct inode *inode, struct dentry *direntry, unsigned int xid,
 			if (S_ISDIR(newinode->i_mode)) {
 				CIFSSMBClose(xid, tcon, fid->netfid);
 				iput(newinode);
-				rc = -EISDIR;
+				rc = -ERR(EISDIR);
 				goto out;
 			}
 
@@ -338,7 +338,7 @@ cifs_do_create(struct inode *inode, struct dentry *direntry, unsigned int xid,
 	 */
 
 	if (!server->ops->open) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto out;
 	}
 
@@ -438,7 +438,7 @@ cifs_create_set_dentry:
 	}
 
 	if (S_ISDIR(newinode->i_mode)) {
-		rc = -EISDIR;
+		rc = -ERR(EISDIR);
 		goto out_err;
 	}
 
@@ -491,7 +491,7 @@ cifs_atomic_open(struct inode *inode, struct dentry *direntry,
 		 * the dentry and it is fine. No need to perform another lookup.
 		 */
 		if (!d_in_lookup(direntry))
-			return -ENOENT;
+			return -ERR(ENOENT);
 
 		res = cifs_lookup(inode, direntry, 0);
 		if (IS_ERR(res))
@@ -613,7 +613,7 @@ out_free_xid:
 int cifs_mknod(struct inode *inode, struct dentry *direntry, umode_t mode,
 		dev_t device_number)
 {
-	int rc = -EPERM;
+	int rc = -ERR(EPERM);
 	unsigned int xid;
 	struct cifs_sb_info *cifs_sb;
 	struct tcon_link *tlink;
@@ -621,7 +621,7 @@ int cifs_mknod(struct inode *inode, struct dentry *direntry, umode_t mode,
 	char *full_path = NULL;
 
 	if (!old_valid_dev(device_number))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cifs_sb = CIFS_SB(inode->i_sb);
 	tlink = cifs_sb_tlink(cifs_sb);
@@ -738,7 +738,7 @@ cifs_d_revalidate(struct dentry *direntry, unsigned int flags)
 	struct inode *inode;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	if (d_really_is_positive(direntry)) {
 		inode = d_inode(direntry);

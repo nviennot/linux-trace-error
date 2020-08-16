@@ -1935,7 +1935,7 @@ long hrtimer_nanosleep(ktime_t rqtp, const enum hrtimer_mode mode,
 
 	/* Absolute timers do not update the rmtp value and restart: */
 	if (mode == HRTIMER_MODE_ABS) {
-		ret = -ERESTARTNOHAND;
+		ret = -ERR(ERESTARTNOHAND);
 		goto out;
 	}
 
@@ -1959,7 +1959,7 @@ SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
 		return -EFAULT;
 
 	if (!timespec64_valid(&tu))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
 	current->restart_block.nanosleep.rmtp = rmtp;
@@ -1980,7 +1980,7 @@ SYSCALL_DEFINE2(nanosleep_time32, struct old_timespec32 __user *, rqtp,
 		return -EFAULT;
 
 	if (!timespec64_valid(&tu))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
 	current->restart_block.nanosleep.compat_rmtp = rmtp;
@@ -2126,7 +2126,7 @@ schedule_hrtimeout_range_clock(ktime_t *expires, u64 delta,
 	 */
 	if (!expires) {
 		schedule();
-		return -EINTR;
+		return -ERR(EINTR);
 	}
 
 	hrtimer_init_sleeper_on_stack(&t, clock_id, mode);
@@ -2141,7 +2141,7 @@ schedule_hrtimeout_range_clock(ktime_t *expires, u64 delta,
 
 	__set_current_state(TASK_RUNNING);
 
-	return !t.task ? 0 : -EINTR;
+	return !t.task ? 0 : -ERR(EINTR);
 }
 
 /**

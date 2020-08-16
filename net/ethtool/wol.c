@@ -34,7 +34,7 @@ static int wol_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_wol)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
@@ -80,7 +80,7 @@ static int wol_fill_reply(struct sk_buff *skb,
 	if (data->show_sopass &&
 	    nla_put(skb, ETHTOOL_A_WOL_SOPASS, sizeof(data->wol.sopass),
 		    data->wol.sopass))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -129,7 +129,7 @@ int ethnl_set_wol(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	dev = req_info.dev;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!dev->ethtool_ops->get_wol || !dev->ethtool_ops->set_wol)
 		goto out_dev;
 
@@ -147,7 +147,7 @@ int ethnl_set_wol(struct sk_buff *skb, struct genl_info *info)
 	if (wol.wolopts & ~wol.supported) {
 		NL_SET_ERR_MSG_ATTR(info->extack, tb[ETHTOOL_A_WOL_MODES],
 				    "cannot enable unsupported WoL mode");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_ops;
 	}
 	if (tb[ETHTOOL_A_WOL_SOPASS]) {
@@ -155,7 +155,7 @@ int ethnl_set_wol(struct sk_buff *skb, struct genl_info *info)
 			NL_SET_ERR_MSG_ATTR(info->extack,
 					    tb[ETHTOOL_A_WOL_SOPASS],
 					    "magicsecure not supported, cannot set password");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_ops;
 		}
 		ethnl_update_binary(wol.sopass, sizeof(wol.sopass),

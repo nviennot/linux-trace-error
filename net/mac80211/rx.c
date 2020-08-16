@@ -1060,7 +1060,7 @@ static int ieee80211_get_keyid(struct sk_buff *skb,
 	}
 
 	if (unlikely(skb->len < minlen))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_copy_bits(skb, key_idx_off, &keyid, 1);
 
@@ -1070,7 +1070,7 @@ static int ieee80211_get_keyid(struct sk_buff *skb,
 
 	/* cs could use more than the usual two bits for the keyid */
 	if (unlikely(keyid >= NUM_DEFAULT_KEYS))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return keyid;
 }
@@ -1664,7 +1664,7 @@ int ieee80211_sta_ps_transition(struct ieee80211_sta *pubsta, bool start)
 	/* Don't let the same PS state be set twice */
 	in_ps = test_sta_flag(sta, WLAN_STA_PS_STA);
 	if ((start && in_ps) || (!start && !in_ps))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (start)
 		sta_ps_start(sta);
@@ -2389,7 +2389,7 @@ ieee80211_rx_h_defragment(struct ieee80211_rx_data *rx)
 static int ieee80211_802_1x_port_control(struct ieee80211_rx_data *rx)
 {
 	if (unlikely(!rx->sta || !test_sta_flag(rx->sta, WLAN_STA_AUTHORIZED)))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 }
@@ -2436,7 +2436,7 @@ drop_check:
 	if (unlikely(!ieee80211_has_protected(fc) &&
 		     !ieee80211_is_any_nullfunc(fc) &&
 		     ieee80211_is_data(fc) && rx->key))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 }
@@ -2463,7 +2463,7 @@ static int ieee80211_drop_unencrypted_mgmt(struct ieee80211_rx_data *rx)
 				cfg80211_rx_unprot_mlme_mgmt(rx->sdata->dev,
 							     rx->skb->data,
 							     rx->skb->len);
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 		/* BIP does not use Protected field, so need to check MMIE */
 		if (unlikely(ieee80211_is_multicast_robust_mgmt_frame(rx->skb) &&
@@ -2473,14 +2473,14 @@ static int ieee80211_drop_unencrypted_mgmt(struct ieee80211_rx_data *rx)
 				cfg80211_rx_unprot_mlme_mgmt(rx->sdata->dev,
 							     rx->skb->data,
 							     rx->skb->len);
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 		if (unlikely(ieee80211_is_beacon(fc) && rx->key &&
 			     ieee80211_get_mmie_keyidx(rx->skb) < 0)) {
 			cfg80211_rx_unprot_mlme_mgmt(rx->sdata->dev,
 						     rx->skb->data,
 						     rx->skb->len);
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 		/*
 		 * When using MFP, Action frames are not allowed prior to
@@ -2488,7 +2488,7 @@ static int ieee80211_drop_unencrypted_mgmt(struct ieee80211_rx_data *rx)
 		 */
 		if (unlikely(ieee80211_is_action(fc) && !rx->key &&
 			     ieee80211_is_robust_mgmt_frame(rx->skb)))
-			return -EACCES;
+			return -ERR(EACCES);
 	}
 
 	return 0;
@@ -4570,7 +4570,7 @@ static void __ieee80211_rx_handle_packet(struct ieee80211_hw *hw,
 	if (ieee80211_is_mgmt(fc)) {
 		/* drop frame if too short for header */
 		if (skb->len < ieee80211_hdrlen(fc))
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 		else
 			err = skb_linearize(skb);
 	} else {

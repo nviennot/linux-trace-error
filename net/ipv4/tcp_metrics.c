@@ -642,7 +642,7 @@ static int tcp_metrics_fill_info(struct sk_buff *msg,
 			goto nla_put_failure;
 		break;
 	default:
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 
 	if (nla_put_msecs(msg, TCP_METRICS_ATTR_AGE,
@@ -715,7 +715,7 @@ static int tcp_metrics_fill_info(struct sk_buff *msg,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int tcp_metrics_dump_info(struct sk_buff *skb,
@@ -728,7 +728,7 @@ static int tcp_metrics_dump_info(struct sk_buff *skb,
 			  &tcp_metrics_nl_family, NLM_F_MULTI,
 			  TCP_METRICS_CMD_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	if (tcp_metrics_fill_info(skb, tm) < 0)
 		goto nla_put_failure;
@@ -738,7 +738,7 @@ static int tcp_metrics_dump_info(struct sk_buff *skb,
 
 nla_put_failure:
 	genlmsg_cancel(skb, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int tcp_metrics_nl_dump(struct sk_buff *skb,
@@ -791,14 +791,14 @@ static int __parse_nl_addr(struct genl_info *info, struct inetpeer_addr *addr,
 		struct in6_addr in6;
 
 		if (nla_len(a) != sizeof(struct in6_addr))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		in6 = nla_get_in6_addr(a);
 		inetpeer_set_addr_v6(addr, &in6);
 		if (hash)
 			*hash = ipv6_addr_hash(inetpeer_get_addr_v6(addr));
 		return 0;
 	}
-	return optional ? 1 : -EAFNOSUPPORT;
+	return optional ? 1 : -ERR(EAFNOSUPPORT);
 }
 
 static int parse_nl_addr(struct genl_info *info, struct inetpeer_addr *addr,
@@ -846,7 +846,7 @@ static int tcp_metrics_nl_cmd_get(struct sk_buff *skb, struct genl_info *info)
 
 	hash ^= net_hash_mix(net);
 	hash = hash_32(hash, tcp_metrics_hash_log);
-	ret = -ESRCH;
+	ret = -ERR(ESRCH);
 	rcu_read_lock();
 	for (tm = rcu_dereference(tcp_metrics_hash[hash].chain); tm;
 	     tm = rcu_dereference(tm->tcpm_next)) {
@@ -865,7 +865,7 @@ static int tcp_metrics_nl_cmd_get(struct sk_buff *skb, struct genl_info *info)
 	return genlmsg_reply(msg, info);
 
 nla_put_failure:
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 
 out_free:
 	nlmsg_free(msg);
@@ -939,7 +939,7 @@ static int tcp_metrics_nl_cmd_del(struct sk_buff *skb, struct genl_info *info)
 	}
 	spin_unlock_bh(&tcp_metrics_lock);
 	if (!found)
-		return -ESRCH;
+		return -ERR(ESRCH);
 	return 0;
 }
 

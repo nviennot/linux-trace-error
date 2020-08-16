@@ -76,7 +76,7 @@ do_wait_for_common(struct completion *x,
 
 		do {
 			if (signal_pending_state(state, current)) {
-				timeout = -ERESTARTSYS;
+				timeout = -ERR(ERESTARTSYS);
 				break;
 			}
 			__prepare_to_swait(&x->wait, &wait);

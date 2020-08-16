@@ -289,7 +289,7 @@ static int __init n810_soc_init(void)
 	if (!of_have_populated_dt() ||
 	    (!of_machine_is_compatible("nokia,n810") &&
 	     !of_machine_is_compatible("nokia,n810-wimax")))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	n810_snd_device = platform_device_alloc("soc-audio", -1);
 	if (!n810_snd_device)
@@ -329,7 +329,7 @@ static int __init n810_soc_init(void)
 
 	if (WARN_ON((gpio_request(N810_HEADSET_AMP_GPIO, "hs_amp") < 0) ||
 		    (gpio_request(N810_SPEAKER_AMP_GPIO, "spk_amp") < 0))) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err4;
 	}
 

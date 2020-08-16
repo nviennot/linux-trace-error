@@ -386,7 +386,7 @@ int rds_cong_wait(struct rds_cong_map *map, __be16 port, int nonblock,
 				return 0;
 		}
 		rds_stats_inc(s_cong_send_error);
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	}
 
 	rds_stats_inc(s_cong_send_blocked);

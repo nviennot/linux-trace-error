@@ -159,7 +159,7 @@ int ceph_file_to_extents(struct ceph_file_layout *l, u64 off, u64 len,
 		     last_ex->oe_off + last_ex->oe_len >= ex->oe_off)) {
 			WARN(1, "%s: object_extents list not sorted!\n",
 			     __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -188,7 +188,7 @@ int ceph_iterate_extents(struct ceph_file_layout *l, u64 off, u64 len,
 		if (!ex) {
 			WARN(1, "%s: objno %llu %llu~%u not found!\n",
 			     __func__, objno, objoff, xlen);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		action_fn(ex, xlen, action_arg);

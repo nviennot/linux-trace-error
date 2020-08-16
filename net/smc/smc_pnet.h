@@ -37,7 +37,7 @@ static inline int smc_pnetid_by_dev_port(struct device *dev,
 #if IS_ENABLED(CONFIG_HAVE_PNETID)
 	return pnet_id_by_dev_port(dev, port, pnetid);
 #else
-	return -ENOENT;
+	return -ERR(ENOENT);
 #endif
 }
 

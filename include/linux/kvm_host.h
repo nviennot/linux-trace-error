@@ -922,7 +922,7 @@ static inline void kvm_arch_free_vm(struct kvm *kvm)
 #ifndef __KVM_HAVE_ARCH_FLUSH_REMOTE_TLB
 static inline int kvm_arch_flush_remote_tlb(struct kvm *kvm)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 #endif
 
@@ -1201,7 +1201,7 @@ void kvm_irq_routing_update(struct kvm *);
 #else
 static inline int kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void kvm_irqfd_release(struct kvm *kvm) {}
@@ -1213,7 +1213,7 @@ static inline void kvm_eventfd_init(struct kvm *kvm) {}
 
 static inline int kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void kvm_irqfd_release(struct kvm *kvm) {}
@@ -1226,7 +1226,7 @@ static inline void kvm_irq_routing_update(struct kvm *kvm)
 
 static inline int kvm_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_HAVE_KVM_EVENTFD */
@@ -1417,7 +1417,7 @@ static inline long kvm_arch_vcpu_async_ioctl(struct file *filp,
 					     unsigned int ioctl,
 					     unsigned long arg)
 {
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 #endif /* CONFIG_HAVE_KVM_VCPU_ASYNC_IOCTL */
 

@@ -92,7 +92,7 @@ int pm_autosleep_set_state(suspend_state_t state)
 
 #ifndef CONFIG_HIBERNATION
 	if (state >= PM_SUSPEND_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	__pm_stay_awake(autosleep_ws);

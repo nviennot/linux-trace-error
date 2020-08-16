@@ -88,14 +88,14 @@ parse_mf_symlink(const u8 *buf, unsigned int buf_len, unsigned int *_link_len,
 	char md5_str2[34];
 
 	if (buf_len != CIFS_MF_SYMLINK_FILE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	md5_str1 = (const char *)&buf[CIFS_MF_SYMLINK_MD5_OFFSET];
 	link_str = (const char *)&buf[CIFS_MF_SYMLINK_LINK_OFFSET];
 
 	rc = sscanf(buf, CIFS_MF_SYMLINK_LEN_FORMAT, &link_len);
 	if (rc != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = symlink_hash(link_len, link_str, md5_hash);
 	if (rc) {
@@ -108,7 +108,7 @@ parse_mf_symlink(const u8 *buf, unsigned int buf_len, unsigned int *_link_len,
 		  CIFS_MF_SYMLINK_MD5_ARGS(md5_hash));
 
 	if (strncmp(md5_str1, md5_str2, 17) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (_link_str) {
 		*_link_str = kstrndup(link_str, link_len, GFP_KERNEL);
@@ -129,12 +129,12 @@ format_mf_symlink(u8 *buf, unsigned int buf_len, const char *link_str)
 	u8 md5_hash[16];
 
 	if (buf_len != CIFS_MF_SYMLINK_FILE_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	link_len = strlen(link_str);
 
 	if (link_len > CIFS_MF_SYMLINK_LINK_MAXLEN)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	rc = symlink_hash(link_len, link_str, md5_hash);
 	if (rc) {
@@ -199,13 +199,13 @@ create_mf_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 		rc = tcon->ses->server->ops->create_mf_symlink(xid, tcon,
 					cifs_sb, fromName, buf, &bytes_written);
 	else
-		rc = -EOPNOTSUPP;
+		rc = -ERR(EOPNOTSUPP);
 
 	if (rc)
 		goto out;
 
 	if (bytes_written != CIFS_MF_SYMLINK_FILE_SIZE)
-		rc = -EIO;
+		rc = -ERR(EIO);
 out:
 	kfree(buf);
 	return rc;
@@ -229,13 +229,13 @@ query_mf_symlink(const unsigned int xid, struct cifs_tcon *tcon,
 		rc = tcon->ses->server->ops->query_mf_symlink(xid, tcon,
 					      cifs_sb, path, buf, &bytes_read);
 	else
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 
 	if (rc)
 		goto out;
 
 	if (bytes_read == 0) { /* not a symlink */
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -267,7 +267,7 @@ check_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
 		rc = tcon->ses->server->ops->query_mf_symlink(xid, tcon,
 					      cifs_sb, path, buf, &bytes_read);
 	else
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 
 	if (rc)
 		goto out;
@@ -326,7 +326,7 @@ cifs_query_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
 		return rc;
 
 	if (file_info.EndOfFile != cpu_to_le64(CIFS_MF_SYMLINK_FILE_SIZE)) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		/* it's not a symlink */
 		goto out;
 	}
@@ -422,7 +422,7 @@ smb3_query_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
 
 	if (pfile_info->EndOfFile != cpu_to_le64(CIFS_MF_SYMLINK_FILE_SIZE)) {
 		/* it's not a symlink */
-		rc = -ENOENT; /* Is there a better rc to return? */
+		rc = -ERR(ENOENT); /* Is there a better rc to return? */
 		goto qmf_out;
 	}
 
@@ -492,7 +492,7 @@ smb3_create_mf_symlink(unsigned int xid, struct cifs_tcon *tcon,
 
 	/* Make sure we wrote all of the symlink data */
 	if ((rc == 0) && (*pbytes_written != CIFS_MF_SYMLINK_FILE_SIZE))
-		rc = -EIO;
+		rc = -ERR(EIO);
 
 	SMB2_close(xid, tcon, fid.persistent_fid, fid.volatile_fid);
 
@@ -508,7 +508,7 @@ int
 cifs_hardlink(struct dentry *old_file, struct inode *inode,
 	      struct dentry *direntry)
 {
-	int rc = -EACCES;
+	int rc = -ERR(EACCES);
 	unsigned int xid;
 	char *from_name = NULL;
 	char *to_name = NULL;
@@ -539,13 +539,13 @@ cifs_hardlink(struct dentry *old_file, struct inode *inode,
 	else {
 		server = tcon->ses->server;
 		if (!server->ops->create_hardlink) {
-			rc = -ENOSYS;
+			rc = -ERR(ENOSYS);
 			goto cifs_hl_exit;
 		}
 		rc = server->ops->create_hardlink(xid, tcon, from_name, to_name,
 						  cifs_sb);
 		if ((rc == -EIO) || (rc == -EINVAL))
-			rc = -EOPNOTSUPP;
+			rc = -ERR(EOPNOTSUPP);
 	}
 
 	d_drop(direntry);	/* force new lookup from server of target */
@@ -608,7 +608,7 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 	struct TCP_Server_Info *server;
 
 	if (!direntry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	xid = get_xid();
 
@@ -629,7 +629,7 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 
 	cifs_dbg(FYI, "Full path: %s inode = 0x%p\n", full_path, inode);
 
-	rc = -EACCES;
+	rc = -ERR(EACCES);
 	/*
 	 * First try Minshall+French Symlinks, if configured
 	 * and fallback to UNIX Extensions Symlinks.
@@ -663,7 +663,7 @@ cifs_get_link(struct dentry *direntry, struct inode *inode,
 int
 cifs_symlink(struct inode *inode, struct dentry *direntry, const char *symname)
 {
-	int rc = -EOPNOTSUPP;
+	int rc = -ERR(EOPNOTSUPP);
 	unsigned int xid;
 	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
 	struct tcon_link *tlink;

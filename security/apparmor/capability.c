@@ -120,7 +120,7 @@ static int profile_capable(struct aa_profile *profile, int cap,
 	    !cap_raised(profile->caps.denied, cap))
 		error = 0;
 	else
-		error = -EPERM;
+		error = -ERR(EPERM);
 
 	if (opts & CAP_OPT_NOAUDIT) {
 		if (!COMPLAIN_MODE(profile))

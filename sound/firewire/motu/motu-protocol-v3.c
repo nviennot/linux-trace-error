@@ -39,7 +39,7 @@ int snd_motu_protocol_v3_get_clock_rate(struct snd_motu *motu,
 
 	data = (data & V3_CLOCK_RATE_MASK) >> V3_CLOCK_RATE_SHIFT;
 	if (data >= ARRAY_SIZE(snd_motu_clock_rates))
-		return -EIO;
+		return -ERR(EIO);
 
 	*rate = snd_motu_clock_rates[data];
 
@@ -59,7 +59,7 @@ int snd_motu_protocol_v3_set_clock_rate(struct snd_motu *motu,
 			break;
 	}
 	if (i == ARRAY_SIZE(snd_motu_clock_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = snd_motu_transaction_read(motu, V3_CLOCK_STATUS_OFFSET, &reg,
 					sizeof(reg));
@@ -81,7 +81,7 @@ int snd_motu_protocol_v3_set_clock_rate(struct snd_motu *motu,
 	if (need_to_wait) {
 		/* Cost expensive. */
 		if (msleep_interruptible(4000) > 0)
-			return -EINTR;
+			return -ERR(EINTR);
 	}
 
 	return 0;

@@ -195,7 +195,7 @@ static int wm9713_voice_shutdown(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
 	if (WARN_ON(event != SND_SOC_DAPM_PRE_PMD))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Gracefully shut down the voice interface. */
 	snd_soc_component_update_bits(component, AC97_HANDSET_RATE, 0x0f00, 0x0200);
@@ -929,7 +929,7 @@ static int wm9713_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 				    0x007f, div | 0x70);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1050,7 +1050,7 @@ static int ac97_aux_prepare(struct snd_pcm_substream *substream,
 	snd_soc_component_update_bits(component, AC97_PCI_SID, 0x8000, 0x8000);
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return snd_soc_component_write(component, AC97_PCM_SURR_DAC_RATE, runtime->rate);
 }
@@ -1221,7 +1221,7 @@ static int wm9713_soc_probe(struct snd_soc_component *component)
 			return PTR_ERR(regmap);
 		}
 	} else {
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	snd_soc_component_init_regmap(component, regmap);

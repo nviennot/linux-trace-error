@@ -244,7 +244,7 @@ static int mounts_open_common(struct inode *inode, struct file *file,
 	struct path root;
 	struct proc_mounts *p;
 	struct seq_file *m;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!task)
 		goto err;
@@ -261,7 +261,7 @@ static int mounts_open_common(struct inode *inode, struct file *file,
 	if (!task->fs) {
 		task_unlock(task);
 		put_task_struct(task);
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto err_put_ns;
 	}
 	get_fs_root(task->fs, &root);

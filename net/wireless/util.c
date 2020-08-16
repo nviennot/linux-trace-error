@@ -247,20 +247,20 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 				    NL80211_EXT_FEATURE_BEACON_PROTECTION_CLIENT))
 		max_key_idx = 7;
 	if (key_idx < 0 || key_idx > max_key_idx)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!pairwise && mac_addr && !(rdev->wiphy.flags & WIPHY_FLAG_IBSS_RSN))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (pairwise && !mac_addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (params->cipher) {
 	case WLAN_CIPHER_SUITE_TKIP:
 		/* Extended Key ID can only be used with CCMP/GCMP ciphers */
 		if ((pairwise && key_idx) ||
 		    params->mode != NL80211_KEY_RX_TX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_CCMP:
 	case WLAN_CIPHER_SUITE_CCMP_256:
@@ -275,13 +275,13 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 		 */
 		if ((params->mode == NL80211_KEY_NO_TX && !pairwise) ||
 		    params->mode == NL80211_KEY_SET_TX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (wiphy_ext_feature_isset(&rdev->wiphy,
 					    NL80211_EXT_FEATURE_EXT_KEY_ID)) {
 			if (pairwise && (key_idx < 0 || key_idx > 1))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} else if (pairwise && key_idx) {
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case WLAN_CIPHER_SUITE_AES_CMAC:
@@ -290,14 +290,14 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		/* Disallow BIP (group-only) cipher as pairwise cipher */
 		if (pairwise)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (key_idx < 4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_WEP40:
 	case WLAN_CIPHER_SUITE_WEP104:
 		if (key_idx > 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	default:
 		break;
 	}
@@ -305,47 +305,47 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 	switch (params->cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
 		if (params->key_len != WLAN_KEY_LEN_WEP40)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_TKIP:
 		if (params->key_len != WLAN_KEY_LEN_TKIP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_CCMP:
 		if (params->key_len != WLAN_KEY_LEN_CCMP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_CCMP_256:
 		if (params->key_len != WLAN_KEY_LEN_CCMP_256)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_GCMP:
 		if (params->key_len != WLAN_KEY_LEN_GCMP)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_GCMP_256:
 		if (params->key_len != WLAN_KEY_LEN_GCMP_256)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_WEP104:
 		if (params->key_len != WLAN_KEY_LEN_WEP104)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_AES_CMAC:
 		if (params->key_len != WLAN_KEY_LEN_AES_CMAC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_BIP_CMAC_256:
 		if (params->key_len != WLAN_KEY_LEN_BIP_CMAC_256)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
 		if (params->key_len != WLAN_KEY_LEN_BIP_GMAC_128)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
 		if (params->key_len != WLAN_KEY_LEN_BIP_GMAC_256)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
 		/*
@@ -363,7 +363,7 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 		case WLAN_CIPHER_SUITE_WEP40:
 		case WLAN_CIPHER_SUITE_WEP104:
 			/* These ciphers do not use key sequence */
-			return -EINVAL;
+			return -ERR(EINVAL);
 		case WLAN_CIPHER_SUITE_TKIP:
 		case WLAN_CIPHER_SUITE_CCMP:
 		case WLAN_CIPHER_SUITE_CCMP_256:
@@ -374,13 +374,13 @@ int cfg80211_validate_key_settings(struct cfg80211_registered_device *rdev,
 		case WLAN_CIPHER_SUITE_BIP_GMAC_128:
 		case WLAN_CIPHER_SUITE_BIP_GMAC_256:
 			if (params->seq_len != 6)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		}
 	}
 
 	if (!cfg80211_supported_cipher_suite(&rdev->wiphy, params->cipher))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -937,23 +937,23 @@ int cfg80211_change_iface(struct cfg80211_registered_device *rdev,
 
 	/* don't support changing VLANs, you just re-create them */
 	if (otype == NL80211_IFTYPE_AP_VLAN)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* cannot change into P2P device or NAN */
 	if (ntype == NL80211_IFTYPE_P2P_DEVICE ||
 	    ntype == NL80211_IFTYPE_NAN)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!rdev->ops->change_virtual_intf ||
 	    !(rdev->wiphy.interface_modes & (1 << ntype)))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* if it's part of a bridge, reject changing type to station/ibss */
 	if (netif_is_bridge_port(dev) &&
 	    (ntype == NL80211_IFTYPE_ADHOC ||
 	     ntype == NL80211_IFTYPE_STATION ||
 	     ntype == NL80211_IFTYPE_P2P_CLIENT))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (ntype != otype) {
 		dev->ieee80211_ptr->use_4addr = false;
@@ -1345,10 +1345,10 @@ int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
 		const u8 *iedata;
 
 		if (len < 2)
-			return -EILSEQ;
+			return -ERR(EILSEQ);
 		iedatalen = ies[1];
 		if (iedatalen + 2 > len)
-			return -EILSEQ;
+			return -ERR(EILSEQ);
 
 		if (ies[0] != WLAN_EID_VENDOR_SPECIFIC)
 			goto cont;
@@ -1393,7 +1393,7 @@ int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
 
 			/* P2P attribute ID & size must fit */
 			if (iedatalen < 3)
-				return -EILSEQ;
+				return -ERR(EILSEQ);
 			desired_attr = iedata[0] == attr;
 			attr_len = get_unaligned_le16(iedata + 1);
 			iedatalen -= 3;
@@ -1424,9 +1424,9 @@ int cfg80211_get_p2p_attr(const u8 *ies, unsigned int len,
 	}
 
 	if (attr_remaining && desired_attr)
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 EXPORT_SYMBOL(cfg80211_get_p2p_attr);
 
@@ -1724,7 +1724,7 @@ int cfg80211_validate_beacon_int(struct cfg80211_registered_device *rdev,
 	 */
 
 	if (beacon_int < 10 || beacon_int > 10000)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -1856,7 +1856,7 @@ int cfg80211_check_combinations(struct wiphy *wiphy,
 	if (err)
 		return err;
 	if (num == 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -1869,10 +1869,10 @@ int ieee80211_get_ratemask(struct ieee80211_supported_band *sband,
 	int i, j;
 
 	if (!sband)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (n_rates == 0 || n_rates > NL80211_MAX_SUPP_RATES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*mask = 0;
 
@@ -1888,7 +1888,7 @@ int ieee80211_get_ratemask(struct ieee80211_supported_band *sband,
 			}
 		}
 		if (!found)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/*
@@ -1921,11 +1921,11 @@ int cfg80211_get_station(struct net_device *dev, const u8 *mac_addr,
 
 	wdev = dev->ieee80211_ptr;
 	if (!wdev)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	rdev = wiphy_to_rdev(wdev->wiphy);
 	if (!rdev->ops->get_station)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	memset(sinfo, 0, sizeof(*sinfo));
 

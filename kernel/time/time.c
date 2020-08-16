@@ -172,7 +172,7 @@ int do_sys_settimeofday64(const struct timespec64 *tv, const struct timezone *tz
 	int error = 0;
 
 	if (tv && !timespec64_valid_settod(tv))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = security_settime64(tv, tz);
 	if (error)
@@ -181,7 +181,7 @@ int do_sys_settimeofday64(const struct timespec64 *tv, const struct timezone *tz
 	if (tz) {
 		/* Verify we're within the +-15 hrs range */
 		if (tz->tz_minuteswest > 15*60 || tz->tz_minuteswest < -15*60)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		sys_tz = *tz;
 		update_vsyscall_tz();
@@ -208,7 +208,7 @@ SYSCALL_DEFINE2(settimeofday, struct __kernel_old_timeval __user *, tv,
 			return -EFAULT;
 
 		if (new_ts.tv_nsec > USEC_PER_SEC || new_ts.tv_nsec < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		new_ts.tv_nsec *= NSEC_PER_USEC;
 	}

@@ -84,12 +84,12 @@ static inline void putback_movable_pages(struct list_head *l) {}
 static inline int migrate_pages(struct list_head *l, new_page_t new,
 		free_page_t free, unsigned long private, enum migrate_mode mode,
 		int reason)
-	{ return -ENOSYS; }
+	{ return -ERR(ENOSYS); }
 static inline int isolate_movable_page(struct page *page, isolate_mode_t mode)
-	{ return -EBUSY; }
+	{ return -ERR(EBUSY); }
 
-static inline int migrate_prep(void) { return -ENOSYS; }
-static inline int migrate_prep_local(void) { return -ENOSYS; }
+static inline int migrate_prep(void) { return -ERR(ENOSYS); }
+static inline int migrate_prep_local(void) { return -ERR(ENOSYS); }
 
 static inline void migrate_page_states(struct page *newpage, struct page *page)
 {
@@ -101,7 +101,7 @@ static inline void migrate_page_copy(struct page *newpage,
 static inline int migrate_huge_page_move_mapping(struct address_space *mapping,
 				  struct page *newpage, struct page *page)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_MIGRATION */
@@ -133,7 +133,7 @@ static inline bool pmd_trans_migrating(pmd_t pmd)
 static inline int migrate_misplaced_page(struct page *page,
 					 struct vm_area_struct *vma, int node)
 {
-	return -EAGAIN; /* can't migrate now */
+	return -ERR(EAGAIN); /* can't migrate now */
 }
 #endif /* CONFIG_NUMA_BALANCING */
 
@@ -150,7 +150,7 @@ static inline int migrate_misplaced_transhuge_page(struct mm_struct *mm,
 			unsigned long address,
 			struct page *page, int node)
 {
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 #endif /* CONFIG_NUMA_BALANCING && CONFIG_TRANSPARENT_HUGEPAGE*/
 

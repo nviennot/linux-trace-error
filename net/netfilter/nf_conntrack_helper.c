@@ -158,7 +158,7 @@ nf_nat_helper_try_module_get(const char *name, u16 l3num, u8 protonum)
 	h = __nf_conntrack_helper_find(name, l3num, protonum);
 	if (!h) {
 		rcu_read_unlock();
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	nat = nf_conntrack_nat_helper_find(h->nat_mod_name);
@@ -171,12 +171,12 @@ nf_nat_helper_try_module_get(const char *name, u16 l3num, u8 protonum)
 		nat = nf_conntrack_nat_helper_find(mod_name);
 		if (!nat) {
 			rcu_read_unlock();
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 	}
 
 	if (!try_module_get(nat->module))
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 
 	rcu_read_unlock();
 	return ret;
@@ -405,7 +405,7 @@ int nf_conntrack_helper_register(struct nf_conntrack_helper *me)
 	BUG_ON(strlen(me->name) > NF_CT_HELPER_NAME_LEN - 1);
 
 	if (me->expect_policy->max_expected > NF_CT_EXPECT_MAX_CNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&nf_ct_helper_mutex);
 	for (i = 0; i < nf_ct_helper_hsize; i++) {
@@ -414,7 +414,7 @@ int nf_conntrack_helper_register(struct nf_conntrack_helper *me)
 			    (cur->tuple.src.l3num == NFPROTO_UNSPEC ||
 			     cur->tuple.src.l3num == me->tuple.src.l3num) &&
 			    cur->tuple.dst.protonum == me->tuple.dst.protonum) {
-				ret = -EEXIST;
+				ret = -ERR(EEXIST);
 				goto out;
 			}
 		}
@@ -425,7 +425,7 @@ int nf_conntrack_helper_register(struct nf_conntrack_helper *me)
 		hlist_for_each_entry(cur, &nf_ct_helper_hash[h], hnode) {
 			if (nf_ct_tuple_src_mask_cmp(&cur->tuple, &me->tuple,
 						     &mask)) {
-				ret = -EEXIST;
+				ret = -ERR(EEXIST);
 				goto out;
 			}
 		}

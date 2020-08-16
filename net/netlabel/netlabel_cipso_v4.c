@@ -89,12 +89,12 @@ static int netlbl_cipsov4_add_common(struct genl_info *info,
 					   NLBL_CIPSOV4_A_MAX,
 					   netlbl_cipsov4_genl_policy,
 					   NULL) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	nla_for_each_nested(nla, info->attrs[NLBL_CIPSOV4_A_TAGLST], nla_rem)
 		if (nla_type(nla) == NLBL_CIPSOV4_A_TAG) {
 			if (iter >= CIPSO_V4_TAG_MAXCNT)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			doi_def->tags[iter++] = nla_get_u8(nla);
 		}
 	while (iter < CIPSO_V4_TAG_MAXCNT)
@@ -121,7 +121,7 @@ static int netlbl_cipsov4_add_common(struct genl_info *info,
 static int netlbl_cipsov4_add_std(struct genl_info *info,
 				  struct netlbl_audit *audit_info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct cipso_v4_doi *doi_def = NULL;
 	struct nlattr *nla_a;
 	struct nlattr *nla_b;
@@ -131,13 +131,13 @@ static int netlbl_cipsov4_add_std(struct genl_info *info,
 
 	if (!info->attrs[NLBL_CIPSOV4_A_TAGLST] ||
 	    !info->attrs[NLBL_CIPSOV4_A_MLSLVLLST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (nla_validate_nested_deprecated(info->attrs[NLBL_CIPSOV4_A_MLSLVLLST],
 					   NLBL_CIPSOV4_A_MAX,
 					   netlbl_cipsov4_genl_policy,
 					   NULL) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	doi_def = kmalloc(sizeof(*doi_def), GFP_KERNEL);
 	if (doi_def == NULL)
@@ -152,7 +152,7 @@ static int netlbl_cipsov4_add_std(struct genl_info *info,
 	ret_val = netlbl_cipsov4_add_common(info, doi_def);
 	if (ret_val != 0)
 		goto add_std_failure;
-	ret_val = -EINVAL;
+	ret_val = -ERR(EINVAL);
 
 	nla_for_each_nested(nla_a,
 			    info->attrs[NLBL_CIPSOV4_A_MLSLVLLST],
@@ -330,7 +330,7 @@ static int netlbl_cipsov4_add_pass(struct genl_info *info,
 	struct cipso_v4_doi *doi_def = NULL;
 
 	if (!info->attrs[NLBL_CIPSOV4_A_TAGLST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	doi_def = kmalloc(sizeof(*doi_def), GFP_KERNEL);
 	if (doi_def == NULL)
@@ -369,7 +369,7 @@ static int netlbl_cipsov4_add_local(struct genl_info *info,
 	struct cipso_v4_doi *doi_def = NULL;
 
 	if (!info->attrs[NLBL_CIPSOV4_A_TAGLST])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	doi_def = kmalloc(sizeof(*doi_def), GFP_KERNEL);
 	if (doi_def == NULL)
@@ -403,12 +403,12 @@ add_local_failure:
 static int netlbl_cipsov4_add(struct sk_buff *skb, struct genl_info *info)
 
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_audit audit_info;
 
 	if (!info->attrs[NLBL_CIPSOV4_A_DOI] ||
 	    !info->attrs[NLBL_CIPSOV4_A_MTYPE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 	switch (nla_get_u32(info->attrs[NLBL_CIPSOV4_A_MTYPE])) {
@@ -458,7 +458,7 @@ static int netlbl_cipsov4_list(struct sk_buff *skb, struct genl_info *info)
 	u32 iter;
 
 	if (!info->attrs[NLBL_CIPSOV4_A_DOI]) {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto list_failure;
 	}
 
@@ -480,7 +480,7 @@ list_start:
 	rcu_read_lock();
 	doi_def = cipso_v4_doi_getdef(doi);
 	if (doi_def == NULL) {
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 		goto list_failure_lock;
 	}
 
@@ -697,14 +697,14 @@ static int netlbl_cipsov4_remove_cb(struct netlbl_dom_map *entry, void *arg)
  */
 static int netlbl_cipsov4_remove(struct sk_buff *skb, struct genl_info *info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_domhsh_walk_arg cb_arg;
 	struct netlbl_audit audit_info;
 	u32 skip_bkt = 0;
 	u32 skip_chain = 0;
 
 	if (!info->attrs[NLBL_CIPSOV4_A_DOI])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	netlbl_netlink_auditinfo(skb, &audit_info);
 	cb_arg.doi = nla_get_u32(info->attrs[NLBL_CIPSOV4_A_DOI]);

@@ -40,7 +40,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 
 	if (SB_BLOCK_COUNT(s) >= block_count_new) {
 		printk("can\'t shrink filesystem on-line\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check the device size */
@@ -49,7 +49,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 	reiserfs_write_lock_nested(s, depth);
 	if (!bh) {
 		printk("reiserfs_resize: can\'t read last block\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	bforget(bh);
 
@@ -61,7 +61,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 	    != REISERFS_DISK_OFFSET_IN_BYTES) {
 		printk
 		    ("reiserfs_resize: unable to resize a reiserfs without distributed bitmap (fs version < 3.5.12)\n");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	/* count used bits in last bitmap block */
@@ -150,7 +150,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 			reiserfs_write_lock_nested(s, depth);
 			if (!bh) {
 				vfree(bitmap);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			memset(bh->b_data, 0, sb_blocksize(sb));
 			reiserfs_set_le_bit(0, bh->b_data);
@@ -186,7 +186,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 		int jerr = journal_end(&th);
 		if (jerr)
 			return jerr;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	reiserfs_prepare_for_journal(s, bh, 1);
@@ -204,7 +204,7 @@ int reiserfs_resize(struct super_block *s, unsigned long block_count_new)
 		int jerr = journal_end(&th);
 		if (jerr)
 			return jerr;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	reiserfs_prepare_for_journal(s, bh, 1);

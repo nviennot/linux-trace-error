@@ -280,28 +280,28 @@ static int netlbl_domhsh_validate(const struct netlbl_dom_map *entry)
 #endif /* IPv6 */
 
 	if (entry == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (entry->family != AF_INET && entry->family != AF_INET6 &&
 	    (entry->family != AF_UNSPEC ||
 	     entry->def.type != NETLBL_NLTYPE_UNLABELED))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (entry->def.type) {
 	case NETLBL_NLTYPE_UNLABELED:
 		if (entry->def.cipso != NULL || entry->def.calipso != NULL ||
 		    entry->def.addrsel != NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case NETLBL_NLTYPE_CIPSOV4:
 		if (entry->family != AF_INET ||
 		    entry->def.cipso == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case NETLBL_NLTYPE_CALIPSO:
 		if (entry->family != AF_INET6 ||
 		    entry->def.calipso == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case NETLBL_NLTYPE_ADDRSELECT:
 		netlbl_af4list_foreach(iter4, &entry->def.addrsel->list4) {
@@ -309,14 +309,14 @@ static int netlbl_domhsh_validate(const struct netlbl_dom_map *entry)
 			switch (map4->def.type) {
 			case NETLBL_NLTYPE_UNLABELED:
 				if (map4->def.cipso != NULL)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			case NETLBL_NLTYPE_CIPSOV4:
 				if (map4->def.cipso == NULL)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 #if IS_ENABLED(CONFIG_IPV6)
@@ -325,20 +325,20 @@ static int netlbl_domhsh_validate(const struct netlbl_dom_map *entry)
 			switch (map6->def.type) {
 			case NETLBL_NLTYPE_UNLABELED:
 				if (map6->def.calipso != NULL)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			case NETLBL_NLTYPE_CALIPSO:
 				if (map6->def.calipso == NULL)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 #endif /* IPv6 */
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -364,7 +364,7 @@ int __init netlbl_domhsh_init(u32 size)
 	struct netlbl_domhsh_tbl *hsh_tbl;
 
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hsh_tbl = kmalloc(sizeof(*hsh_tbl), GFP_KERNEL);
 	if (hsh_tbl == NULL)
@@ -449,7 +449,7 @@ int netlbl_domhsh_add(struct netlbl_dom_map *entry,
 			case AF_UNSPEC:
 				if (entry->def.type !=
 				    NETLBL_NLTYPE_UNLABELED) {
-					ret_val = -EINVAL;
+					ret_val = -ERR(EINVAL);
 					goto add_return;
 				}
 				entry_b = kzalloc(sizeof(*entry_b), GFP_ATOMIC);
@@ -469,7 +469,7 @@ int netlbl_domhsh_add(struct netlbl_dom_map *entry,
 			default:
 				/* Already checked in
 				 * netlbl_domhsh_validate(). */
-				ret_val = -EINVAL;
+				ret_val = -ERR(EINVAL);
 				goto add_return;
 			}
 		}
@@ -502,7 +502,7 @@ int netlbl_domhsh_add(struct netlbl_dom_map *entry,
 			if (netlbl_af4list_search_exact(iter4->addr,
 							iter4->mask,
 							old_list4)) {
-				ret_val = -EEXIST;
+				ret_val = -ERR(EEXIST);
 				goto add_return;
 			}
 #if IS_ENABLED(CONFIG_IPV6)
@@ -510,7 +510,7 @@ int netlbl_domhsh_add(struct netlbl_dom_map *entry,
 			if (netlbl_af6list_search_exact(&iter6->addr,
 							&iter6->mask,
 							old_list6)) {
-				ret_val = -EEXIST;
+				ret_val = -ERR(EEXIST);
 				goto add_return;
 			}
 #endif /* IPv6 */
@@ -538,7 +538,7 @@ int netlbl_domhsh_add(struct netlbl_dom_map *entry,
 		}
 #endif /* IPv6 */
 	} else
-		ret_val = -EINVAL;
+		ret_val = -ERR(EINVAL);
 
 add_return:
 	spin_unlock(&netlbl_domhsh_lock);
@@ -582,7 +582,7 @@ int netlbl_domhsh_remove_entry(struct netlbl_dom_map *entry,
 	struct audit_buffer *audit_buf;
 
 	if (entry == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	spin_lock(&netlbl_domhsh_lock);
 	if (entry->valid) {
@@ -594,7 +594,7 @@ int netlbl_domhsh_remove_entry(struct netlbl_dom_map *entry,
 		else
 			list_del_rcu(&entry->list);
 	} else
-		ret_val = -ENOENT;
+		ret_val = -ERR(ENOENT);
 	spin_unlock(&netlbl_domhsh_lock);
 
 	audit_buf = netlbl_audit_start_common(AUDIT_MAC_MAP_DEL, audit_info);
@@ -794,7 +794,7 @@ remove_af6_failure:
 int netlbl_domhsh_remove(const char *domain, u16 family,
 			 struct netlbl_audit *audit_info)
 {
-	int ret_val = -EINVAL;
+	int ret_val = -ERR(EINVAL);
 	struct netlbl_dom_map *entry;
 
 	rcu_read_lock();
@@ -941,7 +941,7 @@ int netlbl_domhsh_walk(u32 *skip_bkt,
 		     int (*callback) (struct netlbl_dom_map *entry, void *arg),
 		     void *cb_arg)
 {
-	int ret_val = -ENOENT;
+	int ret_val = -ERR(ENOENT);
 	u32 iter_bkt;
 	struct list_head *iter_list;
 	struct netlbl_dom_map *iter_entry;

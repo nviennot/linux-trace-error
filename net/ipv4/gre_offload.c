@@ -15,7 +15,7 @@ static struct sk_buff *gre_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
 {
 	int tnl_hlen = skb_inner_mac_header(skb) - skb_transport_header(skb);
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	u16 mac_offset = skb->mac_header;
 	__be16 protocol = skb->protocol;
 	u16 mac_len = skb->mac_len;
@@ -229,7 +229,7 @@ static int gre_gro_complete(struct sk_buff *skb, int nhoff)
 	struct gre_base_hdr *greh = (struct gre_base_hdr *)(skb->data + nhoff);
 	struct packet_offload *ptype;
 	unsigned int grehlen = sizeof(*greh);
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 	__be16 type;
 
 	skb->encapsulation = 1;

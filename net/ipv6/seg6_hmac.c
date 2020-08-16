@@ -126,7 +126,7 @@ static int __do_hmac(struct seg6_hmac_info *hinfo, const char *text, u8 psize,
 
 	algo = __hmac_get_algo(hinfo->alg_id);
 	if (!algo)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	tfm = *this_cpu_ptr(algo->tfms);
 
@@ -175,7 +175,7 @@ int seg6_hmac_compute(struct seg6_hmac_info *hinfo, struct ipv6_sr_hdr *hdr,
 
 	/* this limit allows for 14 segments */
 	if (plen >= SEG6_HMAC_RING_SIZE)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/* Let's build the HMAC text on the ring buffer. The text is composed
 	 * as follows, in order:
@@ -305,7 +305,7 @@ int seg6_hmac_info_del(struct net *net, u32 key)
 {
 	struct seg6_pernet_data *sdata = seg6_pernet(net);
 	struct seg6_hmac_info *hinfo;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	hinfo = rhashtable_lookup_fast(&sdata->hmac_infos, &key, rht_params);
 	if (!hinfo)
@@ -328,11 +328,11 @@ int seg6_push_hmac(struct net *net, struct in6_addr *saddr,
 {
 	struct seg6_hmac_info *hinfo;
 	struct sr6_tlv_hmac *tlv;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	tlv = seg6_get_tlv_hmac(srh);
 	if (!tlv)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 

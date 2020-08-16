@@ -704,7 +704,7 @@ static int get_node_path(struct inode *inode, long block,
 		level = 3;
 		goto got;
 	} else {
-		return -E2BIG;
+		return -ERR(E2BIG);
 	}
 got:
 	return level;
@@ -741,7 +741,7 @@ int f2fs_get_dnode_of_data(struct dnode_of_data *dn, pgoff_t index, int mode)
 
 	/* if inline_data is set, should not report any block indices */
 	if (f2fs_has_inline_data(dn->inode) && index) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		f2fs_put_page(npage[0], 1);
 		goto release_out;
 	}
@@ -759,7 +759,7 @@ int f2fs_get_dnode_of_data(struct dnode_of_data *dn, pgoff_t index, int mode)
 		if (!nids[i] && mode == ALLOC_NODE) {
 			/* alloc new node */
 			if (!f2fs_alloc_nid(sbi, &(nids[i]))) {
-				err = -ENOSPC;
+				err = -ERR(ENOSPC);
 				goto release_pages;
 			}
 
@@ -1179,7 +1179,7 @@ int f2fs_remove_inode_page(struct inode *inode)
 	/* 0 is possible, after f2fs_new_inode() has failed */
 	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode)))) {
 		f2fs_put_dnode(&dn);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (unlikely(inode->i_blocks != 0 && inode->i_blocks != 8)) {
@@ -1217,7 +1217,7 @@ struct page *f2fs_new_node_page(struct dnode_of_data *dn, unsigned int ofs)
 	int err;
 
 	if (unlikely(is_inode_flag_set(dn->inode, FI_NO_ALLOC)))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	page = f2fs_grab_cache_page(NODE_MAPPING(sbi), dn->nid, false);
 	if (!page)
@@ -1296,7 +1296,7 @@ static int read_node_page(struct page *page, int op_flags)
 	if (unlikely(ni.blk_addr == NULL_ADDR) ||
 			is_sbi_flag_set(sbi, SBI_IS_SHUTDOWN)) {
 		ClearPageUptodate(page);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	fio.new_blkaddr = fio.old_blkaddr = ni.blk_addr;
@@ -1341,9 +1341,9 @@ static struct page *__get_node_page(struct f2fs_sb_info *sbi, pgoff_t nid,
 	int err;
 
 	if (!nid)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	if (f2fs_check_nid_range(sbi, nid))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 repeat:
 	page = f2fs_grab_cache_page(NODE_MAPPING(sbi), nid, false);
 	if (!page)
@@ -1369,7 +1369,7 @@ repeat:
 	}
 
 	if (unlikely(!PageUptodate(page))) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out_err;
 	}
 
@@ -1383,7 +1383,7 @@ page_hit:
 			  nid, nid_of_node(page), ino_of_node(page),
 			  ofs_of_node(page), cpver_of_node(page),
 			  next_blkaddr_of_node(page));
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 out_err:
 		ClearPageUptodate(page);
 		f2fs_put_page(page, 1);
@@ -1461,7 +1461,7 @@ static struct page *last_fsync_dnode(struct f2fs_sb_info *sbi, nid_t ino)
 			if (unlikely(f2fs_cp_error(sbi))) {
 				f2fs_put_page(last_page, 0);
 				pagevec_release(&pvec);
-				return ERR_PTR(-EIO);
+				return ERR_PTR(-ERR(EIO));
 			}
 
 			if (!IS_DNODE(page) || !is_cold_node(page))
@@ -1626,13 +1626,13 @@ int f2fs_move_node_page(struct page *node_page, int gc_type)
 		set_page_dirty(node_page);
 
 		if (!clear_page_dirty_for_io(node_page)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out_page;
 		}
 
 		if (__write_node_page(node_page, false, NULL,
 					&wbc, false, FS_GC_NODE_IO, NULL)) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			unlock_page(node_page);
 		}
 		goto release_page;
@@ -1688,7 +1688,7 @@ retry:
 			if (unlikely(f2fs_cp_error(sbi))) {
 				f2fs_put_page(last_page, 0);
 				pagevec_release(&pvec);
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto out;
 			}
 
@@ -1770,7 +1770,7 @@ continue_unlock:
 out:
 	if (nwritten)
 		f2fs_submit_merged_write_cond(sbi, NULL, NULL, ino, NODE);
-	return ret ? -EIO: 0;
+	return ret ? -ERR(EIO): 0;
 }
 
 static int f2fs_match_ino(struct inode *inode, unsigned long ino, void *data)
@@ -1978,7 +1978,7 @@ out:
 		f2fs_submit_merged_write(sbi, NODE);
 
 	if (unlikely(f2fs_cp_error(sbi)))
-		return -EIO;
+		return -ERR(EIO);
 	return ret;
 }
 
@@ -2010,7 +2010,7 @@ int f2fs_wait_on_node_pages_writeback(struct f2fs_sb_info *sbi,
 
 		f2fs_wait_on_page_writeback(page, NODE, true, false);
 		if (TestClearPageError(page))
-			ret = -EIO;
+			ret = -ERR(EIO);
 
 		put_page(page);
 
@@ -2188,7 +2188,7 @@ static bool add_free_nid(struct f2fs_sb_info *sbi,
 	struct f2fs_nm_info *nm_i = NM_I(sbi);
 	struct free_nid *i, *e;
 	struct nat_entry *ne;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	bool ret = false;
 
 	/* 0 nid should not be used */
@@ -2294,7 +2294,7 @@ static int scan_nat_page(struct f2fs_sb_info *sbi,
 		blk_addr = le32_to_cpu(nat_blk->entries[i].block_addr);
 
 		if (blk_addr == NEW_ADDR)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (blk_addr == NULL_ADDR) {
 			add_free_nid(sbi, start_nid, true, true);
@@ -2626,7 +2626,7 @@ int f2fs_recover_xattr_data(struct inode *inode, struct page *page)
 recover_xnid:
 	/* 2: update xattr nid in inode */
 	if (!f2fs_alloc_nid(sbi, &new_xnid))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	set_new_dnode(&dn, inode, NULL, NULL, new_xnid);
 	xpage = f2fs_new_node_page(&dn, XATTR_NODE_OFFSET);
@@ -2660,7 +2660,7 @@ int f2fs_recover_inode_page(struct f2fs_sb_info *sbi, struct page *page)
 		return err;
 
 	if (unlikely(old_ni.blk_addr != NULL_ADDR))
-		return -EINVAL;
+		return -ERR(EINVAL);
 retry:
 	ipage = f2fs_grab_cache_page(NODE_MAPPING(sbi), ino, false);
 	if (!ipage) {

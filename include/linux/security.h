@@ -606,7 +606,7 @@ static inline int security_fs_context_dup(struct fs_context *fc,
 static inline int security_fs_context_parse_param(struct fs_context *fc,
 						  struct fs_parameter *param)
 {
-	return -ENOPARAM;
+	return -ERR(ENOPARAM);
 }
 
 static inline int security_sb_alloc(struct super_block *sb)
@@ -711,7 +711,7 @@ static inline int security_dentry_init_security(struct dentry *dentry,
 						 void **ctx,
 						 u32 *ctxlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_dentry_create_files_as(struct dentry *dentry,
@@ -738,7 +738,7 @@ static inline int security_old_inode_init_security(struct inode *inode,
 						   const char **name,
 						   void **value, size_t *len)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_inode_create(struct inode *dir,
@@ -864,12 +864,12 @@ static inline int security_inode_killpriv(struct dentry *dentry)
 
 static inline int security_inode_getsecurity(struct inode *inode, const char *name, void **buffer, bool alloc)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_inode_setsecurity(struct inode *inode, const char *name, const void *value, size_t size, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_inode_listsecurity(struct inode *inode, char *buffer, size_t buffer_size)
@@ -895,7 +895,7 @@ static inline int security_kernfs_init_security(struct kernfs_node *kn_dir,
 
 static inline int security_inode_copy_up_xattr(const char *name)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_file_permission(struct file *file, int mask)
@@ -1236,13 +1236,13 @@ static inline void security_d_instantiate(struct dentry *dentry,
 static inline int security_getprocattr(struct task_struct *p, const char *lsm,
 				       char *name, char **value)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int security_setprocattr(const char *lsm, char *name,
 				       void *value, size_t size)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int security_netlink_send(struct sock *sk, struct sk_buff *skb)
@@ -1257,14 +1257,14 @@ static inline int security_ismaclabel(const char *name)
 
 static inline int security_secid_to_secctx(u32 secid, char **secdata, u32 *seclen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int security_secctx_to_secid(const char *secdata,
 					   u32 seclen,
 					   u32 *secid)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void security_release_secctx(char *secdata, u32 seclen)
@@ -1277,15 +1277,15 @@ static inline void security_inode_invalidate_secctx(struct inode *inode)
 
 static inline int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 static inline int security_locked_down(enum lockdown_reason what)
 {
@@ -1473,12 +1473,12 @@ static inline int security_sock_rcv_skb(struct sock *sk,
 static inline int security_socket_getpeersec_stream(struct socket *sock, char __user *optval,
 						    int __user *optlen, unsigned len)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline int security_socket_getpeersec_dgram(struct socket *sock, struct sk_buff *skb, u32 *secid)
 {
-	return -ENOPROTOOPT;
+	return -ERR(ENOPROTOOPT);
 }
 
 static inline int security_sk_alloc(struct sock *sk, int family, gfp_t priority)
@@ -1865,7 +1865,7 @@ extern void securityfs_remove(struct dentry *dentry);
 static inline struct dentry *securityfs_create_dir(const char *name,
 						   struct dentry *parent)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *securityfs_create_file(const char *name,
@@ -1874,7 +1874,7 @@ static inline struct dentry *securityfs_create_file(const char *name,
 						    void *data,
 						    const struct file_operations *fops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline struct dentry *securityfs_create_symlink(const char *name,
@@ -1882,7 +1882,7 @@ static inline struct dentry *securityfs_create_symlink(const char *name,
 					const char *target,
 					const struct inode_operations *iops)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static inline void securityfs_remove(struct dentry *dentry)

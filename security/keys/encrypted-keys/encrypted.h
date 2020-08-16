@@ -12,7 +12,7 @@ static inline struct key *request_trusted_key(const char *trusted_desc,
 					      const u8 **master_key,
 					      size_t *master_keylen)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 #endif
 

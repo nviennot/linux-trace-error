@@ -223,7 +223,7 @@ static int img_spdif_out_trigger(struct snd_pcm_substream *substream, int cmd,
 		spin_unlock_irqrestore(&spdif->lock, flags);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -246,10 +246,10 @@ static int img_spdif_out_hw_params(struct snd_pcm_substream *substream,
 			rate, channels, format);
 
 	if (format != SNDRV_PCM_FORMAT_S32_LE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (channels != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pre_div_a = clk_round_rate(spdif->clk_ref, rate * 256);
 	if (pre_div_a < 0)

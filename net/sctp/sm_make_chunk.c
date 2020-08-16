@@ -152,7 +152,7 @@ int sctp_init_cause(struct sctp_chunk *chunk, __be16 cause_code,
 	err.length = htons(len);
 
 	if (skb_tailroom(chunk->skb) < len)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	chunk->subh.err_hdr = sctp_addto_chunk(chunk, sizeof(err), &err);
 

@@ -172,7 +172,7 @@ static int tas5086_reg_write(void *context, unsigned int reg,
 
 	size = tas5086_register_size(&client->dev, reg);
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf[0] = reg;
 
@@ -187,7 +187,7 @@ static int tas5086_reg_write(void *context, unsigned int reg,
 	else if (ret < 0)
 		return ret;
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 static int tas5086_reg_read(void *context, unsigned int reg,
@@ -202,7 +202,7 @@ static int tas5086_reg_read(void *context, unsigned int reg,
 
 	size = tas5086_register_size(&client->dev, reg);
 	if (size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	send_buf = reg;
 
@@ -220,7 +220,7 @@ static int tas5086_reg_read(void *context, unsigned int reg,
 	if (ret < 0)
 		return ret;
 	else if (ret != ARRAY_SIZE(msgs))
-		return -EIO;
+		return -ERR(EIO);
 
 	*value = 0;
 
@@ -320,7 +320,7 @@ static int tas5086_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	/* The TAS5086 can only be slave to all clocks */
 	if ((format & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS) {
 		dev_err(component->dev, "Invalid clocking mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* we need to refer to the data format from hw_params() */
@@ -345,7 +345,7 @@ static int index_in_array(const int *array, int len, int needle)
 		if (array[i] == needle)
 			return i;
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int tas5086_hw_params(struct snd_pcm_substream *substream,
@@ -365,7 +365,7 @@ static int tas5086_hw_params(struct snd_pcm_substream *substream,
 
 	if (val < 0) {
 		dev_err(component->dev, "Invalid sample rate\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(priv->regmap, TAS5086_CLOCK_CONTROL,
@@ -379,7 +379,7 @@ static int tas5086_hw_params(struct snd_pcm_substream *substream,
 			     priv->mclk / priv->rate);
 	if (val < 0) {
 		dev_err(component->dev, "Invalid MCLK / Fs ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(priv->regmap, TAS5086_CLOCK_CONTROL,
@@ -416,7 +416,7 @@ static int tas5086_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* ... then add the offset for the sample bit depth. */
@@ -432,7 +432,7 @@ static int tas5086_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid bit width\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_write(priv->regmap, TAS5086_SERIAL_DATA_IF, val);
@@ -916,7 +916,7 @@ static int tas5086_i2c_probe(struct i2c_client *i2c,
 {
 	struct tas5086_private *priv;
 	struct device *dev = &i2c->dev;
-	int gpio_nreset = -EINVAL;
+	int gpio_nreset = -ERR(EINVAL);
 	int i, ret;
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
@@ -949,7 +949,7 @@ static int tas5086_i2c_probe(struct i2c_client *i2c,
 
 	if (gpio_is_valid(gpio_nreset))
 		if (devm_gpio_request(dev, gpio_nreset, "TAS5086 Reset"))
-			gpio_nreset = -EINVAL;
+			gpio_nreset = -ERR(EINVAL);
 
 	priv->gpio_nreset = gpio_nreset;
 
@@ -966,7 +966,7 @@ static int tas5086_i2c_probe(struct i2c_client *i2c,
 	if (ret == 0 && i != 0x3) {
 		dev_err(dev,
 			"Failed to identify TAS5086 codec (got %02x)\n", i);
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 	}
 
 	/*

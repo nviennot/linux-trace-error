@@ -356,7 +356,7 @@ static int wm8770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		master = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	iface = 0;
@@ -370,7 +370,7 @@ static int wm8770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		iface |= 0x1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -386,7 +386,7 @@ static int wm8770_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		iface |= 0x4;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, WM8770_IFACECTRL, 0xf, iface);
@@ -443,7 +443,7 @@ static int wm8770_hw_params(struct snd_pcm_substream *substream,
 		shift = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Only need to set MCLK/LRCLK ratio if we're master */
@@ -458,7 +458,7 @@ static int wm8770_hw_params(struct snd_pcm_substream *substream,
 			dev_err(component->dev,
 				"Unable to configure MCLK ratio %d/%d\n",
 				wm8770->sysclk, params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		dev_dbg(component->dev, "MCLK is %dfs\n", mclk_ratios[i]);

@@ -48,7 +48,7 @@ struct fsverity_hash_alg *fsverity_get_hash_alg(const struct inode *inode,
 	if (num >= ARRAY_SIZE(fsverity_hash_algs) ||
 	    !fsverity_hash_algs[num].name) {
 		fsverity_warn(inode, "Unknown hash algorithm number: %u", num);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 	alg = &fsverity_hash_algs[num];
 
@@ -71,7 +71,7 @@ struct fsverity_hash_alg *fsverity_get_hash_alg(const struct inode *inode,
 			fsverity_warn(inode,
 				      "Missing crypto API support for hash algorithm \"%s\"",
 				      alg->name);
-			alg = ERR_PTR(-ENOPKG);
+			alg = ERR_PTR(-ERR(ENOPKG));
 			goto out_unlock;
 		}
 		fsverity_err(inode,
@@ -81,7 +81,7 @@ struct fsverity_hash_alg *fsverity_get_hash_alg(const struct inode *inode,
 		goto out_unlock;
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (WARN_ON(alg->digest_size != crypto_ahash_digestsize(tfm)))
 		goto err_free_tfm;
 	if (WARN_ON(alg->block_size != crypto_ahash_blocksize(tfm)))
@@ -239,7 +239,7 @@ int fsverity_hash_page(const struct merkle_tree_params *params,
 	int err;
 
 	if (WARN_ON(params->block_size != PAGE_SIZE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sg_init_table(&sg, 1);
 	sg_set_page(&sg, page, PAGE_SIZE, 0);

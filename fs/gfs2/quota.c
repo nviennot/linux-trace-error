@@ -325,7 +325,7 @@ static int slot_get(struct gfs2_quota_data *qd)
 	if (qd->qd_slot_count != 0)
 		goto out;
 
-	error = -ENOSPC;
+	error = -ERR(ENOSPC);
 	bit = find_first_zero_bit(sdp->sd_quota_bitmap, sdp->sd_quota_slots);
 	if (bit < sdp->sd_quota_slots) {
 		set_bit(bit, sdp->sd_quota_bitmap);
@@ -388,7 +388,7 @@ static int bh_get(struct gfs2_quota_data *qd)
 	error = gfs2_meta_read(ip->i_gl, bh_map.b_blocknr, DIO_WAIT, 0, &bh);
 	if (error)
 		goto fail;
-	error = -EIO;
+	error = -ERR(EIO);
 	if (gfs2_metatype_check(sdp, bh, GFS2_METATYPE_QC))
 		goto fail_brelse;
 
@@ -578,7 +578,7 @@ int gfs2_quota_hold(struct gfs2_inode *ip, kuid_t uid, kgid_t gid)
 
 	if (gfs2_assert_warn(sdp, !ip->i_qadata->qa_qd_num) ||
 	    gfs2_assert_warn(sdp, !test_bit(GIF_QD_LOCKED, &ip->i_flags))) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out;
 	}
 
@@ -767,7 +767,7 @@ static int gfs2_write_buf_to_page(struct gfs2_inode *ip, unsigned long index,
 unlock_out:
 	unlock_page(page);
 	put_page(page);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int gfs2_write_disk_quota(struct gfs2_inode *ip, struct gfs2_quota *qp,
@@ -836,7 +836,7 @@ static int gfs2_adjust_quota(struct gfs2_inode *ip, loff_t loc,
 		return err;
 
 	loc -= sizeof(q); /* gfs2_internal_read would've advanced the loc ptr */
-	err = -EIO;
+	err = -ERR(EIO);
 	be64_add_cpu(&q.qu_value, change);
 	if (((s64)be64_to_cpu(q.qu_value)) < 0)
 		q.qu_value = 0; /* Never go negative on quota usage */
@@ -1236,7 +1236,7 @@ int gfs2_quota_check(struct gfs2_inode *ip, kuid_t uid, kgid_t gid,
 							   sdp->sd_vfs->s_dev,
 							   QUOTA_NL_BHARDWARN);
 				}
-				error = -EDQUOT;
+				error = -ERR(EDQUOT);
 				break;
 			}
 		} else if (warn && warn < value &&
@@ -1356,7 +1356,7 @@ int gfs2_quota_init(struct gfs2_sbd *sdp)
 	int error;
 
 	if (gfs2_check_internal_file_size(sdp->sd_qc_inode, 1, 64 << 20))
-		return -EIO;
+		return -ERR(EIO);
 
 	sdp->sd_quota_slots = blocks * sdp->sd_qc_per_block;
 	bm_size = DIV_ROUND_UP(sdp->sd_quota_slots, 8 * sizeof(unsigned long));
@@ -1380,7 +1380,7 @@ int gfs2_quota_init(struct gfs2_sbd *sdp)
 			if (error)
 				goto fail;
 		}
-		error = -EIO;
+		error = -ERR(EIO);
 		bh = gfs2_meta_ra(ip->i_gl, dblock, extlen);
 		if (!bh)
 			goto fail;
@@ -1632,11 +1632,11 @@ static int gfs2_get_dqblk(struct super_block *sb, struct kqid qid,
 	memset(fdq, 0, sizeof(*fdq));
 
 	if (sdp->sd_args.ar_quota == GFS2_QUOTA_OFF)
-		return -ESRCH; /* Crazy XFS error code */
+		return -ERR(ESRCH); /* Crazy XFS error code */
 
 	if ((qid.type != USRQUOTA) &&
 	    (qid.type != GRPQUOTA))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = qd_get(sdp, qid, &qd);
 	if (error)
@@ -1673,14 +1673,14 @@ static int gfs2_set_dqblk(struct super_block *sb, struct kqid qid,
 	int error;
 
 	if (sdp->sd_args.ar_quota == GFS2_QUOTA_OFF)
-		return -ESRCH; /* Crazy XFS error code */
+		return -ERR(ESRCH); /* Crazy XFS error code */
 
 	if ((qid.type != USRQUOTA) &&
 	    (qid.type != GRPQUOTA))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (fdq->d_fieldmask & ~GFS2_FIELDMASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = qd_get(sdp, qid, &qd);
 	if (error)

@@ -380,7 +380,7 @@ static int qfq_change_agg(struct Qdisc *sch, struct qfq_class *cl, u32 weight,
 	if (new_agg == NULL) { /* create new aggregate */
 		new_agg = kzalloc(sizeof(*new_agg), GFP_ATOMIC);
 		if (new_agg == NULL)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		qfq_init_agg(q, new_agg, lmax, weight);
 	}
 	qfq_deact_rm_from_agg(q, cl);
@@ -404,7 +404,7 @@ static int qfq_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 
 	if (tca[TCA_OPTIONS] == NULL) {
 		pr_notice("qfq: no options\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_QFQ_MAX, tca[TCA_OPTIONS],
@@ -416,7 +416,7 @@ static int qfq_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 		weight = nla_get_u32(tb[TCA_QFQ_WEIGHT]);
 		if (!weight || weight > (1UL << QFQ_MAX_WSHIFT)) {
 			pr_notice("qfq: invalid weight %u\n", weight);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else
 		weight = 1;
@@ -425,7 +425,7 @@ static int qfq_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 		lmax = nla_get_u32(tb[TCA_QFQ_LMAX]);
 		if (lmax < QFQ_MIN_LMAX || lmax > (1UL << QFQ_MTU_SHIFT)) {
 			pr_notice("qfq: invalid max length %u\n", lmax);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else
 		lmax = psched_mtu(qdisc_dev(sch));
@@ -443,7 +443,7 @@ static int qfq_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 	if (q->wsum + delta_w > QFQ_MAX_WSUM) {
 		pr_notice("qfq: total weight out of range (%d + %u)\n",
 			  delta_w, q->wsum);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (cl != NULL) { /* modify existing class */
@@ -463,7 +463,7 @@ static int qfq_change_class(struct Qdisc *sch, u32 classid, u32 parentid,
 	/* create and init new class */
 	cl = kzalloc(sizeof(struct qfq_class), GFP_KERNEL);
 	if (cl == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	cl->common.classid = classid;
 	cl->deficit = lmax;
@@ -498,7 +498,7 @@ set_change_agg:
 		sch_tree_unlock(sch);
 		new_agg = kzalloc(sizeof(*new_agg), GFP_KERNEL);
 		if (new_agg == NULL) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			gen_kill_estimator(&cl->rate_est);
 			goto destroy_class;
 		}
@@ -535,7 +535,7 @@ static int qfq_delete_class(struct Qdisc *sch, unsigned long arg)
 	struct qfq_class *cl = (struct qfq_class *)arg;
 
 	if (cl->filter_cnt > 0)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	sch_tree_lock(sch);
 
@@ -626,7 +626,7 @@ static int qfq_dump_class(struct Qdisc *sch, unsigned long arg,
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int qfq_dump_class_stats(struct Qdisc *sch, unsigned long arg,

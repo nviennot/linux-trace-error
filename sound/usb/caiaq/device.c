@@ -210,7 +210,7 @@ int snd_usb_caiaq_send_command(struct snd_usb_caiaqdev *cdev,
 	struct usb_device *usb_dev = cdev->chip.dev;
 
 	if (!usb_dev)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (len > EP1_BUFSIZE - 1)
 		len = EP1_BUFSIZE - 1;
@@ -233,7 +233,7 @@ int snd_usb_caiaq_send_command_bank(struct snd_usb_caiaqdev *cdev,
 	struct usb_device *usb_dev = cdev->chip.dev;
 
 	if (!usb_dev)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (len > EP1_BUFSIZE - 2)
 		len = EP1_BUFSIZE - 2;
@@ -261,13 +261,13 @@ int snd_usb_caiaq_set_audio_params (struct snd_usb_caiaqdev *cdev,
 	case 88200:	tmp[0] = SAMPLERATE_88200;   break;
 	case 96000:	tmp[0] = SAMPLERATE_96000;   break;
 	case 192000:	tmp[0] = SAMPLERATE_192000;  break;
-	default:	return -EINVAL;
+	default:	return -ERR(EINVAL);
 	}
 
 	switch (depth) {
 	case 16:	tmp[1] = DEPTH_16;   break;
 	case 24:	tmp[1] = DEPTH_24;   break;
-	default:	return -EINVAL;
+	default:	return -ERR(EINVAL);
 	}
 
 	tmp[2] = bpp & 0xff;
@@ -286,14 +286,14 @@ int snd_usb_caiaq_set_audio_params (struct snd_usb_caiaqdev *cdev,
 
 	if (!wait_event_timeout(cdev->ep1_wait_queue,
 	    cdev->audio_parm_answer >= 0, HZ))
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	if (cdev->audio_parm_answer != 1)
 		dev_dbg(dev, "unable to set the device's audio params\n");
 	else
 		cdev->bpp = bpp;
 
-	return cdev->audio_parm_answer == 1 ? 0 : -EINVAL;
+	return cdev->audio_parm_answer == 1 ? 0 : -ERR(EINVAL);
 }
 
 int snd_usb_caiaq_set_auto_msg(struct snd_usb_caiaqdev *cdev,
@@ -404,7 +404,7 @@ static int create_card(struct usb_device *usb_dev,
 			break;
 
 	if (devnum >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = snd_card_new(&intf->dev,
 			   index[devnum], id[devnum], THIS_MODULE,
@@ -433,7 +433,7 @@ static int init_card(struct snd_usb_caiaqdev *cdev)
 
 	if (usb_set_interface(usb_dev, 0, 1) != 0) {
 		dev_err(dev, "can't set alt interface.\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	usb_init_urb(&cdev->ep1_in_urb);
@@ -453,21 +453,21 @@ static int init_card(struct snd_usb_caiaqdev *cdev)
 	if (usb_urb_ep_type_check(&cdev->ep1_in_urb) ||
 	    usb_urb_ep_type_check(&cdev->midi_out_urb)) {
 		dev_err(dev, "invalid EPs\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	init_waitqueue_head(&cdev->ep1_wait_queue);
 	init_waitqueue_head(&cdev->prepare_wait_queue);
 
 	if (usb_submit_urb(&cdev->ep1_in_urb, GFP_KERNEL) != 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	err = snd_usb_caiaq_send_command(cdev, EP1_CMD_GET_DEVICE_INFO, NULL, 0);
 	if (err)
 		goto err_kill_urb;
 
 	if (!wait_event_timeout(cdev->ep1_wait_queue, cdev->spec_received, HZ)) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto err_kill_urb;
 	}
 

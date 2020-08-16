@@ -98,7 +98,7 @@ static int led_tg_check(const struct xt_tgchk_param *par)
 	int err;
 
 	if (ledinfo->id[0] == '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&xt_led_mutex);
 

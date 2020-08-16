@@ -246,7 +246,7 @@ static int pin_id_to_pin_index(struct hda_codec *codec,
 	}
 
 	codec_warn(codec, "HDMI: pin nid %d not registered\n", pin_nid);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hinfo_to_pcm_index(struct hda_codec *codec,
@@ -260,7 +260,7 @@ static int hinfo_to_pcm_index(struct hda_codec *codec,
 			return pcm_idx;
 
 	codec_warn(codec, "HDMI: hinfo %p not tied to a PCM\n", hinfo);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hinfo_to_pin_index(struct hda_codec *codec,
@@ -279,7 +279,7 @@ static int hinfo_to_pin_index(struct hda_codec *codec,
 
 	codec_dbg(codec, "HDMI: hinfo %p (pcm %d) not registered\n", hinfo,
 		  hinfo_to_pcm_index(codec, hinfo));
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static struct hdmi_spec_per_pin *pcm_idx_to_pin(struct hdmi_spec *spec,
@@ -306,7 +306,7 @@ static int cvt_nid_to_cvt_index(struct hda_codec *codec, hda_nid_t cvt_nid)
 			return cvt_idx;
 
 	codec_warn(codec, "HDMI: cvt nid %d not registered\n", cvt_nid);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hdmi_eld_ctl_info(struct snd_kcontrol *kcontrol,
@@ -360,7 +360,7 @@ static int hdmi_eld_ctl_get(struct snd_kcontrol *kcontrol,
 	if (eld->eld_size > ARRAY_SIZE(ucontrol->value.bytes.data) ||
 	    eld->eld_size > ELD_MAX_SIZE) {
 		snd_BUG();
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 
@@ -889,7 +889,7 @@ static int hdmi_pin_hbr_setup(struct hda_codec *codec, hda_nid_t pin_nid,
 					    AC_VERB_GET_PIN_WIDGET_CONTROL, 0);
 
 		if (pinctl < 0)
-			return hbr ? -EINVAL : 0;
+			return hbr ? -ERR(EINVAL) : 0;
 
 		new_pinctl = pinctl & ~AC_PINCTL_EPT;
 		if (hbr)
@@ -908,7 +908,7 @@ static int hdmi_pin_hbr_setup(struct hda_codec *codec, hda_nid_t pin_nid,
 					    AC_VERB_SET_PIN_WIDGET_CONTROL,
 					    new_pinctl);
 	} else if (hbr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -993,7 +993,7 @@ static int hdmi_choose_cvt(struct hda_codec *codec,
 
 	/* No free converters */
 	if (cvt_idx == spec->num_cvts)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (per_pin != NULL)
 		per_pin->mux_idx = mux_idx;
@@ -1031,7 +1031,7 @@ static int intel_cvt_id_to_mux_idx(struct hdmi_spec *spec,
 	for (i = 0; i < spec->num_cvts; i++)
 		if (spec->cvt_nids[i] == cvt_nid)
 			return i;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Intel HDMI workaround to fix audio routing issue:
@@ -1161,7 +1161,7 @@ static int hdmi_pcm_open_no_pin(struct hda_pcm_stream *hinfo,
 
 	pcm_idx = hinfo_to_pcm_index(codec, hinfo);
 	if (pcm_idx < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = hdmi_choose_cvt(codec, -1, &cvt_idx);
 	if (err)
@@ -1212,13 +1212,13 @@ static int hdmi_pcm_open(struct hda_pcm_stream *hinfo,
 	/* Validate hinfo */
 	pcm_idx = hinfo_to_pcm_index(codec, hinfo);
 	if (pcm_idx < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&spec->pcm_lock);
 	pin_idx = hinfo_to_pin_index(codec, hinfo);
 	if (!spec->dyn_pcm_assign) {
 		if (snd_BUG_ON(pin_idx < 0)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto unlock;
 		}
 	} else {
@@ -1274,7 +1274,7 @@ static int hdmi_pcm_open(struct hda_pcm_stream *hinfo,
 			per_cvt->assigned = 0;
 			hinfo->nid = 0;
 			snd_hda_spdif_ctls_unassign(codec, pcm_idx);
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto unlock;
 		}
 	}
@@ -1307,7 +1307,7 @@ static int hdmi_read_pin_conn(struct hda_codec *codec, int pin_idx)
 		codec_warn(codec,
 			   "HDMI: pin %d wcaps %#x does not support connection list\n",
 			   pin_nid, get_wcaps(codec, pin_nid));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_hda_set_dev_select(codec, pin_nid, dev_id);
@@ -1367,7 +1367,7 @@ static int hdmi_find_pcm_slot(struct hdmi_spec *spec,
 		if (!test_bit(i, &spec->pcm_bitmap))
 			return i;
 	}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static void hdmi_attach_hda_pcm(struct hdmi_spec *spec,
@@ -1812,7 +1812,7 @@ static int hdmi_parse_codec(struct hda_codec *codec)
 	nodes = snd_hda_get_sub_nodes(codec, codec->core.afg, &start_nid);
 	if (!start_nid || nodes < 0) {
 		codec_warn(codec, "HDMI: failed to get afg sub nodes\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1901,7 +1901,7 @@ static int generic_hdmi_playback_pcm_prepare(struct hda_pcm_stream *hinfo,
 	}
 
 	if (snd_BUG_ON(pin_idx < 0)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto unlock;
 	}
 	per_pin = get_pin(spec, pin_idx);
@@ -1977,10 +1977,10 @@ static int hdmi_pcm_close(struct hda_pcm_stream *hinfo,
 	if (hinfo->nid) {
 		pcm_idx = hinfo_to_pcm_index(codec, hinfo);
 		if (snd_BUG_ON(pcm_idx < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		cvt_idx = cvt_nid_to_cvt_index(codec, hinfo->nid);
 		if (snd_BUG_ON(cvt_idx < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		per_cvt = get_cvt(spec, cvt_idx);
 
 		snd_BUG_ON(!per_cvt->assigned);
@@ -1997,7 +1997,7 @@ static int hdmi_pcm_close(struct hda_pcm_stream *hinfo,
 			goto unlock;
 
 		if (snd_BUG_ON(pin_idx < 0)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto unlock;
 		}
 		per_pin = get_pin(spec, pin_idx);
@@ -2742,7 +2742,7 @@ static int alloc_intel_hdmi(struct hda_codec *codec)
 		codec_info(codec, "No i915 binding for Intel HDMI/DP codec\n");
 		/* set probe_id here to prevent generic fallback binding */
 		codec->probe_id = HDA_CODEC_ID_SKIP_PROBE;
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	err = alloc_generic_hdmi(codec);
@@ -3421,7 +3421,7 @@ static int nvhdmi_chmap_validate(struct hdac_chmap *chmap,
 		int ca, int chs, unsigned char *map)
 {
 	if (ca == 0x00 && (map[0] != SNDRV_CHMAP_FL || map[1] != SNDRV_CHMAP_FR))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -3640,7 +3640,7 @@ static int tegra_hdmi_build_pcms(struct hda_codec *codec)
 
 	pcm = hda_find_pcm_by_type(codec, HDA_PCM_TYPE_HDMI);
 	if (!pcm)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Override ->prepare() and ->cleanup() operations to notify the HDMI
@@ -3779,14 +3779,14 @@ static int atihdmi_paired_chmap_validate(struct hdac_chmap *chmap,
 					if (comp_mask_req == comp_mask_act)
 						companion_ok = true;
 					else
-						return -EINVAL;
+						return -ERR(EINVAL);
 				}
 				break;
 			}
 		}
 
 		if (!ok)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (companion_ok)
 			i++; /* companion channel already checked */
@@ -3803,7 +3803,7 @@ static int atihdmi_pin_set_slot_channel(struct hdac_device *hdac,
 	int ati_channel_setup = 0;
 
 	if (hdmi_slot > 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!has_amd_full_remap_support(codec)) {
 		hdmi_slot = atihdmi_paired_swap_fc_lfe(hdmi_slot);
@@ -3841,7 +3841,7 @@ static int atihdmi_pin_get_slot_channel(struct hdac_device *hdac,
 	int ati_channel_setup;
 
 	if (asp_slot > 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!has_amd_full_remap_support(codec)) {
 		ati_asp_slot = atihdmi_paired_swap_fc_lfe(asp_slot);
@@ -3942,7 +3942,7 @@ static int atihdmi_pin_hbr_setup(struct hda_codec *codec, hda_nid_t pin_nid,
 						hbr_ctl_new);
 
 	} else if (hbr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

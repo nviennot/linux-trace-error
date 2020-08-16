@@ -47,14 +47,14 @@ struct reserved_mem *of_reserved_mem_lookup(struct device_node *np);
 static inline int of_reserved_mem_device_init_by_idx(struct device *dev,
 					struct device_node *np, int idx)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int of_reserved_mem_device_init_by_name(struct device *dev,
 						      struct device_node *np,
 						      const char *name)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void of_reserved_mem_device_release(struct device *pdev) { }

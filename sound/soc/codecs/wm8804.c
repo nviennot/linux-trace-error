@@ -166,7 +166,7 @@ static int txsrc_put(struct snd_kcontrol *kcontrol,
 	unsigned int txpwr;
 
 	if (val != 0 && val != mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_dapm_mutex_lock(dapm);
 
@@ -236,7 +236,7 @@ static int wm8804_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set data format */
@@ -252,7 +252,7 @@ static int wm8804_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown master/slave configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set master/slave mode */
@@ -273,7 +273,7 @@ static int wm8804_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(dai->dev, "Unknown polarity configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set frame inversion */
@@ -306,7 +306,7 @@ static int wm8804_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(dai->dev, "Unsupported word length: %u\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set word length */
@@ -366,7 +366,7 @@ static int pll_factors(struct pll_div *pll_div, unsigned int target,
 	if (i == ARRAY_SIZE(post_table)) {
 		pr_err("%s: Unable to scale output frequency: %uHz\n",
 		       __func__, target);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pll_div->prescale = 0;
@@ -380,7 +380,7 @@ static int pll_factors(struct pll_div *pll_div, unsigned int target,
 	if (Ndiv < 5 || Ndiv > 13) {
 		pr_err("%s: WM8804 N value is not within the recommended range: %lu\n",
 		       __func__, Ndiv);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	pll_div->n = Ndiv;
 
@@ -460,7 +460,7 @@ static int wm8804_set_sysclk(struct snd_soc_dai *dai,
 		else {
 			dev_err(dai->dev, "OSCCLOCK is not within the "
 				"recommended range: %uHz\n", freq);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case WM8804_TX_CLKSRC_PLL:
@@ -474,7 +474,7 @@ static int wm8804_set_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Unknown clock source: %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -498,7 +498,7 @@ static int wm8804_set_clkdiv(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(dai->dev, "Unknown clock divider: %d\n", div_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -637,7 +637,7 @@ int wm8804_probe(struct device *dev, struct regmap *regmap)
 
 	if (id2 != 0x8805) {
 		dev_err(dev, "Invalid device ID: %#x\n", id2);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_reg_enable;
 	}
 

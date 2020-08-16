@@ -423,7 +423,7 @@ static int get_coeff(int mclk, int rate)
 		if (coeff_div[i].rate == rate && coeff_div[i].mclk == mclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8971_set_dai_sysclk(struct snd_soc_dai *codec_dai,
@@ -441,7 +441,7 @@ static int wm8971_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8971->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8971_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -458,7 +458,7 @@ static int wm8971_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -478,7 +478,7 @@ static int wm8971_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -495,7 +495,7 @@ static int wm8971_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8971_IFACE, iface);

@@ -64,19 +64,19 @@ static int validate_nla_bitfield32(const struct nlattr *nla,
 	const struct nla_bitfield32 *bf = nla_data(nla);
 
 	if (!valid_flags_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*disallow invalid bit selector */
 	if (bf->selector & ~valid_flags_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*disallow invalid bit values */
 	if (bf->value & ~valid_flags_mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*disallow valid bit values that are not selected*/
 	if (bf->value & ~bf->selector)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -98,7 +98,7 @@ static int nla_validate_array(const struct nlattr *head, int len, int maxtype,
 		if (nla_len(entry) < NLA_HDRLEN) {
 			NL_SET_ERR_MSG_ATTR(extack, entry,
 					    "Array element too short");
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 
 		ret = __nla_validate_parse(nla_data(entry), nla_len(entry),
@@ -179,7 +179,7 @@ static int nla_validate_int_range_unsigned(const struct nla_policy *pt,
 		value = nla_get_u64(nla);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nla_get_range_unsigned(pt, &range);
@@ -187,7 +187,7 @@ static int nla_validate_int_range_unsigned(const struct nla_policy *pt,
 	if (value < range.min || value > range.max) {
 		NL_SET_ERR_MSG_ATTR(extack, nla,
 				    "integer out of range");
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	return 0;
@@ -258,7 +258,7 @@ static int nla_validate_int_range_signed(const struct nla_policy *pt,
 		value = nla_get_s64(nla);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nla_get_range_signed(pt, &range);
@@ -266,7 +266,7 @@ static int nla_validate_int_range_signed(const struct nla_policy *pt,
 	if (value < range.min || value > range.max) {
 		NL_SET_ERR_MSG_ATTR(extack, nla,
 				    "integer out of range");
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	return 0;
@@ -290,7 +290,7 @@ static int nla_validate_int_range(const struct nla_policy *pt,
 		return nla_validate_int_range_signed(pt, nla, extack);
 	default:
 		WARN_ON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -301,7 +301,7 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 	u16 strict_start_type = policy[0].strict_start_type;
 	const struct nla_policy *pt;
 	int minlen = 0, attrlen = nla_len(nla), type = nla_type(nla);
-	int err = -ERANGE;
+	int err = -ERR(ERANGE);
 
 	if (strict_start_type && type >= strict_start_type)
 		validate |= NL_VALIDATE_STRICT;
@@ -322,7 +322,7 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		if (validate & NL_VALIDATE_STRICT_ATTRS) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "invalid attribute length");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -331,13 +331,13 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		    !(nla->nla_type & NLA_F_NESTED)) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "NLA_F_NESTED is missing");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (pt->type != NLA_NESTED && pt->type != NLA_NESTED_ARRAY &&
 		    pt->type != NLA_UNSPEC && (nla->nla_type & NLA_F_NESTED)) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "NLA_F_NESTED not expected");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -346,9 +346,9 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		if (extack && pt->reject_message) {
 			NL_SET_BAD_ATTR(extack, nla);
 			extack->_msg = pt->reject_message;
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_err;
 
 	case NLA_FLAG:
@@ -372,7 +372,7 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 			minlen = attrlen;
 
 		if (!minlen || memchr(nla_data(nla), '\0', minlen) == NULL) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_err;
 		}
 		/* fall through */
@@ -447,7 +447,7 @@ static int validate_nla(const struct nlattr *nla, int maxtype,
 		if (validate & NL_VALIDATE_UNSPEC) {
 			NL_SET_ERR_MSG_ATTR(extack, nla,
 					    "Unsupported attribute");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		/* fall through */
 	case NLA_MIN_LEN:
@@ -512,7 +512,7 @@ static int __nla_validate_parse(const struct nlattr *head, int len, int maxtype,
 	if (depth >= MAX_POLICY_RECURSION_DEPTH) {
 		NL_SET_ERR_MSG(extack,
 			       "allowed policy recursion depth exceeded");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (tb)
@@ -525,7 +525,7 @@ static int __nla_validate_parse(const struct nlattr *head, int len, int maxtype,
 			if (validate & NL_VALIDATE_MAXTYPE) {
 				NL_SET_ERR_MSG_ATTR(extack, nla,
 						    "Unknown attribute type");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			continue;
 		}
@@ -546,7 +546,7 @@ static int __nla_validate_parse(const struct nlattr *head, int len, int maxtype,
 				    rem, current->comm);
 		NL_SET_ERR_MSG(extack, "bytes leftover after parsing attributes");
 		if (validate & NL_VALIDATE_TRAILING)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -981,7 +981,7 @@ EXPORT_SYMBOL(__nla_put_nohdr);
 int nla_put(struct sk_buff *skb, int attrtype, int attrlen, const void *data)
 {
 	if (unlikely(skb_tailroom(skb) < nla_total_size(attrlen)))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	__nla_put(skb, attrtype, attrlen, data);
 	return 0;
@@ -1009,7 +1009,7 @@ int nla_put_64bit(struct sk_buff *skb, int attrtype, int attrlen,
 	else
 		len = nla_total_size(attrlen);
 	if (unlikely(skb_tailroom(skb) < len))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	__nla_put_64bit(skb, attrtype, attrlen, data, padattr);
 	return 0;
@@ -1028,7 +1028,7 @@ EXPORT_SYMBOL(nla_put_64bit);
 int nla_put_nohdr(struct sk_buff *skb, int attrlen, const void *data)
 {
 	if (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	__nla_put_nohdr(skb, attrlen, data);
 	return 0;
@@ -1047,7 +1047,7 @@ EXPORT_SYMBOL(nla_put_nohdr);
 int nla_append(struct sk_buff *skb, int attrlen, const void *data)
 {
 	if (unlikely(skb_tailroom(skb) < NLA_ALIGN(attrlen)))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	skb_put_data(skb, data, attrlen);
 	return 0;

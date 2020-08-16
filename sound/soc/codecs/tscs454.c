@@ -326,7 +326,7 @@ static int coeff_ram_get(struct snd_kcontrol *kcontrol,
 		coeff_ram = tscs454->sub_ram.cache;
 		coeff_ram_lock = &tscs454->sub_ram.lock;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(coeff_ram_lock);
@@ -364,7 +364,7 @@ static int write_coeff_ram(struct snd_soc_component *component, u8 *coeff_ram,
 		}
 
 		if (trys == DACCRSTAT_MAX_TRYS) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			dev_err(component->dev,
 				"Coefficient write error (%d)\n", ret);
 			return ret;
@@ -431,7 +431,7 @@ static int coeff_ram_put(struct snd_kcontrol *kcontrol,
 		r_addr = R_SUBCRADD;
 		r_wr = R_SUBCRWDL;
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(coeff_ram_lock);
@@ -646,7 +646,7 @@ static int set_sysclk(struct snd_soc_component *component)
 		freq = tscs454->bclk_freq;
 	pll_ctl = get_pll_ctl(freq);
 	if (!pll_ctl) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev,
 				"Invalid PLL input %lu (%d)\n", freq, ret);
 		return ret;
@@ -780,7 +780,7 @@ static inline int aif_set_master(struct snd_soc_component *component,
 		reg = R_I2SP3CTL;
 		break;
 	default:
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(component->dev, "Unknown DAI %d (%d)\n", aif_id, ret);
 		return ret;
 	}
@@ -2684,7 +2684,7 @@ static int tscs454_set_bclk_ratio(struct snd_soc_dai *dai,
 		shift = FB_I2SCMC_BCMP3;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unknown audio interface (%d)\n", ret);
 		return ret;
 	}
@@ -2700,7 +2700,7 @@ static int tscs454_set_bclk_ratio(struct snd_soc_dai *dai,
 		val = I2SCMC_BCMP_64X;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported bclk ratio (%d)\n", ret);
 		return ret;
 	}
@@ -2729,7 +2729,7 @@ static inline int set_aif_master_from_fmt(struct snd_soc_component *component,
 		aif->master = false;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported format (%d)\n", ret);
 		return ret;
 	}
@@ -2754,7 +2754,7 @@ static inline int set_aif_tdm_delay(struct snd_soc_component *component,
 		reg = R_PCMP3CTL0;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev,
 				"DAI %d unknown (%d)\n", dai_id + 1, ret);
 		return ret;
@@ -2788,7 +2788,7 @@ static inline int set_aif_format_from_fmt(struct snd_soc_component *component,
 		reg = R_I2SP3CTL;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev,
 				"DAI %d unknown (%d)\n", dai_id + 1, ret);
 		return ret;
@@ -2817,7 +2817,7 @@ static inline int set_aif_format_from_fmt(struct snd_soc_component *component,
 		val = FV_FORMAT_TDM;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Format unsupported (%d)\n", ret);
 		return ret;
 	}
@@ -2852,7 +2852,7 @@ set_aif_clock_format_from_fmt(struct snd_soc_component *component,
 		reg = R_I2SP3CTL;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev,
 				"DAI %d unknown (%d)\n", dai_id + 1, ret);
 		return ret;
@@ -2872,7 +2872,7 @@ set_aif_clock_format_from_fmt(struct snd_soc_component *component,
 		val = FV_BCLKP_INVERTED | FV_LRCLKP_INVERTED;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Format unknown (%d)\n", ret);
 		return ret;
 	}
@@ -2923,7 +2923,7 @@ static int tscs454_dai1_set_tdm_slot(struct snd_soc_dai *dai,
 		return 0;
 
 	if (tx_mask >= (1 << slots) || rx_mask >= (1 << slots)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid TDM slot mask (%d)\n", ret);
 		return ret;
 	}
@@ -2939,7 +2939,7 @@ static int tscs454_dai1_set_tdm_slot(struct snd_soc_dai *dai,
 		val = FV_TDMSO_6 | FV_TDMSI_6;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid number of slots (%d)\n", ret);
 		return ret;
 	}
@@ -2955,7 +2955,7 @@ static int tscs454_dai1_set_tdm_slot(struct snd_soc_dai *dai,
 		val = val | FV_TDMDSS_32;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid TDM slot width (%d)\n", ret);
 		return ret;
 	}
@@ -2981,7 +2981,7 @@ static int tscs454_dai23_set_tdm_slot(struct snd_soc_dai *dai,
 		return 0;
 
 	if (tx_mask >= (1 << slots) || rx_mask >= (1 << slots)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid TDM slot mask (%d)\n", ret);
 		return ret;
 	}
@@ -2994,7 +2994,7 @@ static int tscs454_dai23_set_tdm_slot(struct snd_soc_dai *dai,
 		reg = R_PCMP3CTL1;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unrecognized interface %d (%d)\n",
 				dai->id, ret);
 		return ret;
@@ -3008,7 +3008,7 @@ static int tscs454_dai23_set_tdm_slot(struct snd_soc_dai *dai,
 		val = FV_PCMSOP_2 | FV_PCMSIP_2;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid number of slots (%d)\n", ret);
 		return ret;
 	}
@@ -3024,7 +3024,7 @@ static int tscs454_dai23_set_tdm_slot(struct snd_soc_dai *dai,
 		val = val | FV_PCMDSSP_32;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid TDM slot width (%d)\n", ret);
 		return ret;
 	}
@@ -3088,7 +3088,7 @@ static int set_aif_fs(struct snd_soc_component *component,
 		bm = FV_I2SMBM_2;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported sample rate (%d)\n", ret);
 		return ret;
 	}
@@ -3104,7 +3104,7 @@ static int set_aif_fs(struct snd_soc_component *component,
 		reg = R_I2S3MRATE;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "DAI ID not recognized (%d)\n", ret);
 		return ret;
 	}
@@ -3143,7 +3143,7 @@ static int set_aif_sample_format(struct snd_soc_component *component,
 		width = FV_WL_32;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Unsupported format width (%d)\n", ret);
 		return ret;
 	}
@@ -3159,7 +3159,7 @@ static int set_aif_sample_format(struct snd_soc_component *component,
 		reg = R_I2SP3CTL;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "AIF ID not recognized (%d)\n", ret);
 		return ret;
 	}
@@ -3311,7 +3311,7 @@ static int tscs454_probe(struct snd_soc_component *component)
 		val = FV_PLLISEL_BCLK;
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dev_err(component->dev, "Invalid sysclk src id (%d)\n", ret);
 		return ret;
 	}

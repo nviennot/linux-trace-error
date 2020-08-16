@@ -27,7 +27,7 @@ struct posix_acl *fuse_get_acl(struct inode *inode, int type)
 	else if (type == ACL_TYPE_DEFAULT)
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 	else
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	value = kmalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!value)
@@ -39,7 +39,7 @@ struct posix_acl *fuse_get_acl(struct inode *inode, int type)
 		 (size == -EOPNOTSUPP && fc->no_getxattr))
 		acl = NULL;
 	else if (size == -ERANGE)
-		acl = ERR_PTR(-E2BIG);
+		acl = ERR_PTR(-ERR(E2BIG));
 	else
 		acl = ERR_PTR(size);
 
@@ -54,14 +54,14 @@ int fuse_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 	int ret;
 
 	if (!fc->posix_acl || fc->no_setxattr)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (type == ACL_TYPE_ACCESS)
 		name = XATTR_NAME_POSIX_ACL_ACCESS;
 	else if (type == ACL_TYPE_DEFAULT)
 		name = XATTR_NAME_POSIX_ACL_DEFAULT;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (acl) {
 		/*
@@ -75,7 +75,7 @@ int fuse_set_acl(struct inode *inode, struct posix_acl *acl, int type)
 		void *value;
 
 		if (size > PAGE_SIZE)
-			return -E2BIG;
+			return -ERR(E2BIG);
 
 		value = kmalloc(size, GFP_KERNEL);
 		if (!value)

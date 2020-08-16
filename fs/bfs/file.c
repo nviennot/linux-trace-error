@@ -37,7 +37,7 @@ static int bfs_move_block(unsigned long from, unsigned long to,
 
 	bh = sb_bread(sb, from);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	new = sb_getblk(sb, to);
 	memcpy(new->b_data, bh->b_data, bh->b_size);
 	mark_buffer_dirty(new);
@@ -56,7 +56,7 @@ static int bfs_move_blocks(struct super_block *sb, unsigned long start,
 		if(bfs_move_block(i, where + i, sb)) {
 			dprintf("failed to move block %08lx -> %08lx\n", i,
 								where + i);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	return 0;
 }
@@ -93,7 +93,7 @@ static int bfs_get_block(struct inode *inode, sector_t block,
 
 	/* The file will be extended, so let's see if there is enough space. */
 	if (phys >= info->si_blocks)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* The rest has to be protected against itself. */
 	mutex_lock(&info->bfs_lock);
@@ -117,7 +117,7 @@ static int bfs_get_block(struct inode *inode, sector_t block,
 	/* Ok, we have to move this entire file to the next free block. */
 	phys = info->si_lf_eblk + 1;
 	if (phys + block >= info->si_blocks) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out;
 	}
 

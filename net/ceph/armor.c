@@ -31,7 +31,7 @@ static int decode_bits(char c)
 		return 63;
 	if (c == '=')
 		return 0; /* just non-negative, please */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int ceph_armor(char *dst, const char *src, const char *end)
@@ -84,13 +84,13 @@ int ceph_unarmor(char *dst, const char *src, const char *end)
 			continue;
 		}
 		if (src + 4 > end)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		a = decode_bits(src[0]);
 		b = decode_bits(src[1]);
 		c = decode_bits(src[2]);
 		d = decode_bits(src[3]);
 		if (a < 0 || b < 0 || c < 0 || d < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		*dst++ = (a << 2) | (b >> 4);
 		if (src[2] == '=')

@@ -93,7 +93,7 @@ static struct nfs_subversion *find_nfs_version(unsigned int version)
 	}
 
 	spin_unlock(&nfs_version_lock);
-	return ERR_PTR(-EPROTONOSUPPORT);
+	return ERR_PTR(-ERR(EPROTONOSUPPORT));
 }
 
 struct nfs_subversion *get_nfs_version(unsigned int version)
@@ -108,7 +108,7 @@ struct nfs_subversion *get_nfs_version(unsigned int version)
 	}
 
 	if (!IS_ERR(nfs) && !try_module_get(nfs->owner))
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	return nfs;
 }
 
@@ -174,7 +174,7 @@ struct nfs_client *nfs_alloc_client(const struct nfs_client_initdata *cl_init)
 	}
 
 	INIT_LIST_HEAD(&clp->cl_superblocks);
-	clp->cl_rpcclient = ERR_PTR(-EINVAL);
+	clp->cl_rpcclient = ERR_PTR(-ERR(EINVAL));
 
 	clp->cl_proto = cl_init->proto;
 	clp->cl_nconnect = cl_init->nconnect;
@@ -355,7 +355,7 @@ int nfs_client_init_status(const struct nfs_client *clp)
 	/* called without checking nfs_client_init_is_complete */
 	if (clp->cl_cons_state > NFS_CS_READY) {
 		WARN_ON_ONCE(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return clp->cl_cons_state;
 }
@@ -380,7 +380,7 @@ nfs_found_client(const struct nfs_client_initdata *cl_init,
 	error = nfs_wait_client_init_complete(clp);
 	if (error < 0) {
 		nfs_put_client(clp);
-		return ERR_PTR(-ERESTARTSYS);
+		return ERR_PTR(-ERR(ERESTARTSYS));
 	}
 
 	if (clp->cl_cons_state < NFS_CS_READY) {
@@ -899,7 +899,7 @@ struct nfs_server *nfs_alloc_server(void)
 	if (!server)
 		return NULL;
 
-	server->client = server->client_acl = ERR_PTR(-EINVAL);
+	server->client = server->client_acl = ERR_PTR(-ERR(EINVAL));
 
 	/* Zero out the NFS state stuff */
 	INIT_LIST_HEAD(&server->client_link);

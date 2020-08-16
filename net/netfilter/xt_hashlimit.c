@@ -165,7 +165,7 @@ cfg_copy(struct hashlimit_cfg3 *to, const void *from, int revision)
 	} else if (revision == 3) {
 		memcpy(to, from, sizeof(struct hashlimit_cfg3));
 	} else {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -844,7 +844,7 @@ static int hashlimit_mt_check_common(const struct xt_mtchk_param *par,
 	int ret;
 
 	if (cfg->gc_interval == 0 || cfg->expire == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (cfg->size > HASHLIMIT_MAX_SIZE) {
 		cfg->size = HASHLIMIT_MAX_SIZE;
 		pr_info_ratelimited("size too large, truncated to %u\n", cfg->size);
@@ -855,41 +855,41 @@ static int hashlimit_mt_check_common(const struct xt_mtchk_param *par,
 	}
 	if (par->family == NFPROTO_IPV4) {
 		if (cfg->srcmask > 32 || cfg->dstmask > 32)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (cfg->srcmask > 128 || cfg->dstmask > 128)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (cfg->mode & ~XT_HASHLIMIT_ALL) {
 		pr_info_ratelimited("Unknown mode mask %X, kernel too old?\n",
 				    cfg->mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check for overflow. */
 	if (revision >= 3 && cfg->mode & XT_HASHLIMIT_RATE_MATCH) {
 		if (cfg->avg == 0 || cfg->avg > U32_MAX) {
 			pr_info_ratelimited("invalid rate\n");
-			return -ERANGE;
+			return -ERR(ERANGE);
 		}
 
 		if (cfg->interval == 0) {
 			pr_info_ratelimited("invalid interval\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (cfg->mode & XT_HASHLIMIT_BYTES) {
 		if (user2credits_byte(cfg->avg) == 0) {
 			pr_info_ratelimited("overflow, rate too high: %llu\n",
 					    cfg->avg);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (cfg->burst == 0 ||
 		   user2credits(cfg->avg * cfg->burst, revision) <
 		   user2credits(cfg->avg, revision)) {
 		pr_info_ratelimited("overflow, try lower: %llu/%llu\n",
 				    cfg->avg, cfg->burst);
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	mutex_lock(&hashlimit_mutex);

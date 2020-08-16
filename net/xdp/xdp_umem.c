@@ -57,7 +57,7 @@ static int xdp_reg_umem_at_qid(struct net_device *dev, struct xdp_umem *umem,
 	if (queue_id >= max_t(unsigned int,
 			      dev->real_num_rx_queues,
 			      dev->real_num_tx_queues))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (queue_id < dev->real_num_rx_queues)
 		dev->_rx[queue_id].umem = umem;
@@ -100,10 +100,10 @@ int xdp_umem_assign_dev(struct xdp_umem *umem, struct net_device *dev,
 	force_copy = flags & XDP_COPY;
 
 	if (force_zc && force_copy)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (xdp_get_umem_from_qid(dev, queue_id))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	err = xdp_reg_umem_at_qid(dev, umem, queue_id);
 	if (err)
@@ -128,7 +128,7 @@ int xdp_umem_assign_dev(struct xdp_umem *umem, struct net_device *dev,
 		return 0;
 
 	if (!dev->netdev_ops->ndo_bpf || !dev->netdev_ops->ndo_xsk_wakeup) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto err_unreg_umem;
 	}
 
@@ -294,7 +294,7 @@ static int xdp_umem_account_pages(struct xdp_umem *umem)
 		if (new_npgs > lock_limit) {
 			free_uid(umem->user);
 			umem->user = NULL;
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 	} while (atomic_long_cmpxchg(&umem->user->locked_vm, old_npgs,
 				     new_npgs) != old_npgs);
@@ -316,42 +316,42 @@ static int xdp_umem_reg(struct xdp_umem *umem, struct xdp_umem_reg *mr)
 		 * - making sure the memory area is consecutive
 		 * but for now, we simply say "computer says no".
 		 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mr->flags & ~(XDP_UMEM_UNALIGNED_CHUNK_FLAG |
 			XDP_UMEM_USES_NEED_WAKEUP))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!unaligned_chunks && !is_power_of_2(chunk_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!PAGE_ALIGNED(addr)) {
 		/* Memory area has to be page size aligned. For
 		 * simplicity, this might change.
 		 */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if ((addr + size) < addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	npgs = size >> PAGE_SHIFT;
 	if (npgs > U32_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chunks = (unsigned int)div_u64(size, chunk_size);
 	if (chunks == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!unaligned_chunks) {
 		chunks_per_page = PAGE_SIZE / chunk_size;
 		if (chunks < chunks_per_page || chunks % chunks_per_page)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (headroom >= chunk_size - XDP_PACKET_HEADROOM)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	umem->size = size;
 	umem->headroom = headroom;

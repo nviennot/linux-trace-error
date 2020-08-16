@@ -794,7 +794,7 @@ static int q6afe_callback(struct apr_device *adev, struct apr_resp_pkt *data)
 int q6afe_get_port_id(int index)
 {
 	if (index < 0 || index >= AFE_PORT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return port_maps[index].port_id;
 }
@@ -803,7 +803,7 @@ EXPORT_SYMBOL_GPL(q6afe_get_port_id);
 int q6afe_is_rx_port(int index)
 {
 	if (index < 0 || index >= AFE_PORT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return port_maps[index].is_rx;
 }
@@ -822,18 +822,18 @@ static int afe_apr_send_pkt(struct q6afe *afe, struct apr_pkt *pkt,
 	ret = apr_send_pkt(afe->apr, pkt);
 	if (ret < 0) {
 		dev_err(afe->dev, "packet not transmitted (%d)\n", ret);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
 	ret = wait_event_timeout(*wait, (port->result.opcode == hdr->opcode),
 				 msecs_to_jiffies(TIMEOUT_MS));
 	if (!ret) {
-		ret = -ETIMEDOUT;
+		ret = -ERR(ETIMEDOUT);
 	} else if (port->result.status > 0) {
 		dev_err(afe->dev, "DSP returned error[%x]\n",
 			port->result.status);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		ret = 0;
 	}
@@ -1011,7 +1011,7 @@ int q6afe_port_set_sysclk(struct q6afe_port *port, int clk_id,
 		ret = q6afe_set_lpass_clock_v2(port, &cset);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -1040,7 +1040,7 @@ int q6afe_port_stop(struct q6afe_port *port)
 	index = port->token;
 	if (index < 0 || index >= AFE_PORT_MAX) {
 		dev_err(afe->dev, "AFE port index[%d] invalid!\n", index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pkt_size = APR_HDR_SIZE + sizeof(*stop);
@@ -1188,7 +1188,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 	switch (num_sd_lines) {
 	case 0:
 		dev_err(dev, "no line is assigned\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	case 1:
 		switch (cfg->sd_line_mask) {
 		case AFE_PORT_I2S_SD0_MASK:
@@ -1205,7 +1205,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 			break;
 		default:
 			dev_err(dev, "Invalid SD lines\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 2:
@@ -1218,7 +1218,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 			break;
 		default:
 			dev_err(dev, "Invalid SD lines\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 3:
@@ -1228,7 +1228,7 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 			break;
 		default:
 			dev_err(dev, "Invalid SD lines\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 4:
@@ -1239,12 +1239,12 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 			break;
 		default:
 			dev_err(dev, "Invalid SD lines\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(dev, "Invalid SD lines\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (cfg->num_channels) {
@@ -1271,21 +1271,21 @@ int q6afe_i2s_port_prepare(struct q6afe_port *port, struct q6afe_i2s_cfg *cfg)
 	case 4:
 		if (pcfg->i2s_cfg.channel_mode < AFE_PORT_I2S_QUAD01) {
 			dev_err(dev, "Invalid Channel mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 5:
 	case 6:
 		if (pcfg->i2s_cfg.channel_mode < AFE_PORT_I2S_6CHS) {
 			dev_err(dev, "Invalid Channel mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 7:
 	case 8:
 		if (pcfg->i2s_cfg.channel_mode < AFE_PORT_I2S_8CHS) {
 			dev_err(dev, "Invalid Channel mode\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
@@ -1381,7 +1381,7 @@ struct q6afe_port *q6afe_port_get_from_id(struct device *dev, int id)
 
 	if (id < 0 || id >= AFE_PORT_MAX) {
 		dev_err(dev, "AFE port token[%d] invalid!\n", id);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	/* if port is multiple times bind/unbind before callback finishes */
@@ -1431,7 +1431,7 @@ struct q6afe_port *q6afe_port_get_from_id(struct device *dev, int id)
 
 	default:
 		dev_err(dev, "Invalid port id 0x%x\n", port_id);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	port = kzalloc(sizeof(*port), GFP_KERNEL);

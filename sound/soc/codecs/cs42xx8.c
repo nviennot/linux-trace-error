@@ -234,7 +234,7 @@ static int cs42xx8_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "unsupported dai format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(cs42xx8->regmap, CS42XX8_INTF,
@@ -251,7 +251,7 @@ static int cs42xx8_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "unsupported master/slave mode\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -293,7 +293,7 @@ static int cs42xx8_hw_params(struct snd_pcm_substream *substream,
 			} else {
 				dev_err(component->dev,
 					"unsupported sample rate\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -331,7 +331,7 @@ static int cs42xx8_hw_params(struct snd_pcm_substream *substream,
 
 	if (i == ARRAY_SIZE(cs42xx8_ratios)) {
 		dev_err(component->dev, "unsupported sysclk ratio\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cs42xx8->rate[tx] = params_rate(params);
@@ -544,7 +544,7 @@ int cs42xx8_probe(struct device *dev, struct regmap *regmap)
 
 	if (!cs42xx8->drvdata) {
 		dev_err(dev, "failed to find driver data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cs42xx8->gpiod_reset = devm_gpiod_get_optional(dev, "reset",
@@ -558,7 +558,7 @@ int cs42xx8_probe(struct device *dev, struct regmap *regmap)
 	if (IS_ERR(cs42xx8->clk)) {
 		dev_err(dev, "failed to get the clock: %ld\n",
 				PTR_ERR(cs42xx8->clk));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cs42xx8->sysclk = clk_get_rate(cs42xx8->clk);
@@ -594,7 +594,7 @@ int cs42xx8_probe(struct device *dev, struct regmap *regmap)
 	if (((val & CS42XX8_CHIPID_CHIP_ID_MASK) >> 4) != 0x00) {
 		dev_err(dev, "unmatched chip ID: %d\n",
 			(val & CS42XX8_CHIPID_CHIP_ID_MASK) >> 4);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_enable;
 	}
 

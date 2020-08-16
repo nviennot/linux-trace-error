@@ -133,7 +133,7 @@ static ssize_t scan_sleep_millisecs_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &msecs);
 	if (err || msecs > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_scan_sleep_millisecs = msecs;
 	khugepaged_sleep_expire = 0;
@@ -161,7 +161,7 @@ static ssize_t alloc_sleep_millisecs_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &msecs);
 	if (err || msecs > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_alloc_sleep_millisecs = msecs;
 	khugepaged_sleep_expire = 0;
@@ -188,7 +188,7 @@ static ssize_t pages_to_scan_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &pages);
 	if (err || !pages || pages > UINT_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_pages_to_scan = pages;
 
@@ -256,7 +256,7 @@ static ssize_t khugepaged_max_ptes_none_store(struct kobject *kobj,
 
 	err = kstrtoul(buf, 10, &max_ptes_none);
 	if (err || max_ptes_none > HPAGE_PMD_NR-1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_max_ptes_none = max_ptes_none;
 
@@ -282,7 +282,7 @@ static ssize_t khugepaged_max_ptes_swap_store(struct kobject *kobj,
 
 	err  = kstrtoul(buf, 10, &max_ptes_swap);
 	if (err || max_ptes_swap > HPAGE_PMD_NR-1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_max_ptes_swap = max_ptes_swap;
 
@@ -309,7 +309,7 @@ static ssize_t khugepaged_max_ptes_shared_store(struct kobject *kobj,
 
 	err  = kstrtoul(buf, 10, &max_ptes_shared);
 	if (err || max_ptes_shared > HPAGE_PMD_NR-1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	khugepaged_max_ptes_shared = max_ptes_shared;
 
@@ -1521,7 +1521,7 @@ static int khugepaged_collapse_pte_mapped_thps(struct mm_slot *mm_slot)
 		return 0;
 
 	if (!mmap_write_trylock(mm))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (unlikely(khugepaged_test_exit(mm)))
 		goto out;

@@ -42,7 +42,7 @@ static ssize_t dlm_control_store(struct dlm_ls *ls, const char *buf, size_t len)
 		return rc;
 	ls = dlm_find_lockspace_local(ls->ls_local_handle);
 	if (!ls)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (n) {
 	case 0:
@@ -52,7 +52,7 @@ static ssize_t dlm_control_store(struct dlm_ls *ls, const char *buf, size_t len)
 		dlm_ls_start(ls);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 	dlm_put_lockspace(ls);
 	return ret;
@@ -421,23 +421,23 @@ static int new_lockspace(const char *name, const char *cluster,
 	int namelen = strlen(name);
 
 	if (namelen > DLM_LOCKSPACE_LEN || namelen == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!lvblen || (lvblen % 8))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!try_module_get(THIS_MODULE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!dlm_user_daemon_available()) {
 		log_print("dlm user daemon not available");
-		error = -EUNATCH;
+		error = -ERR(EUNATCH);
 		goto out;
 	}
 
 	if (ops && ops_result) {
 	       	if (!dlm_config.ci_recover_callbacks)
-			*ops_result = -EOPNOTSUPP;
+			*ops_result = -ERR(EOPNOTSUPP);
 		else
 			*ops_result = 0;
 	}
@@ -451,7 +451,7 @@ static int new_lockspace(const char *name, const char *cluster,
 		log_print("dlm cluster name '%s' does not match "
 			  "the application cluster name '%s'",
 			  dlm_config.ci_cluster_name, cluster);
-		error = -EBADR;
+		error = -ERR(EBADR);
 		goto out;
 	}
 
@@ -465,7 +465,7 @@ static int new_lockspace(const char *name, const char *cluster,
 		if (memcmp(ls->ls_name, name, namelen))
 			continue;
 		if (flags & DLM_LSFL_NEWEXCL) {
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 			break;
 		}
 		ls->ls_create_count++;
@@ -763,7 +763,7 @@ static int release_lockspace(struct dlm_ls *ls, int force)
 	spin_lock(&lslist_lock);
 	if (ls->ls_create_count == 1) {
 		if (busy) {
-			rv = -EBUSY;
+			rv = -ERR(EBUSY);
 		} else {
 			/* remove_lockspace takes ls off lslist */
 			ls->ls_create_count = 0;
@@ -772,7 +772,7 @@ static int release_lockspace(struct dlm_ls *ls, int force)
 	} else if (ls->ls_create_count > 1) {
 		rv = --ls->ls_create_count;
 	} else {
-		rv = -EINVAL;
+		rv = -ERR(EINVAL);
 	}
 	spin_unlock(&lslist_lock);
 
@@ -872,7 +872,7 @@ int dlm_release_lockspace(void *lockspace, int force)
 
 	ls = dlm_find_lockspace_local(lockspace);
 	if (!ls)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dlm_put_lockspace(ls);
 
 	mutex_lock(&ls_lock);

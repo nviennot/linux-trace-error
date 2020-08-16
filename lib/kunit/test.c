@@ -484,7 +484,7 @@ int kunit_resource_destroy(struct kunit *test,
 	resource = kunit_resource_remove(test, match, free, match_data);
 
 	if (!resource)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	kunit_resource_free(test, resource);
 	return 0;

@@ -95,7 +95,7 @@ static int br_fill_vlan_tinfo(struct sk_buff *skb, u16 vid,
 
 	tmap = nla_nest_start_noflag(skb, IFLA_BRIDGE_VLAN_TUNNEL_INFO);
 	if (!tmap)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	if (nla_put_u32(skb, IFLA_BRIDGE_VLAN_TUNNEL_ID,
 			be32_to_cpu(tid)))
 		goto nla_put_failure;
@@ -112,7 +112,7 @@ static int br_fill_vlan_tinfo(struct sk_buff *skb, u16 vid,
 nla_put_failure:
 	nla_nest_cancel(skb, tmap);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int br_fill_vlan_tinfo_range(struct sk_buff *skb,
@@ -199,7 +199,7 @@ int br_vlan_tunnel_info(const struct net_bridge_port *p, int cmd,
 	int err = 0;
 
 	if (!p)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case RTM_SETLINK:
@@ -233,12 +233,12 @@ int br_parse_vlan_tunnel_info(struct nlattr *attr,
 
 	if (!tb[IFLA_BRIDGE_VLAN_TUNNEL_ID] ||
 	    !tb[IFLA_BRIDGE_VLAN_TUNNEL_VID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tun_id = nla_get_u32(tb[IFLA_BRIDGE_VLAN_TUNNEL_ID]);
 	vid = nla_get_u16(tb[IFLA_BRIDGE_VLAN_TUNNEL_VID]);
 	if (vid >= VLAN_VID_MASK)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (tb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS])
 		flags = nla_get_u16(tb[IFLA_BRIDGE_VLAN_TUNNEL_FLAGS]);
@@ -260,16 +260,16 @@ int br_process_vlan_tunnel_info(const struct net_bridge *br,
 
 	if (tinfo_curr->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) {
 		if (tinfo_last->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		memcpy(tinfo_last, tinfo_curr, sizeof(struct vtunnel_info));
 	} else if (tinfo_curr->flags & BRIDGE_VLAN_INFO_RANGE_END) {
 		int t, v;
 
 		if (!(tinfo_last->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if ((tinfo_curr->vid - tinfo_last->vid) !=
 		    (tinfo_curr->tunid - tinfo_last->tunid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		t = tinfo_last->tunid;
 		for (v = tinfo_last->vid; v <= tinfo_curr->vid; v++) {
 			err = br_vlan_tunnel_info(p, cmd, v, t, changed);
@@ -281,7 +281,7 @@ int br_process_vlan_tunnel_info(const struct net_bridge *br,
 		memset(tinfo_curr, 0, sizeof(struct vtunnel_info));
 	} else {
 		if (tinfo_last->flags)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		err = br_vlan_tunnel_info(p, cmd, tinfo_curr->vid,
 					  tinfo_curr->tunid, changed);
 		if (err)

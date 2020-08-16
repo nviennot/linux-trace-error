@@ -324,7 +324,7 @@ static int rds_tcp_laddr_check(struct net *net, const struct in6_addr *addr,
 	if (ipv6_addr_v4mapped(addr)) {
 		if (inet_addr_type(net, addr->s6_addr32[3]) == RTN_LOCAL)
 			return 0;
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 	}
 
 	/* If the scope_id is specified, check only those addresses
@@ -336,7 +336,7 @@ static int rds_tcp_laddr_check(struct net *net, const struct in6_addr *addr,
 		/* scope_id is not valid... */
 		if (!dev) {
 			rcu_read_unlock();
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		}
 		rcu_read_unlock();
 	}
@@ -345,7 +345,7 @@ static int rds_tcp_laddr_check(struct net *net, const struct in6_addr *addr,
 	if (ret)
 		return 0;
 #endif
-	return -EADDRNOTAVAIL;
+	return -ERR(EADDRNOTAVAIL);
 }
 
 static void rds_tcp_conn_free(void *arg)
@@ -570,7 +570,7 @@ static __net_init int rds_tcp_init_net(struct net *net)
 #endif
 			unregister_net_sysctl_table(rtn->rds_tcp_sysctl);
 			rtn->rds_tcp_sysctl = NULL;
-			err = -EAFNOSUPPORT;
+			err = -ERR(EAFNOSUPPORT);
 			goto fail;
 #if IS_ENABLED(CONFIG_IPV6)
 		}

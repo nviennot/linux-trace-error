@@ -465,7 +465,7 @@ skip:
 err_out:
 	while (bad_blocks--)
 		dec_io(page, last_write_complete);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int metapage_readpage(struct file *fp, struct page *page)
@@ -522,7 +522,7 @@ add_failed:
 	printk(KERN_ERR "JFS: bio_add_page failed unexpectedly\n");
 	bio_put(bio);
 	dec_io(page, last_read_complete);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int metapage_releasepage(struct page *page, gfp_t gfp_mask)

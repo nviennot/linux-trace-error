@@ -85,7 +85,7 @@ static int batadv_fdebug_log(struct batadv_priv_debug_log *debug_log,
 static int batadv_log_open(struct inode *inode, struct file *file)
 {
 	if (!try_module_get(THIS_MODULE))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	batadv_debugfs_deprecated(file,
 				  "Use tracepoint batadv:batadv_dbg instead\n");
@@ -116,10 +116,10 @@ static ssize_t batadv_log_read(struct file *file, char __user *buf,
 	char c;
 
 	if ((file->f_flags & O_NONBLOCK) && batadv_log_empty(debug_log))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (!buf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (count == 0)
 		return 0;

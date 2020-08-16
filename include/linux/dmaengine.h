@@ -912,7 +912,7 @@ static inline int dmaengine_slave_config(struct dma_chan *chan,
 	if (chan->device->device_config)
 		return chan->device->device_config(chan, config);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline bool is_slave_direction(enum dma_transfer_direction direction)
@@ -1026,7 +1026,7 @@ int dmaengine_desc_set_metadata_len(struct dma_async_tx_descriptor *desc,
 static inline int dmaengine_desc_attach_metadata(
 		struct dma_async_tx_descriptor *desc, void *data, size_t len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline void *dmaengine_desc_get_metadata_ptr(
 		struct dma_async_tx_descriptor *desc, size_t *payload_len,
@@ -1037,7 +1037,7 @@ static inline void *dmaengine_desc_get_metadata_ptr(
 static inline int dmaengine_desc_set_metadata_len(
 		struct dma_async_tx_descriptor *desc, size_t payload_len)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_DMA_ENGINE */
 
@@ -1053,7 +1053,7 @@ static inline int dmaengine_terminate_all(struct dma_chan *chan)
 	if (chan->device->device_terminate_all)
 		return chan->device->device_terminate_all(chan);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 /**
@@ -1082,7 +1082,7 @@ static inline int dmaengine_terminate_async(struct dma_chan *chan)
 	if (chan->device->device_terminate_all)
 		return chan->device->device_terminate_all(chan);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -1143,7 +1143,7 @@ static inline int dmaengine_pause(struct dma_chan *chan)
 	if (chan->device->device_pause)
 		return chan->device->device_pause(chan);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int dmaengine_resume(struct dma_chan *chan)
@@ -1151,7 +1151,7 @@ static inline int dmaengine_resume(struct dma_chan *chan)
 	if (chan->device->device_resume)
 		return chan->device->device_resume(chan);
 
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline enum dma_status dmaengine_tx_status(struct dma_chan *chan,
@@ -1475,12 +1475,12 @@ static inline struct dma_chan *dma_request_slave_channel(struct device *dev,
 static inline struct dma_chan *dma_request_chan(struct device *dev,
 						const char *name)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 static inline struct dma_chan *dma_request_chan_by_mask(
 						const dma_cap_mask_t *mask)
 {
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 static inline void dma_release_channel(struct dma_chan *chan)
 {
@@ -1488,7 +1488,7 @@ static inline void dma_release_channel(struct dma_chan *chan)
 static inline int dma_get_slave_caps(struct dma_chan *chan,
 				     struct dma_slave_caps *caps)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 #endif
 
@@ -1504,7 +1504,7 @@ static inline int dmaengine_desc_set_reuse(struct dma_async_tx_descriptor *tx)
 		return ret;
 
 	if (!caps.descriptor_reuse)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	tx->flags |= DMA_CTRL_REUSE;
 	return 0;
@@ -1524,7 +1524,7 @@ static inline int dmaengine_desc_free(struct dma_async_tx_descriptor *desc)
 {
 	/* this is supported for reusable desc, so check that */
 	if (!dmaengine_desc_test_reuse(desc))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return desc->desc_free(desc);
 }

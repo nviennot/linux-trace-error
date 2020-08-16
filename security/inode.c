@@ -133,7 +133,7 @@ static struct dentry *securityfs_create_dentry(const char *name, umode_t mode,
 		goto out;
 
 	if (d_really_is_positive(dentry)) {
-		error = -EEXIST;
+		error = -ERR(EEXIST);
 		goto out1;
 	}
 

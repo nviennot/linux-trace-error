@@ -51,7 +51,7 @@ int rl6231_get_pre_div(struct regmap *map, unsigned int reg, int sft)
 		pd = 16;
 		break;
 	default:
-		pd = -EINVAL;
+		pd = -ERR(EINVAL);
 		break;
 	}
 
@@ -74,7 +74,7 @@ int rl6231_calc_dmic_clk(int rate)
 
 	if (rate < 1000000 * div[0]) {
 		pr_warn("Base clock rate %d is too low\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(div); i++) {
@@ -86,7 +86,7 @@ int rl6231_calc_dmic_clk(int rate)
 	}
 
 	pr_warn("Base clock rate %d is too high\n", rate);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(rl6231_calc_dmic_clk);
 
@@ -147,7 +147,7 @@ int rl6231_pll_calc(const unsigned int freq_in,
 	bool m_bypass = false, k_bypass = false;
 
 	if (RL6231_PLL_INP_MAX < freq_in || RL6231_PLL_INP_MIN > freq_in)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < ARRAY_SIZE(pll_preset_table); i++) {
 		if (freq_in == pll_preset_table[i].pll_in &&
@@ -235,14 +235,14 @@ int rl6231_get_clk_info(int sclk, int rate)
 	static const int pd[] = {1, 2, 3, 4, 6, 8, 12, 16};
 
 	if (sclk <= 0 || rate <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rate = rate << 8;
 	for (i = 0; i < ARRAY_SIZE(pd); i++)
 		if (sclk == rate * pd[i])
 			return i;
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(rl6231_get_clk_info);
 

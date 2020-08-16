@@ -1389,7 +1389,7 @@ static int AtaMixerIoctl(u_int cmd, u_long arg)
 			    return IOCTL_OUT(arg, porta & 0x40 ? 0 : 100);
 		    }
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 
@@ -1600,15 +1600,15 @@ static int __init dmasound_atari_init(void)
 		dmasound.mach.default_hard = def_hard_tt ;
 		is_falcon = 0;
 	    } else
-		return -ENODEV;
+		return -ERR(ENODEV);
 	    if ((st_mfp.int_en_a & st_mfp.int_mk_a & 0x20) == 0)
 		return dmasound_init();
 	    else {
 		printk("DMA sound driver: Timer A interrupt already in use\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	    }
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void __exit dmasound_atari_cleanup(void)

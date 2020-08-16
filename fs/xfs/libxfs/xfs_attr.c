@@ -117,7 +117,7 @@ xfs_attr_get(
 	XFS_STATS_INC(args->dp->i_mount, xs_attr_get);
 
 	if (XFS_FORCED_SHUTDOWN(args->dp->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	args->geo = args->dp->i_mount->m_attr_geo;
 	args->whichfork = XFS_ATTR_FORK;
@@ -300,7 +300,7 @@ xfs_attr_set(
 	unsigned int		total;
 
 	if (XFS_FORCED_SHUTDOWN(dp->i_mount))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_qm_dqattach(dp);
 	if (error)
@@ -441,14 +441,14 @@ xfs_attr_shortform_addname(xfs_da_args_t *args)
 
 	if (args->namelen >= XFS_ATTR_SF_ENTSIZE_MAX ||
 	    args->valuelen >= XFS_ATTR_SF_ENTSIZE_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	newsize = XFS_ATTR_SF_TOTSIZE(args->dp);
 	newsize += XFS_ATTR_SF_ENTSIZE_BYNAME(args->namelen, args->valuelen);
 
 	forkoff = xfs_attr_shortform_bytesfit(args->dp, newsize);
 	if (!forkoff)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	xfs_attr_shortform_add(args, forkoff);
 	return 0;

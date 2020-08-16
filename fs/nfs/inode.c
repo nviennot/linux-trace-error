@@ -76,7 +76,7 @@ static int nfs_wait_killable(int mode)
 {
 	freezable_schedule_unsafe();
 	if (signal_pending_state(mode, current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	return 0;
 }
 
@@ -433,7 +433,7 @@ nfs_fhget(struct super_block *sb, struct nfs_fh *fh, struct nfs_fattr *fattr, st
 		.fh	= fh,
 		.fattr	= fattr
 	};
-	struct inode *inode = ERR_PTR(-ENOENT);
+	struct inode *inode = ERR_PTR(-ERR(ENOENT));
 	unsigned long hash;
 
 	nfs_attr_check_mountpoint(sb, fattr);
@@ -904,7 +904,7 @@ struct nfs_lock_context *nfs_get_lock_context(struct nfs_open_context *ctx)
 				res = new;
 				new = NULL;
 			} else
-				res = ERR_PTR(-EBADF);
+				res = ERR_PTR(-ERR(EBADF));
 		}
 		spin_unlock(&inode->i_lock);
 		kfree(new);
@@ -1124,7 +1124,7 @@ EXPORT_SYMBOL_GPL(nfs_open);
 int
 __nfs_revalidate_inode(struct nfs_server *server, struct inode *inode)
 {
-	int		 status = -ESTALE;
+	int		 status = -ERR(ESTALE);
 	struct nfs4_label *label = NULL;
 	struct nfs_fattr *fattr = NULL;
 	struct nfs_inode *nfsi = NFS_I(inode);
@@ -1222,7 +1222,7 @@ int nfs_attribute_cache_expired(struct inode *inode)
 int nfs_revalidate_inode(struct nfs_server *server, struct inode *inode)
 {
 	if (!nfs_need_revalidate_inode(inode))
-		return NFS_STALE(inode) ? -ESTALE : 0;
+		return NFS_STALE(inode) ? -ERR(ESTALE) : 0;
 	return __nfs_revalidate_inode(server, inode);
 }
 EXPORT_SYMBOL_GPL(nfs_revalidate_inode);
@@ -1271,13 +1271,13 @@ int nfs_revalidate_mapping_rcu(struct inode *inode)
 	if (IS_SWAPFILE(inode))
 		goto out;
 	if (nfs_mapping_need_revalidate_inode(inode)) {
-		ret = -ECHILD;
+		ret = -ERR(ECHILD);
 		goto out;
 	}
 	spin_lock(&inode->i_lock);
 	if (test_bit(NFS_INO_INVALIDATING, bitlock) ||
 	    (nfsi->cache_validity & NFS_INO_INVALID_DATA))
-		ret = -ECHILD;
+		ret = -ERR(ECHILD);
 	spin_unlock(&inode->i_lock);
 out:
 	return ret;
@@ -1429,10 +1429,10 @@ static int nfs_check_inode_attributes(struct inode *inode, struct nfs_fattr *fat
 		if ((fattr->valid & NFS_ATTR_FATTR_MOUNTED_ON_FILEID) &&
 		    nfsi->fileid == fattr->mounted_on_fileid)
 			return 0;
-		return -ESTALE;
+		return -ERR(ESTALE);
 	}
 	if ((fattr->valid & NFS_ATTR_FATTR_TYPE) && (inode->i_mode & S_IFMT) != (fattr->mode & S_IFMT))
-		return -ESTALE;
+		return -ERR(ESTALE);
 
 
 	if (!nfs_file_has_buffered_writers(nfsi)) {
@@ -2081,7 +2081,7 @@ static int nfs_update_inode(struct inode *inode, struct nfs_fattr *fattr)
 	 * (But we fall through to invalidate the caches.)
 	 */
 	nfs_set_inode_stale_locked(inode);
-	return -ESTALE;
+	return -ERR(ESTALE);
 }
 
 struct inode *nfs_alloc_inode(struct super_block *sb)

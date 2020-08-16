@@ -137,7 +137,7 @@ nfs_get_parent(struct dentry *dentry)
 	struct nfs_fh fh;
 
 	if (!ops->lookupp)
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	fattr = nfs_alloc_fattr();
 	if (fattr == NULL) {

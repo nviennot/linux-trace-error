@@ -1085,7 +1085,7 @@ int nfsd_pool_stats_open(struct inode *inode, struct file *file)
 	mutex_lock(&nfsd_mutex);
 	if (nn->nfsd_serv == NULL) {
 		mutex_unlock(&nfsd_mutex);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/* bump up the psudo refcount while traversing */
 	svc_get(nn->nfsd_serv);

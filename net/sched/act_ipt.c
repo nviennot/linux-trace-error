@@ -108,7 +108,7 @@ static int __tcf_ipt_init(struct net *net, unsigned int id, struct nlattr *nla,
 	u32 index = 0;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_IPT_MAX, nla, ipt_policy,
 					  NULL);
@@ -130,7 +130,7 @@ static int __tcf_ipt_init(struct net *net, unsigned int id, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	td = (struct xt_entry_target *)nla_data(tb[TCA_IPT_TARG]);
@@ -139,7 +139,7 @@ static int __tcf_ipt_init(struct net *net, unsigned int id, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!exists) {
@@ -156,7 +156,7 @@ static int __tcf_ipt_init(struct net *net, unsigned int id, struct nlattr *nla,
 
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	hook = nla_get_u32(tb[TCA_IPT_HOOK]);

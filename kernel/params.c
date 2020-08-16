@@ -135,14 +135,14 @@ static int parse_one(char *param,
 			/* No one handled NULL, so do it here. */
 			if (!val &&
 			    !(params[i].ops->flags & KERNEL_PARAM_OPS_FL_NOARG))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			pr_debug("handling %s with %p\n", param,
 				params[i].ops->set);
 			kernel_param_lock(params[i].mod);
 			if (param_check_unsafe(&params[i]))
 				err = params[i].ops->set(val, &params[i]);
 			else
-				err = -EPERM;
+				err = -ERR(EPERM);
 			kernel_param_unlock(params[i].mod);
 			return err;
 		}
@@ -154,7 +154,7 @@ static int parse_one(char *param,
 	}
 
 	pr_debug("Unknown argument '%s'\n", param);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* Args looks like "foo=bar,bar2 baz=fuz wiz". */
@@ -246,7 +246,7 @@ int param_set_charp(const char *val, const struct kernel_param *kp)
 {
 	if (strlen(val) > 1024) {
 		pr_err("%s: string parameter too long\n", kp->name);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	maybe_kfree_parameter(*(char **)kp->arg);
@@ -324,7 +324,7 @@ int param_set_bool_enable_only(const char *val, const struct kernel_param *kp)
 
 	/* Don't let them unset it once it's set! */
 	if (!new_value && orig_value)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (new_value)
 		err = param_set_bool(val, kp);
@@ -416,7 +416,7 @@ static int param_array(struct module *mod,
 
 		if (*num == max) {
 			pr_err("%s: can only take %i arguments\n", name, max);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		len = strcspn(val, ",");
 
@@ -435,7 +435,7 @@ static int param_array(struct module *mod,
 
 	if (*num < min) {
 		pr_err("%s: needs at least %i arguments\n", name, min);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -495,7 +495,7 @@ int param_set_copystring(const char *val, const struct kernel_param *kp)
 	if (strlen(val)+1 > kps->maxlen) {
 		pr_err("%s: string doesn't fit in %u chars.\n",
 		       kp->name, kps->maxlen-1);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	strcpy(kps->string, val);
 	return 0;
@@ -542,7 +542,7 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
 	struct param_attribute *attribute = to_param_attr(mattr);
 
 	if (!attribute->param->ops->get)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	kernel_param_lock(mk->mod);
 	count = attribute->param->ops->get(buf, attribute->param);
@@ -559,13 +559,13 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
 	struct param_attribute *attribute = to_param_attr(mattr);
 
 	if (!attribute->param->ops->set)
-		return -EPERM;
+		return -ERR(EPERM);
 
 	kernel_param_lock(mk->mod);
 	if (param_check_unsafe(attribute->param))
 		err = attribute->param->ops->set(buf, attribute->param);
 	else
-		err = -EPERM;
+		err = -ERR(EPERM);
 	kernel_param_unlock(mk->mod);
 	if (!err)
 		return len;
@@ -878,7 +878,7 @@ static ssize_t module_attr_show(struct kobject *kobj,
 	mk = to_module_kobject(kobj);
 
 	if (!attribute->show)
-		return -EIO;
+		return -ERR(EIO);
 
 	ret = attribute->show(attribute, mk, buf);
 
@@ -897,7 +897,7 @@ static ssize_t module_attr_store(struct kobject *kobj,
 	mk = to_module_kobject(kobj);
 
 	if (!attribute->store)
-		return -EIO;
+		return -ERR(EIO);
 
 	ret = attribute->store(attribute, mk, buf, len);
 

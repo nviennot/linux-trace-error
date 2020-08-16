@@ -77,7 +77,7 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
 	}
 
 	if (i == ARRAY_SIZE(tpm2_hash_map))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rc = tpm_buf_init(&buf, TPM2_ST_SESSIONS, TPM2_CC_CREATE);
 	if (rc)
@@ -126,7 +126,7 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
 	tpm_buf_append_u32(&buf, 0);
 
 	if (buf.flags & TPM_BUF_OVERFLOW) {
-		rc = -E2BIG;
+		rc = -ERR(E2BIG);
 		goto out;
 	}
 
@@ -136,7 +136,7 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
 
 	blob_len = be32_to_cpup((__be32 *) &buf.data[TPM_HEADER_SIZE]);
 	if (blob_len > MAX_BLOB_SIZE) {
-		rc = -E2BIG;
+		rc = -ERR(E2BIG);
 		goto out;
 	}
 	if (tpm_buf_length(&buf) < TPM_HEADER_SIZE + 4 + blob_len) {
@@ -152,9 +152,9 @@ out:
 
 	if (rc > 0) {
 		if (tpm2_rc_value(rc) == TPM2_RC_HASH)
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 		else
-			rc = -EPERM;
+			rc = -ERR(EPERM);
 	}
 
 	return rc;
@@ -186,12 +186,12 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
 
 	private_len = be16_to_cpup((__be16 *) &payload->blob[0]);
 	if (private_len > (payload->blob_len - 2))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	public_len = be16_to_cpup((__be16 *) &payload->blob[2 + private_len]);
 	blob_len = private_len + public_len + 4;
 	if (blob_len > payload->blob_len)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	rc = tpm_buf_init(&buf, TPM2_ST_SESSIONS, TPM2_CC_LOAD);
 	if (rc)
@@ -207,7 +207,7 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
 	tpm_buf_append(&buf, payload->blob, blob_len);
 
 	if (buf.flags & TPM_BUF_OVERFLOW) {
-		rc = -E2BIG;
+		rc = -ERR(E2BIG);
 		goto out;
 	}
 
@@ -220,7 +220,7 @@ out:
 	tpm_buf_destroy(&buf);
 
 	if (rc > 0)
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 
 	return rc;
 }
@@ -262,7 +262,7 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
 
 	rc = tpm_send(chip, buf.data, tpm_buf_length(&buf));
 	if (rc > 0)
-		rc = -EPERM;
+		rc = -ERR(EPERM);
 
 	if (!rc) {
 		data_len = be16_to_cpup(

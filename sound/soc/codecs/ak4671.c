@@ -457,7 +457,7 @@ static int ak4671_hw_params(struct snd_pcm_substream *substream,
 		fs |= AK4671_FS_48KHZ;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, AK4671_PLL_MODE_SELECT0, fs);
@@ -503,7 +503,7 @@ static int ak4671_set_dai_sysclk(struct snd_soc_dai *dai, int clk_id,
 		pll |= AK4671_PLL_27MHZ;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, AK4671_PLL_MODE_SELECT0, pll);
@@ -528,7 +528,7 @@ static int ak4671_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		mode &= ~(AK4671_M_S);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -548,7 +548,7 @@ static int ak4671_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		format |= AK4671_MSBS;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* set mode and format */

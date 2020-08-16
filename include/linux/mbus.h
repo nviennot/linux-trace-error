@@ -78,7 +78,7 @@ static inline int mvebu_mbus_get_io_win_info(phys_addr_t phyaddr, u32 *size,
 	 * the Armada 3700 could use the mv_xor device driver which calls
 	 * into this function
 	 */
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -102,7 +102,7 @@ int mvebu_mbus_dt_init(bool is_coherent);
 static inline int mvebu_mbus_get_dram_win_info(phys_addr_t phyaddr, u8 *target,
 					       u8 *attr)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_MVEBU_MBUS */
 

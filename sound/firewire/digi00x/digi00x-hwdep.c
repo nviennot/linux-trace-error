@@ -31,7 +31,7 @@ static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf,  long count,
 		schedule();
 		finish_wait(&dg00x->hwdep_wait, &wait);
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		spin_lock_irq(&dg00x->lock);
 	}
 
@@ -106,7 +106,7 @@ static int hwdep_lock(struct snd_dg00x *dg00x)
 		dg00x->dev_lock_count = -1;
 		err = 0;
 	} else {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	spin_unlock_irq(&dg00x->lock);
@@ -124,7 +124,7 @@ static int hwdep_unlock(struct snd_dg00x *dg00x)
 		dg00x->dev_lock_count = 0;
 		err = 0;
 	} else {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 	}
 
 	spin_unlock_irq(&dg00x->lock);
@@ -157,7 +157,7 @@ static int hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
 	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
 		return hwdep_unlock(dg00x);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 

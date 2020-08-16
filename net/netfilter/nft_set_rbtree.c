@@ -195,7 +195,7 @@ static void *nft_rbtree_get(const struct net *net, const struct nft_set *set,
 {
 	struct nft_rbtree *priv = nft_set_priv(set);
 	unsigned int seq = read_seqcount_begin(&priv->count);
-	struct nft_rbtree_elem *rbe = ERR_PTR(-ENOENT);
+	struct nft_rbtree_elem *rbe = ERR_PTR(-ERR(ENOENT));
 	const u32 *key = (const u32 *)&elem->key.val;
 	u8 genmask = nft_genmask_cur(net);
 	bool ret;
@@ -208,7 +208,7 @@ static void *nft_rbtree_get(const struct net *net, const struct nft_set *set,
 	seq = read_seqcount_begin(&priv->count);
 	ret = __nft_rbtree_get(net, set, key, &rbe, seq, flags, genmask);
 	if (!ret)
-		rbe = ERR_PTR(-ENOENT);
+		rbe = ERR_PTR(-ERR(ENOENT));
 	read_unlock_bh(&priv->lock);
 
 	return rbe;
@@ -311,7 +311,7 @@ static int __nft_rbtree_insert(const struct net *net, const struct nft_set *set,
 			} else if (nft_set_elem_active(&rbe->ext, genmask) &&
 				   !nft_set_elem_expired(&rbe->ext)) {
 				*ext = &rbe->ext;
-				return -EEXIST;
+				return -ERR(EEXIST);
 			} else {
 				p = &parent->rb_left;
 			}
@@ -319,7 +319,7 @@ static int __nft_rbtree_insert(const struct net *net, const struct nft_set *set,
 	}
 
 	if (overlap)
-		return -ENOTEMPTY;
+		return -ERR(ENOTEMPTY);
 
 	rb_link_node_rcu(&new->node, parent, p);
 	rb_insert_color(&new->node, &priv->root);

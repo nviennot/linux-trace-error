@@ -1415,7 +1415,7 @@ int split_swap_cluster(swp_entry_t entry)
 
 	si = _swap_info_get(entry);
 	if (!si)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	ci = lock_cluster(si, offset);
 	cluster_clear_huge(ci);
 	unlock_cluster(ci);
@@ -1833,7 +1833,7 @@ int swap_type_of(dev_t device, sector_t offset, struct block_device **bdev_p)
 	if (bdev)
 		bdput(bdev);
 
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /*
@@ -2252,7 +2252,7 @@ retry:
 	if (READ_ONCE(si->inuse_pages)) {
 		if (!signal_pending(current))
 			goto retry;
-		retval = -EINTR;
+		retval = -ERR(EINTR);
 	}
 out:
 	return (retval == FRONTSWAP_PAGES_UNUSED) ? 0 : retval;
@@ -2556,7 +2556,7 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 	unsigned int old_block_size;
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	BUG_ON(!current->mm);
 
@@ -2580,7 +2580,7 @@ SYSCALL_DEFINE1(swapoff, const char __user *, specialfile)
 		}
 	}
 	if (!found) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		spin_unlock(&swap_lock);
 		goto out_dput;
 	}
@@ -2876,7 +2876,7 @@ static struct swap_info_struct *alloc_swap_info(void)
 	if (type >= MAX_SWAPFILES) {
 		spin_unlock(&swap_lock);
 		kvfree(p);
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 	}
 	if (type >= nr_swapfiles) {
 		p->type = type;
@@ -2930,7 +2930,7 @@ static int claim_swapfile(struct swap_info_struct *p, struct inode *inode)
 		 * suitable for swapping.  Disallow them here.
 		 */
 		if (blk_queue_is_zoned(p->bdev->bd_queue))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		p->flags |= SWP_BLKDEV;
 	} else if (S_ISREG(inode->i_mode)) {
 		p->bdev = inode->i_sb->s_bdev;
@@ -3066,7 +3066,7 @@ static int setup_swap_map_and_extents(struct swap_info_struct *p,
 	for (i = 0; i < swap_header->info.nr_badpages; i++) {
 		unsigned int page_nr = swap_header->info.badpages[i];
 		if (page_nr == 0 || page_nr > swap_header->info.last_page)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (page_nr < maxpages) {
 			swap_map[page_nr] = SWAP_MAP_BAD;
 			nr_good_pages--;
@@ -3098,7 +3098,7 @@ static int setup_swap_map_and_extents(struct swap_info_struct *p,
 	}
 	if (!nr_good_pages) {
 		pr_warn("Empty swap-file\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!cluster_info)
@@ -3159,10 +3159,10 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 	bool inced_nr_rotate_swap = false;
 
 	if (swap_flags & ~SWAP_FLAGS_VALID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (!swap_avail_heads)
 		return -ENOMEM;
@@ -3196,7 +3196,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 
 	inode_lock(inode);
 	if (IS_SWAPFILE(inode)) {
-		error = -EBUSY;
+		error = -ERR(EBUSY);
 		goto bad_swap_unlock_inode;
 	}
 
@@ -3204,7 +3204,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 	 * Read the swap header.
 	 */
 	if (!mapping->a_ops->readpage) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto bad_swap_unlock_inode;
 	}
 	page = read_mapping_page(mapping, 0, swap_file);
@@ -3216,7 +3216,7 @@ SYSCALL_DEFINE2(swapon, const char __user *, specialfile, int, swap_flags)
 
 	maxpages = read_swap_header(p, swap_header, inode);
 	if (unlikely(!maxpages)) {
-		error = -EINVAL;
+		error = -ERR(EINVAL);
 		goto bad_swap_unlock_inode;
 	}
 
@@ -3435,7 +3435,7 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 	unsigned long offset;
 	unsigned char count;
 	unsigned char has_cache;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	p = get_swap_device(entry);
 	if (!p)
@@ -3451,7 +3451,7 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 	 * swap entry could be SWAP_MAP_BAD. Check here with lock held.
 	 */
 	if (unlikely(swap_count(count) == SWAP_MAP_BAD)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto unlock_out;
 	}
 
@@ -3465,22 +3465,22 @@ static int __swap_duplicate(swp_entry_t entry, unsigned char usage)
 		if (!has_cache && count)
 			has_cache = SWAP_HAS_CACHE;
 		else if (has_cache)		/* someone else added cache */
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		else				/* no users remaining */
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 
 	} else if (count || has_cache) {
 
 		if ((count & ~COUNT_CONTINUED) < SWAP_MAP_MAX)
 			count += usage;
 		else if ((count & ~COUNT_CONTINUED) > SWAP_MAP_MAX)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		else if (swap_count_continued(p, offset, count))
 			count = COUNT_CONTINUED;
 		else
 			err = -ENOMEM;
 	} else
-		err = -ENOENT;			/* unused swap entry */
+		err = -ERR(ENOENT);			/* unused swap entry */
 
 	p->swap_map[offset] = count | has_cache;
 

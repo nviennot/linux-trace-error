@@ -992,7 +992,7 @@ static int get_new_location(struct inode *reloc_inode, u64 *new_bytenr,
 	if (ret < 0)
 		goto out;
 	if (ret > 0) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1006,7 +1006,7 @@ static int get_new_location(struct inode *reloc_inode, u64 *new_bytenr,
 	       btrfs_file_extent_other_encoding(leaf, fi));
 
 	if (num_bytes != btrfs_file_extent_disk_num_bytes(leaf, fi)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1267,7 +1267,7 @@ again:
 				ret = PTR_ERR(eb);
 				break;
 			} else if (!extent_buffer_uptodate(eb)) {
-				ret = -EIO;
+				ret = -ERR(EIO);
 				free_extent_buffer(eb);
 				break;
 			}
@@ -1456,7 +1456,7 @@ int walk_down_reloc_tree(struct btrfs_root *root, struct btrfs_path *path,
 			return PTR_ERR(eb);
 		} else if (!extent_buffer_uptodate(eb)) {
 			free_extent_buffer(eb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		BUG_ON(btrfs_header_level(eb) != i - 1);
 		path->nodes[i - 1] = eb;
@@ -2100,7 +2100,7 @@ struct btrfs_root *select_one_root(struct btrfs_backref_node *node)
 	}
 
 	if (!fs_root)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	return fs_root;
 }
 
@@ -2173,7 +2173,7 @@ static int reserve_metadata_space(struct btrfs_trans_handle *trans,
 		 */
 		rc->block_rsv->size = tmp + fs_info->nodesize *
 				      RELOCATION_RESERVED_NODES;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	return 0;
@@ -2240,7 +2240,7 @@ static int do_relocation(struct btrfs_trans_handle *trans,
 				if (ret < 0)
 					err = ret;
 				else
-					err = -ENOENT;
+					err = -ERR(ENOENT);
 
 				btrfs_release_path(path);
 				break;
@@ -2274,7 +2274,7 @@ static int do_relocation(struct btrfs_trans_handle *trans,
 		"lowest leaf/node mismatch: bytenr %llu node->bytenr %llu slot %d upper %llu",
 					  bytenr, node->bytenr, slot,
 					  upper->eb->start);
-				err = -EIO;
+				err = -ERR(EIO);
 				goto next;
 			}
 		} else {
@@ -2292,7 +2292,7 @@ static int do_relocation(struct btrfs_trans_handle *trans,
 			goto next;
 		} else if (!extent_buffer_uptodate(eb)) {
 			free_extent_buffer(eb);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto next;
 		}
 		btrfs_tree_lock(eb);
@@ -2439,7 +2439,7 @@ static int get_tree_block_key(struct btrfs_fs_info *fs_info,
 		return PTR_ERR(eb);
 	} else if (!extent_buffer_uptodate(eb)) {
 		free_extent_buffer(eb);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (block->level == 0)
 		btrfs_item_key_to_cpu(eb, &block->key, 0);
@@ -2742,7 +2742,7 @@ static int relocate_file_extent_cluster(struct inode *inode,
 							PAGE_SIZE, true);
 				btrfs_delalloc_release_extents(BTRFS_I(inode),
 							       PAGE_SIZE);
-				ret = -EIO;
+				ret = -ERR(EIO);
 				goto out;
 			}
 		}
@@ -2790,7 +2790,7 @@ static int relocate_file_extent_cluster(struct inode *inode,
 		balance_dirty_pages_ratelimited(inode->i_mapping);
 		btrfs_throttle(fs_info);
 		if (btrfs_should_cancel_balance(fs_info)) {
-			ret = -ECANCELED;
+			ret = -ERR(ECANCELED);
 			goto out;
 		}
 	}
@@ -2865,7 +2865,7 @@ static int add_tree_block(struct reloc_control *rc,
 	} else if (unlikely(item_size == sizeof(struct btrfs_extent_item_v0))) {
 		btrfs_print_v0_err(eb->fs_info);
 		btrfs_handle_fs_error(eb->fs_info, -EINVAL, NULL);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	} else {
 		BUG();
 	}
@@ -2955,7 +2955,7 @@ again:
 	     "tree block extent item (%llu) is not found in extent tree",
 		     bytenr);
 		WARN_ON(1);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -2979,7 +2979,7 @@ static int delete_block_group_cache(struct btrfs_fs_info *fs_info,
 
 	inode = btrfs_iget(fs_info->sb, ino, root);
 	if (IS_ERR(inode))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 truncate:
 	ret = btrfs_check_trunc_cache_free_space(fs_info,
@@ -3033,7 +3033,7 @@ static int delete_v1_space_cache(struct extent_buffer *leaf,
 		}
 	}
 	if (!found)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	ret = delete_block_group_cache(leaf->fs_info, block_group, NULL,
 					space_cache_ino);
 	return ret;
@@ -3309,7 +3309,7 @@ restart:
 			ret = check_extent_flags(flags);
 			BUG_ON(ret);
 		} else if (unlikely(item_size == sizeof(struct btrfs_extent_item_v0))) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			btrfs_print_v0_err(trans->fs_info);
 			btrfs_abort_transaction(trans, err);
 			break;
@@ -3358,7 +3358,7 @@ restart:
 			}
 		}
 		if (btrfs_should_cancel_balance(fs_info)) {
-			err = -ECANCELED;
+			err = -ERR(ECANCELED);
 			break;
 		}
 	}
@@ -3568,11 +3568,11 @@ int btrfs_relocate_block_group(struct btrfs_fs_info *fs_info, u64 group_start)
 
 	bg = btrfs_lookup_block_group(fs_info, group_start);
 	if (!bg)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (btrfs_pinned_by_swapfile(fs_info, bg)) {
 		btrfs_put_block_group(bg);
-		return -ETXTBSY;
+		return -ERR(ETXTBSY);
 	}
 
 	rc = alloc_reloc_control(fs_info);

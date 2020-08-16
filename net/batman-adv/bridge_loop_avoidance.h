@@ -128,13 +128,13 @@ static inline void batadv_bla_free(struct batadv_priv *bat_priv)
 static inline int batadv_bla_claim_dump(struct sk_buff *msg,
 					struct netlink_callback *cb)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int batadv_bla_backbone_dump(struct sk_buff *msg,
 					   struct netlink_callback *cb)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline

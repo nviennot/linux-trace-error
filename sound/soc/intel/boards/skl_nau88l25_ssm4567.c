@@ -67,7 +67,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 	codec_dai = snd_soc_card_get_codec_dai(card, SKL_NUVOTON_CODEC_DAI);
 	if (!codec_dai) {
 		dev_err(card->dev, "Codec dai not found\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
@@ -75,14 +75,14 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 				NAU8825_CLK_MCLK, 24000000, SND_SOC_CLOCK_IN);
 		if (ret < 0) {
 			dev_err(card->dev, "set sysclk err = %d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	} else {
 		ret = snd_soc_dai_set_sysclk(codec_dai,
 				NAU8825_CLK_INTERNAL, 0, SND_SOC_CLOCK_IN);
 		if (ret < 0) {
 			dev_err(card->dev, "set sysclk err = %d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return ret;
@@ -666,7 +666,7 @@ static int skylake_card_late_probe(struct snd_soc_card *card)
 	}
 
 	if (!component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return hdac_hdmi_jack_port_init(component, &card->dapm);
 }

@@ -72,7 +72,7 @@ static inline void ghes_edac_report_mem_error(int sev,
 
 static inline int ghes_edac_register(struct ghes *ghes, struct device *dev)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline void ghes_edac_unregister(struct ghes *ghes)
@@ -124,7 +124,7 @@ static inline void *acpi_hest_get_next(struct acpi_hest_generic_data *gdata)
 #ifdef CONFIG_ACPI_APEI_SEA
 int ghes_notify_sea(void);
 #else
-static inline int ghes_notify_sea(void) { return -ENOENT; }
+static inline int ghes_notify_sea(void) { return -ERR(ENOENT); }
 #endif
 
 #endif /* GHES_H */

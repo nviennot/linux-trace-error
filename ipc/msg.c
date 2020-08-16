@@ -355,7 +355,7 @@ copy_msqid_to_user(void __user *buf, struct msqid64_ds *in, int version)
 		return copy_to_user(buf, &out, sizeof(out));
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -386,7 +386,7 @@ copy_msqid_from_user(struct msqid64_ds *out, void __user *buf, int version)
 		return 0;
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -430,7 +430,7 @@ static int msgctl_down(struct ipc_namespace *ns, int msqid, int cmd,
 
 		if (msg_qbytes > ns->msg_ctlmnb &&
 		    !capable(CAP_SYS_RESOURCE)) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			goto out_unlock1;
 		}
 
@@ -458,7 +458,7 @@ static int msgctl_down(struct ipc_namespace *ns, int msqid, int cmd,
 		goto out_unlock1;
 	}
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_unlock1;
 	}
 
@@ -534,7 +534,7 @@ static int msgctl_stat(struct ipc_namespace *ns, int msqid,
 	if (cmd == MSG_STAT_ANY)
 		audit_ipc_obj(&msq->q_perm);
 	else {
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if (ipcperms(ns, &msq->q_perm, S_IRUGO))
 			goto out_unlock;
 	}
@@ -547,7 +547,7 @@ static int msgctl_stat(struct ipc_namespace *ns, int msqid,
 
 	if (!ipc_valid_object(&msq->q_perm)) {
 		ipc_unlock_object(&msq->q_perm);
-		err = -EIDRM;
+		err = -ERR(EIDRM);
 		goto out_unlock;
 	}
 
@@ -593,7 +593,7 @@ static long ksys_msgctl(int msqid, int cmd, struct msqid_ds __user *buf, int ver
 	int err;
 
 	if (msqid < 0 || cmd < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ns = current->nsproxy->ipc_ns;
 
@@ -625,7 +625,7 @@ static long ksys_msgctl(int msqid, int cmd, struct msqid_ds __user *buf, int ver
 	case IPC_RMID:
 		return msgctl_down(ns, msqid, cmd, NULL, 0);
 	default:
-		return  -EINVAL;
+		return  -ERR(EINVAL);
 	}
 }
 
@@ -730,7 +730,7 @@ static long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr, int versio
 	ns = current->nsproxy->ipc_ns;
 
 	if (msqid < 0 || cmd < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd & (~IPC_64)) {
 	case IPC_INFO:
@@ -759,7 +759,7 @@ static long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr, int versio
 	case IPC_RMID:
 		return msgctl_down(ns, msqid, cmd, NULL, 0);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -849,9 +849,9 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	ns = current->nsproxy->ipc_ns;
 
 	if (msgsz > ns->msg_ctlmax || (long) msgsz < 0 || msqid < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (mtype < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg = load_msg(mtext, msgsz);
 	if (IS_ERR(msg))
@@ -872,13 +872,13 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 	for (;;) {
 		struct msg_sender s;
 
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if (ipcperms(ns, &msq->q_perm, S_IWUGO))
 			goto out_unlock0;
 
 		/* raced with RMID? */
 		if (!ipc_valid_object(&msq->q_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_unlock0;
 		}
 
@@ -891,7 +891,7 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 
 		/* queue full, wait: */
 		if (msgflg & IPC_NOWAIT) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out_unlock0;
 		}
 
@@ -899,7 +899,7 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		ss_add(msq, &s, msgsz);
 
 		if (!ipc_rcu_getref(&msq->q_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_unlock0;
 		}
 
@@ -913,13 +913,13 @@ static long do_msgsnd(int msqid, long mtype, void __user *mtext,
 		ipc_rcu_putref(&msq->q_perm, msg_rcu_free);
 		/* raced with RMID? */
 		if (!ipc_valid_object(&msq->q_perm)) {
-			err = -EIDRM;
+			err = -ERR(EIDRM);
 			goto out_unlock0;
 		}
 		ss_del(&s);
 
 		if (signal_pending(current)) {
-			err = -ERESTARTNOHAND;
+			err = -ERR(ERESTARTNOHAND);
 			goto out_unlock0;
 		}
 
@@ -1055,7 +1055,7 @@ static inline void free_copy(struct msg_msg *copy)
 #else
 static inline struct msg_msg *prepare_copy(void __user *buf, size_t bufsz)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 
 static inline void free_copy(struct msg_msg *copy)
@@ -1084,7 +1084,7 @@ static struct msg_msg *find_msg(struct msg_queue *msq, long *msgtyp, int mode)
 		}
 	}
 
-	return found ?: ERR_PTR(-EAGAIN);
+	return found ?: ERR_PTR(-ERR(EAGAIN));
 }
 
 static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, int msgflg,
@@ -1099,11 +1099,11 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 	ns = current->nsproxy->ipc_ns;
 
 	if (msqid < 0 || (long) bufsz < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (msgflg & MSG_COPY) {
 		if ((msgflg & MSG_EXCEPT) || !(msgflg & IPC_NOWAIT))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		copy = prepare_copy(buf, min_t(size_t, bufsz, ns->msg_ctlmax));
 		if (IS_ERR(copy))
 			return PTR_ERR(copy);
@@ -1121,7 +1121,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 	for (;;) {
 		struct msg_receiver msr_d;
 
-		msg = ERR_PTR(-EACCES);
+		msg = ERR_PTR(-ERR(EACCES));
 		if (ipcperms(ns, &msq->q_perm, S_IRUGO))
 			goto out_unlock1;
 
@@ -1129,7 +1129,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 
 		/* raced with RMID? */
 		if (!ipc_valid_object(&msq->q_perm)) {
-			msg = ERR_PTR(-EIDRM);
+			msg = ERR_PTR(-ERR(EIDRM));
 			goto out_unlock0;
 		}
 
@@ -1140,7 +1140,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 			 * Unlink it from the queue.
 			 */
 			if ((bufsz < msg->m_ts) && !(msgflg & MSG_NOERROR)) {
-				msg = ERR_PTR(-E2BIG);
+				msg = ERR_PTR(-ERR(E2BIG));
 				goto out_unlock0;
 			}
 			/*
@@ -1166,7 +1166,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 
 		/* No message waiting. Wait for a message */
 		if (msgflg & IPC_NOWAIT) {
-			msg = ERR_PTR(-ENOMSG);
+			msg = ERR_PTR(-ERR(ENOMSG));
 			goto out_unlock0;
 		}
 
@@ -1230,7 +1230,7 @@ static long do_msgrcv(int msqid, void __user *buf, size_t bufsz, long msgtyp, in
 
 		list_del(&msr_d.r_list);
 		if (signal_pending(current)) {
-			msg = ERR_PTR(-ERESTARTNOHAND);
+			msg = ERR_PTR(-ERR(ERESTARTNOHAND));
 			goto out_unlock0;
 		}
 

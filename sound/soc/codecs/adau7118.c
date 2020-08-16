@@ -170,7 +170,7 @@ static int adau7118_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(st->dev, "Invalid format %d",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ret < 0)
@@ -192,7 +192,7 @@ static int adau7118_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(st->dev, "Invalid Inv mask %d",
 			fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(dai->component,
@@ -246,7 +246,7 @@ static int adau7118_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 		break;
 	default:
 		dev_err(st->dev, "Invalid slot width:%d\n", slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_update_bits(dai->component,
@@ -288,7 +288,7 @@ static int adau7118_hw_params(struct snd_pcm_substream *substream,
 	if (data_width > slots_width) {
 		dev_err(st->dev, "Invalid data_width:%d, slots_width:%d",
 			data_width, slots_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (st->right_j) {
@@ -309,7 +309,7 @@ static int adau7118_hw_params(struct snd_pcm_substream *substream,
 			dev_err(st->dev,
 				"Cannot set right_j setting, slot_w:%d, data_w:%d\n",
 					slots_width, data_width);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = snd_soc_component_update_bits(dai->component,
@@ -511,7 +511,7 @@ static int adau7118_parset_dt(const struct adau7118_data *st)
 			break;
 		default:
 			dev_err(st->dev, "Invalid dec ratio: %u", dec_ratio);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ret = regmap_update_bits(st->map,

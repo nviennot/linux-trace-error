@@ -90,7 +90,7 @@ static int check_node_data(struct jffs2_sb_info *c, struct jffs2_tmp_dnode_info 
 
 		if (retlen != len) {
 			JFFS2_ERROR("short read at %#08x: %zd instead of %d.\n", ofs, retlen, len);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto free_out;
 		}
 	}
@@ -664,13 +664,13 @@ static inline int read_direntry(struct jffs2_sb_info *c, struct jffs2_raw_node_r
 			jffs2_free_full_dirent(fd);
 			JFFS2_ERROR("short read: wanted %d bytes, got %zd\n",
 				    rd->nsize - already, read);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (unlikely(err)) {
 			JFFS2_ERROR("read remainder of name: error %d\n", err);
 			jffs2_free_full_dirent(fd);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -950,7 +950,7 @@ static int read_more(struct jffs2_sb_info *c, struct jffs2_raw_node_ref *ref,
 	if (retlen < to_read) {
 		JFFS2_ERROR("short read at %#08x: %zu instead of %d.\n",
 				offs, retlen, to_read);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*rdlen += to_read;
@@ -1034,7 +1034,7 @@ static int jffs2_get_inode_nodes(struct jffs2_sb_info *c, struct jffs2_inode_inf
 
 		if (retlen < len) {
 			JFFS2_ERROR("short read at %#08x: %zu instead of %d.\n", ref_offset(ref), retlen, len);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto free_out;
 		}
 
@@ -1187,7 +1187,7 @@ static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
 			if (!rii.fds) {
 				if (f->inocache->state == INO_STATE_READING)
 					jffs2_set_inocache_state(c, f->inocache, INO_STATE_CHECKEDABSENT);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			JFFS2_NOTICE("but it has children so we fake some modes for it\n");
 		}
@@ -1207,14 +1207,14 @@ static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
 		JFFS2_ERROR("failed to read from flash: error %d, %zd of %zd bytes read\n",
 			ret, retlen, sizeof(*latest_node));
 		/* FIXME: If this fails, there seems to be a memory leak. Find it. */
-		return ret ? ret : -EIO;
+		return ret ? ret : -ERR(EIO);
 	}
 
 	crc = crc32(0, latest_node, sizeof(*latest_node)-8);
 	if (crc != je32_to_cpu(latest_node->node_crc)) {
 		JFFS2_ERROR("CRC failed for read_inode of inode %u at physical location 0x%x\n",
 			f->inocache->ino, ref_offset(rii.latest_ref));
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	switch(jemode_to_cpu(latest_node->mode) & S_IFMT) {
@@ -1251,7 +1251,7 @@ static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
 			 * operation. */
 			uint32_t csize = je32_to_cpu(latest_node->csize);
 			if (csize > JFFS2_MAX_NAME_LEN)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			f->target = kmalloc(csize + 1, GFP_KERNEL);
 			if (!f->target) {
 				JFFS2_ERROR("can't allocate %u bytes of memory for the symlink target path cache\n", csize);
@@ -1263,7 +1263,7 @@ static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
 
 			if (ret || retlen != csize) {
 				if (retlen != csize)
-					ret = -EIO;
+					ret = -ERR(EIO);
 				kfree(f->target);
 				f->target = NULL;
 				return ret;
@@ -1282,19 +1282,19 @@ static int jffs2_do_read_inode_internal(struct jffs2_sb_info *c,
 		if (f->metadata) {
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0%o had metadata node\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (!frag_first(&f->fragtree)) {
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0%o has no fragments\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
-			return -EIO;
+			return -ERR(EIO);
 		}
 		/* ASSERT: f->fraglist != NULL */
 		if (frag_next(frag_first(&f->fragtree))) {
 			JFFS2_ERROR("Argh. Special inode #%u with mode 0x%x had more than one node\n",
 			       f->inocache->ino, jemode_to_cpu(latest_node->mode));
 			/* FIXME: Deal with it - check crc32, check for duplicate node, check times and discard the older one */
-			return -EIO;
+			return -ERR(EIO);
 		}
 		/* OK. We're happy */
 		f->metadata = frag_first(&f->fragtree)->node;
@@ -1367,7 +1367,7 @@ int jffs2_do_read_inode(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
 	}
 	if (!f->inocache) {
 		JFFS2_ERROR("requested to read a nonexistent ino %u\n", ino);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	return jffs2_do_read_inode_internal(c, f, latest_node);

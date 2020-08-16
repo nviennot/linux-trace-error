@@ -317,7 +317,7 @@ static int snd_es1938_get_byte(struct es1938 *chip)
 		if ((v = inb(SLSB_REG(chip, STATUS))) & 0x80)
 			return inb(SLSB_REG(chip, READDATA));
 	dev_err(chip->card->dev, "get_byte timeout: status 0x02%x\n", v);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /* -----------------------------------------------------------------
@@ -530,7 +530,7 @@ static int snd_es1938_capture_trigger(struct snd_pcm_substream *substream,
 		chip->active &= ~ADC1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_es1938_write(chip, ESS_CMD_DMACONTROL, val);
 	return 0;
@@ -561,7 +561,7 @@ static int snd_es1938_playback1_trigger(struct snd_pcm_substream *substream,
 		chip->active &= ~DAC2;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -583,7 +583,7 @@ static int snd_es1938_playback2_trigger(struct snd_pcm_substream *substream,
 		chip->active &= ~DAC1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_es1938_write(chip, ESS_CMD_DMACONTROL, val);
 	return 0;
@@ -599,7 +599,7 @@ static int snd_es1938_playback_trigger(struct snd_pcm_substream *substream,
 		return snd_es1938_playback2_trigger(substream, cmd);
 	}
 	snd_BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* --------------------------------------------------------------------
@@ -741,7 +741,7 @@ static int snd_es1938_playback_prepare(struct snd_pcm_substream *substream)
 		return snd_es1938_playback2_prepare(substream);
 	}
 	snd_BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* during the incrementing of dma counters the DMA register reads sometimes
@@ -820,7 +820,7 @@ static snd_pcm_uframes_t snd_es1938_playback_pointer(struct snd_pcm_substream *s
 		return snd_es1938_playback2_pointer(substream);
 	}
 	snd_BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int snd_es1938_capture_copy(struct snd_pcm_substream *substream,
@@ -831,7 +831,7 @@ static int snd_es1938_capture_copy(struct snd_pcm_substream *substream,
 	struct es1938 *chip = snd_pcm_substream_chip(substream);
 
 	if (snd_BUG_ON(pos + count > chip->dma1_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos + count < chip->dma1_size) {
 		if (copy_to_user(dst, runtime->dma_area + pos + 1, count))
 			return -EFAULT;
@@ -853,7 +853,7 @@ static int snd_es1938_capture_copy_kernel(struct snd_pcm_substream *substream,
 	struct es1938 *chip = snd_pcm_substream_chip(substream);
 
 	if (snd_BUG_ON(pos + count > chip->dma1_size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (pos + count < chip->dma1_size) {
 		memcpy(dst, runtime->dma_area + pos + 1, count);
 	} else {
@@ -914,7 +914,7 @@ static int snd_es1938_capture_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	if (chip->playback2_substream)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	chip->capture_substream = substream;
 	runtime->hw = snd_es1938_capture;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -934,12 +934,12 @@ static int snd_es1938_playback_open(struct snd_pcm_substream *substream)
 		break;
 	case 1:
 		if (chip->capture_substream)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		chip->playback2_substream = substream;
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	runtime->hw = snd_es1938_playback;
 	snd_pcm_hw_constraint_ratnums(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -969,7 +969,7 @@ static int snd_es1938_playback_close(struct snd_pcm_substream *substream)
 		break;
 	default:
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1044,7 +1044,7 @@ static int snd_es1938_put_mux(struct snd_kcontrol *kcontrol,
 	unsigned char val = ucontrol->value.enumerated.item[0];
 	
 	if (val > 7)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_es1938_mixer_bits(chip, 0x1c, 0x07, val) != val;
 }
 
@@ -1463,7 +1463,7 @@ static int es1938_resume(struct device *dev)
 		dev_err(dev, "unable to grab IRQ %d, disabling device\n",
 			pci->irq);
 		snd_card_disconnect(card);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1517,7 +1517,7 @@ static void snd_es1938_free_gameport(struct es1938 *chip)
 	}
 }
 #else
-static inline int snd_es1938_create_gameport(struct es1938 *chip) { return -ENOSYS; }
+static inline int snd_es1938_create_gameport(struct es1938 *chip) { return -ERR(ENOSYS); }
 static inline void snd_es1938_free_gameport(struct es1938 *chip) { }
 #endif /* SUPPORT_JOYSTICK */
 
@@ -1565,7 +1565,7 @@ static int snd_es1938_create(struct snd_card *card,
 		dev_err(card->dev,
 			"architecture does not support 24bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-                return -ENXIO;
+                return -ERR(ENXIO);
         }
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -1592,7 +1592,7 @@ static int snd_es1938_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_es1938_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1752,10 +1752,10 @@ static int snd_es1938_probe(struct pci_dev *pci,
 	int idx, err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
@@ -1766,7 +1766,7 @@ static int snd_es1938_probe(struct pci_dev *pci,
 		if (pci_resource_start(pci, idx) == 0 ||
 		    !(pci_resource_flags(pci, idx) & IORESOURCE_IO)) {
 		    	snd_card_free(card);
-		    	return -ENODEV;
+		    	return -ERR(ENODEV);
 		}
 	}
 	if ((err = snd_es1938_create(card, pci, &chip)) < 0) {

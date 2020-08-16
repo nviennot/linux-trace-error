@@ -273,7 +273,7 @@ xfs_iomap_write_direct(
 	 * Copy any maps to caller's array and return any error.
 	 */
 	if (nimaps == 0) {
-		error = -ENOSPC;
+		error = -ERR(ENOSPC);
 		goto out_unlock;
 	}
 
@@ -679,14 +679,14 @@ xfs_ilock_for_iomap(
 	 */
 	if (!(ip->i_df.if_flags & XFS_IFEXTENTS)) {
 		if (flags & IOMAP_NOWAIT)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		mode = XFS_ILOCK_EXCL;
 	}
 
 relock:
 	if (flags & IOMAP_NOWAIT) {
 		if (!xfs_ilock_nowait(ip, mode))
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 	} else {
 		xfs_ilock(ip, mode);
 	}
@@ -728,7 +728,7 @@ xfs_direct_write_iomap_begin(
 	ASSERT(flags & (IOMAP_WRITE | IOMAP_ZERO));
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * Writes that span EOF might trigger an IO size update on completion,
@@ -748,7 +748,7 @@ xfs_direct_write_iomap_begin(
 		goto out_unlock;
 
 	if (imap_needs_cow(ip, flags, &imap, nimaps)) {
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		if (flags & IOMAP_NOWAIT)
 			goto out_unlock;
 
@@ -771,7 +771,7 @@ xfs_direct_write_iomap_begin(
 	return xfs_bmbt_to_iomap(ip, iomap, &imap, iomap_flags);
 
 allocate_blocks:
-	error = -EAGAIN;
+	error = -ERR(EAGAIN);
 	if (flags & IOMAP_NOWAIT)
 		goto out_unlock;
 
@@ -1129,7 +1129,7 @@ xfs_read_iomap_begin(
 	ASSERT(!(flags & (IOMAP_WRITE | IOMAP_ZERO)));
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	error = xfs_ilock_for_iomap(ip, flags, &lockmode);
 	if (error)
@@ -1170,7 +1170,7 @@ xfs_seek_iomap_begin(
 	unsigned		lockmode;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	lockmode = xfs_ilock_data_map_shared(ip);
 	if (!(ip->i_df.if_flags & XFS_IFEXTENTS)) {
@@ -1254,13 +1254,13 @@ xfs_xattr_iomap_begin(
 	unsigned		lockmode;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	lockmode = xfs_ilock_attr_map_shared(ip);
 
 	/* if there are no attribute fork or extents, return ENOENT */
 	if (!XFS_IFORK_Q(ip) || !ip->i_afp->if_nextents) {
-		error = -ENOENT;
+		error = -ERR(ENOENT);
 		goto out_unlock;
 	}
 

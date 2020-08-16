@@ -340,7 +340,7 @@ handle_t *ocfs2_start_trans(struct ocfs2_super *osb, int max_buffs)
 	BUG_ON(!osb || !osb->journal->j_journal);
 
 	if (ocfs2_is_hard_readonly(osb))
-		return ERR_PTR(-EROFS);
+		return ERR_PTR(-ERR(EROFS));
 
 	BUG_ON(osb->journal->j_state == OCFS2_JOURNAL_FREE);
 	BUG_ON(max_buffs <= 0);
@@ -362,7 +362,7 @@ handle_t *ocfs2_start_trans(struct ocfs2_super *osb, int max_buffs)
 
 		if (is_journal_aborted(journal)) {
 			ocfs2_abort(osb->sb, "Detected aborted journal\n");
-			handle = ERR_PTR(-EROFS);
+			handle = ERR_PTR(-ERR(EROFS));
 		}
 	} else {
 		if (!ocfs2_mount_local(osb))
@@ -695,7 +695,7 @@ static int __ocfs2_journal_access(handle_t *handle,
 		break;
 
 	default:
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "Unknown access type!\n");
 	}
 	if (!status && ocfs2_meta_ecc(osb) && triggers)
@@ -830,7 +830,7 @@ int ocfs2_journal_init(struct ocfs2_journal *journal, int *dirty)
 	inode = ocfs2_get_system_file_inode(osb, JOURNAL_SYSTEM_INODE,
 					    osb->slot_num);
 	if (inode == NULL) {
-		status = -EACCES;
+		status = -ERR(EACCES);
 		mlog_errno(status);
 		goto done;
 	}
@@ -838,7 +838,7 @@ int ocfs2_journal_init(struct ocfs2_journal *journal, int *dirty)
 		mlog(ML_ERROR, "access error (bad inode)\n");
 		iput(inode);
 		inode = NULL;
-		status = -EACCES;
+		status = -ERR(EACCES);
 		goto done;
 	}
 
@@ -861,7 +861,7 @@ int ocfs2_journal_init(struct ocfs2_journal *journal, int *dirty)
 	if (i_size_read(inode) <  OCFS2_MIN_JOURNAL_SIZE) {
 		mlog(ML_ERROR, "Journal file size (%lld) is too small!\n",
 		     i_size_read(inode));
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -873,7 +873,7 @@ int ocfs2_journal_init(struct ocfs2_journal *journal, int *dirty)
 	j_journal = jbd2_journal_init_inode(inode);
 	if (j_journal == NULL) {
 		mlog(ML_ERROR, "Linux journal layer error\n");
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto done;
 	}
 
@@ -1451,7 +1451,7 @@ skip_recovery:
 
 	/* Refresh all journal recovery generations from disk */
 	status = ocfs2_check_journals_nolocks(osb);
-	status = (status == -EROFS) ? 0 : status;
+	status = (status == -ERR(EROFS)) ? 0 : status;
 	if (status < 0)
 		mlog_errno(status);
 
@@ -1533,7 +1533,7 @@ static int ocfs2_read_journal_inode(struct ocfs2_super *osb,
 				    struct buffer_head **bh,
 				    struct inode **ret_inode)
 {
-	int status = -EACCES;
+	int status = -ERR(EACCES);
 	struct inode *inode = NULL;
 
 	BUG_ON(slot_num >= osb->max_slots);
@@ -1602,7 +1602,7 @@ static int ocfs2_replay_journal(struct ocfs2_super *osb,
 		trace_ocfs2_replay_journal_recovered(slot_num,
 		     osb->slot_recovery_generations[slot_num], slot_reco_gen);
 		osb->slot_recovery_generations[slot_num] = slot_reco_gen;
-		status = -EBUSY;
+		status = -ERR(EBUSY);
 		goto done;
 	}
 
@@ -1647,7 +1647,7 @@ static int ocfs2_replay_journal(struct ocfs2_super *osb,
 	journal = jbd2_journal_init_inode(inode);
 	if (journal == NULL) {
 		mlog(ML_ERROR, "Linux journal layer error\n");
-		status = -EIO;
+		status = -ERR(EIO);
 		goto done;
 	}
 
@@ -1782,14 +1782,14 @@ static int ocfs2_trylock_journal(struct ocfs2_super *osb,
 					    slot_num);
 	if (inode == NULL) {
 		mlog(ML_ERROR, "access error\n");
-		status = -EACCES;
+		status = -ERR(EACCES);
 		goto bail;
 	}
 	if (is_bad_inode(inode)) {
 		mlog(ML_ERROR, "access error (bad inode)\n");
 		iput(inode);
 		inode = NULL;
-		status = -EACCES;
+		status = -ERR(EACCES);
 		goto bail;
 	}
 	SET_INODE_JOURNAL(inode);
@@ -2094,7 +2094,7 @@ static int ocfs2_queue_orphans(struct ocfs2_super *osb,
 						       ORPHAN_DIR_SYSTEM_INODE,
 						       slot);
 	if  (!orphan_dir_inode) {
-		status = -ENOENT;
+		status = -ERR(ENOENT);
 		mlog_errno(status);
 		return status;
 	}
@@ -2281,7 +2281,7 @@ static int __ocfs2_wait_on_mount(struct ocfs2_super *osb, int quota)
 	if (atomic_read(&osb->vol_state) == VOLUME_DISABLED) {
 		trace_ocfs2_wait_on_mount(VOLUME_DISABLED);
 		mlog(0, "mount error, exiting!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -2366,6 +2366,6 @@ int ocfs2_check_journals_nolocks(struct ocfs2_super *osb)
 
 out:
 	if (journal_dirty)
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 	return ret;
 }

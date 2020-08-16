@@ -54,7 +54,7 @@ static struct file *ovl_open_realfile(const struct file *file,
 	if (err) {
 		realfile = ERR_PTR(err);
 	} else if (!inode_owner_or_capable(realinode)) {
-		realfile = ERR_PTR(-EPERM);
+		realfile = ERR_PTR(-ERR(EPERM));
 	} else {
 		realfile = open_with_fake_path(&file->f_path, flags, realinode,
 					       current_cred());
@@ -79,17 +79,17 @@ static int ovl_change_flags(struct file *file, unsigned int flags)
 
 	/* If some flag changed that cannot be changed then something's amiss */
 	if (WARN_ON((file->f_flags ^ flags) & ~OVL_SETFL_MASK))
-		return -EIO;
+		return -ERR(EIO);
 
 	flags &= OVL_SETFL_MASK;
 
 	if (((flags ^ file->f_flags) & O_APPEND) && IS_APPEND(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (flags & O_DIRECT) {
 		if (!file->f_mapping->a_ops ||
 		    !file->f_mapping->a_ops->direct_IO)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (file->f_op->check_flags) {
@@ -456,10 +456,10 @@ static int ovl_mmap(struct file *file, struct vm_area_struct *vma)
 	int ret;
 
 	if (!realfile->f_op->mmap)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (WARN_ON(file != vma->vm_file))
-		return -EIO;
+		return -ERR(EIO);
 
 	vma->vm_file = get_file(realfile);
 
@@ -552,7 +552,7 @@ static long ovl_ioctl_set_flags(struct file *file, unsigned int cmd,
 	unsigned int old_iflags;
 
 	if (!inode_owner_or_capable(inode))
-		return -EACCES;
+		return -ERR(EACCES);
 
 	ret = mnt_want_write_file(file);
 	if (ret)
@@ -561,7 +561,7 @@ static long ovl_ioctl_set_flags(struct file *file, unsigned int cmd,
 	inode_lock(inode);
 
 	/* Check the capability before cred override */
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	old_iflags = READ_ONCE(inode->i_flags);
 	if (((iflags ^ old_iflags) & (S_APPEND | S_IMMUTABLE)) &&
 	    !capable(CAP_LINUX_IMMUTABLE))
@@ -659,7 +659,7 @@ static long ovl_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 
 	default:
-		ret = -ENOTTY;
+		ret = -ERR(ENOTTY);
 	}
 
 	return ret;
@@ -678,7 +678,7 @@ static long ovl_compat_ioctl(struct file *file, unsigned int cmd,
 		break;
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return ovl_ioctl(file, cmd, arg);
@@ -753,7 +753,7 @@ static loff_t ovl_remap_file_range(struct file *file_in, loff_t pos_in,
 	enum ovl_copyop op;
 
 	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (remap_flags & REMAP_FILE_DEDUP)
 		op = OVL_DEDUPE;
@@ -767,7 +767,7 @@ static loff_t ovl_remap_file_range(struct file *file_in, loff_t pos_in,
 	if (op == OVL_DEDUPE &&
 	    (!ovl_inode_upper(file_inode(file_in)) ||
 	     !ovl_inode_upper(file_inode(file_out))))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return ovl_copyfile(file_in, pos_in, file_out, pos_out, len,
 			    remap_flags, op);

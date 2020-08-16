@@ -70,7 +70,7 @@ static int vboxsf_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	case opt_nls:
 		if (ctx->nls_name || fc->purpose != FS_CONTEXT_FOR_MOUNT) {
 			vbg_err("vboxsf: Cannot reconfigure nls option\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ctx->nls_name = param->string;
 		param->string = NULL;
@@ -78,13 +78,13 @@ static int vboxsf_parse_param(struct fs_context *fc, struct fs_parameter *param)
 	case opt_uid:
 		uid = make_kuid(current_user_ns(), result.uint_32);
 		if (!uid_valid(uid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.uid = uid;
 		break;
 	case opt_gid:
 		gid = make_kgid(current_user_ns(), result.uint_32);
 		if (!gid_valid(gid))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.gid = gid;
 		break;
 	case opt_ttl:
@@ -92,28 +92,28 @@ static int vboxsf_parse_param(struct fs_context *fc, struct fs_parameter *param)
 		break;
 	case opt_dmode:
 		if (result.uint_32 & ~0777)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.dmode = result.uint_32;
 		ctx->o.dmode_set = true;
 		break;
 	case opt_fmode:
 		if (result.uint_32 & ~0777)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.fmode = result.uint_32;
 		ctx->o.fmode_set = true;
 		break;
 	case opt_dmask:
 		if (result.uint_32 & ~07777)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.dmask = result.uint_32;
 		break;
 	case opt_fmask:
 		if (result.uint_32 & ~07777)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ctx->o.fmask = result.uint_32;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -131,7 +131,7 @@ static int vboxsf_fill_super(struct super_block *sb, struct fs_context *fc)
 	int err;
 
 	if (!fc->source)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sbi = kzalloc(sizeof(*sbi), GFP_KERNEL);
 	if (!sbi)
@@ -153,7 +153,7 @@ static int vboxsf_fill_super(struct super_block *sb, struct fs_context *fc)
 
 		if (!sbi->nls) {
 			vbg_err("vboxsf: Count not load '%s' nls\n", nls_name);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto fail_free;
 		}
 	}
@@ -391,7 +391,7 @@ static int vboxsf_parse_monolithic(struct fs_context *fc, void *data)
 		       options[2] == VBSF_MOUNT_SIGNATURE_BYTE_2 &&
 		       options[3] == VBSF_MOUNT_SIGNATURE_BYTE_3) {
 		vbg_err("vboxsf: Old binary mount data not supported, remove obsolete mount.vboxsf and/or update your VBoxService.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return generic_parse_monolithic(fc, data);

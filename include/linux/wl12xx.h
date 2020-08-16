@@ -30,13 +30,13 @@ struct wl1251_platform_data *wl1251_get_platform_data(void);
 static inline
 int wl1251_set_platform_data(const struct wl1251_platform_data *data)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline
 struct wl1251_platform_data *wl1251_get_platform_data(void)
 {
-	return ERR_PTR(-ENODATA);
+	return ERR_PTR(-ERR(ENODATA));
 }
 
 #endif

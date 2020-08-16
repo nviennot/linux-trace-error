@@ -22,7 +22,7 @@ static inline struct device_node *of_pci_find_child_device(struct device_node *p
 
 static inline int of_pci_get_devfn(struct device_node *np)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void of_pci_check_probe_only(void) { }

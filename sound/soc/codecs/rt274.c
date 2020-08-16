@@ -356,7 +356,7 @@ static int rt274_jack_detect(struct rt274_priv *rt274, bool *hp, bool *mic)
 	*mic = false;
 
 	if (!rt274->component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = regmap_read(rt274->regmap, RT274_GET_HP_SENSE, &buf);
 	if (ret)
@@ -627,7 +627,7 @@ static int rt274_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported sample rate %d\n",
 					params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	switch (rt274->sys_clk) {
 	case 12288000:
@@ -635,7 +635,7 @@ static int rt274_hw_params(struct snd_pcm_substream *substream,
 		if (params_rate(params) != 48000) {
 			dev_err(component->dev, "Sys_clk is not matched (%d %d)\n",
 					params_rate(params), rt274->sys_clk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 11289600:
@@ -643,7 +643,7 @@ static int rt274_hw_params(struct snd_pcm_substream *substream,
 		if (params_rate(params) != 44100) {
 			dev_err(component->dev, "Sys_clk is not matched (%d %d)\n",
 					params_rate(params), rt274->sys_clk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	}
@@ -654,7 +654,7 @@ static int rt274_hw_params(struct snd_pcm_substream *substream,
 	} else {
 		dev_err(component->dev, "Unsupported channels %d\n",
 					params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -684,7 +684,7 @@ static int rt274_hw_params(struct snd_pcm_substream *substream,
 		c_len_code = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (rt274->master)
@@ -717,7 +717,7 @@ static int rt274_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		rt274->master = false;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -738,7 +738,7 @@ static int rt274_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 					RT274_I2S_FMT_MASK, RT274_I2S_FMT_PCMB);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* bit 15 Stream Type 0:PCM 1:Non-PCM */
 	snd_soc_component_update_bits(component, RT274_DAC_FORMAT, 0x8000, 0);
@@ -837,7 +837,7 @@ static int rt274_set_dai_sysclk(struct snd_soc_dai *dai,
 	case 19200000:
 		if (clk_id == RT274_SCLK_S_MCLK) {
 			dev_err(component->dev, "Should not use MCLK\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_update_bits(component,
 			RT274_I2S_CTRL2, 0x40, 0x40);
@@ -845,7 +845,7 @@ static int rt274_set_dai_sysclk(struct snd_soc_dai *dai,
 	case 24000000:
 		if (clk_id == RT274_SCLK_S_MCLK) {
 			dev_err(component->dev, "Should not use MCLK\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_update_bits(component,
 			RT274_I2S_CTRL2, 0x40, 0x0);
@@ -862,7 +862,7 @@ static int rt274_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported system clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt274->sys_clk = freq;
@@ -916,7 +916,7 @@ static int rt274_set_tdm_slot(struct snd_soc_dai *dai, unsigned int tx_mask,
 	default:
 		dev_err(component->dev,
 			"Support 2 or 4 slots TDM only\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1141,7 +1141,7 @@ static int rt274_i2c_probe(struct i2c_client *i2c,
 	if (val != RT274_VENDOR_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt274\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	rt274->index_cache = devm_kmemdup(&i2c->dev, rt274_index_def,

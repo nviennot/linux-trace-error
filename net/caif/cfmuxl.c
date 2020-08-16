@@ -180,7 +180,7 @@ static int cfmuxl_receive(struct cflayer *layr, struct cfpkt *pkt)
 	if (cfpkt_extr_head(pkt, &id, 1) < 0) {
 		pr_err("erroneous Caif Packet\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	rcu_read_lock();
 	up = get_up(muxl, id);
@@ -225,7 +225,7 @@ static int cfmuxl_transmit(struct cflayer *layr, struct cfpkt *pkt)
 			info->dev_info->id, info->dev_info->id);
 		rcu_read_unlock();
 		cfpkt_destroy(pkt);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	info->hdr_len += 1;

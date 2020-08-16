@@ -630,7 +630,7 @@ static int wm5102_adsp_power_ev(struct snd_soc_dapm_widget *w,
 		if (ret != 0) {
 			dev_err(component->dev,
 				"Failed to read SYSCLK state: %d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		v = (v & ARIZONA_SYSCLK_FREQ_MASK) >> ARIZONA_SYSCLK_FREQ_SHIFT;
@@ -1753,7 +1753,7 @@ static int wm5102_set_fll(struct snd_soc_component *component, int fll_id,
 		return arizona_set_fll_refclk(&wm5102->fll[1], source, Fref,
 					      Fout);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 

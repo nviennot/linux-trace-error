@@ -183,7 +183,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 	if (!codec_dai) {
 		dev_err(card->dev,
 			"Codec dai not found; Unable to set platform clock\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
@@ -899,7 +899,7 @@ static int snd_byt_rt5651_mc_probe(struct platform_device *pdev)
 		byt_rt5651_dais[dai_index].codecs->name = byt_rt5651_codec_name;
 	} else {
 		dev_err(&pdev->dev, "Error cannot find '%s' dev\n", mach->id);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	codec_dev = bus_find_device_by_name(&i2c_bus_type, NULL,

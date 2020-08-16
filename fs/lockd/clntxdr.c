@@ -119,7 +119,7 @@ static int decode_netobj(struct xdr_stream *xdr,
 	ret = xdr_stream_decode_opaque_inline(xdr, (void *)&obj->data,
 			XDR_MAX_NETOBJ);
 	if (unlikely(ret < 0))
-		return -EIO;
+		return -ERR(EIO);
 	obj->len = ret;
 	return 0;
 }
@@ -160,9 +160,9 @@ out_hpux:
 	return 0;
 out_size:
 	dprintk("NFS: returned cookie was too long: %u\n", length);
-	return -EIO;
+	return -ERR(EIO);
 out_overflow:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -217,9 +217,9 @@ static int decode_nlm_stat(struct xdr_stream *xdr,
 out_enum:
 	dprintk("%s: server returned invalid nlm_stats value: %u\n",
 		__func__, be32_to_cpup(p));
-	return -EIO;
+	return -ERR(EIO);
 out_overflow:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -290,7 +290,7 @@ static int decode_nlm_holder(struct xdr_stream *xdr, struct nlm_res *result)
 out:
 	return error;
 out_overflow:
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*

@@ -51,13 +51,13 @@ static int f2fs_xattr_generic_get(const struct xattr_handler *handler,
 	switch (handler->flags) {
 	case F2FS_XATTR_INDEX_USER:
 		if (!test_opt(sbi, XATTR_USER))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		break;
 	case F2FS_XATTR_INDEX_TRUSTED:
 	case F2FS_XATTR_INDEX_SECURITY:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return f2fs_getxattr(inode, handler->flags, name,
 			     buffer, size, NULL);
@@ -73,13 +73,13 @@ static int f2fs_xattr_generic_set(const struct xattr_handler *handler,
 	switch (handler->flags) {
 	case F2FS_XATTR_INDEX_USER:
 		if (!test_opt(sbi, XATTR_USER))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		break;
 	case F2FS_XATTR_INDEX_TRUSTED:
 	case F2FS_XATTR_INDEX_SECURITY:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return f2fs_setxattr(inode, handler->flags, name,
 					value, size, NULL, flags);
@@ -115,13 +115,13 @@ static int f2fs_xattr_advise_set(const struct xattr_handler *handler,
 	unsigned char new_advise;
 
 	if (!inode_owner_or_capable(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (value == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_advise = *(char *)value;
 	if (new_advise & ~FADVISE_MODIFIABLE_BITS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_advise = new_advise & FADVISE_MODIFIABLE_BITS;
 	new_advise |= old_advise & ~FADVISE_MODIFIABLE_BITS;
@@ -330,7 +330,7 @@ static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 	int err = 0;
 
 	if (!xnid && !inline_size)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	*base_size = XATTR_SIZE(inode) + XATTR_PADDING_SIZE;
 	txattr_addr = xattr_alloc(F2FS_I_SB(inode), *base_size, is_inline);
@@ -375,7 +375,7 @@ static int lookup_all_xattrs(struct inode *inode, struct page *ipage,
 	}
 check:
 	if (IS_XATTR_LAST_ENTRY(*xe)) {
-		err = -ENODATA;
+		err = -ERR(ENODATA);
 		goto out;
 	}
 
@@ -443,7 +443,7 @@ static inline int write_all_xattrs(struct inode *inode, __u32 hsize,
 
 	if (hsize > inline_size && !F2FS_I(inode)->i_xattr_nid)
 		if (!f2fs_alloc_nid(sbi, &new_nid))
-			return -ENOSPC;
+			return -ERR(ENOSPC);
 
 	/* write to inline xattr */
 	if (inline_size) {
@@ -522,11 +522,11 @@ int f2fs_getxattr(struct inode *inode, int index, const char *name,
 	bool is_inline;
 
 	if (name == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = strlen(name);
 	if (len > F2FS_NAME_LEN)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	down_read(&F2FS_I(inode)->i_xattr_sem);
 	error = lookup_all_xattrs(inode, ipage, index, len, name,
@@ -538,7 +538,7 @@ int f2fs_getxattr(struct inode *inode, int index, const char *name,
 	size = le16_to_cpu(entry->e_value_size);
 
 	if (buffer && size > buffer_size) {
-		error = -ERANGE;
+		error = -ERR(ERANGE);
 		goto out;
 	}
 
@@ -546,7 +546,7 @@ int f2fs_getxattr(struct inode *inode, int index, const char *name,
 		char *pval = entry->e_name + entry->e_name_len;
 
 		if (base_size - (pval - (char *)base_addr) < size) {
-			error = -ERANGE;
+			error = -ERR(ERANGE);
 			goto out;
 		}
 		memcpy(buffer, pval, size);
@@ -597,7 +597,7 @@ ssize_t f2fs_listxattr(struct dentry *dentry, char *buffer, size_t buffer_size)
 		size = prefix_len + entry->e_name_len + 1;
 		if (buffer) {
 			if (size > rest) {
-				error = -ERANGE;
+				error = -ERR(ERANGE);
 				goto cleanup;
 			}
 			memcpy(buffer, prefix, prefix_len);
@@ -635,7 +635,7 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 	int error = 0;
 
 	if (name == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (value == NULL)
 		size = 0;
@@ -643,10 +643,10 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 	len = strlen(name);
 
 	if (len > F2FS_NAME_LEN)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (size > MAX_VALUE_LEN(inode))
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	error = read_all_xattrs(inode, ipage, &base_addr);
 	if (error)
@@ -668,14 +668,14 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 
 	if (found) {
 		if ((flags & XATTR_CREATE)) {
-			error = -EEXIST;
+			error = -ERR(EEXIST);
 			goto exit;
 		}
 
 		if (value && f2fs_xattr_value_same(here, value, size))
 			goto exit;
 	} else if ((flags & XATTR_REPLACE)) {
-		error = -ENODATA;
+		error = -ERR(ENODATA);
 		goto exit;
 	}
 
@@ -697,7 +697,7 @@ static int __f2fs_setxattr(struct inode *inode, int index,
 			free = free + ENTRY_SIZE(here);
 
 		if (unlikely(free < newsize)) {
-			error = -E2BIG;
+			error = -ERR(E2BIG);
 			goto exit;
 		}
 	}
@@ -762,9 +762,9 @@ int f2fs_setxattr(struct inode *inode, int index, const char *name,
 	int err;
 
 	if (unlikely(f2fs_cp_error(sbi)))
-		return -EIO;
+		return -ERR(EIO);
 	if (!f2fs_is_checkpoint_ready(sbi))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	err = dquot_initialize(inode);
 	if (err)

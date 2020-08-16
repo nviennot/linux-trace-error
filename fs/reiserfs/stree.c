@@ -1726,7 +1726,7 @@ int reiserfs_cut_from_item(struct reiserfs_transaction_handle *th,
 		reiserfs_warning(sb, "PAP-5610", "item %K not found",
 				 item_key);
 		unfix_nodes(&s_cut_balance);
-		return (ret_value == IO_ERROR) ? -EIO : -ENOENT;
+		return (ret_value == IO_ERROR) ? -ERR(EIO) : -ERR(ENOENT);
 	}			/* while */
 
 	/* check fix_nodes results (IO_ERROR or NO_DISK_SPACE) */
@@ -1742,7 +1742,7 @@ int reiserfs_cut_from_item(struct reiserfs_transaction_handle *th,
 			reiserfs_warning(sb, "reiserfs-5092",
 					 "NO_DISK_SPACE");
 		unfix_nodes(&s_cut_balance);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	/* go ahead and perform balancing */
@@ -1896,7 +1896,7 @@ int reiserfs_do_truncate(struct reiserfs_transaction_handle *th,
 		reiserfs_error(inode->i_sb, "vs-5657",
 			       "i/o failure occurred trying to truncate %K",
 			       &s_item_key);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 	if (retval == POSITION_FOUND || retval == FILE_NOT_FOUND) {
@@ -1904,7 +1904,7 @@ int reiserfs_do_truncate(struct reiserfs_transaction_handle *th,
 			       "wrong result %d of search for %K", retval,
 			       &s_item_key);
 
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -2109,14 +2109,14 @@ search_again:
 		    search_for_position_by_key(th->t_super, key,
 					       search_path);
 		if (retval == IO_ERROR) {
-			retval = -EIO;
+			retval = -ERR(EIO);
 			goto error_out;
 		}
 		if (retval == POSITION_FOUND) {
 			reiserfs_warning(inode->i_sb, "PAP-5710",
 					 "entry or pasted byte (%K) exists",
 					 key);
-			retval = -EEXIST;
+			retval = -ERR(EEXIST);
 			goto error_out;
 		}
 #ifdef CONFIG_REISERFS_CHECK
@@ -2132,7 +2132,7 @@ search_again:
 		do_balance(&s_paste_balance, NULL /*ih */ , body, M_PASTE);
 		return 0;
 	}
-	retval = (retval == NO_DISK_SPACE) ? -ENOSPC : -EIO;
+	retval = (retval == NO_DISK_SPACE) ? -ERR(ENOSPC) : -ERR(EIO);
 error_out:
 	/* this also releases the path */
 	unfix_nodes(&s_paste_balance);
@@ -2217,14 +2217,14 @@ search_again:
 		PROC_INFO_INC(th->t_super, insert_item_restarted);
 		retval = search_item(th->t_super, key, path);
 		if (retval == IO_ERROR) {
-			retval = -EIO;
+			retval = -ERR(EIO);
 			goto error_out;
 		}
 		if (retval == ITEM_FOUND) {
 			reiserfs_warning(th->t_super, "PAP-5760",
 					 "key %K already exists in the tree",
 					 key);
-			retval = -EEXIST;
+			retval = -ERR(EEXIST);
 			goto error_out;
 		}
 	}
@@ -2235,7 +2235,7 @@ search_again:
 		return 0;
 	}
 
-	retval = (retval == NO_DISK_SPACE) ? -ENOSPC : -EIO;
+	retval = (retval == NO_DISK_SPACE) ? -ERR(ENOSPC) : -ERR(EIO);
 error_out:
 	/* also releases the path */
 	unfix_nodes(&s_ins_balance);

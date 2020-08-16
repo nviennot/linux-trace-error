@@ -389,7 +389,7 @@ node_error:
 	clear_bit(HFS_BNODE_NEW, &node->flags);
 	wake_up(&node->lock_wq);
 	hfs_bnode_put(node);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 void hfs_bnode_free(struct hfs_bnode *node)
@@ -421,7 +421,7 @@ struct hfs_bnode *hfs_bnode_create(struct hfs_btree *tree, u32 num)
 		return ERR_PTR(-ENOMEM);
 	if (test_bit(HFS_BNODE_ERROR, &node->flags)) {
 		hfs_bnode_put(node);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	pagep = node->page;

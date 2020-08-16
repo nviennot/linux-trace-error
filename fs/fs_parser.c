@@ -111,7 +111,7 @@ int __fs_parse(struct p_log *log,
 
 	p = fs_lookup_key(desc, param, &result->negated);
 	if (!p)
-		return -ENOPARAM;
+		return -ERR(ENOPARAM);
 
 	if (p->flags & fs_param_deprecated)
 		warn_plog(log, "Deprecated parameter '%s'", param->key);
@@ -179,7 +179,7 @@ int fs_lookup_param(struct fs_context *fc,
 		_path->mnt = NULL;
 		errorf(fc, "%s: Non-blockdev passed as '%s'",
 		       param->key, f->name);
-		ret = -ENOTBLK;
+		ret = -ERR(ENOTBLK);
 	}
 
 out:

@@ -269,7 +269,7 @@ int __init raid6_select_algo(void)
 
 	free_pages((unsigned long)disk_ptr, RAID6_TEST_DISKS_ORDER);
 
-	return gen_best && rec_best ? 0 : -EINVAL;
+	return gen_best && rec_best ? 0 : -ERR(EINVAL);
 }
 
 static void raid6_exit(void)

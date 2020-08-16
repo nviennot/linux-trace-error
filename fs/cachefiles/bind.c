@@ -48,18 +48,18 @@ int cachefiles_daemon_bind(struct cachefiles_cache *cache, char *args)
 
 	if (*args) {
 		pr_err("'bind' command doesn't take an argument\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!cache->rootdirname) {
 		pr_err("No cache directory specified\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* don't permit already bound caches to be re-bound */
 	if (test_bit(CACHEFILES_READY, &cache->flags)) {
 		pr_err("Cache already bound\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/* make sure we have copies of the tag and dirname strings */
@@ -119,7 +119,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	root = path.dentry;
 
 	/* check parameters */
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (d_is_negative(root) ||
 	    !d_backing_inode(root)->i_op->lookup ||
 	    !d_backing_inode(root)->i_op->mkdir ||
@@ -128,7 +128,7 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	    !root->d_sb->s_op->sync_fs)
 		goto error_unsupported;
 
-	ret = -EROFS;
+	ret = -ERR(EROFS);
 	if (sb_rdonly(root->d_sb))
 		goto error_unsupported;
 
@@ -143,11 +143,11 @@ static int cachefiles_daemon_add_cache(struct cachefiles_cache *cache)
 	if (ret < 0)
 		goto error_unsupported;
 
-	ret = -ERANGE;
+	ret = -ERR(ERANGE);
 	if (stats.f_bsize <= 0)
 		goto error_unsupported;
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (stats.f_bsize > PAGE_SIZE)
 		goto error_unsupported;
 

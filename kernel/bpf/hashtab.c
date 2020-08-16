@@ -363,37 +363,37 @@ static int htab_map_alloc_check(union bpf_attr *attr)
 		/* LRU implementation is much complicated than other
 		 * maps.  Hence, limit to CAP_BPF.
 		 */
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (zero_seed && !capable(CAP_SYS_ADMIN))
 		/* Guard against local DoS, and discourage production use. */
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (attr->map_flags & ~HTAB_CREATE_FLAG_MASK ||
 	    !bpf_map_flags_access_ok(attr->map_flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!lru && percpu_lru)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (lru && !prealloc)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (numa_node != NUMA_NO_NODE && (percpu || percpu_lru))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check sanity of attributes.
 	 * value_size == 0 may be allowed in the future to use map as a set
 	 */
 	if (attr->max_entries == 0 || attr->key_size == 0 ||
 	    attr->value_size == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (attr->key_size > MAX_BPF_STACK)
 		/* eBPF programs initialize keys on stack, so they cannot be
 		 * larger than max stack size
 		 */
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (attr->value_size >= KMALLOC_MAX_SIZE -
 	    MAX_BPF_STACK - sizeof(struct htab_elem))
@@ -402,7 +402,7 @@ static int htab_map_alloc_check(union bpf_attr *attr)
 		 * sure that the elem_size doesn't overflow and it's
 		 * kmalloc-able later in htab_map_update_elem()
 		 */
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	return 0;
 }
@@ -452,7 +452,7 @@ static struct bpf_map *htab_map_alloc(union bpf_attr *attr)
 	else
 		htab->elem_size += round_up(htab->map.value_size, 8);
 
-	err = -E2BIG;
+	err = -ERR(E2BIG);
 	/* prevent zero size kmalloc and check for u32 overflow */
 	if (htab->n_buckets == 0 ||
 	    htab->n_buckets > U32_MAX / sizeof(struct bucket))
@@ -761,7 +761,7 @@ find_first_elem:
 	}
 
 	/* iterated over all buckets and all elements */
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static void htab_elem_free(struct bpf_htab *htab, struct htab_elem *l)
@@ -851,7 +851,7 @@ static struct htab_elem *alloc_htab_elem(struct bpf_htab *htab, void *key,
 
 			l = __pcpu_freelist_pop(&htab->freelist);
 			if (!l)
-				return ERR_PTR(-E2BIG);
+				return ERR_PTR(-ERR(E2BIG));
 			l_new = container_of(l, struct htab_elem, fnode);
 		}
 	} else {
@@ -862,7 +862,7 @@ static struct htab_elem *alloc_htab_elem(struct bpf_htab *htab, void *key,
 				 * old element will be freed immediately.
 				 * Otherwise return an error
 				 */
-				l_new = ERR_PTR(-E2BIG);
+				l_new = ERR_PTR(-ERR(E2BIG));
 				goto dec_count;
 			}
 		l_new = kmalloc_node(htab->elem_size, GFP_ATOMIC | __GFP_NOWARN,
@@ -916,11 +916,11 @@ static int check_flags(struct bpf_htab *htab, struct htab_elem *l_old,
 {
 	if (l_old && (map_flags & ~BPF_F_LOCK) == BPF_NOEXIST)
 		/* elem already exists */
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (!l_old && (map_flags & ~BPF_F_LOCK) == BPF_EXIST)
 		/* elem doesn't exist, cannot update it */
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return 0;
 }
@@ -939,7 +939,7 @@ static int htab_map_update_elem(struct bpf_map *map, void *key, void *value,
 
 	if (unlikely((map_flags & ~BPF_F_LOCK) > BPF_EXIST))
 		/* unknown flags */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -952,7 +952,7 @@ static int htab_map_update_elem(struct bpf_map *map, void *key, void *value,
 
 	if (unlikely(map_flags & BPF_F_LOCK)) {
 		if (unlikely(!map_value_has_spin_lock(map)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* find an element without taking the bucket lock */
 		l_old = lookup_nulls_elem_raw(head, hash, key, key_size,
 					      htab->n_buckets);
@@ -1030,7 +1030,7 @@ static int htab_lru_map_update_elem(struct bpf_map *map, void *key, void *value,
 
 	if (unlikely(map_flags > BPF_EXIST))
 		/* unknown flags */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -1094,7 +1094,7 @@ static int __htab_percpu_map_update_elem(struct bpf_map *map, void *key,
 
 	if (unlikely(map_flags > BPF_EXIST))
 		/* unknown flags */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -1146,7 +1146,7 @@ static int __htab_lru_percpu_map_update_elem(struct bpf_map *map, void *key,
 
 	if (unlikely(map_flags > BPF_EXIST))
 		/* unknown flags */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -1218,7 +1218,7 @@ static int htab_map_delete_elem(struct bpf_map *map, void *key)
 	struct htab_elem *l;
 	unsigned long flags;
 	u32 hash, key_size;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -1250,7 +1250,7 @@ static int htab_lru_map_delete_elem(struct bpf_map *map, void *key)
 	struct htab_elem *l;
 	unsigned long flags;
 	u32 hash, key_size;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	WARN_ON_ONCE(!rcu_read_lock_held());
 
@@ -1365,11 +1365,11 @@ __htab_map_lookup_and_delete_batch(struct bpf_map *map,
 	elem_map_flags = attr->batch.elem_flags;
 	if ((elem_map_flags & ~BPF_F_LOCK) ||
 	    ((elem_map_flags & BPF_F_LOCK) && !map_value_has_spin_lock(map)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	map_flags = attr->batch.flags;
 	if (map_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	max_count = attr->batch.count;
 	if (!max_count)
@@ -1383,7 +1383,7 @@ __htab_map_lookup_and_delete_batch(struct bpf_map *map,
 		return -EFAULT;
 
 	if (batch >= htab->n_buckets)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	key_size = htab->map.key_size;
 	roundup_key_size = round_up(htab->map.key_size, 8);
@@ -1431,7 +1431,7 @@ again_nocopy:
 
 	if (bucket_cnt > (max_count - total)) {
 		if (total == 0)
-			ret = -ENOSPC;
+			ret = -ERR(ENOSPC);
 		/* Note that since bucket_cnt > 0 here, it is implicit
 		 * that the locked was grabbed, so release it.
 		 */
@@ -1530,7 +1530,7 @@ next_batch:
 	total += bucket_cnt;
 	batch++;
 	if (batch >= htab->n_buckets) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto after_loop;
 	}
 	goto again;
@@ -1674,7 +1674,7 @@ int bpf_percpu_hash_copy(struct bpf_map *map, void *key, void *value)
 {
 	struct htab_elem *l;
 	void __percpu *pptr;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	int cpu, off = 0;
 	u32 size;
 
@@ -1776,7 +1776,7 @@ const struct bpf_map_ops htab_lru_percpu_map_ops = {
 static int fd_htab_map_alloc_check(union bpf_attr *attr)
 {
 	if (attr->value_size != sizeof(u32))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return htab_map_alloc_check(attr);
 }
 
@@ -1808,14 +1808,14 @@ int bpf_fd_htab_map_lookup_elem(struct bpf_map *map, void *key, u32 *value)
 	int ret = 0;
 
 	if (!map->ops->map_fd_sys_lookup_elem)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	rcu_read_lock();
 	ptr = htab_map_lookup_elem(map, key);
 	if (ptr)
 		*value = map->ops->map_fd_sys_lookup_elem(READ_ONCE(*ptr));
 	else
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 	rcu_read_unlock();
 
 	return ret;

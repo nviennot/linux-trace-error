@@ -67,12 +67,12 @@ static inline void secure_computing_strict(int this_syscall) { return; }
 
 static inline long prctl_get_seccomp(void)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline long prctl_set_seccomp(unsigned long arg2, char __user *arg3)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int seccomp_mode(struct seccomp *s)
@@ -104,13 +104,13 @@ extern long seccomp_get_metadata(struct task_struct *task,
 static inline long seccomp_get_filter(struct task_struct *task,
 				      unsigned long n, void __user *data)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline long seccomp_get_metadata(struct task_struct *task,
 					unsigned long filter_off,
 					void __user *data)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* CONFIG_SECCOMP_FILTER && CONFIG_CHECKPOINT_RESTORE */
 #endif /* _LINUX_SECCOMP_H */

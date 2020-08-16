@@ -22,7 +22,7 @@ static inline int crypto_gcm_check_authsize(unsigned int authsize)
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -39,7 +39,7 @@ static inline int crypto_rfc4106_check_authsize(unsigned int authsize)
 	case 16:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -55,7 +55,7 @@ static inline int crypto_ipsec_check_assoclen(unsigned int assoclen)
 	case 20:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

@@ -169,7 +169,7 @@ static int expand_fdtable(struct files_struct *files, unsigned int nr)
 	 */
 	if (unlikely(new_fdt->max_fds <= nr)) {
 		__free_fdtable(new_fdt);
-		return -EMFILE;
+		return -ERR(EMFILE);
 	}
 	cur_fdt = files_fdtable(files);
 	BUG_ON(nr < cur_fdt->max_fds);
@@ -206,7 +206,7 @@ repeat:
 
 	/* Can we expand? */
 	if (nr >= sysctl_nr_open)
-		return -EMFILE;
+		return -ERR(EMFILE);
 
 	if (unlikely(files->resize_in_progress)) {
 		spin_unlock(&files->file_lock);
@@ -316,7 +316,7 @@ struct files_struct *dup_fd(struct files_struct *oldf, int *errorp)
 		/* beyond sysctl_nr_open; nothing to do */
 		if (unlikely(new_fdt->max_fds < open_files)) {
 			__free_fdtable(new_fdt);
-			*errorp = -EMFILE;
+			*errorp = -ERR(EMFILE);
 			goto out_release;
 		}
 
@@ -498,7 +498,7 @@ repeat:
 	 * N.B. For clone tasks sharing a files structure, this test
 	 * will limit the total number of files that can be opened.
 	 */
-	error = -EMFILE;
+	error = -ERR(EMFILE);
 	if (fd >= end)
 		goto out;
 
@@ -642,7 +642,7 @@ int __close_fd(struct files_struct *files, unsigned fd)
 
 out_unlock:
 	spin_unlock(&files->file_lock);
-	return -EBADF;
+	return -ERR(EBADF);
 }
 EXPORT_SYMBOL(__close_fd); /* for ksys_close() */
 
@@ -674,7 +674,7 @@ int __close_fd_get_file(unsigned int fd, struct file **res)
 out_unlock:
 	spin_unlock(&files->file_lock);
 	*res = NULL;
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 void do_close_on_exec(struct files_struct *files)
@@ -906,7 +906,7 @@ __releases(&files->file_lock)
 
 Ebusy:
 	spin_unlock(&files->file_lock);
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 int replace_fd(unsigned fd, struct file *file, unsigned flags)
@@ -918,7 +918,7 @@ int replace_fd(unsigned fd, struct file *file, unsigned flags)
 		return __close_fd(files, fd);
 
 	if (fd >= rlimit(RLIMIT_NOFILE))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	spin_lock(&files->file_lock);
 	err = expand_files(files, fd);
@@ -933,18 +933,18 @@ out_unlock:
 
 static int ksys_dup3(unsigned int oldfd, unsigned int newfd, int flags)
 {
-	int err = -EBADF;
+	int err = -ERR(EBADF);
 	struct file *file;
 	struct files_struct *files = current->files;
 
 	if ((flags & ~O_CLOEXEC) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(oldfd == newfd))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (newfd >= rlimit(RLIMIT_NOFILE))
-		return -EBADF;
+		return -ERR(EBADF);
 
 	spin_lock(&files->file_lock);
 	err = expand_files(files, newfd);
@@ -959,7 +959,7 @@ static int ksys_dup3(unsigned int oldfd, unsigned int newfd, int flags)
 	return do_dup2(files, file, newfd, flags);
 
 Ebadf:
-	err = -EBADF;
+	err = -ERR(EBADF);
 out_unlock:
 	spin_unlock(&files->file_lock);
 	return err;
@@ -978,7 +978,7 @@ SYSCALL_DEFINE2(dup2, unsigned int, oldfd, unsigned int, newfd)
 
 		rcu_read_lock();
 		if (!fcheck_files(files, oldfd))
-			retval = -EBADF;
+			retval = -ERR(EBADF);
 		rcu_read_unlock();
 		return retval;
 	}
@@ -987,7 +987,7 @@ SYSCALL_DEFINE2(dup2, unsigned int, oldfd, unsigned int, newfd)
 
 int ksys_dup(unsigned int fildes)
 {
-	int ret = -EBADF;
+	int ret = -ERR(EBADF);
 	struct file *file = fget_raw(fildes);
 
 	if (file) {
@@ -1009,7 +1009,7 @@ int f_dupfd(unsigned int from, struct file *file, unsigned flags)
 {
 	int err;
 	if (from >= rlimit(RLIMIT_NOFILE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = alloc_fd(from, flags);
 	if (err >= 0) {
 		get_file(file);

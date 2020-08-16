@@ -28,7 +28,7 @@ hwdep_read_resp_buf(struct snd_efw *efw, char __user *buf, long remained,
 	long count = 0;
 
 	if (remained < sizeof(type) + sizeof(struct snd_efw_transaction))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* data type is SNDRV_FIREWIRE_EVENT_EFW_RESPONSE */
 	type = SNDRV_FIREWIRE_EVENT_EFW_RESPONSE;
@@ -137,7 +137,7 @@ hwdep_read(struct snd_hwdep *hwdep, char __user *buf, long count,
 		schedule();
 		finish_wait(&efw->hwdep_wait, &wait);
 		if (signal_pending(current))
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 		spin_lock_irq(&efw->lock);
 		dev_lock_changed = efw->dev_lock_changed;
 		queued = efw->push_ptr != efw->pull_ptr;
@@ -163,7 +163,7 @@ hwdep_write(struct snd_hwdep *hwdep, const char __user *data, long count,
 
 	if (count < sizeof(struct snd_efw_transaction) ||
 	    SND_EFW_RESPONSE_MAXIMUM_BYTES < count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = memdup_user(data, count);
 	if (IS_ERR(buf))
@@ -172,12 +172,12 @@ hwdep_write(struct snd_hwdep *hwdep, const char __user *data, long count,
 	/* check seqnum is not for kernel-land */
 	seqnum = be32_to_cpu(((struct snd_efw_transaction *)buf)->seqnum);
 	if (seqnum > SND_EFW_TRANSACTION_USER_SEQNUM_MAX) {
-		count = -EINVAL;
+		count = -ERR(EINVAL);
 		goto end;
 	}
 
 	if (snd_efw_transaction_cmd(efw->unit, buf, count) < 0)
-		count = -EIO;
+		count = -ERR(EIO);
 end:
 	kfree(buf);
 	return count;
@@ -232,7 +232,7 @@ hwdep_lock(struct snd_efw *efw)
 		efw->dev_lock_count = -1;
 		err = 0;
 	} else {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	spin_unlock_irq(&efw->lock);
@@ -251,7 +251,7 @@ hwdep_unlock(struct snd_efw *efw)
 		efw->dev_lock_count = 0;
 		err = 0;
 	} else {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 	}
 
 	spin_unlock_irq(&efw->lock);
@@ -286,7 +286,7 @@ hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
 	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
 		return hwdep_unlock(efw);
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 }
 

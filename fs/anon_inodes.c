@@ -78,10 +78,10 @@ struct file *anon_inode_getfile(const char *name,
 	struct file *file;
 
 	if (IS_ERR(anon_inode_inode))
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (fops->owner && !try_module_get(fops->owner))
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	/*
 	 * We know the anon_inode inode count is always greater than zero,

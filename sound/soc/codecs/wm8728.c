@@ -101,7 +101,7 @@ static int wm8728_hw_params(struct snd_pcm_substream *substream,
 		dac |= 0x08;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8728_DACCTL, dac);
@@ -123,7 +123,7 @@ static int wm8728_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The hardware only support full slave mode */
@@ -131,7 +131,7 @@ static int wm8728_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -150,7 +150,7 @@ static int wm8728_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x22;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8728_IFCTL, iface);

@@ -225,7 +225,7 @@ static int rt298_jack_detect(struct rt298_priv *rt298, bool *hp, bool *mic)
 	*mic = false;
 
 	if (!rt298->component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dapm = snd_soc_component_get_dapm(rt298->component);
 
@@ -756,7 +756,7 @@ static int rt298_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Unsupported sample rate %d\n",
 					params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	switch (rt298->sys_clk) {
 	case 12288000:
@@ -764,7 +764,7 @@ static int rt298_hw_params(struct snd_pcm_substream *substream,
 		if (params_rate(params) != 48000) {
 			dev_err(component->dev, "Sys_clk is not matched (%d %d)\n",
 					params_rate(params), rt298->sys_clk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 11289600:
@@ -772,7 +772,7 @@ static int rt298_hw_params(struct snd_pcm_substream *substream,
 		if (params_rate(params) != 44100) {
 			dev_err(component->dev, "Sys_clk is not matched (%d %d)\n",
 					params_rate(params), rt298->sys_clk);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	}
@@ -783,7 +783,7 @@ static int rt298_hw_params(struct snd_pcm_substream *substream,
 	} else {
 		dev_err(component->dev, "Unsupported channels %d\n",
 					params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	d_len_code = 0;
@@ -809,7 +809,7 @@ static int rt298_hw_params(struct snd_pcm_substream *substream,
 		d_len_code = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component,
@@ -836,7 +836,7 @@ static int rt298_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			RT298_I2S_CTRL1, 0x800, 0x0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -857,7 +857,7 @@ static int rt298_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 			RT298_I2S_CTRL1, 0x300, 0x3 << 8);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* bit 15 Stream Type 0:PCM 1:Non-PCM */
 	snd_soc_component_update_bits(component, RT298_DAC_FORMAT, 0x8000, 0);
@@ -890,7 +890,7 @@ static int rt298_set_dai_sysclk(struct snd_soc_dai *dai,
 	case 19200000:
 		if (RT298_SCLK_S_MCLK == clk_id) {
 			dev_err(component->dev, "Should not use MCLK\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_update_bits(component,
 			RT298_I2S_CTRL2, 0x40, 0x40);
@@ -898,7 +898,7 @@ static int rt298_set_dai_sysclk(struct snd_soc_dai *dai,
 	case 24000000:
 		if (RT298_SCLK_S_MCLK == clk_id) {
 			dev_err(component->dev, "Should not use MCLK\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		snd_soc_component_update_bits(component,
 			RT298_I2S_CTRL2, 0x40, 0x0);
@@ -919,7 +919,7 @@ static int rt298_set_dai_sysclk(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "Unsupported system clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rt298->sys_clk = freq;
@@ -1196,7 +1196,7 @@ static int rt298_i2c_probe(struct i2c_client *i2c,
 	if (ret != RT298_VENDOR_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt298\n", ret);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	rt298->index_cache = devm_kmemdup(&i2c->dev, rt298_index_def,

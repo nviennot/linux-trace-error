@@ -168,7 +168,7 @@ static inline int usb_phy_io_read(struct usb_phy *x, u32 reg)
 	if (x && x->io_ops && x->io_ops->read)
 		return x->io_ops->read(x, reg);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int usb_phy_io_write(struct usb_phy *x, u32 val, u32 reg)
@@ -176,7 +176,7 @@ static inline int usb_phy_io_write(struct usb_phy *x, u32 val, u32 reg)
 	if (x && x->io_ops && x->io_ops->write)
 		return x->io_ops->write(x, val, reg);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int
@@ -234,25 +234,25 @@ extern void usb_phy_set_charger_state(struct usb_phy *usb_phy,
 #else
 static inline struct usb_phy *usb_get_phy(enum usb_phy_type type)
 {
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline struct usb_phy *devm_usb_get_phy(struct device *dev,
 	enum usb_phy_type type)
 {
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline struct usb_phy *devm_usb_get_phy_by_phandle(struct device *dev,
 	const char *phandle, u8 index)
 {
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline struct usb_phy *devm_usb_get_phy_by_node(struct device *dev,
 	struct device_node *node, struct notifier_block *nb)
 {
-	return ERR_PTR(-ENXIO);
+	return ERR_PTR(-ERR(ENXIO));
 }
 
 static inline void usb_put_phy(struct usb_phy *x)

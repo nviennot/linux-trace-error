@@ -72,7 +72,7 @@ static int __test_mutex(unsigned int flags)
 		ret = 0;
 		do {
 			if (completion_done(&mtx.done)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				break;
 			}
 			cond_resched();
@@ -86,7 +86,7 @@ static int __test_mutex(unsigned int flags)
 	if (ret) {
 		pr_err("%s(flags=%x): mutual exclusion failure\n",
 		       __func__, flags);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	flush_work(&mtx.work);
@@ -123,7 +123,7 @@ static int test_aa(void)
 	if (ww_mutex_trylock(&mutex))  {
 		pr_err("%s: trylocked itself!\n", __func__);
 		ww_mutex_unlock(&mutex);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -133,7 +133,7 @@ static int test_aa(void)
 		       __func__, ret);
 		if (!ret)
 			ww_mutex_unlock(&mutex);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -222,13 +222,13 @@ static int test_abba(bool resolve)
 		if (err || abba.result) {
 			pr_err("%s: failed to resolve ABBA deadlock, A err=%d, B err=%d\n",
 			       __func__, err, abba.result);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	} else {
 		if (err != -EDEADLK && abba.result != -EDEADLK) {
 			pr_err("%s: missed ABBA deadlock, A err=%d, B err=%d\n",
 			       __func__, err, abba.result);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		}
 	}
 	return ret;
@@ -315,7 +315,7 @@ static int __test_cycle(unsigned int nthreads)
 
 		pr_err("cyclic deadlock not resolved, ret[%d/%d] = %d\n",
 		       n, nthreads, cycle->result);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

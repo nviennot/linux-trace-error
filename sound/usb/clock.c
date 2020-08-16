@@ -134,7 +134,7 @@ static int uac_clock_selector_set_val(struct snd_usb_audio *chip, int selector_i
 		usb_audio_err(chip,
 			"setting selector (id %d) unexpected length %d\n",
 			selector_id, ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = uac_clock_selector_get_val(chip, selector_id);
@@ -145,7 +145,7 @@ static int uac_clock_selector_set_val(struct snd_usb_audio *chip, int selector_i
 		usb_audio_err(chip,
 			"setting selector (id %d) to %x failed (current: %d)\n",
 			selector_id, pin, ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -277,7 +277,7 @@ static int __uac_clock_find_source(struct snd_usb_audio *chip,
 		usb_audio_warn(chip,
 			 "%s(): recursive clock topology detected, id %d.\n",
 			 __func__, entity_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* first, see if the ID we're looking for is a clock source already */
@@ -289,7 +289,7 @@ static int __uac_clock_find_source(struct snd_usb_audio *chip,
 			usb_audio_err(chip,
 				"clock source %d is not valid, cannot use\n",
 				entity_id);
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 		return entity_id;
 	}
@@ -311,7 +311,7 @@ static int __uac_clock_find_source(struct snd_usb_audio *chip,
 				"%s(): selector reported illegal value, id %d, ret %d\n",
 				__func__, selector->bClockID, ret);
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		cur = ret;
@@ -344,7 +344,7 @@ static int __uac_clock_find_source(struct snd_usb_audio *chip,
 			return ret;
 		}
 
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* FIXME: multipliers only act as pass-thru element for now */
@@ -354,7 +354,7 @@ static int __uac_clock_find_source(struct snd_usb_audio *chip,
 					       multiplier->bCSourceID,
 					       visited, validate);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __uac3_clock_find_source(struct snd_usb_audio *chip,
@@ -371,7 +371,7 @@ static int __uac3_clock_find_source(struct snd_usb_audio *chip,
 		usb_audio_warn(chip,
 			 "%s(): recursive clock topology detected, id %d.\n",
 			 __func__, entity_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* first, see if the ID we're looking for is a clock source already */
@@ -383,7 +383,7 @@ static int __uac3_clock_find_source(struct snd_usb_audio *chip,
 			usb_audio_err(chip,
 				"clock source %d is not valid, cannot use\n",
 				entity_id);
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 		return entity_id;
 	}
@@ -405,7 +405,7 @@ static int __uac3_clock_find_source(struct snd_usb_audio *chip,
 				"%s(): selector reported illegal value, id %d, ret %d\n",
 				__func__, selector->bClockID, ret);
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		cur = ret;
@@ -438,7 +438,7 @@ static int __uac3_clock_find_source(struct snd_usb_audio *chip,
 			return ret;
 		}
 
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* FIXME: multipliers only act as pass-thru element for now */
@@ -449,7 +449,7 @@ static int __uac3_clock_find_source(struct snd_usb_audio *chip,
 						multiplier->bCSourceID,
 						visited, validate);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -477,7 +477,7 @@ int snd_usb_clock_find_source(struct snd_usb_audio *chip,
 		return __uac3_clock_find_source(chip, fmt, fmt->clock, visited,
 					       validate);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -491,7 +491,7 @@ static int set_sample_rate_v1(struct snd_usb_audio *chip, int iface,
 	int err, crate;
 
 	if (get_iface_desc(alts)->bNumEndpoints < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ep = get_endpoint(alts, 0)->bEndpointAddress;
 
 	/* if endpoint doesn't have sampling rate control, bail out */
@@ -631,7 +631,7 @@ static int set_sample_rate_v2v3(struct snd_usb_audio *chip, int iface,
 			usb_audio_warn(chip,
 				 "%d:%d: freq mismatch (RO clock): req %d, clock runs @%d\n",
 				 iface, fmt->altsetting, rate, cur_rate);
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 		usb_audio_dbg(chip,
 			"current rate %d is different from the runtime rate %d\n",
@@ -650,7 +650,7 @@ static int set_sample_rate_v2v3(struct snd_usb_audio *chip, int iface,
 validation:
 	/* validate clock after rate change */
 	if (!uac_clock_source_is_valid(chip, fmt, clock))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	return 0;
 }
 
@@ -666,7 +666,7 @@ int snd_usb_init_sample_rate(struct snd_usb_audio *chip, int iface,
 	case UAC_VERSION_3:
 		if (chip->badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) {
 			if (rate != UAC3_BADD_SAMPLING_RATE)
-				return -ENXIO;
+				return -ERR(ENXIO);
 			else
 				return 0;
 		}

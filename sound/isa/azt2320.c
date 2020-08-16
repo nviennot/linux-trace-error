@@ -96,7 +96,7 @@ static int snd_card_azt2320_pnp(int dev, struct snd_card_azt2320 *acard,
 
 	acard->dev = pnp_request_card_device(card, id->devs[0].id, NULL);
 	if (acard->dev == NULL)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	acard->devmpu = pnp_request_card_device(card, id->devs[1].id, NULL);
 
@@ -146,7 +146,7 @@ static int snd_card_azt2320_command(unsigned long port, unsigned char val)
 			outb(val, port + 0x0c);
 			return 0;
 		}
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 static int snd_card_azt2320_enable_wss(unsigned long port)
@@ -270,7 +270,7 @@ static int snd_azt2320_pnp_detect(struct pnp_card_link *card,
 		azt2320_devices++;
 		return 0;
 	}
-        return -ENODEV;
+        return -ERR(ENODEV);
 }
 
 static void snd_azt2320_pnp_remove(struct pnp_card_link *pcard)
@@ -328,7 +328,7 @@ static int __init alsa_card_azt2320_init(void)
 #ifdef MODULE
 		snd_printk(KERN_ERR "no AZT2320 based soundcards found\n");
 #endif
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	return 0;
 }

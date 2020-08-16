@@ -69,7 +69,7 @@ int ceph_fscache_register_fs(struct ceph_fs_client* fsc, struct fs_context *fc)
 
 		errorfc(fc, "fscache cookie already registered for fsid %pU, use fsc=<uniquifier> option",
 		       fsid);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -230,7 +230,7 @@ int ceph_readpage_from_fscache(struct inode *inode, struct page *page)
 	int ret;
 
 	if (!cache_valid(ci))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ret = fscache_read_or_alloc_page(ci->fscache, page,
 					 ceph_readpage_from_fscache_complete, NULL,
@@ -259,7 +259,7 @@ int ceph_readpages_from_fscache(struct inode *inode,
 	int ret;
 
 	if (!cache_valid(ci))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ret = fscache_read_or_alloc_pages(ci->fscache, mapping, pages, nr_pages,
 					  ceph_readpage_from_fscache_complete,

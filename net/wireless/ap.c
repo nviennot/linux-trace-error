@@ -16,14 +16,14 @@ int __cfg80211_stop_ap(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (!rdev->ops->stop_ap)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (dev->ieee80211_ptr->iftype != NL80211_IFTYPE_AP &&
 	    dev->ieee80211_ptr->iftype != NL80211_IFTYPE_P2P_GO)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!wdev->beacon_interval)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = rdev_stop_ap(rdev, dev);
 	if (!err) {

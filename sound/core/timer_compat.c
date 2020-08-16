@@ -53,10 +53,10 @@ static int snd_timer_user_info_compat(struct file *file,
 
 	tu = file->private_data;
 	if (!tu->timeri)
-		return -EBADFD;
+		return -ERR(EBADFD);
 	t = tu->timeri->timer;
 	if (!t)
-		return -EBADFD;
+		return -ERR(EBADFD);
 	memset(&info, 0, sizeof(info));
 	info.card = t->card ? t->card->number : -1;
 	if (t->hw.flags & SNDRV_TIMER_HW_SLAVE)
@@ -108,7 +108,7 @@ static long __snd_timer_user_ioctl_compat(struct file *file, unsigned int cmd,
 	case SNDRV_TIMER_IOCTL_STATUS_COMPAT64:
 		return snd_timer_user_status64(file, argp);
 	}
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static long snd_timer_user_ioctl_compat(struct file *file, unsigned int cmd,

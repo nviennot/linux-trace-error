@@ -31,7 +31,7 @@ static int drv_event(struct snd_soc_dapm_widget *w,
 		break;
 	default:
 		WARN(1, "Unexpected event");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	gpiod_set_value_cansleep(priv->gpiod_enable, val);

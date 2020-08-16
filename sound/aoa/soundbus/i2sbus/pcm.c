@@ -92,7 +92,7 @@ static int i2sbus_pcm_open(struct i2sbus_dev *i2sdev, int in)
 
 	if (pi->active) {
 		/* alsa messed up */
-		result = -EBUSY;
+		result = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -118,7 +118,7 @@ static int i2sbus_pcm_open(struct i2sbus_dev *i2sdev, int in)
 		}
 	}
 	if (!masks_inited || !bus_factor || !sysclock_factor) {
-		result = -ENODEV;
+		result = -ERR(ENODEV);
 		goto out_unlock;
 	}
 	/* bus dependent stuff */
@@ -339,14 +339,14 @@ static int i2sbus_pcm_prepare(struct i2sbus_dev *i2sdev, int in)
 	get_pcm_info(i2sdev, in, &pi, &other);
 
 	if (pi->dbdma_ring.running) {
-		result = -EBUSY;
+		result = -ERR(EBUSY);
 		goto out_unlock;
 	}
 	if (pi->dbdma_ring.stopping)
 		i2sbus_wait_for_stop(i2sdev, pi);
 
 	if (!pi->substream || !pi->substream->runtime) {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -355,7 +355,7 @@ static int i2sbus_pcm_prepare(struct i2sbus_dev *i2sdev, int in)
 	if (other->active &&
 	    ((i2sdev->format != runtime->format)
 	     || (i2sdev->rate != runtime->rate))) {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -414,7 +414,7 @@ static int i2sbus_pcm_prepare(struct i2sbus_dev *i2sdev, int in)
 			break;
 		}
 		if (!bi.bus_factor) {
-			result = -ENODEV;
+			result = -ERR(ENODEV);
 			goto out_unlock;
 		}
 		input_16bit = 1;
@@ -427,7 +427,7 @@ static int i2sbus_pcm_prepare(struct i2sbus_dev *i2sdev, int in)
 		input_16bit = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_unlock;
 	}
 	/* we assume all sysclocks are the same! */
@@ -440,7 +440,7 @@ static int i2sbus_pcm_prepare(struct i2sbus_dev *i2sdev, int in)
 			       bi.bus_factor,
 			       runtime->rate,
 			       &sfr) < 0) {
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_unlock;
 	}
 	switch (bi.bus_factor) {
@@ -543,7 +543,7 @@ static int i2sbus_pcm_trigger(struct i2sbus_dev *i2sdev, int in, int cmd)
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 		if (pi->dbdma_ring.running) {
-			result = -EALREADY;
+			result = -ERR(EALREADY);
 			goto out_unlock;
 		}
 		list_for_each_entry(cii, &i2sdev->sound.codec_list, list)
@@ -586,7 +586,7 @@ static int i2sbus_pcm_trigger(struct i2sbus_dev *i2sdev, int in, int cmd)
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 		if (!pi->dbdma_ring.running) {
-			result = -EALREADY;
+			result = -ERR(EALREADY);
 			goto out_unlock;
 		}
 		pi->dbdma_ring.running = 0;
@@ -600,7 +600,7 @@ static int i2sbus_pcm_trigger(struct i2sbus_dev *i2sdev, int in, int cmd)
 				cii->codec->stop(cii, pi->substream);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		goto out_unlock;
 	}
 
@@ -716,7 +716,7 @@ static int i2sbus_playback_open(struct snd_pcm_substream *substream)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i2sdev->out.substream = substream;
 	return i2sbus_pcm_open(i2sdev, 0);
 }
@@ -727,9 +727,9 @@ static int i2sbus_playback_close(struct snd_pcm_substream *substream)
 	int err;
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->out.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = i2sbus_pcm_close(i2sdev, 0);
 	if (!err)
 		i2sdev->out.substream = NULL;
@@ -741,9 +741,9 @@ static int i2sbus_playback_prepare(struct snd_pcm_substream *substream)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->out.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return i2sbus_pcm_prepare(i2sdev, 0);
 }
 
@@ -752,9 +752,9 @@ static int i2sbus_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->out.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return i2sbus_pcm_trigger(i2sdev, 0, cmd);
 }
 
@@ -764,7 +764,7 @@ static snd_pcm_uframes_t i2sbus_playback_pointer(struct snd_pcm_substream
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->out.substream != substream)
 		return 0;
 	return i2sbus_pcm_pointer(i2sdev, 0);
@@ -784,7 +784,7 @@ static int i2sbus_record_open(struct snd_pcm_substream *substream)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	i2sdev->in.substream = substream;
 	return i2sbus_pcm_open(i2sdev, 1);
 }
@@ -795,9 +795,9 @@ static int i2sbus_record_close(struct snd_pcm_substream *substream)
 	int err;
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->in.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	err = i2sbus_pcm_close(i2sdev, 1);
 	if (!err)
 		i2sdev->in.substream = NULL;
@@ -809,9 +809,9 @@ static int i2sbus_record_prepare(struct snd_pcm_substream *substream)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->in.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return i2sbus_pcm_prepare(i2sdev, 1);
 }
 
@@ -820,9 +820,9 @@ static int i2sbus_record_trigger(struct snd_pcm_substream *substream, int cmd)
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->in.substream != substream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return i2sbus_pcm_trigger(i2sdev, 1, cmd);
 }
 
@@ -832,7 +832,7 @@ static snd_pcm_uframes_t i2sbus_record_pointer(struct snd_pcm_substream
 	struct i2sbus_dev *i2sdev = snd_pcm_substream_chip(substream);
 
 	if (!i2sdev)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (i2sdev->in.substream != substream)
 		return 0;
 	return i2sbus_pcm_pointer(i2sdev, 1);
@@ -876,22 +876,22 @@ i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
 
 	if (!dev->pcmname || dev->pcmid == -1) {
 		printk(KERN_ERR "i2sbus: pcm name and id must be set!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	list_for_each_entry(cii, &dev->codec_list, list) {
 		if (cii->codec_data == data)
-			return -EALREADY;
+			return -ERR(EALREADY);
 	}
 
 	if (!ci->transfers || !ci->transfers->formats
 	    || !ci->transfers->rates || !ci->usable)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* we currently code the i2s transfer on the clock, and support only
 	 * 32 and 64 */
 	if (ci->bus_factor != 32 && ci->bus_factor != 64)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* If you want to fix this, you need to keep track of what transport infos
 	 * are to be used, which codecs they belong to, and then fix all the
@@ -900,12 +900,12 @@ i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
 		if (cii->codec->sysclock_factor != ci->sysclock_factor) {
 			printk(KERN_DEBUG
 			       "cannot yet handle multiple different sysclocks!\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (cii->codec->bus_factor != ci->bus_factor) {
 			printk(KERN_DEBUG
 			       "cannot yet handle multiple different bus clocks!\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -932,20 +932,20 @@ i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
 	if (!cii->sdev) {
 		printk(KERN_DEBUG
 		       "i2sbus: failed to get soundbus dev reference\n");
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto out_free_cii;
 	}
 
 	if (!try_module_get(THIS_MODULE)) {
 		printk(KERN_DEBUG "i2sbus: failed to get module reference!\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_put_sdev;
 	}
 
 	if (!try_module_get(ci->owner)) {
 		printk(KERN_DEBUG
 		       "i2sbus: failed to get module reference to codec owner!\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto out_put_this_module;
 	}
 
@@ -967,7 +967,7 @@ i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
 			/* eh? */
 			printk(KERN_ERR
 			       "Can't attach same bus to different cards!\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_put_ci_module;
 		}
 		err = snd_pcm_new_stream(dev->pcm, SNDRV_PCM_STREAM_PLAYBACK, 1);
@@ -984,7 +984,7 @@ i2sbus_attach_codec(struct soundbus_dev *dev, struct snd_card *card,
 		if (dev->pcm->card != card) {
 			printk(KERN_ERR
 			       "Can't attach same bus to different cards!\n");
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_put_ci_module;
 		}
 		err = snd_pcm_new_stream(dev->pcm, SNDRV_PCM_STREAM_CAPTURE, 1);

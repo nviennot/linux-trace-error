@@ -233,14 +233,14 @@ static int snd_wavefront_midi_input_open(struct snd_rawmidi_substream *substream
 	snd_wavefront_mpu_id mpu;
 
 	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
 
 	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	        return -ERR(EIO);
 
 	spin_lock_irqsave (&midi->open, flags);
 	midi->mode[mpu] |= MPU401_MODE_INPUT;
@@ -257,14 +257,14 @@ static int snd_wavefront_midi_output_open(struct snd_rawmidi_substream *substrea
 	snd_wavefront_mpu_id mpu;
 
 	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
 
 	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	        return -ERR(EIO);
 
 	spin_lock_irqsave (&midi->open, flags);
 	midi->mode[mpu] |= MPU401_MODE_OUTPUT;
@@ -281,14 +281,14 @@ static int snd_wavefront_midi_input_close(struct snd_rawmidi_substream *substrea
 	snd_wavefront_mpu_id mpu;
 
 	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
 
 	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	        return -ERR(EIO);
 
 	spin_lock_irqsave (&midi->open, flags);
 	midi->mode[mpu] &= ~MPU401_MODE_INPUT;
@@ -304,14 +304,14 @@ static int snd_wavefront_midi_output_close(struct snd_rawmidi_substream *substre
 	snd_wavefront_mpu_id mpu;
 
 	if (snd_BUG_ON(!substream || !substream->rmidi))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (snd_BUG_ON(!substream->rmidi->private_data))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mpu = *((snd_wavefront_mpu_id *) substream->rmidi->private_data);
 
 	if ((midi = get_wavefront_midi (substream)) == NULL)
-	        return -EIO;
+	        return -ERR(EIO);
 
 	spin_lock_irqsave (&midi->open, flags);
 	midi->mode[mpu] &= ~MPU401_MODE_OUTPUT;

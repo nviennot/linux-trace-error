@@ -302,7 +302,7 @@ static ssize_t ima_read_policy(char *path)
 	if (rc < 0)
 		return rc;
 	else if (size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else
 		return pathlen;
 }
@@ -317,7 +317,7 @@ static ssize_t ima_write_policy(struct file *file, const char __user *buf,
 		datalen = PAGE_SIZE - 1;
 
 	/* No partial writes. */
-	result = -EINVAL;
+	result = -ERR(EINVAL);
 	if (*ppos != 0)
 		goto out;
 
@@ -338,7 +338,7 @@ static ssize_t ima_write_policy(struct file *file, const char __user *buf,
 		integrity_audit_msg(AUDIT_INTEGRITY_STATUS, NULL, NULL,
 				    "policy_update", "signed policy required",
 				    1, 0);
-		result = -EACCES;
+		result = -ERR(EACCES);
 	} else {
 		result = ima_parse_add_rule(data);
 	}
@@ -382,17 +382,17 @@ static int ima_open_policy(struct inode *inode, struct file *filp)
 {
 	if (!(filp->f_flags & O_WRONLY)) {
 #ifndef	CONFIG_IMA_READ_POLICY
-		return -EACCES;
+		return -ERR(EACCES);
 #else
 		if ((filp->f_flags & O_ACCMODE) != O_RDONLY)
-			return -EACCES;
+			return -ERR(EACCES);
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 		return seq_open(filp, &ima_policy_seqops);
 #endif
 	}
 	if (test_and_set_bit(IMA_FS_BUSY, &ima_fs_flags))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	return 0;
 }
 

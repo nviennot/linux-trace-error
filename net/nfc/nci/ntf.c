@@ -209,7 +209,7 @@ static int nci_add_new_protocol(struct nci_dev *ndev,
 
 	if (!(protocol & ndev->poll_prots)) {
 		pr_err("the target found does not have the desired protocol\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (rf_tech_and_mode == NCI_NFC_A_PASSIVE_POLL_MODE) {
@@ -246,7 +246,7 @@ static int nci_add_new_protocol(struct nci_dev *ndev,
 		memcpy(target->iso15693_uid, nfcv_poll->uid, NFC_ISO15693_UID_MAXSIZE);
 	} else {
 		pr_err("unsupported rf_tech_and_mode 0x%x\n", rf_tech_and_mode);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	target->supported_protocols |= protocol;

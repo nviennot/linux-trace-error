@@ -172,10 +172,10 @@ static int klp_patch_func(struct klp_func *func)
 	int ret;
 
 	if (WARN_ON(!func->old_func))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(func->patched))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ops = klp_find_ops(func->old_func);
 	if (!ops) {
@@ -186,7 +186,7 @@ static int klp_patch_func(struct klp_func *func)
 		if (!ftrace_loc) {
 			pr_err("failed to find location for function '%s'\n",
 				func->old_name);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ops = kzalloc(sizeof(*ops), GFP_KERNEL);
@@ -263,7 +263,7 @@ int klp_patch_object(struct klp_object *obj)
 	int ret;
 
 	if (WARN_ON(obj->patched))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	klp_for_each_func(obj, func) {
 		ret = klp_patch_func(func);

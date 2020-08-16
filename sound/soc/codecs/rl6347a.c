@@ -52,7 +52,7 @@ int rl6347a_hw_write(void *context, unsigned int reg, unsigned int value)
 	if (ret < 0)
 		return ret;
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 EXPORT_SYMBOL_GPL(rl6347a_hw_write);
 
@@ -95,7 +95,7 @@ int rl6347a_hw_read(void *context, unsigned int reg, unsigned int *value)
 	if (ret < 0)
 		return ret;
 	else if (ret != 2)
-		return -EIO;
+		return -ERR(EIO);
 
 	*value = be32_to_cpu(buf);
 

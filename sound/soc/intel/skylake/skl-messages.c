@@ -56,7 +56,7 @@ static int skl_dsp_setup_spib(struct device *dev, unsigned int size,
 	struct hdac_ext_stream *estream;
 
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	estream = stream_to_hdac_ext_stream(stream);
 	/* enable/disable SPIB for this hdac stream */
@@ -78,7 +78,7 @@ static int skl_dsp_prepare(struct device *dev, unsigned int format,
 	int ret;
 
 	if (!bus)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	memset(&substream, 0, sizeof(substream));
 	substream.stream = SNDRV_PCM_STREAM_PLAYBACK;
@@ -86,7 +86,7 @@ static int skl_dsp_prepare(struct device *dev, unsigned int format,
 	estream = snd_hdac_ext_stream_assign(bus, &substream,
 					HDAC_EXT_STREAM_TYPE_HOST);
 	if (!estream)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	stream = hdac_stream(estream);
 
@@ -106,12 +106,12 @@ static int skl_dsp_trigger(struct device *dev, bool start, int stream_tag)
 	struct hdac_stream *stream;
 
 	if (!bus)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	stream = snd_hdac_get_stream(bus,
 		SNDRV_PCM_STREAM_PLAYBACK, stream_tag);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_hdac_dsp_trigger(stream, start);
 
@@ -126,12 +126,12 @@ static int skl_dsp_cleanup(struct device *dev,
 	struct hdac_ext_stream *estream;
 
 	if (!bus)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	stream = snd_hdac_get_stream(bus,
 		SNDRV_PCM_STREAM_PLAYBACK, stream_tag);
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	estream = stream_to_hdac_ext_stream(stream);
 	skl_dsp_setup_spib(dev, 0, stream_tag, false);
@@ -266,12 +266,12 @@ int skl_init_dsp(struct skl_dev *skl)
 	mmio_base = pci_ioremap_bar(skl->pci, 4);
 	if (mmio_base == NULL) {
 		dev_err(bus->dev, "ioremap error\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	ops = skl_get_dsp_ops(skl->pci->device);
 	if (!ops) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto unmap_mmio;
 	}
 
@@ -886,7 +886,7 @@ static int skl_get_queue_index(struct skl_module_pin *mpin,
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -928,7 +928,7 @@ static int skl_alloc_queue(struct skl_module_pin *mpin,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void skl_free_queue(struct skl_module_pin *mpin, int q_index)
@@ -983,7 +983,7 @@ int skl_init_module(struct skl_dev *skl,
 	if (mconfig->pipe->state != SKL_PIPE_CREATED) {
 		dev_err(skl->dev, "Pipe not created state= %d pipe_id= %d\n",
 				 mconfig->pipe->state, mconfig->pipe->ppl_id);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ret = skl_set_module_format(skl, mconfig,
@@ -1129,13 +1129,13 @@ int skl_bind_modules(struct skl_dev *skl,
 
 	src_index = skl_alloc_queue(src_mcfg->m_out_pin, dst_mcfg, out_max);
 	if (src_index < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	msg.src_queue = src_index;
 	dst_index = skl_alloc_queue(dst_mcfg->m_in_pin, src_mcfg, in_max);
 	if (dst_index < 0) {
 		skl_free_queue(src_mcfg->m_out_pin, src_index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*

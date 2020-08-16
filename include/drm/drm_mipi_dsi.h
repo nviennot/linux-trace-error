@@ -215,7 +215,7 @@ static inline int mipi_dsi_pixel_format_to_bpp(enum mipi_dsi_pixel_format fmt)
 		return 16;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 struct mipi_dsi_device *

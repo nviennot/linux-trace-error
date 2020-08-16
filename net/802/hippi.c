@@ -120,7 +120,7 @@ int hippi_mac_addr(struct net_device *dev, void *p)
 {
 	struct sockaddr *addr = p;
 	if (netif_running(dev))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
 	return 0;
 }

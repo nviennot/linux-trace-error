@@ -203,7 +203,7 @@ static int snd_us16x08_route_put(struct snd_kcontrol *kcontrol,
 
 	/* sanity check */
 	if (val < 0 || val > 9)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* prepare the message buffer from template */
 	memcpy(buf, route_msg, sizeof(route_msg));
@@ -272,7 +272,7 @@ static int snd_us16x08_master_put(struct snd_kcontrol *kcontrol,
 	/* sanity check */
 	if (val < SND_US16X08_KCMIN(kcontrol)
 		|| val > SND_US16X08_KCMAX(kcontrol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* prepare the message buffer from template */
 	memcpy(buf, mix_msg_out, sizeof(mix_msg_out));
@@ -381,7 +381,7 @@ static int snd_us16x08_channel_put(struct snd_kcontrol *kcontrol,
 	/* sanity check */
 	if (val < SND_US16X08_KCMIN(kcontrol)
 		|| val > SND_US16X08_KCMAX(kcontrol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* prepare URB message from template */
 	memcpy(buf, mix_msg_in, sizeof(mix_msg_in));
@@ -443,7 +443,7 @@ static int snd_us16x08_comp_put(struct snd_kcontrol *kcontrol,
 	/* sanity check */
 	if (val < SND_US16X08_KCMIN(kcontrol)
 		|| val > SND_US16X08_KCMAX(kcontrol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* new control value incl. bias*/
 	val_idx = elem->head.id - SND_US16X08_ID_COMP_BASE;
@@ -574,7 +574,7 @@ static int snd_us16x08_eq_put(struct snd_kcontrol *kcontrol,
 	/* sanity check */
 	if (val < SND_US16X08_KCMIN(kcontrol)
 		|| val > SND_US16X08_KCMAX(kcontrol))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* copy URB buffer from EQ template */
 	memcpy(buf, eqs_msq, sizeof(eqs_msq));
@@ -752,7 +752,7 @@ static int snd_us16x08_meter_put(struct snd_kcontrol *kcontrol,
 
 	/* sanity check */
 	if (val < 0 || val >= SND_US16X08_MAX_CHANNELS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	store->comp_active_index = val;
 	store->comp_index = val;

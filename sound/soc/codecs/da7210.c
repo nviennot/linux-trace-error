@@ -333,7 +333,7 @@ static int da7210_put_alc_sw(struct snd_kcontrol *kcontrol,
 		if (snd_soc_component_read32(component, DA7210_CONTROL) & DA7210_NOISE_SUP_EN) {
 			dev_dbg(component->dev,
 				"Disable noise suppression to enable ALC\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	/* If all conditions are met or we are actually disabling ALC */
@@ -382,7 +382,7 @@ static int da7210_put_noise_sup_sw(struct snd_kcontrol *kcontrol,
 	return snd_soc_put_volsw(kcontrol, ucontrol);
 
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static const struct snd_kcontrol_new da7210_snd_controls[] = {
@@ -783,7 +783,7 @@ static int da7210_hw_params(struct snd_pcm_substream *substream,
 		dai_cfg1 |= DA7210_DAI_WORD_S32_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, DA7210_DAI_CFG1, dai_cfg1);
@@ -830,7 +830,7 @@ static int da7210_hw_params(struct snd_pcm_substream *substream,
 		sysclk		= 3072000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Disable active mode */
@@ -879,7 +879,7 @@ static int da7210_set_dai_fmt(struct snd_soc_dai *codec_dai, u32 fmt)
 
 	if ((snd_soc_component_read32(component, DA7210_PLL) & DA7210_PLL_EN) &&
 		(!(snd_soc_component_read32(component, DA7210_PLL_DIV3) & DA7210_PLL_BYP)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBM_CFM:
@@ -891,7 +891,7 @@ static int da7210_set_dai_fmt(struct snd_soc_dai *codec_dai, u32 fmt)
 		dai_cfg1 |= DA7210_DAI_MODE_SLAVE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* FIXME
@@ -909,7 +909,7 @@ static int da7210_set_dai_fmt(struct snd_soc_dai *codec_dai, u32 fmt)
 		dai_cfg3 |= DA7210_DAI_FORMAT_RIGHT_J;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* FIXME
@@ -960,12 +960,12 @@ static int da7210_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		default:
 			dev_err(codec_dai->dev, "Unsupported MCLK value %d\n",
 				freq);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(codec_dai->dev, "Unknown clock source %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1025,7 +1025,7 @@ static int da7210_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	return 0;
 err:
 	dev_err(codec_dai->dev, "Unsupported PLL input frequency %d\n", fref);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* DAI operations */

@@ -76,7 +76,7 @@ static int corb_send_verb(struct lola *chip, unsigned int nid,
 			  unsigned int extdata)
 {
 	unsigned long flags;
-	int ret = -EIO;
+	int ret = -ERR(EIO);
 
 	chip->last_cmd_nid = nid;
 	chip->last_verb = verb;
@@ -160,7 +160,7 @@ static int rirb_get_response(struct lola *chip, unsigned int *val,
 				       chip->last_cmd_nid,
 				       chip->last_verb, chip->last_data,
 				       chip->last_extdata);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			return 0;
 		}
@@ -175,7 +175,7 @@ static int rirb_get_response(struct lola *chip, unsigned int *val,
 		chip->polling_mode = 1;
 		goto again;
 	}
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* aynchronous write of a codec verb with data */
@@ -315,7 +315,7 @@ static int reset_controller(struct lola *chip)
 	} while (time_before(jiffies, end_time));
 	if (!gctl) {
 		dev_err(chip->card->dev, "cannot reset controller\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -445,7 +445,7 @@ static int lola_parse_tree(struct lola *chip)
 	val >>= 16;
 	if (val != 0x1369) {
 		dev_err(chip->card->dev, "Unknown codec vendor 0x%x\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = lola_read_param(chip, 1, LOLA_PAR_FUNCTION_TYPE, &val);
@@ -455,7 +455,7 @@ static int lola_parse_tree(struct lola *chip)
 	}
 	if (val != 1) {
 		dev_err(chip->card->dev, "Unknown function type %d\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = lola_read_param(chip, 1, LOLA_PAR_SPECIFIC_CAPS, &val);
@@ -473,7 +473,7 @@ static int lola_parse_tree(struct lola *chip)
 	if (chip->pin[CAPT].num_pins > MAX_AUDIO_INOUT_COUNT ||
 	    chip->pin[PLAY].num_pins > MAX_AUDIO_INOUT_COUNT) {
 		dev_err(chip->card->dev, "Invalid Lola-spec caps 0x%x\n", val);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nid = 0x02;
@@ -621,7 +621,7 @@ static int lola_create(struct snd_card *card, struct pci_dev *pci,
 	chip->bar[1].remap_addr = pci_ioremap_bar(pci, 2);
 	if (!chip->bar[0].remap_addr || !chip->bar[1].remap_addr) {
 		dev_err(chip->card->dev, "ioremap error\n");
-		err = -ENXIO;
+		err = -ERR(ENXIO);
 		goto errout;
 	}
 
@@ -634,7 +634,7 @@ static int lola_create(struct snd_card *card, struct pci_dev *pci,
 	if (request_irq(pci->irq, lola_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, chip)) {
 		dev_err(chip->card->dev, "unable to grab IRQ %d\n", pci->irq);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto errout;
 	}
 	chip->irq = pci->irq;
@@ -654,7 +654,7 @@ static int lola_create(struct snd_card *card, struct pci_dev *pci,
 	    (!chip->pcm[CAPT].num_streams &&
 	     !chip->pcm[PLAY].num_streams)) {
 		dev_err(chip->card->dev, "invalid DEVER = %x\n", dever);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -695,10 +695,10 @@ static int lola_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

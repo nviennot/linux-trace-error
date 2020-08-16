@@ -44,7 +44,7 @@ static int __exfat_write_inode(struct inode *inode, int sync)
 	/* get the directory entry of given file or directory */
 	es = exfat_get_dentry_set(sb, &(ei->dir), ei->entry, ES_ALL_ENTRIES);
 	if (!es)
-		return -EIO;
+		return -ERR(EIO);
 	ep = exfat_get_dentry_cached(es, 0);
 	ep2 = exfat_get_dentry_cached(es, 1);
 
@@ -146,7 +146,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 		int err = exfat_get_cluster(inode, clu_offset,
 				&fclus, clu, &last_clu, 1);
 		if (err)
-			return -EIO;
+			return -ERR(EIO);
 
 		clu_offset -= fclus;
 	} else {
@@ -162,7 +162,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 		while (clu_offset > 0 && *clu != EXFAT_EOF_CLUSTER) {
 			last_clu = *clu;
 			if (exfat_get_next_cluster(sb, clu))
-				return -EIO;
+				return -ERR(EIO);
 			clu_offset--;
 		}
 	}
@@ -179,7 +179,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 		if (num_to_be_allocated < 1) {
 			/* Broken FAT (i_sze > allocated FAT) */
 			exfat_fs_error(sb, "broken FAT chain.");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		ret = exfat_alloc_cluster(inode, num_to_be_allocated, &new_clu);
@@ -191,7 +191,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 			exfat_fs_error(sb,
 				"bogus cluster new allocated (last_clu : %u, new_clu : %u)",
 				last_clu, new_clu.dir);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/* append to the FAT chain */
@@ -213,7 +213,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 			}
 			if (new_clu.flags == ALLOC_FAT_CHAIN)
 				if (exfat_ent_set(sb, last_clu, new_clu.dir))
-					return -EIO;
+					return -ERR(EIO);
 		}
 
 		num_clusters += num_to_be_allocated;
@@ -226,7 +226,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 			es = exfat_get_dentry_set(sb, &(ei->dir), ei->entry,
 				ES_ALL_ENTRIES);
 			if (!es)
-				return -EIO;
+				return -ERR(EIO);
 			/* get stream entry */
 			ep = exfat_get_dentry_cached(es, 1);
 
@@ -259,7 +259,7 @@ static int exfat_map_cluster(struct inode *inode, unsigned int clu_offset,
 		} else {
 			while (num_to_be_allocated > 1) {
 				if (exfat_get_next_cluster(sb, clu))
-					return -EIO;
+					return -ERR(EIO);
 				num_to_be_allocated--;
 			}
 		}
@@ -277,7 +277,7 @@ static int exfat_map_new_buffer(struct exfat_inode_info *ei,
 		struct buffer_head *bh, loff_t pos)
 {
 	if (buffer_delay(bh) && pos > ei->i_size_aligned)
-		return -EIO;
+		return -ERR(EIO);
 	set_buffer_new(bh);
 
 	/*
@@ -420,7 +420,7 @@ static int exfat_write_end(struct file *file, struct address_space *mapping,
 		exfat_fs_error(inode->i_sb,
 			"invalid size(size(%llu) > aligned(%llu)\n",
 			i_size_read(inode), EXFAT_I(inode)->i_size_aligned);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (err < len)

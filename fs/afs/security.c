@@ -409,9 +409,9 @@ int afs_permission(struct inode *inode, int mask)
 	if (mask & MAY_NOT_BLOCK) {
 		key = afs_request_key_rcu(vnode->volume->cell);
 		if (IS_ERR(key))
-			return -ECHILD;
+			return -ERR(ECHILD);
 
-		ret = -ECHILD;
+		ret = -ERR(ECHILD);
 		if (!afs_check_validity(vnode) ||
 		    !afs_check_permit_rcu(vnode, key, &access))
 			goto error;
@@ -470,7 +470,7 @@ int afs_permission(struct inode *inode, int mask)
 	return ret;
 
 permission_denied:
-	ret = -EACCES;
+	ret = -ERR(EACCES);
 error:
 	key_put(key);
 	_leave(" = %d", ret);

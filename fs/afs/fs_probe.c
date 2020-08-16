@@ -299,7 +299,7 @@ stop:
 	kfree(waits);
 
 	if (pref == -1 && signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	if (pref >= 0)
 		slist->preferred = pref;
@@ -453,10 +453,10 @@ dont_wait:
 	if (server->probe.responded)
 		return 0;
 	if (is_intr && signal_pending(current))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	if (timo == 0)
-		return -ETIME;
-	return -EDESTADDRREQ;
+		return -ERR(ETIME);
+	return -ERR(EDESTADDRREQ);
 }
 
 /*

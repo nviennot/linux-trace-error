@@ -123,7 +123,7 @@ static inline int vlynq_virq_to_irq(struct vlynq_device *dev, int virq)
 {
 	int irq = dev->irq_start + virq;
 	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return irq;
 }
@@ -131,7 +131,7 @@ static inline int vlynq_virq_to_irq(struct vlynq_device *dev, int virq)
 static inline int vlynq_irq_to_virq(struct vlynq_device *dev, int irq)
 {
 	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return irq - dev->irq_start;
 }

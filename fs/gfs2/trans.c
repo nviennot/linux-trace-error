@@ -35,7 +35,7 @@ int gfs2_trans_begin(struct gfs2_sbd *sdp, unsigned int blocks,
 	BUG_ON(blocks == 0 && revokes == 0);
 
 	if (!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	tr = kmem_cache_zalloc(gfs2_trans_cachep, GFP_NOFS);
 	if (!tr)

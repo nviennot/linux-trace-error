@@ -104,7 +104,7 @@ static int xfrm6_transport_output(struct xfrm_state *x, struct sk_buff *skb)
 	return 0;
 #else
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 #endif
 }
 
@@ -137,7 +137,7 @@ static int xfrm6_ro_output(struct xfrm_state *x, struct sk_buff *skb)
 	return 0;
 #else
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 #endif
 }
 
@@ -172,7 +172,7 @@ static int xfrm4_beet_encap_add(struct xfrm_state *x, struct sk_buff *skb)
 
 	if (unlikely(optlen)) {
 		if (WARN_ON(optlen < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ph->padlen = 4 - (optlen & 4);
 		ph->hdrlen = optlen / 8;
@@ -298,7 +298,7 @@ static int xfrm6_beet_encap_add(struct xfrm_state *x, struct sk_buff *skb)
 	top_iph = ipv6_hdr(skb);
 	if (unlikely(optlen)) {
 		if (WARN_ON(optlen < 0))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ph->padlen = 4 - (optlen & 4);
 		ph->hdrlen = optlen / 8;
@@ -344,7 +344,7 @@ static int xfrm4_prepare_output(struct xfrm_state *x, struct sk_buff *skb)
 	}
 
 	WARN_ON_ONCE(1);
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int xfrm6_prepare_output(struct xfrm_state *x, struct sk_buff *skb)
@@ -366,11 +366,11 @@ static int xfrm6_prepare_output(struct xfrm_state *x, struct sk_buff *skb)
 		return xfrm6_tunnel_encap_add(x, skb);
 	default:
 		WARN_ON_ONCE(1);
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 #endif
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 static int xfrm_outer_mode_output(struct xfrm_state *x, struct sk_buff *skb)
@@ -399,7 +399,7 @@ static int xfrm_outer_mode_output(struct xfrm_state *x, struct sk_buff *skb)
 		break;
 	}
 
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 #if IS_ENABLED(CONFIG_NET_PKTGEN)
@@ -438,7 +438,7 @@ static int xfrm_output_one(struct sk_buff *skb, int err)
 
 		if (unlikely(x->km.state != XFRM_STATE_VALID)) {
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTSTATEINVALID);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 
@@ -462,7 +462,7 @@ static int xfrm_output_one(struct sk_buff *skb, int err)
 		skb_dst_force(skb);
 		if (!skb_dst(skb)) {
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTERROR);
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			goto error_nolock;
 		}
 
@@ -486,7 +486,7 @@ resume:
 		dst = skb_dst_pop(skb);
 		if (!dst) {
 			XFRM_INC_STATS(net, LINUX_MIB_XFRMOUTERROR);
-			err = -EHOSTUNREACH;
+			err = -ERR(EHOSTUNREACH);
 			goto error_nolock;
 		}
 		skb_dst_set(skb, dst);
@@ -548,7 +548,7 @@ static int xfrm_output_gso(struct net *net, struct sock *sk, struct sk_buff *skb
 	if (IS_ERR(segs))
 		return PTR_ERR(segs);
 	if (segs == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	skb_list_walk_safe(segs, segs, nskb) {
 		int err;
@@ -650,7 +650,7 @@ static int xfrm4_tunnel_check_size(struct sk_buff *skb)
 		else
 			icmp_send(skb, ICMP_DEST_UNREACH,
 				  ICMP_FRAG_NEEDED, htonl(mtu));
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 	}
 out:
 	return ret;
@@ -695,7 +695,7 @@ static int xfrm6_tunnel_check_size(struct sk_buff *skb)
 			xfrm_local_error(skb, mtu);
 		else
 			icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu);
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 	}
 out:
 	return ret;
@@ -717,7 +717,7 @@ static int xfrm6_extract_output(struct xfrm_state *x, struct sk_buff *skb)
 	return 0;
 #else
 	WARN_ON_ONCE(1);
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 #endif
 }
 
@@ -732,7 +732,7 @@ static int xfrm_inner_extract_output(struct xfrm_state *x, struct sk_buff *skb)
 		inner_mode = &x->inner_mode;
 
 	if (inner_mode == NULL)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	switch (inner_mode->family) {
 	case AF_INET:
@@ -741,7 +741,7 @@ static int xfrm_inner_extract_output(struct xfrm_state *x, struct sk_buff *skb)
 		return xfrm6_extract_output(x, skb);
 	}
 
-	return -EAFNOSUPPORT;
+	return -ERR(EAFNOSUPPORT);
 }
 
 void xfrm_local_error(struct sk_buff *skb, int mtu)

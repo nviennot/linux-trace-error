@@ -132,7 +132,7 @@ int jffs2_garbage_collect_pass(struct jffs2_sb_info *c)
 	int xattr = 0;
 
 	if (mutex_lock_interruptible(&c->alloc_sem))
-		return -EINTR;
+		return -ERR(EINTR);
 
 
 	for (;;) {
@@ -180,7 +180,7 @@ int jffs2_garbage_collect_pass(struct jffs2_sb_info *c)
 			c->unchecked_size);
 		jffs2_dbg_dump_block_lists_nolock(c);
 		mutex_unlock(&c->alloc_sem);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	got_next:
 		/* For next time round the loop, we want c->checked_ino to indicate
@@ -269,12 +269,12 @@ int jffs2_garbage_collect_pass(struct jffs2_sb_info *c)
 		if (c->nr_erasing_blocks) {
 			spin_unlock(&c->erase_completion_lock);
 			mutex_unlock(&c->alloc_sem);
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 		}
 		jffs2_dbg(1, "Couldn't find erase block to garbage collect!\n");
 		spin_unlock(&c->erase_completion_lock);
 		mutex_unlock(&c->alloc_sem);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	jffs2_dbg(1, "GC from block %08x, used_size %08x, dirty_size %08x, free_size %08x\n",
@@ -470,7 +470,7 @@ int jffs2_garbage_collect_pass(struct jffs2_sb_info *c)
 		/* Eep. This really should never happen. GC is broken */
 		pr_err("Error garbage collecting node at %08x!\n",
 		       ref_offset(jeb->gc_node));
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 	}
  release_sem:
 	mutex_unlock(&c->alloc_sem);
@@ -618,7 +618,7 @@ static int jffs2_garbage_collect_pristine(struct jffs2_sb_info *c,
 
 	if (alloclen < rawlen) {
 		/* Doesn't fit untouched. We'll go the old route and split it */
-		return -EBADFD;
+		return -ERR(EBADFD);
 	}
 
 	node = kmalloc(rawlen, GFP_KERNEL);
@@ -627,7 +627,7 @@ static int jffs2_garbage_collect_pristine(struct jffs2_sb_info *c,
 
 	ret = jffs2_flash_read(c, ref_offset(raw), rawlen, &retlen, (char *)node);
 	if (!ret && retlen != rawlen)
-		ret = -EIO;
+		ret = -ERR(EIO);
 	if (ret)
 		goto out_node;
 
@@ -738,7 +738,7 @@ static int jffs2_garbage_collect_pristine(struct jffs2_sb_info *c,
 		}
 
 		if (!ret)
-			ret = -EIO;
+			ret = -ERR(EIO);
 		goto out_node;
 	}
 	jffs2_add_physical_node_ref(c, phys_ofs | REF_PRISTINE, rawlen, ic);
@@ -751,7 +751,7 @@ static int jffs2_garbage_collect_pristine(struct jffs2_sb_info *c,
 	kfree(node);
 	return ret;
  bail:
-	ret = -EBADFD;
+	ret = -ERR(EBADFD);
 	goto out_node;
 }
 
@@ -1040,13 +1040,13 @@ static int jffs2_garbage_collect_hole(struct jffs2_sb_info *c, struct jffs2_eras
 			pr_warn("%s(): Node at 0x%08x had node type 0x%04x instead of JFFS2_NODETYPE_INODE(0x%04x)\n",
 				__func__, ref_offset(fn->raw),
 				je16_to_cpu(ri.nodetype), JFFS2_NODETYPE_INODE);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (je32_to_cpu(ri.totlen) != sizeof(ri)) {
 			pr_warn("%s(): Node at 0x%08x had totlen 0x%x instead of expected 0x%zx\n",
 				__func__, ref_offset(fn->raw),
 				je32_to_cpu(ri.totlen), sizeof(ri));
-			return -EIO;
+			return -ERR(EIO);
 		}
 		crc = crc32(0, &ri, sizeof(ri)-8);
 		if (crc != je32_to_cpu(ri.node_crc)) {

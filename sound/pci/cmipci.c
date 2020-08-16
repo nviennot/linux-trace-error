@@ -674,7 +674,7 @@ static int snd_cmipci_playback2_hw_params(struct snd_pcm_substream *substream,
 		mutex_lock(&cm->open_mutex);
 		if (cm->opened[CM_CH_PLAY]) {
 			mutex_unlock(&cm->open_mutex);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		/* reserve the channel A */
 		cm->opened[CM_CH_PLAY] = CM_OPEN_PLAYBACK_MULTI;
@@ -716,9 +716,9 @@ static int set_dac_channels(struct cmipci *cm, struct cmipci_pcm *rec, int chann
 {
 	if (channels > 2) {
 		if (!cm->can_multi_ch || !rec->ch)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (rec->fmt != 0x03) /* stereo 16bit only */
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (cm->can_multi_ch) {
@@ -773,7 +773,7 @@ static int snd_cmipci_pcm_prepare(struct cmipci *cm, struct cmipci_pcm *rec,
 		rec->fmt |= 0x01;
 	if (rec->is_dac && set_dac_channels(cm, rec, runtime->channels) < 0) {
 		dev_dbg(cm->card->dev, "cannot set dac channels\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rec->offset = runtime->dma_addr;
@@ -903,7 +903,7 @@ static int snd_cmipci_pcm_trigger(struct cmipci *cm, struct cmipci_pcm *rec,
 		snd_cmipci_write(cm, CM_REG_FUNCTRL0, cm->ctrl);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&cm->reg_lock);
@@ -1596,7 +1596,7 @@ static int open_device_check(struct cmipci *cm, int mode, struct snd_pcm_substre
 	mutex_lock(&cm->open_mutex);
 	if (cm->opened[ch]) {
 		mutex_unlock(&cm->open_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	cm->opened[ch] = mode;
 	cm->channel[ch].substream = subs;
@@ -2338,7 +2338,7 @@ static int snd_cmipci_uswitch_get(struct snd_kcontrol *kcontrol,
 	struct cmipci_switch_args *args;
 	args = (struct cmipci_switch_args *)kcontrol->private_value;
 	if (snd_BUG_ON(!args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return _snd_cmipci_uswitch_get(kcontrol, ucontrol, args);
 }
 
@@ -2383,7 +2383,7 @@ static int snd_cmipci_uswitch_put(struct snd_kcontrol *kcontrol,
 	struct cmipci_switch_args *args;
 	args = (struct cmipci_switch_args *)kcontrol->private_value;
 	if (snd_BUG_ON(!args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return _snd_cmipci_uswitch_put(kcontrol, ucontrol, args);
 }
 
@@ -2638,7 +2638,7 @@ static int snd_cmipci_mixer_new(struct cmipci *cm, int pcm_spdif_device)
 	int err;
 
 	if (snd_BUG_ON(!cm || !cm->card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	card = cm->card;
 
@@ -2832,7 +2832,7 @@ static int snd_cmipci_create_gameport(struct cmipci *cm, int dev)
 	int i, io_port = 0;
 
 	if (joystick_port[dev] == 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (joystick_port[dev] == 1) { /* auto-detect */
 		for (i = 0; ports[i]; i++) {
@@ -2848,7 +2848,7 @@ static int snd_cmipci_create_gameport(struct cmipci *cm, int dev)
 
 	if (!r) {
 		dev_warn(cm->card->dev, "cannot reserve joystick ports\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	cm->gameport = gp = gameport_allocate_port();
@@ -2883,7 +2883,7 @@ static void snd_cmipci_free_gameport(struct cmipci *cm)
 	}
 }
 #else
-static inline int snd_cmipci_create_gameport(struct cmipci *cm, int dev) { return -ENOSYS; }
+static inline int snd_cmipci_create_gameport(struct cmipci *cm, int dev) { return -ERR(ENOSYS); }
 static inline void snd_cmipci_free_gameport(struct cmipci *cm) { }
 #endif
 
@@ -2933,7 +2933,7 @@ static int snd_cmipci_create_fm(struct cmipci *cm, long fm_port)
 		err = snd_opl3_create(cm->card, iosynth, iosynth + 2,
 				      OPL3_HW_OPL3, 1, &opl3);
 	} else {
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	if (err < 0) {
 		/* then try legacy ports */
@@ -3021,7 +3021,7 @@ static int snd_cmipci_create(struct snd_card *card, struct pci_dev *pci,
 			IRQF_SHARED, KBUILD_MODNAME, cm)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_cmipci_free(cm);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	cm->irq = pci->irq;
 	card->sync_irq = cm->irq;
@@ -3235,10 +3235,10 @@ static int snd_cmipci_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (! enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

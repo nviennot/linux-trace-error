@@ -120,7 +120,7 @@ static int tm2_aif1_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Not supported sample rate: %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return tm2_start_sysclk(rtd->card);
@@ -152,7 +152,7 @@ static int tm2_aif2_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(component->dev, "Not supported sample rate: %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_component_set_pll(component, WM5110_FLL2_REFCLK,
@@ -228,7 +228,7 @@ static int tm2_hdmi_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(rtd->card->dev, "Unsupported bit-width: %d\n", bitwidth);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_rate(params)) {
@@ -239,7 +239,7 @@ static int tm2_hdmi_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(rtd->card->dev, "Unsupported sample rate: %d\n",
 			params_rate(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = snd_soc_dai_set_sysclk(cpu_dai, SAMSUNG_I2S_OPCLK,
@@ -335,7 +335,7 @@ static int tm2_late_probe(struct snd_soc_card *card)
 
 	amp_pdm_dai = snd_soc_find_dai(&tm2_speaker_amp_dev.dlc);
 	if (!amp_pdm_dai)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Set the MAX98504 V/I sense PDM Tx DAI channel mapping */
 	ret = snd_soc_dai_set_channel_map(amp_pdm_dai, ARRAY_SIZE(ch_map),
@@ -534,7 +534,7 @@ static int tm2_probe(struct platform_device *pdev)
 							"audio-amplifier", 0);
 	if (!card->aux_dev[0].dlc.of_node) {
 		dev_err(dev, "audio-amplifier property invalid or missing\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	num_codecs = of_count_phandle_with_args(dev->of_node, "audio-codec",
@@ -555,7 +555,7 @@ static int tm2_probe(struct platform_device *pdev)
 						 cells_name, i, &args);
 		if (!args.np) {
 			dev_err(dev, "i2s-controller property parse error: %d\n", i);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto dai_node_put;
 		}
 		cpu_dai_node[i] = args.np;
@@ -564,7 +564,7 @@ static int tm2_probe(struct platform_device *pdev)
 						     "audio-codec", i);
 		if (!codec_dai_node[i]) {
 			dev_err(dev, "audio-codec property parse error\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto dai_node_put;
 		}
 	}

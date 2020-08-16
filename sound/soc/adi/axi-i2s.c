@@ -77,7 +77,7 @@ static int axi_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		val = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(i2s->regmap, AXI_I2S_REG_CTRL, mask, val);

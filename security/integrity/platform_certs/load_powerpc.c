@@ -56,12 +56,12 @@ static int __init load_powerpc_certs(void)
 	struct device_node *node;
 
 	if (!secvar_ops)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* The following only applies for the edk2-compat backend. */
 	node = of_find_compatible_node(NULL, NULL, "ibm,edk2-compat-v1");
 	if (!node)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Get db, and dbx. They might not exist, so it isn't an error if we

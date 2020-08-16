@@ -96,7 +96,7 @@ static int q6slim_hw_params(struct snd_pcm_substream *substream,
 	default:
 		pr_err("%s: format %d\n",
 			__func__, params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -145,7 +145,7 @@ static int q6hdmi_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "invalid Channels = %u\n", channels);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -191,7 +191,7 @@ static int q6tdm_set_tdm_slot(struct snd_soc_dai *dai,
 	if ((slot_width != 16) && (slot_width != 32)) {
 		dev_err(dai->dev, "%s: invalid slot_width %d\n",
 			__func__, slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* HW supports 1-32 slots configuration. Typical: 1, 2, 4, 8, 16, 32 */
@@ -211,7 +211,7 @@ static int q6tdm_set_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "%s: invalid slots %d\n",
 			__func__, slots);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -224,7 +224,7 @@ static int q6tdm_set_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "%s: invalid dai id 0x%x\n",
 			__func__, dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return rc;
@@ -245,12 +245,12 @@ static int q6tdm_set_channel_map(struct snd_soc_dai *dai,
 		if (dai->id & 0x1) {
 			if (!tx_slot) {
 				dev_err(dai->dev, "tx slot not found\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (tx_num > AFE_PORT_MAX_AUDIO_CHAN_CNT) {
 				dev_err(dai->dev, "invalid tx num %d\n",
 					tx_num);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			for (i = 0; i < tx_num; i++)
@@ -264,12 +264,12 @@ static int q6tdm_set_channel_map(struct snd_soc_dai *dai,
 			/* rx */
 			if (!rx_slot) {
 				dev_err(dai->dev, "rx slot not found\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			if (rx_num > AFE_PORT_MAX_AUDIO_CHAN_CNT) {
 				dev_err(dai->dev, "invalid rx num %d\n",
 					rx_num);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			for (i = 0; i < rx_num; i++)
@@ -285,7 +285,7 @@ static int q6tdm_set_channel_map(struct snd_soc_dai *dai,
 	default:
 		dev_err(dai->dev, "%s: invalid dai id 0x%x\n",
 			__func__, dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return rc;
@@ -363,7 +363,7 @@ static int q6afe_dai_prepare(struct snd_pcm_substream *substream,
 					&dai_data->port_config[dai->id].tdm);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rc = q6afe_port_start(dai_data->port[dai->id]);
@@ -388,7 +388,7 @@ static int q6slim_set_channel_map(struct snd_soc_dai *dai,
 		/* TX */
 		if (!tx_slot) {
 			pr_err("%s: tx slot not found\n", __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		for (i = 0; i < tx_num; i++)
@@ -400,7 +400,7 @@ static int q6slim_set_channel_map(struct snd_soc_dai *dai,
 	} else {
 		if (!rx_slot) {
 			pr_err("%s: rx slot not found\n", __func__);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		for (i = 0; i < rx_num; i++)
@@ -602,7 +602,7 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 	port = q6afe_port_get_from_id(dai->dev, dai->id);
 	if (IS_ERR(port)) {
 		dev_err(dai->dev, "Unable to get afe port\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dai_data->port[dai->id] = port;
 
@@ -1135,7 +1135,7 @@ static int q6afe_of_xlate_dai_name(struct snd_soc_component *component,
 				   const char **dai_name)
 {
 	int id = args->args[0];
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int i;
 
 	for (i = 0; i  < ARRAY_SIZE(q6afe_dais); i++) {

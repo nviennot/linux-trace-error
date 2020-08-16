@@ -775,7 +775,7 @@ static ssize_t cifsFYI_proc_write(struct file *file, const char __user *buffer,
 	else if ((c[0] > '1') && (c[0] <= '9'))
 		cifsFYI = (int) (c[0] - '0'); /* see cifs_debug.h for meanings */
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -929,7 +929,7 @@ static ssize_t cifs_security_flags_proc_write(struct file *file,
 	bool bv;
 
 	if ((count < 1) || (count > 11))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(flags_string, 0, 12);
 
@@ -944,7 +944,7 @@ static ssize_t cifs_security_flags_proc_write(struct file *file,
 		} else if (!isdigit(flags_string[0])) {
 			cifs_dbg(VFS, "Invalid SecurityFlags: %s\n",
 					flags_string);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -960,13 +960,13 @@ static ssize_t cifs_security_flags_proc_write(struct file *file,
 
 	if (flags == 0)  {
 		cifs_dbg(VFS, "Invalid SecurityFlags: %s\n", flags_string);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (flags & ~CIFSSEC_MASK) {
 		cifs_dbg(VFS, "Unsupported security flags: 0x%x\n",
 			 flags & ~CIFSSEC_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cifs_security_flags_handle_must_flags(&flags);

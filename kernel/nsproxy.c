@@ -163,7 +163,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
 			return 0;
 		}
 	} else if (!ns_capable(user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * CLONE_NEWIPC must detach from the undolist: after switching
@@ -174,7 +174,7 @@ int copy_namespaces(unsigned long flags, struct task_struct *tsk)
 	 */
 	if ((flags & (CLONE_NEWIPC | CLONE_SYSVSEM)) ==
 		(CLONE_NEWIPC | CLONE_SYSVSEM)) 
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_ns = create_new_namespaces(flags, tsk, user_ns, tsk->fs);
 	if (IS_ERR(new_ns))
@@ -226,7 +226,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
 
 	user_ns = new_cred ? new_cred->user_ns : current_user_ns();
 	if (!ns_capable(user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	*new_nsp = create_new_namespaces(unshare_flags, current, user_ns,
 					 new_fs ? new_fs : current->fs);
@@ -264,31 +264,31 @@ static int check_setns_flags(unsigned long flags)
 	if (!flags || (flags & ~(CLONE_NEWNS | CLONE_NEWUTS | CLONE_NEWIPC |
 				 CLONE_NEWNET | CLONE_NEWUSER | CLONE_NEWPID |
 				 CLONE_NEWCGROUP)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifndef CONFIG_USER_NS
 	if (flags & CLONE_NEWUSER)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 #ifndef CONFIG_PID_NS
 	if (flags & CLONE_NEWPID)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 #ifndef CONFIG_UTS_NS
 	if (flags & CLONE_NEWUTS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 #ifndef CONFIG_IPC_NS
 	if (flags & CLONE_NEWIPC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 #ifndef CONFIG_CGROUPS
 	if (flags & CLONE_NEWCGROUP)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 #ifndef CONFIG_NET_NS
 	if (flags & CLONE_NEWNET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	return 0;
@@ -368,12 +368,12 @@ static int validate_nsset(struct nsset *nsset, struct pid *pid)
 	tsk = pid_task(pid, PIDTYPE_PID);
 	if (!tsk) {
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 	if (!ptrace_may_access(tsk, PTRACE_MODE_READ_REALCREDS)) {
 		rcu_read_unlock();
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	task_lock(tsk);
@@ -383,7 +383,7 @@ static int validate_nsset(struct nsset *nsset, struct pid *pid)
 	task_unlock(tsk);
 	if (!nsp) {
 		rcu_read_unlock();
-		return -ESRCH;
+		return -ERR(ESRCH);
 	}
 
 #ifdef CONFIG_PID_NS
@@ -391,7 +391,7 @@ static int validate_nsset(struct nsset *nsset, struct pid *pid)
 		pid_ns = task_active_pid_ns(tsk);
 		if (unlikely(!pid_ns)) {
 			rcu_read_unlock();
-			ret = -ESRCH;
+			ret = -ERR(ESRCH);
 			goto out;
 		}
 		get_pid_ns(pid_ns);
@@ -521,17 +521,17 @@ SYSCALL_DEFINE2(setns, int, fd, int, flags)
 
 	file = fget(fd);
 	if (!file)
-		return -EBADF;
+		return -ERR(EBADF);
 
 	if (proc_ns_file(file)) {
 		ns = get_proc_ns(file_inode(file));
 		if (flags && (ns->ops->type != flags))
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 		flags = ns->ops->type;
 	} else if (!IS_ERR(pidfd_pid(file))) {
 		err = check_setns_flags(flags);
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	if (err)
 		goto out;

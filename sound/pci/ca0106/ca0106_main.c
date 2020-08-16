@@ -404,7 +404,7 @@ int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
 	int retry;
 	if ((reg > 0x7f) || (value > 0x1ff)) {
 		dev_err(emu->card->dev, "i2c_write: invalid values.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tmp = reg << 25 | value << 16;
@@ -443,7 +443,7 @@ int snd_ca0106_i2c_write(struct snd_ca0106 *emu,
 
 	if (retry == 10) {
 		dev_err(emu->card->dev, "Writing to ADC failed!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
     
     	return 0;
@@ -972,7 +972,7 @@ static int snd_ca0106_pcm_trigger_playback(struct snd_pcm_substream *substream,
 		snd_ca0106_ptr_write(emu, EXTENDED_INT_MASK, 0, bits);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -1000,7 +1000,7 @@ static int snd_ca0106_pcm_trigger_capture(struct snd_pcm_substream *substream,
 		epcm->running = 0;
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	return result;
@@ -1608,7 +1608,7 @@ static int snd_ca0106_create(int dev, struct snd_card *card,
 	    dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) {
 		dev_err(card->dev, "error to set 32bit mask DMA\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -1628,14 +1628,14 @@ static int snd_ca0106_create(int dev, struct snd_card *card,
 	if (!chip->res_port) {
 		snd_ca0106_free(chip);
 		dev_err(card->dev, "cannot allocate the port\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (request_irq(pci->irq, snd_ca0106_interrupt,
 			IRQF_SHARED, KBUILD_MODNAME, chip)) {
 		snd_ca0106_free(chip);
 		dev_err(card->dev, "cannot grab irq\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1776,10 +1776,10 @@ static int snd_ca0106_probe(struct pci_dev *pci,
 	int i, err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

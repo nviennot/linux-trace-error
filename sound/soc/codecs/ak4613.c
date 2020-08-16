@@ -335,7 +335,7 @@ static int ak4613_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		priv->fmt = fmt;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -390,7 +390,7 @@ static int ak4613_dai_hw_params(struct snd_pcm_substream *substream,
 		ctrl2 = DFS_QUAD_SPEED;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	priv->rate = rate;
 
@@ -400,7 +400,7 @@ static int ak4613_dai_hw_params(struct snd_pcm_substream *substream,
 	 * It doesn't support TDM at this point
 	 */
 	fmt_ctrl = NO_FMT;
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	iface = NULL;
 
 	mutex_lock(&priv->lock);
@@ -653,7 +653,7 @@ static int ak4613_i2c_probe(struct i2c_client *i2c,
 	}
 
 	if (!regmap_cfg)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
 	if (!priv)

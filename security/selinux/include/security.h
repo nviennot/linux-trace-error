@@ -393,14 +393,14 @@ static inline int security_netlbl_secattr_to_sid(struct selinux_state *state,
 					    struct netlbl_lsm_secattr *secattr,
 					    u32 *sid)
 {
-	return -EIDRM;
+	return -ERR(EIDRM);
 }
 
 static inline int security_netlbl_sid_to_secattr(struct selinux_state *state,
 					 u32 sid,
 					 struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif /* CONFIG_NETLABEL */
 

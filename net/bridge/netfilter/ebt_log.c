@@ -30,9 +30,9 @@ static int ebt_log_tg_check(const struct xt_tgchk_param *par)
 	struct ebt_log_info *info = par->targinfo;
 
 	if (info->bitmask & ~EBT_LOG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->loglevel >= 8)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	info->prefix[EBT_LOG_PREFIX_SIZE - 1] = '\0';
 	return 0;
 }

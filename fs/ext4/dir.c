@@ -157,7 +157,7 @@ static int ext4_readdir(struct file *file, struct dir_context *ctx)
 		struct ext4_map_blocks map;
 
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto errout;
 		}
 		cond_resched();
@@ -619,7 +619,7 @@ finished:
 static int ext4_dir_open(struct inode * inode, struct file * filp)
 {
 	if (IS_ENCRYPTED(inode))
-		return fscrypt_get_encryption_info(inode) ? -EACCES : 0;
+		return fscrypt_get_encryption_info(inode) ? -ERR(EACCES) : 0;
 	return 0;
 }
 
@@ -720,7 +720,7 @@ static int ext4_d_hash(const struct dentry *dentry, struct qstr *str)
 	len = utf8_casefold(um, str, norm, PATH_MAX);
 	if (len < 0) {
 		if (ext4_has_strict_mode(sbi))
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 		goto out;
 	}
 	str->hash = full_name_hash(dentry, norm, len);

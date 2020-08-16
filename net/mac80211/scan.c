@@ -490,7 +490,7 @@ static int ieee80211_start_sw_scan(struct ieee80211_local *local,
 {
 	/* Software scan is not supported in multi-channel cases */
 	if (local->use_chanctx)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/*
 	 * Hardware/driver doesn't support hw_scan, so use software
@@ -661,10 +661,10 @@ static int __ieee80211_start_scan(struct ieee80211_sub_if_data *sdata,
 	lockdep_assert_held(&local->mtx);
 
 	if (local->scan_req)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!__ieee80211_can_leave_ch(sdata))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!ieee80211_can_scan(local, sdata)) {
 		/* wait for the work to finish/time out */
@@ -801,7 +801,7 @@ static int __ieee80211_start_scan(struct ieee80211_sub_if_data *sdata,
 		 */
 		if (ieee80211_vif_type_p2p(&sdata->vif) ==
 				NL80211_IFTYPE_P2P_GO)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		hw_scan = false;
 		goto again;
 	}
@@ -1110,7 +1110,7 @@ int ieee80211_request_ibss_scan(struct ieee80211_sub_if_data *sdata,
 				enum nl80211_bss_scan_width scan_width)
 {
 	struct ieee80211_local *local = sdata->local;
-	int ret = -EBUSY, i, n_ch = 0;
+	int ret = -ERR(EBUSY), i, n_ch = 0;
 	enum nl80211_band band;
 
 	mutex_lock(&local->mtx);
@@ -1254,7 +1254,7 @@ int __ieee80211_request_sched_scan_start(struct ieee80211_sub_if_data *sdata,
 	lockdep_assert_held(&local->mtx);
 
 	if (!local->ops->sched_scan_start)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	for (i = 0; i < NUM_NL80211_BANDS; i++) {
 		if (local->hw.wiphy->bands[i]) {
@@ -1308,7 +1308,7 @@ int ieee80211_request_sched_scan_start(struct ieee80211_sub_if_data *sdata,
 
 	if (rcu_access_pointer(local->sched_scan_sdata)) {
 		mutex_unlock(&local->mtx);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	ret = __ieee80211_request_sched_scan_start(sdata, req);
@@ -1320,12 +1320,12 @@ int ieee80211_request_sched_scan_start(struct ieee80211_sub_if_data *sdata,
 int ieee80211_request_sched_scan_stop(struct ieee80211_local *local)
 {
 	struct ieee80211_sub_if_data *sched_scan_sdata;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	mutex_lock(&local->mtx);
 
 	if (!local->ops->sched_scan_stop) {
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		goto out;
 	}
 

@@ -163,7 +163,7 @@ do_add_page_to_bio(struct bio *bio, int npg, int rw, sector_t isect,
 	disk_addr = (u64)isect << SECTOR_SHIFT;
 	if (!offset_in_map(disk_addr, map)) {
 		if (!dev->map(dev, disk_addr, map) || !offset_in_map(disk_addr, map))
-			return ERR_PTR(-EIO);
+			return ERR_PTR(-ERR(EIO));
 		bio = bl_submit_bio(bio);
 	}
 	disk_addr += map->disk_offset;
@@ -220,7 +220,7 @@ static void bl_end_io_read(struct bio *bio)
 		struct nfs_pgio_header *header = par->data;
 
 		if (!header->pnfs_error)
-			header->pnfs_error = -EIO;
+			header->pnfs_error = -ERR(EIO);
 		pnfs_set_lo_fail(header->lseg);
 		bl_mark_devices_unavailable(header, false);
 	}
@@ -287,7 +287,7 @@ bl_read_pagelist(struct nfs_pgio_header *header)
 
 			/* Get the next one */
 			if (!ext_tree_lookup(bl, isect, &be, false)) {
-				header->pnfs_error = -EIO;
+				header->pnfs_error = -ERR(EIO);
 				goto out;
 			}
 			extent_length = be.be_length - (isect - be.be_f_offset);
@@ -350,7 +350,7 @@ static void bl_end_io_write(struct bio *bio)
 
 	if (bio->bi_status) {
 		if (!header->pnfs_error)
-			header->pnfs_error = -EIO;
+			header->pnfs_error = -ERR(EIO);
 		pnfs_set_lo_fail(header->lseg);
 		bl_mark_devices_unavailable(header, true);
 	}
@@ -434,7 +434,7 @@ bl_write_pagelist(struct nfs_pgio_header *header, int sync)
 			bio = bl_submit_bio(bio);
 			/* Get the next one */
 			if (!ext_tree_lookup(bl, isect, &be, true)) {
-				header->pnfs_error = -EINVAL;
+				header->pnfs_error = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -532,33 +532,33 @@ static int verify_extent(struct pnfs_block_extent *be,
 	if (lv->mode == IOMODE_READ) {
 		if (be->be_state == PNFS_BLOCK_READWRITE_DATA ||
 		    be->be_state == PNFS_BLOCK_INVALID_DATA)
-			return -EIO;
+			return -ERR(EIO);
 		if (be->be_f_offset != lv->start)
-			return -EIO;
+			return -ERR(EIO);
 		lv->start += be->be_length;
 		return 0;
 	}
 	/* lv->mode == IOMODE_RW */
 	if (be->be_state == PNFS_BLOCK_READWRITE_DATA) {
 		if (be->be_f_offset != lv->start)
-			return -EIO;
+			return -ERR(EIO);
 		if (lv->cowread > lv->start)
-			return -EIO;
+			return -ERR(EIO);
 		lv->start += be->be_length;
 		lv->inval = lv->start;
 		return 0;
 	} else if (be->be_state == PNFS_BLOCK_INVALID_DATA) {
 		if (be->be_f_offset != lv->start)
-			return -EIO;
+			return -ERR(EIO);
 		lv->start += be->be_length;
 		return 0;
 	} else if (be->be_state == PNFS_BLOCK_READ_DATA) {
 		if (be->be_f_offset > lv->start)
-			return -EIO;
+			return -ERR(EIO);
 		if (be->be_f_offset < lv->inval)
-			return -EIO;
+			return -ERR(EIO);
 		if (be->be_f_offset < lv->cowread)
-			return -EIO;
+			return -ERR(EIO);
 		/* It looks like you might want to min this with lv->start,
 		 * but you really don't.
 		 */
@@ -566,7 +566,7 @@ static int verify_extent(struct pnfs_block_extent *be,
 		lv->cowread = be->be_f_offset + be->be_length;
 		return 0;
 	} else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 static int decode_sector_number(__be32 **rp, sector_t *sp)
@@ -593,7 +593,7 @@ bl_find_get_deviceid(struct nfs_server *server,
 retry:
 	node = nfs4_find_get_deviceid(server, id, cred, gfp_mask);
 	if (!node)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	if (test_bit(NFS_DEVICEID_UNAVAILABLE, &node->flags) == 0)
 		return node;
@@ -604,7 +604,7 @@ retry:
 		nfs4_delete_deviceid(node->ld, node->nfs_client, id);
 		goto retry;
 	}
-	return ERR_PTR(-ENODEV);
+	return ERR_PTR(-ERR(ENODEV));
 }
 
 static int
@@ -619,7 +619,7 @@ bl_alloc_extent(struct xdr_stream *xdr, struct pnfs_layout_hdr *lo,
 
 	p = xdr_inline_decode(xdr, 28 + NFS4_DEVICEID4_SIZE);
 	if (!p)
-		return -EIO;
+		return -ERR(EIO);
 
 	be = kzalloc(sizeof(*be), GFP_NOFS);
 	if (!be)
@@ -639,7 +639,7 @@ bl_alloc_extent(struct xdr_stream *xdr, struct pnfs_layout_hdr *lo,
 	 * The next three values are read in as bytes, but stored in the
 	 * extent structure in 512-byte granularity.
 	 */
-	error = -EIO;
+	error = -ERR(EIO);
 	if (decode_sector_number(&p, &be->be_f_offset) < 0)
 		goto out_put_deviceid;
 	if (decode_sector_number(&p, &be->be_length) < 0)
@@ -699,7 +699,7 @@ bl_alloc_lseg(struct pnfs_layout_hdr *lo, struct nfs4_layoutget_res *lgr,
 			lgr->layoutp->pages, lgr->layoutp->len);
 	xdr_set_scratch_buffer(&xdr, page_address(scratch), PAGE_SIZE);
 
-	status = -EIO;
+	status = -ERR(EIO);
 	p = xdr_inline_decode(&xdr, 4);
 	if (unlikely(!p))
 		goto out_free_scratch;
@@ -720,13 +720,13 @@ bl_alloc_lseg(struct pnfs_layout_hdr *lo, struct nfs4_layoutget_res *lgr,
 	if (lgr->range.offset + lgr->range.length !=
 			lv.start << SECTOR_SHIFT) {
 		dprintk("%s Final length mismatch\n", __func__);
-		status = -EIO;
+		status = -ERR(EIO);
 		goto process_extents;
 	}
 
 	if (lv.start < lv.cowread) {
 		dprintk("%s Final uncovered COW extent\n", __func__);
-		status = -EIO;
+		status = -ERR(EIO);
 	}
 
 process_extents:
@@ -809,12 +809,12 @@ bl_set_layoutdriver(struct nfs_server *server, const struct nfs_fh *fh)
 
 	if (server->pnfs_blksize == 0) {
 		dprintk("%s Server did not return blksize\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (server->pnfs_blksize > PAGE_SIZE) {
 		printk(KERN_ERR "%s: pNFS blksize %d not supported.\n",
 			__func__, server->pnfs_blksize);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

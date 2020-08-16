@@ -166,7 +166,7 @@ struct em_data_callback {};
 static inline int em_register_perf_domain(cpumask_t *span,
 			unsigned int nr_states, struct em_data_callback *cb)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static inline struct em_perf_domain *em_cpu_get(int cpu)
 {

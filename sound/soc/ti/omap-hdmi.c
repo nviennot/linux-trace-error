@@ -120,7 +120,7 @@ static int hdmi_dai_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "format not supported!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ad->dss_audio.iec = iec;
@@ -171,7 +171,7 @@ static int hdmi_dai_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "rate not supported!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* specify the clock accuracy */
@@ -193,7 +193,7 @@ static int hdmi_dai_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(dai->dev, "format not supported!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -247,7 +247,7 @@ static int hdmi_dai_trigger(struct snd_pcm_substream *substream, int cmd,
 		ad->ops->audio_stop(ad->dssdev);
 		break;
 	default:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 	return err;
 }
@@ -317,7 +317,7 @@ static int omap_hdmi_audio_probe(struct platform_device *pdev)
 
 	if (!ha) {
 		dev_err(dev, "No platform data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ad = devm_kzalloc(dev, sizeof(*ad), GFP_KERNEL);
@@ -338,7 +338,7 @@ static int omap_hdmi_audio_probe(struct platform_device *pdev)
 		dai_drv = &omap5_hdmi_dai;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ret = devm_snd_soc_register_component(ad->dssdev, &omap_hdmi_component,
 					 dai_drv, 1);

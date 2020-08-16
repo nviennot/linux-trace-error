@@ -1177,7 +1177,7 @@ batadv_tt_local_dump_entry(struct sk_buff *msg, u32 portid,
 			  &batadv_netlink_family,  NLM_F_MULTI,
 			  BATADV_CMD_GET_TRANSTABLE_LOCAL);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	genl_dump_check_consistent(cb, hdr);
 
@@ -1196,7 +1196,7 @@ batadv_tt_local_dump_entry(struct sk_buff *msg, u32 portid,
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -1232,7 +1232,7 @@ batadv_tt_local_dump_bucket(struct sk_buff *msg, u32 portid,
 					       common)) {
 			spin_unlock_bh(&hash->list_locks[bucket]);
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 	spin_unlock_bh(&hash->list_locks[bucket]);
@@ -1263,11 +1263,11 @@ int batadv_tt_local_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -1275,7 +1275,7 @@ int batadv_tt_local_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -2048,7 +2048,7 @@ batadv_tt_global_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 			  NLM_F_MULTI,
 			  BATADV_CMD_GET_TRANSTABLE_GLOBAL);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	last_ttvn = atomic_read(&orig->orig_node->last_ttvn);
 
@@ -2070,7 +2070,7 @@ batadv_tt_global_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /**
@@ -2110,7 +2110,7 @@ batadv_tt_global_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
 		if (batadv_tt_global_dump_subentry(msg, portid, seq, common,
 						   orig_entry, best)) {
 			*sub_s = sub - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 
@@ -2147,7 +2147,7 @@ batadv_tt_global_dump_bucket(struct sk_buff *msg, u32 portid, u32 seq,
 						common, sub)) {
 			rcu_read_unlock();
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 	rcu_read_unlock();
@@ -2181,11 +2181,11 @@ int batadv_tt_global_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -2193,7 +2193,7 @@ int batadv_tt_global_dump(struct sk_buff *msg, struct netlink_callback *cb)
 
 	primary_if = batadv_primary_if_get_selected(bat_priv);
 	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

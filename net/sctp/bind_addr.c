@@ -194,7 +194,7 @@ int sctp_del_bind_addr(struct sctp_bind_addr *bp, union sctp_addr *del_addr)
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Create a network byte-order representation of all the addresses
@@ -271,7 +271,7 @@ int sctp_raw_to_bind_addrs(struct sctp_bind_addr *bp, __u8 *raw_addr_list,
 
 		af = sctp_get_af_specific(param_type2af(param->type));
 		if (unlikely(!af)) {
-			retval = -EINVAL;
+			retval = -ERR(EINVAL);
 			sctp_bind_addr_clean(bp);
 			break;
 		}
@@ -347,7 +347,7 @@ next:
 	}
 	rcu_read_unlock();
 
-	return (cnt == cnt2) ? 0 : (exist ? -EEXIST : 1);
+	return (cnt == cnt2) ? 0 : (exist ? -ERR(EEXIST) : 1);
 }
 
 /* Does the address 'addr' conflict with any addresses in

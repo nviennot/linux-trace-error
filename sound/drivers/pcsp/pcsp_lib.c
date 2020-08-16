@@ -157,7 +157,7 @@ static int pcsp_start_playing(struct snd_pcsp *chip)
 #endif
 	if (atomic_read(&chip->timer_active)) {
 		printk(KERN_ERR "PCSP: Timer already active\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	raw_spin_lock(&i8253_lock);
@@ -265,7 +265,7 @@ static int snd_pcsp_trigger(struct snd_pcm_substream *substream, int cmd)
 		pcsp_stop_playing(chip);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -312,7 +312,7 @@ static int snd_pcsp_playback_open(struct snd_pcm_substream *substream)
 #endif
 	if (atomic_read(&chip->timer_active)) {
 		printk(KERN_ERR "PCSP: still active!!\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	runtime->hw = snd_pcsp_playback;
 	chip->playback_substream = substream;

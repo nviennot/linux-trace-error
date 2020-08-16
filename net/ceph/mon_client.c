@@ -42,7 +42,7 @@ static int __validate_auth(struct ceph_mon_client *monc);
 static struct ceph_monmap *ceph_monmap_decode(void *p, void *end)
 {
 	struct ceph_monmap *m = NULL;
-	int i, err = -EINVAL;
+	int i, err = -ERR(EINVAL);
 	struct ceph_fsid fsid;
 	u32 epoch, num_mon;
 	u32 len;
@@ -431,7 +431,7 @@ int ceph_monc_wait_osdmap(struct ceph_mon_client *monc, u32 epoch,
 		mutex_unlock(&monc->mutex);
 
 		if (timeout && time_after_eq(jiffies, started + timeout))
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 
 		ret = wait_event_interruptible_timeout(monc->client->auth_wq,
 				     monc->subs[CEPH_SUB_OSDMAP].have >= epoch,

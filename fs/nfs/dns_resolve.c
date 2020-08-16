@@ -27,7 +27,7 @@ ssize_t nfs_dns_resolve_name(struct net *net, char *name, size_t namelen,
 	if (ip_len > 0)
 		ret = rpc_pton(net, ip_addr, ip_len, sa, salen);
 	else
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 	kfree(ip_addr);
 	return ret;
 }
@@ -233,7 +233,7 @@ static int nfs_dns_parse(struct cache_detail *cd, char *buf, int buflen)
 	struct nfs_dns_ent key, *item;
 	unsigned int ttl;
 	ssize_t len;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (buf[buflen-1] != '\n')
 		goto out;
@@ -303,12 +303,12 @@ static int do_cache_lookup_nowait(struct cache_detail *cd,
 	*item = nfs_dns_lookup(cd, key);
 	if (!*item)
 		goto out_err;
-	ret = -ETIMEDOUT;
+	ret = -ERR(ETIMEDOUT);
 	if (!test_bit(CACHE_VALID, &(*item)->h.flags)
 			|| (*item)->h.expiry_time < seconds_since_boot()
 			|| cd->flush_time > (*item)->h.last_refresh)
 		goto out_put;
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	if (test_bit(CACHE_NEGATIVE, &(*item)->h.flags))
 		goto out_put;
 	return 0;
@@ -357,10 +357,10 @@ ssize_t nfs_dns_resolve_name(struct net *net, char *name,
 			memcpy(sa, &item->addr, item->addrlen);
 			ret = item->addrlen;
 		} else
-			ret = -EOVERFLOW;
+			ret = -ERR(EOVERFLOW);
 		cache_put(&item->h, nn->nfs_dns_resolve);
 	} else if (ret == -ENOENT)
-		ret = -ESRCH;
+		ret = -ERR(ESRCH);
 	return ret;
 }
 
@@ -445,7 +445,7 @@ static int rpc_pipefs_event(struct notifier_block *nb, unsigned long event,
 		nfs_cache_unregister_sb(sb, cd);
 		break;
 	default:
-		ret = -ENOTSUPP;
+		ret = -ERR(ENOTSUPP);
 		break;
 	}
 	module_put(THIS_MODULE);

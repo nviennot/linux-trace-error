@@ -447,7 +447,7 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 					pr_err("Dirent at %08x has zero at start of name. Aborting mount.\n",
 					       jeb->offset +
 					       je32_to_cpu(spd->offset));
-					return -EIO;
+					return -ERR(EIO);
 				}
 				if (checkedlen < spd->nsize) {
 					pr_err("Dirent at %08x has zeroes in name. Truncating to %d chars\n",
@@ -550,7 +550,7 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 				uint16_t nodetype = je16_to_cpu(((struct jffs2_sum_unknown_flash *)sp)->nodetype);
 				JFFS2_WARNING("Unsupported node type %x found in summary! Exiting...\n", nodetype);
 				if ((nodetype & JFFS2_COMPAT_MASK) == JFFS2_FEATURE_INCOMPAT)
-					return -EIO;
+					return -ERR(EIO);
 
 				/* For compatible node types, just fall back to the full scan */
 				c->wasted_size -= jeb->wasted_size;
@@ -561,7 +561,7 @@ static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eras
 				jeb->free_size = c->sector_size;
 
 				jffs2_free_jeb_node_refs(c, jeb);
-				return -ENOTRECOVERABLE;
+				return -ERR(ENOTRECOVERABLE);
 			}
 		}
 	}

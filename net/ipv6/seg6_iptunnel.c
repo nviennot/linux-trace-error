@@ -58,7 +58,7 @@ static int nla_put_srh(struct sk_buff *skb, int attrtype,
 
 	nla = nla_reserve(skb, attrtype, len);
 	if (!nla)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	data = nla_data(nla);
 	memcpy(data, tuninfo, len);
@@ -232,7 +232,7 @@ static int seg6_do_srh(struct sk_buff *skb)
 	switch (tinfo->mode) {
 	case SEG6_IPTUN_MODE_INLINE:
 		if (skb->protocol != htons(ETH_P_IPV6))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = seg6_do_srh_inline(skb, tinfo->srh);
 		if (err)
@@ -248,7 +248,7 @@ static int seg6_do_srh(struct sk_buff *skb)
 		else if (skb->protocol == htons(ETH_P_IP))
 			proto = IPPROTO_IPIP;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		err = seg6_do_srh_encap(skb, tinfo->srh, proto);
 		if (err)
@@ -260,7 +260,7 @@ static int seg6_do_srh(struct sk_buff *skb)
 		break;
 	case SEG6_IPTUN_MODE_L2ENCAP:
 		if (!skb_mac_header_was_set(skb))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (pskb_expand_head(skb, skb->mac_len, 0, GFP_ATOMIC) < 0)
 			return -ENOMEM;
@@ -328,7 +328,7 @@ static int seg6_output(struct net *net, struct sock *sk, struct sk_buff *skb)
 	struct dst_entry *orig_dst = skb_dst(skb);
 	struct dst_entry *dst = NULL;
 	struct seg6_lwt *slwt;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	err = seg6_do_srh(skb);
 	if (unlikely(err))
@@ -389,7 +389,7 @@ static int seg6_build_state(struct net *net, struct nlattr *nla,
 	int err;
 
 	if (family != AF_INET && family != AF_INET6)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, SEG6_IPTUNNEL_MAX, nla,
 					  seg6_iptunnel_policy, extack);
@@ -398,7 +398,7 @@ static int seg6_build_state(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (!tb[SEG6_IPTUNNEL_SRH])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	tuninfo = nla_data(tb[SEG6_IPTUNNEL_SRH]);
 	tuninfo_len = nla_len(tb[SEG6_IPTUNNEL_SRH]);
@@ -409,12 +409,12 @@ static int seg6_build_state(struct net *net, struct nlattr *nla,
 	min_size = sizeof(*tuninfo) + sizeof(struct ipv6_sr_hdr) +
 		   sizeof(struct in6_addr);
 	if (tuninfo_len < min_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (tuninfo->mode) {
 	case SEG6_IPTUN_MODE_INLINE:
 		if (family != AF_INET6)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		break;
 	case SEG6_IPTUN_MODE_ENCAP:
@@ -422,12 +422,12 @@ static int seg6_build_state(struct net *net, struct nlattr *nla,
 	case SEG6_IPTUN_MODE_L2ENCAP:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* verify that SRH is consistent */
 	if (!seg6_validate_srh(tuninfo->srh, tuninfo_len - sizeof(*tuninfo), false))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newts = lwtunnel_state_alloc(tuninfo_len + sizeof(*slwt));
 	if (!newts)
@@ -467,7 +467,7 @@ static int seg6_fill_encap_info(struct sk_buff *skb,
 	struct seg6_iptunnel_encap *tuninfo = seg6_encap_lwtunnel(lwtstate);
 
 	if (nla_put_srh(skb, SEG6_IPTUNNEL_SRH, tuninfo))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }

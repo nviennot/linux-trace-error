@@ -95,7 +95,7 @@ static inline int cifs_readpage_from_fscache(struct inode *inode,
 	if (CIFS_I(inode)->fscache)
 		return __cifs_readpage_from_fscache(inode, page);
 
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline int cifs_readpages_from_fscache(struct inode *inode,
@@ -106,7 +106,7 @@ static inline int cifs_readpages_from_fscache(struct inode *inode,
 	if (CIFS_I(inode)->fscache)
 		return __cifs_readpages_from_fscache(inode, mapping, pages,
 						     nr_pages);
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline void cifs_readpage_to_fscache(struct inode *inode,
@@ -149,7 +149,7 @@ static inline void cifs_fscache_invalidate_page(struct page *page,
 static inline int
 cifs_readpage_from_fscache(struct inode *inode, struct page *page)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline int cifs_readpages_from_fscache(struct inode *inode,
@@ -157,7 +157,7 @@ static inline int cifs_readpages_from_fscache(struct inode *inode,
 					      struct list_head *pages,
 					      unsigned *nr_pages)
 {
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 
 static inline void cifs_readpage_to_fscache(struct inode *inode,

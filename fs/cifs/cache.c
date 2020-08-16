@@ -65,7 +65,7 @@ char *extract_sharename(const char *treename)
 	/* share name is always preceded by '\\' now */
 	delim = strchr(src, '\\');
 	if (!delim)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	delim++;
 	len = strlen(delim);
 

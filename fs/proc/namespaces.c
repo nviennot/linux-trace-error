@@ -46,14 +46,14 @@ static const char *proc_ns_get_link(struct dentry *dentry,
 	const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
 	struct task_struct *task;
 	struct path ns_path;
-	int error = -EACCES;
+	int error = -ERR(EACCES);
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	task = get_proc_task(inode);
 	if (!task)
-		return ERR_PTR(-EACCES);
+		return ERR_PTR(-ERR(EACCES));
 
 	if (!ptrace_may_access(task, PTRACE_MODE_READ_FSCREDS))
 		goto out;
@@ -74,7 +74,7 @@ static int proc_ns_readlink(struct dentry *dentry, char __user *buffer, int bufl
 	const struct proc_ns_operations *ns_ops = PROC_I(inode)->ns_ops;
 	struct task_struct *task;
 	char name[50];
-	int res = -EACCES;
+	int res = -ERR(EACCES);
 
 	task = get_proc_task(inode);
 	if (!task)
@@ -104,7 +104,7 @@ static struct dentry *proc_ns_instantiate(struct dentry *dentry,
 
 	inode = proc_pid_make_inode(dentry->d_sb, task, S_IFLNK | S_IRWXUGO);
 	if (!inode)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	ei = PROC_I(inode);
 	inode->i_op = &proc_ns_link_inode_operations;
@@ -121,7 +121,7 @@ static int proc_ns_dir_readdir(struct file *file, struct dir_context *ctx)
 	const struct proc_ns_operations **entry, **last;
 
 	if (!task)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (!dir_emit_dots(file, ctx))
 		goto out;
@@ -154,7 +154,7 @@ static struct dentry *proc_ns_dir_lookup(struct inode *dir,
 	struct task_struct *task = get_proc_task(dir);
 	const struct proc_ns_operations **entry, **last;
 	unsigned int len = dentry->d_name.len;
-	struct dentry *res = ERR_PTR(-ENOENT);
+	struct dentry *res = ERR_PTR(-ERR(ENOENT));
 
 	if (!task)
 		goto out_no_task;

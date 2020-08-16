@@ -23,7 +23,7 @@ struct dentry *qnx6_lookup(struct inode *dir, struct dentry *dentry,
 	int len = dentry->d_name.len;
 
 	if (len > QNX6_LONG_NAME_MAX)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	ino = qnx6_find_entry(len, dir, name, &page);
 	if (ino) {

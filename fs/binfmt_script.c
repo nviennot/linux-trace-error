@@ -39,7 +39,7 @@ static int load_script(struct linux_binprm *bprm)
 
 	/* Not ours to exec if we don't start with "#!". */
 	if ((bprm->buf[0] != '#') || (bprm->buf[1] != '!'))
-		return -ENOEXEC;
+		return -ERR(ENOEXEC);
 
 	/*
 	 * This section handles parsing the #! line into separate
@@ -60,13 +60,13 @@ static int load_script(struct linux_binprm *bprm)
 	if (!i_end) {
 		i_end = next_non_spacetab(bprm->buf + 2, buf_end);
 		if (!i_end)
-			return -ENOEXEC; /* Entire buf is spaces/tabs */
+			return -ERR(ENOEXEC); /* Entire buf is spaces/tabs */
 		/*
 		 * If there is no later space/tab/NUL we must assume the
 		 * interpreter path is truncated.
 		 */
 		if (!next_terminator(i_end, buf_end))
-			return -ENOEXEC;
+			return -ERR(ENOEXEC);
 		i_end = buf_end;
 	}
 	/* Trim any trailing spaces/tabs from i_end */
@@ -76,7 +76,7 @@ static int load_script(struct linux_binprm *bprm)
 	/* Skip over leading spaces/tabs */
 	i_name = next_non_spacetab(bprm->buf+2, i_end);
 	if (!i_name || (i_name == i_end))
-		return -ENOEXEC; /* No interpreter name found */
+		return -ERR(ENOEXEC); /* No interpreter name found */
 
 	/* Is there an optional argument? */
 	i_arg = NULL;
@@ -91,7 +91,7 @@ static int load_script(struct linux_binprm *bprm)
 	 * this file).
 	 */
 	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * OK, we've parsed out the interpreter name and

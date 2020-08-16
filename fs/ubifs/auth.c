@@ -172,7 +172,7 @@ int __ubifs_node_check_hash(const struct ubifs_info *c, const void *node,
 		return err;
 
 	if (ubifs_check_hash(c, expected, calc))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return 0;
 }
@@ -205,7 +205,7 @@ int ubifs_sb_verify_signature(struct ubifs_info *c,
 
 	if (sleb->nodes_cnt == 0) {
 		ubifs_err(c, "Unable to find signature node");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_destroy;
 	}
 
@@ -213,7 +213,7 @@ int ubifs_sb_verify_signature(struct ubifs_info *c,
 
 	if (snod->type != UBIFS_SIG_NODE) {
 		ubifs_err(c, "Signature node is of wrong type");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_destroy;
 	}
 
@@ -221,14 +221,14 @@ int ubifs_sb_verify_signature(struct ubifs_info *c,
 
 	if (le32_to_cpu(signode->len) > snod->len + sizeof(struct ubifs_sig_node)) {
 		ubifs_err(c, "invalid signature len %d", le32_to_cpu(signode->len));
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_destroy;
 	}
 
 	if (le32_to_cpu(signode->type) != UBIFS_SIGNATURE_TYPE_PKCS7) {
 		ubifs_err(c, "Signature type %d is not supported\n",
 			  le32_to_cpu(signode->type));
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_destroy;
 	}
 
@@ -263,7 +263,7 @@ int ubifs_init_authentication(struct ubifs_info *c)
 
 	if (!c->auth_hash_name) {
 		ubifs_err(c, "authentication hash name needed with authentication");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	c->auth_hash_algo = match_string(hash_algo_name, HASH_ALGO__LAST,
@@ -271,7 +271,7 @@ int ubifs_init_authentication(struct ubifs_info *c)
 	if ((int)c->auth_hash_algo < 0) {
 		ubifs_err(c, "Unknown hash algo %s specified",
 			  c->auth_hash_name);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snprintf(hmac_name, CRYPTO_MAX_ALG_NAME, "hmac(%s)",
@@ -289,14 +289,14 @@ int ubifs_init_authentication(struct ubifs_info *c)
 
 	if (keyring_key->type != &key_type_logon) {
 		ubifs_err(c, "key type must be logon");
-		err = -ENOKEY;
+		err = -ERR(ENOKEY);
 		goto out;
 	}
 
 	ukp = user_key_payload_locked(keyring_key);
 	if (!ukp) {
 		/* key was revoked before we acquired its semaphore */
-		err = -EKEYREVOKED;
+		err = -ERR(EKEYREVOKED);
 		goto out;
 	}
 
@@ -312,7 +312,7 @@ int ubifs_init_authentication(struct ubifs_info *c)
 	if (c->hash_len > UBIFS_HASH_ARR_SZ) {
 		ubifs_err(c, "hash %s is bigger than maximum allowed hash size (%d > %d)",
 			  c->auth_hash_name, c->hash_len, UBIFS_HASH_ARR_SZ);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free_hash;
 	}
 
@@ -327,7 +327,7 @@ int ubifs_init_authentication(struct ubifs_info *c)
 	if (c->hmac_desc_len > UBIFS_HMAC_ARR_SZ) {
 		ubifs_err(c, "hmac %s is bigger than maximum allowed hmac size (%d > %d)",
 			  hmac_name, c->hmac_desc_len, UBIFS_HMAC_ARR_SZ);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out_free_hash;
 	}
 
@@ -468,7 +468,7 @@ int __ubifs_node_verify_hmac(const struct ubifs_info *c, const void *node,
 	if (!err)
 		return 0;
 
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 int __ubifs_shash_copy_state(const struct ubifs_info *c, struct shash_desc *src,

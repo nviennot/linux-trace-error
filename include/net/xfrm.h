@@ -1213,7 +1213,7 @@ static inline int xfrm_decode_session_reverse(struct sk_buff *skb,
 					      struct flowi *fl,
 					      unsigned int family)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 static inline int xfrm4_policy_check_reverse(struct sock *sk, int dir,
 					     struct sk_buff *skb)
@@ -1613,7 +1613,7 @@ int xfrm_user_policy(struct sock *sk, int optname,
 #else
 static inline int xfrm_user_policy(struct sock *sk, int optname, u8 __user *optval, int optlen)
 {
- 	return -ENOPROTOOPT;
+ 	return -ERR(ENOPROTOOPT);
 }
 #endif
 
@@ -1989,7 +1989,7 @@ static inline int xfrm_tunnel_check(struct sk_buff *skb, struct xfrm_state *x,
 		break;
 	}
 	if (tunnel && !(x->outer_mode.flags & XFRM_MODE_FLAG_TUNNEL))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }

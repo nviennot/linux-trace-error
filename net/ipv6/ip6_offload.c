@@ -71,7 +71,7 @@ static int ipv6_gso_pull_exthdrs(struct sk_buff *skb, int proto)
 static struct sk_buff *ipv6_gso_segment(struct sk_buff *skb,
 	netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	struct ipv6hdr *ipv6h;
 	const struct net_offload *ops;
 	int proto;
@@ -95,7 +95,7 @@ static struct sk_buff *ipv6_gso_segment(struct sk_buff *skb,
 
 	ipv6h = ipv6_hdr(skb);
 	__skb_pull(skb, sizeof(*ipv6h));
-	segs = ERR_PTR(-EPROTONOSUPPORT);
+	segs = ERR_PTR(-ERR(EPROTONOSUPPORT));
 
 	proto = ipv6_gso_pull_exthdrs(skb, ipv6h->nexthdr);
 
@@ -325,7 +325,7 @@ INDIRECT_CALLABLE_SCOPE int ipv6_gro_complete(struct sk_buff *skb, int nhoff)
 {
 	const struct net_offload *ops;
 	struct ipv6hdr *iph = (struct ipv6hdr *)(skb->data + nhoff);
-	int err = -ENOSYS;
+	int err = -ERR(ENOSYS);
 
 	if (skb->encapsulation) {
 		skb_set_inner_protocol(skb, cpu_to_be16(ETH_P_IPV6));
@@ -383,7 +383,7 @@ static struct sk_buff *sit_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
 {
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP4))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return ipv6_gso_segment(skb, features);
 }
@@ -392,7 +392,7 @@ static struct sk_buff *ip4ip6_gso_segment(struct sk_buff *skb,
 					  netdev_features_t features)
 {
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return inet_gso_segment(skb, features);
 }
@@ -401,7 +401,7 @@ static struct sk_buff *ip6ip6_gso_segment(struct sk_buff *skb,
 					  netdev_features_t features)
 {
 	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_IPXIP6))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	return ipv6_gso_segment(skb, features);
 }

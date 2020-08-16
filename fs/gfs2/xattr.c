@@ -59,13 +59,13 @@ static int ea_check_size(struct gfs2_sbd *sdp, unsigned int nsize, size_t dsize)
 	unsigned int size;
 
 	if (dsize > GFS2_EA_MAX_DATA_LEN)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ea_calc_size(sdp, nsize, dsize, &size);
 
 	/* This can only happen with 512 byte blocks */
 	if (size > sdp->sd_jbsize)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	return 0;
 }
@@ -81,7 +81,7 @@ static int ea_foreach_i(struct gfs2_inode *ip, struct buffer_head *bh,
 	int error = 0;
 
 	if (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_EA))
-		return -EIO;
+		return -ERR(EIO);
 
 	for (ea = GFS2_EA_BH2FIRST(bh);; prev = ea, ea = GFS2_EA2NEXT(ea)) {
 		if (!GFS2_EA_REC_LEN(ea))
@@ -108,7 +108,7 @@ static int ea_foreach_i(struct gfs2_inode *ip, struct buffer_head *bh,
 
 fail:
 	gfs2_consist_inode(ip);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int ea_foreach(struct gfs2_inode *ip, ea_call_t ea_call, void *data)
@@ -127,7 +127,7 @@ static int ea_foreach(struct gfs2_inode *ip, ea_call_t ea_call, void *data)
 	}
 
 	if (gfs2_metatype_check(GFS2_SB(&ip->i_inode), bh, GFS2_METATYPE_IN)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out;
 	}
 
@@ -256,7 +256,7 @@ static int ea_dealloc_unstuffed(struct gfs2_inode *ip, struct buffer_head *bh,
 	rgd = gfs2_blk2rgrpd(sdp, bn, 1);
 	if (!rgd) {
 		gfs2_consist_inode(ip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	error = gfs2_glock_nq_init(rgd->rd_gl, LM_ST_EXCLUSIVE, 0, &rg_gh);
@@ -373,7 +373,7 @@ static int ea_list_i(struct gfs2_inode *ip, struct buffer_head *bh,
 	ea_size = l + ea->ea_name_len + 1;
 	if (er->er_data_len) {
 		if (ei->ei_size + ea_size > er->er_data_len)
-			return -ERANGE;
+			return -ERR(ERANGE);
 
 		memcpy(er->er_data + ei->ei_size, prefix, l);
 		memcpy(er->er_data + ei->ei_size + l, GFS2_EA2NAME(ea),
@@ -474,7 +474,7 @@ static int gfs2_iter_unstuffed(struct gfs2_inode *ip, struct gfs2_ea_header *ea,
 		if (gfs2_metatype_check(sdp, bh[x], GFS2_METATYPE_ED)) {
 			for (; x < nptrs; x++)
 				brelse(bh[x]);
-			error = -EIO;
+			error = -ERR(EIO);
 			goto out;
 		}
 
@@ -507,7 +507,7 @@ static int gfs2_ea_get_copy(struct gfs2_inode *ip, struct gfs2_ea_location *el,
 	int ret;
 	size_t len = GFS2_EA_DATA_LEN(el->el_ea);
 	if (len > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (GFS2_EA_IS_STUFFED(el->el_ea)) {
 		memcpy(data, GFS2_EA2DATA(el->el_ea), len);
@@ -568,15 +568,15 @@ static int __gfs2_xattr_get(struct inode *inode, const char *name,
 	int error;
 
 	if (!ip->i_eattr)
-		return -ENODATA;
+		return -ERR(ENODATA);
 	if (strlen(name) > GFS2_EA_MAX_NAME_LEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = gfs2_ea_find(ip, type, name, &el);
 	if (error)
 		return error;
 	if (!el.el_ea)
-		return -ENODATA;
+		return -ERR(ENODATA);
 	if (size)
 		error = gfs2_ea_get_copy(ip, &el, buffer, size);
 	else
@@ -971,7 +971,7 @@ static int ea_set_block(struct gfs2_inode *ip, struct gfs2_ea_request *er,
 			return error;
 
 		if (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) {
-			error = -EIO;
+			error = -ERR(EIO);
 			goto out;
 		}
 
@@ -983,7 +983,7 @@ static int ea_set_block(struct gfs2_inode *ip, struct gfs2_ea_request *er,
 				break;
 
 		if (eablk == end) {
-			error = -ENOSPC;
+			error = -ERR(ENOSPC);
 			goto out;
 		}
 
@@ -1122,13 +1122,13 @@ static int gfs2_xattr_remove(struct gfs2_inode *ip, int type, const char *name)
 	int error;
 
 	if (!ip->i_eattr)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	error = gfs2_ea_find(ip, type, name, &el);
 	if (error)
 		return error;
 	if (!el.el_ea)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (GFS2_EA_IS_STUFFED(el.el_ea))
 		error = ea_remove_stuffed(ip, &el);
@@ -1164,9 +1164,9 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
 	int error;
 
 	if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 	if (namel > GFS2_EA_MAX_NAME_LEN)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (value == NULL) {
 		error = gfs2_xattr_remove(ip, type, name);
@@ -1176,11 +1176,11 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
 	}
 
 	if (ea_check_size(sdp, namel, size))
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	if (!ip->i_eattr) {
 		if (flags & XATTR_REPLACE)
-			return -ENODATA;
+			return -ERR(ENODATA);
 		return ea_init(ip, type, name, value, size);
 	}
 
@@ -1191,10 +1191,10 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
 	if (el.el_ea) {
 		if (ip->i_diskflags & GFS2_DIF_APPENDONLY) {
 			brelse(el.el_bh);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 
-		error = -EEXIST;
+		error = -ERR(EEXIST);
 		if (!(flags & XATTR_CREATE)) {
 			int unstuffed = !GFS2_EA_IS_STUFFED(el.el_ea);
 			error = ea_set_i(ip, type, name, value, size, &el);
@@ -1206,7 +1206,7 @@ int __gfs2_xattr_set(struct inode *inode, const char *name,
 		return error;
 	}
 
-	error = -ENODATA;
+	error = -ERR(ENODATA);
 	if (!(flags & XATTR_REPLACE))
 		error = ea_set_i(ip, type, name, value, size, NULL);
 
@@ -1234,7 +1234,7 @@ static int gfs2_xattr_set(const struct xattr_handler *handler,
 			goto out;
 	} else {
 		if (WARN_ON_ONCE(ip->i_gl->gl_state != LM_ST_EXCLUSIVE)) {
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto out;
 		}
 		gfs2_holder_mark_uninitialized(&gh);
@@ -1272,7 +1272,7 @@ static int ea_dealloc_indirect(struct gfs2_inode *ip)
 		return error;
 
 	if (gfs2_metatype_check(sdp, indbh, GFS2_METATYPE_IN)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out;
 	}
 
@@ -1382,7 +1382,7 @@ static int ea_dealloc_block(struct gfs2_inode *ip)
 	rgd = gfs2_blk2rgrpd(sdp, ip->i_eattr, 1);
 	if (!rgd) {
 		gfs2_consist_inode(ip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	error = gfs2_glock_nq_init(rgd->rd_gl, LM_ST_EXCLUSIVE, 0, &gh);

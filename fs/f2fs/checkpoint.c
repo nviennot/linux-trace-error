@@ -96,7 +96,7 @@ repeat:
 
 	if (unlikely(!PageUptodate(page))) {
 		f2fs_put_page(page, 1);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 out:
 	return page;
@@ -585,11 +585,11 @@ int f2fs_acquire_orphan_inode(struct f2fs_sb_info *sbi)
 	if (time_to_inject(sbi, FAULT_ORPHAN)) {
 		spin_unlock(&im->ino_lock);
 		f2fs_show_injection_info(sbi, FAULT_ORPHAN);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	if (unlikely(im->ino_num >= sbi->max_orphans))
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 	else
 		im->ino_num++;
 	spin_unlock(&im->ino_lock);
@@ -653,7 +653,7 @@ static int recover_orphan_inode(struct f2fs_sb_info *sbi, nid_t ino)
 
 	/* ENOMEM was fully retried in f2fs_evict_inode. */
 	if (ni.blk_addr != NULL_ADDR) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto err_out;
 	}
 	return 0;
@@ -829,14 +829,14 @@ static int get_checkpoint_version(struct f2fs_sb_info *sbi, block_t cp_addr,
 			crc_offset > CP_CHKSUM_OFFSET) {
 		f2fs_put_page(*cp_page, 1);
 		f2fs_warn(sbi, "invalid crc_offset: %zu", crc_offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	crc = f2fs_checkpoint_chksum(sbi, *cp_block);
 	if (crc != cur_cp_crc(*cp_block)) {
 		f2fs_put_page(*cp_page, 1);
 		f2fs_warn(sbi, "invalid crc value");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	*version = cur_cp_version(*cp_block);
@@ -1048,7 +1048,7 @@ int f2fs_sync_dirty_inodes(struct f2fs_sb_info *sbi, enum inode_type type)
 				F2FS_DIRTY_DENTS : F2FS_DIRTY_DATA));
 retry:
 	if (unlikely(f2fs_cp_error(sbi)))
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock(&sbi->inode_lock[type]);
 
@@ -1098,7 +1098,7 @@ int f2fs_sync_inode_meta(struct f2fs_sb_info *sbi)
 
 	while (total--) {
 		if (unlikely(f2fs_cp_error(sbi)))
-			return -EIO;
+			return -ERR(EIO);
 
 		spin_lock(&sbi->inode_lock[DIRTY_META]);
 		if (list_empty(head)) {
@@ -1545,7 +1545,7 @@ static int do_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 
 	f2fs_bug_on(sbi, get_pages(sbi, F2FS_DIRTY_DENTS));
 
-	return unlikely(f2fs_cp_error(sbi)) ? -EIO : 0;
+	return unlikely(f2fs_cp_error(sbi)) ? -ERR(EIO) : 0;
 }
 
 int f2fs_write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
@@ -1555,7 +1555,7 @@ int f2fs_write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 	int err = 0;
 
 	if (f2fs_readonly(sbi->sb) || f2fs_hw_is_readonly(sbi))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (unlikely(is_sbi_flag_set(sbi, SBI_CP_DISABLED))) {
 		if (cpc->reason != CP_PAUSE)
@@ -1570,7 +1570,7 @@ int f2fs_write_checkpoint(struct f2fs_sb_info *sbi, struct cp_control *cpc)
 		((cpc->reason & CP_DISCARD) && !sbi->discard_blks)))
 		goto out;
 	if (unlikely(f2fs_cp_error(sbi))) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 

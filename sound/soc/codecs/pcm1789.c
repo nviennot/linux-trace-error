@@ -90,7 +90,7 @@ static int pcm1789_hw_params(struct snd_pcm_substream *substream,
 			val = 3;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -101,7 +101,7 @@ static int pcm1789_hw_params(struct snd_pcm_substream *substream,
 			val = 0;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_LEFT_J:
@@ -112,12 +112,12 @@ static int pcm1789_hw_params(struct snd_pcm_substream *substream,
 			val = 1;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_update_bits(priv->regmap, PCM1789_FMT_CONTROL,
@@ -158,7 +158,7 @@ static int pcm1789_trigger(struct snd_pcm_substream *substream, int cmd,
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;

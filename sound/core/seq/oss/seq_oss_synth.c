@@ -152,7 +152,7 @@ snd_seq_oss_synth_remove(struct device *_dev)
 	if (index >= max_synth_devs) {
 		spin_unlock_irqrestore(&register_lock, flags);
 		pr_err("ALSA: seq_oss: can't unregister synth\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	synth_devs[index] = NULL;
 	if (index == max_synth_devs - 1) {
@@ -447,15 +447,15 @@ snd_seq_oss_synth_load_patch(struct seq_oss_devinfo *dp, int dev, int fmt,
 
 	info = get_synthinfo_nospec(dp, dev);
 	if (!info)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (info->is_midi)
 		return 0;
 	if ((rec = get_synthdev(dp, dev)) == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (rec->oper.load_patch == NULL)
-		rc = -ENXIO;
+		rc = -ERR(ENXIO);
 	else
 		rc = rec->oper.load_patch(&info->arg, fmt, buf, p, c);
 	snd_use_lock_free(&rec->use_lock);
@@ -494,7 +494,7 @@ snd_seq_oss_synth_sysex(struct seq_oss_devinfo *dp, int dev, unsigned char *buf,
 
 	info = snd_seq_oss_synth_info(dp, dev);
 	if (!info)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	sysex = info->sysex;
 	if (sysex == NULL) {
@@ -525,19 +525,19 @@ snd_seq_oss_synth_sysex(struct seq_oss_devinfo *dp, int dev, unsigned char *buf,
 		if (sysex->skip) {
 			sysex->skip = 0;
 			sysex->len = 0;
-			return -EINVAL; /* skip */
+			return -ERR(EINVAL); /* skip */
 		}
 		/* copy the data to event record and send it */
 		ev->flags = SNDRV_SEQ_EVENT_LENGTH_VARIABLE;
 		if (snd_seq_oss_synth_addr(dp, dev, ev))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ev->data.ext.len = sysex->len;
 		ev->data.ext.ptr = sysex->buf;
 		sysex->len = 0;
 		return 0;
 	}
 
-	return -EINVAL; /* skip */
+	return -ERR(EINVAL); /* skip */
 }
 
 /*
@@ -549,7 +549,7 @@ snd_seq_oss_synth_addr(struct seq_oss_devinfo *dp, int dev, struct snd_seq_event
 	struct seq_oss_synthinfo *info = snd_seq_oss_synth_info(dp, dev);
 
 	if (!info)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	snd_seq_oss_fill_addr(dp, ev, info->arg.addr.client,
 			      info->arg.addr.port);
 	return 0;
@@ -568,11 +568,11 @@ snd_seq_oss_synth_ioctl(struct seq_oss_devinfo *dp, int dev, unsigned int cmd, u
 
 	info = get_synthinfo_nospec(dp, dev);
 	if (!info || info->is_midi)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if ((rec = get_synthdev(dp, dev)) == NULL)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	if (rec->oper.ioctl == NULL)
-		rc = -ENXIO;
+		rc = -ERR(ENXIO);
 	else
 		rc = rec->oper.ioctl(&info->arg, cmd, addr);
 	snd_use_lock_free(&rec->use_lock);
@@ -590,7 +590,7 @@ snd_seq_oss_synth_raw_event(struct seq_oss_devinfo *dp, int dev, unsigned char *
 
 	info = snd_seq_oss_synth_info(dp, dev);
 	if (!info || info->is_midi)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	ev->type = SNDRV_SEQ_EVENT_OSS;
 	memcpy(ev->data.raw8.d, data, 8);
 	return snd_seq_oss_synth_addr(dp, dev, ev);
@@ -607,7 +607,7 @@ snd_seq_oss_synth_make_info(struct seq_oss_devinfo *dp, int dev, struct synth_in
 	struct seq_oss_synthinfo *info = get_synthinfo_nospec(dp, dev);
 
 	if (!info)
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if (info->is_midi) {
 		struct midi_info minf;
@@ -619,7 +619,7 @@ snd_seq_oss_synth_make_info(struct seq_oss_devinfo *dp, int dev, struct synth_in
 		strlcpy(inf->name, minf.name, sizeof(inf->name));
 	} else {
 		if ((rec = get_synthdev(dp, dev)) == NULL)
-			return -ENXIO;
+			return -ERR(ENXIO);
 		inf->synth_type = rec->synth_type;
 		inf->synth_subtype = rec->synth_subtype;
 		inf->nr_voices = rec->nr_voices;

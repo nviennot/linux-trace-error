@@ -50,7 +50,7 @@ static int nft_masq_init(const struct nft_ctx *ctx,
 	if (tb[NFTA_MASQ_FLAGS]) {
 		priv->flags = ntohl(nla_get_be32(tb[NFTA_MASQ_FLAGS]));
 		if (priv->flags & ~NF_NAT_RANGE_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (tb[NFTA_MASQ_REG_PROTO_MIN]) {

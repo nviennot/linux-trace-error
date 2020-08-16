@@ -33,7 +33,7 @@ static int adau1761_spi_probe(struct spi_device *spi)
 	struct regmap_config config;
 
 	if (!id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	config = adau1761_regmap_config;
 	config.val_bits = 8;

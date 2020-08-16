@@ -101,11 +101,11 @@ int packing(void *pbuf, u64 *uval, int startbit, int endbit, size_t pbuflen,
 	/* startbit is expected to be larger than endbit */
 	if (startbit < endbit)
 		/* Invalid function call */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	value_width = startbit - endbit + 1;
 	if (value_width > 64)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* Check if "uval" fits in "value_width" bits.
 	 * If value_width is 64, the check will fail, but any
@@ -116,7 +116,7 @@ int packing(void *pbuf, u64 *uval, int startbit, int endbit, size_t pbuflen,
 		 * Truncating "uval" is most certainly not desirable,
 		 * so simply erroring out is appropriate.
 		 */
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	/* Initialize parameter */
 	if (op == UNPACK)

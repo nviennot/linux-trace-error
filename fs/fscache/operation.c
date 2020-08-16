@@ -179,11 +179,11 @@ int fscache_submit_exclusive_op(struct fscache_object *object,
 		fscache_stat(&fscache_n_op_rejected);
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	} else if (unlikely(fscache_cache_is_broken(object))) {
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else if (flags & BIT(FSCACHE_OBJECT_IS_AVAILABLE)) {
 		op->object = object;
 		object->n_ops++;
@@ -217,12 +217,12 @@ int fscache_submit_exclusive_op(struct fscache_object *object,
 	} else if (flags & BIT(FSCACHE_OBJECT_KILLED_BY_CACHE)) {
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	} else {
 		fscache_report_unexpected_submission(object, op, ostate);
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	}
 
 	spin_unlock(&object->lock);
@@ -266,11 +266,11 @@ int fscache_submit_op(struct fscache_object *object,
 		fscache_stat(&fscache_n_op_rejected);
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	} else if (unlikely(fscache_cache_is_broken(object))) {
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -EIO;
+		ret = -ERR(EIO);
 	} else if (flags & BIT(FSCACHE_OBJECT_IS_AVAILABLE)) {
 		op->object = object;
 		object->n_ops++;
@@ -299,13 +299,13 @@ int fscache_submit_op(struct fscache_object *object,
 	} else if (flags & BIT(FSCACHE_OBJECT_KILLED_BY_CACHE)) {
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	} else {
 		fscache_report_unexpected_submission(object, op, ostate);
 		ASSERT(!fscache_object_is_active(object));
 		op->cancel(op);
 		op->state = FSCACHE_OP_ST_CANCELLED;
-		ret = -ENOBUFS;
+		ret = -ERR(ENOBUFS);
 	}
 
 	spin_unlock(&object->lock);
@@ -374,7 +374,7 @@ int fscache_cancel_op(struct fscache_operation *op,
 
 	spin_lock(&object->lock);
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (op->state == FSCACHE_OP_ST_PENDING) {
 		ASSERT(!list_empty(&op->pend_link));
 		list_del_init(&op->pend_link);

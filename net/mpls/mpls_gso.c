@@ -18,7 +18,7 @@
 static struct sk_buff *mpls_gso_segment(struct sk_buff *skb,
 				       netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	u16 mac_offset = skb->mac_header;
 	netdev_features_t mpls_features;
 	u16 mac_len = skb->mac_len;

@@ -990,7 +990,7 @@ static int nfs4_copy_lock_stateid(nfs4_stateid *dst,
 {
 	struct nfs4_lock_state *lsp;
 	fl_owner_t fl_owner, fl_flock_owner;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	if (l_ctx == NULL)
 		goto out;
@@ -1004,7 +1004,7 @@ static int nfs4_copy_lock_stateid(nfs4_stateid *dst,
 	spin_lock(&state->state_lock);
 	lsp = __nfs4_find_lock_state(state, fl_owner, fl_flock_owner);
 	if (lsp && test_bit(NFS_LOCK_LOST, &lsp->ls_flags))
-		ret = -EIO;
+		ret = -ERR(EIO);
 	else if (lsp != NULL && test_bit(NFS_LOCK_INITIALIZED, &lsp->ls_flags) != 0) {
 		nfs4_stateid_copy(dst, &lsp->ls_stateid);
 		ret = 0;
@@ -1045,7 +1045,7 @@ int nfs4_select_rw_stateid(struct nfs4_state *state,
 	int ret;
 
 	if (!nfs4_valid_open_stateid(state))
-		return -EIO;
+		return -ERR(EIO);
 	if (cred != NULL)
 		*cred = NULL;
 	ret = nfs4_copy_lock_stateid(dst, state, l_ctx);
@@ -1063,7 +1063,7 @@ int nfs4_select_rw_stateid(struct nfs4_state *state,
 		 * choose to use.
 		 */
 		goto out;
-	ret = nfs4_copy_open_stateid(dst, state) ? 0 : -EAGAIN;
+	ret = nfs4_copy_open_stateid(dst, state) ? 0 : -ERR(EAGAIN);
 out:
 	if (nfs_server_capable(state->inode, NFS_CAP_STATEID_NFSV41))
 		dst->seqid = 0;
@@ -1182,7 +1182,7 @@ int nfs_wait_on_sequence(struct nfs_seqid *seqid, struct rpc_task *task)
 	if (list_first_entry(&sequence->list, struct nfs_seqid, list) == seqid)
 		goto unlock;
 	rpc_sleep_on(&sequence->wait, task, NULL);
-	status = -EAGAIN;
+	status = -ERR(EAGAIN);
 unlock:
 	spin_unlock(&sequence->lock);
 out:
@@ -1329,7 +1329,7 @@ int nfs4_client_recover_expired_lease(struct nfs_client *clp)
 		    !test_bit(NFS4CLNT_CHECK_LEASE,&clp->cl_state))
 			break;
 		nfs4_schedule_state_manager(clp);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 	return ret;
 }
@@ -1388,7 +1388,7 @@ int nfs4_schedule_stateid_recovery(const struct nfs_server *server, struct nfs4_
 	struct nfs_client *clp = server->nfs_client;
 
 	if (!nfs4_state_mark_reclaim_nograce(clp, state))
-		return -EBADF;
+		return -ERR(EBADF);
 	nfs_inode_find_delegation_state_and_recover(state->inode,
 			&state->stateid);
 	dprintk("%s: scheduling stateid recovery for server %s\n", __func__,
@@ -1712,7 +1712,7 @@ restart:
 	spin_unlock(&sp->so_lock);
 #ifdef CONFIG_NFS_V4_2
 	if (found_ssc_copy_state)
-		return -EIO;
+		return -ERR(EIO);
 #endif /* CONFIG_NFS_V4_2 */
 	return 0;
 out_err:
@@ -1925,7 +1925,7 @@ restart:
 				set_bit(ops->owner_flag_bit, &sp->so_flags);
 				nfs4_put_state_owner(sp);
 				status = nfs4_recovery_handle_error(clp, status);
-				return (status != 0) ? status : -EAGAIN;
+				return (status != 0) ? status : -ERR(EAGAIN);
 			}
 
 			nfs4_put_state_owner(sp);
@@ -1951,7 +1951,7 @@ static int nfs4_check_lease(struct nfs_client *clp)
 	cred = ops->get_state_renewal_cred(clp);
 	if (cred == NULL) {
 		cred = nfs4_get_clid_cred(clp);
-		status = -ENOKEY;
+		status = -ERR(ENOKEY);
 		if (cred == NULL)
 			goto out;
 	}
@@ -1973,7 +1973,7 @@ static int nfs4_handle_reclaim_lease_error(struct nfs_client *clp, int status)
 	switch (status) {
 	case -NFS4ERR_SEQ_MISORDERED:
 		if (test_and_set_bit(NFS4CLNT_PURGE_STATE, &clp->cl_state))
-			return -ESERVERFAULT;
+			return -ERR(ESERVERFAULT);
 		/* Lease confirmation error: retry after purging the lease */
 		ssleep(1);
 		clear_bit(NFS4CLNT_LEASE_CONFIRM, &clp->cl_state);
@@ -1987,7 +1987,7 @@ static int nfs4_handle_reclaim_lease_error(struct nfs_client *clp, int status)
 			clp->cl_hostname);
 		nfs_mark_client_ready(clp, -EPERM);
 		clear_bit(NFS4CLNT_LEASE_CONFIRM, &clp->cl_state);
-		return -EPERM;
+		return -ERR(EPERM);
 	case -EACCES:
 	case -NFS4ERR_DELAY:
 	case -EAGAIN:
@@ -1999,7 +1999,7 @@ static int nfs4_handle_reclaim_lease_error(struct nfs_client *clp, int status)
 			nfs_mark_client_ready(clp, -EPROTONOSUPPORT);
 		dprintk("%s: exit with error %d for server %s\n",
 				__func__, -EPROTONOSUPPORT, clp->cl_hostname);
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 	case -NFS4ERR_NOT_SAME: /* FixMe: implement recovery
 				 * in nfs4_exchange_id */
 	default:
@@ -2025,7 +2025,7 @@ static int nfs4_establish_lease(struct nfs_client *clp)
 		return status;
 	cred = nfs4_get_clid_cred(clp);
 	if (cred == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	status = ops->establish_clid(clp, cred);
 	put_cred(cred);
 	if (status != 0)
@@ -2258,7 +2258,7 @@ int nfs4_discover_server_trunking(struct nfs_client *clp,
 
 	mutex_lock(&nfs_clid_init_mutex);
 again:
-	status  = -ENOENT;
+	status  = -ERR(ENOENT);
 	cred = nfs4_get_clid_cred(clp);
 	if (cred == NULL)
 		goto out_unlock;
@@ -2294,7 +2294,7 @@ again:
 	case -NFS4ERR_WRONGSEC:
 		/* No point in retrying if we already used RPC_AUTH_UNIX */
 		if (clnt->cl_auth->au_flavor == RPC_AUTH_UNIX) {
-			status = -EPERM;
+			status = -ERR(EPERM);
 			break;
 		}
 		clnt = rpc_clone_client_set_auth(clnt, RPC_AUTH_UNIX);
@@ -2312,18 +2312,18 @@ again:
 		goto again;
 
 	case -NFS4ERR_MINOR_VERS_MISMATCH:
-		status = -EPROTONOSUPPORT;
+		status = -ERR(EPROTONOSUPPORT);
 		break;
 
 	case -EKEYEXPIRED:
 	case -NFS4ERR_NOT_SAME: /* FixMe: implement recovery
 				 * in nfs4_exchange_id */
-		status = -EKEYEXPIRED;
+		status = -ERR(EKEYEXPIRED);
 		break;
 	default:
 		pr_warn("NFS: %s unhandled error %d. Exiting with error EIO\n",
 				__func__, status);
-		status = -EIO;
+		status = -ERR(EIO);
 	}
 
 out_unlock:

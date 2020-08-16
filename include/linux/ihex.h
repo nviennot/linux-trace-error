@@ -56,7 +56,7 @@ static inline int ihex_validate_fw(const struct firmware *fw)
 		if (rec == end && !be16_to_cpu(rec->len))
 			return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Request firmware and validate it so that we can trust we won't

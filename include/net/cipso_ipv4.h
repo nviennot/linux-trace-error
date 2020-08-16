@@ -125,7 +125,7 @@ int cipso_v4_doi_walk(u32 *skip_cnt,
 static inline int cipso_v4_doi_add(struct cipso_v4_doi *doi_def,
 				   struct netlbl_audit *audit_info)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void cipso_v4_doi_free(struct cipso_v4_doi *doi_def)
@@ -154,7 +154,7 @@ static inline int cipso_v4_doi_walk(u32 *skip_cnt,
 static inline int cipso_v4_doi_domhsh_add(struct cipso_v4_doi *doi_def,
 					  const char *domain)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int cipso_v4_doi_domhsh_remove(struct cipso_v4_doi *doi_def,
@@ -221,14 +221,14 @@ static inline void cipso_v4_error(struct sk_buff *skb,
 static inline int cipso_v4_getattr(const unsigned char *cipso,
 				   struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int cipso_v4_sock_setattr(struct sock *sk,
 				      const struct cipso_v4_doi *doi_def,
 				      const struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void cipso_v4_sock_delattr(struct sock *sk)
@@ -238,14 +238,14 @@ static inline void cipso_v4_sock_delattr(struct sock *sk)
 static inline int cipso_v4_sock_getattr(struct sock *sk,
 					struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int cipso_v4_req_setattr(struct request_sock *req,
 				       const struct cipso_v4_doi *doi_def,
 				       const struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void cipso_v4_req_delattr(struct request_sock *req)
@@ -257,18 +257,18 @@ static inline int cipso_v4_skbuff_setattr(struct sk_buff *skb,
 				      const struct cipso_v4_doi *doi_def,
 				      const struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int cipso_v4_skbuff_delattr(struct sk_buff *skb)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int cipso_v4_skbuff_getattr(const struct sk_buff *skb,
 					  struct netlbl_lsm_secattr *secattr)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline unsigned char *cipso_v4_optptr(const struct sk_buff *skb)

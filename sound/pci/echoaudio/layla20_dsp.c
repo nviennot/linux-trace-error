@@ -41,7 +41,7 @@ static int init_hw(struct echoaudio *chip, u16 device_id, u16 subdevice_id)
 	int err;
 
 	if (snd_BUG_ON((subdevice_id & 0xfff0) != LAYLA20))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((err = init_dsp_comm_page(chip))) {
 		dev_err(chip->card->dev,
@@ -122,7 +122,7 @@ static int check_asic_status(struct echoaudio *chip)
 		if (read_dsp(chip, &asic_status) < 0) {
 			dev_err(chip->card->dev,
 				"check_asic_status: failed on read_dsp\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (asic_status == ASIC_ALREADY_LOADED) {
@@ -132,7 +132,7 @@ static int check_asic_status(struct echoaudio *chip)
 			}
 		}
 	}
-	return -EIO;
+	return -ERR(EIO);
 }
 
 
@@ -159,7 +159,7 @@ static int load_asic(struct echoaudio *chip)
 static int set_sample_rate(struct echoaudio *chip, u32 rate)
 {
 	if (snd_BUG_ON(rate < 8000 || rate > 50000))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Only set the clock for internal mode. Do not return failure,
 	   simply treat it as a non-event. */
@@ -172,7 +172,7 @@ static int set_sample_rate(struct echoaudio *chip, u32 rate)
 	}
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	dev_dbg(chip->card->dev, "set_sample_rate(%d)\n", rate);
 	chip->sample_rate = rate;
@@ -207,7 +207,7 @@ static int set_input_clock(struct echoaudio *chip, u16 clock_source)
 		dev_err(chip->card->dev,
 			"Input clock 0x%x not supported for Layla24\n",
 			clock_source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	chip->input_clock = clock_source;
 
@@ -234,11 +234,11 @@ static int set_output_clock(struct echoaudio *chip, u16 clock)
 		break;
 	default:
 		dev_err(chip->card->dev, "set_output_clock wrong clock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->comm_page->output_clock = cpu_to_le16(clock);
 	chip->output_clock = clock;
@@ -252,10 +252,10 @@ static int set_output_clock(struct echoaudio *chip, u16 clock)
 static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
 {
 	if (snd_BUG_ON(input >= num_busses_in(chip)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 
 	chip->input_gain[input] = gain;
 	gain += GL20_INPUT_GAIN_MAGIC_NUMBER;
@@ -269,7 +269,7 @@ static int set_input_gain(struct echoaudio *chip, u16 input, int gain)
 static int update_flags(struct echoaudio *chip)
 {
 	if (wait_handshake(chip))
-		return -EIO;
+		return -ERR(EIO);
 	clear_handshake(chip);
 	return send_vector(chip, DSP_VC_UPDATE_FLAGS);
 }

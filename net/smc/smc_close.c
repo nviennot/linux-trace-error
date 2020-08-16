@@ -64,8 +64,8 @@ static void smc_close_stream_wait(struct smc_sock *smc, long timeout)
 
 		rc = sk_wait_event(sk, &timeout,
 				   !smc_tx_prepared_sends(&smc->conn) ||
-				   sk->sk_err == ECONNABORTED ||
-				   sk->sk_err == ECONNRESET ||
+				   sk->sk_err == ERR(ECONNABORTED) ||
+				   sk->sk_err == ERR(ECONNRESET) ||
 				   smc->conn.killed,
 				   &wait);
 		if (rc)
@@ -96,7 +96,7 @@ static int smc_close_final(struct smc_connection *conn)
 	else
 		conn->local_tx_ctrl.conn_state_flags.peer_conn_closed = 1;
 	if (conn->killed)
-		return -EPIPE;
+		return -ERR(EPIPE);
 
 	return smc_cdc_get_slot_and_msg_send(conn);
 }
@@ -128,7 +128,7 @@ void smc_close_active_abort(struct smc_sock *smc)
 	bool release_clcsock = false;
 
 	if (sk->sk_state != SMC_INIT && smc->clcsock && smc->clcsock->sk) {
-		sk->sk_err = ECONNABORTED;
+		sk->sk_err = ERR(ECONNABORTED);
 		if (smc->clcsock && smc->clcsock->sk)
 			tcp_abort(smc->clcsock->sk, ECONNABORTED);
 	}

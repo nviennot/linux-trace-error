@@ -197,7 +197,7 @@ static int tegra20_ac97_trigger(struct snd_pcm_substream *substream, int cmd,
 			tegra20_ac97_stop_capture(ac97);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

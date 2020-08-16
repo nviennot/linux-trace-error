@@ -155,7 +155,7 @@ snd_vortex_create(struct snd_card *card, struct pci_dev *pci, vortex_t ** rchip)
 	    dma_set_coherent_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) {
 		dev_err(card->dev, "error to set DMA mask\n");
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
@@ -243,10 +243,10 @@ snd_vortex_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 
 	// (1)
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	// (2)
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
@@ -349,7 +349,7 @@ snd_vortex_probe(struct pci_dev *pci, const struct pci_device_id *pci_id)
 		dev_alert(card->dev,
 			  "Please email the results of 'lspci -vv' to openvortex-dev@nongnu.org.\n");
 		snd_card_free(card);
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		return err;
 	}
 #endif

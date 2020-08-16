@@ -108,7 +108,7 @@ static int unregister_ip_vs_protocol(struct ip_vs_protocol *pp)
 		}
 	}
 
-	return -ESRCH;
+	return -ERR(ESRCH);
 }
 
 /*
@@ -131,7 +131,7 @@ unregister_ip_vs_proto_netns(struct netns_ipvs *ipvs, struct ip_vs_proto_data *p
 		}
 	}
 
-	return -ESRCH;
+	return -ERR(ESRCH);
 }
 
 /*

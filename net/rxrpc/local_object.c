@@ -276,7 +276,7 @@ sock_error:
 addr_in_use:
 	mutex_unlock(&rxnet->local_mutex);
 	_leave(" = -EADDRINUSE");
-	return ERR_PTR(-EADDRINUSE);
+	return ERR_PTR(-ERR(EADDRINUSE));
 }
 
 /*

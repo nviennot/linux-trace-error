@@ -403,7 +403,7 @@ static int snd_akm4xxx_volume_put(struct snd_kcontrol *kcontrol,
 	unsigned int mask = AK_GET_MASK(kcontrol->private_value);
 	unsigned int val = ucontrol->value.integer.value[0];
 	if (val > mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return put_ak_reg(kcontrol, AK_GET_ADDR(kcontrol->private_value), val);
 }
 
@@ -442,7 +442,7 @@ static int snd_akm4xxx_stereo_volume_put(struct snd_kcontrol *kcontrol,
 	val[0] = ucontrol->value.integer.value[0];
 	val[1] = ucontrol->value.integer.value[1];
 	if (val[0] > mask || val[1] > mask)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	change = put_ak_reg(kcontrol, addr, val[0]);
 	change |= put_ak_reg(kcontrol, addr + 1, val[1]);
 	return change;
@@ -553,7 +553,7 @@ static int ak4xxx_capture_source_info(struct snd_kcontrol *kcontrol,
 
 	num_names = ak4xxx_capture_num_inputs(ak, mixer_ch);
 	if (!num_names)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return snd_ctl_enum_info(uinfo, 1, num_names,
 				 ak->adc_info[mixer_ch].input_names);
 }
@@ -584,7 +584,7 @@ static int ak4xxx_capture_source_put(struct snd_kcontrol *kcontrol,
 	int num_names = ak4xxx_capture_num_inputs(ak, mixer_ch);
 
 	if (ucontrol->value.enumerated.item[0] >= num_names)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	oval = snd_akm4xxx_get(ak, chip, addr);
 	val = oval & ~mask;
@@ -698,7 +698,7 @@ static int build_dac_controls(struct snd_akm4xxx *ak)
 			knew.tlv.p = db_scale_linear;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		err = snd_ctl_add(ak->card, snd_ctl_new1(&knew, ak));
@@ -837,7 +837,7 @@ static int build_deemphasis(struct snd_akm4xxx *ak, int num_emphs)
 			knew.private_value = AK_COMPOSE(idx, 1, 1, 0);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		err = snd_ctl_add(ak->card, snd_ctl_new1(&knew, ak));
 		if (err < 0)

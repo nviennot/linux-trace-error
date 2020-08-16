@@ -22,12 +22,12 @@ int mod_check_sig(const struct module_signature *ms, size_t file_len,
 		  const char *name)
 {
 	if (be32_to_cpu(ms->sig_len) >= file_len - sizeof(*ms))
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 
 	if (ms->id_type != PKEY_ID_PKCS7) {
 		pr_err("%s: Module is not signed with expected PKCS#7 message\n",
 		       name);
-		return -ENOPKG;
+		return -ERR(ENOPKG);
 	}
 
 	if (ms->algo != 0 ||
@@ -39,7 +39,7 @@ int mod_check_sig(const struct module_signature *ms, size_t file_len,
 	    ms->__pad[2] != 0) {
 		pr_err("%s: PKCS#7 signature info has unexpected non-zero params\n",
 		       name);
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	return 0;

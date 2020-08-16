@@ -65,12 +65,12 @@ static int mqprio_parse_opt(struct net_device *dev, struct tc_mqprio_qopt *qopt)
 
 	/* Verify num_tc is not out of max range */
 	if (qopt->num_tc > TC_MAX_QUEUE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Verify priority mapping uses valid tcs */
 	for (i = 0; i < TC_BITMASK + 1; i++) {
 		if (qopt->prio_tc_map[i] >= qopt->num_tc)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Limit qopt->hw to maximum supported offload value.  Drivers have
@@ -86,7 +86,7 @@ static int mqprio_parse_opt(struct net_device *dev, struct tc_mqprio_qopt *qopt)
 	 * hardware doesn't support offload and we should return an error.
 	 */
 	if (qopt->hw)
-		return dev->netdev_ops->ndo_setup_tc ? 0 : -EINVAL;
+		return dev->netdev_ops->ndo_setup_tc ? 0 : -ERR(EINVAL);
 
 	for (i = 0; i < qopt->num_tc; i++) {
 		unsigned int last = qopt->offset[i] + qopt->count[i];
@@ -97,12 +97,12 @@ static int mqprio_parse_opt(struct net_device *dev, struct tc_mqprio_qopt *qopt)
 		if (qopt->offset[i] >= dev->real_num_tx_queues ||
 		    !qopt->count[i] ||
 		    last > dev->real_num_tx_queues)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* Verify that the offset and counts do not overlap */
 		for (j = i + 1; j < qopt->num_tc; j++) {
 			if (last > qopt->offset[j])
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -137,7 +137,7 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 	struct mqprio_sched *priv = qdisc_priv(sch);
 	struct netdev_queue *dev_queue;
 	struct Qdisc *qdisc;
-	int i, err = -EOPNOTSUPP;
+	int i, err = -ERR(EOPNOTSUPP);
 	struct tc_mqprio_qopt *qopt = NULL;
 	struct nlattr *tb[TCA_MQPRIO_MAX + 1];
 	struct nlattr *attr;
@@ -148,21 +148,21 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 	BUILD_BUG_ON(TC_BITMASK != TC_QOPT_BITMASK);
 
 	if (sch->parent != TC_H_ROOT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!netif_is_multiqueue(dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* make certain can allocate enough classids to handle queues */
 	if (dev->num_tx_queues >= TC_H_MIN_PRIORITY)
 		return -ENOMEM;
 
 	if (!opt || nla_len(opt) < sizeof(*qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	qopt = nla_data(opt);
 	if (mqprio_parse_opt(dev, qopt))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = nla_len(opt) - NLA_ALIGN(sizeof(*qopt));
 	if (len > 0) {
@@ -172,7 +172,7 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 			return err;
 
 		if (!qopt->hw)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (tb[TCA_MQPRIO_MODE]) {
 			priv->flags |= TC_MQPRIO_F_MODE;
@@ -186,12 +186,12 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 
 		if (tb[TCA_MQPRIO_MIN_RATE64]) {
 			if (priv->shaper != TC_MQPRIO_SHAPER_BW_RATE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			i = 0;
 			nla_for_each_nested(attr, tb[TCA_MQPRIO_MIN_RATE64],
 					    rem) {
 				if (nla_type(attr) != TCA_MQPRIO_MIN_RATE64)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if (i >= qopt->num_tc)
 					break;
 				priv->min_rate[i] = *(u64 *)nla_data(attr);
@@ -202,12 +202,12 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 
 		if (tb[TCA_MQPRIO_MAX_RATE64]) {
 			if (priv->shaper != TC_MQPRIO_SHAPER_BW_RATE)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			i = 0;
 			nla_for_each_nested(attr, tb[TCA_MQPRIO_MAX_RATE64],
 					    rem) {
 				if (nla_type(attr) != TCA_MQPRIO_MAX_RATE64)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if (i >= qopt->num_tc)
 					break;
 				priv->max_rate[i] = *(u64 *)nla_data(attr);
@@ -246,7 +246,7 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 		switch (priv->mode) {
 		case TC_MQPRIO_MODE_DCB:
 			if (priv->shaper != TC_MQPRIO_SHAPER_DCB)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			break;
 		case TC_MQPRIO_MODE_CHANNEL:
 			mqprio.flags = priv->flags;
@@ -262,7 +262,7 @@ static int mqprio_init(struct Qdisc *sch, struct nlattr *opt,
 					mqprio.max_rate[i] = priv->max_rate[i];
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		err = dev->netdev_ops->ndo_setup_tc(dev,
 						    TC_SETUP_QDISC_MQPRIO,
@@ -324,7 +324,7 @@ static int mqprio_graft(struct Qdisc *sch, unsigned long cl, struct Qdisc *new,
 	struct netdev_queue *dev_queue = mqprio_queue_get(sch, cl);
 
 	if (!dev_queue)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (dev->flags & IFF_UP)
 		dev_deactivate(dev);

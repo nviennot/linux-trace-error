@@ -369,13 +369,13 @@ static int wm0010_firmware_load(const char *name, struct snd_soc_component *comp
 	dsp = inforec->dsp_target;
 	wm0010->boot_failed = false;
 	if (WARN_ON(!list_empty(&xfer_list)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	init_completion(&done);
 
 	/* First record should be INFO */
 	if (rec->command != DFW_CMD_INFO) {
 		dev_err(component->dev, "First record not INFO\r\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto abort;
 	}
 
@@ -383,7 +383,7 @@ static int wm0010_firmware_load(const char *name, struct snd_soc_component *comp
 		dev_err(component->dev,
 			"Unsupported version (%02d) of INFO record\r\n",
 			inforec->info_version);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto abort;
 	}
 
@@ -393,7 +393,7 @@ static int wm0010_firmware_load(const char *name, struct snd_soc_component *comp
 	/* Check it's a DSP file */
 	if (dsp != DEVICE_ID_WM0010) {
 		dev_err(component->dev, "Not a WM0010 firmware file.\r\n");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto abort;
 	}
 
@@ -469,7 +469,7 @@ static int wm0010_firmware_load(const char *name, struct snd_soc_component *comp
 
 		if (wm0010->boot_failed) {
 			dev_dbg(component->dev, "Boot fail!\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto abort1;
 		}
 	}
@@ -553,7 +553,7 @@ static int wm0010_stage2_load(struct snd_soc_component *component)
 			dev_err(component->dev, "Boot ROM error: %x in %d\n",
 				out[i], i);
 			wm0010_mark_boot_failure(wm0010);
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto abort;
 		}
 	}
@@ -588,7 +588,7 @@ static int wm0010_boot(struct snd_soc_component *component)
 
 	if (wm0010->sysclk > 26000000) {
 		dev_err(component->dev, "Max DSP clock frequency is 26MHz\n");
-		ret = -ECANCELED;
+		ret = -ERR(ECANCELED);
 		goto err;
 	}
 
@@ -930,7 +930,7 @@ static int wm0010_spi_probe(struct spi_device *spi)
 		}
 	} else {
 		dev_err(wm0010->dev, "No reset GPIO configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wm0010->state = WM0010_POWER_OFF;

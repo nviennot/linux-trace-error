@@ -215,20 +215,20 @@ posix_acl_valid(struct user_namespace *user_ns, const struct posix_acl *acl)
 
 	FOREACH_ACL_ENTRY(pa, acl, pe) {
 		if (pa->e_perm & ~(ACL_READ|ACL_WRITE|ACL_EXECUTE))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		switch (pa->e_tag) {
 			case ACL_USER_OBJ:
 				if (state == ACL_USER_OBJ) {
 					state = ACL_USER;
 					break;
 				}
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			case ACL_USER:
 				if (state != ACL_USER)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if (!kuid_has_mapping(user_ns, pa->e_uid))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				needs_mask = 1;
 				break;
 
@@ -237,19 +237,19 @@ posix_acl_valid(struct user_namespace *user_ns, const struct posix_acl *acl)
 					state = ACL_GROUP;
 					break;
 				}
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			case ACL_GROUP:
 				if (state != ACL_GROUP)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				if (!kgid_has_mapping(user_ns, pa->e_gid))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				needs_mask = 1;
 				break;
 
 			case ACL_MASK:
 				if (state != ACL_GROUP)
-					return -EINVAL;
+					return -ERR(EINVAL);
 				state = ACL_OTHER;
 				break;
 
@@ -259,15 +259,15 @@ posix_acl_valid(struct user_namespace *user_ns, const struct posix_acl *acl)
 					state = 0;
 					break;
 				}
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 	if (state == 0)
 		return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL(posix_acl_valid);
 
@@ -309,7 +309,7 @@ posix_acl_equiv_mode(const struct posix_acl *acl, umode_t *mode_p)
 				not_equiv = 1;
 				break;
 			default:
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
         if (mode_p)
@@ -381,28 +381,28 @@ posix_acl_permission(struct inode *inode, const struct posix_acl *acl, int want)
                                 break;
                         case ACL_OTHER:
 				if (found)
-					return -EACCES;
+					return -ERR(EACCES);
 				else
 					goto check_perm;
 			default:
-				return -EIO;
+				return -ERR(EIO);
                 }
         }
-	return -EIO;
+	return -ERR(EIO);
 
 mask:
 	for (mask_obj = pa+1; mask_obj != pe; mask_obj++) {
 		if (mask_obj->e_tag == ACL_MASK) {
 			if ((pa->e_perm & mask_obj->e_perm & want) == want)
 				return 0;
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 	}
 
 check_perm:
 	if ((pa->e_perm & want) == want)
 		return 0;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 /*
@@ -449,7 +449,7 @@ static int posix_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
                                 break;
 
 			default:
-				return -EIO;
+				return -ERR(EIO);
                 }
         }
 
@@ -458,7 +458,7 @@ static int posix_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
 		mode &= (mask_obj->e_perm << 3) | ~S_IRWXG;
 	} else {
 		if (!group_obj)
-			return -EIO;
+			return -ERR(EIO);
 		group_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (group_obj->e_perm << 3) | ~S_IRWXG;
 	}
@@ -500,7 +500,7 @@ static int __posix_acl_chmod_masq(struct posix_acl *acl, umode_t mode)
 				break;
 
 			default:
-				return -EIO;
+				return -ERR(EIO);
 		}
 	}
 
@@ -508,7 +508,7 @@ static int __posix_acl_chmod_masq(struct posix_acl *acl, umode_t mode)
 		mask_obj->e_perm = (mode & S_IRWXG) >> 3;
 	} else {
 		if (!group_obj)
-			return -EIO;
+			return -ERR(EIO);
 		group_obj->e_perm = (mode & S_IRWXG) >> 3;
 	}
 
@@ -560,7 +560,7 @@ posix_acl_chmod(struct inode *inode, umode_t mode)
 	if (!IS_POSIXACL(inode))
 		return 0;
 	if (!inode->i_op->set_acl)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	acl = get_acl(inode, ACL_TYPE_ACCESS);
 	if (IS_ERR_OR_NULL(acl)) {
@@ -737,13 +737,13 @@ posix_acl_from_xattr(struct user_namespace *user_ns,
 	if (!value)
 		return NULL;
 	if (size < sizeof(struct posix_acl_xattr_header))
-		 return ERR_PTR(-EINVAL);
+		 return ERR_PTR(-ERR(EINVAL));
 	if (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	count = posix_acl_xattr_count(size);
 	if (count < 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	if (count == 0)
 		return NULL;
 	
@@ -786,7 +786,7 @@ posix_acl_from_xattr(struct user_namespace *user_ns,
 
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
+	return ERR_PTR(-ERR(EINVAL));
 }
 EXPORT_SYMBOL (posix_acl_from_xattr);
 
@@ -805,7 +805,7 @@ posix_acl_to_xattr(struct user_namespace *user_ns, const struct posix_acl *acl,
 	if (!buffer)
 		return real_size;
 	if (real_size > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	ext_entry = (void *)(ext_acl + 1);
 	ext_acl->a_version = cpu_to_le32(POSIX_ACL_XATTR_VERSION);
@@ -841,15 +841,15 @@ posix_acl_xattr_get(const struct xattr_handler *handler,
 	int error;
 
 	if (!IS_POSIXACL(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	acl = get_acl(inode, handler->flags);
 	if (IS_ERR(acl))
 		return PTR_ERR(acl);
 	if (acl == NULL)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	error = posix_acl_to_xattr(&init_user_ns, acl, value, size);
 	posix_acl_release(acl);
@@ -861,14 +861,14 @@ int
 set_posix_acl(struct inode *inode, int type, struct posix_acl *acl)
 {
 	if (!IS_POSIXACL(inode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	if (!inode->i_op->set_acl)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (type == ACL_TYPE_DEFAULT && !S_ISDIR(inode->i_mode))
-		return acl ? -EACCES : 0;
+		return acl ? -ERR(EACCES) : 0;
 	if (!inode_owner_or_capable(inode))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (acl) {
 		int ret = posix_acl_valid(inode->i_sb->s_user_ns, acl);

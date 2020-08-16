@@ -327,7 +327,7 @@ static inline int pm80x_request_irq(struct pm80x_chip *pm80x, int irq,
 				     const char *name, void *data)
 {
 	if (!pm80x->irq_data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return request_threaded_irq(regmap_irq_get_virq(pm80x->irq_data, irq),
 				    NULL, handler, flags, name, data);
 }

@@ -372,11 +372,11 @@ static int ak4642_dai_set_sysclk(struct snd_soc_dai *codec_dai,
 		extended_freq = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (extended_freq && !priv->drvdata->extended_frequencies)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	snd_soc_component_update_bits(component, MD_CTL1, PLL_MASK, pll);
 
@@ -401,7 +401,7 @@ static int ak4642_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, PW_MGMT2, MS | MCKO | PMPLL, data);
 	snd_soc_component_update_bits(component, MD_CTL1, BCKO_MASK, bcko);
@@ -419,7 +419,7 @@ static int ak4642_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	 * Please add RIGHT_J / DSP support here
 	 */
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_soc_component_update_bits(component, MD_CTL1, DIF_MASK, data);
 
@@ -656,7 +656,7 @@ static int ak4642_i2c_probe(struct i2c_client *i2c,
 
 	if (!drvdata) {
 		dev_err(dev, "Unknown device type\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);

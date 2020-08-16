@@ -624,7 +624,7 @@ static int __init dmasound_q40_init(void)
 	    dmasound.mach.default_soft = def_soft ;
 	    return dmasound_init();
 	} else
-	    return -ENODEV;
+	    return -ERR(ENODEV);
 }
 
 static void __exit dmasound_q40_cleanup(void)

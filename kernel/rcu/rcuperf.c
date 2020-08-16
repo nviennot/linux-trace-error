@@ -584,7 +584,7 @@ rcu_perf_shutdown(void *arg)
 	smp_mb(); /* Wake before output. */
 	rcu_perf_cleanup();
 	kernel_power_off();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -703,7 +703,7 @@ kfree_perf_shutdown(void *arg)
 
 	kfree_perf_cleanup();
 	kernel_power_off();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int __init
@@ -761,7 +761,7 @@ rcu_perf_init(void)
 	};
 
 	if (!torture_init_begin(perf_type, verbose))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	/* Process args and tell the world that the perf'er is on the job. */
 	for (i = 0; i < ARRAY_SIZE(perf_ops); i++) {
@@ -776,7 +776,7 @@ rcu_perf_init(void)
 			pr_cont(" %s", perf_ops[i]->name);
 		pr_cont("\n");
 		WARN_ON(!IS_MODULE(CONFIG_RCU_PERF_TEST));
-		firsterr = -EINVAL;
+		firsterr = -ERR(EINVAL);
 		cur_ops = NULL;
 		goto unwind;
 	}

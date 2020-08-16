@@ -13,7 +13,7 @@ static const char *autofs_get_link(struct dentry *dentry,
 	struct autofs_info *ino;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 	sbi = autofs_sbi(dentry->d_sb);
 	ino = autofs_dentry_ino(dentry);
 	if (ino && !autofs_oz_mode(sbi))

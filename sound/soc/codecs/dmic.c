@@ -153,7 +153,7 @@ static int dmic_dev_probe(struct platform_device *pdev)
 
 		if (!err) {
 			if (chans < 1 || chans > 8)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			dai_drv = devm_kzalloc(&pdev->dev, sizeof(*dai_drv), GFP_KERNEL);
 			if (!dai_drv)

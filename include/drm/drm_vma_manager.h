@@ -240,7 +240,7 @@ static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
 static inline int drm_vma_node_verify_access(struct drm_vma_offset_node *node,
 					     struct drm_file *tag)
 {
-	return drm_vma_node_is_allowed(node, tag) ? 0 : -EACCES;
+	return drm_vma_node_is_allowed(node, tag) ? 0 : -ERR(EACCES);
 }
 
 #endif /* __DRM_VMA_MANAGER_H__ */

@@ -64,7 +64,7 @@ static uint32_t crc;
 static int xz_dec_test_open(struct inode *i, struct file *f)
 {
 	if (device_is_open)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	device_is_open = true;
 
@@ -110,7 +110,7 @@ static ssize_t xz_dec_test_write(struct file *file, const char __user *buf,
 					"garbage at the end of the file\n",
 					size);
 
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	printk(KERN_INFO DEVICE_NAME ": decoding %zu bytes of input\n",
@@ -169,7 +169,7 @@ static ssize_t xz_dec_test_write(struct file *file, const char __user *buf,
 		break;
 	}
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /* Allocate the XZ decoder state and register the character device. */

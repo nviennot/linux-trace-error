@@ -203,7 +203,7 @@ int snd_seq_device_new(struct snd_card *card, int device, const char *id,
 		*result = NULL;
 
 	if (snd_BUG_ON(!id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev = kzalloc(sizeof(*dev) + argsize, GFP_KERNEL);
 	if (!dev)
@@ -241,7 +241,7 @@ EXPORT_SYMBOL(snd_seq_device_new);
 int __snd_seq_driver_register(struct snd_seq_driver *drv, struct module *mod)
 {
 	if (WARN_ON(!drv->driver.name || !drv->id))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	drv->driver.bus = &snd_seq_bus_type;
 	drv->driver.owner = mod;
 	return driver_register(&drv->driver);

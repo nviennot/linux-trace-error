@@ -111,7 +111,7 @@ affs_grow_extcache(struct inode *inode, u32 lc_idx)
 
 err:
 	// lock cache
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static struct buffer_head *
@@ -123,12 +123,12 @@ affs_alloc_extblock(struct inode *inode, struct buffer_head *bh, u32 ext)
 
 	blocknr = affs_alloc_block(inode, bh->b_blocknr);
 	if (!blocknr)
-		return ERR_PTR(-ENOSPC);
+		return ERR_PTR(-ERR(ENOSPC));
 
 	new_bh = affs_getzeroblk(sb, blocknr);
 	if (!new_bh) {
 		affs_free_block(sb, blocknr);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	AFFS_HEAD(new_bh)->ptype = cpu_to_be32(T_LIST);
@@ -288,7 +288,7 @@ store_ext:
 
 err_bread:
 	affs_brelse(bh);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static int
@@ -355,7 +355,7 @@ affs_get_block(struct inode *inode, sector_t block, struct buffer_head *bh_resul
 err_big:
 	affs_error(inode->i_sb, "get_block", "strange block request %llu",
 		   (unsigned long long)block);
-	return -EIO;
+	return -ERR(EIO);
 err_ext:
 	// unlock cache
 	affs_unlock_ext(inode);
@@ -366,7 +366,7 @@ err_alloc:
 	bh_result->b_bdev = NULL;
 	// unlock cache
 	affs_unlock_ext(inode);
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 static int affs_writepage(struct page *page, struct writeback_control *wbc)
@@ -456,7 +456,7 @@ affs_bread_ino(struct inode *inode, int block, int create)
 			bh->b_state |= tmp_bh.b_state;
 			return bh;
 		}
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	return ERR_PTR(err);
 }
@@ -475,7 +475,7 @@ affs_getzeroblk_ino(struct inode *inode, int block)
 			bh->b_state |= tmp_bh.b_state;
 			return bh;
 		}
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	return ERR_PTR(err);
 }
@@ -494,7 +494,7 @@ affs_getemptyblk_ino(struct inode *inode, int block)
 			bh->b_state |= tmp_bh.b_state;
 			return bh;
 		}
-		err = -EIO;
+		err = -ERR(EIO);
 	}
 	return ERR_PTR(err);
 }

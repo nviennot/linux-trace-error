@@ -111,7 +111,7 @@ static int rt711_calibration(struct rt711_priv *rt711)
 		if (loop >= 500) {
 			pr_err("%s, calibration time-out!\n",
 							__func__);
-			ret = -ETIMEDOUT;
+			ret = -ERR(ETIMEDOUT);
 			break;
 		}
 		loop++;
@@ -221,7 +221,7 @@ static int rt711_headset_detect(struct rt711_priv *rt711)
 	return 0;
 
 to_error:
-	ret = -ETIMEDOUT;
+	ret = -ERR(ETIMEDOUT);
 	pr_err_ratelimited("Time-out error in %s\n", __func__);
 	return ret;
 io_error:
@@ -229,7 +229,7 @@ io_error:
 	return ret;
 remove_error:
 	pr_err_ratelimited("Jack removal in %s\n", __func__);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void rt711_jack_detect_handler(struct work_struct *work)
@@ -638,7 +638,7 @@ static int rt711_mux_get(struct snd_kcontrol *kcontrol,
 	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
 		nid = RT711_MIXER_IN2;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* vid = 0xf01 */
 	reg = RT711_VERB_SET_CONNECT_SEL | nid;
@@ -668,14 +668,14 @@ static int rt711_mux_put(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strstr(ucontrol->id.name, "ADC 22 Mux"))
 		nid = RT711_MIXER_IN1;
 	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
 		nid = RT711_MIXER_IN2;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Verb ID = 0x701h */
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
@@ -951,10 +951,10 @@ static int rt711_pcm_hw_params(struct snd_pcm_substream *substream,
 	stream = snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rt711->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* SoundWire specific configuration */
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -967,7 +967,7 @@ static int rt711_pcm_hw_params(struct snd_pcm_substream *substream,
 		else if (dai->id == RT711_AIF2)
 			port = 2;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	stream_config.frame_rate = params_rate(params);
@@ -992,7 +992,7 @@ static int rt711_pcm_hw_params(struct snd_pcm_substream *substream,
 	} else {
 		dev_err(component->dev, "Unsupported channels %d\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -1012,7 +1012,7 @@ static int rt711_pcm_hw_params(struct snd_pcm_substream *substream,
 		val |= (0x4 << 4);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* 48Khz */
@@ -1032,7 +1032,7 @@ static int rt711_pcm_hw_free(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!rt711->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdw_stream_remove_slave(rt711->slave, stream->sdw_stream);
 	return 0;
@@ -1118,7 +1118,7 @@ int rt711_clock_config(struct device *dev)
 		value = 0x5;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt711->regmap, 0xe0, value);

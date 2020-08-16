@@ -69,7 +69,7 @@ ecryptfs_miscdev_open(struct inode *inode, struct file *file)
 	mutex_lock(&ecryptfs_daemon_hash_mux);
 	rc = ecryptfs_find_daemon_by_euid(&daemon);
 	if (!rc) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_unlock_daemon_list;
 	}
 	rc = ecryptfs_spawn_daemon(&daemon, file);
@@ -80,7 +80,7 @@ ecryptfs_miscdev_open(struct inode *inode, struct file *file)
 	}
 	mutex_lock(&daemon->mux);
 	if (daemon->flags & ECRYPTFS_DAEMON_MISCDEV_OPEN) {
-		rc = -EBUSY;
+		rc = -ERR(EBUSY);
 		goto out_unlock_daemon;
 	}
 	daemon->flags |= ECRYPTFS_DAEMON_MISCDEV_OPEN;
@@ -328,7 +328,7 @@ static int ecryptfs_miscdev_response(struct ecryptfs_daemon *daemon, char *data,
 		printk(KERN_WARNING "%s: (sizeof(*msg) + msg->data_len) = "
 		       "[%zd]; data_size = [%zd]. Invalid packet.\n", __func__,
 		       (sizeof(*msg) + msg->data_len), data_size);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out;
 	}
 	rc = ecryptfs_process_response(daemon, msg, seq);
@@ -368,7 +368,7 @@ ecryptfs_miscdev_write(struct file *file, const char __user *buf,
 		printk(KERN_WARNING "%s: Acceptable packet size range is "
 		       "[%d-%zu], but amount of data written is [%zu].\n",
 		       __func__, MIN_MSG_PKT_SIZE, MAX_MSG_PKT_SIZE, count);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (copy_from_user(packet_size_peek, &buf[PKT_LEN_OFFSET],
@@ -390,7 +390,7 @@ ecryptfs_miscdev_write(struct file *file, const char __user *buf,
 	    != count) {
 		printk(KERN_WARNING "%s: Invalid packet size [%zu]\n", __func__,
 		       packet_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 memdup:
@@ -410,7 +410,7 @@ memdup:
 			       __func__,
 			       (MIN_MSG_PKT_SIZE
 				+ sizeof(struct ecryptfs_message)), count);
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			goto out_free;
 		}
 		memcpy(&counter_nbo, &data[PKT_CTR_OFFSET], PKT_CTR_SIZE);
@@ -432,7 +432,7 @@ memdup:
 		ecryptfs_printk(KERN_WARNING, "Dropping miscdev "
 				"message of unrecognized type [%d]\n",
 				data[0]);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_free;
 	}
 	rc = count;

@@ -159,7 +159,7 @@ static int nilfs_writepages(struct address_space *mapping,
 
 	if (sb_rdonly(inode->i_sb)) {
 		nilfs_clear_dirty_pages(mapping, false);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	if (wbc->sync_mode == WB_SYNC_ALL)
@@ -183,7 +183,7 @@ static int nilfs_writepage(struct page *page, struct writeback_control *wbc)
 		 */
 		nilfs_clear_dirty_page(page, false);
 		unlock_page(page);
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	redirty_page_for_writepage(wbc, page);
@@ -372,7 +372,7 @@ struct inode *nilfs_new_inode(struct inode *dir, umode_t mode)
 	inode->i_generation = nilfs->ns_next_generation++;
 	spin_unlock(&nilfs->ns_next_gen_lock);
 	if (nilfs_insert_inode_locked(inode, root, ino) < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto failed_after_creation;
 	}
 
@@ -439,7 +439,7 @@ int nilfs_read_inode_common(struct inode *inode,
 	inode->i_ctime.tv_nsec = le32_to_cpu(raw_inode->i_ctime_nsec);
 	inode->i_mtime.tv_nsec = le32_to_cpu(raw_inode->i_mtime_nsec);
 	if (inode->i_nlink == 0)
-		return -ESTALE; /* this inode is deleted */
+		return -ERR(ESTALE); /* this inode is deleted */
 
 	inode->i_blocks = le64_to_cpu(raw_inode->i_blocks);
 	ii->i_flags = le32_to_cpu(raw_inode->i_flags);
@@ -849,7 +849,7 @@ int nilfs_permission(struct inode *inode, int mask)
 
 	if ((mask & MAY_WRITE) && root &&
 	    root->cno != NILFS_CPTREE_CURRENT_CNO)
-		return -EROFS; /* snapshot is not writable */
+		return -ERR(EROFS); /* snapshot is not writable */
 
 	return generic_permission(inode, mask);
 }
@@ -923,7 +923,7 @@ int nilfs_set_file_dirty(struct inode *inode, unsigned int nr_dirty)
 				  "cannot set file dirty (ino=%lu): the file is being freed",
 				  inode->i_ino);
 			spin_unlock(&nilfs->ns_inode_lock);
-			return -EINVAL; /*
+			return -ERR(EINVAL); /*
 					 * NILFS_I_DIRTY may remain for
 					 * freeing inode.
 					 */

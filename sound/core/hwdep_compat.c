@@ -60,5 +60,5 @@ static long snd_hwdep_ioctl_compat(struct file * file, unsigned int cmd,
 	}
 	if (hw->ops.ioctl_compat)
 		return hw->ops.ioctl_compat(hw, file, cmd, arg);
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }

@@ -64,7 +64,7 @@ static int configfs_get_target_path(struct config_item *item,
 	depth = item_depth(item);
 	size = item_path_length(target) + depth * 3 - 1;
 	if (size > PATH_MAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	pr_debug("%s: depth = %d, size = %d\n", __func__, depth, size);
 
@@ -85,7 +85,7 @@ static int create_link(struct config_item *parent_item,
 	int ret;
 
 	if (!configfs_dirent_is_ready(target_sd))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	body = kzalloc(PAGE_SIZE, GFP_KERNEL);
 	if (!body)
@@ -97,7 +97,7 @@ static int create_link(struct config_item *parent_item,
 		spin_unlock(&configfs_dirent_lock);
 		configfs_put(target_sd);
 		kfree(body);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	target_sd->s_links++;
 	spin_unlock(&configfs_dirent_lock);
@@ -126,11 +126,11 @@ static int get_target(const char *symname, struct path *path,
 		if (path->dentry->d_sb == sb) {
 			*target = configfs_get_config_item(path->dentry);
 			if (!*target) {
-				ret = -ENOENT;
+				ret = -ERR(ENOENT);
 				path_put(path);
 			}
 		} else {
-			ret = -EPERM;
+			ret = -ERR(EPERM);
 			path_put(path);
 		}
 	}
@@ -154,12 +154,12 @@ int configfs_symlink(struct inode *dir, struct dentry *dentry, const char *symna
 	 * being attached
 	 */
 	if (!configfs_dirent_is_ready(sd))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	parent_item = configfs_get_config_item(dentry->d_parent);
 	type = parent_item->ci_type;
 
-	ret = -EPERM;
+	ret = -ERR(EPERM);
 	if (!type || !type->ct_item_ops ||
 	    !type->ct_item_ops->allow_link)
 		goto out_put;
@@ -195,7 +195,7 @@ int configfs_symlink(struct inode *dir, struct dentry *dentry, const char *symna
 		goto out_put;
 
 	if (dentry->d_inode || d_unhashed(dentry))
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	else
 		ret = inode_permission(dir, MAY_WRITE | MAY_EXEC);
 	if (!ret)
@@ -224,7 +224,7 @@ int configfs_unlink(struct inode *dir, struct dentry *dentry)
 	const struct config_item_type *type;
 	int ret;
 
-	ret = -EPERM;  /* What lack-of-symlink returns */
+	ret = -ERR(EPERM);  /* What lack-of-symlink returns */
 	if (!(sd->s_type & CONFIGFS_ITEM_LINK))
 		goto out;
 

@@ -24,7 +24,7 @@ int adfs_dir_copyfrom(void *dst, struct adfs_dir *dir, unsigned int offset,
 	offset &= sb->s_blocksize - 1;
 	remain = sb->s_blocksize - offset;
 	if (index + (remain < len) >= dir->nr_buffers)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (remain < len) {
 		memcpy(dst, dir->bhs[index]->b_data + offset, remain);
@@ -49,7 +49,7 @@ int adfs_dir_copyto(struct adfs_dir *dir, unsigned int offset, const void *src,
 	offset &= sb->s_blocksize - 1;
 	remain = sb->s_blocksize - offset;
 	if (index + (remain < len) >= dir->nr_buffers)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (remain < len) {
 		memcpy(dir->bhs[index]->b_data + offset, src, remain);
@@ -105,7 +105,7 @@ int adfs_dir_read_buffers(struct super_block *sb, u32 indaddr,
 	if (num > ARRAY_SIZE(dir->bh)) {
 		/* We only allow one extension */
 		if (dir->bhs != dir->bh)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		bhs = kcalloc(num, sizeof(*bhs), GFP_KERNEL);
 		if (!bhs)
@@ -140,7 +140,7 @@ int adfs_dir_read_buffers(struct super_block *sb, u32 indaddr,
 error:
 	adfs_dir_relse(dir);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int adfs_dir_read(struct super_block *sb, u32 indaddr,
@@ -167,7 +167,7 @@ static int adfs_dir_read_inode(struct super_block *sb, struct inode *inode,
 			   "parent directory id changed under me! (%06x but got %06x)\n",
 			   ADFS_I(inode)->parent_id, dir->parent_id);
 		adfs_dir_relse(dir);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -191,7 +191,7 @@ static int adfs_dir_sync(struct adfs_dir *dir)
 		struct buffer_head *bh = dir->bhs[i];
 		sync_dirty_buffer(bh);
 		if (buffer_req(bh) && !buffer_uptodate(bh))
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 
 	return err;
@@ -279,10 +279,10 @@ adfs_dir_update(struct super_block *sb, struct object_info *obj, int wait)
 	int ret;
 
 	if (!IS_ENABLED(CONFIG_ADFS_FS_RW))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!ops->update)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_write(&adfs_dir_rwsem);
 	ret = adfs_dir_read(sb, obj->parent_id, 0, &dir);
@@ -363,7 +363,7 @@ static int adfs_dir_lookup_byname(struct inode *inode, const struct qstr *qstr,
 	if (ret)
 		goto unlock_relse;
 
-	ret = -ENOENT;
+	ret = -ERR(ENOENT);
 	name = qstr->name;
 	name_len = qstr->len;
 	while (ops->getnext(&dir, obj) == 0) {
@@ -399,7 +399,7 @@ adfs_hash(const struct dentry *parent, struct qstr *qstr)
 	u32 len;
 
 	if (qstr->len > ADFS_SB(parent->d_sb)->s_namelen)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	len = qstr->len;
 	name = qstr->name;
@@ -441,7 +441,7 @@ adfs_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 		 */
 		inode = adfs_iget(dir->i_sb, &obj);
 		if (!inode)
-			inode = ERR_PTR(-EACCES);
+			inode = ERR_PTR(-ERR(EACCES));
 	} else if (error != -ENOENT) {
 		inode = ERR_PTR(error);
 	}

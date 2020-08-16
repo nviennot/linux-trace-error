@@ -27,14 +27,14 @@ static int __bpf_mt_check_bytecode(struct sock_filter *insns, __u16 len,
 	struct sock_fprog_kern program;
 
 	if (len > XT_BPF_MAX_NUM_INSTR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	program.len = len;
 	program.filter = insns;
 
 	if (bpf_prog_create(ret, &program)) {
 		pr_info_ratelimited("check failed: parse error\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -55,7 +55,7 @@ static int __bpf_mt_check_fd(int fd, struct bpf_prog **ret)
 static int __bpf_mt_check_path(const char *path, struct bpf_prog **ret)
 {
 	if (strnlen(path, XT_BPF_PATH_MAX) == XT_BPF_PATH_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*ret = bpf_prog_get_type_path(path, BPF_PROG_TYPE_SOCKET_FILTER);
 	return PTR_ERR_OR_ZERO(*ret);
@@ -83,7 +83,7 @@ static int bpf_mt_check_v1(const struct xt_mtchk_param *par)
 	else if (info->mode == XT_BPF_MODE_PATH_PINNED)
 		return __bpf_mt_check_path(info->path, &info->filter);
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static bool bpf_mt(const struct sk_buff *skb, struct xt_action_param *par)

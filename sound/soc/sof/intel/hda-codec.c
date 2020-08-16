@@ -130,7 +130,7 @@ static int hda_codec_probe(struct snd_sof_dev *sdev, int address,
 	snd_hdac_bus_get_response(&hbus->core, address, &resp);
 	mutex_unlock(&hbus->core.cmd_mutex);
 	if (resp == -1)
-		return -EIO;
+		return -ERR(EIO);
 	dev_dbg(sdev->dev, "HDA codec #%d probed OK: response: %x\n",
 		address, resp);
 
@@ -151,7 +151,7 @@ static int hda_codec_probe(struct snd_sof_dev *sdev, int address,
 		if (!hdev->bus->audio_component) {
 			dev_dbg(sdev->dev,
 				"iDisp hw present but no driver\n");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		hda_priv->need_display_power = true;
 	}
@@ -174,7 +174,7 @@ static int hda_codec_probe(struct snd_sof_dev *sdev, int address,
 		 * other return codes without modification
 		 */
 		if (ret == 0)
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 	}
 
 	return ret;

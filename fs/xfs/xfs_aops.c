@@ -161,7 +161,7 @@ xfs_end_ioend(
 	 * Just clean up the in-memory strutures if the fs has been shut down.
 	 */
 	if (XFS_FORCED_SHUTDOWN(ip->i_mount)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto done;
 	}
 
@@ -354,7 +354,7 @@ xfs_map_blocks(
 	int			error = 0;
 
 	if (XFS_FORCED_SHUTDOWN(mp))
-		return -EIO;
+		return -ERR(EIO);
 
 	/*
 	 * COW fork blocks can overlap data fork blocks even if the blocks

@@ -37,9 +37,9 @@ static int dsa_switch_ageing_time(struct dsa_switch *ds,
 
 	if (switchdev_trans_ph_prepare(trans)) {
 		if (ds->ageing_time_min && ageing_time < ds->ageing_time_min)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		if (ds->ageing_time_max && ageing_time > ds->ageing_time_max)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		return 0;
 	}
 
@@ -73,7 +73,7 @@ static int dsa_switch_mtu(struct dsa_switch *ds,
 	int port, ret;
 
 	if (!ds->ops->port_change_mtu)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	for (port = 0; port < ds->num_ports; port++) {
 		if (dsa_switch_mtu_match(ds, port, info)) {
@@ -155,7 +155,7 @@ static int dsa_switch_fdb_add(struct dsa_switch *ds,
 	int port = dsa_towards_port(ds, info->sw_index, info->port);
 
 	if (!ds->ops->port_fdb_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->port_fdb_add(ds, port, info->addr, info->vid);
 }
@@ -166,7 +166,7 @@ static int dsa_switch_fdb_del(struct dsa_switch *ds,
 	int port = dsa_towards_port(ds, info->sw_index, info->port);
 
 	if (!ds->ops->port_fdb_del)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return ds->ops->port_fdb_del(ds, port, info->addr, info->vid);
 }
@@ -189,7 +189,7 @@ static int dsa_switch_mdb_prepare(struct dsa_switch *ds,
 	int port, err;
 
 	if (!ds->ops->port_mdb_prepare || !ds->ops->port_mdb_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	for (port = 0; port < ds->num_ports; port++) {
 		if (dsa_switch_mdb_match(ds, port, info)) {
@@ -224,7 +224,7 @@ static int dsa_switch_mdb_del(struct dsa_switch *ds,
 			      struct dsa_notifier_mdb_info *info)
 {
 	if (!ds->ops->port_mdb_del)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (ds->index == info->sw_index)
 		return ds->ops->port_mdb_del(ds, info->port, info->mdb);
@@ -241,7 +241,7 @@ static int dsa_port_vlan_device_check(struct net_device *vlan_dev,
 
 	for (vid = vlan->vid_begin; vid <= vlan->vid_end; ++vid) {
 		if (vid == vlan_dev_vid)
-			return -EBUSY;
+			return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -287,7 +287,7 @@ static int dsa_switch_vlan_prepare(struct dsa_switch *ds,
 	int port, err;
 
 	if (!ds->ops->port_vlan_prepare || !ds->ops->port_vlan_add)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	for (port = 0; port < ds->num_ports; port++) {
 		if (dsa_switch_vlan_match(ds, port, info)) {
@@ -326,7 +326,7 @@ static int dsa_switch_vlan_del(struct dsa_switch *ds,
 			       struct dsa_notifier_vlan_info *info)
 {
 	if (!ds->ops->port_vlan_del)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (ds->index == info->sw_index)
 		return ds->ops->port_vlan_del(ds, info->port, info->vlan);
@@ -375,7 +375,7 @@ static int dsa_switch_event(struct notifier_block *nb,
 		err = dsa_switch_mtu(ds, info);
 		break;
 	default:
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		break;
 	}
 

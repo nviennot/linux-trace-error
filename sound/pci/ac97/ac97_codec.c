@@ -353,7 +353,7 @@ int snd_ac97_update(struct snd_ac97 *ac97, unsigned short reg, unsigned short va
 	int change;
 
 	if (!snd_ac97_valid_reg(ac97, reg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&ac97->reg_mutex);
 	change = ac97->regs[reg] != value;
 	if (change) {
@@ -385,7 +385,7 @@ int snd_ac97_update_bits(struct snd_ac97 *ac97, unsigned short reg, unsigned sho
 	int change;
 
 	if (!snd_ac97_valid_reg(ac97, reg))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&ac97->reg_mutex);
 	change = snd_ac97_update_bits_nolock(ac97, reg, mask, value);
 	mutex_unlock(&ac97->reg_mutex);
@@ -481,12 +481,12 @@ static int snd_ac97_put_enum_double(struct snd_kcontrol *kcontrol,
 	for (bitmask = 1; bitmask < e->mask; bitmask <<= 1)
 		;
 	if (ucontrol->value.enumerated.item[0] > e->mask - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	val = ucontrol->value.enumerated.item[0] << e->shift_l;
 	mask = (bitmask - 1) << e->shift_l;
 	if (e->shift_l != e->shift_r) {
 		if (ucontrol->value.enumerated.item[1] > e->mask - 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		val |= ucontrol->value.enumerated.item[1] << e->shift_r;
 		mask |= (bitmask - 1) << e->shift_r;
 	}
@@ -1869,7 +1869,7 @@ static int ac97_reset_wait(struct snd_ac97 *ac97, int timeout, int with_modem)
 		}
 		schedule_timeout_uninterruptible(1);
 	} while (time_after_eq(end_time, jiffies));
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /**
@@ -1905,7 +1905,7 @@ int snd_ac97_bus(struct snd_card *card, int num,
 	};
 
 	if (snd_BUG_ON(!card))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	bus = kzalloc(sizeof(*bus), GFP_KERNEL);
 	if (bus == NULL)
 		return -ENOMEM;
@@ -2009,11 +2009,11 @@ int snd_ac97_mixer(struct snd_ac97_bus *bus, struct snd_ac97_template *template,
 	if (rac97)
 		*rac97 = NULL;
 	if (snd_BUG_ON(!bus || !template))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (snd_BUG_ON(template->num >= 4))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (bus->codec[template->num])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	card = bus->card;
 	ac97 = kzalloc(sizeof(*ac97), GFP_KERNEL);
@@ -2085,7 +2085,7 @@ int snd_ac97_mixer(struct snd_ac97_bus *bus, struct snd_ac97_template *template,
 			 "AC'97 %d access is not valid [0x%x], removing mixer.\n",
 			 ac97->num, ac97->id);
 		snd_ac97_free(ac97);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	pid = look_for_codec_id(snd_ac97_codec_ids, ac97->id);
 	if (pid)
@@ -2120,7 +2120,7 @@ int snd_ac97_mixer(struct snd_ac97_bus *bus, struct snd_ac97_template *template,
 				 "AC'97 %d access error (not audio or modem codec)\n",
 				 ac97->num);
 		snd_ac97_free(ac97);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	if (bus->ops->reset) // FIXME: always skipping?
@@ -2623,7 +2623,7 @@ static int snd_ac97_rename_ctl(struct snd_ac97 *ac97, const char *src,
 		set_ctl_name(kctl->id.name, dst, suffix);
 		return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* rename both Volume and Switch controls - don't check the return value */
@@ -2646,7 +2646,7 @@ static int snd_ac97_swap_ctl(struct snd_ac97 *ac97, const char *s1,
 		set_ctl_name(kctl2->id.name, s1, suffix);
 		return 0;
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 #if 1
@@ -2669,7 +2669,7 @@ static int tune_hp_only(struct snd_ac97 *ac97)
 	struct snd_kcontrol *msw = ctl_find(ac97, "Master Playback Switch", NULL);
 	struct snd_kcontrol *mvol = ctl_find(ac97, "Master Playback Volume", NULL);
 	if (! msw || ! mvol)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	msw->put = bind_hp_volsw_put;
 	mvol->put = bind_hp_volsw_put;
 	snd_ac97_remove_ctl(ac97, "Headphone Playback", "Switch");
@@ -2694,7 +2694,7 @@ static int tune_hp_only(struct snd_ac97 *ac97)
 static int tune_swap_hp(struct snd_ac97 *ac97)
 {
 	if (ctl_find(ac97, "Headphone Playback Switch", NULL) == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	snd_ac97_rename_vol_ctl(ac97, "Master Playback", "Line-Out Playback");
 	snd_ac97_rename_vol_ctl(ac97, "Headphone Playback", "Master Playback");
 	return 0;
@@ -2705,7 +2705,7 @@ static int tune_swap_surround(struct snd_ac97 *ac97)
 {
 	if (snd_ac97_swap_ctl(ac97, "Master Playback", "Surround Playback", "Switch") ||
 	    snd_ac97_swap_ctl(ac97, "Master Playback", "Surround Playback", "Volume"))
-		return -ENOENT;
+		return -ERR(ENOENT);
 	return 0;
 }
 
@@ -2715,7 +2715,7 @@ static int tune_ad_sharing(struct snd_ac97 *ac97)
 	unsigned short scfg;
 	if ((ac97->id & 0xffffff00) != 0x41445300) {
 		ac97_err(ac97, "ac97_quirk AD_SHARING is only for AD codecs\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* Turn on OMS bit to route microphone to back panel */
 	scfg = snd_ac97_read(ac97, AC97_AD_SERIAL_CFG);
@@ -2732,7 +2732,7 @@ static int tune_alc_jack(struct snd_ac97 *ac97)
 	if ((ac97->id & 0xffffff00) != 0x414c4700) {
 		ac97_err(ac97,
 			 "ac97_quirk ALC_JACK is only for Realtek codecs\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	snd_ac97_update_bits(ac97, 0x7a, 0x20, 0x20); /* select jack detect function */
 	snd_ac97_update_bits(ac97, 0x7a, 0x01, 0x01); /* Line-out auto mute */
@@ -2746,7 +2746,7 @@ static int tune_inv_eapd(struct snd_ac97 *ac97)
 {
 	struct snd_kcontrol *kctl = ctl_find(ac97, "External Amplifier", NULL);
 	if (! kctl)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	set_inv_eapd(ac97, kctl);
 	return 0;
 }
@@ -2775,7 +2775,7 @@ static int tune_mute_led(struct snd_ac97 *ac97)
 {
 	struct snd_kcontrol *msw = ctl_find(ac97, "Master Playback Switch", NULL);
 	if (! msw)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	msw->put = master_mute_sw_put;
 	snd_ac97_remove_ctl(ac97, "External Amplifier", NULL);
 	snd_ac97_update_bits(
@@ -2811,7 +2811,7 @@ static int tune_hp_mute_led(struct snd_ac97 *ac97)
 	struct snd_kcontrol *msw = ctl_find(ac97, "Master Playback Switch", NULL);
 	struct snd_kcontrol *mvol = ctl_find(ac97, "Master Playback Volume", NULL);
 	if (! msw || ! mvol)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	msw->put = hp_master_mute_sw_put;
 	mvol->put = bind_hp_volsw_put;
 	snd_ac97_remove_ctl(ac97, "External Amplifier", NULL);
@@ -2847,7 +2847,7 @@ static int apply_quirk(struct snd_ac97 *ac97, int type)
 	if (type <= 0)
 		return 0;
 	else if (type >= ARRAY_SIZE(applicable_quirks))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (applicable_quirks[type].func)
 		return applicable_quirks[type].func(ac97);
 	return 0;
@@ -2867,7 +2867,7 @@ static int apply_quirk_str(struct snd_ac97 *ac97, const char *typestr)
 	/* for compatibility, accept the numbers, too */
 	if (*typestr >= '0' && *typestr <= '9')
 		return apply_quirk(ac97, (int)simple_strtoul(typestr, NULL, 10));
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -2898,7 +2898,7 @@ int snd_ac97_tune_hardware(struct snd_ac97 *ac97,
 	}
 
 	if (! quirk)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (; quirk->subvendor; quirk++) {
 		if (quirk->subvendor != ac97->subsystem_vendor)

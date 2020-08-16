@@ -134,7 +134,7 @@ static int snd_opl3_open_seq_oss(struct snd_seq_oss_arg *arg, void *closure)
 	int err;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	if ((err = snd_opl3_synth_setup(opl3)) < 0)
 		return err;
@@ -157,7 +157,7 @@ static int snd_opl3_close_seq_oss(struct snd_seq_oss_arg *arg)
 	struct snd_opl3 *opl3;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	opl3 = arg->private_data;
 
 	snd_opl3_synth_cleanup(opl3);
@@ -180,7 +180,7 @@ static int snd_opl3_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 	int err, type;
 
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	opl3 = arg->private_data;
 
 	if (format == FM_PATCH)
@@ -188,11 +188,11 @@ static int snd_opl3_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 	else if (format == OPL3_PATCH)
 		type = FM_PATCH_OPL3;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (count < (int)sizeof(sbi)) {
 		snd_printk(KERN_ERR "FM Error: Patch record too short\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (copy_from_user(&sbi, buf, sizeof(sbi)))
 		return -EFAULT;
@@ -200,7 +200,7 @@ static int snd_opl3_load_patch_seq_oss(struct snd_seq_oss_arg *arg, int format,
 	if (sbi.channel < 0 || sbi.channel >= SBFM_MAXINSTR) {
 		snd_printk(KERN_ERR "FM Error: Invalid instrument number %d\n",
 			   sbi.channel);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	memset(name, 0, sizeof(name));
@@ -219,13 +219,13 @@ static int snd_opl3_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd,
 				  unsigned long ioarg)
 {
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	switch (cmd) {
 		case SNDCTL_FM_LOAD_INSTR:
 			snd_printk(KERN_ERR "OPL3: "
 				   "Obsolete ioctl(SNDCTL_FM_LOAD_INSTR) used. "
 				   "Fix the program.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		case SNDCTL_SYNTH_MEMAVL:
 			return 0x7fffffff;
@@ -235,7 +235,7 @@ static int snd_opl3_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd,
 			return 0;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -244,7 +244,7 @@ static int snd_opl3_ioctl_seq_oss(struct snd_seq_oss_arg *arg, unsigned int cmd,
 static int snd_opl3_reset_seq_oss(struct snd_seq_oss_arg *arg)
 {
 	if (snd_BUG_ON(!arg))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	return 0;
 }

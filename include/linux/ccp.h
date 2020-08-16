@@ -70,7 +70,7 @@ int ccp_enqueue_cmd(struct ccp_cmd *cmd);
 
 static inline int ccp_present(void)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static inline unsigned int ccp_version(void)
@@ -80,7 +80,7 @@ static inline unsigned int ccp_version(void)
 
 static inline int ccp_enqueue_cmd(struct ccp_cmd *cmd)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 #endif /* CONFIG_CRYPTO_DEV_SP_CCP */

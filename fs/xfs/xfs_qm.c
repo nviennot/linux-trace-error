@@ -121,7 +121,7 @@ xfs_qm_dqpurge(
 {
 	struct xfs_mount	*mp = dqp->q_mount;
 	struct xfs_quotainfo	*qi = mp->m_quotainfo;
-	int			error = -EAGAIN;
+	int			error = -ERR(EAGAIN);
 
 	xfs_dqlock(dqp);
 	if ((dqp->dq_flags & XFS_DQ_FREEING) || dqp->q_nrefs != 0)
@@ -1240,7 +1240,7 @@ xfs_qm_flush_one(
 		bp = xfs_buf_incore(mp->m_ddev_targp, dqp->q_blkno,
 				mp->m_quotainfo->qi_dqchunklen, 0);
 		if (!bp) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out_unlock;
 		}
 		xfs_buf_unlock(bp);
@@ -1248,7 +1248,7 @@ xfs_qm_flush_one(
 		xfs_buf_delwri_pushbuf(bp, buffer_list);
 		xfs_buf_rele(bp);
 
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		goto out_unlock;
 	}
 

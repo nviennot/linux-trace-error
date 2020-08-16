@@ -94,7 +94,7 @@ err_brelse:
 	brelse(bhs[0]);
 err:
 	fat_msg(sb, KERN_ERR, "FAT read failed (blocknr %llu)", (llu)blocknr);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int fat_ent_bread(struct super_block *sb, struct fat_entry *fatent,
@@ -108,7 +108,7 @@ static int fat_ent_bread(struct super_block *sb, struct fat_entry *fatent,
 	if (!fatent->bhs[0]) {
 		fat_msg(sb, KERN_ERR, "FAT read failed (blocknr %llu)",
 		       (llu)blocknr);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	fatent->nr_bhs = 1;
 	ops->ent_set_ptr(fatent, offset);
@@ -355,7 +355,7 @@ int fat_ent_read(struct inode *inode, struct fat_entry *fatent, int entry)
 	if (!fat_valid_entry(sbi, entry)) {
 		fatent_brelse(fatent);
 		fat_fs_error(sb, "invalid access to FAT (entry 0x%08x)", entry);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	fatent_set_entry(fatent, entry);
@@ -476,7 +476,7 @@ int fat_alloc_clusters(struct inode *inode, int *cluster, int nr_cluster)
 	if (sbi->free_clusters != -1 && sbi->free_clus_valid &&
 	    sbi->free_clusters < nr_cluster) {
 		unlock_fat(sbi);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	err = nr_bhs = idx_clus = 0;
@@ -528,7 +528,7 @@ int fat_alloc_clusters(struct inode *inode, int *cluster, int nr_cluster)
 	/* Couldn't allocate the free entries */
 	sbi->free_clusters = 0;
 	sbi->free_clus_valid = 1;
-	err = -ENOSPC;
+	err = -ERR(ENOSPC);
 
 out:
 	unlock_fat(sbi);
@@ -570,7 +570,7 @@ int fat_free_clusters(struct inode *inode, int cluster)
 		} else if (cluster == FAT_ENT_FREE) {
 			fat_fs_error(sb, "%s: deleting FAT entry beyond EOF",
 				     __func__);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto error;
 		}
 
@@ -776,7 +776,7 @@ int fat_trim_fs(struct inode *inode, struct fstrim_range *range)
 	minlen = range->minlen >> sbi->cluster_bits;
 
 	if (ent_start >= sbi->max_cluster || range->len < sbi->cluster_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ent_end >= sbi->max_cluster)
 		ent_end = sbi->max_cluster - 1;
 
@@ -810,7 +810,7 @@ int fat_trim_fs(struct inode *inode, struct fstrim_range *range)
 		} while (fat_ent_next(sbi, &fatent) && fatent.entry <= ent_end);
 
 		if (fatal_signal_pending(current)) {
-			err = -ERESTARTSYS;
+			err = -ERR(ERESTARTSYS);
 			goto error;
 		}
 

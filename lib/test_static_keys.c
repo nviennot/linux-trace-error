@@ -74,14 +74,14 @@ static int verify_keys(struct test_key *keys, int size, bool invert)
 		ret = static_key_enabled(keys[i].key);
 		init = keys[i].init_state;
 		if (ret != (invert ? !init : init))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		ret = keys[i].test_key();
 		if (static_key_enabled(keys[i].key)) {
 			if (!ret)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		} else {
 			if (ret)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 	return 0;

@@ -125,7 +125,7 @@ static int wm5100_alloc_sr(struct snd_soc_component *component, int rate)
 			break;
 	if (i == ARRAY_SIZE(wm5100_sr_code)) {
 		dev_err(component->dev, "Unsupported sample rate: %dHz\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	sr_code = i;
 
@@ -151,7 +151,7 @@ static int wm5100_alloc_sr(struct snd_soc_component *component, int rate)
 
 		if (sr_free == -1) {
 			dev_err(component->dev, "All SR slots already in use\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		dev_dbg(component->dev, "Allocating SR slot %d for %dHz\n",
@@ -167,7 +167,7 @@ static int wm5100_alloc_sr(struct snd_soc_component *component, int rate)
 		dev_err(component->dev,
 			"SR %dHz incompatible with %dHz SYSCLK and %dHz ASYNCCLK\n",
 			rate, wm5100->sysclk, wm5100->asyncclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -1296,7 +1296,7 @@ static int wm5100_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(component->dev, "Unsupported DAI format %d\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
@@ -1315,7 +1315,7 @@ static int wm5100_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	default:
 		dev_err(component->dev, "Unsupported master mode %d\n",
 			fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1332,7 +1332,7 @@ static int wm5100_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		lrclk |= WM5100_AIF1TX_LRCLK_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, base + 1, WM5100_AIF1_BCLK_MSTR |
@@ -1437,7 +1437,7 @@ static int wm5100_hw_params(struct snd_pcm_substream *substream,
 		if (i == ARRAY_SIZE(wm5100_sr_code)) {
 			dev_err(component->dev, "Invalid rate %dHzn",
 				params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* TODO: We should really check for symmetry */
@@ -1448,7 +1448,7 @@ static int wm5100_hw_params(struct snd_pcm_substream *substream,
 	if (!aif_rate) {
 		dev_err(component->dev, "%s has no rate set\n",
 			async ? "ASYNCCLK" : "SYSCLK");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "Target BCLK is %dHz, using %dHz %s\n",
@@ -1466,7 +1466,7 @@ static int wm5100_hw_params(struct snd_pcm_substream *substream,
 		dev_err(component->dev,
 			"No valid BCLK for %dHz found from %dHz %s\n",
 			bclk, aif_rate, async ? "ASYNCCLK" : "SYSCLK");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	bclk = i;
@@ -1530,7 +1530,7 @@ static int wm5100_set_sysclk(struct snd_soc_component *component, int clk_id,
 					    source);
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 
@@ -1547,7 +1547,7 @@ static int wm5100_set_sysclk(struct snd_soc_component *component, int clk_id,
 			break;
 		default:
 			dev_err(component->dev, "Invalid source %d\n", source);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}	
 		return 0;
 
@@ -1571,20 +1571,20 @@ static int wm5100_set_sysclk(struct snd_soc_component *component, int clk_id,
 		default:
 			dev_err(component->dev, "Unsupported OPCLK %dHz\n",
 				freq);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 
 	default:
 		dev_err(component->dev, "Unknown clock %d\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (source) {
 	case WM5100_CLKSRC_SYSCLK:
 	case WM5100_CLKSRC_ASYNCCLK:
 		dev_err(component->dev, "Invalid source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -1602,7 +1602,7 @@ static int wm5100_set_sysclk(struct snd_soc_component *component, int clk_id,
 		break;
 	default:
 		dev_err(component->dev, "Invalid clock rate: %d\n", freq);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (freq) {
@@ -1692,7 +1692,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 8) {
 			pr_err("Can't scale %dMHz input down to <=13.5MHz\n",
 			       Fref);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -1708,7 +1708,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 		if (div > 64) {
 			pr_err("Unable to find FLL_OUTDIV for Fout=%uHz\n",
 			       Fout);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 	target = Fout * div;
@@ -1726,7 +1726,7 @@ static int fll_factors(struct _fll_div *fll_div, unsigned int Fref,
 	}
 	if (i == ARRAY_SIZE(fll_fratios)) {
 		pr_err("Unable to find FLL_FRATIO for Fref=%uHz\n", Fref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fll_div->n = target / (fratio * Fref);
@@ -1774,7 +1774,7 @@ static int wm5100_set_fll(struct snd_soc_component *component, int fll_id, int s
 		break;
 	default:
 		dev_err(component->dev, "Unknown FLL %d\n",fll_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!Fout) {
@@ -1797,7 +1797,7 @@ static int wm5100_set_fll(struct snd_soc_component *component, int fll_id, int s
 		break;
 	default:
 		dev_err(component->dev, "Invalid FLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = fll_factors(&factors, Fref, Fout);
@@ -1862,7 +1862,7 @@ static int wm5100_set_fll(struct snd_soc_component *component, int fll_id, int s
 	if (i == timeout) {
 		dev_err(component->dev, "FLL%d lock timed out\n", fll_id);
 		pm_runtime_put(component->dev);
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 	}
 
 	fll->src = source;
@@ -2495,7 +2495,7 @@ static int wm5100_i2c_probe(struct i2c_client *i2c,
 
 	default:
 		dev_err(&i2c->dev, "Device is not a WM5100, ID is %x\n", reg);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_reset;
 	}
 

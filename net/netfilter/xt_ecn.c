@@ -87,15 +87,15 @@ static int ecn_mt_check4(const struct xt_mtchk_param *par)
 	const struct ipt_ip *ip = par->entryinfo;
 
 	if (info->operation & XT_ECN_OP_MATCH_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->invert & XT_ECN_OP_MATCH_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
 	    (ip->proto != IPPROTO_TCP || ip->invflags & IPT_INV_PROTO)) {
 		pr_info_ratelimited("cannot match TCP bits for non-tcp packets\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -129,15 +129,15 @@ static int ecn_mt_check6(const struct xt_mtchk_param *par)
 	const struct ip6t_ip6 *ip = par->entryinfo;
 
 	if (info->operation & XT_ECN_OP_MATCH_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->invert & XT_ECN_OP_MATCH_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->operation & (XT_ECN_OP_MATCH_ECE | XT_ECN_OP_MATCH_CWR) &&
 	    (ip->proto != IPPROTO_TCP || ip->invflags & IP6T_INV_PROTO)) {
 		pr_info_ratelimited("cannot match TCP bits for non-tcp packets\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

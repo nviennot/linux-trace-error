@@ -212,7 +212,7 @@ static struct page * ext2_get_page(struct inode *dir, unsigned long n,
 
 fail:
 	ext2_put_page(page);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 /*
@@ -307,7 +307,7 @@ ext2_readdir(struct file *file, struct dir_context *ctx)
 				ext2_error(sb, __func__,
 					"zero-length directory entry");
 				ext2_put_page(page);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			if (de->inode) {
 				unsigned char d_type = DT_UNKNOWN;
@@ -503,10 +503,10 @@ int ext2_add_link (struct dentry *dentry, struct inode *inode)
 			if (de->rec_len == 0) {
 				ext2_error(dir->i_sb, __func__,
 					"zero-length directory entry");
-				err = -EIO;
+				err = -ERR(EIO);
 				goto out_unlock;
 			}
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			if (ext2_match (namelen, name, de))
 				goto out_unlock;
 			name_len = EXT2_DIR_REC_LEN(de->name_len);
@@ -521,7 +521,7 @@ int ext2_add_link (struct dentry *dentry, struct inode *inode)
 		ext2_put_page(page);
 	}
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 
 got_it:
 	pos = page_offset(page) +
@@ -573,7 +573,7 @@ int ext2_delete_entry (struct ext2_dir_entry_2 * dir, struct page * page )
 		if (de->rec_len == 0) {
 			ext2_error(inode->i_sb, __func__,
 				"zero-length directory entry");
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		pde = de;

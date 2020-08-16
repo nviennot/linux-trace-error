@@ -57,7 +57,7 @@ static int get_xonar_model(struct oxygen *chip,
 		return 0;
 	if (get_xonar_wm87x6_model(chip, id) >= 0)
 		return 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int xonar_probe(struct pci_dev *pci,
@@ -67,10 +67,10 @@ static int xonar_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		++dev;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	err = oxygen_pci_probe(pci, index[dev], id[dev], THIS_MODULE,
 			       xonar_ids, get_xonar_model);

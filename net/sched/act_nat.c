@@ -47,7 +47,7 @@ static int tcf_nat_init(struct net *net, struct nlattr *nla, struct nlattr *est,
 	u32 index;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_NAT_MAX, nla, nat_policy,
 					  NULL);
@@ -55,7 +55,7 @@ static int tcf_nat_init(struct net *net, struct nlattr *nla, struct nlattr *est,
 		return err;
 
 	if (tb[TCA_NAT_PARMS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	parm = nla_data(tb[TCA_NAT_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
@@ -72,7 +72,7 @@ static int tcf_nat_init(struct net *net, struct nlattr *nla, struct nlattr *est,
 			return 0;
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	} else {
 		return err;

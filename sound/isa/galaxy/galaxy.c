@@ -77,7 +77,7 @@ static int dsp_get_byte(void __iomem *port, u8 *val)
 
 	while (!(ioread8(port + DSP_PORT_DATA_AVAIL) & 0x80)) {
 		if (!loops--)
-			return -EIO;
+			return -ERR(EIO);
 		cpu_relax();
 	}
 	*val = ioread8(port + DSP_PORT_READ);
@@ -93,7 +93,7 @@ static int dsp_reset(void __iomem *port)
 	iowrite8(0, port + DSP_PORT_RESET);
 
 	if (dsp_get_byte(port, &val) < 0 || val != DSP_SIGNATURE)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -104,7 +104,7 @@ static int dsp_command(void __iomem *port, u8 cmd)
 
 	while (ioread8(port + DSP_PORT_STATUS) & 0x80) {
 		if (!loops--)
-			return -EIO;
+			return -ERR(EIO);
 		cpu_relax();
 	}
 	iowrite8(cmd, port + DSP_PORT_COMMAND);
@@ -151,7 +151,7 @@ static int dsp_get_version(void __iomem *port, u8 *major, u8 *minor)
 static int wss_detect(void __iomem *wss_port)
 {
 	if ((ioread8(wss_port + WSS_PORT_SIGNATURE) & 0x3f) != WSS_SIGNATURE)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -384,7 +384,7 @@ static int galaxy_init(struct snd_galaxy *galaxy, u8 *type)
 		return err;
 
 	if (major != GALAXY_DSP_MAJOR || minor != GALAXY_DSP_MINOR)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	err = dsp_command(galaxy->port, DSP_COMMAND_GALAXY_8);
 	if (err < 0)
@@ -508,7 +508,7 @@ static int snd_galaxy_probe(struct device *dev, unsigned int n)
 	if (!galaxy->res_port) {
 		dev_err(dev, "could not grab ports %#lx-%#lx\n", port[n],
 			port[n] + 15);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto error;
 	}
 	galaxy->port = ioport_map(port[n], 16);
@@ -526,7 +526,7 @@ static int snd_galaxy_probe(struct device *dev, unsigned int n)
 		dev_err(dev, "could not grab ports %#lx-%#lx\n",
 			port[n] + GALAXY_PORT_CONFIG,
 			port[n] + GALAXY_PORT_CONFIG + 15);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto error;
 	}
 	galaxy->config_port = ioport_map(port[n] + GALAXY_PORT_CONFIG, 16);
@@ -537,7 +537,7 @@ static int snd_galaxy_probe(struct device *dev, unsigned int n)
 	if (!galaxy->res_wss_port)  {
 		dev_err(dev, "could not grab ports %#lx-%#lx\n", wss_port[n],
 			wss_port[n] + 3);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto error;
 	}
 	galaxy->wss_port = ioport_map(wss_port[n], 4);

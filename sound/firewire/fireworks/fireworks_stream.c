@@ -118,7 +118,7 @@ check_connection_used_by_others(struct snd_efw *efw, struct amdtp_stream *s)
 			"Connection established by others: %cPCR[%d]\n",
 			(conn->direction == CMP_OUTPUT) ? 'o' : 'i',
 			conn->pcr_index);
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 	}
 
 	return err;
@@ -250,7 +250,7 @@ int snd_efw_stream_start_duplex(struct snd_efw *efw)
 
 	// Need no substreams.
 	if (efw->substreams_counter == 0)
-		return -EIO;
+		return -ERR(EIO);
 
 	if (amdtp_streaming_error(&efw->rx_stream) ||
 	    amdtp_streaming_error(&efw->tx_stream)) {
@@ -281,7 +281,7 @@ int snd_efw_stream_start_duplex(struct snd_efw *efw)
 						CALLBACK_TIMEOUT) ||
 		    !amdtp_stream_wait_callback(&efw->tx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 	}
@@ -342,7 +342,7 @@ int snd_efw_stream_lock_try(struct snd_efw *efw)
 
 	/* user land lock this */
 	if (efw->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

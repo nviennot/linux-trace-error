@@ -79,7 +79,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 
 	if (!codec_dai) {
 		dev_err(card->dev, "Codec dai not found; Unable to set platform clock\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
@@ -555,7 +555,7 @@ static int snd_cht_mc_probe(struct platform_device *pdev)
 
 	if (!found) {
 		dev_err(&pdev->dev, "No matching HID found in supported list\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	card->dev = &pdev->dev;

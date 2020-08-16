@@ -83,7 +83,7 @@ static int wait_isoch_resource_delay_after_bus_reset(struct fw_card *card)
 		if (delay <= 0)
 			return 0;
 		if (schedule_timeout_interruptible(delay) > 0)
-			return -ERESTARTSYS;
+			return -ERR(ERESTARTSYS);
 	}
 }
 
@@ -109,7 +109,7 @@ int fw_iso_resources_allocate(struct fw_iso_resources *r,
 	int bandwidth, channel, err;
 
 	if (WARN_ON(r->allocated))
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	r->bandwidth = packet_bandwidth(max_payload_bytes, speed);
 

@@ -56,7 +56,7 @@ static int cq93vc_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cq93vc_set_bias_level(struct snd_soc_component *component,

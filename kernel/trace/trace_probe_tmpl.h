@@ -108,7 +108,7 @@ stage3:
 			code++;
 			goto array;
 		} else
-			return -EILSEQ;
+			return -ERR(EILSEQ);
 	}
 
 	switch (code->op) {
@@ -130,7 +130,7 @@ stage3:
 		ret = fetch_store_string_user(val + code->offset, dest, base);
 		break;
 	default:
-		return -EILSEQ;
+		return -ERR(EILSEQ);
 	}
 	code++;
 
@@ -164,7 +164,7 @@ array:
 		ret = total;
 	}
 
-	return code->op == FETCH_OP_END ? ret : -EILSEQ;
+	return code->op == FETCH_OP_END ? ret : -ERR(EILSEQ);
 }
 
 /* Sum up total data length for dynamic arraies (strings) */

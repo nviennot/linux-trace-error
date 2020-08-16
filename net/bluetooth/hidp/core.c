@@ -106,7 +106,7 @@ static int hidp_send_message(struct hidp_session *session, struct socket *sock,
 	BT_DBG("session %p data %p size %d", session, data, size);
 
 	if (atomic_read(&session->terminate))
-		return -EIO;
+		return -ERR(EIO);
 
 	skb = alloc_skb(size + 1, GFP_ATOMIC);
 	if (!skb) {
@@ -242,7 +242,7 @@ static int hidp_get_raw_report(struct hid_device *hid,
 	int ret;
 
 	if (atomic_read(&session->terminate))
-		return -EIO;
+		return -ERR(EIO);
 
 	switch (report_type) {
 	case HID_FEATURE_REPORT:
@@ -255,11 +255,11 @@ static int hidp_get_raw_report(struct hid_device *hid,
 		report_type = HIDP_TRANS_GET_REPORT | HIDP_DATA_RTYPE_OUPUT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mutex_lock_interruptible(&session->report_mutex))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	/* Set up our wait, and send the report request to the device. */
 	session->waiting_report_type = report_type & HIDP_DATA_RTYPE_MASK;
@@ -282,12 +282,12 @@ static int hidp_get_raw_report(struct hid_device *hid,
 			5*HZ);
 		if (res == 0) {
 			/* timeout */
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto err;
 		}
 		if (res < 0) {
 			/* signal */
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			goto err;
 		}
 	}
@@ -301,7 +301,7 @@ static int hidp_get_raw_report(struct hid_device *hid,
 		session->report_return = NULL;
 	} else {
 		/* Device returned a HANDSHAKE, indicating  protocol error. */
-		len = -EIO;
+		len = -ERR(EIO);
 	}
 
 	clear_bit(HIDP_WAITING_FOR_RETURN, &session->flags);
@@ -333,11 +333,11 @@ static int hidp_set_raw_report(struct hid_device *hid, unsigned char reportnum,
 		report_type = HIDP_TRANS_SET_REPORT | HIDP_DATA_RTYPE_OUPUT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mutex_lock_interruptible(&session->report_mutex))
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 
 	/* Set up our wait, and send the report request to the device. */
 	data[0] = reportnum;
@@ -357,18 +357,18 @@ static int hidp_set_raw_report(struct hid_device *hid, unsigned char reportnum,
 			10*HZ);
 		if (res == 0) {
 			/* timeout */
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto err;
 		}
 		if (res < 0) {
 			/* signal */
-			ret = -ERESTARTSYS;
+			ret = -ERR(ERESTARTSYS);
 			goto err;
 		}
 	}
 
 	if (!session->output_report_success) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -399,7 +399,7 @@ static int hidp_raw_request(struct hid_device *hid, unsigned char reportnum,
 	case HID_REQ_SET_REPORT:
 		return hidp_set_raw_report(hid, reportnum, buf, len, rtype);
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 }
 
@@ -416,8 +416,8 @@ static void hidp_idle_timeout(struct timer_list *t)
 	 * error-condition on both sockets.
 	 */
 
-	session->intr_sock->sk->sk_err = EUNATCH;
-	session->ctrl_sock->sk->sk_err = EUNATCH;
+	session->intr_sock->sk->sk_err = ERR(EUNATCH);
+	session->ctrl_sock->sk->sk_err = ERR(EUNATCH);
 	wake_up_interruptible(sk_sleep(session->intr_sock->sk));
 	wake_up_interruptible(sk_sleep(session->ctrl_sock->sk));
 
@@ -798,7 +798,7 @@ static int hidp_setup_hid(struct hidp_session *session,
 	if (hid_ignore(hid)) {
 		hid_destroy_device(session->hid);
 		session->hid = NULL;
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -1109,7 +1109,7 @@ static int hidp_session_probe(struct l2cap_conn *conn,
 	/* check that no other session for this device exists */
 	s = __hidp_session_find(&session->bdaddr);
 	if (s) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out_unlock;
 	}
 
@@ -1317,27 +1317,27 @@ static int hidp_verify_sockets(struct socket *ctrl_sock,
 	struct hidp_session *session;
 
 	if (!l2cap_is_socket(ctrl_sock) || !l2cap_is_socket(intr_sock))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ctrl_chan = l2cap_pi(ctrl_sock->sk)->chan;
 	intr_chan = l2cap_pi(intr_sock->sk)->chan;
 
 	if (bacmp(&ctrl_chan->src, &intr_chan->src) ||
 	    bacmp(&ctrl_chan->dst, &intr_chan->dst))
-		return -ENOTUNIQ;
+		return -ERR(ENOTUNIQ);
 
 	ctrl = bt_sk(ctrl_sock->sk);
 	intr = bt_sk(intr_sock->sk);
 
 	if (ctrl->sk.sk_state != BT_CONNECTED ||
 	    intr->sk.sk_state != BT_CONNECTED)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	/* early session check, we check again during session registration */
 	session = hidp_session_find(&ctrl_chan->dst);
 	if (session) {
 		hidp_session_put(session);
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	return 0;
@@ -1359,7 +1359,7 @@ int hidp_connection_add(const struct hidp_connadd_req *req,
 		return ret;
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	chan = l2cap_pi(ctrl_sock->sk)->chan;
 	conn = NULL;
@@ -1369,7 +1369,7 @@ int hidp_connection_add(const struct hidp_connadd_req *req,
 	l2cap_chan_unlock(chan);
 
 	if (!conn)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	ret = hidp_session_new(&session, &chan->dst, ctrl_sock,
 			       intr_sock, req, conn);
@@ -1395,11 +1395,11 @@ int hidp_connection_del(struct hidp_conndel_req *req)
 	struct hidp_session *session;
 
 	if (req->flags & ~valid_flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	session = hidp_session_find(&req->bdaddr);
 	if (!session)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (req->flags & BIT(HIDP_VIRTUAL_CABLE_UNPLUG))
 		hidp_send_ctrl_message(session,
@@ -1454,7 +1454,7 @@ int hidp_get_conninfo(struct hidp_conninfo *ci)
 		hidp_session_put(session);
 	}
 
-	return session ? 0 : -ENOENT;
+	return session ? 0 : -ERR(ENOENT);
 }
 
 static int __init hidp_init(void)

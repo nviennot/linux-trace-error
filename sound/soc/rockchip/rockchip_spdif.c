@@ -125,7 +125,7 @@ static int rk_spdif_hw_params(struct snd_pcm_substream *substream,
 		val |= SPDIF_CFGR_VDW_24;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set clock and calculate divider */
@@ -182,7 +182,7 @@ static int rk_spdif_trigger(struct snd_pcm_substream *substream,
 				   SPDIF_XFER_TXS_STOP);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 

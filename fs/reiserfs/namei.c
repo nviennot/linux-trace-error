@@ -358,7 +358,7 @@ static struct dentry *reiserfs_lookup(struct inode *dir, struct dentry *dentry,
 	INITIALIZE_PATH(path_to_entry);
 
 	if (REISERFS_MAX_NAME(dir->i_sb->s_blocksize) < dentry->d_name.len)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	reiserfs_write_lock(dir->i_sb);
 
@@ -372,7 +372,7 @@ static struct dentry *reiserfs_lookup(struct inode *dir, struct dentry *dentry,
 				      (struct cpu_key *)&de.de_dir_id);
 		if (!inode || IS_ERR(inode)) {
 			reiserfs_write_unlock(dir->i_sb);
-			return ERR_PTR(-EACCES);
+			return ERR_PTR(-ERR(EACCES));
 		}
 
 		/*
@@ -387,7 +387,7 @@ static struct dentry *reiserfs_lookup(struct inode *dir, struct dentry *dentry,
 	}
 	reiserfs_write_unlock(dir->i_sb);
 	if (retval == IO_ERROR) {
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	return d_splice_alias(inode, dentry);
@@ -406,7 +406,7 @@ struct dentry *reiserfs_get_parent(struct dentry *child)
 	struct inode *dir = d_inode(child);
 
 	if (dir->i_nlink == 0) {
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 	de.de_gen_number_bit_string = NULL;
 
@@ -415,7 +415,7 @@ struct dentry *reiserfs_get_parent(struct dentry *child)
 	pathrelse(&path_to_entry);
 	if (retval != NAME_FOUND) {
 		reiserfs_write_unlock(dir->i_sb);
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 	}
 	inode = reiserfs_iget(dir->i_sb, (struct cpu_key *)&de.de_dir_id);
 	reiserfs_write_unlock(dir->i_sb);
@@ -454,10 +454,10 @@ static int reiserfs_add_entry(struct reiserfs_transaction_handle *th,
 
 	/* cannot allow items to be added into a busy deleted directory */
 	if (!namelen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (namelen > REISERFS_MAX_NAME(dir->i_sb->s_blocksize))
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	/* each entry has unique key. compose it */
 	make_cpu_key(&entry_key, dir,
@@ -514,7 +514,7 @@ static int reiserfs_add_entry(struct reiserfs_transaction_handle *th,
 		pathrelse(&path);
 
 		if (retval == IO_ERROR) {
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (retval != NAME_FOUND) {
@@ -523,7 +523,7 @@ static int reiserfs_add_entry(struct reiserfs_transaction_handle *th,
 				       "unexpected value (%d)", retval);
 		}
 
-		return -EEXIST;
+		return -ERR(EEXIST);
 	}
 
 	gen_number =
@@ -537,7 +537,7 @@ static int reiserfs_add_entry(struct reiserfs_transaction_handle *th,
 		if (buffer != small_buf)
 			kfree(buffer);
 		pathrelse(&path);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	/* adjust offset of directory enrty */
 	put_deh_offset(deh, SET_GENERATION_NUMBER(deh_offset(deh), gen_number));
@@ -557,7 +557,7 @@ static int reiserfs_add_entry(struct reiserfs_transaction_handle *th,
 			if (buffer != small_buf)
 				kfree(buffer);
 			pathrelse(&path);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 
@@ -926,10 +926,10 @@ static int reiserfs_rmdir(struct inode *dir, struct dentry *dentry)
 	if ((retval =
 	     reiserfs_find_entry(dir, dentry->d_name.name, dentry->d_name.len,
 				 &path, &de)) == NAME_NOT_FOUND) {
-		retval = -ENOENT;
+		retval = -ERR(ENOENT);
 		goto end_rmdir;
 	} else if (retval == IO_ERROR) {
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto end_rmdir;
 	}
 
@@ -942,11 +942,11 @@ static int reiserfs_rmdir(struct inode *dir, struct dentry *dentry)
 		/*
 		 * FIXME: compare key of an object and a key found in the entry
 		 */
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto end_rmdir;
 	}
 	if (!reiserfs_empty_dir(inode)) {
-		retval = -ENOTEMPTY;
+		retval = -ERR(ENOTEMPTY);
 		goto end_rmdir;
 	}
 
@@ -1027,10 +1027,10 @@ static int reiserfs_unlink(struct inode *dir, struct dentry *dentry)
 	if ((retval =
 	     reiserfs_find_entry(dir, dentry->d_name.name, dentry->d_name.len,
 				 &path, &de)) == NAME_NOT_FOUND) {
-		retval = -ENOENT;
+		retval = -ERR(ENOENT);
 		goto end_unlink;
 	} else if (retval == IO_ERROR) {
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto end_unlink;
 	}
 
@@ -1041,7 +1041,7 @@ static int reiserfs_unlink(struct inode *dir, struct dentry *dentry)
 		/*
 		 * FIXME: compare key of an object and a key found in the entry
 		 */
-		retval = -EIO;
+		retval = -ERR(EIO);
 		goto end_unlink;
 	}
 
@@ -1137,7 +1137,7 @@ static int reiserfs_symlink(struct inode *parent_dir,
 	reiserfs_write_lock(parent_dir->i_sb);
 	item_len = ROUND_UP(strlen(symname));
 	if (item_len > MAX_DIRECT_ITEM_LEN(parent_dir->i_sb->s_blocksize)) {
-		retval = -ENAMETOOLONG;
+		retval = -ERR(ENAMETOOLONG);
 		drop_new_inode(inode);
 		goto out_failed;
 	}
@@ -1216,7 +1216,7 @@ static int reiserfs_link(struct dentry *old_dentry, struct inode *dir,
 	if (inode->i_nlink >= REISERFS_LINK_MAX) {
 		/* FIXME: sd_nlink is 32 bit for new files */
 		reiserfs_write_unlock(dir->i_sb);
-		return -EMLINK;
+		return -ERR(EMLINK);
 	}
 
 	/* inc before scheduling so reiserfs_unlink knows we are here */
@@ -1322,7 +1322,7 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	struct timespec64 ctime;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * three balancings: (1) old name removal, (2) new name insertion
@@ -1361,12 +1361,12 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	pathrelse(&old_entry_path);
 	if (retval == IO_ERROR) {
 		reiserfs_write_unlock(old_dir->i_sb);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (retval != NAME_FOUND || old_de.de_objectid != old_inode->i_ino) {
 		reiserfs_write_unlock(old_dir->i_sb);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	old_inode_mode = old_inode->i_mode;
@@ -1379,7 +1379,7 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		if (new_dentry_inode) {
 			if (!reiserfs_empty_dir(new_dentry_inode)) {
 				reiserfs_write_unlock(old_dir->i_sb);
-				return -ENOTEMPTY;
+				return -ERR(ENOTEMPTY);
 			}
 		}
 
@@ -1394,13 +1394,13 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 		pathrelse(&dot_dot_entry_path);
 		if (retval != NAME_FOUND) {
 			reiserfs_write_unlock(old_dir->i_sb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		/* inode number of .. must equal old_dir->i_ino */
 		if (dot_dot_de.de_objectid != old_dir->i_ino) {
 			reiserfs_write_unlock(old_dir->i_sb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -1449,7 +1449,7 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 			pathrelse(&old_entry_path);
 			journal_end(&th);
 			reiserfs_write_unlock(old_dir->i_sb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		copy_item_head(&old_entry_ih, tp_item_head(&old_entry_path));
@@ -1473,7 +1473,7 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 			pathrelse(&old_entry_path);
 			journal_end(&th);
 			reiserfs_write_unlock(old_dir->i_sb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		copy_item_head(&new_entry_ih, tp_item_head(&new_entry_path));
@@ -1491,7 +1491,7 @@ static int reiserfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 				pathrelse(&old_entry_path);
 				journal_end(&th);
 				reiserfs_write_unlock(old_dir->i_sb);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			copy_item_head(&dot_dot_ih,
 				       tp_item_head(&dot_dot_entry_path));

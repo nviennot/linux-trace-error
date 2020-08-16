@@ -527,7 +527,7 @@ static int hdmi_manual_setup_channel_mapping(struct hdac_chmap *chmap,
 		err = chmap->ops.pin_set_slot_channel(chmap->hdac,
 				pin_nid, hdmi_slot, assignments[hdmi_slot]);
 		if (err)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -703,7 +703,7 @@ static int hdmi_chmap_ctl_tlv(struct snd_kcontrol *kcontrol, int op_flag,
 			type = chmap->ops.chmap_cea_alloc_validate_get_type(
 							chmap, cap, chs);
 			if (type < 0)
-				return -ENODEV;
+				return -ERR(ENODEV);
 			if (size < 8)
 				return -ENOMEM;
 
@@ -782,7 +782,7 @@ static int hdmi_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 		prepared = 1;
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	memset(chmap, 0, sizeof(chmap));
 	for (i = 0; i < ARRAY_SIZE(chmap); i++)
@@ -793,7 +793,7 @@ static int hdmi_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 		return 0;
 	ca = hdmi_manual_channel_allocation(ARRAY_SIZE(chmap), chmap);
 	if (ca < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (hchmap->ops.chmap_validate) {
 		err = hchmap->ops.chmap_validate(hchmap, ca,
 				ARRAY_SIZE(chmap), chmap);

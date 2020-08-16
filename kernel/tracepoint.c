@@ -134,7 +134,7 @@ func_add(struct tracepoint_func **funcs, struct tracepoint_func *tp_func,
 	int pos = -1;
 
 	if (WARN_ON(!tp_func->func))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	debug_print_probes(*funcs);
 	old = *funcs;
@@ -146,7 +146,7 @@ func_add(struct tracepoint_func **funcs, struct tracepoint_func *tp_func,
 				pos = nr_probes;
 			if (old[nr_probes].func == tp_func->func &&
 			    old[nr_probes].data == tp_func->data)
-				return ERR_PTR(-EEXIST);
+				return ERR_PTR(-ERR(EEXIST));
 		}
 	}
 	/* + 2 : one for new probe, one for NULL func */
@@ -182,7 +182,7 @@ static void *func_remove(struct tracepoint_func **funcs,
 	old = *funcs;
 
 	if (!old)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	debug_print_probes(*funcs);
 	/* (N -> M), (N > 1, M >= 0) probes */

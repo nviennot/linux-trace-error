@@ -64,7 +64,7 @@ hash_netnet4_data_equal(const struct hash_netnet4_elem *ip1,
 static int
 hash_netnet4_do_data_match(const struct hash_netnet4_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void
@@ -295,7 +295,7 @@ hash_netnet6_data_equal(const struct hash_netnet6_elem *ip1,
 static int
 hash_netnet6_do_data_match(const struct hash_netnet6_elem *elem)
 {
-	return elem->nomatch ? -ENOTEMPTY : 1;
+	return elem->nomatch ? -ERR(ENOTEMPTY) : 1;
 }
 
 static void

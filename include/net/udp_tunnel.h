@@ -61,7 +61,7 @@ static inline int udp_sock_create(struct net *net,
 	if (cfg->family == AF_INET6)
 		return udp_sock_create6(net, cfg, sockp);
 
-	return -EPFNOSUPPORT;
+	return -ERR(EPFNOSUPPORT);
 }
 
 typedef int (*udp_tunnel_encap_rcv_t)(struct sock *sk, struct sk_buff *skb);

@@ -368,9 +368,9 @@ static struct inode *ext2_nfs_get_inode(struct super_block *sb,
 	struct inode *inode;
 
 	if (ino < EXT2_FIRST_INO(sb) && ino != EXT2_ROOT_INO)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	if (ino > le32_to_cpu(EXT2_SB(sb)->s_es->s_inodes_count))
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	/*
 	 * ext2_iget isn't quite right if the inode is currently unallocated!
@@ -383,7 +383,7 @@ static struct inode *ext2_nfs_get_inode(struct super_block *sb,
 	if (generation && inode->i_generation != generation) {
 		/* we didn't find the right inode.. */
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 	return inode;
 }
@@ -846,7 +846,7 @@ static int ext2_fill_super(struct super_block *sb, void *data, int silent)
 	sbi->s_daxdev = dax_dev;
 
 	spin_lock_init(&sbi->s_lock);
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 
 	/*
 	 * See what the current blocksize for the device is, and
@@ -1335,7 +1335,7 @@ static int ext2_remount (struct super_block * sb, int * flags, char * data)
 	spin_unlock(&sbi->s_lock);
 
 	if (!parse_options(data, sb, &new_opts))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock(&sbi->s_lock);
 	es = sbi->s_es;
@@ -1373,7 +1373,7 @@ static int ext2_remount (struct super_block * sb, int * flags, char * data)
 				"warning: couldn't remount RDWR because of "
 				"unsupported optional features (%x).",
 				le32_to_cpu(ret));
-			return -EROFS;
+			return -ERR(EROFS);
 		}
 		/*
 		 * Mounting a RDONLY partition read-write, so reread and
@@ -1513,7 +1513,7 @@ static ssize_t ext2_quota_read(struct super_block *sb, int type, char *data,
 		else {
 			bh = sb_bread(sb, tmp_bh.b_blocknr);
 			if (!bh)
-				return -EIO;
+				return -ERR(EIO);
 			memcpy(data, bh->b_data+offset, tocopy);
 			brelse(bh);
 		}
@@ -1552,7 +1552,7 @@ static ssize_t ext2_quota_write(struct super_block *sb, int type,
 		else
 			bh = sb_getblk(sb, tmp_bh.b_blocknr);
 		if (unlikely(!bh)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 		lock_buffer(bh);

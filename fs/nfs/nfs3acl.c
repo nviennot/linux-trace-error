@@ -63,7 +63,7 @@ struct posix_acl *nfs3_get_acl(struct inode *inode, int type)
 	int status, count;
 
 	if (!nfs_server_capable(inode, NFS_CAP_ACLS))
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	status = nfs_revalidate_inode(server, inode);
 	if (status < 0)
@@ -110,12 +110,12 @@ struct posix_acl *nfs3_get_acl(struct inode *inode, int type)
 			server->caps &= ~NFS_CAP_ACLS;
 			/* fall through */
 		case -ENOTSUPP:
-			status = -EOPNOTSUPP;
+			status = -ERR(EOPNOTSUPP);
 		default:
 			goto getout;
 	}
 	if ((args.mask & res.mask) != args.mask) {
-		status = -EIO;
+		status = -ERR(EIO);
 		goto getout;
 	}
 
@@ -176,13 +176,13 @@ static int __nfs3_proc_setacls(struct inode *inode, struct posix_acl *acl,
 	if (acl == NULL && (!S_ISDIR(inode->i_mode) || dfacl == NULL))
 		goto out;
 
-	status = -EOPNOTSUPP;
+	status = -ERR(EOPNOTSUPP);
 	if (!nfs_server_capable(inode, NFS_CAP_ACLS))
 		goto out;
 
 	/* We are doing this here because XDR marshalling does not
 	 * return any results, it BUGs. */
-	status = -ENOSPC;
+	status = -ERR(ENOSPC);
 	if (acl != NULL && acl->a_count > NFS_ACL_MAX_ENTRIES)
 		goto out;
 	if (dfacl != NULL && dfacl->a_count > NFS_ACL_MAX_ENTRIES)
@@ -230,7 +230,7 @@ static int __nfs3_proc_setacls(struct inode *inode, struct posix_acl *acl,
 			server->caps &= ~NFS_CAP_ACLS;
 			/* fall through */
 		case -ENOTSUPP:
-			status = -EOPNOTSUPP;
+			status = -ERR(EOPNOTSUPP);
 	}
 	nfs_free_fattr(fattr);
 out_freepages:
@@ -247,7 +247,7 @@ int nfs3_proc_setacls(struct inode *inode, struct posix_acl *acl,
 {
 	int ret;
 	ret = __nfs3_proc_setacls(inode, acl, dfacl);
-	return (ret == -EOPNOTSUPP) ? 0 : ret;
+	return (ret == -ERR(EOPNOTSUPP)) ? 0 : ret;
 
 }
 
@@ -318,7 +318,7 @@ nfs3_list_one_acl(struct inode *inode, int type, const char *name, void *data,
 	if (!size)
 		return 0;
 	if (*result > size)
-		return -ERANGE;
+		return -ERR(ERANGE);
 
 	strcpy(p, name);
 	return 0;

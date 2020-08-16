@@ -195,13 +195,13 @@ static int sc6000_wait_data(char __iomem *vport)
 		cpu_relax();
 	} while (loop--);
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int sc6000_read(char __iomem *vport)
 {
 	if (sc6000_wait_data(vport))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return ioread8(vport + DSP_READ);
 
@@ -226,7 +226,7 @@ static int sc6000_write(char __iomem *vport, int cmd)
 
 	snd_printk(KERN_ERR "DSP Command (0x%x) timeout.\n", cmd);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int sc6000_dsp_get_answer(char __iomem *vport, int command,
@@ -236,7 +236,7 @@ static int sc6000_dsp_get_answer(char __iomem *vport, int command,
 
 	if (sc6000_write(vport, command)) {
 		snd_printk(KERN_ERR "CMD 0x%x: failed!\n", command);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	do {
@@ -253,7 +253,7 @@ static int sc6000_dsp_get_answer(char __iomem *vport, int command,
 	 * If no more data available, return to the caller, no error if len>0.
 	 * We have no other way to know when the string is finished.
 	 */
-	return len ? len : -EIO;
+	return len ? len : -ERR(EIO);
 }
 
 static int sc6000_dsp_reset(char __iomem *vport)
@@ -264,7 +264,7 @@ static int sc6000_dsp_reset(char __iomem *vport)
 	udelay(20);
 	if (sc6000_read(vport) == 0xaa)
 		return 0;
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 /* detection and initialization */
@@ -272,23 +272,23 @@ static int sc6000_hw_cfg_write(char __iomem *vport, const int *cfg)
 {
 	if (sc6000_write(vport, COMMAND_6C) < 0) {
 		snd_printk(KERN_WARNING "CMD 0x%x: failed!\n", COMMAND_6C);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (sc6000_write(vport, COMMAND_5C) < 0) {
 		snd_printk(KERN_ERR "CMD 0x%x: failed!\n", COMMAND_5C);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (sc6000_write(vport, cfg[0]) < 0) {
 		snd_printk(KERN_ERR "DATA 0x%x: failed!\n", cfg[0]);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (sc6000_write(vport, cfg[1]) < 0) {
 		snd_printk(KERN_ERR "DATA 0x%x: failed!\n", cfg[1]);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (sc6000_write(vport, COMMAND_C5) < 0) {
 		snd_printk(KERN_ERR "CMD 0x%x: failed!\n", COMMAND_C5);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -299,11 +299,11 @@ static int sc6000_cfg_write(char __iomem *vport, unsigned char softcfg)
 
 	if (sc6000_write(vport, WRITE_MDIRQ_CFG)) {
 		snd_printk(KERN_ERR "CMD 0x%x: failed!\n", WRITE_MDIRQ_CFG);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (sc6000_write(vport, softcfg)) {
 		snd_printk(KERN_ERR "sc6000_cfg_write: failed!\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -316,18 +316,18 @@ static int sc6000_setup_board(char __iomem *vport, int config)
 		if (sc6000_write(vport, COMMAND_88)) {
 			snd_printk(KERN_ERR "CMD 0x%x: failed!\n",
 				   COMMAND_88);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	} while ((sc6000_wait_data(vport) < 0) && loop--);
 
 	if (sc6000_read(vport) < 0) {
 		snd_printk(KERN_ERR "sc6000_read after CMD 0x%x: failed\n",
 			   COMMAND_88);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (sc6000_cfg_write(vport, config))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -338,13 +338,13 @@ static int sc6000_init_mss(char __iomem *vport, int config,
 	if (sc6000_write(vport, DSP_INIT_MSS)) {
 		snd_printk(KERN_ERR "sc6000_init_mss [0x%x]: failed!\n",
 			   DSP_INIT_MSS);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	msleep(10);
 
 	if (sc6000_cfg_write(vport, config))
-		return -EIO;
+		return -ERR(EIO);
 
 	iowrite8(mss_config, vmss_port);
 
@@ -395,7 +395,7 @@ static int sc6000_init_board(char __iomem *vport,
 	err = sc6000_dsp_get_answer(vport, GET_DSP_COPYRIGHT, answer, 15);
 	if (err <= 0) {
 		snd_printk(KERN_ERR "sc6000_dsp_copyright: failed!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	/*
 	 * My SC-6000 card return "SC-6000" in DSPCopyright, so
@@ -406,7 +406,7 @@ static int sc6000_init_board(char __iomem *vport,
 
 	if (sc6000_dsp_get_answer(vport, GET_DSP_VERSION, version, 2) < 2) {
 		snd_printk(KERN_ERR "sc6000_dsp_version: failed!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	printk(KERN_INFO PFX "Detected model: %s, DSP version %d.%d\n",
 		answer, version[0], version[1]);
@@ -422,13 +422,13 @@ static int sc6000_init_board(char __iomem *vport,
 				     mss_port[dev], joystick[dev]);
 		if (sc6000_hw_cfg_write(vport, cfg) < 0) {
 			snd_printk(KERN_ERR "sc6000_hw_cfg_write: failed!\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	err = sc6000_setup_board(vport, config);
 	if (err < 0) {
 		snd_printk(KERN_ERR "sc6000_setup_board: failed!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sc6000_dsp_reset(vport);
@@ -442,13 +442,13 @@ static int sc6000_init_board(char __iomem *vport,
 	err = sc6000_setup_board(vport, config);
 	if (err < 0) {
 		snd_printk(KERN_ERR "sc6000_setup_board: failed!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	err = sc6000_init_mss(vport, config, vmss_port, mss_config);
 	if (err < 0) {
 		snd_printk(KERN_ERR "Cannot initialize "
 			   "Microsoft Sound System mode.\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	return 0;
@@ -556,7 +556,7 @@ static int snd_sc6000_probe(struct device *devptr, unsigned int dev)
 		xirq = snd_legacy_find_free_irq(possible_irqs);
 		if (xirq < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free IRQ\n");
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_exit;
 		}
 	}
@@ -565,7 +565,7 @@ static int snd_sc6000_probe(struct device *devptr, unsigned int dev)
 		xdma = snd_legacy_find_free_dma(possible_dmas);
 		if (xdma < 0) {
 			snd_printk(KERN_ERR PFX "unable to find a free DMA\n");
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_exit;
 		}
 	}
@@ -573,14 +573,14 @@ static int snd_sc6000_probe(struct device *devptr, unsigned int dev)
 	if (!request_region(port[dev], 0x10, DRV_NAME)) {
 		snd_printk(KERN_ERR PFX
 			   "I/O port region is already in use.\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_exit;
 	}
 	*vport = devm_ioport_map(devptr, port[dev], 0x10);
 	if (*vport == NULL) {
 		snd_printk(KERN_ERR PFX
 			   "I/O port cannot be iomapped.\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_unmap1;
 	}
 
@@ -588,14 +588,14 @@ static int snd_sc6000_probe(struct device *devptr, unsigned int dev)
 	if (!request_region(mss_port[dev], 4, DRV_NAME)) {
 		snd_printk(KERN_ERR PFX
 			   "SC-6000 port I/O port region is already in use.\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_unmap1;
 	}
 	vmss_port = devm_ioport_map(devptr, mss_port[dev], 4);
 	if (!vmss_port) {
 		snd_printk(KERN_ERR PFX
 			   "MSS port I/O cannot be iomapped.\n");
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto err_unmap2;
 	}
 

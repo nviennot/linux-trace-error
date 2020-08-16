@@ -227,7 +227,7 @@ int btrfs_block_rsv_add(struct btrfs_root *root,
 int btrfs_block_rsv_check(struct btrfs_block_rsv *block_rsv, int min_factor)
 {
 	u64 num_bytes = 0;
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 
 	if (!block_rsv)
 		return 0;
@@ -246,7 +246,7 @@ int btrfs_block_rsv_refill(struct btrfs_root *root,
 			   enum btrfs_reserve_flush_enum flush)
 {
 	u64 num_bytes = 0;
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 
 	if (!block_rsv)
 		return 0;
@@ -297,7 +297,7 @@ u64 btrfs_block_rsv_release(struct btrfs_fs_info *fs_info,
 
 int btrfs_block_rsv_use_bytes(struct btrfs_block_rsv *block_rsv, u64 num_bytes)
 {
-	int ret = -ENOSPC;
+	int ret = -ERR(ENOSPC);
 
 	spin_lock(&block_rsv->lock);
 	if (block_rsv->reserved >= num_bytes) {
@@ -330,13 +330,13 @@ int btrfs_cond_migrate_bytes(struct btrfs_fs_info *fs_info,
 	u64 min_bytes;
 
 	if (global_rsv->space_info != dest->space_info)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	spin_lock(&global_rsv->lock);
 	min_bytes = div_factor(global_rsv->size, min_factor);
 	if (global_rsv->reserved < min_bytes + num_bytes) {
 		spin_unlock(&global_rsv->lock);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	global_rsv->reserved -= num_bytes;
 	if (global_rsv->reserved < global_rsv->size)

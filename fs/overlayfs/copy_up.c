@@ -76,7 +76,7 @@ int ovl_copy_xattr(struct dentry *old, struct dentry *new)
 
 		/* underlying fs providing us with an broken xattr list? */
 		if (WARN_ON(slen > list_size)) {
-			error = -EIO;
+			error = -ERR(EIO);
 			break;
 		}
 		list_size -= slen;
@@ -172,7 +172,7 @@ static int ovl_copy_up_data(struct path *old, struct path *new, loff_t len)
 			this_len = len;
 
 		if (signal_pending_state(TASK_KILLABLE, current)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			break;
 		}
 
@@ -298,7 +298,7 @@ struct ovl_fh *ovl_encode_real_fh(struct dentry *real, bool is_upper)
 	fh_type = exportfs_encode_fh(real, (void *)fh->fb.fid, &dwords, 0);
 	buflen = (dwords << 2);
 
-	err = -EIO;
+	err = -ERR(EIO);
 	if (WARN_ON(fh_type < 0) ||
 	    WARN_ON(buflen > MAX_HANDLE_SZ) ||
 	    WARN_ON(fh_type == FILEID_INVALID))
@@ -393,11 +393,11 @@ static int ovl_create_index(struct dentry *dentry, struct dentry *origin,
 	 * encoding file handle for non-dir in case index does not exist.
 	 */
 	if (WARN_ON(!d_is_dir(dentry)))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* Directory not expected to be indexed before copy up */
 	if (WARN_ON(ovl_test_flag(OVL_INDEX, d_inode(dentry))))
-		return -EIO;
+		return -ERR(EIO);
 
 	err = ovl_get_index_name(origin, &name);
 	if (err)
@@ -495,7 +495,7 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
 
 		ovl_path_upper(c->dentry, &upperpath);
 		if (WARN_ON(upperpath.dentry != NULL))
-			return -EIO;
+			return -ERR(EIO);
 		upperpath.dentry = temp;
 
 		ovl_path_lowerdata(c->dentry, &datapath);
@@ -523,7 +523,7 @@ static int ovl_copy_up_inode(struct ovl_copy_up_ctx *c, struct dentry *temp)
 
 	if (c->metacopy) {
 		err = ovl_check_setxattr(c->dentry, temp, OVL_XATTR_METACOPY,
-					 NULL, 0, -EOPNOTSUPP);
+					 NULL, 0, -ERR(EOPNOTSUPP));
 		if (err)
 			return err;
 	}
@@ -585,7 +585,7 @@ static int ovl_copy_up_workdir(struct ovl_copy_up_ctx *c)
 	};
 
 	/* workdir and destdir could be the same when copying up to indexdir */
-	err = -EIO;
+	err = -ERR(EIO);
 	if (lock_rename(c->workdir, c->destdir) != NULL)
 		goto unlock;
 
@@ -722,7 +722,7 @@ static int ovl_do_copy_up(struct ovl_copy_up_ctx *c)
 			return err;
 	} else if (WARN_ON(!c->parent)) {
 		/* Disconnected dentry must be copied up to index dir */
-		return -EIO;
+		return -ERR(EIO);
 	} else {
 		/*
 		 * Mark parent "impure" because it may now contain non-pure
@@ -791,11 +791,11 @@ static int ovl_copy_up_meta_inode_data(struct ovl_copy_up_ctx *c)
 
 	ovl_path_upper(c->dentry, &upperpath);
 	if (WARN_ON(upperpath.dentry == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	ovl_path_lowerdata(c->dentry, &datapath);
 	if (WARN_ON(datapath.dentry == NULL))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (c->stat.size) {
 		err = cap_size = ovl_getxattr(upperpath.dentry, XATTR_NAME_CAPS,
@@ -844,7 +844,7 @@ static int ovl_copy_up_one(struct dentry *parent, struct dentry *dentry,
 	};
 
 	if (WARN_ON(!ctx.workdir))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	ovl_path_lower(dentry, &ctx.lowerpath);
 	err = vfs_getattr(&ctx.lowerpath, &ctx.stat,
@@ -907,7 +907,7 @@ static int ovl_copy_up_flags(struct dentry *dentry, int flags)
 	 * linking it to upper dir.
 	 */
 	if (WARN_ON(disconnected && d_is_dir(dentry)))
-		return -EIO;
+		return -ERR(EIO);
 
 	while (!err) {
 		struct dentry *next;

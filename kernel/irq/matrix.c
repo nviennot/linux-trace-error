@@ -233,7 +233,7 @@ cleanup:
 			break;
 		irq_matrix_remove_managed(m, cpumask_of(cpu));
 	}
-	return -ENOSPC;
+	return -ERR(ENOSPC);
 }
 
 /**
@@ -289,11 +289,11 @@ int irq_matrix_alloc_managed(struct irq_matrix *m, const struct cpumask *msk,
 	struct cpumap *cm;
 
 	if (cpumask_empty(msk))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	cpu = matrix_find_best_cpu_managed(m, msk);
 	if (cpu == UINT_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	cm = per_cpu_ptr(m->maps, cpu);
 	end = m->alloc_end;
@@ -301,7 +301,7 @@ int irq_matrix_alloc_managed(struct irq_matrix *m, const struct cpumask *msk,
 	bitmap_andnot(m->scratch_map, cm->managed_map, cm->alloc_map, end);
 	bit = find_first_bit(m->scratch_map, end);
 	if (bit >= end)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	set_bit(bit, cm->alloc_map);
 	cm->allocated++;
 	cm->managed_allocated++;
@@ -382,12 +382,12 @@ int irq_matrix_alloc(struct irq_matrix *m, const struct cpumask *msk,
 
 	cpu = matrix_find_best_cpu(m, msk);
 	if (cpu == UINT_MAX)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	cm = per_cpu_ptr(m->maps, cpu);
 	bit = matrix_alloc_area(m, cm, 1, false);
 	if (bit >= m->alloc_end)
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	cm->allocated++;
 	cm->available--;
 	m->total_allocated++;

@@ -1108,7 +1108,7 @@ static int __meminit drain_cache_node_node(int node)
 
 		if (!list_empty(&n->slabs_full) ||
 		    !list_empty(&n->slabs_partial)) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			break;
 		}
 	}
@@ -2036,7 +2036,7 @@ int __kmem_cache_create(struct kmem_cache *cachep, slab_flags_t flags)
 	if (set_on_slab_cache(cachep, size, flags))
 		goto done;
 
-	return -E2BIG;
+	return -ERR(E2BIG);
 
 done:
 	cachep->freelist_size = cachep->num * sizeof(freelist_idx_t);
@@ -4121,22 +4121,22 @@ ssize_t slabinfo_write(struct file *file, const char __user *buffer,
 	struct kmem_cache *cachep;
 
 	if (count > MAX_SLABINFO_WRITE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (copy_from_user(&kbuf, buffer, count))
 		return -EFAULT;
 	kbuf[MAX_SLABINFO_WRITE] = '\0';
 
 	tmp = strchr(kbuf, ' ');
 	if (!tmp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	*tmp = '\0';
 	tmp++;
 	if (sscanf(tmp, " %d %d %d", &limit, &batchcount, &shared) != 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Find the cache in the chain of caches. */
 	mutex_lock(&slab_mutex);
-	res = -EINVAL;
+	res = -ERR(EINVAL);
 	list_for_each_entry(cachep, &slab_caches, list) {
 		if (!strcmp(cachep->name, kbuf)) {
 			if (limit < 1 || batchcount < 1 ||

@@ -51,14 +51,14 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
 		if (fsverity_require_signatures) {
 			fsverity_err(inode,
 				     "require_signatures=1, rejecting unsigned file!");
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 		return 0;
 	}
 
 	if (sig_size > desc_size - sizeof(*desc)) {
 		fsverity_err(inode, "Signature overflows verity descriptor");
-		return -EBADMSG;
+		return -ERR(EBADMSG);
 	}
 
 	d = kzalloc(sizeof(*d) + hash_alg->digest_size, GFP_KERNEL);

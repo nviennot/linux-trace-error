@@ -42,11 +42,11 @@ static unsigned long adjust_error_retval(unsigned long addr, unsigned long retv)
 		break;
 	case EI_ETYPE_ERRNO:
 		if (retv < (unsigned long)-MAX_ERRNO)
-			return (unsigned long)-EINVAL;
+			return (unsigned long)-ERR(EINVAL);
 		break;
 	case EI_ETYPE_ERRNO_NULL:
 		if (retv != 0 && retv < (unsigned long)-MAX_ERRNO)
-			return (unsigned long)-EINVAL;
+			return (unsigned long)-ERR(EINVAL);
 		break;
 	}
 
@@ -117,14 +117,14 @@ static int fei_retval_set(void *data, u64 val)
 	 * its member.
 	 */
 	if (!fei_attr_is_valid(attr)) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
 	if (attr->kp.addr) {
 		if (adjust_error_retval((unsigned long)attr->kp.addr,
 					val) != retv)
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 	}
 	if (!err)
 		attr->retval = val;
@@ -142,7 +142,7 @@ static int fei_retval_get(void *data, u64 *val)
 	mutex_lock(&fei_lock);
 	/* Here we also validate @attr to ensure it still exists. */
 	if (!fei_attr_is_valid(attr))
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	else
 		*val = attr->retval;
 	mutex_unlock(&fei_lock);
@@ -270,7 +270,7 @@ static ssize_t fei_write(struct file *file, const char __user *buffer,
 	if (sym[0] == '!') {
 		attr = fei_attr_lookup(sym + 1);
 		if (!attr) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto out;
 		}
 		fei_attr_remove(attr);
@@ -280,15 +280,15 @@ static ssize_t fei_write(struct file *file, const char __user *buffer,
 
 	addr = kallsyms_lookup_name(sym);
 	if (!addr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (!within_error_injection_list(addr)) {
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		goto out;
 	}
 	if (fei_attr_lookup(sym)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out;
 	}
 	attr = fei_attr_new(sym, addr);

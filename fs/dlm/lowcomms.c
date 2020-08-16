@@ -317,10 +317,10 @@ static int nodeid_to_addr(int nodeid, struct sockaddr_storage *sas_out,
 	spin_unlock(&dlm_node_addrs_spin);
 
 	if (!na)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (!na->addr_count)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (sas_out)
 		memcpy(sas_out, &sas, sizeof(struct sockaddr_storage));
@@ -344,7 +344,7 @@ static int nodeid_to_addr(int nodeid, struct sockaddr_storage *sas_out,
 static int addr_to_nodeid(struct sockaddr_storage *addr, int *nodeid)
 {
 	struct dlm_node_addr *na;
-	int rv = -EEXIST;
+	int rv = -ERR(EEXIST);
 	int addr_i;
 
 	spin_lock(&dlm_node_addrs_spin);
@@ -397,7 +397,7 @@ int dlm_lowcomms_addr(int nodeid, struct sockaddr_storage *addr, int len)
 		spin_unlock(&dlm_node_addrs_spin);
 		kfree(new_addr);
 		kfree(new_node);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	na->addr[na->addr_count++] = new_addr;
@@ -633,11 +633,11 @@ static int receive_from_sock(struct connection *con)
 	mutex_lock(&con->sock_mutex);
 
 	if (con->sock == NULL) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out_close;
 	}
 	if (con->nodeid == 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out_close;
 	}
 
@@ -708,7 +708,7 @@ out_resched:
 	if (!test_and_set_bit(CF_READ_PENDING, &con->flags))
 		queue_work(recv_workqueue, &con->rwork);
 	mutex_unlock(&con->sock_mutex);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 
 out_close:
 	mutex_unlock(&con->sock_mutex);
@@ -718,7 +718,7 @@ out_close:
 	}
 	/* Don't return success if we really got EOF */
 	if (ret == 0)
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 
 	return ret;
 }
@@ -745,7 +745,7 @@ static int accept_from_sock(struct connection *con)
 
 	if (!con->sock) {
 		mutex_unlock(&con->sock_mutex);
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 	}
 
 	result = kernel_accept(con->sock, &newsock, O_NONBLOCK);
@@ -756,7 +756,7 @@ static int accept_from_sock(struct connection *con)
 	memset(&peeraddr, 0, sizeof(peeraddr));
 	len = newsock->ops->getname(newsock, (struct sockaddr *)&peeraddr, 2);
 	if (len < 0) {
-		result = -ECONNABORTED;
+		result = -ERR(ECONNABORTED);
 		goto accept_err;
 	}
 
@@ -814,7 +814,7 @@ static int accept_from_sock(struct connection *con)
 		}
 		else {
 			printk("Extra connection from node %d attempted\n", nodeid);
-			result = -EAGAIN;
+			result = -ERR(EAGAIN);
 			mutex_unlock(&othercon->sock_mutex);
 			mutex_unlock(&newcon->sock_mutex);
 			goto accept_err;
@@ -1169,7 +1169,7 @@ static void init_local(void)
 static int sctp_listen_for_all(void)
 {
 	struct socket *sock = NULL;
-	int result = -EINVAL;
+	int result = -ERR(EINVAL);
 	struct connection *con = nodeid2con(0, GFP_NOFS);
 
 	if (!con)
@@ -1221,7 +1221,7 @@ static int tcp_listen_for_all(void)
 {
 	struct socket *sock = NULL;
 	struct connection *con = nodeid2con(0, GFP_NOFS);
-	int result = -EINVAL;
+	int result = -ERR(EINVAL);
 
 	if (!con)
 		return -ENOMEM;
@@ -1230,7 +1230,7 @@ static int tcp_listen_for_all(void)
 	if (dlm_local_addr[1] != NULL) {
 		log_print("TCP protocol can't handle multi-homed hosts, "
 			  "try SCTP");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	log_print("Using TCP for communications");
@@ -1241,7 +1241,7 @@ static int tcp_listen_for_all(void)
 		result = 0;
 	}
 	else {
-		result = -EADDRINUSE;
+		result = -ERR(EADDRINUSE);
 	}
 
 	return result;
@@ -1589,7 +1589,7 @@ void dlm_lowcomms_stop(void)
 
 int dlm_lowcomms_start(void)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	struct connection *con;
 	int i;
 
@@ -1598,7 +1598,7 @@ int dlm_lowcomms_start(void)
 
 	init_local();
 	if (!dlm_local_count) {
-		error = -ENOTCONN;
+		error = -ERR(ENOTCONN);
 		log_print("no local IP address has been set");
 		goto fail;
 	}

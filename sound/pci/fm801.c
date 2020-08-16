@@ -393,7 +393,7 @@ static int snd_fm801_playback_trigger(struct snd_pcm_substream *substream,
 	default:
 		spin_unlock(&chip->reg_lock);
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	fm801_writew(chip, PLY_CTRL, chip->ply_ctrl);
 	spin_unlock(&chip->reg_lock);
@@ -428,7 +428,7 @@ static int snd_fm801_capture_trigger(struct snd_pcm_substream *substream,
 	default:
 		spin_unlock(&chip->reg_lock);
 		snd_BUG();
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	fm801_writew(chip, CAP_CTRL, chip->cap_ctrl);
 	spin_unlock(&chip->reg_lock);
@@ -961,7 +961,7 @@ static int snd_fm801_put_mux(struct snd_kcontrol *kcontrol,
         unsigned short val;
  
         if ((val = ucontrol->value.enumerated.item[0]) > 4)
-                return -EINVAL;
+                return -ERR(EINVAL);
 	return snd_fm801_update_bits(chip, FM801_REC_SRC, 7, val);
 }
 
@@ -1075,7 +1075,7 @@ static int wait_for_codec(struct fm801 *chip, unsigned int codec_id,
 			return 0;
 		schedule_timeout_uninterruptible(1);
 	} while (time_after(timeout, jiffies));
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int reset_codec(struct fm801 *chip)
@@ -1220,7 +1220,7 @@ static int snd_fm801_create(struct snd_card *card,
 				IRQF_SHARED, KBUILD_MODNAME, chip)) {
 			dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 			snd_fm801_free(chip);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		chip->irq = pci->irq;
 		card->sync_irq = chip->irq;
@@ -1250,7 +1250,7 @@ static int snd_fm801_create(struct snd_card *card,
 		if (snd_tea575x_init(&chip->tea, THIS_MODULE)) {
 			dev_err(card->dev, "TEA575x radio not found\n");
 			snd_fm801_free(chip);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	} else if ((chip->tea575x_tuner & TUNER_TYPE_MASK) == 0) {
 		unsigned int tuner_only = chip->tea575x_tuner & TUNER_ONLY;
@@ -1292,10 +1292,10 @@ static int snd_card_fm801_probe(struct pci_dev *pci,
 	int err;
 
         if (dev >= SNDRV_CARDS)
-                return -ENODEV;
+                return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

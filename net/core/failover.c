@@ -245,7 +245,7 @@ struct failover *failover_register(struct net_device *dev,
 	struct failover *failover;
 
 	if (dev->type != ARPHRD_ETHER)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	failover = kzalloc(sizeof(*failover), GFP_KERNEL);
 	if (!failover)

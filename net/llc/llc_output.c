@@ -25,7 +25,7 @@
 int llc_mac_hdr_init(struct sk_buff *skb,
 		     const unsigned char *sa, const unsigned char *da)
 {
-	int rc = -EINVAL;
+	int rc = -ERR(EINVAL);
 
 	switch (skb->dev->type) {
 	case ARPHRD_ETHER:

@@ -108,14 +108,14 @@ static int valid_ecryptfs_desc(const char *ecryptfs_desc)
 	if (strlen(ecryptfs_desc) != KEY_ECRYPTFS_DESC_LEN) {
 		pr_err("encrypted_key: key description must be %d hexadecimal "
 		       "characters long\n", KEY_ECRYPTFS_DESC_LEN);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < KEY_ECRYPTFS_DESC_LEN; i++) {
 		if (!isxdigit(ecryptfs_desc[i])) {
 			pr_err("encrypted_key: key description must contain "
 			       "only hexadecimal characters\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -143,13 +143,13 @@ static int valid_master_desc(const char *new_desc, const char *orig_desc)
 	else if (!strncmp(new_desc, KEY_USER_PREFIX, KEY_USER_PREFIX_LEN))
 		prefix_len = KEY_USER_PREFIX_LEN;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!new_desc[prefix_len])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (orig_desc && strncmp(new_desc, orig_desc, prefix_len))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -173,7 +173,7 @@ static int datablob_parse(char *datablob, const char **format,
 			  char **hex_encoded_iv)
 {
 	substring_t args[MAX_OPT_ARGS];
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int key_cmd;
 	int key_format;
 	char *p, *keyword;
@@ -314,7 +314,7 @@ static struct key *request_user_key(const char *master_desc, const u8 **master_k
 		/* key was revoked before we acquired its semaphore */
 		up_read(&ukey->sem);
 		key_put(ukey);
-		ukey = ERR_PTR(-EKEYREVOKED);
+		ukey = ERR_PTR(-ERR(EKEYREVOKED));
 		goto error;
 	}
 	*master_key = upayload->data;
@@ -410,7 +410,7 @@ static struct skcipher_request *init_skcipher_req(const u8 *key,
 static struct key *request_master_key(struct encrypted_key_payload *epayload,
 				      const u8 **master_key, size_t *master_keylen)
 {
-	struct key *mkey = ERR_PTR(-EINVAL);
+	struct key *mkey = ERR_PTR(-ERR(EINVAL));
 
 	if (!strncmp(epayload->master_desc, KEY_TRUSTED_PREFIX,
 		     KEY_TRUSTED_PREFIX_LEN)) {
@@ -534,7 +534,7 @@ static int datablob_hmac_verify(struct encrypted_key_payload *epayload,
 	ret = crypto_memneq(digest, epayload->format + epayload->datablob_len,
 			    sizeof(digest));
 	if (ret) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		dump_hmac("datablob",
 			  epayload->format + epayload->datablob_len,
 			  HASH_SIZE);
@@ -608,7 +608,7 @@ static struct encrypted_key_payload *encrypted_key_alloc(struct key *key,
 
 	ret = kstrtol(datalen, 10, &dlen);
 	if (ret < 0 || dlen < MIN_DATA_SIZE || dlen > MAX_DATA_SIZE)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	format_len = (!format) ? strlen(key_format_default) : strlen(format);
 	decrypted_datalen = dlen;
@@ -618,7 +618,7 @@ static struct encrypted_key_payload *encrypted_key_alloc(struct key *key,
 			if (dlen != ECRYPTFS_MAX_KEY_BYTES) {
 				pr_err("encrypted_key: keylen for the ecryptfs format must be equal to %d bytes\n",
 					ECRYPTFS_MAX_KEY_BYTES);
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 			}
 			decrypted_datalen = ECRYPTFS_MAX_KEY_BYTES;
 			payload_datalen = sizeof(struct ecryptfs_auth_tok);
@@ -626,7 +626,7 @@ static struct encrypted_key_payload *encrypted_key_alloc(struct key *key,
 			if (decrypted_datalen != KEY_ENC32_PAYLOAD_LEN) {
 				pr_err("encrypted_key: enc32 key payload incorrect length: %d\n",
 						decrypted_datalen);
-				return ERR_PTR(-EINVAL);
+				return ERR_PTR(-ERR(EINVAL));
 			}
 		}
 	}
@@ -668,22 +668,22 @@ static int encrypted_key_decrypt(struct encrypted_key_payload *epayload,
 	encrypted_datalen = roundup(epayload->decrypted_datalen, blksize);
 	asciilen = (ivsize + 1 + encrypted_datalen + HASH_SIZE) * 2;
 	if (strlen(hex_encoded_iv) != asciilen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hex_encoded_data = hex_encoded_iv + (2 * ivsize) + 2;
 	ret = hex2bin(epayload->iv, hex_encoded_iv, ivsize);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = hex2bin(epayload->encrypted_data, hex_encoded_data,
 		      encrypted_datalen);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hmac = epayload->format + epayload->datablob_len;
 	ret = hex2bin(hmac, hex_encoded_data + (encrypted_datalen * 2),
 		      HASH_SIZE);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mkey = request_master_key(epayload, &master_key, &master_keylen);
 	if (IS_ERR(mkey))
@@ -791,7 +791,7 @@ static int encrypted_instantiate(struct key *key,
 	int ret;
 
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	datablob = kmalloc(datalen + 1, GFP_KERNEL);
 	if (!datablob)
@@ -850,9 +850,9 @@ static int encrypted_update(struct key *key, struct key_preparsed_payload *prep)
 	int ret = 0;
 
 	if (key_is_negative(key))
-		return -ENOKEY;
+		return -ERR(ENOKEY);
 	if (datalen <= 0 || datalen > 32767 || !prep->data)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = kmalloc(datalen + 1, GFP_KERNEL);
 	if (!buf)

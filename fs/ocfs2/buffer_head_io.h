@@ -47,7 +47,7 @@ static inline int ocfs2_read_block(struct ocfs2_caching_info *ci, u64 off,
 
 	if (bh == NULL) {
 		printk("ocfs2: bh == NULL\n");
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 

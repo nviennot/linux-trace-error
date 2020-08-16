@@ -406,7 +406,7 @@ static int snd_bt87x_pcm_open(struct snd_pcm_substream *substream)
 	int err;
 
 	if (test_and_set_bit(0, &chip->opened))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (substream->pcm->device == DEVICE_DIGITAL)
 		err = snd_bt87x_set_digital_hw(chip, runtime);
@@ -513,7 +513,7 @@ static int snd_bt87x_trigger(struct snd_pcm_substream *substream, int cmd)
 	case SNDRV_PCM_TRIGGER_STOP:
 		return snd_bt87x_stop(chip);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -833,7 +833,7 @@ static int snd_bt87x_detect_card(struct pci_dev *pci)
 			dev_dbg(&pci->dev,
 				"card %#04x-%#04x:%#04x has no audio\n",
 				    pci->device, pci->subsystem_vendor, pci->subsystem_device);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 	dev_info(&pci->dev, "unknown card %#04x-%#04x:%#04x\n",
@@ -856,16 +856,16 @@ static int snd_bt87x_probe(struct pci_dev *pci,
 	if (!pci_id->driver_data) {
 		err = snd_bt87x_detect_card(pci);
 		if (err < 0)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		boardid = err;
 	} else
 		boardid = pci_id->driver_data;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		++dev;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

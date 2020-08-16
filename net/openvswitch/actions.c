@@ -625,7 +625,7 @@ static int set_nsh(struct sk_buff *skb, struct sw_flow_key *flow_key,
 		       sizeof(flow_key->nsh.context));
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	skb_postpush_rcsum(skb, nh, length);
 	return 0;
@@ -1065,7 +1065,7 @@ static int execute_set_action(struct sk_buff *skb,
 		return 0;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* Mask is at the midpoint of the data. */
@@ -1091,7 +1091,7 @@ static int execute_masked_set_action(struct sk_buff *skb,
 
 	case OVS_KEY_ATTR_TUNNEL_INFO:
 		/* Masked data not supported for tunnel. */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 
 	case OVS_KEY_ATTR_ETHERNET:
@@ -1139,7 +1139,7 @@ static int execute_masked_set_action(struct sk_buff *skb,
 	case OVS_KEY_ATTR_CT_LABELS:
 	case OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4:
 	case OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		break;
 	}
 
@@ -1219,7 +1219,7 @@ static int execute_dec_ttl(struct sk_buff *skb, struct sw_flow_key *key)
 		nh = ipv6_hdr(skb);
 
 		if (nh->hop_limit <= 1)
-			return -EHOSTUNREACH;
+			return -ERR(EHOSTUNREACH);
 
 		key->ip.ttl = --nh->hop_limit;
 	} else {
@@ -1233,7 +1233,7 @@ static int execute_dec_ttl(struct sk_buff *skb, struct sw_flow_key *key)
 
 		nh = ip_hdr(skb);
 		if (nh->ttl <= 1)
-			return -EHOSTUNREACH;
+			return -ERR(EHOSTUNREACH);
 
 		old_ttl = nh->ttl--;
 		csum_replace2(&nh->check, htons(old_ttl << 8),
@@ -1371,7 +1371,7 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 
 			/* Hide stolen IP fragments from user space. */
 			if (err)
-				return err == -EINPROGRESS ? 0 : err;
+				return err == -ERR(EINPROGRESS) ? 0 : err;
 			break;
 
 		case OVS_ACTION_ATTR_CT_CLEAR:
@@ -1560,7 +1560,7 @@ int ovs_execute_actions(struct datapath *dp, struct sk_buff *skb,
 		net_crit_ratelimited("ovs: recursion limit reached on datapath %s, probable configuration error\n",
 				     ovs_dp_name(dp));
 		kfree_skb(skb);
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		goto out;
 	}
 

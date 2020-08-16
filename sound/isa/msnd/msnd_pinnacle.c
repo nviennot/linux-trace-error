@@ -199,7 +199,7 @@ static int snd_msnd_reset_dsp(long io, unsigned char *info)
 	}
 	snd_printk(KERN_ERR LOGNAME ": Cannot reset DSP\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_msnd_probe(struct snd_card *card)
@@ -214,12 +214,12 @@ static int snd_msnd_probe(struct snd_card *card)
 
 	if (!request_region(chip->io, DSP_NUMIO, "probing")) {
 		snd_printk(KERN_ERR LOGNAME ": I/O port conflict\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (snd_msnd_reset_dsp(chip->io, &info) < 0) {
 		release_region(chip->io, DSP_NUMIO);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 #ifdef MSND_CLASSIC
@@ -389,7 +389,7 @@ static int upload_dsp_code(struct snd_card *card)
 	memcpy_toio(chip->mappedbase, perm_fw->data, perm_fw->size);
 	if (snd_msnd_upload_host(chip, init_fw->data, init_fw->size) < 0) {
 		printk(KERN_WARNING LOGNAME ": Error uploading to DSP\n");
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto cleanup;
 	}
 	printk(KERN_INFO LOGNAME ": DSP firmware uploaded\n");
@@ -445,7 +445,7 @@ static int snd_msnd_initialize(struct snd_card *card)
 		msleep(1);
 		if (!timeout--) {
 			snd_printd(KERN_ERR LOGNAME ": DSP reset timeout\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -502,7 +502,7 @@ static int snd_msnd_calibrate_adc(struct snd_msnd *chip, u16 srate)
 		return 0;
 	}
 	printk(KERN_WARNING LOGNAME ": ADC calibration failed\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /*
@@ -541,7 +541,7 @@ static int snd_msnd_attach(struct snd_card *card)
 	card->sync_irq = chip->irq;
 	if (request_region(chip->io, DSP_NUMIO, card->shortname) == NULL) {
 		free_irq(chip->irq, chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!request_mem_region(chip->base, BUFFSIZE, card->shortname)) {
@@ -550,14 +550,14 @@ static int snd_msnd_attach(struct snd_card *card)
 			chip->base, chip->base + BUFFSIZE - 1);
 		release_region(chip->io, DSP_NUMIO);
 		free_irq(chip->irq, chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->mappedbase = ioremap(chip->base, 0x8000);
 	if (!chip->mappedbase) {
 		printk(KERN_ERR LOGNAME
 			": unable to map memory region 0x%lx-0x%lx\n",
 			chip->base, chip->base + BUFFSIZE - 1);
-		err = -EIO;
+		err = -ERR(EIO);
 		goto err_release_region;
 	}
 
@@ -644,7 +644,7 @@ static int snd_msnd_write_cfg(int cfg, int reg, int value)
 	outb(value, cfg + 1);
 	if (value != inb(cfg + 1)) {
 		printk(KERN_ERR LOGNAME ": snd_msnd_write_cfg: I/O error\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -652,33 +652,33 @@ static int snd_msnd_write_cfg(int cfg, int reg, int value)
 static int snd_msnd_write_cfg_io0(int cfg, int num, u16 io)
 {
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IO0_BASEHI, HIBYTE(io)))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IO0_BASELO, LOBYTE(io)))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
 static int snd_msnd_write_cfg_io1(int cfg, int num, u16 io)
 {
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IO1_BASEHI, HIBYTE(io)))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IO1_BASELO, LOBYTE(io)))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
 static int snd_msnd_write_cfg_irq(int cfg, int num, u16 irq)
 {
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IRQ_NUMBER, LOBYTE(irq)))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_IRQ_TYPE, IRQTYPE_EDGE))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -689,23 +689,23 @@ static int snd_msnd_write_cfg_mem(int cfg, int num, int mem)
 	mem >>= 8;
 	wmem = (u16)(mem & 0xfff);
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_MEMBASEHI, HIBYTE(wmem)))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_MEMBASELO, LOBYTE(wmem)))
-		return -EIO;
+		return -ERR(EIO);
 	if (wmem && snd_msnd_write_cfg(cfg, IREG_MEMCONTROL,
 				       MEMTYPE_HIADDR | MEMTYPE_16BIT))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
 static int snd_msnd_activate_logical(int cfg, int num)
 {
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg(cfg, IREG_ACTIVATE, LD_ACTIVATE))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -713,17 +713,17 @@ static int snd_msnd_write_cfg_logical(int cfg, int num, u16 io0,
 				      u16 io1, u16 irq, int mem)
 {
 	if (snd_msnd_write_cfg(cfg, IREG_LOGDEVICE, num))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg_io0(cfg, num, io0))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg_io1(cfg, num, io1))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg_irq(cfg, num, irq))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_write_cfg_mem(cfg, num, mem))
-		return -EIO;
+		return -ERR(EIO);
 	if (snd_msnd_activate_logical(cfg, num))
-		return -EIO;
+		return -ERR(EIO);
 	return 0;
 }
 
@@ -735,7 +735,7 @@ static int snd_msnd_pinnacle_cfg_reset(int cfg)
 	printk(KERN_INFO LOGNAME ": Resetting all devices\n");
 	for (i = 0; i < 4; ++i)
 		if (snd_msnd_write_cfg_logical(cfg, i, 0, 0, 0, 0))
-			return -EIO;
+			return -ERR(EIO);
 
 	return 0;
 }
@@ -889,7 +889,7 @@ static int snd_msnd_isa_probe(struct device *pdev, unsigned int idx)
 #endif
 	    ) {
 		printk(KERN_INFO LOGNAME ": Assuming PnP mode\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	err = snd_card_new(pdev, index[idx], id[idx], THIS_MODULE,
@@ -938,11 +938,11 @@ static int snd_msnd_isa_probe(struct device *pdev, unsigned int idx)
 		printk(KERN_ERR LOGNAME ": Config port 0x%lx conflict\n",
 			   cfg[idx]);
 		snd_card_free(card);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (reset[idx])
 		if (snd_msnd_pinnacle_cfg_reset(cfg[idx])) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto cfg_error;
 		}
 
@@ -1081,27 +1081,27 @@ static int snd_msnd_pnp_detect(struct pnp_card_link *pcard,
 			break;
 	}
 	if (idx >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/*
 	 * Check that we still have room for another sound card ...
 	 */
 	pnp_dev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
 	if (!pnp_dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	mpu_dev = pnp_request_card_device(pcard, pid->devs[1].id, NULL);
 	if (!mpu_dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!pnp_is_active(pnp_dev) && pnp_activate_dev(pnp_dev) < 0) {
 		printk(KERN_INFO "msnd_pinnacle: device is inactive\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (!pnp_is_active(mpu_dev) && pnp_activate_dev(mpu_dev) < 0) {
 		printk(KERN_INFO "msnd_pinnacle: MPU device is inactive\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	/*

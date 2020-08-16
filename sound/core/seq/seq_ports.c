@@ -285,7 +285,7 @@ int snd_seq_delete_port(struct snd_seq_client *client, int port)
 	if (found)
 		return port_delete(client, found);
 	else
-		return -ENOENT;
+		return -ERR(ENOENT);
 }
 
 /* delete the all ports belonging to the given client */
@@ -323,7 +323,7 @@ int snd_seq_set_port_info(struct snd_seq_client_port * port,
 			  struct snd_seq_port_info * info)
 {
 	if (snd_BUG_ON(!port || !info))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set port name */
 	if (info->name[0])
@@ -353,7 +353,7 @@ int snd_seq_get_port_info(struct snd_seq_client_port * port,
 			  struct snd_seq_port_info * info)
 {
 	if (snd_BUG_ON(!port || !info))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* get port name */
 	strlcpy(info->name, port->name, sizeof(info->name));
@@ -431,7 +431,7 @@ static int unsubscribe_port(struct snd_seq_client *client,
 	int err = 0;
 
 	if (! grp->count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	grp->count--;
 	if (grp->close && grp->count == 0)
 		err = grp->close(port->private_data, info);
@@ -476,7 +476,7 @@ static int check_and_subscribe_port(struct snd_seq_client *client,
 	int err;
 
 	grp = is_src ? &port->c_src : &port->c_dest;
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 	down_write(&grp->list_mutex);
 	if (exclusive) {
 		if (!list_empty(&grp->list_head))
@@ -592,7 +592,7 @@ int snd_seq_port_disconnect(struct snd_seq_client *connector,
 {
 	struct snd_seq_port_subs_info *src = &src_port->c_src;
 	struct snd_seq_subscribers *subs;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	down_write(&src->list_mutex);
 	/* look for the connection */
@@ -622,7 +622,7 @@ int snd_seq_port_get_subscription(struct snd_seq_port_subs_info *src_grp,
 				  struct snd_seq_port_subscribe *subs)
 {
 	struct snd_seq_subscribers *s;
-	int err = -ENOENT;
+	int err = -ERR(ENOENT);
 
 	down_read(&src_grp->list_mutex);
 	list_for_each_entry(s, &src_grp->list_head, src_list) {

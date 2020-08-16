@@ -61,7 +61,7 @@ static inline void dcookie_unregister(struct dcookie_user * user)
 
 static inline int get_dcookie(const struct path *path, unsigned long *cookie)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #endif /* CONFIG_PROFILING */

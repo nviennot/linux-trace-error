@@ -37,7 +37,7 @@ static int __init xbc_parse_error(const char *msg, const char *p)
 	xbc_err_msg = msg;
 	xbc_err_pos = (int)(p - xbc_data);
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -228,7 +228,7 @@ int __init xbc_node_compose_key_after(struct xbc_node *root,
 	int depth = 0, ret = 0, total = 0;
 
 	if (!node || node == root)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (xbc_node_is_value(node))
 		node = xbc_node_get_parent(node);
@@ -236,11 +236,11 @@ int __init xbc_node_compose_key_after(struct xbc_node *root,
 	while (node && node != root) {
 		keys[depth++] = xbc_node_index(node);
 		if (depth == XBC_DEPTH_MAX)
-			return -ERANGE;
+			return -ERR(ERANGE);
 		node = xbc_node_get_parent(node);
 	}
 	if (!node && root)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	while (--depth >= 0) {
 		node = xbc_nodes + keys[depth];
@@ -674,7 +674,7 @@ static int __init xbc_verify_tree(void)
 	/* Empty tree */
 	if (xbc_node_num == 0) {
 		xbc_parse_error("Empty config", xbc_data);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	for (i = 0; i < xbc_node_num; i++) {
@@ -762,7 +762,7 @@ int __init xbc_init(char *buf, const char **emsg, int *epos)
 	if (xbc_data) {
 		if (emsg)
 			*emsg = "Bootconfig is already initialized";
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	ret = strlen(buf);
@@ -770,7 +770,7 @@ int __init xbc_init(char *buf, const char **emsg, int *epos)
 		if (emsg)
 			*emsg = ret ? "Config data is too big" :
 				"Config data is empty";
-		return -ERANGE;
+		return -ERR(ERANGE);
 	}
 
 	xbc_nodes = memblock_alloc(sizeof(struct xbc_node) * XBC_NODE_MAX,

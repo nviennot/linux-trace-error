@@ -67,7 +67,7 @@ int drm_crtc_add_crc_entry(struct drm_crtc *crtc, bool has_frame,
 static inline int drm_crtc_add_crc_entry(struct drm_crtc *crtc, bool has_frame,
 					 uint32_t frame, uint32_t *crcs)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif /* defined(CONFIG_DEBUG_FS) */
 

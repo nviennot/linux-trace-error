@@ -106,7 +106,7 @@ static ssize_t udelay_test_write(struct file *file, const char __user *buf,
 	int iters;
 
 	if (count >= sizeof(lbuf))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (copy_from_user(lbuf, buf, count))
 		return -EFAULT;
@@ -114,7 +114,7 @@ static ssize_t udelay_test_write(struct file *file, const char __user *buf,
 
 	ret = sscanf(lbuf, "%d %d", &usecs, &iters);
 	if (ret < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	else if (ret < 2)
 		iters = DEFAULT_ITERATIONS;
 

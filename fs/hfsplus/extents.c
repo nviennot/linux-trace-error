@@ -166,9 +166,9 @@ static inline int __hfsplus_ext_read_extent(struct hfs_find_data *fd,
 		return res;
 	if (fd->key->ext.cnid != fd->search_key->ext.cnid ||
 	    fd->key->ext.fork_type != fd->search_key->ext.fork_type)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	if (fd->entrylength != sizeof(hfsplus_extent_rec))
-		return -EIO;
+		return -ERR(EIO);
 	hfs_bnode_read(fd->bnode, extent, fd->entryoffset,
 		sizeof(hfsplus_extent_rec));
 	return 0;
@@ -228,7 +228,7 @@ int hfsplus_get_block(struct inode *inode, sector_t iblock,
 	struct super_block *sb = inode->i_sb;
 	struct hfsplus_sb_info *sbi = HFSPLUS_SB(sb);
 	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
-	int res = -EIO;
+	int res = -ERR(EIO);
 	u32 ablock, dblock, mask;
 	sector_t sector;
 	int was_dirty = 0;
@@ -240,7 +240,7 @@ int hfsplus_get_block(struct inode *inode, sector_t iblock,
 		if (!create)
 			return 0;
 		if (iblock > hip->fs_blocks)
-			return -EIO;
+			return -ERR(EIO);
 		if (ablock >= hip->alloc_blocks) {
 			res = hfsplus_file_extend(inode, false);
 			if (res)
@@ -255,7 +255,7 @@ int hfsplus_get_block(struct inode *inode, sector_t iblock,
 	}
 
 	if (inode->i_ino == HFSPLUS_EXT_CNID)
-		return -EIO;
+		return -ERR(EIO);
 
 	mutex_lock(&hip->extents_lock);
 
@@ -268,7 +268,7 @@ int hfsplus_get_block(struct inode *inode, sector_t iblock,
 	res = hfsplus_ext_read_extent(inode, ablock);
 	if (res) {
 		mutex_unlock(&hip->extents_lock);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	dblock = hfsplus_ext_find_block(hip->cached_extents,
 					ablock - hip->cached_start);
@@ -319,7 +319,7 @@ static int hfsplus_add_extent(struct hfsplus_extent *extent, u32 offset,
 			start = be32_to_cpu(extent->start_block);
 			if (alloc_block != start + count) {
 				if (++i >= 8)
-					return -ENOSPC;
+					return -ERR(ENOSPC);
 				extent++;
 				extent->start_block = cpu_to_be32(alloc_block);
 			} else
@@ -331,7 +331,7 @@ static int hfsplus_add_extent(struct hfsplus_extent *extent, u32 offset,
 		offset -= count;
 	}
 	/* panic? */
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int hfsplus_free_extents(struct super_block *sb,
@@ -355,7 +355,7 @@ static int hfsplus_free_extents(struct super_block *sb,
 		offset -= count;
 	}
 	/* panic? */
-	return -EIO;
+	return -ERR(EIO);
 found:
 	for (;;) {
 		start = be32_to_cpu(extent->start_block);
@@ -451,7 +451,7 @@ int hfsplus_file_extend(struct inode *inode, bool zeroout)
 		pr_err("extend alloc file! (%llu,%u,%u)\n",
 		       sbi->alloc_file->i_size * 8,
 		       sbi->total_blocks, sbi->free_blocks);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	mutex_lock(&hip->extents_lock);
@@ -469,7 +469,7 @@ int hfsplus_file_extend(struct inode *inode, bool zeroout)
 	if (start >= sbi->total_blocks) {
 		start = hfsplus_block_allocate(sb, goal, 0, &len);
 		if (start >= goal) {
-			res = -ENOSPC;
+			res = -ERR(ENOSPC);
 			goto out;
 		}
 	}

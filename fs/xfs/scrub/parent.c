@@ -109,7 +109,7 @@ xchk_parent_count_parent_dentries(
 		if (error)
 			goto out;
 		if (spc.cancelled) {
-			error = -EAGAIN;
+			error = -ERR(EAGAIN);
 			goto out;
 		}
 		if (oldpos == spc.dc.pos)
@@ -275,7 +275,7 @@ xchk_parent(
 	 * a directory that has one entry pointing to us.
 	 */
 	if (!S_ISDIR(VFS_I(sc->ip)->i_mode))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* We're not a special inode, are we? */
 	if (!xfs_verify_dir_ino(mp, sc->ip->i_ino)) {

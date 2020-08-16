@@ -122,7 +122,7 @@ static int hsw_parse_module(struct sst_dsp *dsp, struct sst_fw *fw,
 			dev_err(dsp->dev,
 				"error: block %d size invalid\n", count);
 			sst_module_free(mod);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (le32_to_cpu(block->type)) {
@@ -142,7 +142,7 @@ static int hsw_parse_module(struct sst_dsp *dsp, struct sst_fw *fw,
 			dev_err(dsp->dev, "error: bad type 0x%x for block 0x%x\n",
 				block->type, count);
 			sst_module_free(mod);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		mod->size = le32_to_cpu(block->size);
@@ -185,7 +185,7 @@ static int hsw_parse_fw_image(struct sst_fw *sst_fw)
 	    (sst_fw->size !=
 	     le32_to_cpu(header->file_size) + sizeof(*header))) {
 		dev_err(dsp->dev, "error: invalid fw sign/filesize mismatch\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dsp->dev, "header size=0x%x modules=0x%x fmt=0x%x size=%zu\n",
@@ -488,13 +488,13 @@ static int hsw_acpi_resource_map(struct sst_dsp *sst, struct sst_pdata *pdata)
 	sst->addr.lpe_base = pdata->lpe_base;
 	sst->addr.lpe = ioremap(pdata->lpe_base, pdata->lpe_size);
 	if (!sst->addr.lpe)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* ADSP PCI MMIO config space */
 	sst->addr.pci_cfg = ioremap(pdata->pcicfg_base, pdata->pcicfg_size);
 	if (!sst->addr.pci_cfg) {
 		iounmap(sst->addr.lpe);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* SST Shim */
@@ -635,7 +635,7 @@ static int hsw_init(struct sst_dsp *sst, struct sst_pdata *pdata)
 {
 	const struct sst_adsp_memregion *region;
 	struct device *dev;
-	int ret = -ENODEV, i, j, region_count;
+	int ret = -ERR(ENODEV), i, j, region_count;
 	u32 offset, size, fw_dump_bit;
 
 	dev = sst->dma_dev;

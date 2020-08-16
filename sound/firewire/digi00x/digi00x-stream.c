@@ -43,7 +43,7 @@ int snd_dg00x_stream_get_local_rate(struct snd_dg00x *dg00x, unsigned int *rate)
 	if (data < ARRAY_SIZE(snd_dg00x_stream_rates))
 		*rate = snd_dg00x_stream_rates[data];
 	else
-		err = -EIO;
+		err = -ERR(EIO);
 
 	return err;
 }
@@ -58,7 +58,7 @@ int snd_dg00x_stream_set_local_rate(struct snd_dg00x *dg00x, unsigned int rate)
 			break;
 	}
 	if (i == ARRAY_SIZE(snd_dg00x_stream_rates))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reg = cpu_to_be32(i);
 	return snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
@@ -80,7 +80,7 @@ int snd_dg00x_stream_get_clock(struct snd_dg00x *dg00x,
 
 	*clock = be32_to_cpu(reg) & 0x0f;
 	if (*clock >= SND_DG00X_CLOCK_COUNT)
-		err = -EIO;
+		err = -ERR(EIO);
 
 	return err;
 }
@@ -117,7 +117,7 @@ int snd_dg00x_stream_get_external_rate(struct snd_dg00x *dg00x,
 		*rate = snd_dg00x_stream_rates[data];
 	/* This means desync. */
 	else
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 
 	return err;
 }
@@ -198,7 +198,7 @@ static int keep_resources(struct snd_dg00x *dg00x, struct amdtp_stream *stream,
 			break;
 	}
 	if (i == SND_DG00X_RATE_COUNT)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (stream == &dg00x->tx_stream)
 		resources = &dg00x->tx_resources;
@@ -383,7 +383,7 @@ int snd_dg00x_stream_start_duplex(struct snd_dg00x *dg00x)
 						CALLBACK_TIMEOUT) ||
 		    !amdtp_stream_wait_callback(&dg00x->tx_stream,
 						CALLBACK_TIMEOUT)) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			goto error;
 		}
 	}
@@ -430,7 +430,7 @@ int snd_dg00x_stream_lock_try(struct snd_dg00x *dg00x)
 
 	/* user land lock this */
 	if (dg00x->dev_lock_count < 0) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto end;
 	}
 

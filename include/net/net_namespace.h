@@ -210,7 +210,7 @@ static inline struct net *copy_net_ns(unsigned long flags,
 	struct user_namespace *user_ns, struct net *old_net)
 {
 	if (flags & CLONE_NEWNET)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	return old_net;
 }
 

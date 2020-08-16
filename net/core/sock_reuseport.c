@@ -155,7 +155,7 @@ int reuseport_add_sock(struct sock *sk, struct sock *sk2, bool bind_inany)
 					     lockdep_is_held(&reuseport_lock));
 	if (old_reuse && old_reuse->num_socks != 1) {
 		spin_unlock_bh(&reuseport_lock);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (reuse->num_socks == reuse->max_socks) {
@@ -320,7 +320,7 @@ int reuseport_attach_prog(struct sock *sk, struct bpf_prog *prog)
 			return err;
 	} else if (!rcu_access_pointer(sk->sk_reuseport_cb)) {
 		/* The socket wasn't bound with SO_REUSEPORT */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&reuseport_lock);
@@ -342,7 +342,7 @@ int reuseport_detach_prog(struct sock *sk)
 	struct bpf_prog *old_prog;
 
 	if (!rcu_access_pointer(sk->sk_reuseport_cb))
-		return sk->sk_reuseport ? -ENOENT : -EINVAL;
+		return sk->sk_reuseport ? -ERR(ENOENT) : -ERR(EINVAL);
 
 	old_prog = NULL;
 	spin_lock_bh(&reuseport_lock);
@@ -353,7 +353,7 @@ int reuseport_detach_prog(struct sock *sk)
 	spin_unlock_bh(&reuseport_lock);
 
 	if (!old_prog)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	sk_reuseport_prog_free(old_prog);
 	return 0;

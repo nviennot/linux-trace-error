@@ -175,7 +175,7 @@ static int wm8958_dsp2_fw(struct snd_soc_component *component, const char *name,
 	goto ok;
 
 err:
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 ok:
 	if (!check) {
 		snd_soc_component_write(component, 0x900, 0x0);
@@ -458,10 +458,10 @@ static int wm8958_put_mbc_enum(struct snd_kcontrol *kcontrol,
 	/* Don't allow on the fly reconfiguration */
 	reg = snd_soc_component_read32(component, WM8994_CLOCKING_1);
 	if (reg < 0 || reg & WM8958_DSP2CLK_ENA)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (value >= control->pdata.num_mbc_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->mbc_cfg = value;
 
@@ -512,15 +512,15 @@ static int wm8958_mbc_put(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (ucontrol->value.integer.value[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (wm8958_dsp2_busy(wm8994, mbc)) {
 		dev_dbg(component->dev, "DSP2 active on %d already\n", mbc);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (wm8994->enh_eq_ena[mbc])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wm8994->mbc_ena[mbc] = ucontrol->value.integer.value[0];
 
@@ -548,10 +548,10 @@ static int wm8958_put_vss_enum(struct snd_kcontrol *kcontrol,
 	/* Don't allow on the fly reconfiguration */
 	reg = snd_soc_component_read32(component, WM8994_CLOCKING_1);
 	if (reg < 0 || reg & WM8958_DSP2CLK_ENA)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (value >= control->pdata.num_vss_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->vss_cfg = value;
 
@@ -581,10 +581,10 @@ static int wm8958_put_vss_hpf_enum(struct snd_kcontrol *kcontrol,
 	/* Don't allow on the fly reconfiguration */
 	reg = snd_soc_component_read32(component, WM8994_CLOCKING_1);
 	if (reg < 0 || reg & WM8958_DSP2CLK_ENA)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (value >= control->pdata.num_vss_hpf_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->vss_hpf_cfg = value;
 
@@ -635,18 +635,18 @@ static int wm8958_vss_put(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (ucontrol->value.integer.value[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!wm8994->mbc_vss)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (wm8958_dsp2_busy(wm8994, vss)) {
 		dev_dbg(component->dev, "DSP2 active on %d already\n", vss);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (wm8994->enh_eq_ena[vss])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wm8994->vss_ena[vss] = ucontrol->value.integer.value[0];
 
@@ -706,18 +706,18 @@ static int wm8958_hpf_put(struct snd_kcontrol *kcontrol,
 	}
 
 	if (ucontrol->value.integer.value[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!wm8994->mbc_vss)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (wm8958_dsp2_busy(wm8994, hpf % 3)) {
 		dev_dbg(component->dev, "DSP2 active on %d already\n", hpf);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (wm8994->enh_eq_ena[hpf % 3])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (hpf < 3)
 		wm8994->hpf1_ena[hpf % 3] = ucontrol->value.integer.value[0];
@@ -748,10 +748,10 @@ static int wm8958_put_enh_eq_enum(struct snd_kcontrol *kcontrol,
 	/* Don't allow on the fly reconfiguration */
 	reg = snd_soc_component_read32(component, WM8994_CLOCKING_1);
 	if (reg < 0 || reg & WM8958_DSP2CLK_ENA)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (value >= control->pdata.num_enh_eq_cfgs)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wm8994->enh_eq_cfg = value;
 
@@ -802,19 +802,19 @@ static int wm8958_enh_eq_put(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (ucontrol->value.integer.value[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!wm8994->enh_eq)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (wm8958_dsp2_busy(wm8994, eq)) {
 		dev_dbg(component->dev, "DSP2 active on %d already\n", eq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (wm8994->mbc_ena[eq] || wm8994->vss_ena[eq] ||
 	    wm8994->hpf1_ena[eq] || wm8994->hpf2_ena[eq])
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	wm8994->enh_eq_ena[eq] = ucontrol->value.integer.value[0];
 

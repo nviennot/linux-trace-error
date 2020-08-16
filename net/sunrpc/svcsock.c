@@ -219,7 +219,7 @@ static int svc_one_sock_name(struct svc_sock *svsk, char *buf, int remaining)
 
 	if (len >= remaining) {
 		*buf = '\0';
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	}
 	return len;
 }
@@ -592,7 +592,7 @@ static int svc_udp_sendto(struct svc_rqst *rqstp)
 
 out_notconn:
 	mutex_unlock(&xprt->xpt_mutex);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 }
 
 static int svc_udp_has_wspace(struct svc_xprt *xprt)
@@ -903,7 +903,7 @@ err_too_large:
 			       svc_sock_reclen(svsk));
 	set_bit(XPT_CLOSE, &svsk->sk_xprt.xpt_flags);
 err_short:
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static int receive_cb_reply(struct svc_sock *svsk, struct svc_rqst *rqstp)
@@ -919,7 +919,7 @@ static int receive_cb_reply(struct svc_sock *svsk, struct svc_rqst *rqstp)
 	calldir = *p;
 
 	if (!bc_xprt)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	spin_lock(&bc_xprt->queue_lock);
 	req = xprt_lookup_rqst(bc_xprt, xid);
 	if (!req)
@@ -948,7 +948,7 @@ unlock_notfound:
 		bc_xprt, ntohl(xid));
 unlock_eagain:
 	spin_unlock(&bc_xprt->queue_lock);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static void svc_tcp_fragment_received(struct svc_sock *svsk)
@@ -1099,7 +1099,7 @@ static int svc_tcp_sendto(struct svc_rqst *rqstp)
 
 out_notconn:
 	mutex_unlock(&xprt->xpt_mutex);
-	return -ENOTCONN;
+	return -ERR(ENOTCONN);
 out_close:
 	pr_notice("rpc-srv/tcp: %s: %s %d when sending %d bytes - shutting down socket\n",
 		  xprt->xpt_server->sv_name,
@@ -1108,7 +1108,7 @@ out_close:
 	set_bit(XPT_CLOSE, &xprt->xpt_flags);
 	svc_xprt_enqueue(xprt);
 	mutex_unlock(&xprt->xpt_mutex);
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 static struct svc_xprt *svc_tcp_create(struct svc_serv *serv,
@@ -1296,17 +1296,17 @@ int svc_addsock(struct svc_serv *serv, const int fd, char *name_return,
 
 	if (!so)
 		return err;
-	err = -EAFNOSUPPORT;
+	err = -ERR(EAFNOSUPPORT);
 	if ((so->sk->sk_family != PF_INET) && (so->sk->sk_family != PF_INET6))
 		goto out;
-	err =  -EPROTONOSUPPORT;
+	err =  -ERR(EPROTONOSUPPORT);
 	if (so->sk->sk_protocol != IPPROTO_TCP &&
 	    so->sk->sk_protocol != IPPROTO_UDP)
 		goto out;
-	err = -EISCONN;
+	err = -ERR(EISCONN);
 	if (so->state > SS_UNCONNECTED)
 		goto out;
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if (!try_module_get(THIS_MODULE))
 		goto out;
 	svsk = svc_setup_socket(serv, so, SVC_SOCK_DEFAULTS);
@@ -1348,7 +1348,7 @@ static struct svc_xprt *svc_create_socket(struct svc_serv *serv,
 	if (protocol != IPPROTO_UDP && protocol != IPPROTO_TCP) {
 		printk(KERN_WARNING "svc: only UDP and TCP "
 				"sockets supported\n");
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	type = (protocol == IPPROTO_UDP)? SOCK_DGRAM : SOCK_STREAM;
@@ -1360,7 +1360,7 @@ static struct svc_xprt *svc_create_socket(struct svc_serv *serv,
 		family = PF_INET;
 		break;
 	default:
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	error = __sock_create(net, family, type, protocol, &sock, 1);

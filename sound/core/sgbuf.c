@@ -23,7 +23,7 @@ int snd_free_sgbuf_pages(struct snd_dma_buffer *dmab)
 	int i;
 
 	if (! sgbuf)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vunmap(dmab->area);
 	dmab->area = NULL;

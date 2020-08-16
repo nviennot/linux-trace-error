@@ -219,7 +219,7 @@ int erofs_try_to_free_all_cached_pages(struct erofs_sb_info *sbi,
 
 		/* block other users from reclaiming or migrating the page */
 		if (!trylock_page(page))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		if (page->mapping != mapping)
 			continue;
@@ -294,7 +294,7 @@ static int z_erofs_attach_page(struct z_erofs_collector *clt,
 				      page, type, &occupied);
 	clt->cl->vcnt += (unsigned int)ret;
 
-	return ret ? 0 : -EAGAIN;
+	return ret ? 0 : -ERR(EAGAIN);
 }
 
 static enum z_erofs_collectmode
@@ -432,7 +432,7 @@ static int z_erofs_register_collection(struct z_erofs_collector *clt,
 
 	if (grp != &pcl->obj) {
 		clt->pcl = container_of(grp, struct z_erofs_pcluster, obj);
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 		goto err_out;
 	}
 	/* used to check tail merging loop due to corrupted images */
@@ -464,7 +464,7 @@ static int z_erofs_collector_begin(struct z_erofs_collector *clt,
 
 	if (!PAGE_ALIGNED(map->m_pa)) {
 		DBG_BUGON(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	grp = erofs_find_workgroup(inode->i_sb, map->m_pa >> PAGE_SHIFT);
@@ -838,7 +838,7 @@ static int z_erofs_decompress_pcluster(struct super_block *sb,
 		if (!z_erofs_page_is_staging(page)) {
 			if (erofs_page_is_managed(sbi, page)) {
 				if (!PageUptodate(page))
-					err = -EIO;
+					err = -ERR(EIO);
 				continue;
 			}
 
@@ -863,7 +863,7 @@ static int z_erofs_decompress_pcluster(struct super_block *sb,
 		/* PG_error needs checking for inplaced and staging pages */
 		if (PageError(page)) {
 			DBG_BUGON(PageUptodate(page));
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 	}
 

@@ -278,7 +278,7 @@ int xprt_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 	*sent_p = 0;
 
 	if (unlikely(!sock))
-		return -ENOTSOCK;
+		return -ERR(ENOTSOCK);
 
 	msg->msg_flags |= MSG_MORE;
 	want = xdr->head[0].iov_len + rmsize;

@@ -250,7 +250,7 @@ static int hac_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		pr_debug("hac: invalid depth %d bit\n", params->msbits);
-		return -EINVAL;
+		return -ERR(EINVAL);
 		break;
 	}
 

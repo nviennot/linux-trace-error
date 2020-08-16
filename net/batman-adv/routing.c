@@ -462,21 +462,21 @@ static int batadv_check_unicast_packet(struct batadv_priv *bat_priv,
 
 	/* drop packet if it has not necessary minimum size */
 	if (unlikely(!pskb_may_pull(skb, hdr_size)))
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	ethhdr = eth_hdr(skb);
 
 	/* packet with unicast indication but non-unicast recipient */
 	if (!is_valid_ether_addr(ethhdr->h_dest))
-		return -EBADR;
+		return -ERR(EBADR);
 
 	/* packet with broadcast/multicast sender address */
 	if (is_multicast_ether_addr(ethhdr->h_source))
-		return -EBADR;
+		return -ERR(EBADR);
 
 	/* not for me */
 	if (!batadv_is_my_mac(bat_priv, ethhdr->h_dest))
-		return -EREMOTE;
+		return -ERR(EREMOTE);
 
 	return 0;
 }

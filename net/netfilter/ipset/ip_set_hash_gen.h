@@ -742,7 +742,7 @@ retry:
 					struct hbucket *ht;
 
 					if (m->size >= AHASH_MAX(h)) {
-						ret = -EAGAIN;
+						ret = -ERR(EAGAIN);
 					} else {
 						ht = kzalloc(sizeof(*ht) +
 						(m->size + AHASH_INIT_SIZE)
@@ -859,7 +859,7 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 	struct htable *t;
 	const struct mtype_elem *d = value;
 	struct mtype_elem *data;
-	struct hbucket *n, *old = ERR_PTR(-ENOENT);
+	struct hbucket *n, *old = ERR_PTR(-ERR(ENOENT));
 	int i, j = -1, ret;
 	bool flag_exist = flags & IPSET_FLAG_EXIST;
 	bool deleted = false, forceadd = false, reuse = false;
@@ -954,7 +954,7 @@ mtype_add(struct ip_set *set, void *value, const struct ip_set_ext *ext,
 		if (n->size >= AHASH_MAX(h)) {
 			/* Trigger rehashing */
 			mtype_data_next(&h->next, d);
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto resize;
 		}
 		old = n;
@@ -1315,7 +1315,7 @@ mtype_head(struct ip_set *set, struct sk_buff *skb)
 
 	return 0;
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* Make possible to run dumping parallel with resizing */
@@ -1358,7 +1358,7 @@ mtype_list(const struct ip_set *set,
 
 	atd = nla_nest_start(skb, IPSET_ATTR_ADT);
 	if (!atd)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	pr_debug("list hash set %s\n", set->name);
 	t = (const struct htable *)cb->args[IPSET_CB_PRIVATE];
@@ -1385,7 +1385,7 @@ mtype_list(const struct ip_set *set,
 			if (!nested) {
 				if (cb->args[IPSET_CB_ARG0] == first) {
 					nla_nest_cancel(skb, atd);
-					ret = -EMSGSIZE;
+					ret = -ERR(EMSGSIZE);
 					goto out;
 				}
 				goto nla_put_failure;
@@ -1409,7 +1409,7 @@ nla_put_failure:
 		pr_warn("Can't list set %s: one bucket does not fit into a message. Please report it!\n",
 			set->name);
 		cb->args[IPSET_CB_ARG0] = 0;
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 	} else {
 		nla_nest_end(skb, atd);
 	}

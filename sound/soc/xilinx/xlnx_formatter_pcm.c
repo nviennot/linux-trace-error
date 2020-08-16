@@ -258,7 +258,7 @@ static int xlnx_formatter_pcm_reset(void __iomem *mmio_base)
 		val = readl(mmio_base + XLNX_AUD_CTRL);
 	}
 	if (val & AUD_CTRL_RESET_MASK)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return 0;
 }
@@ -325,10 +325,10 @@ static int xlnx_formatter_pcm_open(struct snd_soc_component *component,
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK &&
 	    !adata->mm2s_presence)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
 		 !adata->s2mm_presence)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	stream_data = kzalloc(sizeof(*stream_data), GFP_KERNEL);
 	if (!stream_data)
@@ -432,7 +432,7 @@ static int xlnx_formatter_pcm_hw_params(struct snd_soc_component *component,
 
 	active_ch = params_channels(params);
 	if (active_ch > stream_data->ch_limit)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE &&
 	    stream_data->xfer_mode == AES_TO_PCM) {
@@ -476,7 +476,7 @@ static int xlnx_formatter_pcm_hw_params(struct snd_soc_component *component,
 		val |= (BIT_DEPTH_32 << AUD_CTRL_DATA_WIDTH_SHIFT);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val |= active_ch << AUD_CTRL_ACTIVE_CH_SHIFT;

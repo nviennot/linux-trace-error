@@ -390,10 +390,10 @@ int walk_page_range(struct mm_struct *mm, unsigned long start,
 	};
 
 	if (start >= end)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!walk.mm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_assert_locked(walk.mm);
 
@@ -451,7 +451,7 @@ int walk_page_range_novma(struct mm_struct *mm, unsigned long start,
 	};
 
 	if (start >= end || !walk.mm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_assert_locked(walk.mm);
 
@@ -470,7 +470,7 @@ int walk_page_vma(struct vm_area_struct *vma, const struct mm_walk_ops *ops,
 	int err;
 
 	if (!walk.mm)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mmap_assert_locked(walk.mm);
 

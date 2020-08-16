@@ -144,14 +144,14 @@ static int attach_meter(struct dp_meter_table *tbl, struct dp_meter *meter)
 	 * OvS uses id-pool to fetch a available id.
 	 */
 	if (unlikely(rcu_dereference_ovsl(ti->dp_meters[hash])))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	dp_meter_instance_insert(ti, meter);
 
 	/* That function is thread-safe. */
 	tbl->count++;
 	if (tbl->count >= tbl->max_meters_allowed) {
-		err = -EFBIG;
+		err = -ERR(EFBIG);
 		goto attach_err;
 	}
 
@@ -225,7 +225,7 @@ ovs_meter_cmd_reply_start(struct genl_info *info, u8 cmd,
 					&dp_meter_genl_family, 0, cmd);
 	if (!*ovs_reply_header) {
 		nlmsg_free(skb);
-		return ERR_PTR(-EMSGSIZE);
+		return ERR_PTR(-ERR(EMSGSIZE));
 	}
 	(*ovs_reply_header)->dp_ifindex = ovs_header->dp_ifindex;
 
@@ -270,7 +270,7 @@ static int ovs_meter_cmd_reply_stats(struct sk_buff *reply, u32 meter_id,
 
 	return 0;
 error:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int ovs_meter_cmd_features(struct sk_buff *skb, struct genl_info *info)
@@ -280,7 +280,7 @@ static int ovs_meter_cmd_features(struct sk_buff *skb, struct genl_info *info)
 	struct nlattr *nla, *band_nla;
 	struct sk_buff *reply;
 	struct datapath *dp;
-	int err = -EMSGSIZE;
+	int err = -ERR(EMSGSIZE);
 
 	reply = ovs_meter_cmd_reply_start(info, OVS_METER_CMD_FEATURES,
 					  &ovs_reply_header);
@@ -290,7 +290,7 @@ static int ovs_meter_cmd_features(struct sk_buff *skb, struct genl_info *info)
 	ovs_lock();
 	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
 	if (!dp) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto exit_unlock;
 	}
 
@@ -337,11 +337,11 @@ static struct dp_meter *dp_meter_create(struct nlattr **a)
 
 	/* Validate attributes, count the bands. */
 	if (!a[OVS_METER_ATTR_BANDS])
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	nla_for_each_nested(nla, a[OVS_METER_ATTR_BANDS], rem)
 		if (++n_bands > DP_MAX_BANDS)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 	/* Allocate and set up the meter before locking anything. */
 	meter = kzalloc(struct_size(meter, bands, n_bands), GFP_KERNEL);
@@ -374,14 +374,14 @@ static struct dp_meter *dp_meter_create(struct nlattr **a)
 		if (!attr[OVS_BAND_ATTR_TYPE] ||
 		    !attr[OVS_BAND_ATTR_RATE] ||
 		    !attr[OVS_BAND_ATTR_BURST]) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto exit_free_meter;
 		}
 
 		band->type = nla_get_u32(attr[OVS_BAND_ATTR_TYPE]);
 		band->rate = nla_get_u32(attr[OVS_BAND_ATTR_RATE]);
 		if (band->rate == 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto exit_free_meter;
 		}
 
@@ -420,7 +420,7 @@ static int ovs_meter_cmd_set(struct sk_buff *skb, struct genl_info *info)
 	bool failed;
 
 	if (!a[OVS_METER_ATTR_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	meter = dp_meter_create(a);
 	if (IS_ERR_OR_NULL(meter))
@@ -436,7 +436,7 @@ static int ovs_meter_cmd_set(struct sk_buff *skb, struct genl_info *info)
 	ovs_lock();
 	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
 	if (!dp) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto exit_unlock;
 	}
 
@@ -493,7 +493,7 @@ static int ovs_meter_cmd_get(struct sk_buff *skb, struct genl_info *info)
 	int err;
 
 	if (!a[OVS_METER_ATTR_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	meter_id = nla_get_u32(a[OVS_METER_ATTR_ID]);
 
@@ -506,14 +506,14 @@ static int ovs_meter_cmd_get(struct sk_buff *skb, struct genl_info *info)
 
 	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
 	if (!dp) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto exit_unlock;
 	}
 
 	/* Locate meter, copy stats. */
 	meter = lookup_meter(&dp->meter_tbl, meter_id);
 	if (!meter) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto exit_unlock;
 	}
 
@@ -546,7 +546,7 @@ static int ovs_meter_cmd_del(struct sk_buff *skb, struct genl_info *info)
 	int err;
 
 	if (!a[OVS_METER_ATTR_ID])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reply = ovs_meter_cmd_reply_start(info, OVS_METER_CMD_DEL,
 					  &ovs_reply_header);
@@ -557,7 +557,7 @@ static int ovs_meter_cmd_del(struct sk_buff *skb, struct genl_info *info)
 
 	dp = get_dp(sock_net(skb->sk), ovs_header->dp_ifindex);
 	if (!dp) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto exit_unlock;
 	}
 

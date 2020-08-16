@@ -657,7 +657,7 @@ static int snd_emu1010_load_firmware_entry(struct snd_emu10k1 *emu,
 	unsigned long flags;
 
 	if (!fw_entry)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* The FPGA is a Xilinx Spartan IIE XC2S50E */
 	/* GPIO7 -> FPGA PGMN
@@ -868,7 +868,7 @@ static int snd_emu10k1_emu1010_init(struct snd_emu10k1 *emu)
 		/* FPGA failed to return to programming mode */
 		dev_info(emu->card->dev,
 			 "emu1010: FPGA failed to return to programming mode\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_info(emu->card->dev, "emu1010: EMU_HANA_ID = 0x%x\n", reg);
 
@@ -885,7 +885,7 @@ static int snd_emu10k1_emu1010_init(struct snd_emu10k1 *emu)
 		dev_info(emu->card->dev,
 			 "emu1010: Loading Hana Firmware file failed, reg = 0x%x\n",
 			 reg);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_info(emu->card->dev, "emu1010: Hana Firmware loaded\n");
@@ -1852,7 +1852,7 @@ int snd_emu10k1_create(struct snd_card *card,
 		dev_err(card->dev, "emu10k1: Card not recognised\n");
 		kfree(emu);
 		pci_disable_device(pci);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	emu->card_capabilities = c;
 	if (c->subsystem && !subsystem)
@@ -1885,7 +1885,7 @@ int snd_emu10k1_create(struct snd_card *card,
 			emu->dma_mask);
 		kfree(emu);
 		pci_disable_device(pci);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	if (is_audigy)
 		emu->gpr_base = A_FXGPREGBASE;
@@ -1981,7 +1981,7 @@ int snd_emu10k1_create(struct snd_card *card,
 	/* irq handler must be registered after I/O ports are activated */
 	if (request_irq(pci->irq, snd_emu10k1_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, emu)) {
-		err = -EBUSY;
+		err = -ERR(EBUSY);
 		goto error;
 	}
 	emu->irq = pci->irq;

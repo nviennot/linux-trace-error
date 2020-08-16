@@ -42,7 +42,7 @@ static int odroid_card_fe_hw_params(struct snd_pcm_substream *substream,
 
 	spin_lock_irqsave(&priv->lock, flags);
 	if (priv->be_active && priv->be_sample_rate != params_rate(params))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	return ret;
@@ -79,7 +79,7 @@ static int odroid_card_be_hw_params(struct snd_pcm_substream *substream,
 		rfs = 512;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_rate(priv->clk_i2s_bus, pll_freq / 2 + 1);
@@ -267,7 +267,7 @@ static int odroid_audio_probe(struct platform_device *pdev)
 
 		if (!args.np) {
 			dev_err(dev, "sound-dai property parse error: %d\n", ret);
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -280,7 +280,7 @@ static int odroid_audio_probe(struct platform_device *pdev)
 	if (ret == 0) {
 		cpu_dai = of_parse_phandle(cpu, "sound-dai", 0);
 		if (!cpu_dai)
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 	}
 
 	of_node_put(cpu);

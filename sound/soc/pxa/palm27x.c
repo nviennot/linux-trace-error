@@ -125,11 +125,11 @@ static int palm27x_asoc_probe(struct platform_device *pdev)
 
 	if (!(machine_is_palmtx() || machine_is_palmt5() ||
 		machine_is_palmld() || machine_is_palmte2()))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (!pdev->dev.platform_data) {
 		dev_err(&pdev->dev, "please supply platform_data\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	hs_jack_gpios[0].gpio = ((struct palm27x_asoc_info *)

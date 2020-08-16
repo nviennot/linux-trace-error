@@ -107,7 +107,7 @@ static struct dentry *orangefs_lookup(struct inode *dir, struct dentry *dentry,
 	struct orangefs_inode_s *parent = ORANGEFS_I(dir);
 	struct orangefs_kernel_op_s *new_op;
 	struct inode *inode;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	/*
 	 * in theory we could skip a lookup here (if the intent is to
@@ -121,7 +121,7 @@ static struct dentry *orangefs_lookup(struct inode *dir, struct dentry *dentry,
 		     __func__, dentry);
 
 	if (dentry->d_name.len > (ORANGEFS_NAME_MAX - 1))
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_LOOKUP);
 	if (!new_op)
@@ -230,10 +230,10 @@ static int orangefs_symlink(struct inode *dir,
 	gossip_debug(GOSSIP_NAME_DEBUG, "%s: called\n", __func__);
 
 	if (!symname)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strlen(symname)+1 > ORANGEFS_NAME_MAX)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_SYMLINK);
 	if (!new_op)
@@ -383,7 +383,7 @@ static int orangefs_rename(struct inode *old_dir,
 	int ret;
 
 	if (flags)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gossip_debug(GOSSIP_NAME_DEBUG,
 		     "orangefs_rename: called (%pd2 => %pd2) ct=%d\n",
@@ -396,7 +396,7 @@ static int orangefs_rename(struct inode *old_dir,
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_RENAME);
 	if (!new_op)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	new_op->upcall.req.rename.old_parent_refn = ORANGEFS_I(old_dir)->refn;
 	new_op->upcall.req.rename.new_parent_refn = ORANGEFS_I(new_dir)->refn;

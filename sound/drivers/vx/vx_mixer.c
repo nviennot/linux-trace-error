@@ -207,7 +207,7 @@ static int vx_adjust_audio_level(struct vx_core *chip, int audio, int capture,
 	struct vx_rmh rmh;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
         vx_init_rmh(&rmh, CMD_AUDIO_LEVEL_ADJUST);
 	if (capture)
@@ -365,7 +365,7 @@ static int vx_get_audio_vu_meter(struct vx_core *chip, int audio, int capture, s
 	int i, err;
 
 	if (chip->chip_status & VX_STAT_IS_STALE)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	vx_init_rmh(&rmh, CMD_AUDIO_VU_PIC_METER);
 	rmh.LgStat += 2 * VU_METER_CHANNELS;
@@ -428,7 +428,7 @@ static int vx_output_level_put(struct snd_kcontrol *kcontrol, struct snd_ctl_ele
 	val[0] = ucontrol->value.integer.value[0];
 	val[1] = ucontrol->value.integer.value[1];
 	if (val[0] > vmax || val[1] > vmax)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mixer_mutex);
 	if (val[0] != chip->output_level[codec][0] ||
 	    val[1] != chip->output_level[codec][1]) {
@@ -485,10 +485,10 @@ static int vx_audio_src_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_v
 
 	if (chip->type >= VX_TYPE_VXPOCKET) {
 		if (ucontrol->value.enumerated.item[0] > 2)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (ucontrol->value.enumerated.item[0] > 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	mutex_lock(&chip->mixer_mutex);
 	if (chip->audio_source_target != ucontrol->value.enumerated.item[0]) {
@@ -533,7 +533,7 @@ static int vx_clock_mode_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 	struct vx_core *chip = snd_kcontrol_chip(kcontrol);
 
 	if (ucontrol->value.enumerated.item[0] > 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mixer_mutex);
 	if (chip->clock_mode != ucontrol->value.enumerated.item[0]) {
 		chip->clock_mode = ucontrol->value.enumerated.item[0];
@@ -588,7 +588,7 @@ static int vx_audio_gain_put(struct snd_kcontrol *kcontrol, struct snd_ctl_elem_
 	val[0] = ucontrol->value.integer.value[0];
 	val[1] = ucontrol->value.integer.value[1];
 	if (val[0] > CVAL_MAX || val[1] > CVAL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&chip->mixer_mutex);
 	if (val[0] != chip->audio_gain[capture][audio] ||
 	    val[1] != chip->audio_gain[capture][audio+1]) {
@@ -622,7 +622,7 @@ static int vx_audio_monitor_put(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 	val[0] = ucontrol->value.integer.value[0];
 	val[1] = ucontrol->value.integer.value[1];
 	if (val[0] > CVAL_MAX || val[1] > CVAL_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&chip->mixer_mutex);
 	if (val[0] != chip->audio_monitor[audio] ||

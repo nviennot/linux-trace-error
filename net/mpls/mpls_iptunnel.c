@@ -159,7 +159,7 @@ drop:
 	if (out_mdev)
 		MPLS_INC_STATS(out_mdev, tx_errors);
 	kfree_skb(skb);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int mpls_build_state(struct net *net, struct nlattr *nla,
@@ -180,13 +180,13 @@ static int mpls_build_state(struct net *net, struct nlattr *nla,
 
 	if (!tb[MPLS_IPTUNNEL_DST]) {
 		NL_SET_ERR_MSG(extack, "MPLS_IPTUNNEL_DST attribute is missing");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* determine number of labels */
 	if (nla_get_labels(tb[MPLS_IPTUNNEL_DST], MAX_NEW_LABELS,
 			   &n_labels, NULL, extack))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	newts = lwtunnel_state_alloc(struct_size(tun_encap_info, label,
 						 n_labels));
@@ -243,7 +243,7 @@ static int mpls_fill_encap_info(struct sk_buff *skb,
 	return 0;
 
 nla_put_failure:
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int mpls_encap_nlsize(struct lwtunnel_state *lwtstate)

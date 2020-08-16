@@ -877,7 +877,7 @@ static int link_schedule_user(struct tipc_link *l, struct tipc_msg *hdr)
 	skb = tipc_msg_create(SOCK_WAKEUP, 0, INT_H_SIZE, 0,
 			      dnode, l->addr, dport, 0, 0);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	msg_set_dest_droppable(buf_msg(skb), true);
 	TIPC_SKB_CB(skb)->chain_imp = msg_importance(hdr);
 	skb_queue_tail(&l->wakeupq, skb);
@@ -1020,14 +1020,14 @@ int tipc_link_xmit(struct tipc_link *l, struct sk_buff_head *list,
 			skb_queue_len(list), msg_user(hdr),
 			msg_type(hdr), msg_size(hdr), mtu);
 		__skb_queue_purge(list);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	/* Allow oversubscription of one data msg per source at congestion */
 	if (unlikely(l->backlog[imp].len >= l->backlog[imp].limit)) {
 		if (imp == TIPC_SYSTEM_IMPORTANCE) {
 			pr_warn("%s<%s>, link overflow", link_rst_msg, l->name);
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		}
 		rc = link_schedule_user(l, hdr);
 	}
@@ -1048,7 +1048,7 @@ int tipc_link_xmit(struct tipc_link *l, struct sk_buff_head *list,
 			if (!_skb) {
 				kfree_skb(skb);
 				__skb_queue_purge(list);
-				return -ENOBUFS;
+				return -ERR(ENOBUFS);
 			}
 			__skb_queue_tail(transmq, skb);
 			tipc_link_set_skb_retransmit_time(skb, l);
@@ -2540,7 +2540,7 @@ int tipc_nl_parse_link_prop(struct nlattr *prop, struct nlattr *props[])
 
 		prio = nla_get_u32(props[TIPC_NLA_PROP_PRIO]);
 		if (prio > TIPC_MAX_LINK_PRI)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (props[TIPC_NLA_PROP_TOL]) {
@@ -2548,7 +2548,7 @@ int tipc_nl_parse_link_prop(struct nlattr *prop, struct nlattr *props[])
 
 		tol = nla_get_u32(props[TIPC_NLA_PROP_TOL]);
 		if ((tol < TIPC_MIN_LINK_TOL) || (tol > TIPC_MAX_LINK_TOL))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (props[TIPC_NLA_PROP_WIN]) {
@@ -2556,7 +2556,7 @@ int tipc_nl_parse_link_prop(struct nlattr *prop, struct nlattr *props[])
 
 		max_win = nla_get_u32(props[TIPC_NLA_PROP_WIN]);
 		if (max_win < TIPC_DEF_LINK_WIN || max_win > TIPC_MAX_LINK_WIN)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2612,7 +2612,7 @@ static int __tipc_nl_add_stats(struct sk_buff *skb, struct tipc_stats *s)
 
 	stats = nla_nest_start_noflag(skb, TIPC_NLA_LINK_STATS);
 	if (!stats)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i <  ARRAY_SIZE(map); i++)
 		if (nla_put_u32(skb, map[i].key, map[i].val))
@@ -2624,7 +2624,7 @@ static int __tipc_nl_add_stats(struct sk_buff *skb, struct tipc_stats *s)
 msg_full:
 	nla_nest_cancel(skb, stats);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 /* Caller should hold appropriate locks to protect the link */
@@ -2640,7 +2640,7 @@ int __tipc_nl_add_link(struct net *net, struct tipc_nl_msg *msg,
 	hdr = genlmsg_put(msg->skb, msg->portid, msg->seq, &tipc_genl_family,
 			  nlflags, TIPC_NL_LINK_GET);
 	if (!hdr)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK);
 	if (!attrs)
@@ -2694,7 +2694,7 @@ attr_msg_full:
 msg_full:
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int __tipc_nl_add_bc_link_stat(struct sk_buff *skb,
@@ -2733,7 +2733,7 @@ static int __tipc_nl_add_bc_link_stat(struct sk_buff *skb,
 
 	nest = nla_nest_start_noflag(skb, TIPC_NLA_LINK_STATS);
 	if (!nest)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	for (i = 0; i <  ARRAY_SIZE(map); i++)
 		if (nla_put_u32(skb, map[i].key, map[i].val))
@@ -2745,7 +2745,7 @@ static int __tipc_nl_add_bc_link_stat(struct sk_buff *skb,
 msg_full:
 	nla_nest_cancel(skb, nest);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 int tipc_nl_add_bc_link(struct net *net, struct tipc_nl_msg *msg,
@@ -2767,7 +2767,7 @@ int tipc_nl_add_bc_link(struct net *net, struct tipc_nl_msg *msg,
 			  NLM_F_MULTI, TIPC_NL_LINK_GET);
 	if (!hdr) {
 		tipc_bcast_unlock(net);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	attrs = nla_nest_start_noflag(msg->skb, TIPC_NLA_LINK);
@@ -2818,7 +2818,7 @@ msg_full:
 	tipc_bcast_unlock(net);
 	genlmsg_cancel(msg->skb, hdr);
 
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 void tipc_link_set_tolerance(struct tipc_link *l, u32 tol,

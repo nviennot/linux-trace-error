@@ -242,7 +242,7 @@ static int __init test_hexdump_init(void)
 	else
 		pr_err("failed %u out of %u tests\n", failed_tests, total_tests);
 
-	return failed_tests ? -EINVAL : 0;
+	return failed_tests ? -ERR(EINVAL) : 0;
 }
 module_init(test_hexdump_init);
 

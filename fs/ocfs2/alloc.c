@@ -1803,7 +1803,7 @@ static int __ocfs2_find_path(struct ocfs2_caching_info *ci,
 				    "Owner %llu has empty extent list at depth %u\n",
 				    (unsigned long long)ocfs2_metadata_cache_owner(ci),
 				    le16_to_cpu(el->l_tree_depth));
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 
 		}
@@ -1828,7 +1828,7 @@ static int __ocfs2_find_path(struct ocfs2_caching_info *ci,
 				    "Owner %llu has bad blkno in extent list at depth %u (index %d)\n",
 				    (unsigned long long)ocfs2_metadata_cache_owner(ci),
 				    le16_to_cpu(el->l_tree_depth), i);
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 		}
 
@@ -1851,7 +1851,7 @@ static int __ocfs2_find_path(struct ocfs2_caching_info *ci,
 				    (unsigned long long)bh->b_blocknr,
 				    le16_to_cpu(el->l_next_free_rec),
 				    le16_to_cpu(el->l_count));
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 		}
 
@@ -2126,7 +2126,7 @@ static int ocfs2_rotate_subtree_right(handle_t *handle,
 			    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 			    (unsigned long long)left_leaf_bh->b_blocknr,
 			    le16_to_cpu(left_el->l_next_free_rec));
-		return -EROFS;
+		return -ERR(EROFS);
 	}
 
 	/*
@@ -2263,7 +2263,7 @@ int ocfs2_find_cpos_for_left_leaf(struct super_block *sb,
 		 */
 		ocfs2_error(sb, "Invalid extent tree at extent block %llu\n",
 			    (unsigned long long)blkno);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 
 next_node:
@@ -2677,7 +2677,7 @@ static int ocfs2_rotate_subtree_left(handle_t *handle,
 		 */
 
 		if (eb->h_next_leaf_blk != 0ULL)
-			return -EAGAIN;
+			return -ERR(EAGAIN);
 
 		if (le16_to_cpu(right_leaf_el->l_next_free_rec) > 1) {
 			ret = ocfs2_journal_access_eb(handle, et->et_ci,
@@ -2859,7 +2859,7 @@ int ocfs2_find_cpos_for_right_leaf(struct super_block *sb,
 		 */
 		ocfs2_error(sb, "Invalid extent tree at extent block %llu\n",
 			    (unsigned long long)blkno);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 
 next_node:
@@ -4806,14 +4806,14 @@ int ocfs2_add_clusters_in_btree(handle_t *handle,
 	 *    many times. */
 	if (!free_extents && !meta_ac) {
 		err = -1;
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 		reason = RESTART_META;
 		goto leave;
 	} else if ((!free_extents)
 		   && (ocfs2_alloc_context_bits_left(meta_ac)
 		       < ocfs2_extend_meta_needed(et->et_root_el))) {
 		err = -2;
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 		reason = RESTART_META;
 		goto leave;
 	}
@@ -4856,7 +4856,7 @@ int ocfs2_add_clusters_in_btree(handle_t *handle,
 
 	if (clusters_to_add) {
 		err = clusters_to_add;
-		status = -EAGAIN;
+		status = -ERR(EAGAIN);
 		reason = RESTART_TRANS;
 	}
 
@@ -5002,7 +5002,7 @@ leftright:
 				    "Owner %llu has an extent at cpos %u which can no longer be found\n",
 				    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 				    cpos);
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 		}
 		goto leftright;
@@ -5071,7 +5071,7 @@ int ocfs2_split_extent(handle_t *handle,
 	if (le32_to_cpu(rec->e_cpos) > le32_to_cpu(split_rec->e_cpos) ||
 	    ((le32_to_cpu(rec->e_cpos) + le16_to_cpu(rec->e_leaf_clusters)) <
 	     (le32_to_cpu(split_rec->e_cpos) + le16_to_cpu(split_rec->e_leaf_clusters)))) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -5182,11 +5182,11 @@ int ocfs2_change_extent_flag(handle_t *handle,
 			    "Owner %llu has an extent at cpos %u which can no longer be found\n",
 			    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 			    cpos);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
-	ret = -EIO;
+	ret = -ERR(EIO);
 	rec = &el->l_recs[index];
 	if (new_flags && (rec->e_flags & new_flags)) {
 		mlog(ML_ERROR, "Owner %llu tried to set %d flags on an "
@@ -5250,7 +5250,7 @@ int ocfs2_mark_extent_written(struct inode *inode,
 	if (!ocfs2_writes_unwritten_extents(OCFS2_SB(inode->i_sb))) {
 		ocfs2_error(inode->i_sb, "Inode %llu has unwritten extents that are being written to, but the feature bit is not set in the super block\n",
 			    (unsigned long long)OCFS2_I(inode)->ip_blkno);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
@@ -5541,7 +5541,7 @@ int ocfs2_remove_extent(handle_t *handle,
 			    "Owner %llu has an extent at cpos %u which can no longer be found\n",
 			    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 			    cpos);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
@@ -5606,7 +5606,7 @@ int ocfs2_remove_extent(handle_t *handle,
 				    "Owner %llu: split at cpos %u lost record\n",
 				    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 				    cpos);
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 		}
 
@@ -5623,7 +5623,7 @@ int ocfs2_remove_extent(handle_t *handle,
 				    (unsigned long long)ocfs2_metadata_cache_owner(et->et_ci),
 				    cpos, len, le32_to_cpu(rec->e_cpos),
 				    ocfs2_rec_clusters(el, rec));
-			ret = -EROFS;
+			ret = -ERR(EROFS);
 			goto out;
 		}
 
@@ -5871,7 +5871,7 @@ int ocfs2_truncate_log_append(struct ocfs2_super *osb,
 	/* Caller should have known to flush before calling us. */
 	index = le16_to_cpu(tl->tl_used);
 	if (index >= tl_count) {
-		status = -ENOSPC;
+		status = -ERR(ENOSPC);
 		mlog_errno(status);
 		goto bail;
 	}
@@ -6031,7 +6031,7 @@ int __ocfs2_flush_truncate_log(struct ocfs2_super *osb)
 						       GLOBAL_BITMAP_SYSTEM_INODE,
 						       OCFS2_INVALID_SLOT);
 	if (!data_alloc_inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "Could not get bitmap inode!\n");
 		goto out;
 	}
@@ -6152,7 +6152,7 @@ static int ocfs2_get_truncate_log_info(struct ocfs2_super *osb,
 					   TRUNCATE_LOG_SYSTEM_INODE,
 					   slot_num);
 	if (!inode) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "Could not get load truncate log inode!\n");
 		goto bail;
 	}
@@ -6254,7 +6254,7 @@ int ocfs2_complete_truncate_log_recovery(struct ocfs2_super *osb,
 
 	if (OCFS2_I(tl_inode)->ip_blkno == le64_to_cpu(tl_copy->i_blkno)) {
 		mlog(ML_ERROR, "Asked to recover my own truncate log!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	tl = &tl_copy->id2.i_dealloc;
@@ -6396,7 +6396,7 @@ static int ocfs2_free_cached_blocks(struct ocfs2_super *osb,
 
 	inode = ocfs2_get_system_file_inode(osb, sysfile_type, slot);
 	if (!inode) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -7292,7 +7292,7 @@ start:
 			    "Inode %llu has empty extent block at %llu\n",
 			    (unsigned long long)OCFS2_I(inode)->ip_blkno,
 			    (unsigned long long)path_leaf_bh(path)->b_blocknr);
-		status = -EROFS;
+		status = -ERR(EROFS);
 		goto bail;
 	}
 
@@ -7420,7 +7420,7 @@ int ocfs2_truncate_inline(struct inode *inode, struct buffer_head *di_bh,
 			    le16_to_cpu(di->i_dyn_features),
 			    OCFS2_I(inode)->ip_dyn_features,
 			    osb->s_feature_incompat);
-		ret = -EROFS;
+		ret = -ERR(EROFS);
 		goto out;
 	}
 
@@ -7525,7 +7525,7 @@ static int ocfs2_trim_group(struct super_block *sb,
 		start = next + 1;
 
 		if (fatal_signal_pending(current)) {
-			count = -ERESTARTSYS;
+			count = -ERR(ERESTARTSYS);
 			break;
 		}
 
@@ -7557,7 +7557,7 @@ int ocfs2_trim_mainbm(struct super_block *sb, struct fstrim_range *range)
 	minlen = range->minlen >> osb->s_clustersize_bits;
 
 	if (minlen >= osb->bitmap_cpg || range->len < sb->s_blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	trace_ocfs2_trim_mainbm(start, len, minlen);
 
@@ -7566,7 +7566,7 @@ next_group:
 						    GLOBAL_BITMAP_SYSTEM_INODE,
 						    OCFS2_INVALID_SLOT);
 	if (!main_bm_inode) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		mlog_errno(ret);
 		goto out;
 	}
@@ -7585,7 +7585,7 @@ next_group:
 	 */
 	if (!group) {
 		if (start >= le32_to_cpu(main_bm->i_clusters)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out_unlock;
 		}
 

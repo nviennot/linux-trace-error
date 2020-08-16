@@ -96,9 +96,9 @@ int snmp_version(void *context, size_t hdrlen, unsigned char tag,
 		 const void *data, size_t datalen)
 {
 	if (datalen != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (*(unsigned char *)data > 1)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	return 1;
 }
 
@@ -109,7 +109,7 @@ int snmp_helper(void *context, size_t hdrlen, unsigned char tag,
 	__be32 *pdata;
 
 	if (datalen != 4)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	pdata = (__be32 *)data;
 	if (*pdata == ctx->from) {
 		pr_debug("%s: %pI4 to %pI4\n", __func__,

@@ -121,11 +121,11 @@ static struct tcf_ematch_ops *tcf_em_lookup(u16 kind)
  */
 int tcf_em_register(struct tcf_ematch_ops *ops)
 {
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 	struct tcf_ematch_ops *e;
 
 	if (ops->match == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	write_lock(&ematch_mod_lock);
 	list_for_each_entry(e, &ematch_ops, link)
@@ -170,7 +170,7 @@ static int tcf_em_validate(struct tcf_proto *tp,
 			   struct tcf_ematch_tree_hdr *tree_hdr,
 			   struct tcf_ematch *em, struct nlattr *nla, int idx)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct tcf_ematch_hdr *em_hdr = nla_data(nla);
 	int data_len = nla_len(nla) - sizeof(*em_hdr);
 	void *data = (void *) em_hdr + sizeof(*em_hdr);
@@ -212,7 +212,7 @@ static int tcf_em_validate(struct tcf_proto *tp,
 		em->ops = tcf_em_lookup(em_hdr->kind);
 
 		if (em->ops == NULL) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 #ifdef CONFIG_MODULES
 			__rtnl_unlock();
 			request_module("ematch-kind-%u", em_hdr->kind);
@@ -225,7 +225,7 @@ static int tcf_em_validate(struct tcf_proto *tp,
 				 */
 				module_put(em->ops->owner);
 				em->ops = NULL;
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 			}
 #endif
 			goto errout;
@@ -238,7 +238,7 @@ static int tcf_em_validate(struct tcf_proto *tp,
 			goto errout;
 
 		if (em->ops->change) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			if (em_hdr->flags & TCF_EM_SIMPLE)
 				goto errout;
 			err = em->ops->change(net, data, data_len, em);
@@ -261,7 +261,7 @@ static int tcf_em_validate(struct tcf_proto *tp,
 			} else {
 				void *v = kmemdup(data, data_len, GFP_KERNEL);
 				if (v == NULL) {
-					err = -ENOBUFS;
+					err = -ERR(ENOBUFS);
 					goto errout;
 				}
 				em->data = (unsigned long) v;
@@ -318,7 +318,7 @@ int tcf_em_tree_validate(struct tcf_proto *tp, struct nlattr *nla,
 	if (err < 0)
 		goto errout;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	rt_hdr = tb[TCA_EMATCH_TREE_HDR];
 	rt_list = tb[TCA_EMATCH_TREE_LIST];
 
@@ -346,7 +346,7 @@ int tcf_em_tree_validate(struct tcf_proto *tp, struct nlattr *nla,
 	 * to this policy will result in parsing failure.
 	 */
 	for (idx = 0; nla_ok(rt_match, list_len); idx++) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
 		if (rt_match->nla_type != (idx + 1))
 			goto errout_abort;
@@ -372,7 +372,7 @@ int tcf_em_tree_validate(struct tcf_proto *tp, struct nlattr *nla,
 	 * undefined references during the matching process.
 	 */
 	if (idx != tree_hdr->nmatches) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout_abort;
 	}
 

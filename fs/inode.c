@@ -118,7 +118,7 @@ int proc_nr_inodes(struct ctl_table *table, int write,
 
 static int no_open(struct inode *inode, struct file *file)
 {
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 /**
@@ -831,7 +831,7 @@ repeat:
 		}
 		if (unlikely(inode->i_state & I_CREATING)) {
 			spin_unlock(&inode->i_lock);
-			return ERR_PTR(-ESTALE);
+			return ERR_PTR(-ERR(ESTALE));
 		}
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
@@ -862,7 +862,7 @@ repeat:
 		}
 		if (unlikely(inode->i_state & I_CREATING)) {
 			spin_unlock(&inode->i_lock);
-			return ERR_PTR(-ESTALE);
+			return ERR_PTR(-ERR(ESTALE));
 		}
 		__iget(inode);
 		spin_unlock(&inode->i_lock);
@@ -1563,7 +1563,7 @@ int insert_inode_locked(struct inode *inode)
 		if (unlikely(old->i_state & I_CREATING)) {
 			spin_unlock(&old->i_lock);
 			spin_unlock(&inode_hash_lock);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		__iget(old);
 		spin_unlock(&old->i_lock);
@@ -1571,7 +1571,7 @@ int insert_inode_locked(struct inode *inode)
 		wait_on_inode(old);
 		if (unlikely(!inode_unhashed(old))) {
 			iput(old);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		iput(old);
 	}
@@ -1588,7 +1588,7 @@ int insert_inode_locked4(struct inode *inode, unsigned long hashval,
 
 	if (old != inode) {
 		iput(old);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	return 0;
 }
@@ -1698,7 +1698,7 @@ EXPORT_SYMBOL(iput);
 int bmap(struct inode *inode, sector_t *block)
 {
 	if (!inode->i_mapping->a_ops->bmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*block = inode->i_mapping->a_ops->bmap(inode->i_mapping, *block);
 	return 0;
@@ -2311,7 +2311,7 @@ int vfs_ioc_setflags_prepare(struct inode *inode, unsigned int oldflags,
 	 */
 	if ((flags ^ oldflags) & (FS_APPEND_FL | FS_IMMUTABLE_FL) &&
 	    !capable(CAP_LINUX_IMMUTABLE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	return fscrypt_prepare_setflags(inode, oldflags, flags);
 }
@@ -2334,7 +2334,7 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
 	if ((old_fa->fsx_xflags ^ fa->fsx_xflags) &
 			(FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND) &&
 	    !capable(CAP_LINUX_IMMUTABLE))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	/*
 	 * Project Quota ID state is only allowed to change from within the init
@@ -2343,23 +2343,23 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
 	 */
 	if (current_user_ns() != &init_user_ns) {
 		if (old_fa->fsx_projid != fa->fsx_projid)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if ((old_fa->fsx_xflags ^ fa->fsx_xflags) &
 				FS_XFLAG_PROJINHERIT)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Check extent size hints. */
 	if ((fa->fsx_xflags & FS_XFLAG_EXTSIZE) && !S_ISREG(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((fa->fsx_xflags & FS_XFLAG_EXTSZINHERIT) &&
 			!S_ISDIR(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((fa->fsx_xflags & FS_XFLAG_COWEXTSIZE) &&
 	    !S_ISREG(inode->i_mode) && !S_ISDIR(inode->i_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * It is only valid to set the DAX flag on regular files and
@@ -2367,7 +2367,7 @@ int vfs_ioc_fssetxattr_check(struct inode *inode, const struct fsxattr *old_fa,
 	 */
 	if ((fa->fsx_xflags & FS_XFLAG_DAX) &&
 	    !(S_ISREG(inode->i_mode) || S_ISDIR(inode->i_mode)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Extent size hints of zero turn off the flags. */
 	if (fa->fsx_extsize == 0)

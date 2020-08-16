@@ -44,9 +44,9 @@ static int nflog_tg_check(const struct xt_tgchk_param *par)
 	const struct xt_nflog_info *info = par->targinfo;
 
 	if (info->flags & ~XT_NFLOG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (info->prefix[sizeof(info->prefix) - 1] != '\0')
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return nf_logger_find_get(par->family, NF_LOG_TYPE_ULOG);
 }

@@ -224,13 +224,13 @@ static inline int ceph_decode_pgid(void **p, void *end, struct ceph_pg *pgid)
 
 	if (!ceph_has_room(p, end, CEPH_PGID_ENCODING_LEN)) {
 		pr_warn("incomplete pg encoding\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	version = ceph_decode_8(p);
 	if (version > 1) {
 		pr_warn("do not understand pg encoding %d > 1\n",
 			(int)version);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pgid->pool = ceph_decode_64(p);

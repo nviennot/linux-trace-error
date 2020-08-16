@@ -141,10 +141,10 @@ int vfs_statx_fd(unsigned int fd, struct kstat *stat,
 		 u32 request_mask, unsigned int query_flags)
 {
 	struct fd f;
-	int error = -EBADF;
+	int error = -ERR(EBADF);
 
 	if (query_flags & ~KSTAT_QUERY_FLAGS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	f = fdget_raw(fd);
 	if (f.file) {
@@ -161,7 +161,7 @@ static inline unsigned vfs_stat_set_lookup_flags(unsigned *lookup_flags,
 {
 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
 		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	*lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
 	if (flags & AT_SYMLINK_NOFOLLOW)
@@ -193,11 +193,11 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
 	      struct kstat *stat, u32 request_mask)
 {
 	struct path path;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 	unsigned lookup_flags;
 
 	if (vfs_stat_set_lookup_flags(&lookup_flags, flags))
-		return -EINVAL;
+		return -ERR(EINVAL);
 retry:
 	error = user_path_at(dfd, filename, lookup_flags, &path);
 	if (error)
@@ -244,17 +244,17 @@ static int cp_old_stat(struct kstat *stat, struct __old_kernel_stat __user * sta
 	tmp.st_dev = old_encode_dev(stat->dev);
 	tmp.st_ino = stat->ino;
 	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	tmp.st_mode = stat->mode;
 	tmp.st_nlink = stat->nlink;
 	if (tmp.st_nlink != stat->nlink)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
 	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
 	tmp.st_rdev = old_encode_dev(stat->rdev);
 #if BITS_PER_LONG == 32
 	if (stat->size > MAX_NON_LFS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 #endif
 	tmp.st_size = stat->size;
 	tmp.st_atime = stat->atime.tv_sec;
@@ -322,21 +322,21 @@ static int cp_new_stat(struct kstat *stat, struct stat __user *statbuf)
 	struct stat tmp;
 
 	if (!valid_dev(stat->dev) || !valid_dev(stat->rdev))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 #if BITS_PER_LONG == 32
 	if (stat->size > MAX_NON_LFS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 #endif
 
 	INIT_STRUCT_STAT_PADDING(tmp);
 	tmp.st_dev = encode_dev(stat->dev);
 	tmp.st_ino = stat->ino;
 	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	tmp.st_mode = stat->mode;
 	tmp.st_nlink = stat->nlink;
 	if (tmp.st_nlink != stat->nlink)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
 	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
 	tmp.st_rdev = encode_dev(stat->rdev);
@@ -413,14 +413,14 @@ static int do_readlinkat(int dfd, const char __user *pathname,
 	unsigned int lookup_flags = LOOKUP_EMPTY;
 
 	if (bufsiz <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 retry:
 	error = user_path_at_empty(dfd, pathname, lookup_flags, &path, &empty);
 	if (!error) {
 		struct inode *inode = d_backing_inode(path.dentry);
 
-		error = empty ? -ENOENT : -EINVAL;
+		error = empty ? -ERR(ENOENT) : -ERR(EINVAL);
 		/*
 		 * AFS mountpoints allow readlink(2) but are not symlinks
 		 */
@@ -475,7 +475,7 @@ static long cp_new_stat64(struct kstat *stat, struct stat64 __user *statbuf)
 #endif
 	tmp.st_ino = stat->ino;
 	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 #ifdef STAT64_HAS_BROKEN_ST_INO
 	tmp.__st_ino = stat->ino;
 #endif
@@ -585,9 +585,9 @@ int do_statx(int dfd, const char __user *filename, unsigned flags,
 	int error;
 
 	if (mask & STATX__RESERVED)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((flags & AT_STATX_SYNC_TYPE) == AT_STATX_SYNC_TYPE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	error = vfs_statx(dfd, filename, flags, &stat, mask);
 	if (error)
@@ -621,22 +621,22 @@ static int cp_compat_stat(struct kstat *stat, struct compat_stat __user *ubuf)
 	struct compat_stat tmp;
 
 	if (!old_valid_dev(stat->dev) || !old_valid_dev(stat->rdev))
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 
 	memset(&tmp, 0, sizeof(tmp));
 	tmp.st_dev = old_encode_dev(stat->dev);
 	tmp.st_ino = stat->ino;
 	if (sizeof(tmp.st_ino) < sizeof(stat->ino) && tmp.st_ino != stat->ino)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	tmp.st_mode = stat->mode;
 	tmp.st_nlink = stat->nlink;
 	if (tmp.st_nlink != stat->nlink)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	SET_UID(tmp.st_uid, from_kuid_munged(current_user_ns(), stat->uid));
 	SET_GID(tmp.st_gid, from_kgid_munged(current_user_ns(), stat->gid));
 	tmp.st_rdev = old_encode_dev(stat->rdev);
 	if ((u64) stat->size > MAX_NON_LFS)
-		return -EOVERFLOW;
+		return -ERR(EOVERFLOW);
 	tmp.st_size = stat->size;
 	tmp.st_atime = stat->atime.tv_sec;
 	tmp.st_atime_nsec = stat->atime.tv_nsec;

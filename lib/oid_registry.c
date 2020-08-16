@@ -117,7 +117,7 @@ int sprint_oid(const void *data, size_t datasize, char *buffer, size_t bufsize)
 	n = *v++;
 	ret = count = snprintf(buffer, bufsize, "%u.%u", n / 40, n % 40);
 	if (count >= bufsize)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	buffer += count;
 	bufsize -= count;
 
@@ -138,7 +138,7 @@ int sprint_oid(const void *data, size_t datasize, char *buffer, size_t bufsize)
 		}
 		ret += count = snprintf(buffer, bufsize, ".%lu", num);
 		if (count >= bufsize)
-			return -ENOBUFS;
+			return -ERR(ENOBUFS);
 		buffer += count;
 		bufsize -= count;
 	}
@@ -147,7 +147,7 @@ int sprint_oid(const void *data, size_t datasize, char *buffer, size_t bufsize)
 
 bad:
 	snprintf(buffer, bufsize, "(bad)");
-	return -EBADMSG;
+	return -ERR(EBADMSG);
 }
 EXPORT_SYMBOL_GPL(sprint_oid);
 

@@ -1004,7 +1004,7 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt,
 	INIT_WORK(&q->work, htb_work_func);
 
 	if (!opt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
 	if (err)
@@ -1016,11 +1016,11 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt,
 		return err;
 
 	if (!tb[TCA_HTB_INIT])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gopt = nla_data(tb[TCA_HTB_INIT]);
 	if (gopt->version != HTB_VER >> 16)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = qdisc_class_hash_init(&q->clhash);
 	if (err < 0)
@@ -1150,11 +1150,11 @@ static int htb_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
 	struct htb_class *cl = (struct htb_class *)arg;
 
 	if (cl->level)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (new == NULL &&
 	    (new = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
 				     cl->common.classid, extack)) == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	*old = qdisc_replace(sch, new, &cl->leaf.q);
 	return 0;
@@ -1258,7 +1258,7 @@ static int htb_delete(struct Qdisc *sch, unsigned long arg)
 	 * refs so that we can remove children safely there ?
 	 */
 	if (cl->children || cl->filter_cnt)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (!cl->level && htb_parent_last_child(cl)) {
 		new_q = qdisc_create_dflt(sch->dev_queue, &pfifo_qdisc_ops,
@@ -1297,7 +1297,7 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 			    u32 parentid, struct nlattr **tca,
 			    unsigned long *arg, struct netlink_ext_ack *extack)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	struct htb_sched *q = qdisc_priv(sch);
 	struct htb_class *cl = (struct htb_class *)*arg, *parent;
 	struct nlattr *opt = tca[TCA_OPTIONS];
@@ -1316,7 +1316,7 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 	if (err < 0)
 		goto failure;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (tb[TCA_HTB_PARMS] == NULL)
 		goto failure;
 
@@ -1363,7 +1363,7 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 			pr_err("htb: tree is too deep\n");
 			goto failure;
 		}
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		cl = kzalloc(sizeof(*cl), GFP_KERNEL);
 		if (!cl)
 			goto failure;

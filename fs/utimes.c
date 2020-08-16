@@ -88,7 +88,7 @@ out:
 long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
 	       int flags)
 {
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	if (times && (!nsec_valid(times[0].tv_nsec) ||
 		      !nsec_valid(times[1].tv_nsec))) {
@@ -105,7 +105,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
 			goto out;
 
 		f = fdget(dfd);
-		error = -EBADF;
+		error = -ERR(EBADF);
 		if (!f.file)
 			goto out;
 
@@ -179,7 +179,7 @@ static long do_futimesat(int dfd, const char __user *filename,
 		   valid for utimensat.  */
 		if (times[0].tv_usec >= 1000000 || times[0].tv_usec < 0 ||
 		    times[1].tv_usec >= 1000000 || times[1].tv_usec < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		tstimes[0].tv_sec = times[0].tv_sec;
 		tstimes[0].tv_nsec = 1000 * times[0].tv_usec;
@@ -269,7 +269,7 @@ static long do_compat_futimesat(unsigned int dfd, const char __user *filename,
 			return -EFAULT;
 		if (tv[0].tv_nsec >= 1000000 || tv[0].tv_nsec < 0 ||
 		    tv[1].tv_nsec >= 1000000 || tv[1].tv_nsec < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		tv[0].tv_nsec *= 1000;
 		tv[1].tv_nsec *= 1000;
 	}

@@ -76,7 +76,7 @@ int ip6_datagram_dst_update(struct sock *sk, bool fix_sk_saddr)
 	if (np->sndflow && (np->flow_label & IPV6_FLOWLABEL_MASK)) {
 		flowlabel = fl6_sock_lookup(sk, np->flow_label);
 		if (IS_ERR(flowlabel))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 	ip6_datagram_flow_key_init(&fl6, sk);
 
@@ -145,16 +145,16 @@ int __ip6_datagram_connect(struct sock *sk, struct sockaddr *uaddr,
 
 	if (usin->sin6_family == AF_INET) {
 		if (__ipv6_only_sock(sk))
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 		err = __ip4_datagram_connect(sk, uaddr, addr_len);
 		goto ipv4_connected;
 	}
 
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (usin->sin6_family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (np->sndflow)
 		fl6_flowlabel = usin->sin6_flowinfo & IPV6_FLOWINFO_MASK;
@@ -178,7 +178,7 @@ int __ip6_datagram_connect(struct sock *sk, struct sockaddr *uaddr,
 		struct sockaddr_in sin;
 
 		if (__ipv6_only_sock(sk)) {
-			err = -ENETUNREACH;
+			err = -ERR(ENETUNREACH);
 			goto out;
 		}
 		sin.sin_family = AF_INET;
@@ -214,7 +214,7 @@ ipv4_connected:
 		if (addr_len >= sizeof(struct sockaddr_in6) &&
 		    usin->sin6_scope_id) {
 			if (!sk_dev_equal_l3scope(sk, usin->sin6_scope_id)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 			sk->sk_bound_dev_if = usin->sin6_scope_id;
@@ -225,7 +225,7 @@ ipv4_connected:
 
 		/* Connect to link-local address requires an interface */
 		if (!sk->sk_bound_dev_if) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -279,7 +279,7 @@ int ip6_datagram_connect_v6_only(struct sock *sk, struct sockaddr *uaddr,
 {
 	DECLARE_SOCKADDR(struct sockaddr_in6 *, sin6, uaddr);
 	if (sin6->sin6_family != AF_INET6)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	return ip6_datagram_connect(sk, uaddr, addr_len);
 }
 EXPORT_SYMBOL_GPL(ip6_datagram_connect_v6_only);
@@ -442,7 +442,7 @@ int ipv6_recv_error(struct sock *sk, struct msghdr *msg, int len, int *addr_len)
 	int err;
 	int copied;
 
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	skb = sock_dequeue_err_skb(sk);
 	if (!skb)
 		goto out;
@@ -532,7 +532,7 @@ int ipv6_recv_rxpmtu(struct sock *sk, struct msghdr *msg, int len,
 	int err;
 	int copied;
 
-	err = -EAGAIN;
+	err = -ERR(EAGAIN);
 	skb = xchg(&np->rxpmtu, NULL);
 	if (!skb)
 		goto out;
@@ -750,7 +750,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		int addr_type;
 
 		if (!CMSG_OK(msg, cmsg)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto exit_f;
 		}
 
@@ -772,7 +772,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 			int src_idx;
 
 			if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct in6_pktinfo))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
@@ -784,7 +784,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 				    src_idx != fl6->flowi6_oif &&
 				    (sk->sk_bound_dev_if != fl6->flowi6_oif ||
 				     !sk_dev_equal_l3scope(sk, src_idx)))
-					return -EINVAL;
+					return -ERR(EINVAL);
 				fl6->flowi6_oif = src_idx;
 			}
 
@@ -795,11 +795,11 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 				dev = dev_get_by_index_rcu(net, fl6->flowi6_oif);
 				if (!dev) {
 					rcu_read_unlock();
-					return -ENODEV;
+					return -ERR(ENODEV);
 				}
 			} else if (addr_type & IPV6_ADDR_LINKLOCAL) {
 				rcu_read_unlock();
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			if (addr_type != IPV6_ADDR_ANY) {
@@ -810,7 +810,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 							     IFA_F_TENTATIVE) &&
 				    !ipv6_chk_acast_addr_src(net, dev,
 							     &src_info->ipi6_addr))
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 				else
 					fl6->saddr = src_info->ipi6_addr;
 			}
@@ -825,13 +825,13 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 
 		case IPV6_FLOWINFO:
 			if (cmsg->cmsg_len < CMSG_LEN(4)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			if (fl6->flowlabel&IPV6_FLOWINFO_MASK) {
 				if ((fl6->flowlabel^*(__be32 *)CMSG_DATA(cmsg))&~IPV6_FLOWINFO_MASK) {
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					goto exit_f;
 				}
 			}
@@ -841,18 +841,18 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		case IPV6_2292HOPOPTS:
 		case IPV6_HOPOPTS:
 			if (opt->hopopt || cmsg->cmsg_len < CMSG_LEN(sizeof(struct ipv6_opt_hdr))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			hdr = (struct ipv6_opt_hdr *)CMSG_DATA(cmsg);
 			len = ((hdr->hdrlen + 1) << 3);
 			if (cmsg->cmsg_len < CMSG_LEN(len)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 			if (!ns_capable(net->user_ns, CAP_NET_RAW)) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto exit_f;
 			}
 			opt->opt_nflen += len;
@@ -861,22 +861,22 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 
 		case IPV6_2292DSTOPTS:
 			if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct ipv6_opt_hdr))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			hdr = (struct ipv6_opt_hdr *)CMSG_DATA(cmsg);
 			len = ((hdr->hdrlen + 1) << 3);
 			if (cmsg->cmsg_len < CMSG_LEN(len)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 			if (!ns_capable(net->user_ns, CAP_NET_RAW)) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto exit_f;
 			}
 			if (opt->dst1opt) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 			opt->opt_flen += len;
@@ -886,18 +886,18 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		case IPV6_DSTOPTS:
 		case IPV6_RTHDRDSTOPTS:
 			if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct ipv6_opt_hdr))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			hdr = (struct ipv6_opt_hdr *)CMSG_DATA(cmsg);
 			len = ((hdr->hdrlen + 1) << 3);
 			if (cmsg->cmsg_len < CMSG_LEN(len)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 			if (!ns_capable(net->user_ns, CAP_NET_RAW)) {
-				err = -EPERM;
+				err = -ERR(EPERM);
 				goto exit_f;
 			}
 			if (cmsg->cmsg_type == IPV6_DSTOPTS) {
@@ -912,7 +912,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		case IPV6_2292RTHDR:
 		case IPV6_RTHDR:
 			if (cmsg->cmsg_len < CMSG_LEN(sizeof(struct ipv6_rt_hdr))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
@@ -923,26 +923,26 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 			case IPV6_SRCRT_TYPE_2:
 				if (rthdr->hdrlen != 2 ||
 				    rthdr->segments_left != 1) {
-					err = -EINVAL;
+					err = -ERR(EINVAL);
 					goto exit_f;
 				}
 				break;
 #endif
 			default:
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			len = ((rthdr->hdrlen + 1) << 3);
 
 			if (cmsg->cmsg_len < CMSG_LEN(len)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			/* segments left must also match */
 			if ((rthdr->hdrlen >> 1) != rthdr->segments_left) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
@@ -963,13 +963,13 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		case IPV6_2292HOPLIMIT:
 		case IPV6_HOPLIMIT:
 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(int))) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
 			ipc6->hlimit = *(int *)CMSG_DATA(cmsg);
 			if (ipc6->hlimit < -1 || ipc6->hlimit > 0xff) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto exit_f;
 			}
 
@@ -979,7 +979,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		    {
 			int tc;
 
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(int)))
 				goto exit_f;
 
@@ -997,7 +997,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		    {
 			int df;
 
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(int)))
 				goto exit_f;
 
@@ -1013,7 +1013,7 @@ int ip6_datagram_send_ctl(struct net *net, struct sock *sk,
 		default:
 			net_dbg_ratelimited("invalid cmsg type: %d\n",
 					    cmsg->cmsg_type);
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto exit_f;
 		}
 	}

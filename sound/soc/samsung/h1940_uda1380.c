@@ -84,7 +84,7 @@ static int h1940_hw_params(struct snd_pcm_substream *substream,
 	default:
 		dev_err(rtd->dev, "%s: rate %d is not supported\n",
 			__func__, rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* select clock source */
@@ -199,7 +199,7 @@ static int __init h1940_init(void)
 	int ret;
 
 	if (!machine_is_h1940())
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* configure some gpios */
 	ret = gpio_request(S3C_GPIO_END + 9, "speaker-power");

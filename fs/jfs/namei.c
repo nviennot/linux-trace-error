@@ -351,7 +351,7 @@ static int jfs_rmdir(struct inode *dip, struct dentry *dentry)
 
 	/* directory must be empty to be removed */
 	if (!dtEmpty(ip)) {
-		rc = -ENOTEMPTY;
+		rc = -ERR(ENOTEMPTY);
 		goto out;
 	}
 
@@ -992,7 +992,7 @@ static int jfs_symlink(struct inode *dip, struct dentry *dentry,
 
 			if (mp == NULL) {
 				xtTruncate(tid, ip, 0, COMMIT_PWMAP);
-				rc = -EIO;
+				rc = -ERR(EIO);
 				txAbort(tid, 0);
 				goto out3;
 			}
@@ -1080,7 +1080,7 @@ static int jfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	int commit_flag;
 
 	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	jfs_info("jfs_rename: %pd %pd", old_dentry, new_dentry);
 
@@ -1105,7 +1105,7 @@ static int jfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	 */
 	rc = dtSearch(old_dir, &old_dname, &ino, &btstack, JFS_LOOKUP);
 	if (rc || (ino != old_ip->i_ino)) {
-		rc = -ENOENT;
+		rc = -ERR(ENOENT);
 		goto out3;
 	}
 
@@ -1115,21 +1115,21 @@ static int jfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 	rc = dtSearch(new_dir, &new_dname, &ino, &btstack, JFS_LOOKUP);
 	if (!rc) {
 		if ((!new_ip) || (ino != new_ip->i_ino)) {
-			rc = -ESTALE;
+			rc = -ERR(ESTALE);
 			goto out3;
 		}
 	} else if (rc != -ENOENT)
 		goto out3;
 	else if (new_ip) {
 		/* no entry exists, but one was expected */
-		rc = -ESTALE;
+		rc = -ERR(ESTALE);
 		goto out3;
 	}
 
 	if (S_ISDIR(old_ip->i_mode)) {
 		if (new_ip) {
 			if (!dtEmpty(new_ip)) {
-				rc = -ENOTEMPTY;
+				rc = -ERR(ENOTEMPTY);
 				goto out3;
 			}
 		}
@@ -1182,7 +1182,7 @@ static int jfs_rename(struct inode *old_dir, struct dentry *old_dentry,
 					IWRITE_UNLOCK(new_ip);
 				jfs_error(new_ip->i_sb,
 					  "new_ip->i_nlink != 0\n");
-				return -EIO;
+				return -ERR(EIO);
 			}
 			tblk = tid_to_tblock(tid);
 			tblk->xflag |= COMMIT_DELETE;
@@ -1472,14 +1472,14 @@ static struct inode *jfs_nfs_get_inode(struct super_block *sb,
 	struct inode *inode;
 
 	if (ino == 0)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	inode = jfs_iget(sb, ino);
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
 
 	if (generation && inode->i_generation != generation) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return inode;

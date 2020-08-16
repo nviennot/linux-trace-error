@@ -110,12 +110,12 @@ int xchk_rtsummary(struct xfs_scrub *sc);
 static inline int
 xchk_rtbitmap(struct xfs_scrub *sc)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 static inline int
 xchk_rtsummary(struct xfs_scrub *sc)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 #ifdef CONFIG_XFS_QUOTA
@@ -124,7 +124,7 @@ int xchk_quota(struct xfs_scrub *sc);
 static inline int
 xchk_quota(struct xfs_scrub *sc)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 int xchk_fscounters(struct xfs_scrub *sc);

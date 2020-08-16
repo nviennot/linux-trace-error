@@ -467,7 +467,7 @@ static int __init test_lockup_init(void)
 		break;
 	default:
 		pr_err("unknown state=%s\n", state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (alloc_pages_atomic)
@@ -477,7 +477,7 @@ static int __init test_lockup_init(void)
 	    test_kernel_ptr(lock_rwlock_ptr, sizeof(rwlock_t)) ||
 	    test_kernel_ptr(lock_mutex_ptr, sizeof(struct mutex)) ||
 	    test_kernel_ptr(lock_rwsem_ptr, sizeof(struct rw_semaphore)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_DEBUG_SPINLOCK
 	if (test_magic(lock_spinlock_ptr,
@@ -492,7 +492,7 @@ static int __init test_lockup_init(void)
 	    test_magic(lock_rwsem_ptr,
 		       offsetof(struct rw_semaphore, wait_lock.magic),
 		       SPINLOCK_MAGIC))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	if ((wait_state != TASK_RUNNING ||
@@ -501,26 +501,26 @@ static int __init test_lockup_init(void)
 	    (test_disable_irq || disable_softirq || disable_preempt ||
 	     lock_rcu || lock_spinlock_ptr || lock_rwlock_ptr)) {
 		pr_err("refuse to sleep in atomic context\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (lock_mmap_sem && !main_task->mm) {
 		pr_err("no mm to lock mmap_lock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (test_file_path[0]) {
 		test_file = filp_open(test_file_path, O_RDONLY, 0);
 		if (IS_ERR(test_file)) {
 			pr_err("cannot find file_path\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		test_inode = file_inode(test_file);
 	} else if (test_lock_inode ||
 		   test_lock_mapping ||
 		   test_lock_sb_umount) {
 		pr_err("no file to lock\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (test_lock_inode && test_inode)
@@ -588,9 +588,9 @@ static int __init test_lockup_init(void)
 		fput(test_file);
 
 	if (signal_pending(main_task))
-		return -EINTR;
+		return -ERR(EINTR);
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 module_init(test_lockup_init);
 

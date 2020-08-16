@@ -201,7 +201,7 @@ char *op_name_from_perf_id(void);
 static inline int __init oprofile_perf_init(struct oprofile_operations *ops)
 {
 	pr_info("oprofile: hardware counters not available\n");
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 static inline void oprofile_perf_exit(void) { }
 #endif /* CONFIG_HW_PERF_EVENTS */

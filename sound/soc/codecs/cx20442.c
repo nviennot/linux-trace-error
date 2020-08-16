@@ -91,7 +91,7 @@ static unsigned int cx20442_read_reg_cache(struct snd_soc_component *component,
 	struct cx20442_priv *cx20442 = snd_soc_component_get_drvdata(component);
 
 	if (reg >= 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return cx20442->reg_cache;
 }
@@ -136,7 +136,7 @@ static int cx20442_pm_to_v253_vls(u8 value)
 	case (1 << CX20442_TELOUT) | (1 << CX20442_MIC):
 		return V253_VLS_NONE;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static int cx20442_pm_to_v253_vsp(u8 value)
 {
@@ -146,7 +146,7 @@ static int cx20442_pm_to_v253_vsp(u8 value)
 	case (1 << CX20442_SPKOUT) | (1 << CX20442_MIC):
 		return (bool)(value & (1 << CX20442_AGC));
 	}
-	return (value & (1 << CX20442_AGC)) ? -EINVAL : 0;
+	return (value & (1 << CX20442_AGC)) ? -ERR(EINVAL) : 0;
 }
 
 static int cx20442_write(struct snd_soc_component *component, unsigned int reg,
@@ -157,12 +157,12 @@ static int cx20442_write(struct snd_soc_component *component, unsigned int reg,
 	char buf[18];
 
 	if (reg >= 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* tty and write pointers required for talking to the modem
 	 * are expected to be set by the line discipline initialization code */
 	if (!cx20442->tty || !cx20442->tty->ops->write)
-		return -EIO;
+		return -ERR(EIO);
 
 	old = cx20442->reg_cache;
 	cx20442->reg_cache = value;
@@ -191,7 +191,7 @@ static int cx20442_write(struct snd_soc_component *component, unsigned int reg,
 
 	dev_dbg(component->dev, "%s: %s\n", __func__, buf);
 	if (cx20442->tty->ops->write(cx20442->tty, buf, len) != len)
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -215,15 +215,15 @@ static int v253_open(struct tty_struct *tty)
 
 	/* Doesn't make sense without write callback */
 	if (!tty->ops->write)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Won't work if no codec pointer has been passed by a card driver */
 	if (!tty->disc_data)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	tty->receive_room = 16;
 	if (tty->ops->write(tty, v253_init, len) != len) {
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 	/* Actual setup will be performed after the modem responds. */

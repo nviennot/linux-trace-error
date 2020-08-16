@@ -250,7 +250,7 @@ retry:
 					cond_resched();
 					goto retry;
 				}
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				goto next;
 			}
 
@@ -906,10 +906,10 @@ int f2fs_disable_cp_again(struct f2fs_sb_info *sbi, block_t unusable)
 	int ovp_hole_segs =
 		(overprovision_segments(sbi) - reserved_segments(sbi));
 	if (unusable > F2FS_OPTION(sbi).unusable_cap)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	if (is_sbi_flag_set(sbi, SBI_CP_DISABLED_QUICK) &&
 		dirty_segments(sbi) > ovp_hole_segs)
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	return 0;
 }
 
@@ -1161,7 +1161,7 @@ static int __submit_discard_cmd(struct f2fs_sb_info *sbi,
 
 		if (time_to_inject(sbi, FAULT_DISCARD)) {
 			f2fs_show_injection_info(sbi, FAULT_DISCARD);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto submit;
 		}
 		err = __blkdev_issue_discard(bdev,
@@ -1769,7 +1769,7 @@ static int __f2fs_issue_discard_zone(struct f2fs_sb_info *sbi,
 		if (blkstart < FDEV(devi).start_blk ||
 		    blkstart > FDEV(devi).end_blk) {
 			f2fs_err(sbi, "Invalid block %x", blkstart);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		blkstart -= FDEV(devi).start_blk;
 	}
@@ -1784,7 +1784,7 @@ static int __f2fs_issue_discard_zone(struct f2fs_sb_info *sbi,
 			f2fs_err(sbi, "(%d) %s: Unaligned zone reset attempted (block %x + %x)",
 				 devi, sbi->s_ndevs ? FDEV(devi).path : "",
 				 blkstart, blklen);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		trace_f2fs_issue_reset_zone(bdev, blkstart);
 		return blkdev_zone_mgmt(bdev, REQ_OP_ZONE_RESET,
@@ -2840,7 +2840,7 @@ int f2fs_trim_fs(struct f2fs_sb_info *sbi, struct fstrim_range *range)
 	bool need_align = f2fs_lfs_mode(sbi) && __is_large_section(sbi);
 
 	if (start >= MAX_BLKADDR(sbi) || range->len < sbi->blocksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (end < MAIN_BLKADDR(sbi))
 		goto out;
@@ -3644,7 +3644,7 @@ static int restore_curseg_summaries(struct f2fs_sb_info *sbi)
 			sits_in_cursum(sit_j) > SIT_JOURNAL_ENTRIES) {
 		f2fs_err(sbi, "invalid journal entries nats %u sits %u\n",
 			 nats_in_cursum(nat_j), sits_in_cursum(sit_j));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -4545,7 +4545,7 @@ static int fix_curseg_write_pointer(struct f2fs_sb_info *sbi, int type)
 
 	/* check consistency of the zone curseg pointed to */
 	if (check_zone_write_pointer(sbi, zbd, &zone))
-		return -EIO;
+		return -ERR(EIO);
 
 	/* check newly assigned zone */
 	cs_section = GET_SEC_FROM_SEG(sbi, cs->segno);

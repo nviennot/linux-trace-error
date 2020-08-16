@@ -114,7 +114,7 @@ int get_callchain_buffers(int event_max_stack)
 
 	count = atomic_inc_return(&nr_callchain_events);
 	if (WARN_ON_ONCE(count < 1)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto exit;
 	}
 
@@ -126,7 +126,7 @@ int get_callchain_buffers(int event_max_stack)
 	 * And also do it here so that we have &callchain_mutex held.
 	 */
 	if (event_max_stack > sysctl_perf_event_max_stack) {
-		err = -EOVERFLOW;
+		err = -ERR(EOVERFLOW);
 		goto exit;
 	}
 
@@ -249,7 +249,7 @@ int perf_event_max_stack_handler(struct ctl_table *table, int write,
 
 	mutex_lock(&callchain_mutex);
 	if (atomic_read(&nr_callchain_events))
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else
 		*value = new_value;
 

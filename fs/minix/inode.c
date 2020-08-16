@@ -159,7 +159,7 @@ static int minix_fill_super(struct super_block *s, void *data, int silent)
 	unsigned long i, block;
 	struct inode *root_inode;
 	struct minix_sb_info *sbi;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	sbi = kzalloc(sizeof(struct minix_sb_info), GFP_KERNEL);
 	if (!sbi)
@@ -466,7 +466,7 @@ static struct inode *V1_minix_iget(struct inode *inode)
 	raw_inode = minix_V1_raw_inode(inode->i_sb, inode->i_ino, &bh);
 	if (!raw_inode) {
 		iget_failed(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	inode->i_mode = raw_inode->i_mode;
 	i_uid_write(inode, raw_inode->i_uid);
@@ -499,7 +499,7 @@ static struct inode *V2_minix_iget(struct inode *inode)
 	raw_inode = minix_V2_raw_inode(inode->i_sb, inode->i_ino, &bh);
 	if (!raw_inode) {
 		iget_failed(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	inode->i_mode = raw_inode->i_mode;
 	i_uid_write(inode, raw_inode->i_uid);
@@ -606,13 +606,13 @@ static int minix_write_inode(struct inode *inode, struct writeback_control *wbc)
 	else
 		bh = V2_minix_update_inode(inode);
 	if (!bh)
-		return -EIO;
+		return -ERR(EIO);
 	if (wbc->sync_mode == WB_SYNC_ALL && buffer_dirty(bh)) {
 		sync_dirty_buffer(bh);
 		if (buffer_req(bh) && !buffer_uptodate(bh)) {
 			printk("IO error syncing minix inode [%s:%08lx]\n",
 				inode->i_sb->s_id, inode->i_ino);
-			err = -EIO;
+			err = -ERR(EIO);
 		}
 	}
 	brelse (bh);

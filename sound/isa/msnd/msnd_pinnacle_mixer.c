@@ -99,7 +99,7 @@ static int snd_msndmix_set_mux(struct snd_msnd *chip, int val)
 		msndbyte = HDEXAR_SET_DAT_IN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	change  = newrecsrc != chip->recsrc;
 	if (change) {
@@ -187,7 +187,7 @@ static int snd_msndmix_set(struct snd_msnd *dev, int d, int left, int right)
 	int updatemaster = 0;
 
 	if (d >= LEVEL_ENTRIES)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bLeft = left * 0xff / 100;
 	wLeft = left * 0xffff / 100;
@@ -209,7 +209,7 @@ static int snd_msndmix_set(struct snd_msnd *dev, int d, int left, int right)
 		break;
 	case MSND_MIXER_MIC:			/* mic pot control */
 		if (dev->type == msndClassic)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* scaled by IMIX in digital mix */
 		writeb(bLeft, dev->SMA + SMA_bMicPotPosLeft);
 		writeb(bRight, dev->SMA + SMA_bMicPotPosRight);
@@ -234,7 +234,7 @@ static int snd_msndmix_set(struct snd_msnd *dev, int d, int left, int right)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (updatemaster) {
@@ -299,7 +299,7 @@ int snd_msndmix_new(struct snd_card *card)
 	int err;
 
 	if (snd_BUG_ON(!chip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_init(&chip->mixer_lock);
 	strcpy(card->mixername, "MSND Pinnacle Mixer");
 

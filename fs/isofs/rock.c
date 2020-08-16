@@ -97,7 +97,7 @@ static int rock_continue(struct rock_state *rs)
 		printk(KERN_NOTICE "rock: corrupted directory entry. "
 			"extent=%d, offset=%d, size=%d\n",
 			rs->cont_extent, rs->cont_offset, rs->cont_size);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto out;
 	}
 
@@ -109,7 +109,7 @@ static int rock_continue(struct rock_state *rs)
 			ret = -ENOMEM;
 			goto out;
 		}
-		ret = -EIO;
+		ret = -ERR(EIO);
 		if (++rs->cont_loops >= RR_MAX_CE_ENTRIES)
 			goto out;
 		bh = sb_bread(rs->inode->i_sb, rs->cont_extent);
@@ -187,7 +187,7 @@ static int rock_check_overflow(struct rock_state *rs, int sig)
 				"storage\n");
 		printk(KERN_NOTICE "rock: sig=0x%02x, size=%d, remaining=%d\n",
 				sig, len, rs->len);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	return 0;
 }
@@ -298,7 +298,7 @@ out:
 	kfree(rs.buffer);
 	return ret;
 eio:
-	ret = -EIO;
+	ret = -ERR(EIO);
 	goto out;
 }
 
@@ -596,7 +596,7 @@ out:
 	kfree(rs.buffer);
 	return ret;
 eio:
-	ret = -EIO;
+	ret = -ERR(EIO);
 	goto out;
 }
 
@@ -799,7 +799,7 @@ fail:
 error:
 	SetPageError(page);
 	unlock_page(page);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 const struct address_space_operations isofs_symlink_aops = {

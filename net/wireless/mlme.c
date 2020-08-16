@@ -246,17 +246,17 @@ int cfg80211_mlme_auth(struct cfg80211_registered_device *rdev,
 
 	if (auth_type == NL80211_AUTHTYPE_SHARED_KEY)
 		if (!key || !key_len || key_idx < 0 || key_idx > 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	if (wdev->current_bss &&
 	    ether_addr_equal(bssid, wdev->current_bss->pub.bssid))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	req.bss = cfg80211_get_bss(&rdev->wiphy, chan, bssid, ssid, ssid_len,
 				   IEEE80211_BSS_TYPE_ESS,
 				   IEEE80211_PRIVACY_ANY);
 	if (!req.bss)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = rdev_auth(rdev, dev, &req);
 
@@ -313,7 +313,7 @@ int cfg80211_mlme_assoc(struct cfg80211_registered_device *rdev,
 	if (wdev->current_bss &&
 	    (!req->prev_bssid || !ether_addr_equal(wdev->current_bss->pub.bssid,
 						   req->prev_bssid)))
-		return -EALREADY;
+		return -ERR(EALREADY);
 
 	cfg80211_oper_and_ht_capa(&req->ht_capa_mask,
 				  rdev->wiphy.ht_capa_mod_mask);
@@ -324,7 +324,7 @@ int cfg80211_mlme_assoc(struct cfg80211_registered_device *rdev,
 				    IEEE80211_BSS_TYPE_ESS,
 				    IEEE80211_PRIVACY_ANY);
 	if (!req->bss)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	err = rdev_assoc(rdev, dev, req);
 	if (!err)
@@ -381,12 +381,12 @@ int cfg80211_mlme_disassoc(struct cfg80211_registered_device *rdev,
 	ASSERT_WDEV_LOCK(wdev);
 
 	if (!wdev->current_bss)
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	if (ether_addr_equal(wdev->current_bss->pub.bssid, bssid))
 		req.bss = &wdev->current_bss->pub;
 	else
-		return -ENOTCONN;
+		return -ERR(ENOTCONN);
 
 	err = rdev_disassoc(rdev, dev, &req);
 	if (err)
@@ -497,23 +497,23 @@ int cfg80211_mlme_register_mgmt(struct wireless_dev *wdev, u32 snd_portid,
 	bool update_multicast = false;
 
 	if (!wdev->wiphy->mgmt_stypes)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if ((frame_type & IEEE80211_FCTL_FTYPE) != IEEE80211_FTYPE_MGMT) {
 		NL_SET_ERR_MSG(extack, "frame type not management");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (frame_type & ~(IEEE80211_FCTL_FTYPE | IEEE80211_FCTL_STYPE)) {
 		NL_SET_ERR_MSG(extack, "Invalid frame type");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mgmt_type = (frame_type & IEEE80211_FCTL_STYPE) >> 4;
 	if (!(wdev->wiphy->mgmt_stypes[wdev->iftype].rx & BIT(mgmt_type))) {
 		NL_SET_ERR_MSG(extack,
 			       "Registration to specific type not supported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -529,7 +529,7 @@ int cfg80211_mlme_register_mgmt(struct wireless_dev *wdev, u32 snd_portid,
 	    !(match_data && match_len >= 2)) {
 		NL_SET_ERR_MSG(extack,
 			       "Authentication algorithm number required");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nreg = kzalloc(sizeof(*reg) + match_len, GFP_KERNEL);
@@ -551,7 +551,7 @@ int cfg80211_mlme_register_mgmt(struct wireless_dev *wdev, u32 snd_portid,
 				break;
 			}
 			NL_SET_ERR_MSG(extack, "Match already configured");
-			err = -EALREADY;
+			err = -ERR(EALREADY);
 			break;
 		}
 	}
@@ -637,22 +637,22 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 	u16 stype;
 
 	if (!wdev->wiphy->mgmt_stypes)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!rdev->ops->mgmt_tx)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (params->len < 24 + 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mgmt = (const struct ieee80211_mgmt *)params->buf;
 
 	if (!ieee80211_is_mgmt(mgmt->frame_control))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	stype = le16_to_cpu(mgmt->frame_control) & IEEE80211_FCTL_STYPE;
 	if (!(wdev->wiphy->mgmt_stypes[wdev->iftype].tx & BIT(stype >> 4)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ieee80211_is_action(mgmt->frame_control) &&
 	    mgmt->u.action.category != WLAN_CATEGORY_PUBLIC) {
@@ -665,13 +665,13 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 		case NL80211_IFTYPE_STATION:
 		case NL80211_IFTYPE_P2P_CLIENT:
 			if (!wdev->current_bss) {
-				err = -ENOTCONN;
+				err = -ERR(ENOTCONN);
 				break;
 			}
 
 			if (!ether_addr_equal(wdev->current_bss->pub.bssid,
 					      mgmt->bssid)) {
-				err = -ENOTCONN;
+				err = -ERR(ENOTCONN);
 				break;
 			}
 
@@ -685,7 +685,7 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 			/* for station, check that DA is the AP */
 			if (!ether_addr_equal(wdev->current_bss->pub.bssid,
 					      mgmt->da)) {
-				err = -ENOTCONN;
+				err = -ERR(ENOTCONN);
 				break;
 			}
 			break;
@@ -693,11 +693,11 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 		case NL80211_IFTYPE_P2P_GO:
 		case NL80211_IFTYPE_AP_VLAN:
 			if (!ether_addr_equal(mgmt->bssid, wdev_address(wdev)))
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 			break;
 		case NL80211_IFTYPE_MESH_POINT:
 			if (!ether_addr_equal(mgmt->sa, mgmt->bssid)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				break;
 			}
 			/*
@@ -712,7 +712,7 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 			 */
 		case NL80211_IFTYPE_NAN:
 		default:
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			break;
 		}
 		wdev_unlock(wdev);
@@ -728,17 +728,17 @@ int cfg80211_mlme_mgmt_tx(struct cfg80211_registered_device *rdev,
 		 */
 		if (!ieee80211_is_action(mgmt->frame_control) ||
 		    mgmt->u.action.category != WLAN_CATEGORY_PUBLIC)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (!wdev->current_bss &&
 		    !wiphy_ext_feature_isset(
 			    &rdev->wiphy,
 			    NL80211_EXT_FEATURE_MGMT_TX_RANDOM_TA))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (wdev->current_bss &&
 		    !wiphy_ext_feature_isset(
 			    &rdev->wiphy,
 			    NL80211_EXT_FEATURE_MGMT_TX_RANDOM_TA_CONNECTED))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* Transmit the Action frame as requested by user space */

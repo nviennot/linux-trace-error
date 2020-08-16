@@ -101,7 +101,7 @@ static int orangefs_d_revalidate(struct dentry *dentry, unsigned int flags)
 		return 1;
 
 	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+		return -ERR(ECHILD);
 
 	gossip_debug(GOSSIP_DCACHE_DEBUG, "%s: called on dentry %p.\n",
 		     __func__, dentry);

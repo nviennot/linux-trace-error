@@ -643,10 +643,10 @@ static inline int __ttm_bo_reserve(struct ttm_buffer_object *bo,
 	if (no_wait) {
 		bool success;
 		if (WARN_ON(ticket))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		success = dma_resv_trylock(bo->base.resv);
-		return success ? 0 : -EBUSY;
+		return success ? 0 : -ERR(EBUSY);
 	}
 
 	if (interruptible)
@@ -654,7 +654,7 @@ static inline int __ttm_bo_reserve(struct ttm_buffer_object *bo,
 	else
 		ret = dma_resv_lock(bo->base.resv, ticket);
 	if (ret == -EINTR)
-		return -ERESTARTSYS;
+		return -ERR(ERESTARTSYS);
 	return ret;
 }
 
@@ -736,7 +736,7 @@ static inline int ttm_bo_reserve_slowpath(struct ttm_buffer_object *bo,
 		dma_resv_lock_slow(bo->base.resv, ticket);
 
 	if (ret == -EINTR)
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 
 	return ret;
 }

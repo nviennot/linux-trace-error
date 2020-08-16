@@ -121,7 +121,7 @@ static struct fscache_object *fscache_objlist_lookup(loff_t *_pos)
 	}
 
 	if (!minobj)
-		*_pos = (unsigned long) ERR_PTR(-ENOENT);
+		*_pos = (unsigned long) ERR_PTR(-ERR(ENOENT));
 	else if (minobj != obj)
 		*_pos = (unsigned long) minobj;
 	return minobj;

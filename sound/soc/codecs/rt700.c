@@ -141,7 +141,7 @@ static int rt700_headset_detect(struct rt700_priv *rt700)
 	return 0;
 
 to_error:
-	ret = -ETIMEDOUT;
+	ret = -ERR(ETIMEDOUT);
 	pr_err_ratelimited("Time-out error in %s\n", __func__);
 	return ret;
 io_error:
@@ -149,7 +149,7 @@ io_error:
 	return ret;
 remove_error:
 	pr_err_ratelimited("Jack removal in %s\n", __func__);
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static void rt700_jack_detect_handler(struct work_struct *work)
@@ -523,7 +523,7 @@ static int rt700_mux_get(struct snd_kcontrol *kcontrol,
 	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
 		nid = RT700_MIXER_IN2;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* vid = 0xf01 */
 	reg = RT700_VERB_SET_CONNECT_SEL | nid;
@@ -550,7 +550,7 @@ static int rt700_mux_put(struct snd_kcontrol *kcontrol,
 	int ret;
 
 	if (item[0] >= e->items)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (strstr(ucontrol->id.name, "HPO Mux"))
 		nid = RT700_HP_OUT;
@@ -559,7 +559,7 @@ static int rt700_mux_put(struct snd_kcontrol *kcontrol,
 	else if (strstr(ucontrol->id.name, "ADC 23 Mux"))
 		nid = RT700_MIXER_IN2;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Verb ID = 0x701h */
 	val = snd_soc_enum_item_to_val(e, item[0]) << e->shift_l;
@@ -905,10 +905,10 @@ static int rt700_pcm_hw_params(struct snd_pcm_substream *substream,
 	stream = snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!stream)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!rt700->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* SoundWire specific configuration */
 	/* This code assumes port 1 for playback and port 2 for capture */
@@ -928,7 +928,7 @@ static int rt700_pcm_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI id %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	stream_config.frame_rate = params_rate(params);
@@ -953,7 +953,7 @@ static int rt700_pcm_hw_params(struct snd_pcm_substream *substream,
 	} else {
 		dev_err(component->dev, "Unsupported channels %d\n",
 			params_channels(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_width(params)) {
@@ -973,7 +973,7 @@ static int rt700_pcm_hw_params(struct snd_pcm_substream *substream,
 		val |= (0x4 << 4);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* 48Khz */
@@ -992,7 +992,7 @@ static int rt700_pcm_hw_free(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_dma_data(dai, substream);
 
 	if (!rt700->slave)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sdw_stream_remove_slave(rt700->slave, stream->sdw_stream);
 	return 0;
@@ -1085,7 +1085,7 @@ int rt700_clock_config(struct device *dev)
 		value = 0x5;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_write(rt700->regmap, 0xe0, value);

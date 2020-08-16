@@ -372,7 +372,7 @@ int hfsplus_asc2uni(struct super_block *sb,
 	}
 	ustr->length = cpu_to_be16(outlen);
 	if (len > 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 	return 0;
 }
 

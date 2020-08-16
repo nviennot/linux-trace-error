@@ -112,7 +112,7 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 	u32 index;
 
 	if (nla == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_SKBEDIT_MAX, nla,
 					  skbedit_policy, NULL);
@@ -120,7 +120,7 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 		return err;
 
 	if (tb[TCA_SKBEDIT_PARMS] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (tb[TCA_SKBEDIT_PRIORITY] != NULL) {
 		flags |= SKBEDIT_F_PRIORITY;
@@ -135,7 +135,7 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 	if (tb[TCA_SKBEDIT_PTYPE] != NULL) {
 		ptype = nla_data(tb[TCA_SKBEDIT_PTYPE]);
 		if (!skb_pkt_type_ok(*ptype))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		flags |= SKBEDIT_F_PTYPE;
 	}
 
@@ -170,7 +170,7 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 			tcf_idr_release(*a, bind);
 		else
 			tcf_idr_cleanup(tn, index);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (!exists) {
@@ -187,7 +187,7 @@ static int tcf_skbedit_init(struct net *net, struct nlattr *nla,
 		d = to_skbedit(*a);
 		if (!ovr) {
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);

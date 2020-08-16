@@ -783,7 +783,7 @@ __ww_mutex_kill(struct mutex *lock, struct ww_acquire_ctx *ww_ctx)
 		DEBUG_LOCKS_WARN_ON(ww_ctx->contending_lock);
 		ww_ctx->contending_lock = ww;
 #endif
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 	}
 
 	return 0;
@@ -941,7 +941,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 	ww = container_of(lock, struct ww_mutex, base);
 	if (use_ww_ctx && ww_ctx) {
 		if (unlikely(ww_ctx == READ_ONCE(ww->ctx)))
-			return -EALREADY;
+			return -ERR(EALREADY);
 
 		/*
 		 * Reset the wounded flag after a kill. No other process can
@@ -1019,7 +1019,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		 * against mutex_unlock() and wake-ups do not go missing.
 		 */
 		if (signal_pending_state(state, current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto err;
 		}
 
@@ -1174,7 +1174,7 @@ ww_mutex_deadlock_injection(struct ww_mutex *lock, struct ww_acquire_ctx *ctx)
 
 		ww_mutex_unlock(lock);
 
-		return -EDEADLK;
+		return -ERR(EDEADLK);
 	}
 #endif
 

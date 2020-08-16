@@ -250,10 +250,10 @@ static int tas_snd_vol_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < 0 ||
 	    ucontrol->value.integer.value[0] > 177)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (ucontrol->value.integer.value[1] < 0 ||
 	    ucontrol->value.integer.value[1] > 177)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&tas->mtx);
 	if (tas->cached_volume_l == ucontrol->value.integer.value[0]
@@ -410,7 +410,7 @@ static int tas_snd_drc_range_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < 0 ||
 	    ucontrol->value.integer.value[0] > TAS3004_DRC_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&tas->mtx);
 	if (tas->drc_range == ucontrol->value.integer.value[0]) {
@@ -500,7 +500,7 @@ static int tas_snd_capture_source_put(struct snd_kcontrol *kcontrol,
 	int oldacr;
 
 	if (ucontrol->value.enumerated.item[0] > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&tas->mtx);
 	oldacr = tas->acr;
 
@@ -571,7 +571,7 @@ static int tas_snd_treble_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < TAS3004_TREBLE_MIN ||
 	    ucontrol->value.integer.value[0] > TAS3004_TREBLE_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&tas->mtx);
 	if (tas->treble == ucontrol->value.integer.value[0]) {
 		mutex_unlock(&tas->mtx);
@@ -622,7 +622,7 @@ static int tas_snd_bass_put(struct snd_kcontrol *kcontrol,
 
 	if (ucontrol->value.integer.value[0] < TAS3004_BASS_MIN ||
 	    ucontrol->value.integer.value[0] > TAS3004_BASS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	mutex_lock(&tas->mtx);
 	if (tas->bass == ucontrol->value.integer.value[0]) {
 		mutex_unlock(&tas->mtx);
@@ -708,7 +708,7 @@ static int tas_reset_init(struct tas *tas)
 
 	return 0;
  outerr:
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 static int tas_switch_clock(struct codec_info_item *cii, enum clock_switch clock)
@@ -733,7 +733,7 @@ static int tas_switch_clock(struct codec_info_item *cii, enum clock_switch clock
 		break;
 	default:
 		/* doesn't happen as of now */
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -800,14 +800,14 @@ static int tas_init_codec(struct aoa_codec *codec)
 
 	if (!tas->codec.gpio || !tas->codec.gpio->methods) {
 		printk(KERN_ERR PFX "gpios not assigned!!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mutex_lock(&tas->mtx);
 	if (tas_reset_init(tas)) {
 		printk(KERN_ERR PFX "tas failed to initialise\n");
 		mutex_unlock(&tas->mtx);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 	tas->hw_enabled = 1;
 	mutex_unlock(&tas->mtx);
@@ -816,12 +816,12 @@ static int tas_init_codec(struct aoa_codec *codec)
 						   aoa_get_card(),
 						   &tas_codec_info, tas)) {
 		printk(KERN_ERR PFX "error attaching tas to soundbus\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	if (aoa_snd_device_new(SNDRV_DEV_CODEC, tas, &ops)) {
 		printk(KERN_ERR PFX "failed to create tas snd device!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	err = aoa_snd_ctl_add(snd_ctl_new1(&volume_control, tas));
 	if (err)
@@ -910,7 +910,7 @@ static int tas_i2c_probe(struct i2c_client *client,
  fail:
 	mutex_destroy(&tas->mtx);
 	kfree(tas);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int tas_i2c_remove(struct i2c_client *client)

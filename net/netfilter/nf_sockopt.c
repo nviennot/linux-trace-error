@@ -39,7 +39,7 @@ int nf_register_sockopt(struct nf_sockopt_ops *reg)
 				ops->get_optmin, ops->get_optmax,
 				reg->set_optmin, reg->set_optmax,
 				reg->get_optmin, reg->get_optmax);
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 	}
@@ -83,7 +83,7 @@ static struct nf_sockopt_ops *nf_sockopt_find(struct sock *sk, u_int8_t pf,
 		}
 	}
 out_nosup:
-	ops = ERR_PTR(-ENOPROTOOPT);
+	ops = ERR_PTR(-ERR(ENOPROTOOPT));
 out:
 	mutex_unlock(&nf_sockopt_mutex);
 	return ops;

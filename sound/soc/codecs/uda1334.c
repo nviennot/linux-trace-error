@@ -47,7 +47,7 @@ static int uda1334_put_deemph(struct snd_kcontrol *kcontrol,
 	int deemph = ucontrol->value.integer.value[0];
 
 	if (deemph > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	gpiod_set_value_cansleep(uda1334->deemph, deemph);
 
@@ -63,7 +63,7 @@ static int uda1334_get_deemph(struct snd_kcontrol *kcontrol,
 
 	ret = gpiod_get_value_cansleep(uda1334->deemph);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ucontrol->value.integer.value[0] = ret;
 
@@ -100,7 +100,7 @@ static int uda1334_startup(struct snd_pcm_substream *substream,
 	if (!uda1334->sysclk) {
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_hw_constraint_list(substream->runtime, 0,
@@ -161,7 +161,7 @@ static int uda1334_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 	/* Need at least one supported rate... */
 	if (uda1334->rate_constraint.count == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -174,7 +174,7 @@ static int uda1334_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	if (fmt != (SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 		    SND_SOC_DAIFMT_CBS_CFS)) {
 		dev_err(codec_dai->dev, "Invalid DAI format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

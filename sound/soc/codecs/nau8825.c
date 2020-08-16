@@ -446,7 +446,7 @@ static int nau8825_xtalk_baktab_index_by_reg(unsigned int reg)
 	for (index = 0; index < ARRAY_SIZE(nau8825_xtalk_baktab); index++)
 		if (nau8825_xtalk_baktab[index].reg == reg)
 			return index;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void nau8825_xtalk_backup(struct nau8825 *nau8825)
@@ -927,7 +927,7 @@ static int nau8825_adc_event(struct snd_soc_dapm_widget *w,
 				NAU8825_REG_ENA_CTRL, NAU8825_ENABLE_ADC, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -951,7 +951,7 @@ static int nau8825_pump_event(struct snd_soc_dapm_widget *w,
 			NAU8825_JAMNODCLOW, 0);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -974,7 +974,7 @@ static int nau8825_output_dac_event(struct snd_soc_dapm_widget *w,
 			NAU8825_BIAS_TESTDAC_EN, NAU8825_BIAS_TESTDAC_EN);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -987,7 +987,7 @@ static int nau8825_biq_coeff_get(struct snd_kcontrol *kcontrol,
 	struct soc_bytes_ext *params = (void *)kcontrol->private_value;
 
 	if (!component->regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	regmap_raw_read(component->regmap, NAU8825_REG_BIQ_COF1,
 		ucontrol->value.bytes.data, params->max);
@@ -1002,7 +1002,7 @@ static int nau8825_biq_coeff_put(struct snd_kcontrol *kcontrol,
 	void *data;
 
 	if (!component->regmap)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = kmemdup(ucontrol->value.bytes.data,
 		params->max, GFP_KERNEL | GFP_DMA);
@@ -1222,17 +1222,17 @@ static int nau8825_clock_check(struct nau8825 *nau8825,
 
 	if (stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (osr >= ARRAY_SIZE(osr_dac_sel))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		osrate = osr_dac_sel[osr].osr;
 	} else {
 		if (osr >= ARRAY_SIZE(osr_adc_sel))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		osrate = osr_adc_sel[osr].osr;
 	}
 
 	if (!osrate || rate * osr > CLK_DA_AD_MAX) {
 		dev_err(nau8825->dev, "exceed the maximum frequency of CLK_ADC or CLK_DAC\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1260,7 +1260,7 @@ static int nau8825_hw_params(struct snd_pcm_substream *substream,
 		if (nau8825_clock_check(nau8825, substream->stream,
 			params_rate(params), osr)) {
 			nau8825_sema_release(nau8825);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		regmap_update_bits(nau8825->regmap, NAU8825_REG_CLK_DIVIDER,
 			NAU8825_CLK_DAC_SRC_MASK,
@@ -1271,7 +1271,7 @@ static int nau8825_hw_params(struct snd_pcm_substream *substream,
 		if (nau8825_clock_check(nau8825, substream->stream,
 			params_rate(params), osr)) {
 			nau8825_sema_release(nau8825);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		regmap_update_bits(nau8825->regmap, NAU8825_REG_CLK_DIVIDER,
 			NAU8825_CLK_ADC_SRC_MASK,
@@ -1291,7 +1291,7 @@ static int nau8825_hw_params(struct snd_pcm_substream *substream,
 			bclk_div = 0;
 		else {
 			nau8825_sema_release(nau8825);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		regmap_update_bits(nau8825->regmap, NAU8825_REG_I2S_PCM_CTRL2,
 			NAU8825_I2S_LRC_DIV_MASK | NAU8825_I2S_BLK_DIV_MASK,
@@ -1313,7 +1313,7 @@ static int nau8825_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		nau8825_sema_release(nau8825);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(nau8825->regmap, NAU8825_REG_I2S_PCM_CTRL1,
@@ -1338,7 +1338,7 @@ static int nau8825_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -1348,7 +1348,7 @@ static int nau8825_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		ctrl1_val |= NAU8825_I2S_BP_INV;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -1369,7 +1369,7 @@ static int nau8825_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		ctrl1_val |= NAU8825_I2S_PCMB_EN;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	nau8825_sema_acquire(nau8825, 3 * HZ);
@@ -1998,7 +1998,7 @@ static int nau8825_calc_fll_param(unsigned int fll_in, unsigned int fs,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_pre_scalar))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->clk_ref_div = fll_pre_scalar[i].val;
 
 	/* Choose the FLL ratio based on FREF */
@@ -2007,7 +2007,7 @@ static int nau8825_calc_fll_param(unsigned int fll_in, unsigned int fs,
 			break;
 	}
 	if (i == ARRAY_SIZE(fll_ratio))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->ratio = fll_ratio[i].val;
 
 	/* Calculate the frequency of DCO (FDCO) given freq_out = 256 * Fs.
@@ -2026,7 +2026,7 @@ static int nau8825_calc_fll_param(unsigned int fll_in, unsigned int fs,
 		}
 	}
 	if (ARRAY_SIZE(mclk_src_scaling) == fvco_sel)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	fll_param->mclk_src = mclk_src_scaling[fvco_sel].val;
 
 	/* Calculate the FLL 10-bit integer input and the FLL 16-bit fractional
@@ -2290,7 +2290,7 @@ static int nau8825_configure_sysclk(struct nau8825 *nau8825, int clk_id,
 		break;
 	default:
 		dev_err(nau8825->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(nau8825->dev, "Sysclk is %dHz and clock id is %d\n", freq,
@@ -2545,7 +2545,7 @@ static int nau8825_read_device_properties(struct device *dev,
 		nau8825->mclk = NULL;
 		dev_info(dev, "No 'mclk' clock found, assume MCLK is managed externally");
 	} else if (IS_ERR(nau8825->mclk)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2612,7 +2612,7 @@ static int nau8825_i2c_probe(struct i2c_client *i2c,
 	if ((value & NAU8825_SOFTWARE_ID_MASK) !=
 			NAU8825_SOFTWARE_ID_NAU8825) {
 		dev_err(dev, "Not a NAU8825 chip\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	nau8825_init_regs(nau8825);

@@ -165,14 +165,14 @@ int skl_cldma_wait_interruptible(struct sst_dsp *ctx)
 				ctx->cl_dev.wait_condition,
 				msecs_to_jiffies(SKL_WAIT_TIMEOUT))) {
 		dev_err(ctx->dev, "%s: Wait timeout\n", __func__);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto cleanup;
 	}
 
 	dev_dbg(ctx->dev, "%s: Event wake\n", __func__);
 	if (ctx->cl_dev.wake_status != SKL_CL_DMA_BUF_COMPLETE) {
 		dev_err(ctx->dev, "%s: DMA Error\n", __func__);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 cleanup:
@@ -253,7 +253,7 @@ skl_cldma_copy_to_buf(struct sst_dsp *ctx, const void *bin,
 	const void *curr_pos = bin;
 
 	if (total_size <= 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dev_dbg(ctx->dev, "%s: Total binary size: %u\n", __func__, bytes_left);
 

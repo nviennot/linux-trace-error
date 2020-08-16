@@ -104,7 +104,7 @@ int asus_wmi_evaluate_method(u32 method_id, u32 arg0, u32 arg1, u32 *retval);
 static inline int asus_wmi_evaluate_method(u32 method_id, u32 arg0, u32 arg1,
 					   u32 *retval)
 {
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 #endif
 

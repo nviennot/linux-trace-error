@@ -851,7 +851,7 @@ static int __init kmalloc_tests_init(void)
 
 	kasan_restore_multi_shot(multishot);
 
-	return -EAGAIN;
+	return -ERR(EAGAIN);
 }
 
 module_init(kmalloc_tests_init);

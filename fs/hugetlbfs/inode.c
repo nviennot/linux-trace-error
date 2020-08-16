@@ -154,18 +154,18 @@ static int hugetlbfs_file_mmap(struct file *file, struct vm_area_struct *vma)
 	 */
 	if (sizeof(unsigned long) == sizeof(loff_t)) {
 		if (vma->vm_pgoff & PGOFF_LOFFT_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	/* must be huge page aligned */
 	if (vma->vm_pgoff & (~huge_page_mask(h) >> PAGE_SHIFT))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	vma_len = (loff_t)(vma->vm_end - vma->vm_start);
 	len = vma_len + ((loff_t)vma->vm_pgoff << PAGE_SHIFT);
 	/* check for overflow */
 	if (len < vma_len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	inode_lock(inode);
 	file_accessed(file);
@@ -248,13 +248,13 @@ hugetlb_get_unmapped_area(struct file *file, unsigned long addr,
 	struct hstate *h = hstate_file(file);
 
 	if (len & ~huge_page_mask(h))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (len > TASK_SIZE)
 		return -ENOMEM;
 
 	if (flags & MAP_FIXED) {
 		if (prepare_hugepage_range(file, addr, len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return addr;
 	}
 
@@ -380,7 +380,7 @@ static int hugetlbfs_write_begin(struct file *file,
 			loff_t pos, unsigned len, unsigned flags,
 			struct page **pagep, void **fsdata)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int hugetlbfs_write_end(struct file *file, struct address_space *mapping,
@@ -388,7 +388,7 @@ static int hugetlbfs_write_end(struct file *file, struct address_space *mapping,
 			struct page *page, void *fsdata)
 {
 	BUG();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void remove_huge_page(struct page *page)
@@ -607,7 +607,7 @@ static long hugetlbfs_punch_hole(struct inode *inode, loff_t offset, loff_t len)
 		/* protected by i_mutex */
 		if (info->seals & (F_SEAL_WRITE | F_SEAL_FUTURE_WRITE)) {
 			inode_unlock(inode);
-			return -EPERM;
+			return -ERR(EPERM);
 		}
 
 		i_mmap_lock_write(mapping);
@@ -639,7 +639,7 @@ static long hugetlbfs_fallocate(struct file *file, int mode, loff_t offset,
 	u32 hash;
 
 	if (mode & ~(FALLOC_FL_KEEP_SIZE | FALLOC_FL_PUNCH_HOLE))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (mode & FALLOC_FL_PUNCH_HOLE)
 		return hugetlbfs_punch_hole(inode, offset, len);
@@ -660,7 +660,7 @@ static long hugetlbfs_fallocate(struct file *file, int mode, loff_t offset,
 		goto out;
 
 	if ((info->seals & F_SEAL_GROW) && offset + len > inode->i_size) {
-		error = -EPERM;
+		error = -ERR(EPERM);
 		goto out;
 	}
 
@@ -689,7 +689,7 @@ static long hugetlbfs_fallocate(struct file *file, int mode, loff_t offset,
 		 * interrupted because we are using up too much memory.
 		 */
 		if (signal_pending(current)) {
-			error = -EINTR;
+			error = -ERR(EINTR);
 			break;
 		}
 
@@ -770,11 +770,11 @@ static int hugetlbfs_setattr(struct dentry *dentry, struct iattr *attr)
 		loff_t newsize = attr->ia_size;
 
 		if (newsize & ~huge_page_mask(h))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		/* protected by i_mutex */
 		if ((newsize < oldsize && (info->seals & F_SEAL_SHRINK)) ||
 		    (newsize > oldsize && (info->seals & F_SEAL_GROW)))
-			return -EPERM;
+			return -ERR(EPERM);
 		error = hugetlb_vmtruncate(inode, newsize);
 		if (error)
 			return error;
@@ -882,7 +882,7 @@ static int do_hugetlbfs_mknod(struct inode *dir,
 			bool tmpfile)
 {
 	struct inode *inode;
-	int error = -ENOSPC;
+	int error = -ERR(ENOSPC);
 
 	inode = hugetlbfs_get_inode(dir->i_sb, dir, mode, dev);
 	if (inode) {
@@ -927,7 +927,7 @@ static int hugetlbfs_symlink(struct inode *dir,
 			struct dentry *dentry, const char *symname)
 {
 	struct inode *inode;
-	int error = -ENOSPC;
+	int error = -ERR(ENOSPC);
 
 	inode = hugetlbfs_get_inode(dir->i_sb, dir, S_IFLNK|S_IRWXUGO, 0);
 	if (inode) {
@@ -1274,7 +1274,7 @@ static int hugetlbfs_parse_param(struct fs_context *fc, struct fs_parameter *par
 		ctx->hstate = size_to_hstate(ps);
 		if (!ctx->hstate) {
 			pr_err("Unsupported page size %lu MB\n", ps >> 20);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 
@@ -1289,7 +1289,7 @@ static int hugetlbfs_parse_param(struct fs_context *fc, struct fs_parameter *par
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 bad_val:
@@ -1321,7 +1321,7 @@ static int hugetlbfs_validate(struct fs_context *fc)
 	if (ctx->max_val_type > NO_SIZE &&
 	    ctx->min_hpages > ctx->max_hpages) {
 		pr_err("Minimum size can not be greater than maximum size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1455,12 +1455,12 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
 
 	hstate_idx = get_hstate_idx(page_size_log);
 	if (hstate_idx < 0)
-		return ERR_PTR(-ENODEV);
+		return ERR_PTR(-ERR(ENODEV));
 
 	*user = NULL;
 	mnt = hugetlbfs_vfsmount[hstate_idx];
 	if (!mnt)
-		return ERR_PTR(-ENOENT);
+		return ERR_PTR(-ERR(ENOENT));
 
 	if (creat_flags == HUGETLB_SHMFS_INODE && !can_do_hugetlb_shm()) {
 		*user = current_user();
@@ -1471,11 +1471,11 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
 			task_unlock(current);
 		} else {
 			*user = NULL;
-			return ERR_PTR(-EPERM);
+			return ERR_PTR(-ERR(EPERM));
 		}
 	}
 
-	file = ERR_PTR(-ENOSPC);
+	file = ERR_PTR(-ERR(ENOSPC));
 	inode = hugetlbfs_get_inode(mnt->mnt_sb, NULL, S_IFREG | S_IRWXUGO, 0);
 	if (!inode)
 		goto out;
@@ -1533,7 +1533,7 @@ static int __init init_hugetlbfs_fs(void)
 
 	if (!hugepages_supported()) {
 		pr_info("disabling because there are no supported hugepage sizes\n");
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 	}
 
 	error = -ENOMEM;

@@ -395,7 +395,7 @@ static int rxrpc_recvmsg_data(struct socket *sock, struct rxrpc_call *call,
 	size_t remain;
 	bool rx_pkt_last;
 	unsigned int rx_pkt_offset, rx_pkt_len;
-	int ix, copy, ret = -EAGAIN, ret2;
+	int ix, copy, ret = -ERR(EAGAIN), ret2;
 
 	if (test_and_clear_bit(RXRPC_CALL_RX_UNDERRUN, &call->flags) &&
 	    call->ackr_reason)
@@ -531,7 +531,7 @@ int rxrpc_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 	trace_rxrpc_recvmsg(NULL, rxrpc_recvmsg_enter, 0, 0, 0, 0);
 
 	if (flags & (MSG_OOB | MSG_TRUNC))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	timeo = sock_rcvtimeo(&rx->sk, flags & MSG_DONTWAIT);
 
@@ -543,7 +543,7 @@ try_again:
 	    list_empty(&rx->recvmsg_q) &&
 	    rx->sk.sk_state != RXRPC_SERVER_LISTENING) {
 		release_sock(&rx->sk);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (list_empty(&rx->recvmsg_q)) {
@@ -594,7 +594,7 @@ try_again:
 		ret = -EWOULDBLOCK;
 		if (flags & MSG_DONTWAIT)
 			goto error_requeue_call;
-		ret = -ERESTARTSYS;
+		ret = -ERR(ERESTARTSYS);
 		if (mutex_lock_interruptible(&call->user_mutex) < 0)
 			goto error_requeue_call;
 	}
@@ -763,7 +763,7 @@ int rxrpc_kernel_recv_data(struct socket *sock, struct rxrpc_call *call,
 		goto call_complete;
 
 	default:
-		ret = -EINPROGRESS;
+		ret = -ERR(EINPROGRESS);
 		goto out;
 	}
 
@@ -789,11 +789,11 @@ out:
 
 short_data:
 	trace_rxrpc_rx_eproto(call, 0, tracepoint_string("short_data"));
-	ret = -EBADMSG;
+	ret = -ERR(EBADMSG);
 	goto out;
 excess_data:
 	trace_rxrpc_rx_eproto(call, 0, tracepoint_string("excess_data"));
-	ret = -EMSGSIZE;
+	ret = -ERR(EMSGSIZE);
 	goto out;
 call_complete:
 	*_abort = call->abort_code;
@@ -801,7 +801,7 @@ call_complete:
 	if (call->completion == RXRPC_CALL_SUCCEEDED) {
 		ret = 1;
 		if (iov_iter_count(iter) > 0)
-			ret = -ECONNRESET;
+			ret = -ERR(ECONNRESET);
 	}
 	goto out;
 }

@@ -30,7 +30,7 @@ static int mq_offload(struct Qdisc *sch, enum tc_mq_command cmd)
 	};
 
 	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_MQ, &opt);
 }
@@ -74,10 +74,10 @@ static int mq_init(struct Qdisc *sch, struct nlattr *opt,
 	unsigned int ntx;
 
 	if (sch->parent != TC_H_ROOT)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (!netif_is_multiqueue(dev))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* pre-allocate qdiscs, attachment can't fail */
 	priv->qdiscs = kcalloc(dev->num_tx_queues, sizeof(priv->qdiscs[0]),

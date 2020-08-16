@@ -32,7 +32,7 @@ int ovl_setattr(struct dentry *dentry, struct iattr *attr)
 	if (attr->ia_valid & ATTR_SIZE) {
 		struct inode *realinode = d_inode(ovl_dentry_real(dentry));
 
-		err = -ETXTBSY;
+		err = -ERR(ETXTBSY);
 		if (atomic_read(&realinode->i_writecount) < 0)
 			goto out_drop_write;
 
@@ -287,7 +287,7 @@ int ovl_permission(struct inode *inode, int mask)
 	/* Careful in RCU walk mode */
 	if (!realinode) {
 		WARN_ON(!(mask & MAY_NOT_BLOCK));
-		return -ECHILD;
+		return -ERR(ECHILD);
 	}
 
 	/*
@@ -319,7 +319,7 @@ static const char *ovl_get_link(struct dentry *dentry,
 	const char *p;
 
 	if (!dentry)
-		return ERR_PTR(-ECHILD);
+		return ERR_PTR(-ERR(ECHILD));
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	p = vfs_get_link(ovl_dentry_real(dentry), done);
@@ -422,7 +422,7 @@ ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size)
 
 		/* underlying fs providing us with an broken xattr list? */
 		if (WARN_ON(slen > len))
-			return -EIO;
+			return -ERR(EIO);
 
 		len -= slen;
 		if (!ovl_can_list(s)) {
@@ -477,7 +477,7 @@ static int ovl_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
 	const struct cred *old_cred;
 
 	if (!realinode->i_op->fiemap)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	old_cred = ovl_override_creds(inode->i_sb);
 	err = realinode->i_op->fiemap(realinode, fieinfo, start, len);
@@ -720,7 +720,7 @@ static int ovl_set_nlink_common(struct dentry *dentry,
 		       (int) (inode->i_nlink - realinode->i_nlink));
 
 	if (WARN_ON(len >= sizeof(buf)))
-		return -EIO;
+		return -ERR(EIO);
 
 	return ovl_do_setxattr(ovl_dentry_upper(dentry),
 			       OVL_XATTR_NLINK, buf, len, 0);
@@ -847,7 +847,7 @@ struct inode *ovl_lookup_inode(struct super_block *sb, struct dentry *real,
 	if (!ovl_verify_inode(inode, is_upper ? NULL : real,
 			      is_upper ? real : NULL, false)) {
 		iput(inode);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return inode;
@@ -881,7 +881,7 @@ struct inode *ovl_get_trap_inode(struct super_block *sb, struct dentry *dir)
 	struct inode *trap;
 
 	if (!d_is_dir(dir))
-		return ERR_PTR(-ENOTDIR);
+		return ERR_PTR(-ERR(ENOTDIR));
 
 	trap = iget5_locked(sb, (unsigned long) key, ovl_inode_test,
 			    ovl_inode_set, key);
@@ -891,7 +891,7 @@ struct inode *ovl_get_trap_inode(struct super_block *sb, struct dentry *dir)
 	if (!(trap->i_state & I_NEW)) {
 		/* Conflicting layer roots? */
 		iput(trap);
-		return ERR_PTR(-ELOOP);
+		return ERR_PTR(-ERR(ELOOP));
 	}
 
 	trap->i_mode = S_IFDIR;
@@ -956,7 +956,7 @@ struct inode *ovl_get_inode(struct super_block *sb,
 	int fsid = bylower ? lowerpath->layer->fsid : 0;
 	bool is_dir;
 	unsigned long ino = 0;
-	int err = oip->newinode ? -EEXIST : -ENOMEM;
+	int err = oip->newinode ? -ERR(EEXIST) : -ENOMEM;
 
 	if (!realinode)
 		realinode = d_inode(lowerdentry);
@@ -982,7 +982,7 @@ struct inode *ovl_get_inode(struct super_block *sb,
 			if (!ovl_verify_inode(inode, lowerdentry, upperdentry,
 					      true)) {
 				iput(inode);
-				err = -ESTALE;
+				err = -ERR(ESTALE);
 				goto out_err;
 			}
 

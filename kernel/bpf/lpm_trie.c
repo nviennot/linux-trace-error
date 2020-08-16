@@ -310,17 +310,17 @@ static int trie_update_elem(struct bpf_map *map,
 	int ret = 0;
 
 	if (unlikely(flags > BPF_EXIST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (key->prefixlen > trie->max_prefixlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&trie->lock, irq_flags);
 
 	/* Allocate and fill a new node */
 
 	if (trie->n_entries == trie->map.max_entries) {
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto out;
 	}
 
@@ -440,7 +440,7 @@ static int trie_delete_elem(struct bpf_map *map, void *_key)
 	int ret = 0;
 
 	if (key->prefixlen > trie->max_prefixlen)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&trie->lock, irq_flags);
 
@@ -470,7 +470,7 @@ static int trie_delete_elem(struct bpf_map *map, void *_key)
 	if (!node || node->prefixlen != key->prefixlen ||
 	    node->prefixlen != matchlen ||
 	    (node->flags & LPM_TREE_NODE_FLAG_IM)) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -544,7 +544,7 @@ static struct bpf_map *trie_alloc(union bpf_attr *attr)
 	int ret;
 
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	/* check sanity of attributes */
 	if (attr->max_entries == 0 ||
@@ -555,7 +555,7 @@ static struct bpf_map *trie_alloc(union bpf_attr *attr)
 	    attr->key_size > LPM_KEY_SIZE_MAX ||
 	    attr->value_size < LPM_VAL_SIZE_MIN ||
 	    attr->value_size > LPM_VAL_SIZE_MAX)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	trie = kzalloc(sizeof(*trie), GFP_USER | __GFP_NOWARN);
 	if (!trie)
@@ -651,7 +651,7 @@ static int trie_get_next_key(struct bpf_map *map, void *_key, void *_next_key)
 	/* Empty trie */
 	search_root = rcu_dereference(trie->root);
 	if (!search_root)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/* For invalid key, find the leftmost node in the trie */
 	if (!key || key->prefixlen > trie->max_prefixlen)
@@ -699,7 +699,7 @@ static int trie_get_next_key(struct bpf_map *map, void *_key, void *_next_key)
 	}
 
 	/* did not find anything */
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	goto free_stack;
 
 find_leftmost:
@@ -732,7 +732,7 @@ static int trie_check_btf(const struct bpf_map *map,
 {
 	/* Keys must have struct bpf_lpm_trie_key embedded. */
 	return BTF_INFO_KIND(key_type->info) != BTF_KIND_STRUCT ?
-	       -EINVAL : 0;
+	       -ERR(EINVAL) : 0;
 }
 
 const struct bpf_map_ops trie_map_ops = {

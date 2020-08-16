@@ -667,7 +667,7 @@ static int hdsp_check_for_iobox (struct hdsp *hdsp)
 	}
 	dev_err(hdsp->card->dev, "no IO box connected!\n");
 	hdsp->state &= ~HDSP_FirmwareLoaded;
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int hdsp_wait_for_iobox(struct hdsp *hdsp, unsigned int loops,
@@ -690,7 +690,7 @@ static int hdsp_wait_for_iobox(struct hdsp *hdsp, unsigned int loops,
 
 	dev_info(hdsp->card->dev, "no IO box connected!\n");
 	hdsp->state &= ~HDSP_FirmwareLoaded;
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_hdsp_load_firmware_from_cache(struct hdsp *hdsp) {
@@ -703,10 +703,10 @@ static int snd_hdsp_load_firmware_from_cache(struct hdsp *hdsp) {
 		cache = hdsp->fw_uploaded;
 	else {
 		if (!hdsp->firmware)
-			return -ENODEV;
+			return -ERR(ENODEV);
 		cache = (u32 *)hdsp->firmware->data;
 		if (!cache)
-			return -ENODEV;
+			return -ERR(ENODEV);
 	}
 
 	if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
@@ -720,7 +720,7 @@ static int snd_hdsp_load_firmware_from_cache(struct hdsp *hdsp) {
 			dev_info(hdsp->card->dev,
 				 "timeout waiting for download preparation\n");
 			hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		hdsp_write (hdsp, HDSP_control2Reg, HDSP_S_LOAD);
@@ -731,7 +731,7 @@ static int snd_hdsp_load_firmware_from_cache(struct hdsp *hdsp) {
 				dev_info(hdsp->card->dev,
 					 "timeout during firmware loading\n");
 				hdsp_write(hdsp, HDSP_control2Reg, HDSP_S200);
-				return -EIO;
+				return -ERR(EIO);
 			}
 		}
 
@@ -828,7 +828,7 @@ static int hdsp_check_for_firmware (struct hdsp *hdsp, int load_on_demand)
 	if ((hdsp_read (hdsp, HDSP_statusRegister) & HDSP_DllError) != 0) {
 		hdsp->state &= ~HDSP_FirmwareLoaded;
 		if (! load_on_demand)
-			return -EIO;
+			return -ERR(EIO);
 		dev_err(hdsp->card->dev, "firmware not present.\n");
 		/* try to load firmware */
 		if (! (hdsp->state & HDSP_FirmwareCached)) {
@@ -836,12 +836,12 @@ static int hdsp_check_for_firmware (struct hdsp *hdsp, int load_on_demand)
 				return 0;
 			dev_err(hdsp->card->dev,
 				   "No firmware loaded nor cached, please upload firmware.\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (snd_hdsp_load_firmware_from_cache(hdsp) != 0) {
 			dev_err(hdsp->card->dev,
 				   "Firmware loading from cache failed, please upload manually.\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 	return 0;
@@ -1157,7 +1157,7 @@ static int hdsp_set_rate(struct hdsp *hdsp, int rate, int called_internally)
 	   is to flag rate changes in the read/write routines.  */
 
 	if (rate > 96000 && hdsp->io_type != H9632)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (rate) {
 	case 32000:
@@ -1206,7 +1206,7 @@ static int hdsp_set_rate(struct hdsp *hdsp, int rate, int called_internally)
 		rate_bits = HDSP_Frequency192KHz;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (reject_if_open && (hdsp->capture_pid >= 0 || hdsp->playback_pid >= 0)) {
@@ -1214,7 +1214,7 @@ static int hdsp_set_rate(struct hdsp *hdsp, int rate, int called_internally)
 			 "cannot change speed mode (capture PID = %d, playback PID = %d)\n",
 			    hdsp->capture_pid,
 			    hdsp->playback_pid);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	hdsp->control_register &= ~HDSP_FrequencyMask;
@@ -1678,7 +1678,7 @@ static int snd_hdsp_put_spdif_in(struct snd_kcontrol *kcontrol, struct snd_ctl_e
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0] % ((hdsp->io_type == H9632) ? 4 : 3);
 	spin_lock_irq(&hdsp->lock);
 	change = val != hdsp_spdif_in(hdsp);
@@ -1736,7 +1736,7 @@ static int snd_hdsp_put_toggle_setting(struct snd_kcontrol *kcontrol,
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
 	change = (int) val != hdsp_toggle_setting(hdsp, regmask);
@@ -2038,7 +2038,7 @@ static int snd_hdsp_put_clock_source(struct snd_kcontrol *kcontrol, struct snd_c
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0) val = 0;
 	if (hdsp->io_type == H9632) {
@@ -2144,7 +2144,7 @@ static int snd_hdsp_put_da_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0) val = 0;
 	if (val > 2) val = 2;
@@ -2223,7 +2223,7 @@ static int snd_hdsp_put_ad_gain(struct snd_kcontrol *kcontrol, struct snd_ctl_el
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0) val = 0;
 	if (val > 2) val = 2;
@@ -2302,7 +2302,7 @@ static int snd_hdsp_put_phone_gain(struct snd_kcontrol *kcontrol, struct snd_ctl
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0) val = 0;
 	if (val > 2) val = 2;
@@ -2398,7 +2398,7 @@ static int snd_hdsp_info_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd
 		num_items = 3;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return snd_ctl_enum_info(uinfo, 1, num_items, texts);
@@ -2419,7 +2419,7 @@ static int snd_hdsp_put_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd_
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	switch (hdsp->io_type) {
 	case Digiface:
@@ -2433,7 +2433,7 @@ static int snd_hdsp_put_pref_sync_ref(struct snd_kcontrol *kcontrol, struct snd_
 		max = 3;
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	val = ucontrol->value.enumerated.item[0] % max;
@@ -2533,7 +2533,7 @@ static int snd_hdsp_put_precise_pointer(struct snd_kcontrol *kcontrol, struct sn
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
 	change = (int)val != hdsp->precise_ptr;
@@ -2579,7 +2579,7 @@ static int snd_hdsp_put_use_midi_tasklet(struct snd_kcontrol *kcontrol, struct s
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
 	change = (int)val != hdsp->use_midi_tasklet;
@@ -2641,7 +2641,7 @@ static int snd_hdsp_put_mixer(struct snd_kcontrol *kcontrol, struct snd_ctl_elem
 	int addr;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	source = ucontrol->value.integer.value[0];
 	destination = ucontrol->value.integer.value[1];
@@ -2785,21 +2785,21 @@ static int snd_hdsp_get_adat_sync_check(struct snd_kcontrol *kcontrol, struct sn
 
 	offset = ucontrol->id.index - 1;
 	if (snd_BUG_ON(offset < 0))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (hdsp->io_type) {
 	case Digiface:
 	case H9652:
 		if (offset >= 3)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	case Multiface:
 	case H9632:
 		if (offset >= 1)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		break;
 	default:
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ucontrol->value.enumerated.item[0] = hdsp_adat_sync_check(hdsp, offset);
@@ -2868,7 +2868,7 @@ static int snd_hdsp_put_dds_offset(struct snd_kcontrol *kcontrol, struct snd_ctl
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0];
 	spin_lock_irq(&hdsp->lock);
 	if (val != hdsp_dds_offset(hdsp))
@@ -3013,7 +3013,7 @@ static int snd_hdsp_put_rpm_input12(struct snd_kcontrol *kcontrol, struct snd_ct
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0)
 		val = 0;
@@ -3098,7 +3098,7 @@ static int snd_hdsp_put_rpm_input34(struct snd_kcontrol *kcontrol, struct snd_ct
 	int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.enumerated.item[0];
 	if (val < 0)
 		val = 0;
@@ -3148,7 +3148,7 @@ static int snd_hdsp_put_rpm_bypass(struct snd_kcontrol *kcontrol, struct snd_ctl
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
 	change = (int)val != hdsp_rpm_bypass(hdsp);
@@ -3200,7 +3200,7 @@ static int snd_hdsp_put_rpm_disconnect(struct snd_kcontrol *kcontrol, struct snd
 	unsigned int val;
 
 	if (!snd_hdsp_use_is_exclusive(hdsp))
-		return -EBUSY;
+		return -ERR(EBUSY);
 	val = ucontrol->value.integer.value[0] & 1;
 	spin_lock_irq(&hdsp->lock);
 	change = (int)val != hdsp_rpm_disconnect(hdsp);
@@ -3774,7 +3774,7 @@ static int snd_hdsp_set_defaults(struct hdsp *hdsp)
 
 	for (i = 0; i < ((hdsp->io_type == H9652 || hdsp->io_type == H9632) ? 1352 : HDSP_MATRIX_MIXER_SIZE); ++i) {
 		if (hdsp_write_gain (hdsp, i, MINUS_INFINITY_GAIN))
-			return -EIO;
+			return -ERR(EIO);
 	}
 
 	/* H9632 specific defaults */
@@ -3897,11 +3897,11 @@ static int snd_hdsp_playback_copy(struct snd_pcm_substream *substream,
 	char *channel_buf;
 
 	if (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
 	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
+		return -ERR(EIO);
 	if (copy_from_user(channel_buf + pos, src, count))
 		return -EFAULT;
 	return 0;
@@ -3916,7 +3916,7 @@ static int snd_hdsp_playback_copy_kernel(struct snd_pcm_substream *substream,
 
 	channel_buf = hdsp_channel_buffer_location(hdsp, substream->pstr->stream, channel);
 	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
+		return -ERR(EIO);
 	memcpy(channel_buf + pos, src, count);
 	return 0;
 }
@@ -3929,11 +3929,11 @@ static int snd_hdsp_capture_copy(struct snd_pcm_substream *substream,
 	char *channel_buf;
 
 	if (snd_BUG_ON(pos + count > HDSP_CHANNEL_BUFFER_BYTES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
 	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
+		return -ERR(EIO);
 	if (copy_to_user(dst, channel_buf + pos, count))
 		return -EFAULT;
 	return 0;
@@ -3948,7 +3948,7 @@ static int snd_hdsp_capture_copy_kernel(struct snd_pcm_substream *substream,
 
 	channel_buf = hdsp_channel_buffer_location(hdsp, substream->pstr->stream, channel);
 	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
+		return -ERR(EIO);
 	memcpy(dst, channel_buf + pos, count);
 	return 0;
 }
@@ -3962,7 +3962,7 @@ static int snd_hdsp_hw_silence(struct snd_pcm_substream *substream,
 
 	channel_buf = hdsp_channel_buffer_location (hdsp, substream->pstr->stream, channel);
 	if (snd_BUG_ON(!channel_buf))
-		return -EIO;
+		return -ERR(EIO);
 	memset(channel_buf + pos, 0, count);
 	return 0;
 }
@@ -4002,10 +4002,10 @@ static int snd_hdsp_hw_params(struct snd_pcm_substream *substream,
 	pid_t other_pid;
 
 	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock_irq(&hdsp->lock);
 
@@ -4029,13 +4029,13 @@ static int snd_hdsp_hw_params(struct snd_pcm_substream *substream,
 		if (params_rate(params) != hdsp->system_sample_rate) {
 			spin_unlock_irq(&hdsp->lock);
 			_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_RATE);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		if (params_period_size(params) != hdsp->period_bytes / 4) {
 			spin_unlock_irq(&hdsp->lock);
 			_snd_pcm_hw_param_setempty(params, SNDRV_PCM_HW_PARAM_PERIOD_SIZE);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 
 		/* We're fine. */
@@ -4075,11 +4075,11 @@ static int snd_hdsp_channel_info(struct snd_pcm_substream *substream,
 	unsigned int channel = info->channel;
 
 	if (snd_BUG_ON(channel >= hdsp->max_channels))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	channel = array_index_nospec(channel, hdsp->max_channels);
 
 	if (hdsp->channel_map[channel] < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	info->offset = hdsp->channel_map[channel] * HDSP_CHANNEL_BUFFER_BYTES;
 	info->first = 0;
@@ -4109,10 +4109,10 @@ static int snd_hdsp_trigger(struct snd_pcm_substream *substream, int cmd)
 	int running;
 
 	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hdsp_check_for_firmware(hdsp, 0)) /* no auto-loading in trigger */
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock(&hdsp->lock);
 	running = hdsp->running;
@@ -4126,7 +4126,7 @@ static int snd_hdsp_trigger(struct snd_pcm_substream *substream, int cmd)
 	default:
 		snd_BUG();
 		spin_unlock(&hdsp->lock);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		other = hdsp->capture_substream;
@@ -4176,10 +4176,10 @@ static int snd_hdsp_prepare(struct snd_pcm_substream *substream)
 	int result = 0;
 
 	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock_irq(&hdsp->lock);
 	if (!hdsp->running)
@@ -4430,10 +4430,10 @@ static int snd_hdsp_playback_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock_irq(&hdsp->lock);
 
@@ -4507,10 +4507,10 @@ static int snd_hdsp_capture_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	if (hdsp_check_for_iobox (hdsp))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (hdsp_check_for_firmware(hdsp, 1))
-		return -EIO;
+		return -ERR(EIO);
 
 	spin_lock_irq(&hdsp->lock);
 
@@ -4704,7 +4704,7 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 		if (!(hdsp->state & HDSP_FirmwareLoaded)) {
 			dev_err(hdsp->card->dev,
 				"firmware needs to be uploaded to the card.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (hdsp->io_type) {
@@ -4779,7 +4779,7 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 	case SNDRV_HDSP_IOCTL_GET_9632_AEB: {
 		struct hdsp_9632_aeb h9632_aeb;
 
-		if (hdsp->io_type != H9632) return -EINVAL;
+		if (hdsp->io_type != H9632) return -ERR(EINVAL);
 		h9632_aeb.aebi = hdsp->ss_in_channels - H9632_SS_CHANNELS;
 		h9632_aeb.aebo = hdsp->ss_out_channels - H9632_SS_CHANNELS;
 		if (copy_to_user(argp, &h9632_aeb, sizeof(h9632_aeb)))
@@ -4790,7 +4790,7 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 		struct hdsp_version hdsp_version;
 		int err;
 
-		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -EINVAL;
+		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -ERR(EINVAL);
 		if (hdsp->io_type == Undefined) {
 			if ((err = hdsp_get_iobox_version(hdsp)) < 0)
 				return err;
@@ -4807,12 +4807,12 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 		u32 __user *firmware_data;
 		int err;
 
-		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -EINVAL;
+		if (hdsp->io_type == H9652 || hdsp->io_type == H9632) return -ERR(EINVAL);
 		/* SNDRV_HDSP_IOCTL_GET_VERSION must have been called */
-		if (hdsp->io_type == Undefined) return -EINVAL;
+		if (hdsp->io_type == Undefined) return -ERR(EINVAL);
 
 		if (hdsp->state & (HDSP_FirmwareCached | HDSP_FirmwareLoaded))
-			return -EBUSY;
+			return -ERR(EBUSY);
 
 		dev_info(hdsp->card->dev,
 			 "initializing firmware upload\n");
@@ -4821,7 +4821,7 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 		firmware_data = (u32 __user *)firmware.firmware_data;
 
 		if (hdsp_check_for_iobox (hdsp))
-			return -EIO;
+			return -ERR(EIO);
 
 		if (!hdsp->fw_uploaded) {
 			hdsp->fw_uploaded = vmalloc(HDSP_FIRMWARE_SIZE);
@@ -4863,7 +4863,7 @@ static int snd_hdsp_hwdep_ioctl(struct snd_hwdep *hw, struct file *file, unsigne
 		break;
 	}
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -4944,7 +4944,7 @@ static int snd_hdsp_enable_io (struct hdsp *hdsp)
 	if (hdsp_fifo_wait (hdsp, 0, 100)) {
 		dev_err(hdsp->card->dev,
 			"enable_io fifo_wait failed\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	for (i = 0; i < hdsp->max_channels; ++i) {
@@ -5109,20 +5109,20 @@ static int hdsp_request_fw_loader(struct hdsp *hdsp)
 	default:
 		dev_err(hdsp->card->dev,
 			"invalid io_type %d\n", hdsp->io_type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (request_firmware(&fw, fwfile, &hdsp->pci->dev)) {
 		dev_err(hdsp->card->dev,
 			"cannot load firmware %s\n", fwfile);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	if (fw->size < HDSP_FIRMWARE_SIZE) {
 		dev_err(hdsp->card->dev,
 			"too short firmware size %d (expected %d)\n",
 			   (int)fw->size, HDSP_FIRMWARE_SIZE);
 		release_firmware(fw);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hdsp->firmware = fw;
@@ -5200,7 +5200,7 @@ static int snd_hdsp_create(struct snd_card *card,
 	strcpy(card->mixername, "Xilinx FPGA");
 
 	if (hdsp->firmware_rev < 0xa)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	else if (hdsp->firmware_rev < 0x64)
 		hdsp->card_name = "RME Hammerfall DSP";
 	else if (hdsp->firmware_rev < 0x96) {
@@ -5223,13 +5223,13 @@ static int snd_hdsp_create(struct snd_card *card,
 	if ((hdsp->iobase = ioremap(hdsp->port, HDSP_IO_EXTENT)) == NULL) {
 		dev_err(hdsp->card->dev, "unable to remap region 0x%lx-0x%lx\n",
 			hdsp->port, hdsp->port + HDSP_IO_EXTENT - 1);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (request_irq(pci->irq, snd_hdsp_interrupt, IRQF_SHARED,
 			KBUILD_MODNAME, hdsp)) {
 		dev_err(hdsp->card->dev, "unable to use IRQ %d\n", pci->irq);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	hdsp->irq = pci->irq;
@@ -5343,10 +5343,10 @@ static int snd_hdsp_probe(struct pci_dev *pci,
 	int err;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,

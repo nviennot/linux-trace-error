@@ -17,7 +17,7 @@ static int snd_opl4_mem_proc_open(struct snd_info_entry *entry,
 	mutex_lock(&opl4->access_mutex);
 	if (opl4->memory_access) {
 		mutex_unlock(&opl4->access_mutex);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	opl4->memory_access++;
 	mutex_unlock(&opl4->access_mutex);

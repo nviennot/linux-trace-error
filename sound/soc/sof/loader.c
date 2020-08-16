@@ -23,12 +23,12 @@ static int get_ext_windows(struct snd_sof_dev *sdev,
 	size_t w_size = struct_size(w, window, w->num_windows);
 
 	if (w->num_windows == 0 || w->num_windows > SOF_IPC_MAX_ELEMS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sdev->info_window) {
 		if (memcmp(sdev->info_window, w, w_size)) {
 			dev_err(sdev->dev, "error: mismatch between window descriptor from extended manifest and mailbox");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 	}
@@ -52,7 +52,7 @@ static int get_cc_info(struct snd_sof_dev *sdev,
 	if (sdev->cc_version) {
 		if (memcmp(sdev->cc_version, cc, cc->ext_hdr.hdr.size)) {
 			dev_err(sdev->dev, "error: receive diverged cc_version descriptions");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		return 0;
 	}
@@ -188,7 +188,7 @@ static ssize_t snd_sof_ext_man_size(const struct firmware *fw)
 	 * step.
 	 */
 	if (fw->size < sizeof(*head))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * When fw points to extended manifest,
@@ -225,7 +225,7 @@ static int snd_sof_fw_ext_man_parse(struct snd_sof_dev *sdev,
 					     head->header_version)) {
 		dev_err(sdev->dev, "error: extended manifest version 0x%X differ from used 0x%X\n",
 			head->header_version, SOF_EXT_MAN_VERSION);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* get first extended manifest element header */
@@ -241,7 +241,7 @@ static int snd_sof_fw_ext_man_parse(struct snd_sof_dev *sdev,
 		    elem_hdr->size > remaining) {
 			dev_err(sdev->dev, "error: invalid sof_ext_man header size, type %d size 0x%X\n",
 				elem_hdr->type, elem_hdr->size);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* process structure data */
@@ -273,7 +273,7 @@ static int snd_sof_fw_ext_man_parse(struct snd_sof_dev *sdev,
 
 	if (remaining) {
 		dev_err(sdev->dev, "error: sof_ext_man header is inconsistent\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ext_man_size;
@@ -419,7 +419,7 @@ int sof_fw_ready(struct snd_sof_dev *sdev, u32 msg_id)
 	bar = snd_sof_dsp_get_bar_index(sdev, SOF_FW_BLK_TYPE_SRAM);
 	if (bar < 0) {
 		dev_err(sdev->dev, "error: have no bar mapping\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(sdev->dev, "ipc: DSP is ready 0x%8.8x offset 0x%x\n",
@@ -540,7 +540,7 @@ static int check_header(struct snd_sof_dev *sdev, const struct firmware *fw,
 
 	if (fw->size <= fw_offset) {
 		dev_err(sdev->dev, "error: firmware size must be greater than firmware offset\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Read the header information from the data pointer */
@@ -549,14 +549,14 @@ static int check_header(struct snd_sof_dev *sdev, const struct firmware *fw,
 	/* verify FW sig */
 	if (strncmp(header->sig, SND_SOF_FW_SIG, SND_SOF_FW_SIG_SIZE) != 0) {
 		dev_err(sdev->dev, "error: invalid firmware signature\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check size is valid */
 	if (fw_size != header->file_size + sizeof(*header)) {
 		dev_err(sdev->dev, "error: invalid filesize mismatch got 0x%zx expected 0x%zx\n",
 			fw_size, header->file_size + sizeof(*header));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(sdev->dev, "header size=0x%x modules=0x%x abi=0x%x size=%zu\n",
@@ -579,7 +579,7 @@ static int load_modules(struct snd_sof_dev *sdev, const struct firmware *fw,
 	header = (struct snd_sof_fw_header *)(fw->data + fw_offset);
 	load_module = sof_ops(sdev)->load_module;
 	if (!load_module)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* parse each module */
 	module = (struct snd_sof_mod_hdr *)(fw->data + fw_offset +
@@ -588,14 +588,14 @@ static int load_modules(struct snd_sof_dev *sdev, const struct firmware *fw,
 	/* check for wrap */
 	if (remaining > fw->size) {
 		dev_err(sdev->dev, "error: fw size smaller than header size\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (count = 0; count < header->num_modules; count++) {
 		/* check for wrap */
 		if (remaining < sizeof(*module)) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* minus header size of module */
@@ -610,7 +610,7 @@ static int load_modules(struct snd_sof_dev *sdev, const struct firmware *fw,
 
 		if (remaining < module->size) {
 			dev_err(sdev->dev, "error: not enough data remaining\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* minus body size of module */
@@ -772,13 +772,13 @@ int snd_sof_run_firmware(struct snd_sof_dev *sdev)
 		snd_sof_dsp_dbg_dump(sdev, SOF_DBG_REGS | SOF_DBG_MBOX |
 			SOF_DBG_TEXT | SOF_DBG_PCI);
 		sdev->fw_state = SOF_FW_BOOT_FAILED;
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (sdev->fw_state == SOF_FW_BOOT_COMPLETE)
 		dev_dbg(sdev->dev, "firmware boot complete\n");
 	else
-		return -EIO; /* FW boots but fw_ready op failed */
+		return -ERR(EIO); /* FW boots but fw_ready op failed */
 
 	/* perform post fw run operations */
 	ret = snd_sof_dsp_post_fw_run(sdev);

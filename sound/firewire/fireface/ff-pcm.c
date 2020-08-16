@@ -171,7 +171,7 @@ static int pcm_open(struct snd_pcm_substream *substream)
 		// streaming engine can't support.
 		if (i >= CIP_SFC_COUNT) {
 			mutex_unlock(&ff->mutex);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto release_lock;
 		}
 
@@ -308,7 +308,7 @@ static int pcm_capture_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&ff->tx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -326,7 +326,7 @@ static int pcm_playback_trigger(struct snd_pcm_substream *substream, int cmd)
 		amdtp_stream_pcm_trigger(&ff->rx_stream, NULL);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

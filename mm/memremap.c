@@ -53,7 +53,7 @@ static int devmap_managed_enable_get(struct dev_pagemap *pgmap)
 	if (pgmap->type == MEMORY_DEVICE_PRIVATE &&
 	    (!pgmap->ops || !pgmap->ops->page_free)) {
 		WARN(1, "Missing page_free method\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (atomic_inc_return(&devmap_managed_enable) == 1)
@@ -63,7 +63,7 @@ static int devmap_managed_enable_get(struct dev_pagemap *pgmap)
 #else
 static int devmap_managed_enable_get(struct dev_pagemap *pgmap)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static void devmap_managed_enable_put(void)
 {
@@ -198,22 +198,22 @@ void *memremap_pages(struct dev_pagemap *pgmap, int nid)
 	case MEMORY_DEVICE_PRIVATE:
 		if (!IS_ENABLED(CONFIG_DEVICE_PRIVATE)) {
 			WARN(1, "Device private memory not supported\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		if (!pgmap->ops || !pgmap->ops->migrate_to_ram) {
 			WARN(1, "Missing migrate_to_ram method\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		if (!pgmap->owner) {
 			WARN(1, "Missing owner\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		break;
 	case MEMORY_DEVICE_FS_DAX:
 		if (!IS_ENABLED(CONFIG_ZONE_DEVICE) ||
 		    IS_ENABLED(CONFIG_FS_DAX_LIMITED)) {
 			WARN(1, "File system DAX not supported\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 		break;
 	case MEMORY_DEVICE_DEVDAX:
@@ -230,7 +230,7 @@ void *memremap_pages(struct dev_pagemap *pgmap, int nid)
 
 	if (!pgmap->ref) {
 		if (pgmap->ops && (pgmap->ops->kill || pgmap->ops->cleanup))
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 
 		init_completion(&pgmap->done);
 		error = percpu_ref_init(&pgmap->internal_ref,
@@ -241,7 +241,7 @@ void *memremap_pages(struct dev_pagemap *pgmap, int nid)
 	} else {
 		if (!pgmap->ops || !pgmap->ops->kill || !pgmap->ops->cleanup) {
 			WARN(1, "Missing reference count teardown definition\n");
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		}
 	}
 
@@ -273,7 +273,7 @@ void *memremap_pages(struct dev_pagemap *pgmap, int nid)
 	if (is_ram != REGION_DISJOINT) {
 		WARN_ONCE(1, "%s attempted on %s region %pr\n", __func__,
 				is_ram == REGION_MIXED ? "mixed" : "ram", res);
-		error = -ENXIO;
+		error = -ERR(ENXIO);
 		goto err_array;
 	}
 

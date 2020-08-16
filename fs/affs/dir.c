@@ -91,7 +91,7 @@ affs_readdir(struct file *file, struct dir_context *ctx)
 		fh_bh = affs_bread(sb, ino);
 		if (!fh_bh) {
 			affs_error(sb, "readdir","Cannot read block %d", i);
-			error = -EIO;
+			error = -ERR(EIO);
 			goto out_brelse_dir;
 		}
 		ino = be32_to_cpu(AFFS_TAIL(sb, fh_bh)->hash_chain);

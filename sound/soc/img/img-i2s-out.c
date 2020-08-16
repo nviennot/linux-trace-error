@@ -204,7 +204,7 @@ static int img_i2s_out_trigger(struct snd_pcm_substream *substream, int cmd,
 		img_i2s_out_reset(i2s);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -226,12 +226,12 @@ static int img_i2s_out_hw_params(struct snd_pcm_substream *substream,
 	i2s_channels = channels / 2;
 
 	if (format != SNDRV_PCM_FORMAT_S32_LE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((channels < 2) ||
 	    (channels > (i2s->max_i2s_chan * 2)) ||
 	    (channels % 2))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	pre_div_a = clk_round_rate(i2s->clk_ref, rate * 256);
 	if (pre_div_a < 0)
@@ -309,7 +309,7 @@ static int img_i2s_out_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		control_set |= IMG_I2S_OUT_CTL_MASTER_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -326,7 +326,7 @@ static int img_i2s_out_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		control_set |= IMG_I2S_OUT_CTL_FRM_CLK_POL_MASK;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -336,7 +336,7 @@ static int img_i2s_out_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_LEFT_J:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	control_mask = IMG_I2S_OUT_CTL_CLK_EN_MASK |
@@ -450,7 +450,7 @@ static int img_i2s_out_probe(struct platform_device *pdev)
 	if (of_property_read_u32(pdev->dev.of_node, "img,i2s-channels",
 			&i2s->max_i2s_chan)) {
 		dev_err(&pdev->dev, "No img,i2s-channels property\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	max_i2s_chan_pow_2 = 1 << get_count_order(i2s->max_i2s_chan);

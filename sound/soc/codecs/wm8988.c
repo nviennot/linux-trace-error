@@ -513,7 +513,7 @@ static inline int get_coeff(int mclk, int rate)
 			return i;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* The set of rates we can generate from the above for each SYSCLK */
@@ -578,7 +578,7 @@ static int wm8988_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		wm8988->sysclk = freq;
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int wm8988_set_dai_fmt(struct snd_soc_dai *codec_dai,
@@ -595,7 +595,7 @@ static int wm8988_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBS_CFS:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -615,7 +615,7 @@ static int wm8988_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -632,7 +632,7 @@ static int wm8988_set_dai_fmt(struct snd_soc_dai *codec_dai,
 		iface |= 0x0010;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8988_IFACE, iface);
@@ -651,7 +651,7 @@ static int wm8988_pcm_startup(struct snd_pcm_substream *substream,
 	if (!wm8988->sysclk) {
 		dev_err(component->dev,
 			"No MCLK configured, call set_sysclk() on init\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_hw_constraint_list(substream->runtime, 0,

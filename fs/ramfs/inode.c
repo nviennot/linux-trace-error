@@ -104,7 +104,7 @@ static int
 ramfs_mknod(struct inode *dir, struct dentry *dentry, umode_t mode, dev_t dev)
 {
 	struct inode * inode = ramfs_get_inode(dir->i_sb, dir, mode, dev);
-	int error = -ENOSPC;
+	int error = -ERR(ENOSPC);
 
 	if (inode) {
 		d_instantiate(dentry, inode);
@@ -131,7 +131,7 @@ static int ramfs_create(struct inode *dir, struct dentry *dentry, umode_t mode, 
 static int ramfs_symlink(struct inode * dir, struct dentry *dentry, const char * symname)
 {
 	struct inode *inode;
-	int error = -ENOSPC;
+	int error = -ERR(ENOSPC);
 
 	inode = ramfs_get_inode(dir->i_sb, dir, S_IFLNK|S_IRWXUGO, 0);
 	if (inode) {

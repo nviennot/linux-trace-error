@@ -73,7 +73,7 @@ static int param_set_hashtbl_sz(const char *val, const struct kernel_param *kp)
 	*(unsigned int *)kp->arg = nbits;
 	return 0;
 out_inval:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int param_get_hashtbl_sz(char *buffer, const struct kernel_param *kp)
@@ -112,11 +112,11 @@ rpcauth_register(const struct rpc_authops *ops)
 	rpc_authflavor_t flavor;
 
 	if ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	old = cmpxchg((const struct rpc_authops ** __force)&auth_flavors[flavor], NULL, ops);
 	if (old == NULL || old == ops)
 		return 0;
-	return -EPERM;
+	return -ERR(EPERM);
 }
 EXPORT_SYMBOL_GPL(rpcauth_register);
 
@@ -127,12 +127,12 @@ rpcauth_unregister(const struct rpc_authops *ops)
 	rpc_authflavor_t flavor;
 
 	if ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	old = cmpxchg((const struct rpc_authops ** __force)&auth_flavors[flavor], ops, NULL);
 	if (old == ops || old == NULL)
 		return 0;
-	return -EPERM;
+	return -ERR(EPERM);
 }
 EXPORT_SYMBOL_GPL(rpcauth_unregister);
 
@@ -210,9 +210,9 @@ rpcauth_get_gssinfo(rpc_authflavor_t pseudoflavor, struct rpcsec_gss_info *info)
 
 	ops = rpcauth_get_authops(flavor);
 	if (ops == NULL)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
-	result = -ENOENT;
+	result = -ERR(ENOENT);
 	if (ops->flavor2info != NULL)
 		result = ops->flavor2info(pseudoflavor, info);
 
@@ -224,7 +224,7 @@ EXPORT_SYMBOL_GPL(rpcauth_get_gssinfo);
 struct rpc_auth *
 rpcauth_create(const struct rpc_auth_create_args *args, struct rpc_clnt *clnt)
 {
-	struct rpc_auth	*auth = ERR_PTR(-EINVAL);
+	struct rpc_auth	*auth = ERR_PTR(-ERR(EINVAL));
 	const struct rpc_authops *ops;
 	u32 flavor = pseudoflavor_to_flavor(args->pseudoflavor);
 

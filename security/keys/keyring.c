@@ -122,7 +122,7 @@ static void keyring_publish_name(struct key *keyring)
  */
 static int keyring_preparse(struct key_preparsed_payload *prep)
 {
-	return prep->datalen != 0 ? -EINVAL : 0;
+	return prep->datalen != 0 ? -ERR(EINVAL) : 0;
 }
 
 /*
@@ -487,7 +487,7 @@ static long keyring_read(const struct key *keyring,
 	kenter("{%d},,%zu", key_serial(keyring), buflen);
 
 	if (buflen & (sizeof(key_serial_t) - 1))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Copy as many key IDs as fit into the buffer */
 	if (buffer && buflen) {
@@ -556,7 +556,7 @@ int restrict_link_reject(struct key *keyring,
 			 const union key_payload *payload,
 			 struct key *restriction_key)
 {
-	return -EPERM;
+	return -ERR(EPERM);
 }
 
 /*
@@ -592,14 +592,14 @@ static int keyring_search_iterator(const void *object, void *iterator_data)
 
 		if (kflags & ((1 << KEY_FLAG_INVALIDATED) |
 			      (1 << KEY_FLAG_REVOKED))) {
-			ctx->result = ERR_PTR(-EKEYREVOKED);
+			ctx->result = ERR_PTR(-ERR(EKEYREVOKED));
 			kleave(" = %d [invrev]", ctx->skipped_ret);
 			goto skipped;
 		}
 
 		if (expiry && ctx->now >= expiry) {
 			if (!(ctx->flags & KEYRING_SEARCH_SKIP_EXPIRED))
-				ctx->result = ERR_PTR(-EKEYEXPIRED);
+				ctx->result = ERR_PTR(-ERR(EKEYEXPIRED));
 			kleave(" = %d [expire]", ctx->skipped_ret);
 			goto skipped;
 		}
@@ -615,7 +615,7 @@ static int keyring_search_iterator(const void *object, void *iterator_data)
 	if (!(ctx->flags & KEYRING_SEARCH_NO_CHECK_PERM) &&
 	    key_task_permission(make_key_ref(key, ctx->possessed),
 				ctx->cred, KEY_NEED_SEARCH) < 0) {
-		ctx->result = ERR_PTR(-EACCES);
+		ctx->result = ERR_PTR(-ERR(EACCES));
 		kleave(" = %d [!perm]", ctx->skipped_ret);
 		goto skipped;
 	}
@@ -782,7 +782,7 @@ ascend_to_node:
 
 		if (sp >= KEYRING_SEARCH_MAX_DEPTH) {
 			if (ctx->flags & KEYRING_SEARCH_DETECT_TOO_DEEP) {
-				ctx->result = ERR_PTR(-ELOOP);
+				ctx->result = ERR_PTR(-ERR(ELOOP));
 				return false;
 			}
 			goto not_this_keyring;
@@ -904,13 +904,13 @@ key_ref_t keyring_search_rcu(key_ref_t keyring_ref,
 
 	ctx->iterator = keyring_search_iterator;
 	ctx->possessed = is_key_possessed(keyring_ref);
-	ctx->result = ERR_PTR(-EAGAIN);
+	ctx->result = ERR_PTR(-ERR(EAGAIN));
 
 	keyring = key_ref_to_ptr(keyring_ref);
 	key_check(keyring);
 
 	if (keyring->type != &key_type_keyring)
-		return ERR_PTR(-ENOTDIR);
+		return ERR_PTR(-ERR(ENOTDIR));
 
 	if (!(ctx->flags & KEYRING_SEARCH_NO_CHECK_PERM)) {
 		err = key_task_permission(keyring_ref, ctx->cred, KEY_NEED_SEARCH);
@@ -1030,7 +1030,7 @@ int keyring_restrict(key_ref_t keyring_ref, const char *type,
 	key_check(keyring);
 
 	if (keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	if (!type) {
 		restrict_link = keyring_restriction_alloc(restrict_link_reject);
@@ -1041,7 +1041,7 @@ int keyring_restrict(key_ref_t keyring_ref, const char *type,
 			return PTR_ERR(restrict_type);
 
 		if (!restrict_type->lookup_restriction) {
-			ret = -ENOENT;
+			ret = -ERR(ENOENT);
 			goto error;
 		}
 
@@ -1057,9 +1057,9 @@ int keyring_restrict(key_ref_t keyring_ref, const char *type,
 	down_write(&keyring_serialise_restrict_sem);
 
 	if (keyring->restrict_link) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 	} else if (keyring_detect_restriction_cycle(keyring, restrict_link)) {
-		ret = -EDEADLK;
+		ret = -ERR(EDEADLK);
 	} else {
 		keyring->restrict_link = restrict_link;
 		notify_key(keyring, NOTIFY_KEY_SETATTR, 0);
@@ -1144,7 +1144,7 @@ struct key *find_keyring_by_name(const char *name, bool uid_keyring)
 	struct key *keyring;
 
 	if (!name)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	read_lock(&keyring_name_lock);
 
@@ -1180,7 +1180,7 @@ struct key *find_keyring_by_name(const char *name, bool uid_keyring)
 		goto out;
 	}
 
-	keyring = ERR_PTR(-ENOKEY);
+	keyring = ERR_PTR(-ERR(ENOKEY));
 out:
 	read_unlock(&keyring_name_lock);
 	return keyring;
@@ -1199,7 +1199,7 @@ static int keyring_detect_cycle_iterator(const void *object,
 	if (key != ctx->match_data.raw_data)
 		return 0;
 
-	ctx->result = ERR_PTR(-EDEADLK);
+	ctx->result = ERR_PTR(-ERR(EDEADLK));
 	return 1;
 }
 
@@ -1227,7 +1227,7 @@ static int keyring_detect_cycle(struct key *A, struct key *B)
 	rcu_read_lock();
 	search_nested_keyrings(B, &ctx);
 	rcu_read_unlock();
-	return PTR_ERR(ctx.result) == -EAGAIN ? 0 : PTR_ERR(ctx.result);
+	return PTR_ERR(ctx.result) == -ERR(EAGAIN) ? 0 : PTR_ERR(ctx.result);
 }
 
 /*
@@ -1239,7 +1239,7 @@ int __key_link_lock(struct key *keyring,
 	__acquires(&keyring_serialise_link_lock)
 {
 	if (keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	down_write(&keyring->sem);
 
@@ -1263,7 +1263,7 @@ int __key_move_lock(struct key *l_keyring, struct key *u_keyring,
 {
 	if (l_keyring->type != &key_type_keyring ||
 	    u_keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	/* We have to be very careful here to take the keyring locks in the
 	 * right order, lest we open ourselves to deadlocking against another
@@ -1304,7 +1304,7 @@ int __key_link_begin(struct key *keyring,
 
 	*_edit = NULL;
 
-	ret = -EKEYREVOKED;
+	ret = -ERR(EKEYREVOKED);
 	if (test_bit(KEY_FLAG_REVOKED, &keyring->flags))
 		goto error;
 
@@ -1472,7 +1472,7 @@ static int __key_unlink_lock(struct key *keyring)
 	__acquires(&keyring->sem)
 {
 	if (keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	down_write(&keyring->sem);
 	return 0;
@@ -1494,7 +1494,7 @@ static int __key_unlink_begin(struct key *keyring, struct key *key,
 		return PTR_ERR(edit);
 
 	if (!edit)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*_edit = edit;
 	return 0;
@@ -1614,7 +1614,7 @@ int key_move(struct key *key,
 	if (ret < 0)
 		goto error;
 
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (to_edit->dead_leaf && (flags & KEYCTL_MOVE_EXCL))
 		goto error;
 
@@ -1650,7 +1650,7 @@ int keyring_clear(struct key *keyring)
 	int ret;
 
 	if (keyring->type != &key_type_keyring)
-		return -ENOTDIR;
+		return -ERR(ENOTDIR);
 
 	down_write(&keyring->sem);
 

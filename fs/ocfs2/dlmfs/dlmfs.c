@@ -77,7 +77,7 @@ static int param_set_dlmfs_capabilities(const char *val,
 					const struct kernel_param *kp)
 {
 	printk(KERN_ERR "%s: readonly parameter\n", kp->name);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 static int param_get_dlmfs_capabilities(char *buffer,
 					const struct kernel_param *kp)
@@ -152,7 +152,7 @@ static int dlmfs_file_open(struct inode *inode,
 		 * valid lock request from one that simply couldn't be
 		 * granted. */
 		if (flags & DLM_LKF_NOQUEUE && status == -EAGAIN)
-			status = -ETXTBSY;
+			status = -ERR(ETXTBSY);
 		kfree(fp);
 		goto bail;
 	}
@@ -277,7 +277,7 @@ static ssize_t dlmfs_file_write(struct file *filp,
 		inode->i_ino, count, *ppos);
 
 	if (*ppos >= i_size_read(inode))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	/* don't write past the lvb */
 	if (count > i_size_read(inode) - *ppos)
@@ -445,7 +445,7 @@ static int dlmfs_mkdir(struct inode * dir,
 
 	/* verify that we have a proper domain */
 	if (domain->len >= GROUP_NAME_MAX) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "invalid domain name for directory.\n");
 		goto bail;
 	}
@@ -494,7 +494,7 @@ static int dlmfs_create(struct inode *dir,
 	 * characters */
 	if (name->len >= USER_DLM_LOCK_ID_MAX_LEN ||
 	    name->name[0] == '$') {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		mlog(ML_ERROR, "invalid lock name, %.*s\n", name->len,
 		     name->name);
 		goto bail;

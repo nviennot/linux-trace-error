@@ -101,7 +101,7 @@ static int cgroup_storage_insert(struct bpf_cgroup_storage_map *map,
 			new = &((*new)->rb_right);
 			break;
 		default:
-			return -EEXIST;
+			return -ERR(EEXIST);
 		}
 	}
 
@@ -132,19 +132,19 @@ static int cgroup_storage_update_elem(struct bpf_map *map, void *_key,
 	struct bpf_storage_buffer *new;
 
 	if (unlikely(flags & ~(BPF_F_LOCK | BPF_EXIST | BPF_NOEXIST)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely(flags & BPF_NOEXIST))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (unlikely((flags & BPF_F_LOCK) &&
 		     !map_value_has_spin_lock(map)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	storage = cgroup_storage_lookup((struct bpf_cgroup_storage_map *)map,
 					key, false);
 	if (!storage)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (flags & BPF_F_LOCK) {
 		copy_map_value_locked(map, storage->buf->data, value, false);
@@ -180,7 +180,7 @@ int bpf_percpu_cgroup_storage_copy(struct bpf_map *_map, void *_key,
 	storage = cgroup_storage_lookup(map, key, false);
 	if (!storage) {
 		rcu_read_unlock();
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* per_cpu areas are zero-filled and bpf programs can only
@@ -207,13 +207,13 @@ int bpf_percpu_cgroup_storage_update(struct bpf_map *_map, void *_key,
 	u32 size;
 
 	if (map_flags != BPF_ANY && map_flags != BPF_EXIST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	rcu_read_lock();
 	storage = cgroup_storage_lookup(map, key, false);
 	if (!storage) {
 		rcu_read_unlock();
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* the user space will provide round_up(value_size, 8) bytes that
@@ -265,7 +265,7 @@ static int cgroup_storage_get_next_key(struct bpf_map *_map, void *_key,
 
 enoent:
 	spin_unlock_bh(&map->lock);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static struct bpf_map *cgroup_storage_map_alloc(union bpf_attr *attr)
@@ -276,21 +276,21 @@ static struct bpf_map *cgroup_storage_map_alloc(union bpf_attr *attr)
 	int ret;
 
 	if (attr->key_size != sizeof(struct bpf_cgroup_storage_key))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (attr->value_size == 0)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (attr->value_size > PAGE_SIZE)
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 
 	if (attr->map_flags & ~LOCAL_STORAGE_CREATE_FLAG_MASK ||
 	    !bpf_map_flags_access_ok(attr->map_flags))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	if (attr->max_entries)
 		/* max_entries is not used and enforced to be 0 */
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	ret = bpf_map_charge_init(&mem, sizeof(struct bpf_cgroup_storage_map));
 	if (ret < 0)
@@ -327,7 +327,7 @@ static void cgroup_storage_map_free(struct bpf_map *_map)
 
 static int cgroup_storage_delete_elem(struct bpf_map *map, void *key)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int cgroup_storage_check_btf(const struct bpf_map *map,
@@ -351,7 +351,7 @@ static int cgroup_storage_check_btf(const struct bpf_map *map,
 	 */
 	if (BTF_INFO_KIND(key_type->info) != BTF_KIND_STRUCT ||
 	    BTF_INFO_VLEN(key_type->info) != 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The first field must be a 64 bit integer at 0 offset.
@@ -359,7 +359,7 @@ static int cgroup_storage_check_btf(const struct bpf_map *map,
 	m = (struct btf_member *)(key_type + 1);
 	size = sizeof_field(struct bpf_cgroup_storage_key, cgroup_inode_id);
 	if (!btf_member_is_reg_int(btf, key_type, m, 0, size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * The second field must be a 32 bit integer at 64 bit offset.
@@ -368,7 +368,7 @@ static int cgroup_storage_check_btf(const struct bpf_map *map,
 	offset = offsetof(struct bpf_cgroup_storage_key, attach_type);
 	size = sizeof_field(struct bpf_cgroup_storage_key, attach_type);
 	if (!btf_member_is_reg_int(btf, key_type, m, offset, size))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -424,7 +424,7 @@ int bpf_cgroup_storage_assign(struct bpf_prog_aux *aux, struct bpf_map *_map)
 {
 	enum bpf_cgroup_storage_type stype = cgroup_storage_type(_map);
 	struct bpf_cgroup_storage_map *map = map_to_storage(_map);
-	int ret = -EBUSY;
+	int ret = -ERR(EBUSY);
 
 	spin_lock_bh(&map->lock);
 
@@ -490,7 +490,7 @@ struct bpf_cgroup_storage *bpf_cgroup_storage_alloc(struct bpf_prog *prog,
 	size = bpf_cgroup_storage_calculate_size(map, &pages);
 
 	if (bpf_map_charge_memlock(map, pages))
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	storage = kmalloc_node(sizeof(struct bpf_cgroup_storage),
 			       __GFP_ZERO | GFP_USER, map->numa_node);

@@ -449,7 +449,7 @@ struct kallsym_iter {
 int __weak arch_get_kallsym(unsigned int symnum, unsigned long *value,
 			    char *type, char *name)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int get_ksymbol_arch(struct kallsym_iter *iter)

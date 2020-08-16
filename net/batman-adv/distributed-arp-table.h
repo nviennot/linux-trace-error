@@ -175,7 +175,7 @@ static inline void batadv_dat_free(struct batadv_priv *bat_priv)
 static inline int
 batadv_dat_cache_dump(struct sk_buff *msg, struct netlink_callback *cb)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void batadv_dat_inc_counter(struct batadv_priv *bat_priv,

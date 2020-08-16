@@ -64,7 +64,7 @@ int snd_pt2258_reset(struct snd_pt2258 *pt)
       __error:
 	snd_i2c_unlock(pt->i2c_bus);
 	snd_printk(KERN_ERR "PT2258 reset failed\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int pt2258_stereo_volume_info(struct snd_kcontrol *kcontrol,
@@ -100,7 +100,7 @@ static int pt2258_stereo_volume_put(struct snd_kcontrol *kcontrol,
 	val0 = 79 - ucontrol->value.integer.value[0];
 	val1 = 79 - ucontrol->value.integer.value[1];
 	if (val0 < 0 || val0 > 79 || val1 < 0 || val1 > 79)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (val0 == pt->volume[base] && val1 == pt->volume[base + 1])
 		return 0;
 
@@ -125,7 +125,7 @@ static int pt2258_stereo_volume_put(struct snd_kcontrol *kcontrol,
       __error:
 	snd_i2c_unlock(pt->i2c_bus);
 	snd_printk(KERN_ERR "PT2258 access failed\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 #define pt2258_switch_info	snd_ctl_boolean_mono_info
@@ -162,7 +162,7 @@ static int pt2258_switch_put(struct snd_kcontrol *kcontrol,
       __error:
 	snd_i2c_unlock(pt->i2c_bus);
 	snd_printk(KERN_ERR "PT2258 access failed 2\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static const DECLARE_TLV_DB_SCALE(pt2258_db_scale, -7900, 100, 0);

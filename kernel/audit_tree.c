@@ -417,7 +417,7 @@ static int create_chunk(struct inode *inode, struct audit_tree *tree)
 		mutex_unlock(&audit_tree_group->mark_mutex);
 		fsnotify_put_mark(mark);
 		kfree(chunk);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 
 	spin_lock(&hash_lock);
@@ -732,7 +732,7 @@ int audit_make_tree(struct audit_krule *rule, char *pathname, u32 op)
 	    rule->listnr != AUDIT_FILTER_EXIT ||
 	    op != Audit_equal ||
 	    rule->inode_f || rule->watch || rule->tree)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	rule->tree = alloc_tree(pathname);
 	if (!rule->tree)
 		return -ENOMEM;
@@ -855,7 +855,7 @@ int audit_add_tree_rule(struct audit_krule *rule)
 	mutex_lock(&audit_filter_mutex);
 	if (list_empty(&rule->rlist)) {
 		put_tree(tree);
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 	rule->tree = tree;
 	put_tree(tree);

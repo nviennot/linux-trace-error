@@ -165,7 +165,7 @@ restart:
 
 	if (rds_destroy_pending(cp->cp_conn)) {
 		release_in_xmit(cp);
-		ret = -ENETUNREACH; /* dont requeue send work */
+		ret = -ERR(ENETUNREACH); /* dont requeue send work */
 		goto out;
 	}
 
@@ -207,7 +207,7 @@ restart:
 			same_rm++;
 			if (same_rm >= 4096) {
 				rds_stats_inc(s_send_stuck_rm);
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 				break;
 			}
 		}
@@ -457,7 +457,7 @@ over_batch:
 				goto restart;
 			rcu_read_lock();
 			if (rds_destroy_pending(cp->cp_conn))
-				ret = -ENETUNREACH;
+				ret = -ERR(ENETUNREACH);
 			else
 				queue_delayed_work(rds_wq, &cp->cp_send_w, 1);
 			rcu_read_unlock();
@@ -897,11 +897,11 @@ static int rds_rm_size(struct msghdr *msg, int num_sgs,
 	struct rds_iov_vector *iov, *tmp_iov;
 
 	if (num_sgs < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (cmsg->cmsg_level != SOL_RDS)
 			continue;
@@ -951,19 +951,19 @@ static int rds_rm_size(struct msghdr *msg, int num_sgs,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 	}
 
 	if ((msg->msg_flags & MSG_ZEROCOPY) && !zcopy_cookie)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size += num_sgs * sizeof(struct scatterlist);
 
 	/* Ensure (DEST, MAP) are never used with (ARGS, ATOMIC) */
 	if (cmsg_groups == 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return size;
 }
@@ -975,7 +975,7 @@ static int rds_cmsg_zcopy(struct rds_sock *rs, struct rds_message *rm,
 
 	if (cmsg->cmsg_len < CMSG_LEN(sizeof(*cookie)) ||
 	    !rm->data.op_mmp_znotifier)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	cookie = CMSG_DATA(cmsg);
 	rm->data.op_mmp_znotifier->z_cookie = *cookie;
 	return 0;
@@ -990,7 +990,7 @@ static int rds_cmsg_send(struct rds_sock *rs, struct rds_message *rm,
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (cmsg->cmsg_level != SOL_RDS)
 			continue;
@@ -1018,7 +1018,7 @@ static int rds_cmsg_send(struct rds_sock *rs, struct rds_message *rm,
 				/* Accommodate the get_mr() case which can fail
 				 * if connection isn't established yet.
 				 */
-				ret = -EAGAIN;
+				ret = -ERR(EAGAIN);
 			break;
 		case RDS_CMSG_ATOMIC_CSWP:
 		case RDS_CMSG_ATOMIC_FADD:
@@ -1032,7 +1032,7 @@ static int rds_cmsg_send(struct rds_sock *rs, struct rds_message *rm,
 			break;
 
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (ret)
@@ -1082,7 +1082,7 @@ static int rds_rdma_bytes(struct msghdr *msg, size_t *rdma_bytes)
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (cmsg->cmsg_level != SOL_RDS)
 			continue;
@@ -1090,7 +1090,7 @@ static int rds_rdma_bytes(struct msghdr *msg, size_t *rdma_bytes)
 		if (cmsg->cmsg_type == RDS_CMSG_RDMA_ARGS) {
 			if (cmsg->cmsg_len <
 			    CMSG_LEN(sizeof(struct rds_rdma_args)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			args = CMSG_DATA(cmsg);
 			*rdma_bytes += args->remote_vec.bytes;
 		}
@@ -1130,14 +1130,14 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 	/* Mirror Linux UDP mirror of BSD error message compatibility */
 	/* XXX: Perhaps MSG_MORE someday */
 	if (msg->msg_flags & ~(MSG_DONTWAIT | MSG_CMSG_COMPAT | MSG_ZEROCOPY)) {
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	namelen = msg->msg_namelen;
 	if (namelen != 0) {
 		if (namelen < sizeof(*usin)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		switch (usin->sin_family) {
@@ -1145,7 +1145,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 			if (usin->sin_addr.s_addr == htonl(INADDR_ANY) ||
 			    usin->sin_addr.s_addr == htonl(INADDR_BROADCAST) ||
 			    ipv4_is_multicast(usin->sin_addr.s_addr)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			ipv6_addr_set_v4mapped(usin->sin_addr.s_addr, &daddr);
@@ -1157,7 +1157,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 			int addr_type;
 
 			if (namelen < sizeof(*sin6)) {
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 			addr_type = ipv6_addr_type(&sin6->sin6_addr);
@@ -1165,7 +1165,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 				__be32 addr4;
 
 				if (!(addr_type & IPV6_ADDR_MAPPED)) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					goto out;
 				}
 
@@ -1176,13 +1176,13 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 				if (addr4 == htonl(INADDR_ANY) ||
 				    addr4 == htonl(INADDR_BROADCAST) ||
 				    ipv4_is_multicast(addr4)) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					goto out;
 				}
 			}
 			if (addr_type & IPV6_ADDR_LINKLOCAL) {
 				if (sin6->sin6_scope_id == 0) {
-					ret = -EINVAL;
+					ret = -ERR(EINVAL);
 					goto out;
 				}
 				scope_id = sin6->sin6_scope_id;
@@ -1195,7 +1195,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 #endif
 
 		default:
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
@@ -1210,7 +1210,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 	lock_sock(sk);
 	if (ipv6_addr_any(&rs->rs_bound_addr) || ipv6_addr_any(&daddr)) {
 		release_sock(sk);
-		ret = -ENOTCONN;
+		ret = -ERR(ENOTCONN);
 		goto out;
 	} else if (namelen != 0) {
 		/* Cannot send to an IPv4 address using an IPv6 source
@@ -1220,7 +1220,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 		if (ipv6_addr_v4mapped(&daddr) ^
 		    ipv6_addr_v4mapped(&rs->rs_bound_addr)) {
 			release_sock(sk);
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 		/* If the socket is already bound to a link local address,
@@ -1232,7 +1232,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 				scope_id = rs->rs_bound_scope_id;
 			} else if (rs->rs_bound_scope_id) {
 				release_sock(sk);
-				ret = -EINVAL;
+				ret = -ERR(EINVAL);
 				goto out;
 			}
 		}
@@ -1245,18 +1245,18 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 
 	total_payload_len += rdma_payload_len;
 	if (max_t(size_t, payload_len, rdma_payload_len) > RDS_MAX_MSG_SIZE) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out;
 	}
 
 	if (payload_len > rds_sk_sndbuf(rs)) {
-		ret = -EMSGSIZE;
+		ret = -ERR(EMSGSIZE);
 		goto out;
 	}
 
 	if (zcopy) {
 		if (rs->rs_transport->t_type != RDS_TRANS_TCP) {
-			ret = -EOPNOTSUPP;
+			ret = -ERR(EOPNOTSUPP);
 			goto out;
 		}
 		num_sgs = iov_iter_npages(&msg->msg_iter, INT_MAX);
@@ -1324,19 +1324,19 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 	if (rm->rdma.op_active && !conn->c_trans->xmit_rdma) {
 		printk_ratelimited(KERN_NOTICE "rdma_op %p conn xmit_rdma %p\n",
 			       &rm->rdma, conn->c_trans->xmit_rdma);
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (rm->atomic.op_active && !conn->c_trans->xmit_atomic) {
 		printk_ratelimited(KERN_NOTICE "atomic_op %p conn xmit_atomic %p\n",
 			       &rm->atomic, conn->c_trans->xmit_atomic);
-		ret = -EOPNOTSUPP;
+		ret = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (rds_destroy_pending(conn)) {
-		ret = -EAGAIN;
+		ret = -ERR(EAGAIN);
 		goto out;
 	}
 
@@ -1353,7 +1353,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 		rds_stats_inc(s_send_queue_full);
 
 		if (nonblock) {
-			ret = -EAGAIN;
+			ret = -ERR(EAGAIN);
 			goto out;
 		}
 
@@ -1369,7 +1369,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 
 		ret = timeo;
 		if (ret == 0)
-			ret = -ETIMEDOUT;
+			ret = -ERR(ETIMEDOUT);
 		goto out;
 	}
 
@@ -1384,7 +1384,7 @@ int rds_sendmsg(struct socket *sock, struct msghdr *msg, size_t payload_len)
 		ret = 0;
 		rcu_read_lock();
 		if (rds_destroy_pending(cpath->cp_conn))
-			ret = -ENETUNREACH;
+			ret = -ERR(ENETUNREACH);
 		else
 			queue_delayed_work(rds_wq, &cpath->cp_send_w, 1);
 		rcu_read_unlock();

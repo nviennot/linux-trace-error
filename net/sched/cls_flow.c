@@ -402,7 +402,7 @@ static int flow_change(struct net *net, struct sk_buff *in_skb,
 	int err;
 
 	if (opt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nla_parse_nested_deprecated(tb, TCA_FLOW_MAX, opt, flow_policy,
 					  NULL);
@@ -412,7 +412,7 @@ static int flow_change(struct net *net, struct sk_buff *in_skb,
 	if (tb[TCA_FLOW_BASECLASS]) {
 		baseclass = nla_get_u32(tb[TCA_FLOW_BASECLASS]);
 		if (TC_H_MIN(baseclass) == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (tb[TCA_FLOW_KEYS]) {
@@ -420,19 +420,19 @@ static int flow_change(struct net *net, struct sk_buff *in_skb,
 
 		nkeys = hweight32(keymask);
 		if (nkeys == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (fls(keymask) - 1 > FLOW_KEY_MAX)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		if ((keymask & (FLOW_KEY_SKUID|FLOW_KEY_SKGID)) &&
 		    sk_user_ns(NETLINK_CB(in_skb).sk) != &init_user_ns)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 	}
 
 	fnew = kzalloc(sizeof(*fnew), GFP_KERNEL);
 	if (!fnew)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = tcf_em_tree_validate(tp, tb[TCA_FLOW_EMATCHES], &fnew->ematches);
 	if (err < 0)
@@ -449,7 +449,7 @@ static int flow_change(struct net *net, struct sk_buff *in_skb,
 
 	fold = *arg;
 	if (fold) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (fold->handle != handle && handle)
 			goto err2;
 
@@ -481,7 +481,7 @@ static int flow_change(struct net *net, struct sk_buff *in_skb,
 			perturb_period = nla_get_u32(tb[TCA_FLOW_PERTURB]) * HZ;
 		}
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!handle)
 			goto err2;
 		if (!tb[TCA_FLOW_KEYS])
@@ -582,7 +582,7 @@ static int flow_init(struct tcf_proto *tp)
 
 	head = kzalloc(sizeof(*head), GFP_KERNEL);
 	if (head == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 	INIT_LIST_HEAD(&head->filters);
 	rcu_assign_pointer(tp->root, head);
 	return 0;

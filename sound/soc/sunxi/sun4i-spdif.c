@@ -247,7 +247,7 @@ static int sun4i_spdif_startup(struct snd_pcm_substream *substream,
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(asoc_rtd_to_cpu(rtd, 0));
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	sun4i_spdif_configure(host);
 
@@ -277,7 +277,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		fmt = SUN4I_SPDIF_TXCFG_NONAUDIO;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (params_format(params)) {
@@ -291,7 +291,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		fmt |= SUN4I_SPDIF_TXCFG_FMT24BIT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (rate) {
@@ -309,7 +309,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		mclk = 24576000;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = clk_set_rate(host->spdif_clk, mclk);
@@ -343,7 +343,7 @@ static int sun4i_spdif_hw_params(struct snd_pcm_substream *substream,
 		mclk_div = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	reg_val = 0;
@@ -363,7 +363,7 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 	struct sun4i_spdif_dev *host = snd_soc_dai_get_drvdata(dai);
 
 	if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
@@ -379,7 +379,7 @@ static int sun4i_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		break;
 
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 	return ret;
@@ -526,7 +526,7 @@ static int sun4i_spdif_probe(struct platform_device *pdev)
 	quirks = of_device_get_match_data(&pdev->dev);
 	if (quirks == NULL) {
 		dev_err(&pdev->dev, "Failed to determine the quirks to use\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	host->quirks = quirks;
 

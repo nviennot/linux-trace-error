@@ -95,7 +95,7 @@ static int skl_get_pvtid_map(struct uuid_module *module, int instance_id)
 		if (module->instance_id[pvt_id] == instance_id)
 			return pvt_id;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 int skl_get_pvt_instance_id_map(struct skl_dev *skl,
@@ -108,7 +108,7 @@ int skl_get_pvt_instance_id_map(struct skl_dev *skl,
 			return skl_get_pvtid_map(module, instance_id);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(skl_get_pvt_instance_id_map);
 
@@ -130,7 +130,7 @@ static inline int skl_getid_32(struct uuid_module *module, u64 *val,
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int skl_pvtid_128(struct uuid_module *module)
@@ -148,15 +148,15 @@ static inline int skl_pvtid_128(struct uuid_module *module)
 
 			word1_mask += 32;
 			if ((word1_mask + word2_mask) >= module->max_instance)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 
 		word2_mask += 64;
 		if (word2_mask >= module->max_instance)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -186,7 +186,7 @@ int skl_get_pvt_id(struct skl_dev *skl, guid_t *uuid_mod, int instance_id)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(skl_get_pvt_id);
 
@@ -218,7 +218,7 @@ int skl_put_pvt_id(struct skl_dev *skl, guid_t *uuid_mod, int *pvt_id)
 		}
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 EXPORT_SYMBOL_GPL(skl_put_pvt_id);
 
@@ -251,7 +251,7 @@ int snd_skl_parse_uuids(struct sst_dsp *ctx, const struct firmware *fw,
 	safe_file = sizeof(*adsp_hdr) + offset;
 	if (stripped_fw.size <= safe_file) {
 		dev_err(ctx->dev, "Small fw file size, No space for hdr\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	adsp_hdr = (struct adsp_fw_hdr *)(buf + offset);
@@ -260,7 +260,7 @@ int snd_skl_parse_uuids(struct sst_dsp *ctx, const struct firmware *fw,
 	safe_file += adsp_hdr->len + sizeof(*mod_entry);
 	if (stripped_fw.size <= safe_file) {
 		dev_err(ctx->dev, "Small fw file size, No module entry\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mod_entry = (struct adsp_module_entry *)(buf + offset + adsp_hdr->len);
@@ -271,7 +271,7 @@ int snd_skl_parse_uuids(struct sst_dsp *ctx, const struct firmware *fw,
 	safe_file += num_entry * sizeof(*mod_entry);
 	if (stripped_fw.size <= safe_file) {
 		dev_err(ctx->dev, "Small fw file size, No modules\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 
@@ -340,7 +340,7 @@ int skl_dsp_strip_extended_manifest(struct firmware *fw)
 	/* check if fw file is greater than header we are looking */
 	if (fw->size < sizeof(hdr)) {
 		pr_err("%s: Firmware file small, no hdr\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	hdr = (struct skl_ext_manifest_hdr *)fw->data;
@@ -366,7 +366,7 @@ int skl_sst_ctx_init(struct device *dev, int irq, const char *fw_name,
 	skl->dsp = skl_dsp_ctx_init(dev, skl_dev, irq);
 	if (!skl->dsp) {
 		dev_err(skl->dev, "%s: no device\n", __func__);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sst = skl->dsp;

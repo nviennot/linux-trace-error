@@ -62,7 +62,7 @@ static inline struct snd_soc_component *gpio_to_component(struct gpio_chip *chip
 static int snd_soc_ac97_gpio_request(struct gpio_chip *chip, unsigned offset)
 {
 	if (offset >= AC97_NUM_GPIOS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -383,7 +383,7 @@ int snd_soc_set_ac97_ops(struct snd_ac97_bus_ops *ops)
 		return 0;
 
 	if (soc_ac97_ops && ops)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	soc_ac97_ops = ops;
 	soc_ac97_bus.ops = ops;

@@ -28,7 +28,7 @@ static int xlnx_i2s_set_sclkout_div(struct snd_soc_dai *cpu_dai,
 	void __iomem *base = snd_soc_dai_get_drvdata(cpu_dai);
 
 	if (!div || (div & ~I2S_I2STIM_VALID_MASK))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	writel(div, base + I2S_I2STIM_OFFSET);
 
@@ -70,7 +70,7 @@ static int xlnx_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		writel(0, base + I2S_CORE_CTRL_OFFSET);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -130,7 +130,7 @@ static int xlnx_i2s_probe(struct platform_device *pdev)
 		format = SNDRV_PCM_FMTBIT_S24_LE;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (of_device_is_compatible(node, "xlnx,i2s-transmitter-1.0")) {
@@ -150,7 +150,7 @@ static int xlnx_i2s_probe(struct platform_device *pdev)
 		dai_drv->capture.rates = SNDRV_PCM_RATE_8000_192000;
 		dai_drv->ops = &xlnx_i2s_dai_ops;
 	} else {
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	dev_set_drvdata(&pdev->dev, base);

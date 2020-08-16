@@ -382,7 +382,7 @@ xfs_bmap_update_finish_item(
 	if (!error && count > 0) {
 		ASSERT(bmap->bi_type == XFS_BMAP_UNMAP);
 		bmap->bi_bmap.br_blockcount = count;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	kmem_free(bmap);
 	return error;

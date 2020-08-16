@@ -1024,7 +1024,7 @@ struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data)
 	struct io_wq *wq;
 
 	if (WARN_ON_ONCE(!data->free_work || !data->do_work))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	wq = kzalloc(sizeof(*wq), GFP_KERNEL);
 	if (!wq)

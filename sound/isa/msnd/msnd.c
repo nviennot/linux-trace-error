@@ -59,7 +59,7 @@ static int snd_msnd_wait_TXDE(struct snd_msnd *dev)
 		if (inb(io + HP_ISR) & HPISR_TXDE)
 			return 0;
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int snd_msnd_wait_HC0(struct snd_msnd *dev)
@@ -71,7 +71,7 @@ static int snd_msnd_wait_HC0(struct snd_msnd *dev)
 		if (!(inb(io + HP_CVR) & HPCVR_HC))
 			return 0;
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int snd_msnd_send_dsp_cmd(struct snd_msnd *dev, u8 cmd)
@@ -88,7 +88,7 @@ int snd_msnd_send_dsp_cmd(struct snd_msnd *dev, u8 cmd)
 
 	snd_printd(KERN_ERR LOGNAME ": Send DSP command timeout\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL(snd_msnd_send_dsp_cmd);
 
@@ -106,7 +106,7 @@ int snd_msnd_send_word(struct snd_msnd *dev, unsigned char high,
 
 	snd_printd(KERN_ERR LOGNAME ": Send host word timeout\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL(snd_msnd_send_word);
 
@@ -117,12 +117,12 @@ int snd_msnd_upload_host(struct snd_msnd *dev, const u8 *bin, int len)
 	if (len % 3 != 0) {
 		snd_printk(KERN_ERR LOGNAME
 			   ": Upload host data not multiple of 3!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	for (i = 0; i < len; i += 3)
 		if (snd_msnd_send_word(dev, bin[i], bin[i + 1], bin[i + 2]))
-			return -EIO;
+			return -ERR(EIO);
 
 	inb(dev->io + HP_RXL);
 	inb(dev->io + HP_CVR);
@@ -158,7 +158,7 @@ int snd_msnd_enable_irq(struct snd_msnd *dev)
 
 	snd_printd(KERN_ERR LOGNAME ": Enable IRQ failed\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL(snd_msnd_enable_irq);
 
@@ -188,7 +188,7 @@ int snd_msnd_disable_irq(struct snd_msnd *dev)
 
 	snd_printd(KERN_ERR LOGNAME ": Disable IRQ failed\n");
 
-	return -EIO;
+	return -ERR(EIO);
 }
 EXPORT_SYMBOL(snd_msnd_disable_irq);
 
@@ -543,7 +543,7 @@ static int snd_msnd_playback_trigger(struct snd_pcm_substream *substream,
 		snd_msnd_send_dsp_cmd(chip, HDEX_PLAY_STOP);
 	} else {
 		snd_printd(KERN_ERR "snd_msnd_playback_trigger(?????)\n");
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 	}
 
 	snd_printdd("snd_msnd_playback_trigger() ENDE\n");
@@ -621,7 +621,7 @@ static int snd_msnd_capture_trigger(struct snd_pcm_substream *substream,
 		snd_msnd_send_dsp_cmd(chip, HDEX_RECORD_STOP);
 		return 0;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 

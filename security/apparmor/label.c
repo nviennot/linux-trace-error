@@ -1332,7 +1332,7 @@ next:
 	aa_compute_perms(profile->policy.dfa, state, perms);
 	aa_apply_modes_to_perms(profile, perms);
 	if ((perms->allow & request) != request)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 
@@ -1395,13 +1395,13 @@ next:
 	}
 
 	if ((perms->allow & request) != request)
-		return -EACCES;
+		return -ERR(EACCES);
 
 	return 0;
 
 fail:
 	*perms = nullperms;
-	return -EACCES;
+	return -ERR(EACCES);
 }
 
 /**
@@ -1897,7 +1897,7 @@ struct aa_label *aa_label_strn_parse(struct aa_label *base, const char *str,
 
 	str = skipn_spaces(str, n);
 	if (str == NULL || (*str == '=' && base != &root_ns->unconfined->label))
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	len = label_count_strn_entries(str, end - str);
 	if (*str == '&' || force_stack) {
@@ -1959,7 +1959,7 @@ out:
 	return label;
 
 fail:
-	label = ERR_PTR(-ENOENT);
+	label = ERR_PTR(-ERR(ENOENT));
 	goto out;
 }
 

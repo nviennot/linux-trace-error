@@ -122,7 +122,7 @@ struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst)
 	size_t alen;
 
 	if (src->m_ts > dst->m_ts)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	alen = min(len, DATALEN_MSG);
 	memcpy(dst + 1, src + 1, alen);
@@ -144,7 +144,7 @@ struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst)
 #else
 struct msg_msg *copy_msg(struct msg_msg *src, struct msg_msg *dst)
 {
-	return ERR_PTR(-ENOSYS);
+	return ERR_PTR(-ERR(ENOSYS));
 }
 #endif
 int store_msg(void __user *dest, struct msg_msg *msg, size_t len)

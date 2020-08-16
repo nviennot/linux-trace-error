@@ -565,7 +565,7 @@ static int __udp4_lib_err_encap_no_sk(struct sk_buff *skb, u32 info)
 			return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* Try to match ICMP errors to UDP tunnels by looking up a socket without
@@ -653,7 +653,7 @@ int __udp4_lib_err(struct sk_buff *skb, u32 info, struct udp_table *udptable)
 			       inet_sdif(skb), udptable, NULL);
 	if (!sk) {
 		/* No socket for error: try tunnels before discarding */
-		sk = ERR_PTR(-ENOENT);
+		sk = ERR_PTR(-ERR(ENOENT));
 		if (static_branch_unlikely(&udp_encap_needed_key)) {
 			sk = __udp4_lib_err_encap(net, iph, uh, udptable, skb,
 						  info);
@@ -676,25 +676,25 @@ int __udp4_lib_err(struct sk_buff *skb, u32 info, struct udp_table *udptable)
 	switch (type) {
 	default:
 	case ICMP_TIME_EXCEEDED:
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		break;
 	case ICMP_SOURCE_QUENCH:
 		goto out;
 	case ICMP_PARAMETERPROB:
-		err = EPROTO;
+		err = ERR(EPROTO);
 		harderr = 1;
 		break;
 	case ICMP_DEST_UNREACH:
 		if (code == ICMP_FRAG_NEEDED) { /* Path MTU discovery */
 			ipv4_sk_update_pmtu(skb, sk, info);
 			if (inet->pmtudisc != IP_PMTUDISC_DONT) {
-				err = EMSGSIZE;
+				err = ERR(EMSGSIZE);
 				harderr = 1;
 				break;
 			}
 			goto out;
 		}
-		err = EHOSTUNREACH;
+		err = ERR(EHOSTUNREACH);
 		if (code <= NR_ICMP_UNREACH) {
 			harderr = icmp_err_convert[code].fatal;
 			err = icmp_err_convert[code].errno;
@@ -845,20 +845,20 @@ static int udp_send_skb(struct sk_buff *skb, struct flowi4 *fl4,
 
 		if (hlen + cork->gso_size > cork->fragsize) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (skb->len > cork->gso_size * UDP_MAX_SEGMENTS) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (sk->sk_no_check_tx) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (skb->ip_summed != CHECKSUM_PARTIAL || is_udplite ||
 		    dst_xfrm(skb_dst(skb))) {
 			kfree_skb(skb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (datalen > cork->gso_size) {
@@ -936,11 +936,11 @@ static int __udp_cmsg_send(struct cmsghdr *cmsg, u16 *gso_size)
 	switch (cmsg->cmsg_type) {
 	case UDP_SEGMENT:
 		if (cmsg->cmsg_len != CMSG_LEN(sizeof(__u16)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		*gso_size = *(__u16 *)CMSG_DATA(cmsg);
 		return 0;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -952,7 +952,7 @@ int udp_cmsg_send(struct sock *sk, struct msghdr *msg, u16 *gso_size)
 
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (cmsg->cmsg_level != SOL_UDP) {
 			need_ip = true;
@@ -990,14 +990,14 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	struct ip_options_data opt_copy;
 
 	if (len > 0xFFFF)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	/*
 	 *	Check the flags.
 	 */
 
 	if (msg->msg_flags & MSG_OOB) /* Mirror BSD error message compatibility */
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	getfrag = is_udplite ? udplite_getfrag : ip_generic_getfrag;
 
@@ -1011,7 +1011,7 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		if (likely(up->pending)) {
 			if (unlikely(up->pending != AF_INET)) {
 				release_sock(sk);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			goto do_append_data;
 		}
@@ -1024,19 +1024,19 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	 */
 	if (usin) {
 		if (msg->msg_namelen < sizeof(*usin))
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (usin->sin_family != AF_INET) {
 			if (usin->sin_family != AF_UNSPEC)
-				return -EAFNOSUPPORT;
+				return -ERR(EAFNOSUPPORT);
 		}
 
 		daddr = usin->sin_addr.s_addr;
 		dport = usin->sin_port;
 		if (dport == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 		daddr = inet->inet_daddr;
 		dport = inet->inet_dport;
 		/* Open fast path for connected socket.
@@ -1082,7 +1082,7 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 		if (usin) {
 			if (usin->sin_port == 0) {
 				/* BPF program set invalid port. Reject it. */
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out_free;
 			}
 			daddr = usin->sin_addr.s_addr;
@@ -1095,7 +1095,7 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	if (ipc.opt && ipc.opt->opt.srr) {
 		if (!daddr) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out_free;
 		}
 		faddr = ipc.opt->opt.faddr;
@@ -1156,7 +1156,7 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			goto out;
 		}
 
-		err = -EACCES;
+		err = -ERR(EACCES);
 		if ((rt->rt_flags & RTCF_BROADCAST) &&
 		    !sock_flag(sk, SOCK_BROADCAST))
 			goto out;
@@ -1192,7 +1192,7 @@ back_from_confirm:
 		release_sock(sk);
 
 		net_dbg_ratelimited("socket already corked\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 	/*
@@ -1276,7 +1276,7 @@ int udp_sendpage(struct sock *sk, struct page *page, int offset,
 		release_sock(sk);
 
 		net_dbg_ratelimited("cork failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = ip_append_page(sk, &inet->cork.fl.u.ip4,
@@ -1490,7 +1490,7 @@ int __udp_enqueue_schedule_skb(struct sock *sk, struct sk_buff *skb)
 		amt = sk_mem_pages(size);
 		delta = amt << SK_MEM_QUANTUM_SHIFT;
 		if (!__sk_mem_raise_allocated(sk, delta, amt, SK_MEM_RECV)) {
-			err = -ENOBUFS;
+			err = -ERR(ENOBUFS);
 			spin_unlock(&list->lock);
 			goto uncharge_drop;
 		}
@@ -1648,7 +1648,7 @@ int udp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 	}
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return 0;
@@ -1674,7 +1674,7 @@ struct sk_buff *__skb_recv_udp(struct sock *sk, unsigned int flags,
 		if (error)
 			break;
 
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		do {
 			spin_lock_bh(&queue->lock);
 			skb = __skb_try_recv_from_queue(sk, queue, flags, off,
@@ -1847,7 +1847,7 @@ int udp_pre_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	 * that are out of the bound specified by user in addr_len.
 	 */
 	if (addr_len < sizeof(struct sockaddr_in))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return BPF_CGROUP_RUN_PROG_INET4_CONNECT_LOCK(sk, uaddr);
 }
@@ -2544,7 +2544,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 	int is_udplite = IS_UDPLITE(sk);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *)optval))
 		return -EFAULT;
@@ -2584,7 +2584,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 			release_sock(sk);
 			break;
 		default:
-			err = -ENOPROTOOPT;
+			err = -ERR(ENOPROTOOPT);
 			break;
 		}
 		break;
@@ -2599,7 +2599,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 
 	case UDP_SEGMENT:
 		if (val < 0 || val > USHRT_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		up->gso_size = val;
 		break;
 
@@ -2618,7 +2618,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 	 * The case coverage > packet length is handled by send module. */
 	case UDPLITE_SEND_CSCOV:
 		if (!is_udplite)         /* Disable the option on UDP sockets */
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 		if (val != 0 && val < 8) /* Illegal coverage: use default (8) */
 			val = 8;
 		else if (val > USHRT_MAX)
@@ -2632,7 +2632,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 	 * used, this again means full checksum coverage.                     */
 	case UDPLITE_RECV_CSCOV:
 		if (!is_udplite)         /* Disable the option on UDP sockets */
-			return -ENOPROTOOPT;
+			return -ERR(ENOPROTOOPT);
 		if (val != 0 && val < 8) /* Avoid silly minimal values.       */
 			val = 8;
 		else if (val > USHRT_MAX)
@@ -2642,7 +2642,7 @@ int udp_lib_setsockopt(struct sock *sk, int level, int optname,
 		break;
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -2682,7 +2682,7 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 	len = min_t(unsigned int, len, sizeof(int));
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (optname) {
 	case UDP_CORK:
@@ -2716,7 +2716,7 @@ int udp_lib_getsockopt(struct sock *sk, int level, int optname,
 		break;
 
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))

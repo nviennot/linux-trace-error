@@ -1019,7 +1019,7 @@ static inline int br_vlan_get_tag(const struct sk_buff *skb, u16 *vid)
 		*vid = skb_vlan_tag_get_id(skb);
 	} else {
 		*vid = 0;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 	}
 
 	return err;
@@ -1071,12 +1071,12 @@ static inline int br_vlan_add(struct net_bridge *br, u16 vid, u16 flags,
 			      bool *changed, struct netlink_ext_ack *extack)
 {
 	*changed = false;
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int br_vlan_delete(struct net_bridge *br, u16 vid)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void br_vlan_flush(struct net_bridge *br)
@@ -1096,12 +1096,12 @@ static inline int nbp_vlan_add(struct net_bridge_port *port, u16 vid, u16 flags,
 			       bool *changed, struct netlink_ext_ack *extack)
 {
 	*changed = false;
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int nbp_vlan_delete(struct net_bridge_port *port, u16 vid)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void nbp_vlan_flush(struct net_bridge_port *port)
@@ -1133,7 +1133,7 @@ static inline u16 br_get_pvid(const struct net_bridge_vlan_group *vg)
 static inline int __br_vlan_filter_toggle(struct net_bridge *br,
 					  unsigned long val)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int nbp_get_num_vlan_infos(struct net_bridge_port *p,
@@ -1318,7 +1318,7 @@ static inline int br_mrp_parse(struct net_bridge *br, struct net_bridge_port *p,
 			       struct nlattr *attr, int cmd,
 			       struct netlink_ext_ack *extack)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int br_mrp_process(struct net_bridge_port *p, struct sk_buff *skb)
@@ -1421,12 +1421,12 @@ static inline int br_switchdev_port_vlan_add(struct net_device *dev,
 					     u16 vid, u16 flags,
 					     struct netlink_ext_ack *extack)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int br_switchdev_port_vlan_del(struct net_device *dev, u16 vid)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline void

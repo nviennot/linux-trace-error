@@ -87,19 +87,19 @@ static int ovl_acceptable(void *ctx, struct dentry *dentry)
 int ovl_check_fb_len(struct ovl_fb *fb, int fb_len)
 {
 	if (fb_len < sizeof(struct ovl_fb) || fb_len < fb->len)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (fb->magic != OVL_FH_MAGIC)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Treat larger version and unknown flags as "origin unknown" */
 	if (fb->version > OVL_FH_VERSION || fb->flags & ~OVL_FH_FLAG_ALL)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	/* Treat endianness mismatch as "origin unknown" */
 	if (!(fb->flags & OVL_FH_FLAG_ANY_ENDIAN) &&
 	    (fb->flags & OVL_FH_FLAG_BIG_ENDIAN) != OVL_FH_FLAG_CPU_ENDIAN)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	return 0;
 }
@@ -206,7 +206,7 @@ static struct dentry *ovl_lookup_positive_unlocked(const char *name,
 			spin_unlock(&ret->d_lock);
 		}
 		dput(ret);
-		ret = ERR_PTR(-ENOENT);
+		ret = ERR_PTR(-ERR(ENOENT));
 	}
 	return ret;
 }
@@ -231,7 +231,7 @@ static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
 
 	if (ovl_dentry_weird(this)) {
 		/* Don't support traversing automounts and other weirdness */
-		err = -EREMOTE;
+		err = -ERR(EREMOTE);
 		goto out_err;
 	}
 	if (ovl_is_whiteout(this)) {
@@ -262,7 +262,7 @@ static int ovl_lookup_single(struct dentry *base, struct ovl_lookup_data *d,
 	} else {
 		if (ovl_lookup_trap_inode(d->sb, this)) {
 			/* Caught in a trap of overlapping layers */
-			err = -ELOOP;
+			err = -ERR(ELOOP);
 			goto out_err;
 		}
 
@@ -315,7 +315,7 @@ static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
 
 		/* Verify we did not go off the rails */
 		if (WARN_ON(s[-1] != '/'))
-			return -EIO;
+			return -ERR(EIO);
 
 		err = ovl_lookup_single(base, d, s, thislen,
 					d->name.len - rem, next, &base,
@@ -330,7 +330,7 @@ static int ovl_lookup_layer(struct dentry *base, struct ovl_lookup_data *d,
 		rem -= thislen + 1;
 
 		if (WARN_ON(rem >= d->name.len))
-			return -EIO;
+			return -ERR(EIO);
 	}
 	*ret = dentry;
 	return 0;
@@ -359,7 +359,7 @@ int ovl_check_origin_fh(struct ovl_fs *ofs, struct ovl_fh *fh, bool connected,
 	}
 
 	if (!origin)
-		return -ESTALE;
+		return -ERR(ESTALE);
 	else if (IS_ERR(origin))
 		return PTR_ERR(origin);
 
@@ -385,7 +385,7 @@ invalid:
 			    upperdentry, d_inode(upperdentry)->i_mode & S_IFMT,
 			    d_inode(origin)->i_mode & S_IFMT);
 	dput(origin);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static int ovl_check_origin(struct ovl_fs *ofs, struct dentry *upperdentry,
@@ -420,13 +420,13 @@ static int ovl_verify_fh(struct dentry *dentry, const char *name,
 	int err = 0;
 
 	if (!ofh)
-		return -ENODATA;
+		return -ERR(ENODATA);
 
 	if (IS_ERR(ofh))
 		return PTR_ERR(ofh);
 
 	if (fh->fb.len != ofh->fb.len || memcmp(&fh->fb, &ofh->fb, fh->fb.len))
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 
 	kfree(ofh);
 	return err;
@@ -489,13 +489,13 @@ struct dentry *ovl_index_upper(struct ovl_fs *ofs, struct dentry *index)
 	kfree(fh);
 
 	if (IS_ERR_OR_NULL(upper))
-		return upper ?: ERR_PTR(-ESTALE);
+		return upper ?: ERR_PTR(-ERR(ESTALE));
 
 	if (!d_is_dir(upper)) {
 		pr_warn_ratelimited("invalid index upper (%pd2, upper=%pd2).\n",
 				    index, upper);
 		dput(upper);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 
 	return upper;
@@ -518,7 +518,7 @@ int ovl_verify_index(struct ovl_fs *ofs, struct dentry *index)
 	if (!d_inode(index))
 		return 0;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (index->d_name.len < sizeof(struct ovl_fb)*2)
 		goto fail;
 
@@ -528,7 +528,7 @@ int ovl_verify_index(struct ovl_fs *ofs, struct dentry *index)
 	if (!fh)
 		goto fail;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (hex2bin(fh->buf, index->d_name.name, len))
 		goto fail;
 
@@ -570,7 +570,7 @@ int ovl_verify_index(struct ovl_fs *ofs, struct dentry *index)
 		if (err == -ESTALE)
 			goto orphan;
 		else if (!err)
-			err = -ESTALE;
+			err = -ERR(ESTALE);
 		goto fail;
 	}
 
@@ -603,7 +603,7 @@ orphan:
 	pr_warn_ratelimited("orphan index entry (%pd2, ftype=%x, nlink=%u)\n",
 			    index, d_inode(index)->i_mode & S_IFMT,
 			    d_inode(index)->i_nlink);
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	goto out;
 }
 
@@ -672,9 +672,9 @@ struct dentry *ovl_get_index_fh(struct ovl_fs *ofs, struct ovl_fh *fh)
 	}
 
 	if (ovl_is_whiteout(index))
-		err = -ESTALE;
+		err = -ERR(ESTALE);
 	else if (ovl_dentry_weird(index))
-		err = -EIO;
+		err = -ERR(EIO);
 	else
 		return index;
 
@@ -718,7 +718,7 @@ struct dentry *ovl_lookup_index(struct ovl_fs *ofs, struct dentry *upper,
 		 * warning about it.
 		 */
 		dput(index);
-		index = ERR_PTR(-ESTALE);
+		index = ERR_PTR(-ERR(ESTALE));
 		goto out;
 	} else if (ovl_dentry_weird(index) || ovl_is_whiteout(index) ||
 		   ((inode->i_mode ^ d_inode(origin)->i_mode) & S_IFMT)) {
@@ -763,7 +763,7 @@ out_dput:
 
 fail:
 	dput(index);
-	index = ERR_PTR(-EIO);
+	index = ERR_PTR(-ERR(EIO));
 	goto out;
 }
 
@@ -842,7 +842,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 	};
 
 	if (dentry->d_name.len > ofs->namelen)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	upperdir = ovl_dentry_upper(dentry->d_parent);
@@ -853,7 +853,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 
 		if (upperdentry && upperdentry->d_flags & DCACHE_OP_REAL) {
 			dput(upperdentry);
-			err = -EREMOTE;
+			err = -ERR(EREMOTE);
 			goto out;
 		}
 		if (upperdentry && !d.is_dir) {
@@ -910,7 +910,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 			continue;
 
 		if ((uppermetacopy || d.metacopy) && !ofs->config.metacopy) {
-			err = -EPERM;
+			err = -ERR(EPERM);
 			pr_warn_ratelimited("refusing to follow metacopy origin for (%pd2)\n", dentry);
 			goto out_put;
 		}
@@ -974,7 +974,7 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 		 * Only following redirects when redirects are enabled disables
 		 * this attack vector when not necessary.
 		 */
-		err = -EPERM;
+		err = -ERR(EPERM);
 		if (d.redirect && !ofs->config.redirect_follow) {
 			pr_warn_ratelimited("refusing to follow redirect for (%pd2)\n",
 					    dentry);
@@ -1000,11 +1000,11 @@ struct dentry *ovl_lookup(struct inode *dir, struct dentry *dentry,
 	 * Just make sure a corresponding data dentry has been found.
 	 */
 	if (d.metacopy || (uppermetacopy && !ctr)) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out_put;
 	} else if (!d.is_dir && upperdentry && !ctr && origin_path) {
 		if (WARN_ON(stack != NULL)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out_put;
 		}
 		stack = origin_path;

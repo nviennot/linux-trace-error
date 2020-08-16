@@ -191,8 +191,8 @@ static int max9768_i2c_probe(struct i2c_client *client,
 
 		max9768->flags = pdata->flags;
 	} else {
-		max9768->shdn_gpio = -EINVAL;
-		max9768->mute_gpio = -EINVAL;
+		max9768->shdn_gpio = -ERR(EINVAL);
+		max9768->mute_gpio = -ERR(EINVAL);
 	}
 
 	i2c_set_clientdata(client, max9768);

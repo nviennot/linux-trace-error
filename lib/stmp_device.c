@@ -72,6 +72,6 @@ int stmp_reset_block(void __iomem *reset_addr)
 
 error:
 	pr_err("%s(%p): module reset timeout\n", __func__, reset_addr);
-	return -ETIMEDOUT;
+	return -ERR(ETIMEDOUT);
 }
 EXPORT_SYMBOL(stmp_reset_block);

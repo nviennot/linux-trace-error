@@ -693,7 +693,7 @@ static int batadv_master_del_slave(struct batadv_hard_iface *slave,
 	if (!master)
 		return 0;
 
-	ret = -EBUSY;
+	ret = -ERR(EBUSY);
 	if (master->netdev_ops->ndo_del_slave)
 		ret = master->netdev_ops->ndo_del_slave(master, slave->net_dev);
 
@@ -739,7 +739,7 @@ int batadv_hardif_enable_interface(struct batadv_hard_iface *hard_iface,
 	if (!batadv_softif_is_valid(soft_iface)) {
 		pr_err("Can't create batman mesh interface %s: already exists as regular interface\n",
 		       soft_iface->name);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_dev;
 	}
 

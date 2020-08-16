@@ -660,7 +660,7 @@ static inline int wm8350_register_irq(struct wm8350 *wm8350, int irq,
 				      const char *name, void *data)
 {
 	if (!wm8350->irq_base)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return request_threaded_irq(irq + wm8350->irq_base, NULL,
 				    handler, flags, name, data);

@@ -116,7 +116,7 @@ static int nft_rt_get_init(const struct nft_ctx *ctx,
 
 	if (tb[NFTA_RT_KEY] == NULL ||
 	    tb[NFTA_RT_DREG] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	priv->key = ntohl(nla_get_be32(tb[NFTA_RT_KEY]));
 	switch (priv->key) {
@@ -138,7 +138,7 @@ static int nft_rt_get_init(const struct nft_ctx *ctx,
 		break;
 #endif
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	priv->dreg = nft_parse_register(tb[NFTA_RT_DREG]);
@@ -179,7 +179,7 @@ static int nft_rt_validate(const struct nft_ctx *ctx, const struct nft_expr *exp
 			(1 << NF_INET_POST_ROUTING);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return nft_chain_validate_hooks(ctx->chain, hooks);

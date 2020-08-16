@@ -477,7 +477,7 @@ process_slot:
 			ASSERT(key.offset == 0);
 			ASSERT(datal <= fs_info->sectorsize);
 			if (key.offset != 0 || datal > fs_info->sectorsize)
-				return -EUCLEAN;
+				return -ERR(EUCLEAN);
 
 			ret = clone_copy_inline_extent(inode, path, &new_key,
 						       drop_start, datal, size,
@@ -501,7 +501,7 @@ process_slot:
 		key.offset = next_key_min_offset;
 
 		if (fatal_signal_pending(current)) {
-			ret = -EINTR;
+			ret = -ERR(EINTR);
 			goto out;
 		}
 	}
@@ -583,7 +583,7 @@ static int btrfs_extent_same(struct inode *src, u64 loff, u64 olen,
 			      root_dst->root_key.objectid,
 			      root_dst->send_in_progress);
 		spin_unlock(&root_dst->root_item_lock);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	root_dst->dedupe_in_progress++;
 	spin_unlock(&root_dst->root_item_lock);
@@ -693,17 +693,17 @@ static int btrfs_remap_file_range_prep(struct file *file_in, loff_t pos_in,
 		struct btrfs_root *root_out = BTRFS_I(inode_out)->root;
 
 		if (btrfs_root_readonly(root_out))
-			return -EROFS;
+			return -ERR(EROFS);
 
 		if (file_in->f_path.mnt != file_out->f_path.mnt ||
 		    inode_in->i_sb != inode_out->i_sb)
-			return -EXDEV;
+			return -ERR(EXDEV);
 	}
 
 	/* Don't make the dst file partly checksummed */
 	if ((BTRFS_I(inode_in)->flags & BTRFS_INODE_NODATASUM) !=
 	    (BTRFS_I(inode_out)->flags & BTRFS_INODE_NODATASUM)) {
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -778,7 +778,7 @@ loff_t btrfs_remap_file_range(struct file *src_file, loff_t off,
 	int ret;
 
 	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (same_inode)
 		inode_lock(src_inode);

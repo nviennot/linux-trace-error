@@ -189,7 +189,7 @@ static int ieee80211_verify_mac(struct ieee80211_sub_if_data *sdata, u8 *addr,
 			((u64)m[4] << 1*8) | ((u64)m[5] << 0*8);
 
 		if ((new & ~mask) != (tmp & ~mask)) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 	}
@@ -206,7 +206,7 @@ static int ieee80211_change_mac(struct net_device *dev, void *addr)
 	int ret;
 
 	if (ieee80211_sdata_running(sdata))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (sdata->vif.type == NL80211_IFTYPE_MONITOR &&
 	    !(sdata->u.mntr.flags & MONITOR_FLAG_ACTIVE))
@@ -259,7 +259,7 @@ static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
 			     nsdata->vif.type != NL80211_IFTYPE_MONITOR) ||
 			    (sdata->vif.type != NL80211_IFTYPE_MONITOR &&
 			     nsdata->vif.type == NL80211_IFTYPE_OCB))
-				return -EBUSY;
+				return -ERR(EBUSY);
 
 			/*
 			 * Allow only a single IBSS interface to be up at any
@@ -273,13 +273,13 @@ static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
 			 */
 			if (iftype == NL80211_IFTYPE_ADHOC &&
 			    nsdata->vif.type == NL80211_IFTYPE_ADHOC)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			/*
 			 * will not add another interface while any channel
 			 * switch is active.
 			 */
 			if (nsdata->vif.csa_active)
-				return -EBUSY;
+				return -ERR(EBUSY);
 
 			/*
 			 * The remaining checks are only performed for interfaces
@@ -294,7 +294,7 @@ static int ieee80211_check_concurrent_iface(struct ieee80211_sub_if_data *sdata,
 			 */
 			if (!identical_mac_addr_allowed(iftype,
 							nsdata->vif.type))
-				return -ENOTUNIQ;
+				return -ERR(ENOTUNIQ);
 
 			/*
 			 * can only add VLANs to enabled APs
@@ -324,10 +324,10 @@ static int ieee80211_check_queues(struct ieee80211_sub_if_data *sdata,
 		for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 			if (WARN_ON_ONCE(sdata->vif.hw_queue[i] ==
 					 IEEE80211_INVAL_HW_QUEUE))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			if (WARN_ON_ONCE(sdata->vif.hw_queue[i] >=
 					 n_queues))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -340,10 +340,10 @@ static int ieee80211_check_queues(struct ieee80211_sub_if_data *sdata,
 	}
 
 	if (WARN_ON_ONCE(sdata->vif.cab_queue == IEEE80211_INVAL_HW_QUEUE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON_ONCE(sdata->vif.cab_queue >= n_queues))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -499,13 +499,13 @@ int ieee80211_do_open(struct wireless_dev *wdev, bool coming_up)
 	switch (sdata->vif.type) {
 	case NL80211_IFTYPE_WDS:
 		if (!is_valid_ether_addr(sdata->u.wds.remote_addr))
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 		break;
 	case NL80211_IFTYPE_AP_VLAN: {
 		struct ieee80211_sub_if_data *master;
 
 		if (!sdata->bss)
-			return -ENOLINK;
+			return -ERR(ENOLINK);
 
 		mutex_lock(&local->mtx);
 		list_add(&sdata->u.vlan.list, &sdata->bss->vlans);
@@ -576,7 +576,7 @@ int ieee80211_do_open(struct wireless_dev *wdev, bool coming_up)
 		memcpy(dev->perm_addr, dev->dev_addr, ETH_ALEN);
 
 		if (!is_valid_ether_addr(dev->dev_addr)) {
-			res = -EADDRNOTAVAIL;
+			res = -ERR(EADDRNOTAVAIL);
 			goto err_stop;
 		}
 	}
@@ -788,7 +788,7 @@ static int ieee80211_open(struct net_device *dev)
 
 	/* fail early if user set an invalid address */
 	if (!is_valid_ether_addr(dev->dev_addr))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	err = ieee80211_check_concurrent_iface(sdata, sdata->vif.type);
 	if (err)
@@ -1562,7 +1562,7 @@ static int ieee80211_runtime_change_iftype(struct ieee80211_sub_if_data *sdata,
 	ASSERT_RTNL();
 
 	if (!local->ops->change_interface)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	switch (sdata->vif.type) {
 	case NL80211_IFTYPE_AP:
@@ -1577,7 +1577,7 @@ static int ieee80211_runtime_change_iftype(struct ieee80211_sub_if_data *sdata,
 		 */
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	switch (type) {
@@ -1601,7 +1601,7 @@ static int ieee80211_runtime_change_iftype(struct ieee80211_sub_if_data *sdata,
 		internal_type = NL80211_IFTYPE_AP;
 		break;
 	default:
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	ret = ieee80211_check_concurrent_iface(sdata, internal_type);

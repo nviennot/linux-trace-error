@@ -39,7 +39,7 @@ static int nft_immediate_init(const struct nft_ctx *ctx,
 
 	if (tb[NFTA_IMMEDIATE_DREG] == NULL ||
 	    tb[NFTA_IMMEDIATE_DATA] == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = nft_data_init(ctx, &priv->data, sizeof(priv->data), &desc,
 			    tb[NFTA_IMMEDIATE_DATA]);
@@ -143,7 +143,7 @@ static int nft_immediate_offload_verdict(struct nft_offload_ctx *ctx,
 		entry->id = FLOW_ACTION_DROP;
 		break;
 	default:
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	}
 
 	return 0;

@@ -276,7 +276,7 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		master = MAX9860_MASTER;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ifc1a |= master;
 
@@ -299,7 +299,7 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		if (params_width(params) != 16) {
 			dev_err(component->dev,
 				"DSP_A works for 16 bits per sample only.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ifc1a |= MAX9860_DDLY | MAX9860_WCI | MAX9860_HIZ | MAX9860_TDM;
 		ifc1b |= MAX9860_ADLY;
@@ -308,12 +308,12 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		if (params_width(params) != 16) {
 			dev_err(component->dev,
 				"DSP_B works for 16 bits per sample only.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ifc1a |= MAX9860_WCI | MAX9860_HIZ | MAX9860_TDM;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (max9860->fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -323,7 +323,7 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		switch (max9860->fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 		case SND_SOC_DAIFMT_DSP_A:
 		case SND_SOC_DAIFMT_DSP_B:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ifc1a ^= MAX9860_WCI;
 		break;
@@ -331,7 +331,7 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		switch (max9860->fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
 		case SND_SOC_DAIFMT_DSP_A:
 		case SND_SOC_DAIFMT_DSP_B:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		ifc1a ^= MAX9860_WCI;
 		/* fall through */
@@ -340,7 +340,7 @@ static int max9860_hw_params(struct snd_pcm_substream *substream,
 		ifc1b ^= MAX9860_ABCI;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(component->dev, "IFC1A  %02x\n", ifc1a);
@@ -455,7 +455,7 @@ static int max9860_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		return 0;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -654,7 +654,7 @@ static int max9860_probe(struct i2c_client *i2c)
 	if (mclk_rate > 60000000 || mclk_rate < 10000000) {
 		dev_err(dev, "Bad mclk %luHz (needs 10MHz - 60MHz)\n",
 			mclk_rate);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err_regulator;
 	}
 	if (mclk_rate >= 40000000)

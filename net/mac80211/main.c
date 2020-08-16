@@ -879,7 +879,7 @@ static int ieee80211_init_cipher_suites(struct ieee80211_local *local)
 			suites[w++] = cs[r].cipher;
 			if (WARN_ON(cs[r].pn_len > IEEE80211_MAX_PN_LEN)) {
 				kfree(suites);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -903,26 +903,26 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 	if (ieee80211_hw_check(hw, QUEUE_CONTROL) &&
 	    (local->hw.offchannel_tx_hw_queue == IEEE80211_INVAL_HW_QUEUE ||
 	     local->hw.offchannel_tx_hw_queue >= local->hw.queues))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((hw->wiphy->features & NL80211_FEATURE_TDLS_CHANNEL_SWITCH) &&
 	    (!local->ops->tdls_channel_switch ||
 	     !local->ops->tdls_cancel_channel_switch ||
 	     !local->ops->tdls_recv_channel_switch))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (WARN_ON(ieee80211_hw_check(hw, SUPPORTS_TX_FRAG) &&
 		    !local->ops->set_frag_threshold))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (WARN_ON(local->hw.wiphy->interface_modes &
 			BIT(NL80211_IFTYPE_NAN) &&
 		    (!local->ops->start_nan || !local->ops->stop_nan)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 #ifdef CONFIG_PM
 	if (hw->wiphy->wowlan && (!local->ops->suspend || !local->ops->resume))
-		return -EINVAL;
+		return -ERR(EINVAL);
 #endif
 
 	if (!local->use_chanctx) {
@@ -932,7 +932,7 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 			comb = &local->hw.wiphy->iface_combinations[i];
 
 			if (comb->num_different_channels > 1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	} else {
 		/*
@@ -941,7 +941,7 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 		 * type interfaces use
 		 */
 		if (local->hw.wiphy->interface_modes & BIT(NL80211_IFTYPE_WDS))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* DFS is not supported with multi-channel combinations yet */
 		for (i = 0; i < local->hw.wiphy->n_iface_combinations; i++) {
@@ -951,13 +951,13 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 
 			if (comb->radar_detect_widths &&
 			    comb->num_different_channels > 1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
 	/* Only HW csum features are currently compatible with mac80211 */
 	if (WARN_ON(hw->netdev_features & ~MAC80211_SUPPORTED_FEATURES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (hw->max_report_rates == 0)
 		hw->max_report_rates = hw->max_rates;
@@ -1006,7 +1006,7 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 		/* HT, VHT, HE require QoS, thus >= 4 queues */
 		if (WARN_ON(local->hw.queues < IEEE80211_NUM_ACS &&
 			    (supp_ht || supp_vht || supp_he)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (!sband->ht_cap.ht_supported)
 			continue;
@@ -1045,7 +1045,7 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 		for (j = 0; j < c->n_limits; j++)
 			if ((c->limits[j].types & BIT(NL80211_IFTYPE_ADHOC)) &&
 			    c->limits[j].max > 1)
-				return -EINVAL;
+				return -ERR(EINVAL);
 	}
 
 	local->int_scan_req = kzalloc(sizeof(*local->int_scan_req) +
@@ -1077,7 +1077,7 @@ int ieee80211_register_hw(struct ieee80211_hw *hw)
 	} else if (ieee80211_hw_check(&local->hw, SIGNAL_UNSPEC)) {
 		local->hw.wiphy->signal_type = CFG80211_SIGNAL_TYPE_UNSPEC;
 		if (hw->max_signal <= 0) {
-			result = -EINVAL;
+			result = -ERR(EINVAL);
 			goto fail_workqueue;
 		}
 	}

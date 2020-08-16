@@ -35,7 +35,7 @@ SYSCALL_DEFINE3(msync, unsigned long, start, size_t, len, int, flags)
 	struct mm_struct *mm = current->mm;
 	struct vm_area_struct *vma;
 	int unmapped_error = 0;
-	int error = -EINVAL;
+	int error = -ERR(EINVAL);
 
 	start = untagged_addr(start);
 
@@ -77,7 +77,7 @@ SYSCALL_DEFINE3(msync, unsigned long, start, size_t, len, int, flags)
 		/* Here vma->vm_start <= start < vma->vm_end. */
 		if ((flags & MS_INVALIDATE) &&
 				(vma->vm_flags & VM_LOCKED)) {
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 			goto out_unlock;
 		}
 		file = vma->vm_file;

@@ -84,7 +84,7 @@ int nci_conn_max_data_pkt_payload_size(struct nci_dev *ndev, __u8 conn_id)
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, conn_id);
 	if (!conn_info)
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	return conn_info->max_pkt_payload_len;
 }
@@ -106,7 +106,7 @@ static int nci_queue_tx_data_frags(struct nci_dev *ndev,
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, conn_id);
 	if (!conn_info) {
-		rc = -EPROTO;
+		rc = -ERR(EPROTO);
 		goto exit;
 	}
 
@@ -173,7 +173,7 @@ int nci_send_data(struct nci_dev *ndev, __u8 conn_id, struct sk_buff *skb)
 
 	conn_info = nci_get_conn_info_by_conn_id(ndev, conn_id);
 	if (!conn_info) {
-		rc = -EPROTO;
+		rc = -ERR(EPROTO);
 		goto free_exit;
 	}
 

@@ -187,7 +187,7 @@ static ssize_t enabled_store(struct kobject *kobj,
 		clear_bit(TRANSPARENT_HUGEPAGE_FLAG, &transparent_hugepage_flags);
 		clear_bit(TRANSPARENT_HUGEPAGE_REQ_MADV_FLAG, &transparent_hugepage_flags);
 	} else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	if (ret > 0) {
 		int err = start_stop_khugepaged();
@@ -219,7 +219,7 @@ ssize_t single_hugepage_flag_store(struct kobject *kobj,
 	if (ret < 0)
 		return ret;
 	if (value > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (value)
 		set_bit(flag, &transparent_hugepage_flags);
@@ -273,7 +273,7 @@ static ssize_t defrag_store(struct kobject *kobj,
 		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_KSWAPD_OR_MADV_FLAG, &transparent_hugepage_flags);
 		clear_bit(TRANSPARENT_HUGEPAGE_DEFRAG_REQ_MADV_FLAG, &transparent_hugepage_flags);
 	} else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return count;
 }
@@ -394,7 +394,7 @@ static int __init hugepage_init(void)
 
 	if (!has_transparent_hugepage()) {
 		transparent_hugepage_flags = 0;
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/*
@@ -1003,7 +1003,7 @@ struct page *follow_devmap_pmd(struct vm_area_struct *vma, unsigned long addr,
 	 * caller will manage the page reference count.
 	 */
 	if (!(flags & (FOLL_GET | FOLL_PIN)))
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 
 	pfn += (addr & ~PMD_MASK) >> PAGE_SHIFT;
 	*pgmap = get_dev_pagemap(pfn, *pgmap);
@@ -1038,7 +1038,7 @@ int copy_huge_pmd(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 	src_ptl = pmd_lockptr(src_mm, src_pmd);
 	spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	pmd = *src_pmd;
 
 	/*
@@ -1159,7 +1159,7 @@ struct page *follow_devmap_pud(struct vm_area_struct *vma, unsigned long addr,
 	 * At least one of FOLL_GET | FOLL_PIN must be set, so assert that here:
 	 */
 	if (!(flags & (FOLL_GET | FOLL_PIN)))
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 
 	pfn += (addr & ~PUD_MASK) >> PAGE_SHIFT;
 	*pgmap = get_dev_pagemap(pfn, *pgmap);
@@ -1184,7 +1184,7 @@ int copy_huge_pud(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 	src_ptl = pud_lockptr(src_mm, src_pud);
 	spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
 
-	ret = -EAGAIN;
+	ret = -ERR(EAGAIN);
 	pud = *src_pud;
 	if (unlikely(!pud_trans_huge(pud) && !pud_devmap(pud)))
 		goto out_unlock;
@@ -2614,7 +2614,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 	VM_BUG_ON_PAGE(!PageCompound(head), head);
 
 	if (PageWriteback(head))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	if (PageAnon(head)) {
 		/*
@@ -2627,7 +2627,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 		 */
 		anon_vma = page_get_anon_vma(head);
 		if (!anon_vma) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 		end = -1;
@@ -2638,7 +2638,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 
 		/* Truncated ? */
 		if (!mapping) {
-			ret = -EBUSY;
+			ret = -ERR(EBUSY);
 			goto out;
 		}
 
@@ -2660,7 +2660,7 @@ int split_huge_page_to_list(struct page *page, struct list_head *list)
 	 * split PMDs
 	 */
 	if (!can_split_huge_page(head, &extra_pins)) {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto out_unlock;
 	}
 
@@ -2720,7 +2720,7 @@ fail:		if (mapping)
 			xa_unlock(&mapping->i_pages);
 		spin_unlock_irqrestore(&pgdata->lru_lock, flags);
 		remap_page(head);
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	}
 
 out_unlock:
@@ -2873,7 +2873,7 @@ static int split_huge_pages_set(void *data, u64 val)
 	unsigned long total = 0, split = 0;
 
 	if (val != 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for_each_populated_zone(zone) {
 		max_zone_pfn = zone_end_pfn(zone);

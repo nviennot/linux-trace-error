@@ -206,12 +206,12 @@ int hfsplus_find_cat(struct super_block *sb, u32 cnid,
 	type = be16_to_cpu(tmp.type);
 	if (type != HFSPLUS_FOLDER_THREAD && type != HFSPLUS_FILE_THREAD) {
 		pr_err("found bad thread record in catalog\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (be16_to_cpu(tmp.thread.nodeName.length) > 255) {
 		pr_err("catalog name length corrupted\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	hfsplus_cat_build_key_uni(fd->search_key,
@@ -286,7 +286,7 @@ int hfsplus_create_cat(u32 cnid, struct inode *dir,
 	err = hfs_brec_find(&fd, hfs_find_rec_by_key);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto err2;
 	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
@@ -302,7 +302,7 @@ int hfsplus_create_cat(u32 cnid, struct inode *dir,
 	if (err != -ENOENT) {
 		/* panic? */
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto err1;
 	}
 	err = hfs_brec_insert(&fd, &entry, entry_size);
@@ -467,7 +467,7 @@ int hfsplus_rename_cat(u32 cnid,
 	if (err)
 		goto out;
 	if (src_fd.entrylength > sizeof(entry) || src_fd.entrylength < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto out;
 	}
 
@@ -484,7 +484,7 @@ int hfsplus_rename_cat(u32 cnid,
 	err = hfs_brec_find(&dst_fd, hfs_find_rec_by_key);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -535,7 +535,7 @@ int hfsplus_rename_cat(u32 cnid,
 	err = hfs_brec_find(&dst_fd, hfs_find_rec_by_key);
 	if (err != -ENOENT) {
 		if (!err)
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 		goto out;
 	}
 	err = hfs_brec_insert(&dst_fd, &entry, entry_size);

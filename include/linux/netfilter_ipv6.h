@@ -106,12 +106,12 @@ static inline int nf_ip6_route(struct net *net, struct dst_entry **dst,
 	if (v6ops)
 		return v6ops->route(net, dst, fl, strict);
 
-	return -EHOSTUNREACH;
+	return -ERR(EHOSTUNREACH);
 #endif
 #if IS_BUILTIN(CONFIG_IPV6)
 	return __nf_ip6_route(net, dst, fl, strict);
 #else
-	return -EHOSTUNREACH;
+	return -ERR(EHOSTUNREACH);
 #endif
 }
 
@@ -169,13 +169,13 @@ static inline int nf_ip6_route_me_harder(struct net *net, struct sk_buff *skb)
 	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
 	if (!v6_ops)
-		return -EHOSTUNREACH;
+		return -ERR(EHOSTUNREACH);
 
 	return v6_ops->route_me_harder(net, skb);
 #elif IS_BUILTIN(CONFIG_IPV6)
 	return ip6_route_me_harder(net, skb);
 #else
-	return -EHOSTUNREACH;
+	return -ERR(EHOSTUNREACH);
 #endif
 }
 

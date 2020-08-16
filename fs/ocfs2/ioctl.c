@@ -95,7 +95,7 @@ static int ocfs2_set_inode_attr(struct inode *inode, unsigned flags,
 		goto bail;
 	}
 
-	status = -EACCES;
+	status = -ERR(EACCES);
 	if (!inode_owner_or_capable(inode))
 		goto bail_unlock;
 
@@ -349,7 +349,7 @@ static int ocfs2_info_handle_freeinode(struct inode *inode,
 			if (!inode_alloc) {
 				mlog(ML_ERROR, "unable to get alloc inode in "
 				    "slot %u\n", i);
-				status = -EIO;
+				status = -ERR(EIO);
 				goto bail;
 			}
 		} else {
@@ -361,7 +361,7 @@ static int ocfs2_info_handle_freeinode(struct inode *inode,
 							    strlen(namebuf),
 							    &blkno);
 			if (status < 0) {
-				status = -ENOENT;
+				status = -ERR(ENOENT);
 				goto bail;
 			}
 		}
@@ -466,7 +466,7 @@ static int ocfs2_info_freefrag_scan_chain(struct ocfs2_super *osb,
 		if (status < 0) {
 			mlog(ML_ERROR, "Can't read the group descriptor # "
 			     "%llu from device.", (unsigned long long)blkno);
-			status = -EIO;
+			status = -ERR(EIO);
 			goto bail;
 		}
 
@@ -566,7 +566,7 @@ static int ocfs2_info_freefrag_scan_bitmap(struct ocfs2_super *osb,
 	 * less than clusters in a group.
 	 */
 	if (ffg->iff_chunksize > le16_to_cpu(cl->cl_cpg)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -633,7 +633,7 @@ static int ocfs2_info_handle_freefrag(struct inode *inode,
 	 */
 	if ((oiff->iff_chunksize & (oiff->iff_chunksize - 1)) ||
 	    (!oiff->iff_chunksize)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -642,7 +642,7 @@ static int ocfs2_info_handle_freefrag(struct inode *inode,
 						       OCFS2_INVALID_SLOT);
 		if (!gb_inode) {
 			mlog(ML_ERROR, "unable to get global_bitmap inode\n");
-			status = -EIO;
+			status = -ERR(EIO);
 			goto bail;
 		}
 	} else {
@@ -653,7 +653,7 @@ static int ocfs2_info_handle_freefrag(struct inode *inode,
 						    strlen(namebuf),
 						    &blkno);
 		if (status < 0) {
-			status = -ENOENT;
+			status = -ERR(ENOENT);
 			goto bail;
 		}
 	}
@@ -711,7 +711,7 @@ static int ocfs2_info_handle_request(struct inode *inode,
 	if (o2info_from_user(oir, req))
 		goto bail;
 
-	status = -EINVAL;
+	status = -ERR(EINVAL);
 	if (oir.ir_magic != OCFS2_INFO_MAGIC)
 		goto bail;
 
@@ -808,7 +808,7 @@ static int ocfs2_info_handle(struct inode *inode, struct ocfs2_info *info,
 
 	if ((info->oi_count > OCFS2_INFO_MAX_REQUEST) ||
 	    (!info->oi_requests)) {
-		status = -EINVAL;
+		status = -ERR(EINVAL);
 		goto bail;
 	}
 
@@ -820,7 +820,7 @@ static int ocfs2_info_handle(struct inode *inode, struct ocfs2_info *info,
 
 		reqp = (struct ocfs2_info_request __user *)(unsigned long)req_addr;
 		if (!reqp) {
-			status = -EINVAL;
+			status = -ERR(EINVAL);
 			goto bail;
 		}
 
@@ -877,7 +877,7 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		return ocfs2_change_file_space(filp, cmd, &sr);
 	case OCFS2_IOC_GROUP_EXTEND:
 		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (get_user(new_clusters, (int __user *)arg))
 			return -EFAULT;
@@ -891,7 +891,7 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case OCFS2_IOC_GROUP_ADD:
 	case OCFS2_IOC_GROUP_ADD64:
 		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (copy_from_user(&input, (int __user *) arg, sizeof(input)))
 			return -EFAULT;
@@ -923,10 +923,10 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		int ret = 0;
 
 		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+			return -ERR(EPERM);
 
 		if (!blk_queue_discard(q))
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 
 		if (copy_from_user(&range, argp, sizeof(range)))
 			return -EFAULT;
@@ -945,7 +945,7 @@ long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case OCFS2_IOC_MOVE_EXT:
 		return ocfs2_ioctl_move_extents(filp, argp);
 	default:
-		return -ENOTTY;
+		return -ERR(ENOTTY);
 	}
 }
 
@@ -989,7 +989,7 @@ long ocfs2_compat_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 	case OCFS2_IOC_MOVE_EXT:
 		break;
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return ocfs2_ioctl(file, cmd, arg);

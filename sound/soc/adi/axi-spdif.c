@@ -63,7 +63,7 @@ static int axi_spdif_trigger(struct snd_pcm_substream *substream, int cmd,
 		val = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(spdif->regmap, AXI_SPDIF_REG_CTRL,

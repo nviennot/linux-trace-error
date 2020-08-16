@@ -109,7 +109,7 @@ int ubifs_leb_write(struct ubifs_info *c, int lnum, const void *buf, int offs,
 
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!dbg_is_tst_rcvry(c))
 		err = ubi_leb_write(c->ubi, lnum, buf, offs, len);
 	else
@@ -129,7 +129,7 @@ int ubifs_leb_change(struct ubifs_info *c, int lnum, const void *buf, int len)
 
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!dbg_is_tst_rcvry(c))
 		err = ubi_leb_change(c->ubi, lnum, buf, len);
 	else
@@ -149,7 +149,7 @@ int ubifs_leb_unmap(struct ubifs_info *c, int lnum)
 
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!dbg_is_tst_rcvry(c))
 		err = ubi_leb_unmap(c->ubi, lnum);
 	else
@@ -168,7 +168,7 @@ int ubifs_leb_map(struct ubifs_info *c, int lnum)
 
 	ubifs_assert(c, !c->ro_media && !c->ro_mount);
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 	if (!dbg_is_tst_rcvry(c))
 		err = ubi_leb_map(c->ubi, lnum);
 	else
@@ -225,7 +225,7 @@ int ubifs_is_mapped(const struct ubifs_info *c, int lnum)
 int ubifs_check_node(const struct ubifs_info *c, const void *buf, int lnum,
 		     int offs, int quiet, int must_chk_crc)
 {
-	int err = -EINVAL, type, node_len, dump_node = 1;
+	int err = -ERR(EINVAL), type, node_len, dump_node = 1;
 	uint32_t crc, node_crc, magic;
 	const struct ubifs_ch *ch = buf;
 
@@ -237,7 +237,7 @@ int ubifs_check_node(const struct ubifs_info *c, const void *buf, int lnum,
 		if (!quiet)
 			ubifs_err(c, "bad magic %#08x, expected %#08x",
 				  magic, UBIFS_NODE_MAGIC);
-		err = -EUCLEAN;
+		err = -ERR(EUCLEAN);
 		goto out;
 	}
 
@@ -269,7 +269,7 @@ int ubifs_check_node(const struct ubifs_info *c, const void *buf, int lnum,
 		if (!quiet)
 			ubifs_err(c, "bad CRC: calculated %#08x, read %#08x",
 				  crc, node_crc);
-		err = -EUCLEAN;
+		err = -ERR(EUCLEAN);
 		goto out;
 	}
 
@@ -567,7 +567,7 @@ int ubifs_wbuf_sync_nolock(struct ubifs_wbuf *wbuf)
 		ubifs_assert(c, !((wbuf->offs + wbuf->size) % c->max_write_size));
 
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/*
 	 * Do not write whole write buffer but write only the minimum necessary
@@ -665,7 +665,7 @@ int ubifs_bg_wbufs_sync(struct ubifs_info *c)
 	c->need_wbuf_sync = 0;
 
 	if (c->ro_error) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_timers;
 	}
 
@@ -749,14 +749,14 @@ int ubifs_wbuf_write_nolock(struct ubifs_wbuf *wbuf, void *buf, int len)
 		ubifs_assert(c, !((wbuf->offs + wbuf->size) % c->max_write_size));
 
 	if (c->leb_size - wbuf->offs - wbuf->used < aligned_len) {
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out;
 	}
 
 	cancel_wbuf_timer_nolock(wbuf);
 
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	if (aligned_len <= wbuf->avail) {
 		/*
@@ -925,7 +925,7 @@ int ubifs_write_node_hmac(struct ubifs_info *c, void *buf, int len, int lnum,
 	ubifs_assert(c, !c->space_fixup);
 
 	if (c->ro_error)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	err = ubifs_prepare_node_hmac(c, buf, len, hmac_offs, 1);
 	if (err)
@@ -1034,7 +1034,7 @@ out:
 	ubifs_err(c, "bad node at LEB %d:%d", lnum, offs);
 	ubifs_dump_node(c, buf);
 	dump_stack();
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**
@@ -1093,7 +1093,7 @@ out:
 		ubifs_dump_node(c, buf);
 		dump_stack();
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /**

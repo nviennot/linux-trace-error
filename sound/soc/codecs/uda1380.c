@@ -121,13 +121,13 @@ static int uda1380_write(struct snd_soc_component *component, unsigned int reg,
 		if (val != value) {
 			pr_debug("uda1380: READ BACK VAL %x\n",
 					(data[0]<<8) | data[1]);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		if (reg >= 0x10)
 			clear_bit(reg - 0x10, &uda1380_cache_dirty);
 		return 0;
 	} else
-		return -EIO;
+		return -ERR(EIO);
 }
 
 static void uda1380_sync_cache(struct snd_soc_component *component)
@@ -166,7 +166,7 @@ static int uda1380_reset(struct snd_soc_component *component)
 
 		if (i2c_master_send(uda1380->i2c, data, 3) != 3) {
 			dev_err(component->dev, "%s: failed\n", __func__);
-			return -EIO;
+			return -ERR(EIO);
 		}
 	}
 
@@ -437,7 +437,7 @@ static int uda1380_set_dai_fmt_both(struct snd_soc_dai *codec_dai,
 
 	/* DATAI is slave only, so in single-link mode, this has to be slave */
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	uda1380_write_reg_cache(component, UDA1380_IFACE, iface);
 
@@ -467,7 +467,7 @@ static int uda1380_set_dai_fmt_playback(struct snd_soc_dai *codec_dai,
 
 	/* DATAI is slave only, so this has to be slave */
 	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	uda1380_write(component, UDA1380_IFACE, iface);
 
@@ -747,7 +747,7 @@ static int uda1380_i2c_probe(struct i2c_client *i2c,
 	int ret;
 
 	if (!pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	uda1380 = devm_kzalloc(&i2c->dev, sizeof(struct uda1380_priv),
 			       GFP_KERNEL);

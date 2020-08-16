@@ -43,7 +43,7 @@ static void modify_qos(struct atm_vcc *vcc, struct atmsvc_msg *msg)
 		return;
 	msg->type = as_error;
 	if (!vcc->dev->ops->change_qos)
-		msg->reply = -EOPNOTSUPP;
+		msg->reply = -ERR(EOPNOTSUPP);
 	else {
 		/* should lock VCC */
 		msg->reply = vcc->dev->ops->change_qos(vcc, &msg->qos,
@@ -131,7 +131,7 @@ as_indicate_complete:
 		break;
 	default:
 		pr_alert("bad message type %d\n", (int)msg->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	sk->sk_state_change(sk);
 out:
@@ -233,7 +233,7 @@ static struct atm_dev sigd_dev = {
 int sigd_attach(struct atm_vcc *vcc)
 {
 	if (sigd)
-		return -EADDRINUSE;
+		return -ERR(EADDRINUSE);
 	pr_debug("\n");
 	sigd = vcc;
 	vcc->dev = &sigd_dev;

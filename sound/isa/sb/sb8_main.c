@@ -102,7 +102,7 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 	case SB_HW_JAZZ16:
 		if (runtime->format == SNDRV_PCM_FORMAT_S16_LE) {
 			if (chip->mode & SB_MODE_CAPTURE_16)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			else
 				chip->mode |= SB_MODE_PLAYBACK_16;
 		}
@@ -112,7 +112,7 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 		if (runtime->channels > 1) {
 			if (snd_BUG_ON(rate != SB8_RATE(11025) &&
 				       rate != SB8_RATE(22050)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			chip->playback_format = SB_DSP_HI_OUTPUT_AUTO;
 			break;
 		}
@@ -130,7 +130,7 @@ static int snd_sb8_playback_prepare(struct snd_pcm_substream *substream)
 		chip->playback_format = SB_DSP_OUTPUT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (chip->mode & SB_MODE_PLAYBACK_16) {
 		format = stereo ? SB_DSP_STEREO_16BIT : SB_DSP_MONO_16BIT;
@@ -240,7 +240,7 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 	case SB_HW_JAZZ16:
 		if (runtime->format == SNDRV_PCM_FORMAT_S16_LE) {
 			if (chip->mode & SB_MODE_PLAYBACK_16)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			else
 				chip->mode |= SB_MODE_CAPTURE_16;
 		}
@@ -250,7 +250,7 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 		if (runtime->channels > 1) {
 			if (snd_BUG_ON(rate != SB8_RATE(11025) &&
 				       rate != SB8_RATE(22050)))
-				return -EINVAL;
+				return -ERR(EINVAL);
 			chip->capture_format = SB_DSP_HI_INPUT_AUTO;
 			break;
 		}
@@ -269,7 +269,7 @@ static int snd_sb8_capture_prepare(struct snd_pcm_substream *substream)
 		chip->capture_format = SB_DSP_INPUT;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (chip->mode & SB_MODE_CAPTURE_16) {
 		format = stereo ? SB_DSP_STEREO_16BIT : SB_DSP_MONO_16BIT;
@@ -469,7 +469,7 @@ static int snd_sb8_open(struct snd_pcm_substream *substream)
 	spin_lock_irqsave(&chip->open_lock, flags);
 	if (chip->open) {
 		spin_unlock_irqrestore(&chip->open_lock, flags);
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 	chip->open |= SB_OPEN_PCM;
 	spin_unlock_irqrestore(&chip->open_lock, flags);

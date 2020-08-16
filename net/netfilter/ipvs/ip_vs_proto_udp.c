@@ -370,7 +370,7 @@ static int udp_register_app(struct netns_ipvs *ipvs, struct ip_vs_app *inc)
 
 	list_for_each_entry(i, &ipvs->udp_apps[hash], p_list) {
 		if (i->port == port) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto out;
 		}
 	}

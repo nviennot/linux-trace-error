@@ -302,7 +302,7 @@ static int qnx6_fill_super(struct super_block *s, void *data, int silent)
 	struct inode *root;
 	const char *errmsg;
 	struct qnx6_sb_info *qs;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	u64 offset;
 	int bootblock_offset = QNX6_BOOTBLOCK_SIZE;
 
@@ -454,7 +454,7 @@ mmi_success:
 	if (!s->s_root)
 		goto out2;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	errmsg = qnx6_checkroot(s);
 	if (errmsg != NULL) {
 		if (!silent)
@@ -542,7 +542,7 @@ struct inode *qnx6_iget(struct super_block *sb, unsigned ino)
 		pr_err("bad inode number on dev %s: %u is out of range\n",
 		       sb->s_id, ino);
 		iget_failed(inode);
-		return ERR_PTR(-EIO);
+		return ERR_PTR(-ERR(EIO));
 	}
 	n = (ino - 1) >> (PAGE_SHIFT - QNX6_INODE_SIZE_BITS);
 	offs = (ino - 1) & (~PAGE_MASK >> QNX6_INODE_SIZE_BITS);

@@ -205,7 +205,7 @@ static inline int ip_route_input(struct sk_buff *skb, __be32 dst, __be32 src,
 	if (!err) {
 		skb_dst_force(skb);
 		if (!skb_dst(skb))
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 	}
 	rcu_read_unlock();
 

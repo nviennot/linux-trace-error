@@ -59,7 +59,7 @@ do {									\
 	prepare_to_wait(sk_sleep(sk), &__wait, TASK_INTERRUPTIBLE);	\
 	while (!(condition)) {						\
 		if (!__timeo) {						\
-			ret = -EAGAIN;					\
+			ret = -ERR(EAGAIN);					\
 			break;						\
 		}							\
 		if (signal_pending(current)) {				\
@@ -242,19 +242,19 @@ static int afiucv_hs_send(struct iucv_message *imsg, struct sock *sock,
 
 	skb->dev = iucv->hs_dev;
 	if (!skb->dev) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto err_free;
 	}
 
 	dev_hard_header(skb, skb->dev, ETH_P_AF_IUCV, NULL, NULL, skb->len);
 
 	if (!(skb->dev->flags & IFF_UP) || !netif_carrier_ok(skb->dev)) {
-		err = -ENETDOWN;
+		err = -ERR(ENETDOWN);
 		goto err_free;
 	}
 	if (skb->len > skb->dev->mtu) {
 		if (sock->sk_type == SOCK_SEQPACKET) {
-			err = -EMSGSIZE;
+			err = -ERR(EMSGSIZE);
 			goto err_free;
 		}
 		skb_trim(skb, skb->dev->mtu);
@@ -439,7 +439,7 @@ static void iucv_sock_close(struct sock *sk)
 		sk->sk_state = IUCV_CLOSED;
 		sk->sk_state_change(sk);
 
-		sk->sk_err = ECONNRESET;
+		sk->sk_err = ERR(ECONNRESET);
 		sk->sk_state_change(sk);
 
 		skb_queue_purge(&iucv->send_skb_q);
@@ -597,11 +597,11 @@ static int iucv_sock_bind(struct socket *sock, struct sockaddr *addr,
 	/* Verify the input sockaddr */
 	if (addr_len < sizeof(struct sockaddr_iucv) ||
 	    addr->sa_family != AF_IUCV)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	if (sk->sk_state != IUCV_OPEN) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
@@ -609,7 +609,7 @@ static int iucv_sock_bind(struct socket *sock, struct sockaddr *addr,
 
 	iucv = iucv_sk(sk);
 	if (__iucv_get_sock_by_name(sa->siucv_name)) {
-		err = -EADDRINUSE;
+		err = -ERR(EADDRINUSE);
 		goto done_unlock;
 	}
 	if (iucv->path)
@@ -657,7 +657,7 @@ vm_bind:
 		goto done_unlock;
 	}
 	/* found no dev to bind */
-	err = -ENODEV;
+	err = -ERR(ENODEV);
 done_unlock:
 	/* Release the socket list lock */
 	write_unlock_bh(&iucv_sk_list.lock);
@@ -673,7 +673,7 @@ static int iucv_sock_autobind(struct sock *sk)
 	int err = 0;
 
 	if (unlikely(!pr_iucv))
-		return -EPROTO;
+		return -ERR(EPROTO);
 
 	memcpy(iucv->src_user_id, iucv_userid, 8);
 	iucv->transport = AF_IUCV_TRANS_IUCV;
@@ -716,17 +716,17 @@ static int afiucv_path_connect(struct socket *sock, struct sockaddr *addr)
 		iucv->path = NULL;
 		switch (err) {
 		case 0x0b:	/* Target communicator is not logged on */
-			err = -ENETUNREACH;
+			err = -ERR(ENETUNREACH);
 			break;
 		case 0x0d:	/* Max connections for this guest exceeded */
 		case 0x0e:	/* Max connections for target guest exceeded */
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		case 0x0f:	/* Missing IUCV authorization */
-			err = -EACCES;
+			err = -ERR(EACCES);
 			break;
 		default:
-			err = -ECONNREFUSED;
+			err = -ERR(ECONNREFUSED);
 			break;
 		}
 	}
@@ -744,17 +744,17 @@ static int iucv_sock_connect(struct socket *sock, struct sockaddr *addr,
 	int err;
 
 	if (alen < sizeof(struct sockaddr_iucv) || addr->sa_family != AF_IUCV)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sk->sk_state != IUCV_OPEN && sk->sk_state != IUCV_BOUND)
-		return -EBADFD;
+		return -ERR(EBADFD);
 
 	if (sk->sk_state == IUCV_OPEN &&
 	    iucv->transport == AF_IUCV_TRANS_HIPER)
-		return -EBADFD; /* explicit bind required */
+		return -ERR(EBADFD); /* explicit bind required */
 
 	if (sk->sk_type != SOCK_STREAM && sk->sk_type != SOCK_SEQPACKET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (sk->sk_state == IUCV_OPEN) {
 		err = iucv_sock_autobind(sk);
@@ -781,7 +781,7 @@ static int iucv_sock_connect(struct socket *sock, struct sockaddr *addr,
 				     sock_sndtimeo(sk, flags & O_NONBLOCK));
 
 	if (sk->sk_state == IUCV_DISCONN || sk->sk_state == IUCV_CLOSED)
-		err = -ECONNREFUSED;
+		err = -ERR(ECONNREFUSED);
 
 	if (err && iucv->transport == AF_IUCV_TRANS_IUCV)
 		iucv_sever_path(sk, 0);
@@ -799,7 +799,7 @@ static int iucv_sock_listen(struct socket *sock, int backlog)
 
 	lock_sock(sk);
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (sk->sk_state != IUCV_BOUND)
 		goto done;
 
@@ -828,7 +828,7 @@ static int iucv_sock_accept(struct socket *sock, struct socket *newsock,
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
 	if (sk->sk_state != IUCV_LISTEN) {
-		err = -EBADFD;
+		err = -ERR(EBADFD);
 		goto done;
 	}
 
@@ -839,7 +839,7 @@ static int iucv_sock_accept(struct socket *sock, struct socket *newsock,
 	while (!(nsk = iucv_accept_dequeue(sk, newsock))) {
 		set_current_state(TASK_INTERRUPTIBLE);
 		if (!timeo) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			break;
 		}
 
@@ -848,7 +848,7 @@ static int iucv_sock_accept(struct socket *sock, struct socket *newsock,
 		lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
 
 		if (sk->sk_state != IUCV_LISTEN) {
-			err = -EBADFD;
+			err = -ERR(EBADFD);
 			break;
 		}
 
@@ -940,22 +940,22 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 		return err;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* SOCK_SEQPACKET: we do not support segmented records */
 	if (sk->sk_type == SOCK_SEQPACKET && !(msg->msg_flags & MSG_EOR))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
 	if (sk->sk_shutdown & SEND_SHUTDOWN) {
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		goto out;
 	}
 
 	/* Return if the socket is not in connected state */
 	if (sk->sk_state != IUCV_CONNECTED) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -965,7 +965,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 	/* iterate over control messages */
 	for_each_cmsghdr(cmsg, msg) {
 		if (!CMSG_OK(msg, cmsg)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -973,7 +973,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 			continue;
 
 		if (cmsg->cmsg_type & cmsg_done) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		cmsg_done |= cmsg->cmsg_type;
@@ -981,7 +981,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 		switch (cmsg->cmsg_type) {
 		case SCM_IUCV_TRGCLS:
 			if (cmsg->cmsg_len != CMSG_LEN(TRGCLS_SIZE)) {
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out;
 			}
 
@@ -992,7 +992,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 			break;
 
 		default:
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	}
@@ -1038,7 +1038,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 
 	/* return -ECONNRESET if the socket is no longer connected */
 	if (sk->sk_state != IUCV_CONNECTED) {
-		err = -ECONNRESET;
+		err = -ERR(ECONNRESET);
 		goto fail;
 	}
 
@@ -1072,7 +1072,7 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 			if (err == 0x15) {
 				pr_iucv->path_sever(iucv->path, NULL);
 				skb_unlink(skb, &iucv->send_skb_q);
-				err = -EPIPE;
+				err = -ERR(EPIPE);
 				goto fail;
 			}
 		} else if (skb_is_nonlinear(skb)) {
@@ -1105,9 +1105,9 @@ static int iucv_sock_sendmsg(struct socket *sock, struct msghdr *msg,
 				pr_err(
 		"Application %s on z/VM guest %s exceeds message limit\n",
 					appl_id, user_id);
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 			} else {
-				err = -EPIPE;
+				err = -ERR(EPIPE);
 			}
 			skb_unlink(skb, &iucv->send_skb_q);
 			goto fail;
@@ -1254,7 +1254,7 @@ static int iucv_sock_recvmsg(struct socket *sock, struct msghdr *msg,
 		return 0;
 
 	if (flags & (MSG_OOB))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* receive/dequeue next skb:
 	 * the function understands MSG_PEEK and, thus, does not dequeue skb */
@@ -1420,7 +1420,7 @@ static int iucv_sock_shutdown(struct socket *sock, int how)
 	how++;
 
 	if ((how & ~SHUTDOWN_MASK) || !how)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	switch (sk->sk_state) {
@@ -1428,7 +1428,7 @@ static int iucv_sock_shutdown(struct socket *sock, int how)
 	case IUCV_DISCONN:
 	case IUCV_CLOSING:
 	case IUCV_CLOSED:
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto fail;
 	default:
 		break;
@@ -1443,13 +1443,13 @@ static int iucv_sock_shutdown(struct socket *sock, int how)
 			if (err) {
 				switch (err) {
 				case 1:
-					err = -ENOTCONN;
+					err = -ERR(ENOTCONN);
 					break;
 				case 2:
-					err = -ECONNRESET;
+					err = -ERR(ECONNRESET);
 					break;
 				default:
-					err = -ENOTCONN;
+					err = -ERR(ENOTCONN);
 					break;
 				}
 			}
@@ -1463,7 +1463,7 @@ static int iucv_sock_shutdown(struct socket *sock, int how)
 		    iucv->path) {
 			err = pr_iucv->path_quiesce(iucv->path, NULL);
 			if (err)
-				err = -ENOTCONN;
+				err = -ERR(ENOTCONN);
 /*			skb_queue_purge(&sk->sk_receive_queue); */
 		}
 		skb_queue_purge(&sk->sk_receive_queue);
@@ -1502,10 +1502,10 @@ static int iucv_sock_setsockopt(struct socket *sock, int level, int optname,
 	int rc;
 
 	if (level != SOL_IUCV)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (optlen < sizeof(int))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (get_user(val, (int __user *) optval))
 		return -EFAULT;
@@ -1525,17 +1525,17 @@ static int iucv_sock_setsockopt(struct socket *sock, int level, int optname,
 		case IUCV_OPEN:
 		case IUCV_BOUND:
 			if (val < 1 || val > U16_MAX)
-				rc = -EINVAL;
+				rc = -ERR(EINVAL);
 			else
 				iucv->msglimit = val;
 			break;
 		default:
-			rc = -EINVAL;
+			rc = -ERR(EINVAL);
 			break;
 		}
 		break;
 	default:
-		rc = -ENOPROTOOPT;
+		rc = -ERR(ENOPROTOOPT);
 		break;
 	}
 	release_sock(sk);
@@ -1552,13 +1552,13 @@ static int iucv_sock_getsockopt(struct socket *sock, int level, int optname,
 	int len;
 
 	if (level != SOL_IUCV)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	if (get_user(len, optlen))
 		return -EFAULT;
 
 	if (len < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = min_t(unsigned int, len, sizeof(int));
 
@@ -1574,13 +1574,13 @@ static int iucv_sock_getsockopt(struct socket *sock, int level, int optname,
 		break;
 	case SO_MSGSIZE:
 		if (sk->sk_state == IUCV_OPEN)
-			return -EBADFD;
+			return -ERR(EBADFD);
 		val = (iucv->hs_dev) ? iucv->hs_dev->mtu -
 				sizeof(struct af_iucv_trans_hdr) - ETH_HLEN :
 				0x7fffffff;
 		break;
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	if (put_user(len, optlen))
@@ -1622,7 +1622,7 @@ static int iucv_callback_connreq(struct iucv_path *path,
 	read_unlock(&iucv_sk_list.lock);
 	if (!iucv)
 		/* No socket found, not one of our paths. */
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	bh_lock_sock(sk);
 
@@ -2262,7 +2262,7 @@ static int iucv_sock_create(struct net *net, struct socket *sock, int protocol,
 	struct sock *sk;
 
 	if (protocol && protocol != PF_IUCV)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	sock->state = SS_UNCONNECTED;
 
@@ -2273,7 +2273,7 @@ static int iucv_sock_create(struct net *net, struct socket *sock, int protocol,
 		sock->ops = &iucv_sock_ops;
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	sk = iucv_sock_alloc(sock, protocol, GFP_KERNEL, kern);
@@ -2314,7 +2314,7 @@ static int __init afiucv_init(void)
 		cpcmd("QUERY USERID", iucv_userid, sizeof(iucv_userid), &err);
 		if (unlikely(err)) {
 			WARN_ON(err);
-			err = -EPROTONOSUPPORT;
+			err = -ERR(EPROTONOSUPPORT);
 			goto out;
 		}
 

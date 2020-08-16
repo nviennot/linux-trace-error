@@ -165,7 +165,7 @@ SYSCALL_DEFINE1(syncfs, int, fd)
 	int ret, ret2;
 
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 	sb = f.file->f_path.dentry->d_sb;
 
 	down_read(&sb->s_umount);
@@ -194,7 +194,7 @@ int vfs_fsync_range(struct file *file, loff_t start, loff_t end, int datasync)
 	struct inode *inode = file->f_mapping->host;
 
 	if (!file->f_op->fsync)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (!datasync && (inode->i_state & I_DIRTY_TIME))
 		mark_inode_dirty_sync(inode);
 	return file->f_op->fsync(file, start, end, datasync);
@@ -218,7 +218,7 @@ EXPORT_SYMBOL(vfs_fsync);
 static int do_fsync(unsigned int fd, int datasync)
 {
 	struct fd f = fdget(fd);
-	int ret = -EBADF;
+	int ret = -ERR(EBADF);
 
 	if (f.file) {
 		ret = vfs_fsync(f.file, datasync);
@@ -245,7 +245,7 @@ int sync_file_range(struct file *file, loff_t offset, loff_t nbytes,
 	loff_t endbyte;			/* inclusive */
 	umode_t i_mode;
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (flags & ~VALID_FLAGS)
 		goto out;
 
@@ -281,7 +281,7 @@ int sync_file_range(struct file *file, loff_t offset, loff_t nbytes,
 		endbyte--;		/* inclusive */
 
 	i_mode = file_inode(file)->i_mode;
-	ret = -ESPIPE;
+	ret = -ERR(ESPIPE);
 	if (!S_ISREG(i_mode) && !S_ISBLK(i_mode) && !S_ISDIR(i_mode) &&
 			!S_ISLNK(i_mode))
 		goto out;
@@ -370,7 +370,7 @@ int ksys_sync_file_range(int fd, loff_t offset, loff_t nbytes,
 	int ret;
 	struct fd f;
 
-	ret = -EBADF;
+	ret = -ERR(EBADF);
 	f = fdget(fd);
 	if (f.file)
 		ret = sync_file_range(f.file, offset, nbytes, flags);

@@ -97,7 +97,7 @@ static int lpass_platform_pcmops_open(struct snd_soc_component *component,
 	if (ret < 0) {
 		dev_err(soc_runtime->dev, "setting constraints failed: %d\n",
 			ret);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
@@ -170,7 +170,7 @@ static int lpass_platform_pcmops_hw_params(struct snd_soc_component *component,
 			dev_err(soc_runtime->dev,
 				"invalid PCM config given: bw=%d, ch=%u\n",
 				bitwidth, channels);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case 24:
@@ -195,13 +195,13 @@ static int lpass_platform_pcmops_hw_params(struct snd_soc_component *component,
 			dev_err(soc_runtime->dev,
 				"invalid PCM config given: bw=%d, ch=%u\n",
 				bitwidth, channels);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
 		dev_err(soc_runtime->dev, "invalid PCM config given: bw=%d, ch=%u\n",
 			bitwidth, channels);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = regmap_write(drvdata->lpaif_map,
@@ -492,7 +492,7 @@ static int lpass_platform_pcm_new(struct snd_soc_component *component,
 {
 	struct snd_pcm *pcm = soc_runtime->pcm;
 	struct snd_pcm_substream *psubstream, *csubstream;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	size_t size = lpass_platform_pcm_hardware.buffer_bytes_max;
 
 	psubstream = pcm->streams[SNDRV_PCM_STREAM_PLAYBACK].substream;
@@ -562,7 +562,7 @@ int asoc_qcom_lpass_platform_register(struct platform_device *pdev)
 
 	drvdata->lpaif_irq = platform_get_irq_byname(pdev, "lpass-irq-lpaif");
 	if (drvdata->lpaif_irq < 0)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* ensure audio hardware is disabled */
 	ret = regmap_write(drvdata->lpaif_map,

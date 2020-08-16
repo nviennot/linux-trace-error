@@ -241,7 +241,7 @@ static struct rfcomm_dev *__rfcomm_dev_add(struct rfcomm_dev_req *req,
 
 		list_for_each_entry(entry, &rfcomm_dev_list, list) {
 			if (entry->id == dev->id) {
-				err = -EADDRINUSE;
+				err = -ERR(EADDRINUSE);
 				goto out;
 			}
 
@@ -253,7 +253,7 @@ static struct rfcomm_dev *__rfcomm_dev_add(struct rfcomm_dev_req *req,
 	}
 
 	if ((dev->id < 0) || (dev->id > RFCOMM_MAX_DEV - 1)) {
-		err = -ENFILE;
+		err = -ERR(ENFILE);
 		goto out;
 	}
 
@@ -399,12 +399,12 @@ static int __rfcomm_create_dev(struct sock *sk, void __user *arg)
 	BT_DBG("sk %p dev_id %d flags 0x%x", sk, req.dev_id, req.flags);
 
 	if (req.flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (req.flags & (1 << RFCOMM_REUSE_DLC)) {
 		/* Socket must be connected */
 		if (sk->sk_state != BT_CONNECTED)
-			return -EBADFD;
+			return -ERR(EBADFD);
 
 		dlc = rfcomm_pi(sk)->dlc;
 		rfcomm_dlc_hold(dlc);
@@ -414,7 +414,7 @@ static int __rfcomm_create_dev(struct sock *sk, void __user *arg)
 		if (IS_ERR(dlc))
 			return PTR_ERR(dlc);
 		if (dlc)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		dlc = rfcomm_dlc_alloc(GFP_KERNEL);
 		if (!dlc)
 			return -ENOMEM;
@@ -446,17 +446,17 @@ static int __rfcomm_release_dev(void __user *arg)
 
 	dev = rfcomm_dev_get(req.dev_id);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (dev->flags != NOCAP_FLAGS && !capable(CAP_NET_ADMIN)) {
 		tty_port_put(&dev->port);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	/* only release once */
 	if (test_and_set_bit(RFCOMM_DEV_RELEASED, &dev->status)) {
 		tty_port_put(&dev->port);
-		return -EALREADY;
+		return -ERR(EALREADY);
 	}
 
 	if (req.flags & (1 << RFCOMM_HANGUP_NOW))
@@ -512,7 +512,7 @@ static int rfcomm_get_dev_list(void __user *arg)
 		return -EFAULT;
 
 	if (!dev_num || dev_num > (PAGE_SIZE * 4) / sizeof(*di))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	size = sizeof(*dl) + dev_num * sizeof(*di);
 
@@ -562,7 +562,7 @@ static int rfcomm_get_dev_info(void __user *arg)
 
 	dev = rfcomm_dev_get(di.id);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	di.flags   = dev->flags;
 	di.channel = dev->channel;
@@ -595,7 +595,7 @@ int rfcomm_dev_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
 		return rfcomm_get_dev_info(arg);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /* ---- DLC callbacks ---- */
@@ -712,7 +712,7 @@ static int rfcomm_tty_install(struct tty_driver *driver, struct tty_struct *tty)
 
 	dev = rfcomm_dev_get(tty->index);
 	if (!dev)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	dlc = dev->dlc;
 
@@ -827,11 +827,11 @@ static int rfcomm_tty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned l
 	switch (cmd) {
 	case TCGETS:
 		BT_DBG("TCGETS is not supported");
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	case TCSETS:
 		BT_DBG("TCSETS is not supported");
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	case TIOCMIWAIT:
 		BT_DBG("TIOCMIWAIT");
@@ -839,18 +839,18 @@ static int rfcomm_tty_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned l
 
 	case TIOCSERGETLSR:
 		BT_ERR("TIOCSERGETLSR is not supported");
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	case TIOCSERCONFIG:
 		BT_ERR("TIOCSERCONFIG is not supported");
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 
 	default:
-		return -ENOIOCTLCMD;	/* ioctls which we must ignore */
+		return -ERR(ENOIOCTLCMD);	/* ioctls which we must ignore */
 
 	}
 
-	return -ENOIOCTLCMD;
+	return -ERR(ENOIOCTLCMD);
 }
 
 static void rfcomm_tty_set_termios(struct tty_struct *tty, struct ktermios *old)

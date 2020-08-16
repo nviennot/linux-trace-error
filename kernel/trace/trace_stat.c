@@ -280,7 +280,7 @@ static int tracing_stat_init(void)
 
 	d_tracing = tracing_init_dentry();
 	if (IS_ERR(d_tracing))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	stat_dir = tracefs_create_dir("trace_stat", d_tracing);
 	if (!stat_dir) {
@@ -308,13 +308,13 @@ static int init_stat_file(struct stat_session *session)
 int register_stat_tracer(struct tracer_stat *trace)
 {
 	struct stat_session *session, *node;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (!trace)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!trace->stat_start || !trace->stat_next || !trace->stat_show)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Already registered? */
 	mutex_lock(&all_stat_sessions_mutex);

@@ -180,7 +180,7 @@ static inline void knav_dma_close_channel(void *channel)
 
 static inline int knav_dma_get_flow(void *channel)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline bool knav_dma_device_ready(void)

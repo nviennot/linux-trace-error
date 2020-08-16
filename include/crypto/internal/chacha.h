@@ -19,7 +19,7 @@ static inline int chacha_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	int i;
 
 	if (keysize != CHACHA_KEY_SIZE)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for (i = 0; i < ARRAY_SIZE(ctx->key); i++)
 		ctx->key[i] = get_unaligned_le32(key + i * sizeof(u32));

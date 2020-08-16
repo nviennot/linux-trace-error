@@ -64,7 +64,7 @@ static int rfkill_gpio_acpi_probe(struct device *dev,
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
 	if (!id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	rfkill->type = (unsigned)id->driver_data;
 
@@ -113,7 +113,7 @@ static int rfkill_gpio_probe(struct platform_device *pdev)
 	/* Make sure at-least one GPIO is defined for this instance */
 	if (!rfkill->reset_gpio && !rfkill->shutdown_gpio) {
 		dev_err(&pdev->dev, "invalid platform data\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rfkill->rfkill_dev = rfkill_alloc(rfkill->name, &pdev->dev,

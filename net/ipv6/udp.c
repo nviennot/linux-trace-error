@@ -428,7 +428,7 @@ static int __udp6_lib_err_encap_no_sk(struct sk_buff *skb,
 			return 0;
 	}
 
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 /* Try to match ICMP errors to UDP tunnels by looking up a socket without
@@ -510,7 +510,7 @@ int __udp6_lib_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 			       inet6_iif(skb), inet6_sdif(skb), udptable, NULL);
 	if (!sk) {
 		/* No socket for error: try tunnels before discarding */
-		sk = ERR_PTR(-ENOENT);
+		sk = ERR_PTR(-ERR(ENOENT));
 		if (static_branch_unlikely(&udpv6_encap_needed_key)) {
 			sk = __udp6_lib_err_encap(net, hdr, offset, uh,
 						  udptable, skb,
@@ -1040,19 +1040,19 @@ static int udpv6_pre_connect(struct sock *sk, struct sockaddr *uaddr,
 			     int addr_len)
 {
 	if (addr_len < offsetofend(struct sockaddr, sa_family))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* The following checks are replicated from __ip6_datagram_connect()
 	 * and intended to prevent BPF program called below from accessing
 	 * bytes that are out of the bound specified by user in addr_len.
 	 */
 	if (uaddr->sa_family == AF_INET) {
 		if (__ipv6_only_sock(sk))
-			return -EAFNOSUPPORT;
+			return -ERR(EAFNOSUPPORT);
 		return udp_pre_connect(sk, uaddr, addr_len);
 	}
 
 	if (addr_len < SIN6_LEN_RFC2133)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return BPF_CGROUP_RUN_PROG_INET6_CONNECT_LOCK(sk, uaddr);
 }
@@ -1131,20 +1131,20 @@ static int udp_v6_send_skb(struct sk_buff *skb, struct flowi6 *fl6,
 
 		if (hlen + cork->gso_size > cork->fragsize) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (skb->len > cork->gso_size * UDP_MAX_SEGMENTS) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (udp_sk(sk)->no_check6_tx) {
 			kfree_skb(skb);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		if (skb->ip_summed != CHECKSUM_PARTIAL || is_udplite ||
 		    dst_xfrm(skb_dst(skb))) {
 			kfree_skb(skb);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (datalen > cork->gso_size) {
@@ -1246,12 +1246,12 @@ int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	/* destination address check */
 	if (sin6) {
 		if (addr_len < offsetof(struct sockaddr, sa_data))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		switch (sin6->sin6_family) {
 		case AF_INET6:
 			if (addr_len < SIN6_LEN_RFC2133)
-				return -EINVAL;
+				return -ERR(EINVAL);
 			daddr = &sin6->sin6_addr;
 			if (ipv6_addr_any(daddr) &&
 			    ipv6_addr_v4mapped(&np->saddr))
@@ -1266,11 +1266,11 @@ int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			daddr = NULL;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	} else if (!up->pending) {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 		daddr = &sk->sk_v6_daddr;
 	} else
 		daddr = NULL;
@@ -1285,7 +1285,7 @@ int udpv6_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 			msg->msg_namelen = sizeof(sin);
 do_udp_sendmsg:
 			if (__ipv6_only_sock(sk))
-				return -ENETUNREACH;
+				return -ERR(ENETUNREACH);
 			return udp_sendmsg(sk, msg, len);
 		}
 	}
@@ -1297,7 +1297,7 @@ do_udp_sendmsg:
 	   better check is made in ip6_append_data().
 	   */
 	if (len > INT_MAX - sizeof(struct udphdr))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	getfrag  =  is_udplite ?  udplite_getfrag : ip_generic_getfrag;
 	if (up->pending) {
@@ -1309,7 +1309,7 @@ do_udp_sendmsg:
 		if (likely(up->pending)) {
 			if (unlikely(up->pending != AF_INET6)) {
 				release_sock(sk);
-				return -EAFNOSUPPORT;
+				return -ERR(EAFNOSUPPORT);
 			}
 			dst = NULL;
 			goto do_append_data;
@@ -1322,7 +1322,7 @@ do_udp_sendmsg:
 
 	if (sin6) {
 		if (sin6->sin6_port == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		fl6.fl6_dport = sin6->sin6_port;
 		daddr = &sin6->sin6_addr;
@@ -1332,7 +1332,7 @@ do_udp_sendmsg:
 			if (fl6.flowlabel&IPV6_FLOWLABEL_MASK) {
 				flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 				if (IS_ERR(flowlabel))
-					return -EINVAL;
+					return -ERR(EINVAL);
 			}
 		}
 
@@ -1350,7 +1350,7 @@ do_udp_sendmsg:
 			fl6.flowi6_oif = sin6->sin6_scope_id;
 	} else {
 		if (sk->sk_state != TCP_ESTABLISHED)
-			return -EDESTADDRREQ;
+			return -ERR(EDESTADDRREQ);
 
 		fl6.fl6_dport = inet->inet_dport;
 		daddr = &sk->sk_v6_daddr;
@@ -1384,7 +1384,7 @@ do_udp_sendmsg:
 		if ((fl6.flowlabel&IPV6_FLOWLABEL_MASK) && !flowlabel) {
 			flowlabel = fl6_sock_lookup(sk, fl6.flowlabel);
 			if (IS_ERR(flowlabel))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 		if (!(opt->opt_nflen|opt->opt_flen))
 			opt = NULL;
@@ -1415,12 +1415,12 @@ do_udp_sendmsg:
 				/* BPF program rewrote IPv6-only by IPv4-mapped
 				 * IPv6. It's currently unsupported.
 				 */
-				err = -ENOTSUPP;
+				err = -ERR(ENOTSUPP);
 				goto out_no_dst;
 			}
 			if (sin6->sin6_port == 0) {
 				/* BPF program set invalid port. Reject it. */
-				err = -EINVAL;
+				err = -ERR(EINVAL);
 				goto out_no_dst;
 			}
 			fl6.fl6_dport = sin6->sin6_port;
@@ -1484,7 +1484,7 @@ back_from_confirm:
 		release_sock(sk);
 
 		net_dbg_ratelimited("udp cork app bug 2\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 

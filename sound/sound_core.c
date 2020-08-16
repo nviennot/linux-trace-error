@@ -178,12 +178,12 @@ static int __sound_insert_unit(struct sound_unit * s, struct sound_unit **list, 
 		}
 
 		if(n>=top)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	} else {
 		n = low+(index*16);
 		while (*list) {
 			if ((*list)->unit_minor==n)
-				return -EBUSY;
+				return -ERR(EBUSY);
 			if ((*list)->unit_minor>n)
 				break;
 			list=&((*list)->next);
@@ -275,7 +275,7 @@ retry:
 				goto retry;
 			}
 			spin_unlock(&sound_loader_lock);
-			r = -EBUSY;
+			r = -ERR(EBUSY);
 			goto fail;
 		}
 	}
@@ -594,7 +594,7 @@ static int soundcore_open(struct inode *inode, struct file *file)
 
 		return err;
 	}
-	return -ENODEV;
+	return -ERR(ENODEV);
 }
 
 MODULE_ALIAS_CHARDEV_MAJOR(SOUND_MAJOR);
@@ -611,7 +611,7 @@ static int __init init_oss_soundcore(void)
 	if (preclaim_oss &&
 	    register_chrdev(SOUND_MAJOR, "sound", &soundcore_fops) < 0) {
 		printk(KERN_ERR "soundcore: sound device already in use.\n");
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;

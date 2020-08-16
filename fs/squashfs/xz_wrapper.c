@@ -51,7 +51,7 @@ static void *squashfs_xz_comp_opts(struct squashfs_sb_info *msblk,
 	if (comp_opts) {
 		/* check compressor options are the expected length */
 		if (len < sizeof(*comp_opts)) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 
@@ -61,7 +61,7 @@ static void *squashfs_xz_comp_opts(struct squashfs_sb_info *msblk,
 		n = ffs(opts->dict_size) - 1;
 		if (opts->dict_size != (1 << n) && opts->dict_size != (1 << n) +
 						(1 << (n + 1))) {
-			err = -EIO;
+			err = -ERR(EIO);
 			goto out;
 		}
 	} else
@@ -141,7 +141,7 @@ static int squashfs_xz_uncompress(struct squashfs_sb_info *msblk, void *strm,
 
 			if (!bio_next_segment(bio, &iter_all)) {
 				/* XZ_STREAM_END must be reached. */
-				error = -EIO;
+				error = -ERR(EIO);
 				break;
 			}
 
@@ -166,7 +166,7 @@ static int squashfs_xz_uncompress(struct squashfs_sb_info *msblk, void *strm,
 		if (xz_err == XZ_STREAM_END)
 			break;
 		if (xz_err != XZ_OK) {
-			error = -EIO;
+			error = -ERR(EIO);
 			break;
 		}
 	}

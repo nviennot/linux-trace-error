@@ -1000,7 +1000,7 @@ static int batadv_mcast_forw_mode_check_ipv4(struct batadv_priv *bat_priv,
 		return -ENOMEM;
 
 	if (batadv_mcast_is_report_ipv4(skb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	iphdr = ip_hdr(skb);
 
@@ -1064,12 +1064,12 @@ static int batadv_mcast_forw_mode_check_ipv6(struct batadv_priv *bat_priv,
 		return -ENOMEM;
 
 	if (batadv_mcast_is_report_ipv6(skb))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ip6hdr = ipv6_hdr(skb);
 
 	if (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) < IPV6_ADDR_SCOPE_LINKLOCAL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* link-local-all-nodes multicast listeners behind a bridge are
 	 * not snoopable (see RFC4541, section 3, paragraph 3)
@@ -1102,7 +1102,7 @@ static int batadv_mcast_forw_mode_check(struct batadv_priv *bat_priv,
 	struct ethhdr *ethhdr = eth_hdr(skb);
 
 	if (!atomic_read(&bat_priv->multicast_mode))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (ntohs(ethhdr->h_proto)) {
 	case ETH_P_IP:
@@ -1111,13 +1111,13 @@ static int batadv_mcast_forw_mode_check(struct batadv_priv *bat_priv,
 							 is_routable);
 	case ETH_P_IPV6:
 		if (!IS_ENABLED(CONFIG_IPV6))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		return batadv_mcast_forw_mode_check_ipv6(bat_priv, skb,
 							 is_unsnoopable,
 							 is_routable);
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 }
 
@@ -2185,7 +2185,7 @@ int batadv_mcast_mesh_info_put(struct sk_buff *msg,
 
 	if (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS, flags) ||
 	    nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS_PRIV, flags_priv))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -2211,14 +2211,14 @@ batadv_mcast_flags_dump_entry(struct sk_buff *msg, u32 portid,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_MCAST_FLAGS);
 	if (!hdr)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	genl_dump_check_consistent(cb, hdr);
 
 	if (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
 		    orig_node->orig)) {
 		genlmsg_cancel(msg, hdr);
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 	}
 
 	if (test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
@@ -2226,7 +2226,7 @@ batadv_mcast_flags_dump_entry(struct sk_buff *msg, u32 portid,
 		if (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS,
 				orig_node->mcast_flags)) {
 			genlmsg_cancel(msg, hdr);
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 	}
 
@@ -2270,7 +2270,7 @@ batadv_mcast_flags_dump_bucket(struct sk_buff *msg, u32 portid,
 			spin_unlock_bh(&hash->list_locks[bucket]);
 			*idx_skip = idx;
 
-			return -EMSGSIZE;
+			return -ERR(EMSGSIZE);
 		}
 
 skip:
@@ -2337,11 +2337,11 @@ batadv_mcast_netlink_get_primary(struct netlink_callback *cb,
 
 	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
 	if (!ifindex)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	soft_iface = dev_get_by_index(net, ifindex);
 	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 
@@ -2349,7 +2349,7 @@ batadv_mcast_netlink_get_primary(struct netlink_callback *cb,
 
 	hard_iface = batadv_primary_if_get_selected(bat_priv);
 	if (!hard_iface || hard_iface->if_status != BATADV_IF_ACTIVE) {
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 

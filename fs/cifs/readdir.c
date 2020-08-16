@@ -393,7 +393,7 @@ initiate_cifs_search(const unsigned int xid, struct file *file)
 	server = tcon->ses->server;
 
 	if (!server->ops->query_dir_first) {
-		rc = -ENOSYS;
+		rc = -ERR(ENOSYS);
 		goto error_exit;
 	}
 
@@ -608,7 +608,7 @@ static int cifs_fill_dirent(struct cifs_dirent *de, const void *info,
 		break;
 	default:
 		cifs_dbg(FYI, "Unknown findfirst level %d\n", level);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -701,10 +701,10 @@ find_cifs_entry(const unsigned int xid, struct cifs_tcon *tcon, loff_t pos,
 	/* check if index in the buffer */
 
 	if (!server->ops->query_dir_first || !server->ops->query_dir_next)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	if ((cfile == NULL) || (current_entry == NULL) || (num_to_ret == NULL))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*current_entry = NULL;
 	first_entry_in_buffer = cfile->srch_inf.index_of_last_entry -
@@ -766,7 +766,7 @@ find_cifs_entry(const unsigned int xid, struct cifs_tcon *tcon, loff_t pos,
 		if (cfile->srch_inf.last_entry)
 			cifs_save_resume_key(cfile->srch_inf.last_entry, cfile);
 		if (rc)
-			return -ENOENT;
+			return -ERR(ENOENT);
 	}
 	if (index_to_find < cfile->srch_inf.index_of_last_entry) {
 		/* we found the buffer that contains the entry */
@@ -777,7 +777,7 @@ find_cifs_entry(const unsigned int xid, struct cifs_tcon *tcon, loff_t pos,
 
 		if (cfile->srch_inf.ntwrk_buf_start == NULL) {
 			cifs_dbg(VFS, "ntwrk_buf_start is NULL during readdir\n");
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		end_of_smb = cfile->srch_inf.ntwrk_buf_start +
@@ -838,7 +838,7 @@ static int cifs_filldir(char *find_entry, struct file *file,
 	if (de.namelen > max_len) {
 		cifs_dbg(VFS, "bad search response length %zd past smb end\n",
 			 de.namelen);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* skip . and .. since we added them first */

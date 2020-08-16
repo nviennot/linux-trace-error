@@ -522,7 +522,7 @@ xchk_bmap_check_rmap(
 
 out:
 	if (sc->sm->sm_flags & XFS_SCRUB_OFLAG_CORRUPT)
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 	return 0;
 }
 
@@ -741,7 +741,7 @@ xchk_bmap_cow(
 	struct xfs_scrub	*sc)
 {
 	if (!xfs_is_reflink_inode(sc->ip))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	return xchk_bmap(sc, XFS_COW_FORK);
 }

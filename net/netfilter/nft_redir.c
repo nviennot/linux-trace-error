@@ -73,7 +73,7 @@ static int nft_redir_init(const struct nft_ctx *ctx,
 	if (tb[NFTA_REDIR_FLAGS]) {
 		priv->flags = ntohl(nla_get_be32(tb[NFTA_REDIR_FLAGS]));
 		if (priv->flags & ~NF_NAT_RANGE_MASK)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	return nf_ct_netns_get(ctx->net, ctx->family);

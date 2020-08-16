@@ -221,7 +221,7 @@ static int parse_fsid(const char *str, struct ceph_fsid *fsid)
 {
 	int i = 0;
 	char tmp[3];
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int d;
 
 	dout("parse_fsid '%s'\n", str);
@@ -385,7 +385,7 @@ static int get_secret(struct ceph_crypto_key *dst, const char *name,
 			error_plog(log, "Failed due to key error %d: %s",
 			       key_err, name);
 		}
-		err = -EPERM;
+		err = -ERR(EPERM);
 		goto out;
 	}
 
@@ -773,7 +773,7 @@ int __ceph_open_session(struct ceph_client *client, unsigned long started)
 
 	while (!have_mon_and_osd_map(client)) {
 		if (timeout && time_after_eq(jiffies, started + timeout))
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 
 		/* wait */
 		dout("mount waiting for mon_map\n");

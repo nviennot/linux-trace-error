@@ -265,9 +265,9 @@ int snd_pcm_format_signed(snd_pcm_format_t format)
 {
 	int val;
 	if (!valid_format(format))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((val = pcm_formats[(INT)format].signd) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return val;
 }
 EXPORT_SYMBOL(snd_pcm_format_signed);
@@ -313,9 +313,9 @@ int snd_pcm_format_little_endian(snd_pcm_format_t format)
 {
 	int val;
 	if (!valid_format(format))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((val = pcm_formats[(INT)format].le) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return val;
 }
 EXPORT_SYMBOL(snd_pcm_format_little_endian);
@@ -349,9 +349,9 @@ int snd_pcm_format_width(snd_pcm_format_t format)
 {
 	int val;
 	if (!valid_format(format))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((val = pcm_formats[(INT)format].width) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return val;
 }
 EXPORT_SYMBOL(snd_pcm_format_width);
@@ -367,9 +367,9 @@ int snd_pcm_format_physical_width(snd_pcm_format_t format)
 {
 	int val;
 	if (!valid_format(format))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if ((val = pcm_formats[(INT)format].phys) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return val;
 }
 EXPORT_SYMBOL(snd_pcm_format_physical_width);
@@ -386,7 +386,7 @@ ssize_t snd_pcm_format_size(snd_pcm_format_t format, size_t samples)
 {
 	int phys_width = snd_pcm_format_physical_width(format);
 	if (phys_width < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return samples * phys_width / 8;
 }
 EXPORT_SYMBOL(snd_pcm_format_size);
@@ -424,13 +424,13 @@ int snd_pcm_format_set_silence(snd_pcm_format_t format, void *data, unsigned int
 	const unsigned char *pat;
 
 	if (!valid_format(format))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (samples == 0)
 		return 0;
 	width = pcm_formats[(INT)format].phys; /* physical width */
 	pat = pcm_formats[(INT)format].silence;
 	if (! width)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* signed or 1 byte data */
 	if (pcm_formats[(INT)format].signd == 1 || width <= 8) {
 		unsigned int bytes = samples * width / 8;

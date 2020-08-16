@@ -76,7 +76,7 @@ static int sst_byt_parse_module(struct sst_dsp *dsp, struct sst_fw *fw,
 
 		if (block->size <= 0) {
 			dev_err(dsp->dev, "block %d size invalid\n", count);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		switch (block->type) {
@@ -98,7 +98,7 @@ static int sst_byt_parse_module(struct sst_dsp *dsp, struct sst_fw *fw,
 		default:
 			dev_err(dsp->dev, "wrong ram type 0x%x in block0x%x\n",
 				block->type, count);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		mod->size = block->size;
@@ -126,7 +126,7 @@ static int sst_byt_parse_fw_image(struct sst_fw *sst_fw)
 	    (sst_fw->size != header->file_size + sizeof(*header))) {
 		/* Invalid FW signature */
 		dev_err(dsp->dev, "Invalid FW sign/filesize mismatch\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	dev_dbg(dsp->dev,
@@ -252,13 +252,13 @@ static int sst_byt_resource_map(struct sst_dsp *sst, struct sst_pdata *pdata)
 	sst->addr.lpe_base = pdata->lpe_base;
 	sst->addr.lpe = ioremap(pdata->lpe_base, pdata->lpe_size);
 	if (!sst->addr.lpe)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* ADSP PCI MMIO config space */
 	sst->addr.pci_cfg = ioremap(pdata->pcicfg_base, pdata->pcicfg_size);
 	if (!sst->addr.pci_cfg) {
 		iounmap(sst->addr.lpe);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* SST Extended FW allocation */
@@ -266,7 +266,7 @@ static int sst_byt_resource_map(struct sst_dsp *sst, struct sst_pdata *pdata)
 	if (!sst->addr.fw_ext) {
 		iounmap(sst->addr.pci_cfg);
 		iounmap(sst->addr.lpe);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* SST Shim */
@@ -286,7 +286,7 @@ static int sst_byt_init(struct sst_dsp *sst, struct sst_pdata *pdata)
 {
 	const struct sst_adsp_memregion *region;
 	struct device *dev;
-	int ret = -ENODEV, i, j, region_count;
+	int ret = -ERR(ENODEV), i, j, region_count;
 	u32 offset, size;
 
 	dev = sst->dev;

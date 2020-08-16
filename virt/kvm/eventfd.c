@@ -289,10 +289,10 @@ kvm_irqfd_assign(struct kvm *kvm, struct kvm_irqfd *args)
 	int idx;
 
 	if (!kvm_arch_intc_initialized(kvm))
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 
 	if (!kvm_arch_irqfd_allowed(kvm, args))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	irqfd = kzalloc(sizeof(*irqfd), GFP_KERNEL_ACCOUNT);
 	if (!irqfd)
@@ -307,7 +307,7 @@ kvm_irqfd_assign(struct kvm *kvm, struct kvm_irqfd *args)
 
 	f = fdget(args->fd);
 	if (!f.file) {
-		ret = -EBADF;
+		ret = -ERR(EBADF);
 		goto out;
 	}
 
@@ -382,7 +382,7 @@ kvm_irqfd_assign(struct kvm *kvm, struct kvm_irqfd *args)
 		if (irqfd->eventfd != tmp->eventfd)
 			continue;
 		/* This fd is used for another irq already. */
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		spin_unlock_irq(&kvm->irqfds.lock);
 		goto fail;
 	}
@@ -567,7 +567,7 @@ int
 kvm_irqfd(struct kvm *kvm, struct kvm_irqfd *args)
 {
 	if (args->flags & ~(KVM_IRQFD_FLAG_DEASSIGN | KVM_IRQFD_FLAG_RESAMPLE))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (args->flags & KVM_IRQFD_FLAG_DEASSIGN)
 		return kvm_irqfd_deassign(kvm, args);
@@ -732,7 +732,7 @@ ioeventfd_write(struct kvm_vcpu *vcpu, struct kvm_io_device *this, gpa_t addr,
 	struct _ioeventfd *p = to_ioeventfd(this);
 
 	if (!ioeventfd_in_range(p, addr, len, val))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	eventfd_signal(p->eventfd, 1);
 	return 0;
@@ -817,7 +817,7 @@ static int kvm_assign_ioeventfd_idx(struct kvm *kvm,
 
 	/* Verify that there isn't a match already */
 	if (ioeventfd_check_collision(kvm, p)) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto unlock_fail;
 	}
 
@@ -852,7 +852,7 @@ kvm_deassign_ioeventfd_idx(struct kvm *kvm, enum kvm_bus bus_idx,
 	struct _ioeventfd        *p, *tmp;
 	struct eventfd_ctx       *eventfd;
 	struct kvm_io_bus	 *bus;
-	int                       ret = -ENOENT;
+	int                       ret = -ERR(ENOENT);
 
 	eventfd = eventfd_ctx_fdget(args->fd);
 	if (IS_ERR(eventfd))
@@ -916,20 +916,20 @@ kvm_assign_ioeventfd(struct kvm *kvm, struct kvm_ioeventfd *args)
 	case 8:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* check for range overflow */
 	if (args->addr + args->len < args->addr)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* check for extra flags that we don't understand */
 	if (args->flags & ~KVM_IOEVENTFD_VALID_FLAG_MASK)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* ioeventfd with no length can't be combined with DATAMATCH */
 	if (!args->len && (args->flags & KVM_IOEVENTFD_FLAG_DATAMATCH))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = kvm_assign_ioeventfd_idx(kvm, bus_idx, args);
 	if (ret)

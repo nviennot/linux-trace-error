@@ -70,7 +70,7 @@ static int privflags_prepare_data(const struct ethnl_req_info *req_base,
 
 	ops = dev->ethtool_ops;
 	if (!ops->get_priv_flags || !ops->get_sset_count || !ops->get_strings)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
 		return ret;
@@ -163,7 +163,7 @@ int ethnl_set_privflags(struct sk_buff *skb, struct genl_info *info)
 	if (ret < 0)
 		return ret;
 	if (!tb[ETHTOOL_A_PRIVFLAGS_FLAGS])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	ret = ethnl_bitset_is_compact(tb[ETHTOOL_A_PRIVFLAGS_FLAGS], &compact);
 	if (ret < 0)
 		return ret;
@@ -175,7 +175,7 @@ int ethnl_set_privflags(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!ops->get_priv_flags || !ops->set_priv_flags ||
 	    !ops->get_sset_count || !ops->get_strings)
 		goto out_dev;

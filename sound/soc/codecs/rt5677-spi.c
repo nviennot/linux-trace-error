@@ -220,7 +220,7 @@ static int rt5677_spi_copy_block(struct rt5677_dsp *rt5677_dsp,
 		dev_err(rt5677_dsp->dev,
 			"Invalid copy from (%u, %u), dma_area size %zu\n",
 			begin, end, runtime->dma_bytes);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* The block to copy is empty */
@@ -480,11 +480,11 @@ int rt5677_spi_read(u32 addr, void *rxbuf, size_t len)
 	u8 *cb = rxbuf;
 
 	if (!g_spi)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if ((addr & 3) || (len & 3)) {
 		dev_err(&g_spi->dev, "Bad read align 0x%x(%zu)\n", addr, len);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	memset(t, 0, sizeof(t));
@@ -535,11 +535,11 @@ int rt5677_spi_write(u32 addr, const void *txbuf, size_t len)
 	const u8 *cb = txbuf;
 
 	if (!g_spi)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (addr & 3) {
 		dev_err(&g_spi->dev, "Bad write align 0x%x(%zu)\n", addr, len);
-		return -EACCES;
+		return -ERR(EACCES);
 	}
 
 	memset(&t, 0, sizeof(t));

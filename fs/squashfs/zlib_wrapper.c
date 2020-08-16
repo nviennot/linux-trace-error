@@ -71,7 +71,7 @@ static int zlib_uncompress(struct squashfs_sb_info *msblk, void *strm,
 
 			if (!bio_next_segment(bio, &iter_all)) {
 				/* Z_STREAM_END must be reached. */
-				error = -EIO;
+				error = -ERR(EIO);
 				break;
 			}
 
@@ -92,7 +92,7 @@ static int zlib_uncompress(struct squashfs_sb_info *msblk, void *strm,
 		if (!zlib_init) {
 			zlib_err = zlib_inflateInit(stream);
 			if (zlib_err != Z_OK) {
-				error = -EIO;
+				error = -ERR(EIO);
 				break;
 			}
 			zlib_init = 1;
@@ -102,7 +102,7 @@ static int zlib_uncompress(struct squashfs_sb_info *msblk, void *strm,
 		if (zlib_err == Z_STREAM_END)
 			break;
 		if (zlib_err != Z_OK) {
-			error = -EIO;
+			error = -ERR(EIO);
 			break;
 		}
 	}
@@ -111,7 +111,7 @@ static int zlib_uncompress(struct squashfs_sb_info *msblk, void *strm,
 
 	if (!error)
 		if (zlib_inflateEnd(stream) != Z_OK)
-			error = -EIO;
+			error = -ERR(EIO);
 
 	return error ? error : stream->total_out;
 }

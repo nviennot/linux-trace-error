@@ -196,7 +196,7 @@ static int virtio_fs_add_instance(struct virtio_fs *fs)
 	mutex_unlock(&virtio_fs_mutex);
 
 	if (duplicate)
-		return -EEXIST;
+		return -ERR(EEXIST);
 	return 0;
 }
 
@@ -248,7 +248,7 @@ static int virtio_fs_read_tag(struct virtio_device *vdev, struct virtio_fs *fs)
 			   &tag_buf, sizeof(tag_buf));
 	end = memchr(tag_buf, '\0', sizeof(tag_buf));
 	if (end == tag_buf)
-		return -EINVAL; /* empty tag */
+		return -ERR(EINVAL); /* empty tag */
 	if (!end)
 		end = &tag_buf[sizeof(tag_buf)];
 
@@ -609,7 +609,7 @@ static int virtio_fs_setup_vqs(struct virtio_device *vdev,
 	virtio_cread(vdev, struct virtio_fs_config, num_request_queues,
 		     &fs->num_request_queues);
 	if (fs->num_request_queues == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fs->nvqs = 1 + fs->num_request_queues;
 	fs->vqs = kcalloc(fs->nvqs, sizeof(fs->vqs[VQ_HIPRIO]), GFP_KERNEL);
@@ -754,7 +754,7 @@ static int virtio_fs_freeze(struct virtio_device *vdev)
 {
 	/* TODO need to save state here */
 	pr_warn("virtio-fs: suspend/resume not yet supported\n");
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static int virtio_fs_restore(struct virtio_device *vdev)
@@ -971,7 +971,7 @@ static int virtio_fs_enqueue_req(struct virtio_fs_vq *fsvq,
 
 	if (!fsvq->connected) {
 		spin_unlock(&fsvq->lock);
-		ret = -ENOTCONN;
+		ret = -ERR(ENOTCONN);
 		goto out;
 	}
 
@@ -1095,7 +1095,7 @@ static int virtio_fs_fill_super(struct super_block *sb)
 	 * Though we are holding a reference to it, drive ->remove might
 	 * still have cleaned up virtual queues. In that case bail out.
 	 */
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (list_empty(&fs->list)) {
 		pr_info("virtio-fs: tag <%s> not found\n", fs->tag);
 		goto err;
@@ -1201,7 +1201,7 @@ static int virtio_fs_get_tree(struct fs_context *fsc)
 	fs = virtio_fs_find_instance(fsc->source);
 	if (!fs) {
 		pr_info("virtio-fs: tag <%s> not found\n", fsc->source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	fc = kzalloc(sizeof(struct fuse_conn), GFP_KERNEL);

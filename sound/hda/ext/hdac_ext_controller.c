@@ -181,7 +181,7 @@ static int check_hdac_link_power_active(struct hdac_ext_link *link, bool enable)
 		udelay(3);
 	} while (--timeout);
 
-	return -EIO;
+	return -ERR(EIO);
 }
 
 /**

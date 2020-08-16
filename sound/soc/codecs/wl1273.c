@@ -67,7 +67,7 @@ static int snd_wl1273_fm_set_i2s_mode(struct wl1273_core *core,
 		break;
 	default:
 		dev_err(dev, "Sampling rate: %d not supported\n", rate);
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -101,7 +101,7 @@ static int snd_wl1273_fm_set_i2s_mode(struct wl1273_core *core,
 		break;
 	default:
 		dev_err(dev, "Data width: %d not supported\n", width);
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -148,7 +148,7 @@ static int snd_wl1273_fm_set_channel_number(struct wl1273_core *core,
 	else if (channel_number == 2 && core->mode == WL1273_MODE_TX)
 		r = core->write(core, WL1273_MONO_SET, WL1273_TX_STEREO);
 	else
-		r = -EINVAL;
+		r = -ERR(EINVAL);
 out:
 	mutex_unlock(&core->lock);
 
@@ -184,10 +184,10 @@ static int snd_wl1273_set_audio_route(struct snd_kcontrol *kcontrol,
 
 	/* Do not allow changes while stream is running */
 	if (snd_soc_component_active(component))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	if (ucontrol->value.enumerated.item[0] >=  ARRAY_SIZE(wl1273_audio_route))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wl1273->mode = ucontrol->value.enumerated.item[0];
 
@@ -300,17 +300,17 @@ static int wl1273_startup(struct snd_pcm_substream *substream,
 	case WL1273_MODE_FM_RX:
 		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 			pr_err("Cannot play in RX mode.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case WL1273_MODE_FM_TX:
 		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 			pr_err("Cannot capture in TX mode.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 		break;
 	}
 
@@ -328,7 +328,7 @@ static int wl1273_hw_params(struct snd_pcm_substream *substream,
 	if (params_width(params) != 16) {
 		dev_err(dai->dev, "%d bits/sample not supported\n",
 			params_width(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	rate = params_rate(params);
@@ -337,12 +337,12 @@ static int wl1273_hw_params(struct snd_pcm_substream *substream,
 	if (wl1273->mode == WL1273_MODE_BT) {
 		if (rate != 8000) {
 			pr_err("Rate %d not supported.\n", params_rate(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (params_channels(params) != 1) {
 			pr_err("Only mono supported.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		return 0;
@@ -351,19 +351,19 @@ static int wl1273_hw_params(struct snd_pcm_substream *substream,
 	if (wl1273->mode == WL1273_MODE_FM_TX &&
 	    substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 		pr_err("Only playback supported with TX.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wl1273->mode == WL1273_MODE_FM_RX  &&
 	    substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		pr_err("Only capture supported with RX.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (wl1273->mode != WL1273_MODE_FM_RX  &&
 	    wl1273->mode != WL1273_MODE_FM_TX) {
 		pr_err("Unexpected mode: %d.\n", wl1273->mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	r = snd_wl1273_fm_set_i2s_mode(core, rate, width);
@@ -406,7 +406,7 @@ int wl1273_get_format(struct snd_soc_component *component, unsigned int *fmt)
 	struct wl1273_priv *wl1273;
 
 	if (component == NULL || fmt == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	wl1273 = snd_soc_component_get_drvdata(component);
 
@@ -425,7 +425,7 @@ int wl1273_get_format(struct snd_soc_component *component, unsigned int *fmt)
 
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -441,7 +441,7 @@ static int wl1273_probe(struct snd_soc_component *component)
 
 	if (!core) {
 		dev_err(component->dev, "Platform data is missing.\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	wl1273 = kzalloc(sizeof(struct wl1273_priv), GFP_KERNEL);

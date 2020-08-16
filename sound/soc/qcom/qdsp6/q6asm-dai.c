@@ -222,12 +222,12 @@ static int q6asm_dai_prepare(struct snd_soc_component *component,
 
 	pdata = snd_soc_component_get_drvdata(component);
 	if (!pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!prtd || !prtd->audio_client) {
 		pr_err("%s: private data null or audio client freed\n",
 			__func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prtd->pcm_count = snd_pcm_lib_period_bytes(substream);
@@ -321,7 +321,7 @@ static int q6asm_dai_trigger(struct snd_soc_component *component,
 		ret = q6asm_cmd_nowait(prtd->audio_client, CMD_PAUSE);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -345,7 +345,7 @@ static int q6asm_dai_open(struct snd_soc_component *component,
 	pdata = snd_soc_component_get_drvdata(component);
 	if (!pdata) {
 		pr_err("Drv data not found ..\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prtd = kzalloc(sizeof(struct q6asm_dai_rtd), GFP_KERNEL);
@@ -555,7 +555,7 @@ static int q6asm_dai_compr_open(struct snd_soc_component *component,
 	pdata = snd_soc_component_get_drvdata(component);
 	if (!pdata) {
 		dev_err(dev, "Drv data not found ..\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prtd = kzalloc(sizeof(*prtd), GFP_KERNEL);
@@ -652,11 +652,11 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 
 	pdata = snd_soc_component_get_drvdata(component);
 	if (!pdata)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!prtd || !prtd->audio_client) {
 		dev_err(dev, "private data null or audio client freed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	prtd->periods = runtime->fragments;
@@ -702,7 +702,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 							   &flac_cfg);
 		if (ret < 0) {
 			dev_err(dev, "FLAC CMD Format block failed:%d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		break;
 
@@ -725,7 +725,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 		else if (wma_cfg.num_channels == 2)
 			wma_cfg.channel_mask = 3; /* Stereo FL/FR */
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* check the codec profile */
 		switch (params->codec.profile) {
@@ -753,7 +753,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 		default:
 			dev_err(dev, "Unknown WMA profile:%x\n",
 				params->codec.profile);
-			return -EIO;
+			return -ERR(EIO);
 		}
 
 		if (wma_v9)
@@ -764,7 +764,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 					prtd->audio_client, &wma_cfg);
 		if (ret < 0) {
 			dev_err(dev, "WMA9 CMD failed:%d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		break;
 
@@ -797,7 +797,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 							   &alac_cfg);
 		if (ret < 0) {
 			dev_err(dev, "ALAC CMD Format block failed:%d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		break;
 
@@ -821,7 +821,7 @@ static int q6asm_dai_compr_set_params(struct snd_soc_component *component,
 							  &ape_cfg);
 		if (ret < 0) {
 			dev_err(dev, "APE CMD Format block failed:%d\n", ret);
-			return -EIO;
+			return -ERR(EIO);
 		}
 		break;
 
@@ -865,7 +865,7 @@ static int q6asm_dai_compr_trigger(struct snd_soc_component *component,
 		ret = q6asm_cmd_nowait(prtd->audio_client, CMD_PAUSE);
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -1052,7 +1052,7 @@ static int of_q6asm_parse_dai_data(struct device *dev,
 	pdata->num_dais = of_get_child_count(dev->of_node);
 	if (!pdata->num_dais) {
 		dev_err(dev, "No dais found in DT\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	pdata->dais = devm_kcalloc(dev, pdata->num_dais, sizeof(*dai_drv),

@@ -38,7 +38,7 @@ static int rings_prepare_data(const struct ethnl_req_info *req_base,
 	int ret;
 
 	if (!dev->ethtool_ops->get_ringparam)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 	ret = ethnl_ops_begin(dev);
 	if (ret < 0)
 		return ret;
@@ -88,7 +88,7 @@ static int rings_fill_reply(struct sk_buff *skb,
 			  ringparam->tx_max_pending) ||
 	      nla_put_u32(skb, ETHTOOL_A_RINGS_TX,
 			  ringparam->tx_pending))))
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	return 0;
 }
@@ -147,7 +147,7 @@ int ethnl_set_rings(struct sk_buff *skb, struct genl_info *info)
 		return ret;
 	dev = req_info.dev;
 	ops = dev->ethtool_ops;
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (!ops->get_ringparam || !ops->set_ringparam)
 		goto out_dev;
 
@@ -179,7 +179,7 @@ int ethnl_set_rings(struct sk_buff *skb, struct genl_info *info)
 	else
 		err_attr = NULL;
 	if (err_attr) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		NL_SET_ERR_MSG_ATTR(info->extack, err_attr,
 				    "requested ring size exceeds maximum");
 		goto out_ops;

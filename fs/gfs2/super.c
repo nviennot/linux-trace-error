@@ -108,13 +108,13 @@ int gfs2_jdesc_check(struct gfs2_jdesc *jd)
 	u64 size = i_size_read(jd->jd_inode);
 
 	if (gfs2_check_internal_file_size(jd->jd_inode, 8 << 20, BIT(30)))
-		return -EIO;
+		return -ERR(EIO);
 
 	jd->jd_blocks = size >> sdp->sd_sb.sb_bsize_shift;
 
 	if (gfs2_write_alloc_required(ip, 0, size)) {
 		gfs2_consist_inode(ip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	return 0;
@@ -175,7 +175,7 @@ int gfs2_make_fs_rw(struct gfs2_sbd *sdp)
 
 	j_gl->gl_ops->go_inval(j_gl, DIO_METADATA);
 	if (gfs2_withdrawn(sdp)) {
-		error = -EIO;
+		error = -ERR(EIO);
 		goto fail;
 	}
 
@@ -185,7 +185,7 @@ int gfs2_make_fs_rw(struct gfs2_sbd *sdp)
 
 	if (!(head.lh_flags & GFS2_LOG_HEAD_UNMOUNT)) {
 		gfs2_consist(sdp);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto fail;
 	}
 
@@ -442,7 +442,7 @@ static int gfs2_lock_fs_check_clean(struct gfs2_sbd *sdp)
 		if (error)
 			break;
 		if (!(lh.lh_flags & GFS2_LOG_HEAD_UNMOUNT)) {
-			error = -EBUSY;
+			error = -ERR(EBUSY);
 			break;
 		}
 	}
@@ -801,7 +801,7 @@ static int gfs2_freeze(struct super_block *sb)
 
 	for (;;) {
 		if (gfs2_withdrawn(sdp)) {
-			error = -EINVAL;
+			error = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -932,7 +932,7 @@ static int gfs2_statfs_slow(struct gfs2_sbd *sdp, struct gfs2_statfs_change_host
 			}
 
 			if (signal_pending(current))
-				error = -ERESTARTSYS;
+				error = -ERR(ERESTARTSYS);
 		}
 
 		if (done)
@@ -1202,7 +1202,7 @@ static int gfs2_dinode_dealloc(struct gfs2_inode *ip)
 
 	if (gfs2_get_inode_blocks(&ip->i_inode) != 1) {
 		gfs2_consist_inode(ip);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	error = gfs2_rindex_update(sdp);
@@ -1216,7 +1216,7 @@ static int gfs2_dinode_dealloc(struct gfs2_inode *ip)
 	rgd = gfs2_blk2rgrpd(sdp, ip->i_no_addr, 1);
 	if (!rgd) {
 		gfs2_consist_inode(ip);
-		error = -EIO;
+		error = -ERR(EIO);
 		goto out_qs;
 	}
 

@@ -66,7 +66,7 @@ static int kobject_action_type(const char *buf, size_t count,
 	enum kobject_action action;
 	size_t count_first;
 	const char *args_start;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	if (count && (buf[count-1] == '\n' || buf[count-1] == '\0'))
 		count--;
@@ -117,13 +117,13 @@ static int kobject_action_args(const char *buf, size_t count,
 	struct kobj_uevent_env *env = NULL;
 	const char *next, *buf_end, *key;
 	int key_len;
-	int r = -EINVAL;
+	int r = -ERR(EINVAL);
 
 	if (count && (buf[count - 1] == '\n' || buf[count - 1] == '\0'))
 		count--;
 
 	if (!count)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	env = kzalloc(sizeof(*env), GFP_KERNEL);
 	if (!env)
@@ -485,7 +485,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 		pr_debug("kobject: '%s' (%p): %s: attempted to send uevent "
 			 "without kset!\n", kobject_name(kobj), kobj,
 			 __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	kset = top_kobj->kset;
@@ -527,7 +527,7 @@ int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
 	/* complete object path */
 	devpath = kobject_get_path(kobj, GFP_KERNEL);
 	if (!devpath) {
-		retval = -ENOENT;
+		retval = -ERR(ENOENT);
 		goto exit;
 	}
 
@@ -695,7 +695,7 @@ static int uevent_net_broadcast(struct sock *usk, struct sk_buff *skb,
 	/* verify message does not overflow */
 	if ((skb->len + ret) > UEVENT_BUFFER_SIZE) {
 		NL_SET_ERR_MSG(extack, "uevent message too big");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* copy skb and extend to accommodate sequence number */
@@ -728,7 +728,7 @@ static int uevent_net_rcv_skb(struct sk_buff *skb, struct nlmsghdr *nlh,
 	int ret;
 
 	if (!nlmsg_data(nlh))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/*
 	 * Verify that we are allowed to send messages to the target
@@ -738,7 +738,7 @@ static int uevent_net_rcv_skb(struct sk_buff *skb, struct nlmsghdr *nlh,
 	net = sock_net(NETLINK_CB(skb).sk);
 	if (!netlink_ns_capable(skb, net->user_ns, CAP_SYS_ADMIN)) {
 		NL_SET_ERR_MSG(extack, "missing CAP_SYS_ADMIN capability");
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	mutex_lock(&uevent_sock_mutex);
@@ -770,7 +770,7 @@ static int uevent_net_init(struct net *net)
 	if (!ue_sk->sk) {
 		pr_err("kobject_uevent: unable to create netlink socket!\n");
 		kfree(ue_sk);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	net->uevent_sock = ue_sk;

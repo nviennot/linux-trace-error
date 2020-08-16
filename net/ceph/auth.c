@@ -29,7 +29,7 @@ static int ceph_auth_init_protocol(struct ceph_auth_client *ac, int protocol)
 	case CEPH_AUTH_CEPHX:
 		return ceph_x_init(ac);
 	default:
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 }
 
@@ -91,7 +91,7 @@ int ceph_auth_entity_name_encode(const char *name, void **p, void *end)
 	int len = strlen(name);
 
 	if (*p + 2*sizeof(u32) + len > end)
-		return -ERANGE;
+		return -ERR(ERANGE);
 	ceph_encode_32(p, CEPH_ENTITY_TYPE_CLIENT);
 	ceph_encode_32(p, len);
 	ceph_encode_copy(p, name, len);
@@ -141,7 +141,7 @@ out:
 	return ret;
 
 bad:
-	ret = -ERANGE;
+	ret = -ERR(ERANGE);
 	goto out;
 }
 
@@ -188,7 +188,7 @@ int ceph_handle_auth_reply(struct ceph_auth_client *ac,
 	int payload_len;
 	char *result_msg;
 	int result_msg_len;
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	mutex_lock(&ac->mutex);
 	dout("handle_auth_reply %p %p\n", p, end);
@@ -253,7 +253,7 @@ out:
 
 bad:
 	pr_err("failed to decode auth msg\n");
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out;
 }
 

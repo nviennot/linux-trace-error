@@ -42,7 +42,7 @@ static int __check_free_space_extents(struct btrfs_trans_handle *trans,
 
 	if (extent_count != num_extents) {
 		test_err("extent count is wrong");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 	if (flags & BTRFS_FREE_SPACE_USING_BITMAPS) {
@@ -101,7 +101,7 @@ out:
 	return ret;
 invalid:
 	test_err("free space tree is invalid");
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	goto out;
 }
 
@@ -507,7 +507,7 @@ static int run_test(test_func_t test_func, int bitmaps, u32 sectorsize,
 
 	if (btrfs_header_nritems(root->node) != 0) {
 		test_err("free space tree has leftover items");
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 

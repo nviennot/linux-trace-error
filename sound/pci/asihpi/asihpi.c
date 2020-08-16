@@ -343,7 +343,7 @@ static int snd_card_asihpi_format_alsa2hpi(snd_pcm_format_t alsa_format,
 	snd_printd(KERN_WARNING "failed match for alsa format %d\n",
 		   alsa_format);
 	*hpi_format = 0;
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void snd_card_asihpi_pcm_samplerates(struct snd_card_asihpi *asihpi,
@@ -459,11 +459,11 @@ static int snd_card_asihpi_pcm_hw_params(struct snd_pcm_substream *substream,
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 		if (hpi_instream_reset(dpcm->h_stream) != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		if (hpi_instream_set_format(
 			dpcm->h_stream, &dpcm->format) != 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	dpcm->hpi_buffer_attached = 0;
@@ -489,7 +489,7 @@ static int snd_card_asihpi_pcm_hw_params(struct snd_pcm_substream *substream,
 	bytes_per_sec *= width;
 	bytes_per_sec /= 8;
 	if (width < 0 || bytes_per_sec == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dpcm->bytes_per_sec = bytes_per_sec;
 	dpcm->buffer_bytes = params_buffer_bytes(params);
@@ -681,7 +681,7 @@ static int snd_card_asihpi_trigger(struct snd_pcm_substream *substream,
 		break;
 	default:
 		snd_printd(KERN_ERR "\tINVALID\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -1023,9 +1023,9 @@ static int snd_card_asihpi_playback_open(struct snd_pcm_substream *substream)
 	if (err)
 		kfree(dpcm);
 	if (err == HPI_ERROR_OBJ_ALREADY_OPEN)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (err)
-		return -EIO;
+		return -ERR(EIO);
 
 	/*? also check ASI5000 samplerate source
 	    If external, only support external rate.
@@ -1201,9 +1201,9 @@ static int snd_card_asihpi_capture_open(struct snd_pcm_substream *substream)
 	if (err)
 		kfree(dpcm);
 	if (err == HPI_ERROR_OBJ_ALREADY_OPEN)
-		return -EBUSY;
+		return -ERR(EBUSY);
 	if (err)
-		return -EIO;
+		return -ERR(EIO);
 
 	timer_setup(&dpcm->timer, snd_card_asihpi_timer_function, 0);
 	dpcm->substream = substream;
@@ -1705,7 +1705,7 @@ static int snd_asihpi_aesebu_format_put(struct snd_kcontrol *kcontrol,
 		source = HPI_AESEBU_FORMAT_AESEBU;
 
 	if (func(h_control, source) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 1;
 }
@@ -1761,7 +1761,7 @@ static int snd_asihpi_aesebu_rx_add(struct snd_card_asihpi *asihpi,
 
 
 	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Status");
 	snd_control.access =
@@ -1875,7 +1875,7 @@ static int asihpi_tuner_band_query(struct snd_kcontrol *kcontrol,
 	}
 
 	if (err && (err != HPI_ERROR_INVALID_OBJ_INDEX))
-		return -EIO;
+		return -ERR(EIO);
 
 	return i;
 }
@@ -2033,7 +2033,7 @@ static int snd_asihpi_tuner_add(struct snd_card_asihpi *asihpi,
 		snd_control.put = snd_asihpi_tuner_gain_put;
 
 		if (ctl_add(card, &snd_control, asihpi) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Band");
@@ -2042,7 +2042,7 @@ static int snd_asihpi_tuner_add(struct snd_card_asihpi *asihpi,
 	snd_control.put = snd_asihpi_tuner_band_put;
 
 	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Freq");
 	snd_control.info = snd_asihpi_tuner_freq_info;
@@ -2281,7 +2281,7 @@ static int snd_asihpi_cmode_info(struct snd_kcontrol *kcontrol,
 			}
 
 	if (!valid_modes)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return snd_ctl_enum_info(uinfo, 1, valid_modes, mapped_names);
 }
@@ -2501,7 +2501,7 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 	u16 source;
 
 	if (snd_BUG_ON(!asihpi))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = asihpi->card;
 	clkcache = &asihpi->cc;
 	snd_control.private_value = hpi_ctl->h_control;
@@ -2542,7 +2542,7 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 	snd_control.get = snd_asihpi_clksrc_get;
 	snd_control.put = snd_asihpi_clksrc_put;
 	if (ctl_add(card, &snd_control, asihpi) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 
 	if (clkcache->has_local) {
@@ -2554,7 +2554,7 @@ static int snd_asihpi_sampleclock_add(struct snd_card_asihpi *asihpi,
 
 
 		if (ctl_add(card, &snd_control, asihpi) < 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	asihpi_ctl_init(&snd_control, hpi_ctl, "Rate");
@@ -2578,7 +2578,7 @@ static int snd_card_asihpi_mixer_new(struct snd_card_asihpi *asihpi)
 	struct hpi_control hpi_ctl, prev_ctl;
 
 	if (snd_BUG_ON(!asihpi))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	card = asihpi->card;
 	strcpy(card->mixername, "Asihpi Mixer");
 
@@ -2758,7 +2758,7 @@ static int snd_asihpi_hpi_open(struct snd_hwdep *hw, struct file *file)
 	if (enable_hpi_hwdep)
 		return 0;
 	else
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 }
 
@@ -2767,7 +2767,7 @@ static int snd_asihpi_hpi_release(struct snd_hwdep *hw, struct file *file)
 	if (enable_hpi_hwdep)
 		return asihpi_hpi_release(file);
 	else
-		return -ENODEV;
+		return -ERR(ENODEV);
 }
 
 static int snd_asihpi_hpi_ioctl(struct snd_hwdep *hw, struct file *file,
@@ -2776,7 +2776,7 @@ static int snd_asihpi_hpi_ioctl(struct snd_hwdep *hw, struct file *file,
 	if (enable_hpi_hwdep)
 		return asihpi_hpi_ioctl(file, cmd, arg);
 	else
-		return -ENODEV;
+		return -ERR(ENODEV);
 }
 
 
@@ -2817,12 +2817,12 @@ static int snd_asihpi_probe(struct pci_dev *pci_dev,
 
 	static int dev;
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	/* Should this be enable[hpi->index] ? */
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	/* Initialise low-level HPI driver */

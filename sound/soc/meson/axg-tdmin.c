@@ -128,7 +128,7 @@ static int axg_tdmin_prepare(struct regmap *map,
 	default:
 		pr_err("Unsupported format: %u\n",
 		       ts->iface->fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	val = TDMIN_CTRL_IN_BIT_SKEW(skew);

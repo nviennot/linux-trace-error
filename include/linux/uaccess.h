@@ -293,7 +293,7 @@ copy_struct_from_user(void *dst, size_t ksize, const void __user *src,
 	} else if (usize > ksize) {
 		int ret = check_zeroed_user(src + size, rest);
 		if (ret <= 0)
-			return ret ?: -E2BIG;
+			return ret ?: -ERR(E2BIG);
 	}
 	/* Copy the interoperable parts of the struct. */
 	if (copy_from_user(dst, src, size))

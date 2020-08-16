@@ -344,12 +344,12 @@ int z_erofs_map_blocks_iter(struct inode *inode,
 			    struct erofs_map_blocks *map,
 			    int flags);
 #else
-static inline int z_erofs_fill_inode(struct inode *inode) { return -EOPNOTSUPP; }
+static inline int z_erofs_fill_inode(struct inode *inode) { return -ERR(EOPNOTSUPP); }
 static inline int z_erofs_map_blocks_iter(struct inode *inode,
 					  struct erofs_map_blocks *map,
 					  int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif	/* !CONFIG_EROFS_FS_ZIP */
 
@@ -397,7 +397,7 @@ void *erofs_get_pcpubuf(unsigned int pagenr);
 #else
 static inline void *erofs_get_pcpubuf(unsigned int pagenr)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 #define erofs_put_pcpubuf(buf) do {} while (0)

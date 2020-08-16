@@ -164,7 +164,7 @@ static int jread(struct buffer_head **bhp, journal_t *journal,
 		printk(KERN_ERR "JBD2: Failed to read block at offset %u\n",
 			offset);
 		brelse(bh);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	*bhp = bh;
@@ -796,11 +796,11 @@ static int do_one_pass(journal_t *journal,
 				"transaction %u, expected %u\n",
 				pass, next_commit_ID, info->end_transaction);
 			if (!success)
-				success = -EIO;
+				success = -ERR(EIO);
 		}
 	}
 	if (block_error && success == 0)
-		success = -EIO;
+		success = -ERR(EIO);
 	return success;
 
  failed:
@@ -828,7 +828,7 @@ static int scan_revoke_records(journal_t *journal, struct buffer_head *bh,
 	if (jbd2_journal_has_csum_v2or3(journal))
 		csum_size = sizeof(struct jbd2_journal_block_tail);
 	if (rcount > journal->j_blocksize - csum_size)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	max = rcount;
 
 	if (jbd2_has_feature_64bit(journal))

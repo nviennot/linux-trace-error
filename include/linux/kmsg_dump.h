@@ -106,12 +106,12 @@ static inline void kmsg_dump_rewind(struct kmsg_dumper *dumper)
 
 static inline int kmsg_dump_register(struct kmsg_dumper *dumper)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int kmsg_dump_unregister(struct kmsg_dumper *dumper)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline const char *kmsg_dump_reason_str(enum kmsg_dump_reason reason)

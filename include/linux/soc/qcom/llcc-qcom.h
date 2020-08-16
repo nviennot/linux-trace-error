@@ -137,7 +137,7 @@ static inline void llcc_slice_putd(struct llcc_slice_desc *desc)
 
 static inline int llcc_get_slice_id(struct llcc_slice_desc *desc)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline size_t llcc_get_slice_size(struct llcc_slice_desc *desc)
@@ -146,12 +146,12 @@ static inline size_t llcc_get_slice_size(struct llcc_slice_desc *desc)
 }
 static inline int llcc_slice_activate(struct llcc_slice_desc *desc)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int llcc_slice_deactivate(struct llcc_slice_desc *desc)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 

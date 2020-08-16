@@ -93,7 +93,7 @@ static const struct seq_operations neigh_stat_seq_ops;
 static int neigh_blackhole(struct neighbour *neigh, struct sk_buff *skb)
 {
 	kfree_skb(skb);
-	return -ENETDOWN;
+	return -ERR(ENETDOWN);
 }
 
 static void neigh_cleanup_and_release(struct neighbour *neigh)
@@ -583,7 +583,7 @@ static struct neighbour *___neigh_create(struct neigh_table *tbl,
 	trace_neigh_create(tbl, dev, pkey, n, exempt_from_gc);
 
 	if (!n) {
-		rc = ERR_PTR(-ENOBUFS);
+		rc = ERR_PTR(-ERR(ENOBUFS));
 		goto out;
 	}
 
@@ -624,7 +624,7 @@ static struct neighbour *___neigh_create(struct neigh_table *tbl,
 	hash_val = tbl->hash(n->primary_key, dev, nht->hash_rnd) >> (32 - nht->hash_shift);
 
 	if (n->parms->dead) {
-		rc = ERR_PTR(-EINVAL);
+		rc = ERR_PTR(-ERR(EINVAL));
 		goto out_tbl_unlock;
 	}
 
@@ -779,7 +779,7 @@ int pneigh_delete(struct neigh_table *tbl, struct net *net, const void *pkey,
 		}
 	}
 	write_unlock_bh(&tbl->lock);
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
@@ -810,7 +810,7 @@ static int pneigh_ifdown_and_unlock(struct neigh_table *tbl,
 			dev_put(n->dev);
 		kfree(n);
 	}
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static void neigh_parms_destroy(struct neigh_parms *parms);
@@ -1241,7 +1241,7 @@ static int __neigh_update(struct neighbour *neigh, const u8 *lladdr,
 
 	dev    = neigh->dev;
 	old    = neigh->nud_state;
-	err    = -EPERM;
+	err    = -ERR(EPERM);
 
 	if (!(flags & NEIGH_UPDATE_F_ADMIN) &&
 	    (old & (NUD_NOARP | NUD_PERMANENT)))
@@ -1285,7 +1285,7 @@ static int __neigh_update(struct neighbour *neigh, const u8 *lladdr,
 		/* No address is supplied; if we know something,
 		   use it, otherwise discard the request.
 		 */
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (!(old & NUD_VALID)) {
 			NL_SET_ERR_MSG(extack, "No link layer address given");
 			goto out;
@@ -1493,7 +1493,7 @@ int neigh_resolve_output(struct neighbour *neigh, struct sk_buff *skb)
 out:
 	return rc;
 out_kfree_skb:
-	rc = -EINVAL;
+	rc = -ERR(EINVAL);
 	kfree_skb(skb);
 	goto out;
 }
@@ -1517,7 +1517,7 @@ int neigh_connected_output(struct neighbour *neigh, struct sk_buff *skb)
 	if (err >= 0)
 		err = dev_queue_xmit(skb);
 	else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		kfree_skb(skb);
 	}
 	return err;
@@ -1794,7 +1794,7 @@ static int neigh_delete(struct sk_buff *skb, struct nlmsghdr *nlh,
 	struct neigh_table *tbl;
 	struct neighbour *neigh;
 	struct net_device *dev = NULL;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	ASSERT_RTNL();
 	if (nlmsg_len(nlh) < sizeof(*ndm))
@@ -1810,14 +1810,14 @@ static int neigh_delete(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (ndm->ndm_ifindex) {
 		dev = __dev_get_by_index(net, ndm->ndm_ifindex);
 		if (dev == NULL) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 	}
 
 	tbl = neigh_find_table(ndm->ndm_family);
 	if (tbl == NULL)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (nla_len(dst_attr) < (int)tbl->key_len) {
 		NL_SET_ERR_MSG(extack, "Invalid network address");
@@ -1834,7 +1834,7 @@ static int neigh_delete(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	neigh = neigh_lookup(tbl, nla_data(dst_attr), dev);
 	if (neigh == NULL) {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1871,7 +1871,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (err < 0)
 		goto out;
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (!tb[NDA_DST]) {
 		NL_SET_ERR_MSG(extack, "Network address not specified");
 		goto out;
@@ -1881,7 +1881,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (ndm->ndm_ifindex) {
 		dev = __dev_get_by_index(net, ndm->ndm_ifindex);
 		if (dev == NULL) {
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 			goto out;
 		}
 
@@ -1893,7 +1893,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 	tbl = neigh_find_table(ndm->ndm_family);
 	if (tbl == NULL)
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 
 	if (nla_len(tb[NDA_DST]) < (int)tbl->key_len) {
 		NL_SET_ERR_MSG(extack, "Invalid network address");
@@ -1909,7 +1909,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 	if (ndm->ndm_flags & NTF_PROXY) {
 		struct pneigh_entry *pn;
 
-		err = -ENOBUFS;
+		err = -ERR(ENOBUFS);
 		pn = pneigh_lookup(tbl, net, dst, dev, 1);
 		if (pn) {
 			pn->flags = ndm->ndm_flags;
@@ -1926,7 +1926,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	if (tbl->allow_add && !tbl->allow_add(dev, extack)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1935,7 +1935,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 		bool exempt_from_gc;
 
 		if (!(nlh->nlmsg_flags & NLM_F_CREATE)) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto out;
 		}
 
@@ -1948,7 +1948,7 @@ static int neigh_add(struct sk_buff *skb, struct nlmsghdr *nlh,
 		}
 	} else {
 		if (nlh->nlmsg_flags & NLM_F_EXCL) {
-			err = -EEXIST;
+			err = -ERR(EEXIST);
 			neigh_release(neigh);
 			goto out;
 		}
@@ -1986,7 +1986,7 @@ static int neightbl_fill_parms(struct sk_buff *skb, struct neigh_parms *parms)
 
 	nest = nla_nest_start_noflag(skb, NDTA_PARMS);
 	if (nest == NULL)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	if ((parms->dev &&
 	     nla_put_u32(skb, NDTPA_IFINDEX, parms->dev->ifindex)) ||
@@ -2025,7 +2025,7 @@ static int neightbl_fill_parms(struct sk_buff *skb, struct neigh_parms *parms)
 
 nla_put_failure:
 	nla_nest_cancel(skb, nest);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int neightbl_fill_info(struct sk_buff *skb, struct neigh_table *tbl,
@@ -2036,7 +2036,7 @@ static int neightbl_fill_info(struct sk_buff *skb, struct neigh_table *tbl,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndtmsg), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndtmsg = nlmsg_data(nlh);
 
@@ -2114,7 +2114,7 @@ static int neightbl_fill_info(struct sk_buff *skb, struct neigh_table *tbl,
 nla_put_failure:
 	read_unlock_bh(&tbl->lock);
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int neightbl_fill_param_info(struct sk_buff *skb,
@@ -2128,7 +2128,7 @@ static int neightbl_fill_param_info(struct sk_buff *skb,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndtmsg), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndtmsg = nlmsg_data(nlh);
 
@@ -2147,7 +2147,7 @@ static int neightbl_fill_param_info(struct sk_buff *skb,
 errout:
 	read_unlock_bh(&tbl->lock);
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static const struct nla_policy nl_neightbl_policy[NDTA_MAX+1] = {
@@ -2192,7 +2192,7 @@ static int neightbl_set(struct sk_buff *skb, struct nlmsghdr *nlh,
 		goto errout;
 
 	if (tb[NDTA_NAME] == NULL) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto errout;
 	}
 
@@ -2211,7 +2211,7 @@ static int neightbl_set(struct sk_buff *skb, struct nlmsghdr *nlh,
 	}
 
 	if (!found)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	/*
 	 * We acquire tbl->lock to be nice to the periodic timers and
@@ -2235,7 +2235,7 @@ static int neightbl_set(struct sk_buff *skb, struct nlmsghdr *nlh,
 
 		p = lookup_neigh_parms(tbl, net, ifindex);
 		if (p == NULL) {
-			err = -ENOENT;
+			err = -ERR(ENOENT);
 			goto errout_tbl_lock;
 		}
 
@@ -2312,7 +2312,7 @@ static int neightbl_set(struct sk_buff *skb, struct nlmsghdr *nlh,
 		}
 	}
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 	if ((tb[NDTA_THRESH1] || tb[NDTA_THRESH2] ||
 	     tb[NDTA_THRESH3] || tb[NDTA_GC_INTERVAL]) &&
 	    !net_eq(net, &init_net))
@@ -2345,18 +2345,18 @@ static int neightbl_valid_dump_info(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndtm))) {
 		NL_SET_ERR_MSG(extack, "Invalid header for neighbor table dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ndtm = nlmsg_data(nlh);
 	if (ndtm->ndtm_pad1  || ndtm->ndtm_pad2) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor table dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (nlmsg_attrlen(nlh, sizeof(*ndtm))) {
 		NL_SET_ERR_MSG(extack, "Invalid data after header in neighbor table dump request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -2433,7 +2433,7 @@ static int neigh_fill_info(struct sk_buff *skb, struct neighbour *neigh,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndm), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family	 = neigh->ops->family;
@@ -2476,7 +2476,7 @@ static int neigh_fill_info(struct sk_buff *skb, struct neighbour *neigh,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static int pneigh_fill_info(struct sk_buff *skb, struct pneigh_entry *pn,
@@ -2488,7 +2488,7 @@ static int pneigh_fill_info(struct sk_buff *skb, struct pneigh_entry *pn,
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*ndm), flags);
 	if (nlh == NULL)
-		return -EMSGSIZE;
+		return -ERR(EMSGSIZE);
 
 	ndm = nlmsg_data(nlh);
 	ndm->ndm_family	 = tbl->family;
@@ -2510,7 +2510,7 @@ static int pneigh_fill_info(struct sk_buff *skb, struct pneigh_entry *pn,
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
+	return -ERR(EMSGSIZE);
 }
 
 static void neigh_update_notify(struct neighbour *neigh, u32 nlmsg_pid)
@@ -2651,19 +2651,19 @@ static int neigh_valid_dump_req(const struct nlmsghdr *nlh,
 
 		if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
 			NL_SET_ERR_MSG(extack, "Invalid header for neighbor dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		ndm = nlmsg_data(nlh);
 		if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_ifindex ||
 		    ndm->ndm_state || ndm->ndm_type) {
 			NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		if (ndm->ndm_flags & ~NTF_PROXY) {
 			NL_SET_ERR_MSG(extack, "Invalid flags in header for neighbor dump request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg),
@@ -2691,7 +2691,7 @@ static int neigh_valid_dump_req(const struct nlmsghdr *nlh,
 		default:
 			if (strict_check) {
 				NL_SET_ERR_MSG(extack, "Unsupported attribute in neighbor dump request");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 	}
@@ -2756,19 +2756,19 @@ static int neigh_valid_get_req(const struct nlmsghdr *nlh,
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*ndm))) {
 		NL_SET_ERR_MSG(extack, "Invalid header for neighbor get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ndm = nlmsg_data(nlh);
 	if (ndm->ndm_pad1  || ndm->ndm_pad2  || ndm->ndm_state ||
 	    ndm->ndm_type) {
 		NL_SET_ERR_MSG(extack, "Invalid values in header for neighbor get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ndm->ndm_flags & ~NTF_PROXY) {
 		NL_SET_ERR_MSG(extack, "Invalid flags in header for neighbor get request");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nlmsg_parse_deprecated_strict(nlh, sizeof(struct ndmsg), tb,
@@ -2781,7 +2781,7 @@ static int neigh_valid_get_req(const struct nlmsghdr *nlh,
 	*tbl = neigh_find_table(ndm->ndm_family);
 	if (*tbl == NULL) {
 		NL_SET_ERR_MSG(extack, "Unsupported family in header for neighbor get request");
-		return -EAFNOSUPPORT;
+		return -ERR(EAFNOSUPPORT);
 	}
 
 	for (i = 0; i <= NDA_MAX; ++i) {
@@ -2792,13 +2792,13 @@ static int neigh_valid_get_req(const struct nlmsghdr *nlh,
 		case NDA_DST:
 			if (nla_len(tb[i]) != (int)(*tbl)->key_len) {
 				NL_SET_ERR_MSG(extack, "Invalid network address in neighbor get request");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			*dst = nla_data(tb[i]);
 			break;
 		default:
 			NL_SET_ERR_MSG(extack, "Unsupported attribute in neighbor get request");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
@@ -2823,7 +2823,7 @@ static int neigh_get_reply(struct net *net, struct neighbour *neigh,
 
 	skb = nlmsg_new(neigh_nlmsg_size(), GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = neigh_fill_info(skb, neigh, pid, seq, RTM_NEWNEIGH, 0);
 	if (err) {
@@ -2851,7 +2851,7 @@ static int pneigh_get_reply(struct net *net, struct pneigh_entry *neigh,
 
 	skb = nlmsg_new(pneigh_nlmsg_size(), GFP_KERNEL);
 	if (!skb)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	err = pneigh_fill_info(skb, neigh, pid, seq, RTM_NEWNEIGH, 0, tbl);
 	if (err) {
@@ -2885,13 +2885,13 @@ static int neigh_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		dev = __dev_get_by_index(net, dev_idx);
 		if (!dev) {
 			NL_SET_ERR_MSG(extack, "Unknown device ifindex");
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 	}
 
 	if (!dst) {
 		NL_SET_ERR_MSG(extack, "Network address not specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (ndm_flags & NTF_PROXY) {
@@ -2900,7 +2900,7 @@ static int neigh_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 		pn = pneigh_lookup(tbl, net, dst, dev, 0);
 		if (!pn) {
 			NL_SET_ERR_MSG(extack, "Proxy neighbour entry not found");
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		return pneigh_get_reply(net, pn, NETLINK_CB(in_skb).portid,
 					nlh->nlmsg_seq, tbl);
@@ -2908,13 +2908,13 @@ static int neigh_get(struct sk_buff *in_skb, struct nlmsghdr *nlh,
 
 	if (!dev) {
 		NL_SET_ERR_MSG(extack, "No device specified");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	neigh = neigh_lookup(tbl, dst, dev);
 	if (!neigh) {
 		NL_SET_ERR_MSG(extack, "Neighbour entry not found");
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = neigh_get_reply(net, neigh, NETLINK_CB(in_skb).portid,
@@ -2985,7 +2985,7 @@ EXPORT_SYMBOL(__neigh_for_each_release);
 int neigh_xmit(int index, struct net_device *dev,
 	       const void *addr, struct sk_buff *skb)
 {
-	int err = -EAFNOSUPPORT;
+	int err = -ERR(EAFNOSUPPORT);
 	if (likely(index < NEIGH_NR_TABLES)) {
 		struct neigh_table *tbl;
 		struct neighbour *neigh;
@@ -3351,7 +3351,7 @@ static void __neigh_notify(struct neighbour *n, int type, int flags,
 {
 	struct net *net = dev_net(n->dev);
 	struct sk_buff *skb;
-	int err = -ENOBUFS;
+	int err = -ERR(ENOBUFS);
 
 	skb = nlmsg_new(neigh_nlmsg_size(), GFP_ATOMIC);
 	if (skb == NULL)
@@ -3701,7 +3701,7 @@ int neigh_sysctl_register(struct net_device *dev, struct neigh_parms *p,
 free:
 	kfree(t);
 err:
-	return -ENOBUFS;
+	return -ERR(ENOBUFS);
 }
 EXPORT_SYMBOL(neigh_sysctl_register);
 

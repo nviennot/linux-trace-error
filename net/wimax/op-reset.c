@@ -53,7 +53,7 @@
  */
 int wimax_reset(struct wimax_dev *wimax_dev)
 {
-	int result = -EINVAL;
+	int result = -ERR(EINVAL);
 	struct device *dev = wimax_dev_to_dev(wimax_dev);
 	enum wimax_st state;
 
@@ -90,7 +90,7 @@ int wimax_gnl_doit_reset(struct sk_buff *skb, struct genl_info *info)
 	struct wimax_dev *wimax_dev;
 
 	d_fnstart(3, NULL, "(skb %p info %p)\n", skb, info);
-	result = -ENODEV;
+	result = -ERR(ENODEV);
 	if (info->attrs[WIMAX_GNL_RESET_IFIDX] == NULL) {
 		pr_err("WIMAX_GNL_OP_RFKILL: can't find IFIDX attribute\n");
 		goto error_no_wimax_dev;

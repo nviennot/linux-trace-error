@@ -190,7 +190,7 @@ vxfs_lookup(struct inode *dip, struct dentry *dp, unsigned int flags)
 	ino_t			ino;
 			 
 	if (dp->d_name.len > VXFS_NAMELEN)
-		return ERR_PTR(-ENAMETOOLONG);
+		return ERR_PTR(-ERR(ENAMETOOLONG));
 				 
 	ino = vxfs_inode_by_name(dip, dp);
 	if (ino)

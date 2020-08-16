@@ -67,7 +67,7 @@ int hda_dsp_core_reset_enter(struct snd_sof_dev *sdev, unsigned int core_mask)
 		dev_err(sdev->dev,
 			"error: reset enter failed: core_mask %x adspcs 0x%x\n",
 			core_mask, adspcs);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -107,7 +107,7 @@ int hda_dsp_core_reset_leave(struct snd_sof_dev *sdev, unsigned int core_mask)
 		dev_err(sdev->dev,
 			"error: reset leave failed: core_mask %x adspcs 0x%x\n",
 			core_mask, adspcs);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -146,7 +146,7 @@ int hda_dsp_core_run(struct snd_sof_dev *sdev, unsigned int core_mask)
 		hda_dsp_core_stall_reset(sdev, core_mask);
 		dev_err(sdev->dev, "error: DSP start core failed: core_mask %x\n",
 			core_mask);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -189,7 +189,7 @@ int hda_dsp_core_power_up(struct snd_sof_dev *sdev, unsigned int core_mask)
 		dev_err(sdev->dev,
 			"error: power up core failed core_mask %xadspcs 0x%x\n",
 			core_mask, adspcs);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -281,7 +281,7 @@ int hda_dsp_core_reset_power_down(struct snd_sof_dev *sdev,
 	if (hda_dsp_core_is_enabled(sdev, core_mask)) {
 		dev_err(sdev->dev, "error: dsp core disable fail mask %x: %d\n",
 			core_mask, ret);
-		ret = -EIO;
+		ret = -ERR(EIO);
 	}
 
 	return ret;
@@ -323,7 +323,7 @@ static int hda_dsp_wait_d0i3c_done(struct snd_sof_dev *sdev)
 
 	while (snd_hdac_chip_readb(bus, VS_D0I3C) & SOF_HDA_VS_D0I3C_CIP) {
 		if (!retry--)
-			return -ETIMEDOUT;
+			return -ERR(ETIMEDOUT);
 		usleep_range(10, 15);
 	}
 
@@ -400,7 +400,7 @@ static int hda_dsp_set_D0_state(struct snd_sof_dev *sdev,
 	default:
 		dev_err(sdev->dev, "error: transition from %d to %d not allowed\n",
 			sdev->dsp_power_state.state, target_state->state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set flags and register value for D0 target substate */
@@ -537,11 +537,11 @@ set_state:
 		dev_err(sdev->dev,
 			"error: transition from %d to %d not allowed\n",
 			sdev->dsp_power_state.state, target_state->state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	default:
 		dev_err(sdev->dev, "error: target state unsupported %d\n",
 			target_state->state);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	if (ret < 0) {
 		dev_err(sdev->dev,
@@ -752,7 +752,7 @@ int hda_dsp_runtime_idle(struct snd_sof_dev *sdev)
 	if (hbus->codec_powered) {
 		dev_dbg(sdev->dev, "some codecs still powered (%08X), not idle\n",
 			(unsigned int)hbus->codec_powered);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	return 0;
@@ -850,7 +850,7 @@ int hda_dsp_set_hw_params_upon_resume(struct snd_sof_dev *sdev)
 			name = asoc_rtd_to_codec(rtd, 0)->component->name;
 			link = snd_hdac_ext_bus_get_link(bus, name);
 			if (!link)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			stream->link_prepared = 0;
 

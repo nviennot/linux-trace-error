@@ -247,7 +247,7 @@ int __v9fs_readpage_from_fscache(struct inode *inode, struct page *page)
 
 	p9_debug(P9_DEBUG_FSC, "inode %p page %p\n", inode, page);
 	if (!v9inode->fscache)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ret = fscache_read_or_alloc_page(v9inode->fscache,
 					 page,
@@ -285,7 +285,7 @@ int __v9fs_readpages_from_fscache(struct inode *inode,
 
 	p9_debug(P9_DEBUG_FSC, "inode %p pages %u\n", inode, *nr_pages);
 	if (!v9inode->fscache)
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	ret = fscache_read_or_alloc_pages(v9inode->fscache,
 					  mapping, pages, nr_pages,

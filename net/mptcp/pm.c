@@ -26,12 +26,12 @@ int mptcp_pm_announce_addr(struct mptcp_sock *msk,
 
 int mptcp_pm_remove_addr(struct mptcp_sock *msk, u8 local_id)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 int mptcp_pm_remove_subflow(struct mptcp_sock *msk, u8 remote_id)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 /* path manager event handlers */

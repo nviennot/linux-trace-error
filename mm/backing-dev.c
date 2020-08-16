@@ -581,7 +581,7 @@ static int cgwb_create(struct backing_dev_info *bdi,
 	 * whether they're still online.  Don't link @wb if any is dead.
 	 * See wb_memcg_offline() and wb_blkcg_offline().
 	 */
-	ret = -ENODEV;
+	ret = -ERR(ENODEV);
 	spin_lock_irqsave(&cgwb_lock, flags);
 	if (test_bit(WB_registered, &bdi->wb.state) &&
 	    blkcg_cgwb_list->next && memcg_cgwb_list->next) {

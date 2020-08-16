@@ -11006,7 +11006,7 @@ static int uni2char(const wchar_t uni,
 	unsigned char out0,out1;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (uni == 0x20ac) {/* Euro symbol.The only exception with a non-ascii unicode */
 		out[0] = 0x80;
@@ -11022,10 +11022,10 @@ static int uni2char(const wchar_t uni,
 				out[0] = cl;
 				return 1;
 			}
-			return -EINVAL;
+			return -ERR(EINVAL);
 		} else {
 			if (boundlen <= 1)
-				return -ENAMETOOLONG;
+				return -ERR(ENAMETOOLONG);
 			out[0] = out0;
 			out[1] = out1;
 			return 2;
@@ -11035,15 +11035,15 @@ static int uni2char(const wchar_t uni,
 	uni2charset = page_uni2charset[ch];
 	if (uni2charset) {
 		if (boundlen <= 1)
-			return -ENAMETOOLONG;
+			return -ERR(ENAMETOOLONG);
 		out[0] = uni2charset[cl*2];
 		out[1] = uni2charset[cl*2+1];
 		if (out[0] == 0x00 && out[1] == 0x00)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		return 2;
 	}
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 }
 
 static int char2uni(const unsigned char *rawstring, int boundlen,
@@ -11054,7 +11054,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	int n;
 
 	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+		return -ERR(ENAMETOOLONG);
 
 	if (boundlen == 1) {
 		if (rawstring[0]==0x80) { /* Euro symbol.The only exception with a non-ascii unicode */
@@ -11072,7 +11072,7 @@ static int char2uni(const unsigned char *rawstring, int boundlen,
 	if (charset2uni && cl) {
 		*uni = charset2uni[cl];
 		if (*uni == 0x0000)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		n = 2;
 	} else{
 		if (ch==0x80) {/* Euro symbol.The only exception with a non-ascii unicode */

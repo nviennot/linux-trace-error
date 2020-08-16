@@ -242,7 +242,7 @@ static int wm8753_set_dai(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	if (snd_soc_component_active(component))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ioctl = snd_soc_component_read32(component, WM8753_IOCTL);
 
@@ -743,7 +743,7 @@ static int wm8753_set_dai_pll(struct snd_soc_dai *codec_dai, int pll_id,
 	struct snd_soc_component *component = codec_dai->component;
 
 	if (pll_id < WM8753_PLL1 || pll_id > WM8753_PLL2)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	if (pll_id == WM8753_PLL1) {
 		offset = 0;
@@ -852,7 +852,7 @@ static int get_coeff(int mclk, int rate)
 		if (coeff_div[i].rate == rate && coeff_div[i].mclk == mclk)
 			return i;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -879,7 +879,7 @@ static int wm8753_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		}
 		break;
 	}
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 /*
@@ -907,7 +907,7 @@ static int wm8753_vdac_adc_set_dai_fmt(struct snd_soc_component *component,
 		voice |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8753_PCM, voice);
@@ -971,7 +971,7 @@ static int wm8753_pcm_set_dai_fmt(struct snd_soc_component *component,
 		voice |= 0x0040;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -986,7 +986,7 @@ static int wm8753_pcm_set_dai_fmt(struct snd_soc_component *component,
 			voice |= 0x0080;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -1006,11 +1006,11 @@ static int wm8753_pcm_set_dai_fmt(struct snd_soc_component *component,
 			voice |= 0x0010;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8753_PCM, voice);
@@ -1038,7 +1038,7 @@ static int wm8753_set_dai_clkdiv(struct snd_soc_dai *codec_dai,
 		snd_soc_component_write(component, WM8753_SRATE2, reg | div);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -1068,7 +1068,7 @@ static int wm8753_hdac_set_dai_fmt(struct snd_soc_component *component,
 		hifi |= 0x0013;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8753_HIFI, hifi);
@@ -1096,7 +1096,7 @@ static int wm8753_i2s_set_dai_fmt(struct snd_soc_component *component,
 		hifi |= 0x0040;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* clock inversion */
@@ -1111,7 +1111,7 @@ static int wm8753_i2s_set_dai_fmt(struct snd_soc_component *component,
 			hifi |= 0x0080;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	case SND_SOC_DAIFMT_I2S:
@@ -1131,11 +1131,11 @@ static int wm8753_i2s_set_dai_fmt(struct snd_soc_component *component,
 			hifi |= 0x0010;
 			break;
 		default:
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_write(component, WM8753_HIFI, hifi);
@@ -1224,7 +1224,7 @@ static int wm8753_mode3_4_set_dai_fmt(struct snd_soc_component *component,
 	snd_soc_component_write(component, WM8753_CLOCK, clock | 0x4);
 
 	if (wm8753_hdac_set_dai_fmt(component, fmt) < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	return wm8753_vdac_adc_set_dai_fmt(component, fmt);
 }
 

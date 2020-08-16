@@ -217,7 +217,7 @@ static int bbclk_ev(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;

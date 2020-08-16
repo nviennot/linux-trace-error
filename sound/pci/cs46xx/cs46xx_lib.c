@@ -311,7 +311,7 @@ int snd_cs46xx_download(struct snd_cs46xx *chip,
 	offset = offset & 0xffff;
 
 	if (snd_BUG_ON((offset & 3) || (len & 3)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dst = chip->region.idx[bank+1].remap_addr + offset;
 	len /= sizeof(u32);
 
@@ -396,7 +396,7 @@ static int load_firmware(struct snd_cs46xx *chip,
 		return err;
 	fwsize = fw->size / 4;
 	if (fwsize < 2) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -458,7 +458,7 @@ static int load_firmware(struct snd_cs46xx *chip,
 	return 0;
 
  error_inval:
-	err = -EINVAL;
+	err = -ERR(EINVAL);
  error:
 	free_module_desc(module);
 	release_firmware(fw);
@@ -474,7 +474,7 @@ int snd_cs46xx_clear_BA1(struct snd_cs46xx *chip,
 	offset = offset & 0xffff;
 
 	if (snd_BUG_ON((offset & 3) || (len & 3)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	dst = chip->region.idx[bank+1].remap_addr + offset;
 	len /= sizeof(u32);
 
@@ -507,7 +507,7 @@ static int load_firmware(struct snd_cs46xx *chip)
 	if (err < 0)
 		return err;
 	if (fw->size != sizeof(*chip->ba1)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto error;
 	}
 
@@ -524,7 +524,7 @@ static int load_firmware(struct snd_cs46xx *chip)
 	for (i = 0; i < BA1_MEMORY_COUNT; i++)
 		size += chip->ba1->memory[i].size;
 	if (size > BA1_DWORD_SIZE * 4)
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 
  error:
 	release_firmware(fw);
@@ -601,7 +601,7 @@ static int cs46xx_wait_for_fifo(struct snd_cs46xx * chip,int retry_timeout)
 	if(status & SERBST_WBSY) {
 		dev_err(chip->card->dev,
 			"failure waiting for FIFO command to complete\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -900,7 +900,7 @@ static snd_pcm_uframes_t snd_cs46xx_playback_direct_pointer(struct snd_pcm_subst
 	struct snd_cs46xx_pcm *cpcm = substream->runtime->private_data;
 
 	if (snd_BUG_ON(!cpcm->pcm_channel))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	ptr = snd_cs46xx_peek(chip, (cpcm->pcm_channel->pcm_reader_scb->address + 2) << 2);
@@ -919,7 +919,7 @@ static snd_pcm_uframes_t snd_cs46xx_playback_indirect_pointer(struct snd_pcm_sub
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	if (snd_BUG_ON(!cpcm->pcm_channel))
-		return -ENXIO;
+		return -ERR(ENXIO);
 	ptr = snd_cs46xx_peek(chip, (cpcm->pcm_channel->pcm_reader_scb->address + 2) << 2);
 #else
 	ptr = snd_cs46xx_peek(chip, BA1_PBA);
@@ -952,7 +952,7 @@ static int snd_cs46xx_playback_trigger(struct snd_pcm_substream *substream,
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	struct snd_cs46xx_pcm *cpcm = substream->runtime->private_data;
 	if (! cpcm->pcm_channel) {
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 #endif
 	switch (cmd) {
@@ -1000,7 +1000,7 @@ static int snd_cs46xx_playback_trigger(struct snd_pcm_substream *substream,
 #endif
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 
@@ -1029,7 +1029,7 @@ static int snd_cs46xx_capture_trigger(struct snd_pcm_substream *substream,
 		snd_cs46xx_poke(chip, BA1_CCTL, tmp);
 		break;
 	default:
-		result = -EINVAL;
+		result = -ERR(EINVAL);
 		break;
 	}
 	spin_unlock(&chip->reg_lock);
@@ -1090,25 +1090,25 @@ static int snd_cs46xx_playback_hw_params(struct snd_pcm_substream *substream,
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	if (snd_BUG_ON(!sample_rate))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	mutex_lock(&chip->spos_mutex);
 
 	if (_cs46xx_adjust_sample_rate (chip,cpcm,sample_rate)) {
 		mutex_unlock(&chip->spos_mutex);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	snd_BUG_ON(!cpcm->pcm_channel);
 	if (!cpcm->pcm_channel) {
 		mutex_unlock(&chip->spos_mutex);
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 
 	if (cs46xx_dsp_pcm_channel_set_period (chip,cpcm->pcm_channel,period_size)) {
 		 mutex_unlock(&chip->spos_mutex);
-		 return -EINVAL;
+		 return -ERR(EINVAL);
 	 }
 
 	dev_dbg(chip->card->dev,
@@ -1189,7 +1189,7 @@ static int snd_cs46xx_playback_hw_free(struct snd_pcm_substream *substream)
 
 	/* if play_back open fails, then this function
 	   is called and cpcm can actually be NULL here */
-	if (!cpcm) return -ENXIO;
+	if (!cpcm) return -ERR(ENXIO);
 
 	if (runtime->dma_area != cpcm->hw_buf.area)
 		snd_pcm_lib_free_pages(substream);
@@ -1213,7 +1213,7 @@ static int snd_cs46xx_playback_prepare(struct snd_pcm_substream *substream)
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	if (snd_BUG_ON(!cpcm->pcm_channel))
-		return -ENXIO;
+		return -ERR(ENXIO);
 
 	pfie = snd_cs46xx_peek(chip, (cpcm->pcm_channel->pcm_reader_scb->address + 1) << 2 );
 	pfie &= ~0x0000f03f;
@@ -1610,7 +1610,7 @@ static int snd_cs46xx_playback_close(struct snd_pcm_substream *substream)
 	cpcm = runtime->private_data;
 
 	/* when playback_open fails, then cpcm can be NULL */
-	if (!cpcm) return -ENXIO;
+	if (!cpcm) return -ERR(ENXIO);
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	mutex_lock(&chip->spos_mutex);
@@ -2018,7 +2018,7 @@ static int snd_cs46xx_iec958_put(struct snd_kcontrol *kcontrol,
 		res = (change != chip->dsp_spos_instance->spdif_status_in);
 		break;
 	default:
-		res = -EINVAL;
+		res = -ERR(EINVAL);
 		snd_BUG(); /* should never happen ... */
 	}
 
@@ -2443,7 +2443,7 @@ static int cs46xx_detect_codec(struct snd_cs46xx *chip, int codec)
 		if (snd_cs46xx_codec_read(chip, AC97_RESET, codec) & 0x8000) {
 			dev_dbg(chip->card->dev,
 				"secondary codec not present\n");
-			return -ENXIO;
+			return -ERR(ENXIO);
 		}
 	}
 
@@ -2456,7 +2456,7 @@ static int cs46xx_detect_codec(struct snd_cs46xx *chip, int codec)
 		msleep(10);
 	}
 	dev_dbg(chip->card->dev, "codec %d detection timeout\n", codec);
-	return -ENXIO;
+	return -ERR(ENXIO);
 }
 
 int snd_cs46xx_mixer(struct snd_cs46xx *chip, int spdif_device)
@@ -2481,7 +2481,7 @@ int snd_cs46xx_mixer(struct snd_cs46xx *chip, int spdif_device)
 	chip->ac97_bus->private_free = snd_cs46xx_mixer_free_ac97_bus;
 
 	if (cs46xx_detect_codec(chip, CS46XX_PRIMARY_CODEC_INDEX) < 0)
-		return -ENXIO;
+		return -ERR(ENXIO);
 	chip->nr_ac97_codecs = 1;
 
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
@@ -2794,7 +2794,7 @@ static inline void snd_cs46xx_remove_gameport(struct snd_cs46xx *chip)
 	}
 }
 #else
-int snd_cs46xx_gameport(struct snd_cs46xx *chip) { return -ENOSYS; }
+int snd_cs46xx_gameport(struct snd_cs46xx *chip) { return -ERR(ENOSYS); }
 static inline void snd_cs46xx_remove_gameport(struct snd_cs46xx *chip) { }
 #endif /* CONFIG_GAMEPORT */
 
@@ -2907,7 +2907,7 @@ static int snd_cs46xx_free(struct snd_cs46xx *chip)
 	int idx;
 
 	if (snd_BUG_ON(!chip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (chip->active_ctrl)
 		chip->active_ctrl(chip, 1);
@@ -3105,7 +3105,7 @@ static int snd_cs46xx_chip_init(struct snd_cs46xx *chip)
 		"create - never read codec ready from AC'97\n");
 	dev_err(chip->card->dev,
 		"it is not probably bug, try to use CS4236 driver\n");
-	return -EIO;
+	return -ERR(EIO);
  ok1:
 #ifdef CONFIG_SND_CS46XX_NEW_DSP
 	{
@@ -3155,7 +3155,7 @@ static int snd_cs46xx_chip_init(struct snd_cs46xx *chip)
 #ifndef CONFIG_SND_CS46XX_NEW_DSP
 	dev_err(chip->card->dev,
 		"create - never read ISV3 & ISV4 from AC'97\n");
-	return -EIO;
+	return -ERR(EIO);
 #else
 	/* This may happen on a cold boot with a Terratec SiXPack 5.1.
 	   Reloading the driver may help, if there's other soundcards 
@@ -3169,7 +3169,7 @@ static int snd_cs46xx_chip_init(struct snd_cs46xx *chip)
 	dev_err(chip->card->dev,
 		"this message please report to alsa-devel@alsa-project.org\n");
 
-	return -EIO;
+	return -ERR(EIO);
 #endif
  ok2:
 
@@ -3249,7 +3249,7 @@ int snd_cs46xx_start_dsp(struct snd_cs46xx *chip)
 	}
 
 	if (cs46xx_dsp_scb_and_task_init(chip) < 0)
-		return -EIO;
+		return -ERR(EIO);
 #else
 	err = load_firmware(chip);
 	if (err < 0)
@@ -3331,7 +3331,7 @@ static int voyetra_setup_eapd_slot(struct snd_cs46xx *chip)
 	if(chip->nr_ac97_codecs != 2) {
 		dev_err(chip->card->dev,
 			"cs46xx_setup_eapd_slot() - no secondary codec configured\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	modem_power = snd_cs46xx_codec_read (chip, 
@@ -3373,7 +3373,7 @@ static int voyetra_setup_eapd_slot(struct snd_cs46xx *chip)
 	if ( cs46xx_wait_for_fifo(chip,1) ) {
 		dev_dbg(chip->card->dev, "FIFO is busy\n");
 	  
-	  return -EINVAL;
+	  return -ERR(EINVAL);
 	}
 
 	/*
@@ -3396,7 +3396,7 @@ static int voyetra_setup_eapd_slot(struct snd_cs46xx *chip)
 				"failed waiting for FIFO at addr (%02X)\n",
 				idx);
 
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
             
 		/*
@@ -3971,7 +3971,7 @@ int snd_cs46xx_create(struct snd_card *card,
 				"unable to request memory region 0x%lx-0x%lx\n",
 				   region->base, region->base + region->size - 1);
 			snd_cs46xx_free(chip);
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 		region->remap_addr = ioremap(region->base, region->size);
 		if (region->remap_addr == NULL) {
@@ -3986,7 +3986,7 @@ int snd_cs46xx_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(chip->card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_cs46xx_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;

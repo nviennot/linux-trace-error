@@ -239,11 +239,11 @@ static int snd_cmi8328_probe(struct device *pdev, unsigned int ndev)
 
 	/* 0xff is invalid configuration (but settable - hope it isn't set) */
 	if (snd_cmi8328_cfg_read(port, CFG1) == 0xff)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	/* the SB disable bit must NEVER EVER be cleared or the WSS dies */
 	snd_cmi8328_cfg_write(port, CFG1, CFG1_SB_DISABLE);
 	if (snd_cmi8328_cfg_read(port, CFG1) != CFG1_SB_DISABLE)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	/* disable everything first */
 	snd_cmi8328_cfg_write(port, CFG2, 0);	/* disable CDROM and MPU401 */
 	snd_cmi8328_cfg_write(port, CFG3, 0);	/* disable CDROM IRQ and DMA */
@@ -252,14 +252,14 @@ static int snd_cmi8328_probe(struct device *pdev, unsigned int ndev)
 		irq[ndev] = snd_legacy_find_free_irq(irqs);
 		if (irq[ndev] < 0) {
 			snd_printk(KERN_ERR "unable to find a free IRQ\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma1[ndev] == SNDRV_AUTO_DMA) {
 		dma1[ndev] = snd_legacy_find_free_dma(dma1s);
 		if (dma1[ndev] < 0) {
 			snd_printk(KERN_ERR "unable to find a free DMA1\n");
-			return -EBUSY;
+			return -ERR(EBUSY);
 		}
 	}
 	if (dma2[ndev] == SNDRV_AUTO_DMA) {
@@ -273,14 +273,14 @@ static int snd_cmi8328_probe(struct device *pdev, unsigned int ndev)
 	pos = array_find(irqs, irq[ndev]);
 	if (pos < 0) {
 		snd_printk(KERN_ERR "invalid IRQ %d\n", irq[ndev]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	val = irq_bits[pos] << 3;
 	/* ...and DMA... */
 	pos = array_find(dma1s, dma1[ndev]);
 	if (pos < 0) {
 		snd_printk(KERN_ERR "invalid DMA1 %d\n", dma1[ndev]);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	val |= dma_bits[pos];
 	/* ...and DMA2 */
@@ -288,7 +288,7 @@ static int snd_cmi8328_probe(struct device *pdev, unsigned int ndev)
 		pos = array_find(dma2s[dma1[ndev]], dma2[ndev]);
 		if (pos < 0) {
 			snd_printk(KERN_ERR "invalid DMA2 %d\n", dma2[ndev]);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		val |= 0x04; /* enable separate capture DMA */
 	}

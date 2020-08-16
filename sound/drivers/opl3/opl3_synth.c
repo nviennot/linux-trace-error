@@ -83,7 +83,7 @@ int snd_opl3_ioctl(struct snd_hwdep * hw, struct file *file,
 	void __user *argp = (void __user *)arg;
 
 	if (snd_BUG_ON(!opl3))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (cmd) {
 		/* get information */
@@ -163,7 +163,7 @@ int snd_opl3_ioctl(struct snd_hwdep * hw, struct file *file,
 		snd_printk(KERN_WARNING "unknown IOCTL: 0x%x\n", cmd);
 #endif
 	}
-	return -ENOTTY;
+	return -ERR(ENOTTY);
 }
 
 /*
@@ -399,7 +399,7 @@ static int snd_opl3_play_note(struct snd_opl3 * opl3, struct snd_dm_fm_note * no
 	/* Voices 0 - 17 in OPL3 mode */
 	if (note->voice >= ((opl3->fm_mode == SNDRV_DM_FM_MODE_OPL3) ?
 			    MAX_OPL3_VOICES : MAX_OPL2_VOICES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Get register array side and offset of voice */
 	if (note->voice < MAX_OPL2_VOICES) {
@@ -445,12 +445,12 @@ static int snd_opl3_set_voice(struct snd_opl3 * opl3, struct snd_dm_fm_voice * v
 
 	/* Only operators 1 and 2 */
 	if (voice->op > 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	/* Voices 0 -  8 in OPL2 mode */
 	/* Voices 0 - 17 in OPL3 mode */
 	if (voice->voice >= ((opl3->fm_mode == SNDRV_DM_FM_MODE_OPL3) ?
 			     MAX_OPL3_VOICES : MAX_OPL2_VOICES))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Get register array side and offset of voice */
 	if (voice->voice < MAX_OPL2_VOICES) {
@@ -581,7 +581,7 @@ static int snd_opl3_set_params(struct snd_opl3 * opl3, struct snd_dm_fm_params *
 static int snd_opl3_set_mode(struct snd_opl3 * opl3, int mode)
 {
 	if ((mode == SNDRV_DM_FM_MODE_OPL3) && (opl3->hardware < OPL3_HW_OPL3))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	opl3->fm_mode = mode;
 	if (opl3->hardware >= OPL3_HW_OPL3)
@@ -596,7 +596,7 @@ static int snd_opl3_set_connection(struct snd_opl3 * opl3, int connection)
 
 	/* OPL-3 only */
 	if (opl3->fm_mode != SNDRV_DM_FM_MODE_OPL3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	reg_val = connection & (OPL3_RIGHT_4OP_0 | OPL3_RIGHT_4OP_1 | OPL3_RIGHT_4OP_2 |
 				OPL3_LEFT_4OP_0 | OPL3_LEFT_4OP_1 | OPL3_LEFT_4OP_2);

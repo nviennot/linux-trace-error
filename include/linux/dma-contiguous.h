@@ -132,14 +132,14 @@ static inline int dma_contiguous_reserve_area(phys_addr_t size, phys_addr_t base
 				       phys_addr_t limit, struct cma **res_cma,
 				       bool fixed)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline
 int dma_declare_contiguous(struct device *dev, phys_addr_t size,
 			   phys_addr_t base, phys_addr_t limit)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline

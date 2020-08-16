@@ -406,18 +406,18 @@ static inline void prcmu_disable_wakeups(void) {}
 
 static inline int prcmu_abb_read(u8 slave, u8 reg, u8 *value, u8 size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int prcmu_abb_write(u8 slave, u8 reg, u8 *value, u8 size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int prcmu_abb_write_masked(u8 slave, u8 reg, u8 *value, u8 *mask,
 	u8 size)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int prcmu_config_clkout(u8 clkout, u8 source, u8 div)

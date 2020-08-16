@@ -83,7 +83,7 @@ static inline int gpio_to_irq(unsigned int gpio)
 
 static inline int irq_to_gpio(unsigned int irq)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 #endif /* ! CONFIG_ARCH_HAVE_CUSTOM_GPIO_H */
@@ -113,18 +113,18 @@ static inline bool gpio_is_valid(int number)
 
 static inline int gpio_request(unsigned gpio, const char *label)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpio_request_one(unsigned gpio,
 					unsigned long flags, const char *label)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpio_request_array(const struct gpio *array, size_t num)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline void gpio_free(unsigned gpio)
@@ -145,17 +145,17 @@ static inline void gpio_free_array(const struct gpio *array, size_t num)
 
 static inline int gpio_direction_input(unsigned gpio)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpio_direction_output(unsigned gpio, int value)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpio_set_debounce(unsigned gpio, unsigned debounce)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 static inline int gpio_get_value(unsigned gpio)
@@ -195,7 +195,7 @@ static inline int gpio_export(unsigned gpio, bool direction_may_change)
 {
 	/* GPIO can never have been requested or set as {in,out}put */
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int gpio_export_link(struct device *dev, const char *name,
@@ -203,7 +203,7 @@ static inline int gpio_export_link(struct device *dev, const char *name,
 {
 	/* GPIO can never have been exported */
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void gpio_unexport(unsigned gpio)
@@ -216,28 +216,28 @@ static inline int gpio_to_irq(unsigned gpio)
 {
 	/* GPIO can never have been requested or set as input */
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int irq_to_gpio(unsigned irq)
 {
 	/* irq can never have been returned from gpio_to_irq() */
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devm_gpio_request(struct device *dev, unsigned gpio,
 				    const char *label)
 {
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int devm_gpio_request_one(struct device *dev, unsigned gpio,
 					unsigned long flags, const char *label)
 {
 	WARN_ON(1);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void devm_gpio_free(struct device *dev, unsigned int gpio)

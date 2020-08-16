@@ -124,14 +124,14 @@ __devm_ioremap_resource(struct device *dev, const struct resource *res,
 
 	if (!res || resource_type(res) != IORESOURCE_MEM) {
 		dev_err(dev, "invalid resource\n");
-		return IOMEM_ERR_PTR(-EINVAL);
+		return IOMEM_ERR_PTR(-ERR(EINVAL));
 	}
 
 	size = resource_size(res);
 
 	if (!devm_request_mem_region(dev, res->start, size, dev_name(dev))) {
 		dev_err(dev, "can't request region for resource %pR\n", res);
-		return IOMEM_ERR_PTR(-EBUSY);
+		return IOMEM_ERR_PTR(-ERR(EBUSY));
 	}
 
 	dest_ptr = __devm_ioremap(dev, res->start, size, type);
@@ -211,7 +211,7 @@ void __iomem *devm_of_iomap(struct device *dev, struct device_node *node, int in
 	struct resource res;
 
 	if (of_address_to_resource(node, index, &res))
-		return IOMEM_ERR_PTR(-EINVAL);
+		return IOMEM_ERR_PTR(-ERR(EINVAL));
 	if (size)
 		*size = resource_size(&res);
 	return devm_ioremap_resource(dev, &res);
@@ -402,7 +402,7 @@ int pcim_iomap_regions(struct pci_dev *pdev, int mask, const char *name)
 		if (!(mask & (1 << i)))
 			continue;
 
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		len = pci_resource_len(pdev, i);
 		if (!len)
 			goto err_inval;

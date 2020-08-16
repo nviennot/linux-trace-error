@@ -573,7 +573,8 @@ enum sctp_disposition sctp_sf_do_5_1C_ack(struct net *net,
 			return sctp_sf_pdiscard(net, ep, asoc, type, arg, commands);
 
 		SCTP_INC_STATS(net, SCTP_MIB_ABORTEDS);
-		return sctp_stop_t1_and_abort(net, commands, error, ECONNREFUSED,
+		return sctp_stop_t1_and_abort(net, commands, error,
+						ERR(ECONNREFUSED),
 						asoc, chunk->transport);
 	}
 
@@ -2652,7 +2653,8 @@ enum sctp_disposition sctp_sf_cookie_wait_abort(
 	if (len >= sizeof(struct sctp_chunkhdr) + sizeof(struct sctp_errhdr))
 		error = ((struct sctp_errhdr *)chunk->skb->data)->cause;
 
-	return sctp_stop_t1_and_abort(net, commands, error, ECONNREFUSED, asoc,
+	return sctp_stop_t1_and_abort(net, commands, error, ERR(ECONNREFUSED),
+				      asoc,
 				      chunk->transport);
 }
 
@@ -2668,7 +2670,7 @@ enum sctp_disposition sctp_sf_cookie_wait_icmp_abort(
 					struct sctp_cmd_seq *commands)
 {
 	return sctp_stop_t1_and_abort(net, commands, SCTP_ERROR_NO_ERROR,
-				      ENOPROTOOPT, asoc,
+				      ERR(ENOPROTOOPT), asoc,
 				      (struct sctp_transport *)arg);
 }
 

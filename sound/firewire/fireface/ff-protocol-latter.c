@@ -57,7 +57,7 @@ static int parse_clock_bits(u32 data, unsigned int *rate,
 		}
 	}
 	if (i == ARRAY_SIZE(rate_entries))
-		return -EIO;
+		return -ERR(EIO);
 
 	for (i = 0; i < ARRAY_SIZE(clk_entries); ++i) {
 		clk_entry = clk_entries + i;
@@ -67,7 +67,7 @@ static int parse_clock_bits(u32 data, unsigned int *rate,
 		}
 	}
 	if (i == ARRAY_SIZE(clk_entries))
-		return -EIO;
+		return -ERR(EIO);
 
 	return 0;
 }
@@ -120,7 +120,7 @@ static int latter_allocate_resources(struct snd_ff *ff, unsigned int rate)
 	else if (rate % 32000 == 0)
 		code = 0x00;
 	else
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (rate >= 64000 && rate < 128000)
 		code |= 0x08;
@@ -147,14 +147,14 @@ static int latter_allocate_resources(struct snd_ff *ff, unsigned int rate)
 			break;
 	}
 	if (count > 10)
-		return -ETIMEDOUT;
+		return -ERR(ETIMEDOUT);
 
 	for (i = 0; i < ARRAY_SIZE(amdtp_rate_table); ++i) {
 		if (rate == amdtp_rate_table[i])
 			break;
 	}
 	if (i == ARRAY_SIZE(amdtp_rate_table))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	err = snd_ff_stream_get_multiplier_mode(i, &mode);
 	if (err < 0)
@@ -197,7 +197,7 @@ static int latter_begin_session(struct snd_ff *ff, unsigned int rate)
 		else if (rate >= 128000 && rate <= 192000)
 			flag = 0x8c;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	} else {
 		// For Fireface UFX and 802. Due to bandwidth limitation on
 		// IEEE 1394a (400 Mbps), Analog 1-12 and AES are available
@@ -209,7 +209,7 @@ static int latter_begin_session(struct snd_ff *ff, unsigned int rate)
 		else if (rate >= 128000 && rate <= 192000)
 			flag = 0x8e;
 		else
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (generation != fw_parent_device(ff->unit)->card->generation) {
@@ -400,7 +400,7 @@ static inline int calculate_message_bytes(u8 status)
 	break;
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int latter_fill_midi_msg(struct snd_ff *ff,

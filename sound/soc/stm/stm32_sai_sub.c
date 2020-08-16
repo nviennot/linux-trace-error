@@ -320,7 +320,7 @@ static int stm32_sai_get_clk_div(struct stm32_sai_sub_data *sai,
 	div = DIV_ROUND_CLOSEST(input_rate, output_rate);
 	if (div > SAI_XCR1_MCKDIV_MAX(version)) {
 		dev_err(&sai->pdev->dev, "Divider %d out of range\n", div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(&sai->pdev->dev, "SAI divider %d\n", div);
 
@@ -340,7 +340,7 @@ static int stm32_sai_set_clk_div(struct stm32_sai_sub_data *sai,
 
 	if (div > SAI_XCR1_MCKDIV_MAX(version)) {
 		dev_err(&sai->pdev->dev, "Divider %d out of range\n", div);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	mask = SAI_XCR1_MCKDIV_MASK(SAI_XCR1_MCKDIV_WIDTH(version));
@@ -685,7 +685,7 @@ static int stm32_sai_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported protocol %#x\n",
 			fmt & SND_SOC_DAIFMT_FORMAT_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cr1_mask |= SAI_XCR1_CKSTR;
@@ -710,7 +710,7 @@ static int stm32_sai_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported strobing %#x\n",
 			fmt & SND_SOC_DAIFMT_INV_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	cr1_mask |= SAI_XCR1_CKSTR;
 	frcr_mask |= SAI_XFRCR_FSPOL;
@@ -730,7 +730,7 @@ static int stm32_sai_set_dai_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	default:
 		dev_err(cpu_dai->dev, "Unsupported mode %#x\n",
 			fmt & SND_SOC_DAIFMT_MASTER_MASK);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Set slave mode if sub-block is synchronized with another SAI */
@@ -838,7 +838,7 @@ static int stm32_sai_set_config(struct snd_soc_dai *cpu_dai,
 		break;
 	default:
 		dev_err(cpu_dai->dev, "Data format not supported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	cr1_mask |= SAI_XCR1_MONO;
@@ -873,7 +873,7 @@ static int stm32_sai_set_slots(struct snd_soc_dai *cpu_dai)
 		dev_err(cpu_dai->dev,
 			"Data size %d larger than slot width\n",
 			sai->data_size);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Slot number is set to 2, if not specified in DT */
@@ -1041,7 +1041,7 @@ static int stm32_sai_configure_clock(struct snd_soc_dai *cpu_dai,
 					dev_err(cpu_dai->dev,
 						"Wrong mclk ratio %d\n",
 						mclk_ratio);
-					return -EINVAL;
+					return -ERR(EINVAL);
 				}
 
 				stm32_sai_sub_reg_up(sai,
@@ -1139,7 +1139,7 @@ static int stm32_sai_trigger(struct snd_pcm_substream *substream, int cmd,
 			sai->spdif_frm_cnt = 0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return ret;
@@ -1358,7 +1358,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 	int ret;
 
 	if (!np)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
@@ -1393,7 +1393,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 		sai->dir = SNDRV_PCM_STREAM_CAPTURE;
 	} else {
 		dev_err(&pdev->dev, "Unsupported direction\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Get spdif iec60958 property */
@@ -1402,7 +1402,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 		if (!STM_SAI_HAS_SPDIF(sai) ||
 		    sai->dir == SNDRV_PCM_STREAM_CAPTURE) {
 			dev_err(&pdev->dev, "S/PDIF IEC60958 not supported\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		stm32_sai_init_iec958_status(sai);
 		sai->spdif = true;
@@ -1422,7 +1422,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 		if (args.np == np) {
 			dev_err(&pdev->dev, "%pOFn sync own reference\n", np);
 			of_node_put(args.np);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		sai->np_sync_provider  = of_get_parent(args.np);
@@ -1430,7 +1430,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 			dev_err(&pdev->dev, "%pOFn parent node not found\n",
 				np);
 			of_node_put(args.np);
-			return -ENODEV;
+			return -ERR(ENODEV);
 		}
 
 		sai->sync = SAI_SYNC_INTERNAL;
@@ -1439,7 +1439,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 				dev_err(&pdev->dev,
 					"External synchro not supported\n");
 				of_node_put(args.np);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			sai->sync = SAI_SYNC_EXTERNAL;
 
@@ -1448,7 +1448,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 			    (sai->synci > (SAI_GCR_SYNCIN_MAX + 1))) {
 				dev_err(&pdev->dev, "Wrong SAI index\n");
 				of_node_put(args.np);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 
 			if (of_property_match_string(args.np, "compatible",
@@ -1462,7 +1462,7 @@ static int stm32_sai_sub_parse_of(struct platform_device *pdev,
 			if (!sai->synco) {
 				dev_err(&pdev->dev, "Unknown SAI sub-block\n");
 				of_node_put(args.np);
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 		}
 
@@ -1516,7 +1516,7 @@ static int stm32_sai_sub_probe(struct platform_device *pdev)
 
 	of_id = of_match_device(stm32_sai_sub_ids, &pdev->dev);
 	if (!of_id)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	sai->id = (uintptr_t)of_id->data;
 
 	sai->pdev = pdev;
@@ -1527,7 +1527,7 @@ static int stm32_sai_sub_probe(struct platform_device *pdev)
 	sai->pdata = dev_get_drvdata(pdev->dev.parent);
 	if (!sai->pdata) {
 		dev_err(&pdev->dev, "Parent device data not available\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = stm32_sai_sub_parse_of(pdev, sai);

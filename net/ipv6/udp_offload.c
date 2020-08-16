@@ -17,7 +17,7 @@
 static struct sk_buff *udp6_ufo_fragment(struct sk_buff *skb,
 					 netdev_features_t features)
 {
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
+	struct sk_buff *segs = ERR_PTR(-ERR(EINVAL));
 	unsigned int mss;
 	unsigned int unfrag_ip6hlen, unfrag_len;
 	struct frag_hdr *fptr;

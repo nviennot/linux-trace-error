@@ -44,7 +44,7 @@ static int reuseport_array_alloc_check(union bpf_attr *attr)
 {
 	if (attr->value_size != sizeof(u32) &&
 	    attr->value_size != sizeof(u64))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return array_map_alloc_check(attr);
 }
@@ -69,10 +69,10 @@ static int reuseport_array_delete_elem(struct bpf_map *map, void *key)
 	int err;
 
 	if (index >= map->max_entries)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (!rcu_access_pointer(array->ptrs[index]))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	spin_lock_bh(&reuseport_lock);
 
@@ -85,7 +85,7 @@ static int reuseport_array_delete_elem(struct bpf_map *map, void *key)
 		write_unlock_bh(&sk->sk_callback_lock);
 		err = 0;
 	} else {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	}
 
 	spin_unlock_bh(&reuseport_lock);
@@ -158,7 +158,7 @@ static struct bpf_map *reuseport_array_alloc(union bpf_attr *attr)
 	u64 array_size;
 
 	if (!bpf_capable())
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 
 	array_size = sizeof(*array);
 	array_size += (u64)attr->max_entries * sizeof(struct sock *);
@@ -188,7 +188,7 @@ int bpf_fd_reuseport_array_lookup_elem(struct bpf_map *map, void *key,
 	int err;
 
 	if (map->value_size != sizeof(u64))
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 
 	rcu_read_lock();
 	sk = reuseport_array_lookup_elem(map, key);
@@ -196,7 +196,7 @@ int bpf_fd_reuseport_array_lookup_elem(struct bpf_map *map, void *key,
 		*(u64 *)value = sock_gen_cookie(sk);
 		err = 0;
 	} else {
-		err = -ENOENT;
+		err = -ERR(ENOENT);
 	}
 	rcu_read_unlock();
 
@@ -211,19 +211,19 @@ reuseport_array_update_check(const struct reuseport_array *array,
 			     u32 map_flags)
 {
 	if (osk && map_flags == BPF_NOEXIST)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	if (!osk && map_flags == BPF_EXIST)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	if (nsk->sk_protocol != IPPROTO_UDP && nsk->sk_protocol != IPPROTO_TCP)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (nsk->sk_family != AF_INET && nsk->sk_family != AF_INET6)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	if (nsk->sk_type != SOCK_STREAM && nsk->sk_type != SOCK_DGRAM)
-		return -ENOTSUPP;
+		return -ERR(ENOTSUPP);
 
 	/*
 	 * sk must be hashed (i.e. listening in the TCP case or binded
@@ -234,11 +234,11 @@ reuseport_array_update_check(const struct reuseport_array *array,
 	 * rcu_read_lock().
 	 */
 	if (!sock_flag(nsk, SOCK_RCU_FREE) || !sk_hashed(nsk) || !nsk_reuse)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* READ_ONCE because the sk->sk_callback_lock may not be held here */
 	if (READ_ONCE(nsk->sk_user_data))
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	return 0;
 }
@@ -260,16 +260,16 @@ int bpf_fd_reuseport_array_update_elem(struct bpf_map *map, void *key,
 	int err, fd;
 
 	if (map_flags > BPF_EXIST)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (index >= map->max_entries)
-		return -E2BIG;
+		return -ERR(E2BIG);
 
 	if (map->value_size == sizeof(u64)) {
 		u64 fd64 = *(u64 *)value;
 
 		if (fd64 > S32_MAX)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		fd = fd64;
 	} else {
 		fd = *(int *)value;
@@ -281,7 +281,7 @@ int bpf_fd_reuseport_array_update_elem(struct bpf_map *map, void *key,
 
 	nsk = socket->sk;
 	if (!nsk) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto put_file;
 	}
 
@@ -345,7 +345,7 @@ static int reuseport_array_get_next_key(struct bpf_map *map, void *key,
 	}
 
 	if (index == array->map.max_entries - 1)
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	*next = index + 1;
 	return 0;

@@ -125,7 +125,7 @@ static int usX2Y_urb_play_prepare(struct snd_usX2Y_substream *subs,
 		count += counts;
 		if (counts < 43 || counts > 50) {
 			snd_printk(KERN_ERR "should not be here with counts=%i\n", counts);
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		/* set up descriptor */
 		urb->iso_frame_desc[pack].offset = pack ?
@@ -184,7 +184,7 @@ static int usX2Y_urb_submit(struct snd_usX2Y_substream *subs, struct urb *urb, i
 {
 	int err;
 	if (!urb)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	urb->start_frame = (frame + NRURBS * nr_of_packs());  // let hcd do rollover sanity checks
 	urb->hcpriv = NULL;
 	urb->dev = subs->usX2Y->dev; /* we need to set this at each time */
@@ -401,7 +401,7 @@ static int usX2Y_urbs_allocate(struct snd_usX2Y_substream *subs)
 			usb_rcvisocpipe(dev, subs->endpoint);
 	subs->maxpacksize = usb_maxpacket(dev, pipe, is_playback);
 	if (!subs->maxpacksize)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (is_playback && NULL == subs->tmpbuf) {	/* allocate a temporary buffer for playback */
 		subs->tmpbuf = kcalloc(nr_of_packs(), subs->maxpacksize, GFP_KERNEL);
@@ -479,7 +479,7 @@ static int usX2Y_urbs_start(struct snd_usX2Y_substream *subs)
 			urb->transfer_buffer_length = subs->maxpacksize * nr_of_packs(); 
 			if ((err = usb_submit_urb(urb, GFP_ATOMIC)) < 0) {
 				snd_printk (KERN_ERR "cannot submit datapipe for urb %d, err = %d\n", i, err);
-				err = -EPIPE;
+				err = -ERR(EPIPE);
 				goto cleanup;
 			} else
 				if (i == 0)
@@ -493,7 +493,7 @@ static int usX2Y_urbs_start(struct snd_usX2Y_substream *subs)
 	err = 0;
 	wait_event(usX2Y->prepare_wait_queue, NULL == usX2Y->prepare_subs);
 	if (atomic_read(&subs->state) != state_PREPARED)
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 
  cleanup:
 	if (err) {
@@ -526,7 +526,7 @@ static int snd_usX2Y_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 			atomic_set(&subs->state, state_PRERUNNING);
 		} else {
 			snd_printdd("\n");
-			return -EPIPE;
+			return -ERR(EPIPE);
 		}
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
@@ -535,7 +535,7 @@ static int snd_usX2Y_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 			atomic_set(&subs->state, state_PREPARED);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -675,7 +675,7 @@ static int usX2Y_rate_set(struct usX2Ydev *usX2Y, int rate)
 		wait_event_timeout(usX2Y->In04WaitQueue, 0 == us->len, HZ);
 		usX2Y->US04 =	NULL;
 		if (us->len)
-			err = -ENODEV;
+			err = -ERR(ENODEV);
 	cleanup:
 		if (us) {
 			us->submitted =	2*NOOF_SETRATE_URBS;
@@ -685,7 +685,7 @@ static int usX2Y_rate_set(struct usX2Ydev *usX2Y, int rate)
 					continue;
 				if (urb->status) {
 					if (!err)
-						err = -ENODEV;
+						err = -ERR(ENODEV);
 					usb_kill_urb(urb);
 				}
 				usb_free_urb(urb);
@@ -761,7 +761,7 @@ static int snd_usX2Y_pcm_hw_params(struct snd_pcm_substream *substream,
 		     test_substream->runtime->format != format) ||
 		    (test_substream->runtime->rate &&
 		     test_substream->runtime->rate != rate)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto error;
 		}
 	}
@@ -869,7 +869,7 @@ static int snd_usX2Y_pcm_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime	*runtime = substream->runtime;
 
 	if (subs->usX2Y->chip_status & USX2Y_STAT_CHIP_MMAP_PCM_URBS)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	runtime->hw = snd_usX2Y_2c;
 	runtime->private_data = subs;

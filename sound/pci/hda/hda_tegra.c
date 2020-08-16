@@ -384,7 +384,7 @@ static int hda_tegra_first_init(struct azx *chip, struct platform_device *pdev)
 	/* codec detection */
 	if (!bus->codec_mask) {
 		dev_err(card->dev, "no codecs found!\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	/* driver name */

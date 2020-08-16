@@ -81,7 +81,7 @@ error:
 bad_type_length:
 	pr_err("Cache object %lu type xattr length incorrect\n",
 	       d_backing_inode(dentry)->i_ino);
-	ret = -EIO;
+	ret = -ERR(EIO);
 	goto error;
 
 bad_type:
@@ -89,7 +89,7 @@ bad_type:
 	pr_err("Cache object %pd [%lu] type %s not %s\n",
 	       dentry, d_backing_inode(dentry)->i_ino,
 	       xtype, type);
-	ret = -EIO;
+	ret = -ERR(EIO);
 	goto error;
 }
 
@@ -132,7 +132,7 @@ int cachefiles_update_object_xattr(struct cachefiles_object *object,
 	int ret;
 
 	if (!dentry)
-		return -ESTALE;
+		return -ERR(ESTALE);
 
 	_enter("%p,#%d", object, auxdata->len);
 
@@ -173,7 +173,7 @@ int cachefiles_check_auxdata(struct cachefiles_object *object)
 
 	xlen = vfs_getxattr(dentry, cachefiles_xattr_cache,
 			    &auxbuf->type, 512 + 1);
-	ret = -ESTALE;
+	ret = -ERR(ESTALE);
 	if (xlen < 1 ||
 	    auxbuf->type != object->fscache.cookie->def->type)
 		goto error;
@@ -293,11 +293,11 @@ error:
 bad_type_length:
 	pr_err("Cache object %lu xattr length incorrect\n",
 	       d_backing_inode(dentry)->i_ino);
-	ret = -EIO;
+	ret = -ERR(EIO);
 	goto error;
 
 stale:
-	ret = -ESTALE;
+	ret = -ERR(ESTALE);
 	goto error;
 }
 

@@ -266,13 +266,13 @@ static int l2tp_ip_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	int chk_addr_ret;
 
 	if (addr_len < sizeof(struct sockaddr_l2tpip))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (addr->l2tp_family != AF_INET)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (!sock_flag(sk, SOCK_ZAPPED))
 		goto out;
 
@@ -280,7 +280,7 @@ static int l2tp_ip_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 		goto out;
 
 	chk_addr_ret = inet_addr_type(net, addr->l2tp_addr.s_addr);
-	ret = -EADDRNOTAVAIL;
+	ret = -ERR(EADDRNOTAVAIL);
 	if (addr->l2tp_addr.s_addr && chk_addr_ret != RTN_LOCAL &&
 	    chk_addr_ret != RTN_MULTICAST && chk_addr_ret != RTN_BROADCAST)
 		goto out;
@@ -294,7 +294,7 @@ static int l2tp_ip_bind(struct sock *sk, struct sockaddr *uaddr, int addr_len)
 	if (__l2tp_ip_bind_lookup(net, addr->l2tp_addr.s_addr, 0,
 				  sk->sk_bound_dev_if, addr->l2tp_conn_id)) {
 		write_unlock_bh(&l2tp_ip_lock);
-		ret = -EADDRINUSE;
+		ret = -ERR(EADDRINUSE);
 		goto out;
 	}
 
@@ -320,16 +320,16 @@ static int l2tp_ip_connect(struct sock *sk, struct sockaddr *uaddr, int addr_len
 	int rc;
 
 	if (addr_len < sizeof(*lsa))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ipv4_is_multicast(lsa->l2tp_addr.s_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
 	/* Must bind first - autobinding does not work */
 	if (sock_flag(sk, SOCK_ZAPPED)) {
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		goto out_sk;
 	}
 
@@ -370,7 +370,7 @@ static int l2tp_ip_getname(struct socket *sock, struct sockaddr *uaddr,
 	lsa->l2tp_family = AF_INET;
 	if (peer) {
 		if (!inet->inet_dport)
-			return -ENOTCONN;
+			return -ERR(ENOTCONN);
 		lsa->l2tp_conn_id = lsk->peer_conn_id;
 		lsa->l2tp_addr.s_addr = inet->inet_daddr;
 	} else {
@@ -415,26 +415,26 @@ static int l2tp_ip_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 
 	lock_sock(sk);
 
-	rc = -ENOTCONN;
+	rc = -ERR(ENOTCONN);
 	if (sock_flag(sk, SOCK_DEAD))
 		goto out;
 
 	/* Get and verify the address. */
 	if (msg->msg_name) {
 		DECLARE_SOCKADDR(struct sockaddr_l2tpip *, lip, msg->msg_name);
-		rc = -EINVAL;
+		rc = -ERR(EINVAL);
 		if (msg->msg_namelen < sizeof(*lip))
 			goto out;
 
 		if (lip->l2tp_family != AF_INET) {
-			rc = -EAFNOSUPPORT;
+			rc = -ERR(EAFNOSUPPORT);
 			if (lip->l2tp_family != AF_UNSPEC)
 				goto out;
 		}
 
 		daddr = lip->l2tp_addr.s_addr;
 	} else {
-		rc = -EDESTADDRREQ;
+		rc = -ERR(EDESTADDRREQ);
 		if (sk->sk_state != TCP_ESTABLISHED)
 			goto out;
 
@@ -520,7 +520,7 @@ no_route:
 	rcu_read_unlock();
 	IP_INC_STATS(sock_net(sk), IPSTATS_MIB_OUTNOROUTES);
 	kfree_skb(skb);
-	rc = -EHOSTUNREACH;
+	rc = -ERR(EHOSTUNREACH);
 	goto out;
 }
 
@@ -529,7 +529,7 @@ static int l2tp_ip_recvmsg(struct sock *sk, struct msghdr *msg,
 {
 	struct inet_sock *inet = inet_sk(sk);
 	size_t copied = 0;
-	int err = -EOPNOTSUPP;
+	int err = -ERR(EOPNOTSUPP);
 	DECLARE_SOCKADDR(struct sockaddr_in *, sin, msg->msg_name);
 	struct sk_buff *skb;
 
@@ -587,7 +587,7 @@ int l2tp_ioctl(struct sock *sk, int cmd, unsigned long arg)
 		break;
 
 	default:
-		return -ENOIOCTLCMD;
+		return -ERR(ENOIOCTLCMD);
 	}
 
 	return put_user(amount, (int __user *)arg);

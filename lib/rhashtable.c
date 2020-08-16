@@ -227,7 +227,7 @@ static int rhashtable_rehash_one(struct rhashtable *ht,
 {
 	struct bucket_table *old_tbl = rht_dereference(ht->tbl, ht);
 	struct bucket_table *new_tbl = rhashtable_last_table(ht, old_tbl);
-	int err = -EAGAIN;
+	int err = -ERR(EAGAIN);
 	struct rhash_head *head, *next, *entry;
 	struct rhash_head __rcu **pprev = NULL;
 	unsigned int new_hash;
@@ -235,7 +235,7 @@ static int rhashtable_rehash_one(struct rhashtable *ht,
 	if (new_tbl->nest)
 		goto out;
 
-	err = -ENOENT;
+	err = -ERR(ENOENT);
 
 	rht_for_each_from(entry, rht_ptr(bkt, old_tbl, old_hash),
 			  old_tbl, old_hash) {
@@ -304,7 +304,7 @@ static int rhashtable_rehash_attach(struct rhashtable *ht,
 
 	if (cmpxchg((struct bucket_table **)&old_tbl->future_tbl, NULL,
 		    new_tbl) != NULL)
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	return 0;
 }
@@ -345,7 +345,7 @@ static int rhashtable_rehash_table(struct rhashtable *ht)
 	call_rcu(&old_tbl->rcu, bucket_table_free_rcu);
 	spin_unlock(&ht->lock);
 
-	return rht_dereference(new_tbl->future_tbl, ht) ? -EAGAIN : 0;
+	return rht_dereference(new_tbl->future_tbl, ht) ? -ERR(EAGAIN) : 0;
 }
 
 static int rhashtable_rehash_alloc(struct rhashtable *ht,
@@ -399,7 +399,7 @@ static int rhashtable_shrink(struct rhashtable *ht)
 		return 0;
 
 	if (rht_dereference(old_tbl->future_tbl, ht))
-		return -EEXIST;
+		return -ERR(EEXIST);
 
 	return rhashtable_rehash_alloc(ht, old_tbl, size);
 }
@@ -448,7 +448,7 @@ static int rhashtable_insert_rehash(struct rhashtable *ht,
 
 	size = tbl->size;
 
-	err = -EBUSY;
+	err = -ERR(EBUSY);
 
 	if (rht_grow_above_75(ht, tbl))
 		size *= 2;
@@ -530,9 +530,9 @@ static void *rhashtable_lookup_one(struct rhashtable *ht,
 	}
 
 	if (elasticity <= 0)
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 
-	return ERR_PTR(-ENOENT);
+	return ERR_PTR(-ERR(ENOENT));
 }
 
 static struct bucket_table *rhashtable_insert_one(
@@ -544,7 +544,7 @@ static struct bucket_table *rhashtable_insert_one(
 	struct rhash_head *head;
 
 	if (!IS_ERR_OR_NULL(data))
-		return ERR_PTR(-EEXIST);
+		return ERR_PTR(-ERR(EEXIST));
 
 	if (PTR_ERR(data) != -EAGAIN && PTR_ERR(data) != -ENOENT)
 		return ERR_CAST(data);
@@ -557,10 +557,10 @@ static struct bucket_table *rhashtable_insert_one(
 		return ERR_CAST(data);
 
 	if (unlikely(rht_grow_above_max(ht, tbl)))
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 
 	if (unlikely(rht_grow_above_100(ht, tbl)))
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 
 	head = rht_ptr(bkt, tbl, hash);
 
@@ -605,7 +605,7 @@ static void *rhashtable_try_insert(struct rhashtable *ht, const void *key,
 			bkt = rht_bucket_insert(ht, tbl, hash);
 		if (bkt == NULL) {
 			new_tbl = rht_dereference_rcu(tbl->future_tbl, ht);
-			data = ERR_PTR(-EAGAIN);
+			data = ERR_PTR(-ERR(EAGAIN));
 		} else {
 			rht_lock(tbl, bkt);
 			data = rhashtable_lookup_one(ht, bkt, tbl,
@@ -621,7 +621,7 @@ static void *rhashtable_try_insert(struct rhashtable *ht, const void *key,
 
 	if (PTR_ERR(data) == -EAGAIN)
 		data = ERR_PTR(rhashtable_insert_rehash(ht, tbl) ?:
-			       -EAGAIN);
+			       -ERR(EAGAIN));
 
 	return data;
 }
@@ -730,7 +730,7 @@ int rhashtable_walk_start_check(struct rhashtable_iter *iter)
 		iter->walker.tbl = rht_dereference_rcu(ht->tbl, ht);
 		iter->slot = 0;
 		iter->skip = 0;
-		return -EAGAIN;
+		return -ERR(EAGAIN);
 	}
 
 	if (iter->p && !rhlist) {
@@ -836,7 +836,7 @@ next:
 	if (iter->walker.tbl) {
 		iter->slot = 0;
 		iter->skip = 0;
-		return ERR_PTR(-EAGAIN);
+		return ERR_PTR(-ERR(EAGAIN));
 	} else {
 		iter->end_of_table = true;
 	}
@@ -1020,7 +1020,7 @@ int rhashtable_init(struct rhashtable *ht,
 
 	if ((!params->key_len && !params->obj_hashfn) ||
 	    (params->obj_hashfn && !params->obj_cmpfn))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	memset(ht, 0, sizeof(*ht));
 	mutex_init(&ht->mutex);

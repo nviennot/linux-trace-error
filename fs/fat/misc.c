@@ -71,7 +71,7 @@ int fat_clusters_flush(struct super_block *sb)
 	bh = sb_bread(sb, sbi->fsinfo_sector);
 	if (bh == NULL) {
 		fat_msg(sb, KERN_ERR, "bread failed in fat_clusters_flush");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	fsinfo = (struct fat_boot_fsinfo *)bh->b_data;
@@ -359,7 +359,7 @@ int fat_sync_bhs(struct buffer_head **bhs, int nr_bhs)
 	for (i = 0; i < nr_bhs; i++) {
 		wait_on_buffer(bhs[i]);
 		if (!err && !buffer_uptodate(bhs[i]))
-			err = -EIO;
+			err = -ERR(EIO);
 	}
 	return err;
 }

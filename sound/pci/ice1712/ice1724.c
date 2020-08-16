@@ -143,7 +143,7 @@ static int snd_vt1724_ac97_wait_bit(struct snd_ice1712 *ice, unsigned char bit)
 		if ((inb(ICEMT1724(ice, AC97_CMD)) & bit) == 0)
 			return 0;
 	dev_dbg(ice->card->dev, "snd_vt1724_ac97_wait_bit: timeout\n");
-	return -EIO;
+	return -ERR(EIO);
 }
 
 static void snd_vt1724_ac97_write(struct snd_ac97 *ac97,
@@ -586,7 +586,7 @@ static int snd_vt1724_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	return 0;
 }
@@ -650,20 +650,20 @@ static int snd_vt1724_set_pro_rate(struct snd_ice1712 *ice, unsigned int rate,
 	bool call_set_rate = false;
 
 	if (rate > ice->hw_rates->list[ice->hw_rates->count - 1])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	spin_lock_irqsave(&ice->reg_lock, flags);
 	if ((inb(ICEMT1724(ice, DMA_CONTROL)) & DMA_STARTS) ||
 	    (inb(ICEMT1724(ice, DMA_PAUSE)) & DMA_PAUSES)) {
 		/* running? we cannot change the rate now... */
 		spin_unlock_irqrestore(&ice->reg_lock, flags);
-		return ((rate == ice->cur_rate) && !force) ? 0 : -EBUSY;
+		return ((rate == ice->cur_rate) && !force) ? 0 : -ERR(EBUSY);
 	}
 	if (!force && is_pro_rate_locked(ice)) {
 		/* comparing required and current rate - makes sense for
 		 * internal clock only */
 		spin_unlock_irqrestore(&ice->reg_lock, flags);
-		return (rate == ice->cur_rate) ? 0 : -EBUSY;
+		return (rate == ice->cur_rate) ? 0 : -ERR(EBUSY);
 	}
 
 	if (force || !ice->is_spdif_master(ice)) {
@@ -719,7 +719,7 @@ static int snd_vt1724_pcm_hw_params(struct snd_pcm_substream *substream,
 			if (ice->pcm_reserved[i] &&
 			    ice->pcm_reserved[i] != substream) {
 				mutex_unlock(&ice->open_mutex);
-				return -EBUSY;
+				return -ERR(EBUSY);
 			}
 			ice->pcm_reserved[i] = substream;
 		}
@@ -734,7 +734,7 @@ static int snd_vt1724_pcm_hw_params(struct snd_pcm_substream *substream,
 				if (ice->pcm_reserved[i] &&
 				    ice->pcm_reserved[i] != substream) {
 					mutex_unlock(&ice->open_mutex);
-					return -EBUSY;
+					return -ERR(EBUSY);
 				}
 				ice->pcm_reserved[i] = substream;
 				break;
@@ -1390,7 +1390,7 @@ static int snd_vt1724_playback_indep_open(struct snd_pcm_substream *substream)
 	/* already used by PDMA0? */
 	if (ice->pcm_reserved[substream->number]) {
 		mutex_unlock(&ice->open_mutex);
-		return -EBUSY; /* FIXME: should handle blocking mode properly */
+		return -ERR(EBUSY); /* FIXME: should handle blocking mode properly */
 	}
 	mutex_unlock(&ice->open_mutex);
 	runtime->private_data = (void *)&vt1724_playback_dma_regs[substream->number];
@@ -1902,7 +1902,7 @@ static int snd_vt1724_pro_internal_clock_put(struct snd_kcontrol *kcontrol,
 	unsigned int first_ext_clock = ice->hw_rates->count;
 
 	if (item >  first_ext_clock + ice->ext_clock_count - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* if rate = 0 => external clock */
 	spin_lock_irq(&ice->reg_lock);
@@ -2304,7 +2304,7 @@ static int snd_vt1724_read_eeprom(struct snd_ice1712 *ice,
 			    ice->eeprom.subvendor == (unsigned int)-1) {
 				dev_err(ice->card->dev,
 					"No valid ID is found\n");
-				return -ENXIO;
+				return -ERR(ENXIO);
 			}
 		}
 	}
@@ -2343,7 +2343,7 @@ static int snd_vt1724_read_eeprom(struct snd_ice1712 *ice,
 	else if (ice->eeprom.size > 32) {
 		dev_err(ice->card->dev, "Invalid EEPROM (size = %i)\n",
 		       ice->eeprom.size);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	ice->eeprom.version = snd_vt1724_read_i2c(ice, dev, 0x05);
 	if (ice->eeprom.version != 1 && ice->eeprom.version != 2)
@@ -2405,7 +2405,7 @@ static int snd_vt1724_spdif_build_controls(struct snd_ice1712 *ice)
 	struct snd_kcontrol *kctl;
 
 	if (snd_BUG_ON(!ice->pcm))
-		return -EIO;
+		return -ERR(EIO);
 
 	if (!ice->own_routing) {
 		err = snd_ctl_add(ice->card,
@@ -2553,7 +2553,7 @@ static int snd_vt1724_create(struct snd_card *card,
 			IRQF_SHARED, KBUILD_MODNAME, ice)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_vt1724_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	ice->irq = pci->irq;
@@ -2562,11 +2562,11 @@ static int snd_vt1724_create(struct snd_card *card,
 	snd_vt1724_chip_reset(ice);
 	if (snd_vt1724_read_eeprom(ice, modelname) < 0) {
 		snd_vt1724_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 	if (snd_vt1724_chip_init(ice) < 0) {
 		snd_vt1724_free(ice);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, ice, &ops);
@@ -2596,10 +2596,10 @@ static int snd_vt1724_probe(struct pci_dev *pci,
 	const struct snd_ice1712_card_info * const *tbl, *c;
 
 	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+		return -ERR(ENODEV);
 	if (!enable[dev]) {
 		dev++;
-		return -ENOENT;
+		return -ERR(ENOENT);
 	}
 
 	err = snd_card_new(&pci->dev, index[dev], id[dev], THIS_MODULE,
@@ -2804,7 +2804,7 @@ static int snd_vt1724_resume(struct device *dev)
 
 	if (snd_vt1724_chip_init(ice) < 0) {
 		snd_card_disconnect(card);
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (ice->pm_resume)

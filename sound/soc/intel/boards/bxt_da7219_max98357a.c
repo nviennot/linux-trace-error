@@ -64,7 +64,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 	codec_dai = snd_soc_card_get_codec_dai(card, BXT_DIALOG_CODEC_DAI);
 	if (!codec_dai) {
 		dev_err(card->dev, "Codec dai not found; Unable to set/unset codec pll\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
@@ -618,7 +618,7 @@ static int bxt_card_late_probe(struct snd_soc_card *card)
 					ARRAY_SIZE(broxton_map));
 
 	if (list_empty(&ctx->hdmi_pcm_list))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (ctx->common_hdmi_codec_drv) {
 		pcm = list_first_entry(&ctx->hdmi_pcm_list, struct bxt_hdmi_pcm,

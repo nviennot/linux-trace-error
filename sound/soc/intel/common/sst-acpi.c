@@ -88,13 +88,13 @@ static int sst_acpi_probe(struct platform_device *pdev)
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
 	if (!id)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	desc = (struct sst_acpi_desc *)id->driver_data;
 	mach = snd_soc_acpi_find_machine(desc->machines);
 	if (mach == NULL) {
 		dev_err(dev, "No matching ASoC machine driver found\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	sst_pdata = &sst_acpi->sst_pdata;

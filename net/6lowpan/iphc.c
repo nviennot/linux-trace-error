@@ -343,12 +343,12 @@ static int lowpan_iphc_uncompress_addr(struct sk_buff *skb,
 		break;
 	default:
 		pr_debug("Invalid address mode value: 0x%x\n", address_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fail) {
 		pr_debug("Failed to fetch skb data\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	raw_dump_inline(NULL, "Reconstructed ipv6 addr is",
@@ -405,12 +405,12 @@ static int lowpan_iphc_uncompress_ctx_addr(struct sk_buff *skb,
 		break;
 	default:
 		pr_debug("Invalid sam value: 0x%x\n", address_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fail) {
 		pr_debug("Failed to fetch skb data\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	raw_dump_inline(NULL,
@@ -462,12 +462,12 @@ static int lowpan_uncompress_multicast_daddr(struct sk_buff *skb,
 		break;
 	default:
 		pr_debug("DAM value has a wrong value: 0x%x\n", address_mode);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (fail) {
 		pr_debug("Failed to fetch skb data\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	raw_dump_inline(NULL, "Reconstructed ipv6 multicast addr is",
@@ -488,7 +488,7 @@ static int lowpan_uncompress_multicast_ctx_daddr(struct sk_buff *skb,
 	fail = lowpan_fetch_skb(skb, &ipaddr->s6_addr[1], 2);
 	fail |= lowpan_fetch_skb(skb, &ipaddr->s6_addr[12], 4);
 	if (fail)
-		return -EIO;
+		return -ERR(EIO);
 
 	/* take prefix_len and network prefix from the context */
 	ipaddr->s6_addr[3] = ctx->plen;
@@ -552,7 +552,7 @@ static int lowpan_iphc_tf_decompress(struct sk_buff *skb, struct ipv6hdr *hdr,
 	case LOWPAN_IPHC_TF_00:
 		/* ECN + DSCP + 4-bit Pad + Flow Label (4 bytes) */
 		if (lowpan_fetch_skb(skb, tf, 4))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*                      1                   2                   3
 		 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -567,7 +567,7 @@ static int lowpan_iphc_tf_decompress(struct sk_buff *skb, struct ipv6hdr *hdr,
 	case LOWPAN_IPHC_TF_01:
 		/* ECN + 2-bit Pad + Flow Label (3 bytes), DSCP is elided. */
 		if (lowpan_fetch_skb(skb, tf, 3))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*                     1                   2
 		 * 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
@@ -581,7 +581,7 @@ static int lowpan_iphc_tf_decompress(struct sk_buff *skb, struct ipv6hdr *hdr,
 	case LOWPAN_IPHC_TF_10:
 		/* ECN + DSCP (1 byte), Flow Label is elided. */
 		if (lowpan_fetch_skb(skb, tf, 1))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/*  0 1 2 3 4 5 6 7
 		 * +-+-+-+-+-+-+-+-+
@@ -596,7 +596,7 @@ static int lowpan_iphc_tf_decompress(struct sk_buff *skb, struct ipv6hdr *hdr,
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -622,14 +622,14 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 
 	if (lowpan_fetch_skb(skb, &iphc0, sizeof(iphc0)) ||
 	    lowpan_fetch_skb(skb, &iphc1, sizeof(iphc1)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hdr.version = 6;
 
 	/* default CID = 0, another if the CID flag is set */
 	if (iphc1 & LOWPAN_IPHC_CID) {
 		if (lowpan_fetch_skb(skb, &cid, sizeof(cid)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	err = lowpan_iphc_tf_decompress(skb, &hdr,
@@ -641,7 +641,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 	if (!(iphc0 & LOWPAN_IPHC_NH)) {
 		/* Next header is carried inline */
 		if (lowpan_fetch_skb(skb, &hdr.nexthdr, sizeof(hdr.nexthdr)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		pr_debug("NH flag is set, next header carried inline: %02x\n",
 			 hdr.nexthdr);
@@ -653,7 +653,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 	} else {
 		if (lowpan_fetch_skb(skb, &hdr.hop_limit,
 				     sizeof(hdr.hop_limit)))
-			return -EINVAL;
+			return -ERR(EINVAL);
 	}
 
 	if (iphc1 & LOWPAN_IPHC_SAC) {
@@ -661,7 +661,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 		ci = lowpan_iphc_ctx_get_by_id(dev, LOWPAN_IPHC_CID_SCI(cid));
 		if (!ci) {
 			spin_unlock_bh(&lowpan_dev(dev)->ctx.lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		pr_debug("SAC bit is set. Handle context based source address.\n");
@@ -679,7 +679,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 
 	/* Check on error of previous branch */
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	switch (iphc1 & (LOWPAN_IPHC_M | LOWPAN_IPHC_DAC)) {
 	case LOWPAN_IPHC_M | LOWPAN_IPHC_DAC:
@@ -689,7 +689,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 		ci = lowpan_iphc_ctx_get_by_id(dev, LOWPAN_IPHC_CID_DCI(cid));
 		if (!ci) {
 			spin_unlock_bh(&lowpan_dev(dev)->ctx.lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* multicast with context */
@@ -713,7 +713,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 		ci = lowpan_iphc_ctx_get_by_id(dev, LOWPAN_IPHC_CID_DCI(cid));
 		if (!ci) {
 			spin_unlock_bh(&lowpan_dev(dev)->ctx.lock);
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* Destination address context based uncompression */
@@ -735,7 +735,7 @@ int lowpan_header_decompress(struct sk_buff *skb, const struct net_device *dev,
 	}
 
 	if (err)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Next header data uncompression */
 	if (iphc0 & LOWPAN_IPHC_NH) {
@@ -1138,7 +1138,7 @@ int lowpan_header_compress(struct sk_buff *skb, const struct net_device *dev,
 	int ret, ipv6_daddr_type, ipv6_saddr_type;
 
 	if (skb->protocol != htons(ETH_P_IPV6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	hdr = ipv6_hdr(skb);
 	hc_ptr = head + 2;

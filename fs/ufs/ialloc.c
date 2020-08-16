@@ -180,13 +180,13 @@ struct inode *ufs_new_inode(struct inode *dir, umode_t mode)
 	struct timespec64 ts;
 	unsigned cg, bit, i, j, start;
 	struct ufs_inode_info *ufsi;
-	int err = -ENOSPC;
+	int err = -ERR(ENOSPC);
 
 	UFSD("ENTER\n");
 	
 	/* Cannot create files in a deleted directory */
 	if (!dir || !dir->i_nlink)
-		return ERR_PTR(-EPERM);
+		return ERR_PTR(-ERR(EPERM));
 	sb = dir->i_sb;
 	inode = new_inode(sb);
 	if (!inode)
@@ -238,7 +238,7 @@ struct inode *ufs_new_inode(struct inode *dir, umode_t mode)
 cg_found:
 	ucpi = ufs_load_cylinder (sb, cg);
 	if (!ucpi) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto failed;
 	}
 	ucg = ubh_get_ucg(UCPI_UBH(ucpi));
@@ -252,7 +252,7 @@ cg_found:
 		if (!(bit < start)) {
 			ufs_error (sb, "ufs_new_inode",
 			    "cylinder group %u corrupted - error in inode bitmap\n", cg);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto failed;
 		}
 	}
@@ -261,7 +261,7 @@ cg_found:
 		ubh_setbit (UCPI_UBH(ucpi), ucpi->c_iusedoff, bit);
 	else {
 		ufs_panic (sb, "ufs_new_inode", "internal error");
-		err = -EIO;
+		err = -ERR(EIO);
 		goto failed;
 	}
 
@@ -301,7 +301,7 @@ cg_found:
 	ufsi->i_dir_start_lookup = 0;
 	memset(&ufsi->i_u1, 0, sizeof(ufsi->i_u1));
 	if (insert_inode_locked(inode) < 0) {
-		err = -EIO;
+		err = -ERR(EIO);
 		goto failed;
 	}
 	mark_inode_dirty(inode);
@@ -319,7 +319,7 @@ cg_found:
 			ufs_warning(sb, "ufs_read_inode",
 				    "unable to read inode %lu\n",
 				    inode->i_ino);
-			err = -EIO;
+			err = -ERR(EIO);
 			goto fail_remove_inode;
 		}
 		lock_buffer(bh);

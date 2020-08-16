@@ -574,13 +574,13 @@ const char *snd_hda_get_hint(struct hda_codec *codec, const char *key)
 static inline
 int snd_hda_get_bool_hint(struct hda_codec *codec, const char *key)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 
 static inline
 int snd_hda_get_int_hint(struct hda_codec *codec, const char *key, int *valp)
 {
-	return -ENOENT;
+	return -ERR(ENOENT);
 }
 #endif
 

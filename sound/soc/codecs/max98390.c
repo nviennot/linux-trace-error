@@ -184,7 +184,7 @@ static int max98390_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "DAI clock mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98390->regmap,
@@ -200,7 +200,7 @@ static int max98390_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "DAI invert mode unsupported\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98390->regmap,
@@ -223,7 +223,7 @@ static int max98390_dai_set_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
 		format = MAX98390_PCM_FORMAT_TDM_MODE0;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98390->regmap,
@@ -274,7 +274,7 @@ static int max98390_set_clock(struct snd_soc_component *component,
 		}
 		if (i == ARRAY_SIZE(rate_table)) {
 			dev_err(component->dev, "failed to find proper clock rate.\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(max98390->regmap,
@@ -289,7 +289,7 @@ static int max98390_set_clock(struct snd_soc_component *component,
 		if (!value) {
 			dev_err(component->dev, "format unsupported %d\n",
 				params_format(params));
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		regmap_update_bits(max98390->regmap,
@@ -379,7 +379,7 @@ static int max98390_dai_hw_params(struct snd_pcm_substream *substream,
 
 	return max98390_set_clock(component, params);
 err:
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int max98390_dai_tdm_slot(struct snd_soc_dai *dai,
@@ -406,7 +406,7 @@ static int max98390_dai_tdm_slot(struct snd_soc_dai *dai,
 	if (!bsel) {
 		dev_err(component->dev, "BCLK %d not supported\n",
 			slots * slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98390->regmap,
@@ -428,7 +428,7 @@ static int max98390_dai_tdm_slot(struct snd_soc_dai *dai,
 	default:
 		dev_err(component->dev, "format unsupported %d\n",
 			slot_width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98390->regmap,
@@ -960,7 +960,7 @@ static int max98390_i2c_probe(struct i2c_client *i2c,
 		| I2C_FUNC_SMBUS_BYTE_DATA);
 	if (!ret) {
 		dev_err(&i2c->dev, "I2C check functionality failed\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	max98390 = devm_kzalloc(&i2c->dev, sizeof(*max98390), GFP_KERNEL);

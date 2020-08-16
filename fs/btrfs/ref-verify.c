@@ -372,7 +372,7 @@ static int add_shared_data_ref(struct btrfs_fs_info *fs_info,
 		spin_unlock(&fs_info->ref_verify_lock);
 		btrfs_err(fs_info, "existing shared ref when reading from disk?");
 		kfree(ref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	spin_unlock(&fs_info->ref_verify_lock);
 	return 0;
@@ -410,14 +410,14 @@ static int add_extent_data_ref(struct btrfs_fs_info *fs_info,
 		spin_unlock(&fs_info->ref_verify_lock);
 		btrfs_err(fs_info, "existing ref when reading from disk?");
 		kfree(ref);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	re = lookup_root_entry(&be->roots, ref_root);
 	if (!re) {
 		spin_unlock(&fs_info->ref_verify_lock);
 		btrfs_err(fs_info, "missing root in new block entry?");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	re->num_refs += num_refs;
 	spin_unlock(&fs_info->ref_verify_lock);
@@ -482,7 +482,7 @@ static int process_extent_item(struct btrfs_fs_info *fs_info,
 			break;
 		default:
 			btrfs_err(fs_info, "invalid key type in iref");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 		if (ret)
@@ -570,7 +570,7 @@ static int walk_down_tree(struct btrfs_root *root, struct btrfs_path *path,
 				return PTR_ERR(eb);
 			if (!extent_buffer_uptodate(eb)) {
 				free_extent_buffer(eb);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			btrfs_tree_read_lock(eb);
 			btrfs_set_lock_blocking_read(eb);
@@ -735,7 +735,7 @@ int btrfs_ref_tree_mod(struct btrfs_fs_info *fs_info,
 	 * This is an allocation, preallocate the block_entry in case we haven't
 	 * used it before.
 	 */
-	ret = -EINVAL;
+	ret = -ERR(EINVAL);
 	if (action == BTRFS_ADD_DELAYED_EXTENT) {
 		/*
 		 * For subvol_create we'll just pass in whatever the parent root

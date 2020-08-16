@@ -146,13 +146,13 @@ static int kirkwood_dma_open(struct snd_soc_component *component,
 	addr = substream->dma_buffer.addr;
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (priv->substream_play)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		priv->substream_play = substream;
 		kirkwood_dma_conf_mbus_windows(priv->io,
 			KIRKWOOD_PLAYBACK_WIN, addr, dram);
 	} else {
 		if (priv->substream_rec)
-			return -EBUSY;
+			return -ERR(EBUSY);
 		priv->substream_rec = substream;
 		kirkwood_dma_conf_mbus_windows(priv->io,
 			KIRKWOOD_RECORD_WIN, addr, dram);

@@ -217,7 +217,7 @@ static inline void drm_pci_free(struct drm_device *dev,
 static inline int drm_legacy_pci_init(struct drm_driver *driver,
 				      struct pci_driver *pdriver)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline void drm_legacy_pci_exit(struct drm_driver *driver,

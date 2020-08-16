@@ -61,7 +61,7 @@ static int apq8016_sbc_dai_init(struct snd_soc_pcm_runtime *rtd)
 
 	default:
 		dev_err(card->dev, "unsupported cpu dai configuration\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 
@@ -165,14 +165,14 @@ static struct apq8016_sbc_data *apq8016_sbc_parse_of(struct snd_soc_card *card)
 
 		if (!cpu || !codec) {
 			dev_err(dev, "Can't find cpu/codec DT node\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 
 		link->cpus->of_node = of_parse_phandle(cpu, "sound-dai", 0);
 		if (!link->cpus->of_node) {
 			dev_err(card->dev, "error getting cpu phandle\n");
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto error;
 		}
 

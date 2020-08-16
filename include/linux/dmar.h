@@ -141,7 +141,7 @@ extern int dmar_release_one_atsr(struct acpi_dmar_header *hdr, void *arg);
 extern int dmar_iommu_hotplug(struct dmar_drhd_unit *dmaru, bool insert);
 extern int dmar_iommu_notify_scope_dev(struct dmar_pci_notify_info *info);
 #else /* !CONFIG_INTEL_IOMMU: */
-static inline int intel_iommu_init(void) { return -ENODEV; }
+static inline int intel_iommu_init(void) { return -ERR(ENODEV); }
 static inline void intel_iommu_shutdown(void) { }
 
 #define	dmar_parse_one_rmrr		dmar_res_noop

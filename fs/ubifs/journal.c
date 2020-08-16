@@ -111,7 +111,7 @@ again:
 	mutex_lock_nested(&wbuf->io_mutex, wbuf->jhead);
 
 	if (c->ro_error) {
-		err = -EROFS;
+		err = -ERR(EROFS);
 		goto out_unlock;
 	}
 
@@ -329,7 +329,7 @@ again:
 		 */
 		if (nospc_retries++ < 2) {
 			dbg_jnl("no space, retry");
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 		}
 
 		/*
@@ -353,7 +353,7 @@ again:
 		 * are too tough.
 		 */
 		ubifs_err(c, "stuck in space allocation");
-		err = -ENOSPC;
+		err = -ERR(ENOSPC);
 		goto out;
 	} else if (cmt_retries > 32)
 		ubifs_warn(c, "too many space allocation re-tries (%d)",

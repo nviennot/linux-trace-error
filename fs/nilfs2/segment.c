@@ -228,7 +228,7 @@ int nilfs_transaction_begin(struct super_block *sb,
 	down_read(&nilfs->ns_segctor_sem);
 	if (vacancy_check && nilfs_near_disk_full(nilfs)) {
 		up_read(&nilfs->ns_segctor_sem);
-		ret = -ENOSPC;
+		ret = -ERR(ENOSPC);
 		goto failed;
 	}
 
@@ -439,7 +439,7 @@ static int nilfs_segctor_feed_segment(struct nilfs_sc_info *sci)
 {
 	sci->sc_nblk_this_inc += sci->sc_curseg->sb_sum.nblocks;
 	if (NILFS_SEGBUF_IS_LAST(sci->sc_curseg, &sci->sc_segbufs))
-		return -E2BIG; /*
+		return -ERR(E2BIG); /*
 				* The current segment is filled up
 				* (internal code)
 				*/
@@ -2182,7 +2182,7 @@ static int nilfs_segctor_sync(struct nilfs_sc_info *sci)
 			schedule();
 			continue;
 		}
-		err = -ERESTARTSYS;
+		err = -ERR(ERESTARTSYS);
 		break;
 	}
 	finish_wait(&sci->sc_wait_request, &wait_req.wq);
@@ -2235,7 +2235,7 @@ int nilfs_construct_segment(struct super_block *sb)
 	int err;
 
 	if (!sci)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	/* A call inside transactions causes a deadlock. */
 	BUG_ON((ti = current->journal_info) && ti->ti_magic == NILFS_TI_MAGIC);
@@ -2274,7 +2274,7 @@ int nilfs_construct_dsync_segment(struct super_block *sb, struct inode *inode,
 	int err = 0;
 
 	if (!sci)
-		return -EROFS;
+		return -ERR(EROFS);
 
 	nilfs_transaction_lock(sb, &ti, 0);
 
@@ -2377,7 +2377,7 @@ static int nilfs_segctor_construct(struct nilfs_sc_info *sci, int mode)
 		if (test_bit(NILFS_SC_SUPER_ROOT, &sci->sc_flags) &&
 		    nilfs_discontinued(nilfs)) {
 			down_write(&nilfs->ns_sem);
-			err = -EIO;
+			err = -ERR(EIO);
 			sbp = nilfs_prepare_super(sci->sc_super,
 						  nilfs_sb_will_flip(nilfs));
 			if (likely(sbp)) {
@@ -2424,7 +2424,7 @@ int nilfs_clean_segments(struct super_block *sb, struct nilfs_argv *argv,
 	int err;
 
 	if (unlikely(!sci))
-		return -EROFS;
+		return -ERR(EROFS);
 
 	nilfs_transaction_lock(sb, &ti, 1);
 

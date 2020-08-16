@@ -32,7 +32,7 @@ int snd_soc_component_read(struct snd_soc_component *component,
 		ret = 0;
 	}
 	else
-		ret = -EIO;
+		ret = -ERR(EIO);
 
 	return ret;
 }
@@ -68,7 +68,7 @@ int snd_soc_component_write(struct snd_soc_component *component,
 	else if (component->driver->write)
 		return component->driver->write(component, reg, val);
 	else
-		return -EIO;
+		return -ERR(EIO);
 }
 EXPORT_SYMBOL_GPL(snd_soc_component_write);
 

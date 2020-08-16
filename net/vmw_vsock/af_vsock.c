@@ -444,7 +444,7 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
 			new_transport = transport_h2g;
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	if (vsk->transport) {
@@ -465,7 +465,7 @@ int vsock_assign_transport(struct vsock_sock *vsk, struct vsock_sock *psk)
 	 * while there are open sockets assigned to it.
 	 */
 	if (!new_transport || !try_module_get(new_transport->module))
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	ret = new_transport->init(vsk, psk);
 	if (ret) {
@@ -533,7 +533,7 @@ static int vsock_send_shutdown(struct sock *sk, int mode)
 	struct vsock_sock *vsk = vsock_sk(sk);
 
 	if (!vsk->transport)
-		return -ENODEV;
+		return -ERR(ENODEV);
 
 	return vsk->transport->shutdown(vsk, mode);
 }
@@ -616,18 +616,18 @@ static int __vsock_bind_stream(struct vsock_sock *vsk,
 		}
 
 		if (!found)
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 	} else {
 		/* If port is in reserved range, ensure caller
 		 * has necessary privileges.
 		 */
 		if (addr->svm_port <= LAST_RESERVED_PORT &&
 		    !capable(CAP_NET_BIND_SERVICE)) {
-			return -EACCES;
+			return -ERR(EACCES);
 		}
 
 		if (__vsock_find_bound_socket(&new_addr))
-			return -EADDRINUSE;
+			return -ERR(EADDRINUSE);
 	}
 
 	vsock_addr_init(&vsk->local_addr, new_addr.svm_cid, new_addr.svm_port);
@@ -655,7 +655,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
 
 	/* First ensure this socket isn't already bound. */
 	if (vsock_addr_bound(&vsk->local_addr))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* Now bind to the provided address or select appropriate values if
 	 * none are provided (VMADDR_CID_ANY and VMADDR_PORT_ANY).  Note that
@@ -663,7 +663,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
 	 * cases), we only allow binding to a local CID.
 	 */
 	if (addr->svm_cid != VMADDR_CID_ANY && !vsock_find_cid(addr->svm_cid))
-		return -EADDRNOTAVAIL;
+		return -ERR(EADDRNOTAVAIL);
 
 	switch (sk->sk_socket->type) {
 	case SOCK_STREAM:
@@ -677,7 +677,7 @@ static int __vsock_bind(struct sock *sk, struct sockaddr_vm *addr)
 		break;
 
 	default:
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 		break;
 	}
 
@@ -851,7 +851,7 @@ vsock_bind(struct socket *sock, struct sockaddr *addr, int addr_len)
 	sk = sock->sk;
 
 	if (vsock_addr_cast(addr, addr_len, &vm_addr) != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 	err = __vsock_bind(sk, vm_addr);
@@ -876,7 +876,7 @@ static int vsock_getname(struct socket *sock,
 
 	if (peer) {
 		if (sock->state != SS_CONNECTED) {
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 			goto out;
 		}
 		vm_addr = &vsk->remote_addr;
@@ -885,7 +885,7 @@ static int vsock_getname(struct socket *sock,
 	}
 
 	if (!vm_addr) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -917,7 +917,7 @@ static int vsock_shutdown(struct socket *sock, int mode)
 	mode++;
 
 	if ((mode & ~SHUTDOWN_MASK) || !mode)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* If this is a STREAM socket and it is not connected then bail out
 	 * immediately.  If it is a DGRAM socket then we must first kick the
@@ -927,7 +927,7 @@ static int vsock_shutdown(struct socket *sock, int mode)
 
 	sk = sock->sk;
 	if (sock->state == SS_UNCONNECTED) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		if (sk->sk_type == SOCK_STREAM)
 			return err;
 	} else {
@@ -1076,7 +1076,7 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 	const struct vsock_transport *transport;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	/* For now, MSG_DONTWAIT is always assumed... */
 	err = 0;
@@ -1105,7 +1105,7 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 			remote_addr->svm_cid = transport->get_local_cid();
 
 		if (!vsock_addr_bound(remote_addr)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	} else if (sock->state == SS_CONNECTED) {
@@ -1118,17 +1118,17 @@ static int vsock_dgram_sendmsg(struct socket *sock, struct msghdr *msg,
 		 * bound?
 		 */
 		if (!vsock_addr_bound(&vsk->remote_addr)) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	if (!transport->dgram_allow(remote_addr->svm_cid,
 				    remote_addr->svm_port)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1159,7 +1159,7 @@ static int vsock_dgram_connect(struct socket *sock,
 		release_sock(sk);
 		return 0;
 	} else if (err != 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	lock_sock(sk);
 
@@ -1169,7 +1169,7 @@ static int vsock_dgram_connect(struct socket *sock,
 
 	if (!vsk->transport->dgram_allow(remote_addr->svm_cid,
 					 remote_addr->svm_port)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1215,7 +1215,7 @@ static int vsock_transport_cancel_pkt(struct vsock_sock *vsk)
 	const struct vsock_transport *transport = vsk->transport;
 
 	if (!transport->cancel_pkt)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return transport->cancel_pkt(vsk);
 }
@@ -1233,7 +1233,7 @@ static void vsock_connect_timeout(struct work_struct *work)
 	if (sk->sk_state == TCP_SYN_SENT &&
 	    (sk->sk_shutdown != SHUTDOWN_MASK)) {
 		sk->sk_state = TCP_CLOSE;
-		sk->sk_err = ETIMEDOUT;
+		sk->sk_err = ERR(ETIMEDOUT);
 		sk->sk_error_report(sk);
 		cancel = 1;
 	}
@@ -1264,10 +1264,10 @@ static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
 	/* XXX AF_UNSPEC should make us disconnect like AF_INET. */
 	switch (sock->state) {
 	case SS_CONNECTED:
-		err = -EISCONN;
+		err = -ERR(EISCONN);
 		goto out;
 	case SS_DISCONNECTING:
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	case SS_CONNECTING:
 		/* This continues on so we can move sock into the SS_CONNECTED
@@ -1276,12 +1276,12 @@ static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
 		 * for the connection or return -EALREADY should this be a
 		 * non-blocking call.
 		 */
-		err = -EALREADY;
+		err = -ERR(EALREADY);
 		break;
 	default:
 		if ((sk->sk_state == TCP_LISTEN) ||
 		    vsock_addr_cast(addr, addr_len, &remote_addr) != 0) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1301,7 +1301,7 @@ static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
 		if (!transport ||
 		    !transport->stream_allow(remote_addr->svm_cid,
 					     remote_addr->svm_port)) {
-			err = -ENETUNREACH;
+			err = -ERR(ENETUNREACH);
 			goto out;
 		}
 
@@ -1319,7 +1319,7 @@ static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
 		 * progress in case this is a non-blocking connect.
 		 */
 		sock->state = SS_CONNECTING;
-		err = -EINPROGRESS;
+		err = -ERR(EINPROGRESS);
 	}
 
 	/* The receive path will handle all communication until we are able to
@@ -1355,7 +1355,7 @@ static int vsock_stream_connect(struct socket *sock, struct sockaddr *addr,
 			vsock_transport_cancel_pkt(vsk);
 			goto out_wait;
 		} else if (timeout == 0) {
-			err = -ETIMEDOUT;
+			err = -ERR(ETIMEDOUT);
 			sk->sk_state = TCP_CLOSE;
 			sock->state = SS_UNCONNECTED;
 			vsock_transport_cancel_pkt(vsk);
@@ -1396,12 +1396,12 @@ static int vsock_accept(struct socket *sock, struct socket *newsock, int flags,
 	lock_sock(listener);
 
 	if (sock->type != SOCK_STREAM) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (listener->sk_state != TCP_LISTEN) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1422,7 +1422,7 @@ static int vsock_accept(struct socket *sock, struct socket *newsock, int flags,
 			err = sock_intr_errno(timeout);
 			goto out;
 		} else if (timeout == 0) {
-			err = -EAGAIN;
+			err = -ERR(EAGAIN);
 			goto out;
 		}
 
@@ -1473,19 +1473,19 @@ static int vsock_listen(struct socket *sock, int backlog)
 	lock_sock(sk);
 
 	if (sock->type != SOCK_STREAM) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	if (sock->state != SS_UNCONNECTED) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
 	vsk = vsock_sk(sk);
 
 	if (!vsock_addr_bound(&vsk->local_addr)) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1529,7 +1529,7 @@ static int vsock_stream_setsockopt(struct socket *sock,
 	u64 val;
 
 	if (level != AF_VSOCK)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 #define COPY_IN(_v)                                       \
 	do {						  \
@@ -1580,13 +1580,13 @@ static int vsock_stream_setsockopt(struct socket *sock,
 				    VSOCK_DEFAULT_CONNECT_TIMEOUT;
 
 		} else {
-			err = -ERANGE;
+			err = -ERR(ERANGE);
 		}
 		break;
 	}
 
 	default:
-		err = -ENOPROTOOPT;
+		err = -ERR(ENOPROTOOPT);
 		break;
 	}
 
@@ -1609,7 +1609,7 @@ static int vsock_stream_getsockopt(struct socket *sock,
 	u64 val;
 
 	if (level != AF_VSOCK)
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 
 	err = get_user(len, optlen);
 	if (err != 0)
@@ -1656,7 +1656,7 @@ static int vsock_stream_getsockopt(struct socket *sock,
 		break;
 	}
 	default:
-		return -ENOPROTOOPT;
+		return -ERR(ENOPROTOOPT);
 	}
 
 	err = put_user(len, optlen);
@@ -1687,31 +1687,31 @@ static int vsock_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 	err = 0;
 
 	if (msg->msg_flags & MSG_OOB)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	lock_sock(sk);
 
 	/* Callers should not provide a destination with stream sockets. */
 	if (msg->msg_namelen) {
-		err = sk->sk_state == TCP_ESTABLISHED ? -EISCONN : -EOPNOTSUPP;
+		err = sk->sk_state == TCP_ESTABLISHED ? -ERR(EISCONN) : -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
 	/* Send data only if both sides are not shutdown in the direction. */
 	if (sk->sk_shutdown & SEND_SHUTDOWN ||
 	    vsk->peer_shutdown & RCV_SHUTDOWN) {
-		err = -EPIPE;
+		err = -ERR(EPIPE);
 		goto out;
 	}
 
 	if (!transport || sk->sk_state != TCP_ESTABLISHED ||
 	    !vsock_addr_bound(&vsk->local_addr)) {
-		err = -ENOTCONN;
+		err = -ERR(ENOTCONN);
 		goto out;
 	}
 
 	if (!vsock_addr_bound(&vsk->remote_addr)) {
-		err = -EDESTADDRREQ;
+		err = -ERR(EDESTADDRREQ);
 		goto out;
 	}
 
@@ -1733,7 +1733,7 @@ static int vsock_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 
 			/* Don't wait for non-blocking sockets. */
 			if (timeout == 0) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				remove_wait_queue(sk_sleep(sk), &wait);
 				goto out_err;
 			}
@@ -1752,7 +1752,7 @@ static int vsock_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 				remove_wait_queue(sk_sleep(sk), &wait);
 				goto out_err;
 			} else if (timeout == 0) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				remove_wait_queue(sk_sleep(sk), &wait);
 				goto out_err;
 			}
@@ -1768,7 +1768,7 @@ static int vsock_stream_sendmsg(struct socket *sock, struct msghdr *msg,
 			goto out_err;
 		} else if ((sk->sk_shutdown & SEND_SHUTDOWN) ||
 			   (vsk->peer_shutdown & RCV_SHUTDOWN)) {
-			err = -EPIPE;
+			err = -ERR(EPIPE);
 			goto out_err;
 		}
 
@@ -1839,13 +1839,13 @@ vsock_stream_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 		if (sock_flag(sk, SOCK_DONE))
 			err = 0;
 		else
-			err = -ENOTCONN;
+			err = -ERR(ENOTCONN);
 
 		goto out;
 	}
 
 	if (flags & MSG_OOB) {
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -1900,7 +1900,7 @@ vsock_stream_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 			}
 			/* Don't wait for non-blocking sockets. */
 			if (timeout == 0) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				finish_wait(sk_sleep(sk), &wait);
 				break;
 			}
@@ -1920,7 +1920,7 @@ vsock_stream_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
 				finish_wait(sk_sleep(sk), &wait);
 				break;
 			} else if (timeout == 0) {
-				err = -EAGAIN;
+				err = -ERR(EAGAIN);
 				finish_wait(sk_sleep(sk), &wait);
 				break;
 			}
@@ -2009,10 +2009,10 @@ static int vsock_create(struct net *net, struct socket *sock,
 	int ret;
 
 	if (!sock)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (protocol && protocol != PF_VSOCK)
-		return -EPROTONOSUPPORT;
+		return -ERR(EPROTONOSUPPORT);
 
 	switch (sock->type) {
 	case SOCK_DGRAM:
@@ -2022,7 +2022,7 @@ static int vsock_create(struct net *net, struct socket *sock,
 		sock->ops = &vsock_stream_ops;
 		break;
 	default:
-		return -ESOCKTNOSUPPORT;
+		return -ERR(ESOCKTNOSUPPORT);
 	}
 
 	sock->state = SS_UNCONNECTED;
@@ -2075,7 +2075,7 @@ static long vsock_dev_do_ioctl(struct file *filp,
 
 	default:
 		pr_err("Unknown ioctl %d\n", cmd);
-		retval = -EINVAL;
+		retval = -ERR(EINVAL);
 	}
 
 	return retval;
@@ -2174,7 +2174,7 @@ int vsock_core_register(const struct vsock_transport *t, int features)
 
 	if (features & VSOCK_TRANSPORT_F_H2G) {
 		if (t_h2g) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_busy;
 		}
 		t_h2g = t;
@@ -2182,7 +2182,7 @@ int vsock_core_register(const struct vsock_transport *t, int features)
 
 	if (features & VSOCK_TRANSPORT_F_G2H) {
 		if (t_g2h) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_busy;
 		}
 		t_g2h = t;
@@ -2190,7 +2190,7 @@ int vsock_core_register(const struct vsock_transport *t, int features)
 
 	if (features & VSOCK_TRANSPORT_F_DGRAM) {
 		if (t_dgram) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_busy;
 		}
 		t_dgram = t;
@@ -2198,7 +2198,7 @@ int vsock_core_register(const struct vsock_transport *t, int features)
 
 	if (features & VSOCK_TRANSPORT_F_LOCAL) {
 		if (t_local) {
-			err = -EBUSY;
+			err = -ERR(EBUSY);
 			goto err_busy;
 		}
 		t_local = t;

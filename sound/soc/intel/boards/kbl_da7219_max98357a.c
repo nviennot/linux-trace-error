@@ -61,7 +61,7 @@ static int platform_clock_control(struct snd_soc_dapm_widget *w,
 	codec_dai = snd_soc_card_get_codec_dai(card, KBL_DIALOG_CODEC_DAI);
 	if (!codec_dai) {
 		dev_err(card->dev, "Codec dai not found; Unable to set/unset codec pll\n");
-		return -EIO;
+		return -ERR(EIO);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
@@ -553,7 +553,7 @@ static int kabylake_card_late_probe(struct snd_soc_card *card)
 	}
 
 	if (!component)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return hdac_hdmi_jack_port_init(component, &card->dapm);
 }

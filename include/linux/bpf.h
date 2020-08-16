@@ -609,11 +609,11 @@ static inline struct bpf_trampoline *bpf_trampoline_lookup(u64 key)
 }
 static inline int bpf_trampoline_link_prog(struct bpf_prog *prog)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline int bpf_trampoline_unlink_prog(struct bpf_prog *prog)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 static inline void bpf_trampoline_put(struct bpf_trampoline *tr) {}
 #define DEFINE_BPF_DISPATCHER(name)
@@ -814,7 +814,7 @@ static inline int bpf_struct_ops_map_sys_lookup_elem(struct bpf_map *map,
 						     void *key,
 						     void *value)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 #endif
 
@@ -1307,14 +1307,14 @@ const struct bpf_func_proto *bpf_base_func_proto(enum bpf_func_id func_id);
 #else /* !CONFIG_BPF_SYSCALL */
 static inline struct bpf_prog *bpf_prog_get(u32 ufd)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline struct bpf_prog *bpf_prog_get_type_dev(u32 ufd,
 						     enum bpf_prog_type type,
 						     bool attach_drv)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline void bpf_prog_add(struct bpf_prog *prog, int i)
@@ -1336,7 +1336,7 @@ static inline void bpf_prog_inc(struct bpf_prog *prog)
 static inline struct bpf_prog *__must_check
 bpf_prog_inc_not_zero(struct bpf_prog *prog)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline int __bpf_prog_charge(struct user_struct *user, u32 pages)
@@ -1350,7 +1350,7 @@ static inline void __bpf_prog_uncharge(struct user_struct *user, u32 pages)
 
 static inline int bpf_obj_get_user(const char __user *pathname, int flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline struct net_device  *__dev_map_lookup_elem(struct bpf_map *map,
@@ -1419,35 +1419,35 @@ static inline int cpu_map_enqueue(struct bpf_cpu_map_entry *rcpu,
 static inline struct bpf_prog *bpf_prog_get_type_path(const char *name,
 				enum bpf_prog_type type)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline int bpf_prog_test_run_xdp(struct bpf_prog *prog,
 					const union bpf_attr *kattr,
 					union bpf_attr __user *uattr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int bpf_prog_test_run_skb(struct bpf_prog *prog,
 					const union bpf_attr *kattr,
 					union bpf_attr __user *uattr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int bpf_prog_test_run_tracing(struct bpf_prog *prog,
 					    const union bpf_attr *kattr,
 					    union bpf_attr __user *uattr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline int bpf_prog_test_run_flow_dissector(struct bpf_prog *prog,
 						   const union bpf_attr *kattr,
 						   union bpf_attr __user *uattr)
 {
-	return -ENOTSUPP;
+	return -ERR(ENOTSUPP);
 }
 
 static inline void bpf_map_put(struct bpf_map *map)
@@ -1456,7 +1456,7 @@ static inline void bpf_map_put(struct bpf_map *map)
 
 static inline struct bpf_prog *bpf_prog_by_id(u32 id)
 {
-	return ERR_PTR(-ENOTSUPP);
+	return ERR_PTR(-ERR(ENOTSUPP));
 }
 
 static inline const struct bpf_func_proto *
@@ -1519,7 +1519,7 @@ void bpf_map_offload_map_free(struct bpf_map *map);
 static inline int bpf_prog_offload_init(struct bpf_prog *prog,
 					union bpf_attr *attr)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline bool bpf_prog_is_dev_bound(struct bpf_prog_aux *aux)
@@ -1534,7 +1534,7 @@ static inline bool bpf_map_is_dev_bound(struct bpf_map *map)
 
 static inline struct bpf_map *bpf_map_offload_map_alloc(union bpf_attr *attr)
 {
-	return ERR_PTR(-EOPNOTSUPP);
+	return ERR_PTR(-ERR(EOPNOTSUPP));
 }
 
 static inline void bpf_map_offload_map_free(struct bpf_map *map)
@@ -1554,19 +1554,19 @@ static inline int sock_map_prog_update(struct bpf_map *map,
 				       struct bpf_prog *prog,
 				       struct bpf_prog *old, u32 which)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int sock_map_get_from_fd(const union bpf_attr *attr,
 				       struct bpf_prog *prog)
 {
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static inline int sock_map_prog_detach(const union bpf_attr *attr,
 				       enum bpf_prog_type ptype)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif /* CONFIG_BPF_STREAM_PARSER */
 
@@ -1585,14 +1585,14 @@ static inline void bpf_sk_reuseport_detach(struct sock *sk)
 static inline int bpf_fd_reuseport_array_lookup_elem(struct bpf_map *map,
 						     void *key, void *value)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 
 static inline int bpf_fd_reuseport_array_update_elem(struct bpf_map *map,
 						     void *key, void *value,
 						     u64 map_flags)
 {
-	return -EOPNOTSUPP;
+	return -ERR(EOPNOTSUPP);
 }
 #endif /* CONFIG_BPF_SYSCALL */
 #endif /* defined(CONFIG_INET) && defined(CONFIG_BPF_SYSCALL) */

@@ -57,7 +57,7 @@ int hda_dsp_ctrl_link_reset(struct snd_sof_dev *sdev, bool reset)
 	/* enter/exit reset failed */
 	dev_err(sdev->dev, "error: failed to %s HDA controller gctl 0x%x\n",
 		reset ? "reset" : "ready", gctl);
-	return -EIO;
+	return -ERR(EIO);
 }
 
 int hda_dsp_ctrl_get_caps(struct snd_sof_dev *sdev)
@@ -223,7 +223,7 @@ int hda_dsp_ctrl_init_chip(struct snd_sof_dev *sdev, bool full_reset)
 	/* check to see if controller is ready */
 	if (!snd_hdac_chip_readb(bus, GCTL)) {
 		dev_dbg(bus->dev, "controller not ready!\n");
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 		goto err;
 	}
 

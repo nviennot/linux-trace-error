@@ -55,18 +55,18 @@ static int nfnl_acct_new(struct net *net, struct sock *nfnl,
 	u32 flags = 0;
 
 	if (!tb[NFACCT_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	acct_name = nla_data(tb[NFACCT_NAME]);
 	if (strlen(acct_name) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	list_for_each_entry(nfacct, &net->nfnl_acct_list, head) {
 		if (strncmp(nfacct->name, acct_name, NFACCT_NAME_MAX) != 0)
 			continue;
 
                 if (nlh->nlmsg_flags & NLM_F_EXCL)
-			return -EEXIST;
+			return -ERR(EEXIST);
 
 		matching = nfacct;
 		break;
@@ -84,19 +84,19 @@ static int nfnl_acct_new(struct net *net, struct sock *nfnl,
 					  &matching->flags);
 			return 0;
 		}
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 
 	if (tb[NFACCT_FLAGS]) {
 		flags = ntohl(nla_get_be32(tb[NFACCT_FLAGS]));
 		if (flags & ~NFACCT_F_QUOTA)
-			return -EOPNOTSUPP;
+			return -ERR(EOPNOTSUPP);
 		if ((flags & NFACCT_F_QUOTA) == NFACCT_F_QUOTA)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (flags & NFACCT_F_OVERQUOTA)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if ((flags & NFACCT_F_QUOTA) && !tb[NFACCT_QUOTA])
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		size += sizeof(u64);
 	}
@@ -251,7 +251,7 @@ static int nfnl_acct_start(struct netlink_callback *cb)
 		return err;
 
 	if (!tb[NFACCT_FILTER_MASK] || !tb[NFACCT_FILTER_VALUE])
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	filter = kzalloc(sizeof(struct nfacct_filter), GFP_KERNEL);
 	if (!filter)
@@ -269,7 +269,7 @@ static int nfnl_acct_get(struct net *net, struct sock *nfnl,
 			 const struct nlattr * const tb[],
 			 struct netlink_ext_ack *extack)
 {
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	struct nf_acct *cur;
 	char *acct_name;
 
@@ -285,7 +285,7 @@ static int nfnl_acct_get(struct net *net, struct sock *nfnl,
 	}
 
 	if (!tb[NFACCT_NAME])
-		return -EINVAL;
+		return -ERR(EINVAL);
 	acct_name = nla_data(tb[NFACCT_NAME]);
 
 	list_for_each_entry(cur, &net->nfnl_acct_list, head) {
@@ -314,7 +314,7 @@ static int nfnl_acct_get(struct net *net, struct sock *nfnl,
 			ret = 0;
 
 		/* this avoids a loop in nfnetlink. */
-		return ret == -EAGAIN ? -ENOBUFS : ret;
+		return ret == -ERR(EAGAIN) ? -ERR(ENOBUFS) : ret;
 	}
 	return ret;
 }
@@ -332,7 +332,7 @@ static int nfnl_acct_try_del(struct nf_acct *cur)
 		list_del_rcu(&cur->head);
 		kfree_rcu(cur, rcu_head);
 	} else {
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	}
 	return ret;
 }
@@ -343,7 +343,7 @@ static int nfnl_acct_del(struct net *net, struct sock *nfnl,
 			 struct netlink_ext_ack *extack)
 {
 	struct nf_acct *cur, *tmp;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 	char *acct_name;
 
 	if (!tb[NFACCT_NAME]) {

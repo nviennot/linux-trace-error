@@ -303,7 +303,7 @@ static int build_via_table(struct viadev *dev, struct snd_pcm_substream *substre
 
 			if (idx >= VIA_TABLE_SIZE) {
 				dev_err(&pci->dev, "too much table size!\n");
-				return -EINVAL;
+				return -ERR(EINVAL);
 			}
 			addr = snd_pcm_sgbuf_get_addr(substream, ofs);
 			pgtbl[idx << 1] = cpu_to_le32(addr);
@@ -375,7 +375,7 @@ static int snd_via82xx_codec_ready(struct via82xx_modem *chip, int secondary)
 	}
 	dev_err(chip->card->dev, "codec_ready: codec %i is not ready [0x%x]\n",
 		   secondary, snd_via82xx_codec_xread(chip));
-	return -EIO;
+	return -ERR(EIO);
 }
  
 static int snd_via82xx_codec_valid(struct via82xx_modem *chip, int secondary)
@@ -392,7 +392,7 @@ static int snd_via82xx_codec_valid(struct via82xx_modem *chip, int secondary)
 			return val & 0xffff;
 		udelay(1);
 	}
-	return -EIO;
+	return -ERR(EIO);
 }
  
 static void snd_via82xx_codec_wait(struct snd_ac97 *ac97)
@@ -532,7 +532,7 @@ static int snd_via82xx_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 		viadev->running = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	outb(val, VIADEV_REG(viadev, OFFSET_CONTROL));
 	if (cmd == SNDRV_PCM_TRIGGER_STOP)
@@ -1103,7 +1103,7 @@ static int snd_via82xx_create(struct snd_card *card,
 			KBUILD_MODNAME, chip)) {
 		dev_err(card->dev, "unable to grab IRQ %d\n", pci->irq);
 		snd_via82xx_free(chip);
-		return -EBUSY;
+		return -ERR(EBUSY);
 	}
 	chip->irq = pci->irq;
 	card->sync_irq = chip->irq;
@@ -1151,7 +1151,7 @@ static int snd_via82xx_probe(struct pci_dev *pci,
 		break;
 	default:
 		dev_err(card->dev, "invalid card type %d\n", card_type);
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __error;
 	}
 		

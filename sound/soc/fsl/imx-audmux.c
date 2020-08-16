@@ -197,13 +197,13 @@ static const uint8_t port_mapping[] = {
 int imx_audmux_v1_configure_port(unsigned int port, unsigned int pcr)
 {
 	if (audmux_type != IMX21_AUDMUX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!audmux_base)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	if (port >= ARRAY_SIZE(port_mapping))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	writel(pcr, audmux_base + port_mapping[port]);
 
@@ -217,10 +217,10 @@ int imx_audmux_v2_configure_port(unsigned int port, unsigned int ptcr,
 	int ret;
 
 	if (audmux_type != IMX31_AUDMUX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!audmux_base)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 
 	if (audmux_clk) {
 		ret = clk_prepare_enable(audmux_clk);
@@ -328,7 +328,7 @@ static int imx_audmux_probe(struct platform_device *pdev)
 		break;
 	default:
 		dev_err(&pdev->dev, "unsupported version!\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regcache = devm_kzalloc(&pdev->dev, sizeof(u32) * reg_max, GFP_KERNEL);

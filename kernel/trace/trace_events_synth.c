@@ -128,16 +128,16 @@ static int synth_field_string_size(char *type)
 
 	start = strstr(type, "char[");
 	if (start == NULL)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	start += sizeof("char[") - 1;
 
 	end = strchr(type, ']');
 	if (!end || end < start)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	len = end - start;
 	if (len > 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	strncpy(buf, start, len);
 	buf[len] = '\0';
@@ -147,7 +147,7 @@ static int synth_field_string_size(char *type)
 		return err;
 
 	if (size > STR_VAR_LEN_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return size;
 }
@@ -471,7 +471,7 @@ static struct synth_field *parse_synth_field(int argc, const char **argv,
 
 	if (!strcmp(field_type, "unsigned")) {
 		if (argc < 3)
-			return ERR_PTR(-EINVAL);
+			return ERR_PTR(-ERR(EINVAL));
 		prefix = "unsigned ";
 		field_type = argv[1];
 		field_name = argv[2];
@@ -522,7 +522,7 @@ static struct synth_field *parse_synth_field(int argc, const char **argv,
 
 	field->size = synth_field_size(field->type);
 	if (!field->size) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto free;
 	}
 
@@ -612,7 +612,7 @@ static int register_synth_event(struct synth_event *event)
 
 	ret = register_trace_event(&call->event);
 	if (!ret) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		goto out;
 	}
 	call->flags = TRACE_EVENT_FL_TRACEPOINT;
@@ -711,7 +711,7 @@ static int synth_event_check_arg_fn(void *data)
 
 	size = synth_field_size((char *)arg_pair->lhs);
 
-	return size ? 0 : -EINVAL;
+	return size ? 0 : -ERR(EINVAL);
 }
 
 /**
@@ -735,10 +735,10 @@ int synth_event_add_field(struct dynevent_cmd *cmd, const char *type,
 	int ret;
 
 	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!type || !name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dynevent_arg_pair_init(&arg_pair, 0, ';');
 
@@ -750,7 +750,7 @@ int synth_event_add_field(struct dynevent_cmd *cmd, const char *type,
 		return ret;
 
 	if (++cmd->n_fields > SYNTH_FIELDS_MAX)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	return ret;
 }
@@ -778,10 +778,10 @@ int synth_event_add_field_str(struct dynevent_cmd *cmd, const char *type_name)
 	int ret;
 
 	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (!type_name)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dynevent_arg_init(&arg, ';');
 
@@ -792,7 +792,7 @@ int synth_event_add_field_str(struct dynevent_cmd *cmd, const char *type_name)
 		return ret;
 
 	if (++cmd->n_fields > SYNTH_FIELDS_MAX)
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	return ret;
 }
@@ -824,7 +824,7 @@ int synth_event_add_fields(struct dynevent_cmd *cmd,
 
 	for (i = 0; i < n_fields; i++) {
 		if (fields[i].type == NULL || fields[i].name == NULL) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -876,7 +876,7 @@ int __synth_event_gen_cmd_start(struct dynevent_cmd *cmd, const char *name,
 	cmd->private_data = mod;
 
 	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dynevent_arg_init(&arg, 0);
 	arg.str = name;
@@ -896,7 +896,7 @@ int __synth_event_gen_cmd_start(struct dynevent_cmd *cmd, const char *name,
 			break;
 
 		if (++cmd->n_fields > SYNTH_FIELDS_MAX) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			break;
 		}
 
@@ -947,10 +947,10 @@ int synth_event_gen_cmd_array_start(struct dynevent_cmd *cmd, const char *name,
 	cmd->private_data = mod;
 
 	if (cmd->type != DYNEVENT_TYPE_SYNTH)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (n_fields > SYNTH_FIELDS_MAX)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dynevent_arg_init(&arg, 0);
 	arg.str = name;
@@ -960,7 +960,7 @@ int synth_event_gen_cmd_array_start(struct dynevent_cmd *cmd, const char *name,
 
 	for (i = 0; i < n_fields; i++) {
 		if (fields[i].type == NULL || fields[i].name == NULL)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		ret = synth_event_add_field(cmd, fields[i].type, fields[i].name);
 		if (ret)
@@ -985,13 +985,13 @@ static int __create_synth_event(int argc, const char *name, const char **argv)
 	 */
 
 	if (name[0] == '\0' || argc < 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&event_mutex);
 
 	event = find_synth_event(name);
 	if (event) {
-		ret = -EEXIST;
+		ret = -ERR(EEXIST);
 		goto out;
 	}
 
@@ -999,7 +999,7 @@ static int __create_synth_event(int argc, const char *name, const char **argv)
 		if (strcmp(argv[i], ";") == 0)
 			continue;
 		if (n_fields == SYNTH_FIELDS_MAX) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto err;
 		}
 
@@ -1013,7 +1013,7 @@ static int __create_synth_event(int argc, const char *name, const char **argv)
 	}
 
 	if (i < argc && strcmp(argv[i], ";") != 0) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto err;
 	}
 
@@ -1094,7 +1094,7 @@ static int destroy_synth_event(struct synth_event *se)
 	int ret;
 
 	if (se->ref)
-		ret = -EBUSY;
+		ret = -ERR(EBUSY);
 	else {
 		ret = unregister_synth_event(se);
 		if (!ret) {
@@ -1118,7 +1118,7 @@ int synth_event_delete(const char *event_name)
 {
 	struct synth_event *se = NULL;
 	struct module *mod = NULL;
-	int ret = -ENOENT;
+	int ret = -ERR(ENOENT);
 
 	mutex_lock(&event_mutex);
 	se = find_synth_event(event_name);
@@ -1160,7 +1160,7 @@ static int create_or_delete_synth_event(int argc, char **argv)
 	}
 
 	ret = __create_synth_event(argc - 1, name, (const char **)argv + 1);
-	return ret == -ECANCELED ? -EINVAL : ret;
+	return ret == -ERR(ECANCELED) ? -ERR(EINVAL) : ret;
 }
 
 static int synth_event_run_command(struct dynevent_cmd *cmd)
@@ -1174,7 +1174,7 @@ static int synth_event_run_command(struct dynevent_cmd *cmd)
 
 	se = find_synth_event(cmd->event_name);
 	if (WARN_ON(!se))
-		return -ENOENT;
+		return -ERR(ENOENT);
 
 	se->mod = cmd->private_data;
 
@@ -1218,7 +1218,7 @@ __synth_event_trace_start(struct trace_event_file *file,
 	if (!(file->flags & EVENT_FILE_FL_ENABLED) ||
 	    trace_trigger_soft_disabled(file)) {
 		trace_state->disabled = true;
-		ret = -ENOENT;
+		ret = -ERR(ENOENT);
 		goto out;
 	}
 
@@ -1239,7 +1239,7 @@ __synth_event_trace_start(struct trace_event_file *file,
 							entry_size);
 	if (!trace_state->entry) {
 		ring_buffer_nest_end(trace_state->buffer);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 out:
 	return ret;
@@ -1287,7 +1287,7 @@ int synth_event_trace(struct trace_event_file *file, unsigned int n_vals, ...)
 	}
 
 	if (n_vals != state.event->n_fields) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1367,7 +1367,7 @@ int synth_event_trace_array(struct trace_event_file *file, u64 *vals,
 	}
 
 	if (n_vals != state.event->n_fields) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -1443,7 +1443,7 @@ int synth_event_trace_start(struct trace_event_file *file,
 	int ret;
 
 	if (!trace_state)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = __synth_event_trace_start(file, trace_state);
 	if (ret == -ENOENT)
@@ -1462,20 +1462,20 @@ static int __synth_event_add_val(const char *field_name, u64 val,
 	int i, ret = 0;
 
 	if (!trace_state) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
 	/* can't mix add_next_synth_val() with add_synth_val() */
 	if (field_name) {
 		if (trace_state->add_next) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		trace_state->add_name = true;
 	} else {
 		if (trace_state->add_name) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		trace_state->add_next = true;
@@ -1492,12 +1492,12 @@ static int __synth_event_add_val(const char *field_name, u64 val,
 				break;
 		}
 		if (!field) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 	} else {
 		if (trace_state->cur_field >= event->n_fields) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 		field = event->fields[trace_state->cur_field++];
@@ -1509,7 +1509,7 @@ static int __synth_event_add_val(const char *field_name, u64 val,
 		char *str_field;
 
 		if (!str_val) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out;
 		}
 
@@ -1631,7 +1631,7 @@ EXPORT_SYMBOL_GPL(synth_event_add_val);
 int synth_event_trace_end(struct synth_event_trace_state *trace_state)
 {
 	if (!trace_state)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	__synth_event_trace_end(trace_state);
 
@@ -1645,14 +1645,14 @@ static int create_synth_event(int argc, const char **argv)
 	int len;
 
 	if (name[0] != 's' || name[1] != ':')
-		return -ECANCELED;
+		return -ERR(ECANCELED);
 	name += 2;
 
 	/* This interface accepts group name prefix */
 	if (strchr(name, '/')) {
 		len = str_has_prefix(name, SYNTH_SYSTEM "/");
 		if (len == 0)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		name += len;
 	}
 	return __create_synth_event(argc - 1, name, argv + 1);
@@ -1664,7 +1664,7 @@ static int synth_event_release(struct dyn_event *ev)
 	int ret;
 
 	if (event->ref)
-		return -EBUSY;
+		return -ERR(EBUSY);
 
 	ret = unregister_synth_event(event);
 	if (ret)
@@ -1775,7 +1775,7 @@ static __init int trace_events_synth_init(void)
 	entry = tracefs_create_file("synthetic_events", 0644, d_tracer,
 				    NULL, &synth_events_fops);
 	if (!entry) {
-		err = -ENODEV;
+		err = -ERR(ENODEV);
 		goto err;
 	}
 

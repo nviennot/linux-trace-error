@@ -98,13 +98,13 @@ static int tee_tg_check(const struct xt_tgchk_param *par)
 	/* 0.0.0.0 and :: not allowed */
 	if (memcmp(&info->gw, &tee_zero_address,
 		   sizeof(tee_zero_address)) == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (info->oif[0]) {
 		struct net_device *dev;
 
 		if (info->oif[sizeof(info->oif)-1] != '\0')
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 		if (priv == NULL)

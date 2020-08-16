@@ -136,7 +136,7 @@ static int hda_sdw_acpi_scan(struct snd_sof_dev *sdev)
 
 	ret = sdw_intel_acpi_scan(handle, &hdev->info);
 	if (ret < 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return 0;
 }
@@ -172,7 +172,7 @@ static int hda_sdw_probe(struct snd_sof_dev *sdev)
 	sdw = sdw_intel_probe(&res);
 	if (!sdw) {
 		dev_err(sdev->dev, "error: SoundWire probe failed\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* save context */
@@ -514,7 +514,7 @@ static int hda_init(struct snd_sof_dev *sdev)
 #endif
 	if (!bus->remap_addr) {
 		dev_err(bus->dev, "error: ioremap error\n");
-		return -ENXIO;
+		return -ERR(ENXIO);
 	}
 
 	/* HDA base */
@@ -728,10 +728,10 @@ int hda_dsp_probe(struct snd_sof_dev *sdev)
 	 */
 	if (pci->class == 0x040300) {
 		dev_err(sdev->dev, "error: the DSP is not enabled on this platform, aborting probe\n");
-		return -ENODEV;
+		return -ERR(ENODEV);
 	} else if (pci->class != 0x040100 && pci->class != 0x040380) {
 		dev_err(sdev->dev, "error: unknown PCI class/subclass/prog-if 0x%06x found, aborting probe\n", pci->class);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 	dev_info(sdev->dev, "DSP detected with PCI class/subclass/prog-if 0x%06x\n", pci->class);
 
@@ -739,7 +739,7 @@ int hda_dsp_probe(struct snd_sof_dev *sdev)
 	if (!chip) {
 		dev_err(sdev->dev, "error: no such device supported, chip id:%x\n",
 			pci->device);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto err;
 	}
 
@@ -779,7 +779,7 @@ int hda_dsp_probe(struct snd_sof_dev *sdev)
 #endif
 	if (!sdev->bar[HDA_DSP_BAR]) {
 		dev_err(sdev->dev, "error: ioremap error\n");
-		ret = -ENXIO;
+		ret = -ERR(ENXIO);
 		goto hdac_bus_unmap;
 	}
 
@@ -1008,7 +1008,7 @@ static int hda_generic_machine_select(struct snd_sof_dev *sdev)
 			tplg_filename = fixup_tplg_name(sdev, tplg_filename,
 							idisp_str, dmic_str);
 			if (!tplg_filename)
-				return -EINVAL;
+				return -ERR(EINVAL);
 
 			dev_info(bus->dev,
 				 "DMICs detected in NHLT tables: %d\n",

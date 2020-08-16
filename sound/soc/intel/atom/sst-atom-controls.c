@@ -35,7 +35,7 @@ static int sst_fill_byte_control(struct sst_data *drv,
 
 	if (len > SST_MAX_BIN_BYTES - sizeof(*byte_data)) {
 		dev_err(&drv->pdev->dev, "command length too big (%u)", len);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	byte_data->len = len;
 	memcpy(byte_data->bytes, cmd_data, len);
@@ -226,7 +226,7 @@ static int sst_slot_put(struct snd_kcontrol *kcontrol,
 	val = 1 << ctl_no;
 	mux = ucontrol->value.enumerated.item[0];
 	if (mux > e->max - 1)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	mutex_lock(&drv->lock);
 	/* first clear all registers of this bit */
@@ -330,7 +330,7 @@ static int sst_algo_control_get(struct snd_kcontrol *kcontrol,
 	default:
 		dev_err(component->dev, "Invalid Input- algo type:%d\n",
 				bc->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	}
 	return 0;
@@ -354,7 +354,7 @@ static int sst_algo_control_set(struct snd_kcontrol *kcontrol,
 		mutex_unlock(&drv->lock);
 		dev_err(cmpnt->dev, "Invalid Input- algo type:%d\n",
 				bc->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/*if pipe is enabled, need to send the algo params from here*/
 	if (bc->w && bc->w->power)
@@ -447,7 +447,7 @@ static int sst_gain_get(struct snd_kcontrol *kcontrol,
 	default:
 		dev_err(component->dev, "Invalid Input- gain type:%d\n",
 				mc->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -487,7 +487,7 @@ static int sst_gain_put(struct snd_kcontrol *kcontrol,
 		mutex_unlock(&drv->lock);
 		dev_err(cmpnt->dev, "Invalid Input- gain type:%d\n",
 				mc->type);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (mc->w && mc->w->power)
@@ -804,7 +804,7 @@ static int sst_get_frame_sync_polarity(struct snd_soc_dai *dai,
 		dev_err(dai->dev, "Invalid frame sync polarity %d\n", format);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int sst_get_ssp_mode(struct snd_soc_dai *dai, unsigned int fmt)
@@ -823,7 +823,7 @@ static int sst_get_ssp_mode(struct snd_soc_dai *dai, unsigned int fmt)
 		dev_err(dai->dev, "Invalid ssp protocol: %d\n", format);
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 
@@ -1395,7 +1395,7 @@ static int sst_fill_module_list(struct snd_kcontrol *kctl,
 	} else {
 		dev_err(c->dev, "invoked for unknown type %d module %s",
 				type, kctl->id.name);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	}
 
 	return ret;

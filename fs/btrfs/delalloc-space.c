@@ -229,7 +229,7 @@ commit_trans:
 		trace_btrfs_space_reservation(fs_info,
 					      "space_info:enospc",
 					      data_sinfo->flags, bytes, 1);
-		return -ENOSPC;
+		return -ERR(ENOSPC);
 	}
 	btrfs_space_info_update_bytes_may_use(fs_info, data_sinfo, bytes);
 	spin_unlock(&data_sinfo->lock);

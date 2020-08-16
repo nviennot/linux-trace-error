@@ -845,7 +845,7 @@ static int rt5660_hw_params(struct snd_pcm_substream *substream,
 	if (pre_div < 0) {
 		dev_err(component->dev, "Unsupported clock setting %d for DAI %d\n",
 			rt5660->lrck[dai->id], dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	frame_size = snd_soc_params_to_frame_size(params);
@@ -879,7 +879,7 @@ static int rt5660_hw_params(struct snd_pcm_substream *substream,
 		val_len |= RT5660_I2S_DL_8;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -894,7 +894,7 @@ static int rt5660_hw_params(struct snd_pcm_substream *substream,
 
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -917,7 +917,7 @@ static int rt5660_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -929,7 +929,7 @@ static int rt5660_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -949,7 +949,7 @@ static int rt5660_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (dai->id) {
@@ -961,7 +961,7 @@ static int rt5660_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	default:
 		dev_err(component->dev, "Invalid dai->id: %d\n", dai->id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -992,7 +992,7 @@ static int rt5660_set_dai_sysclk(struct snd_soc_dai *dai,
 
 	default:
 		dev_err(component->dev, "Invalid clock id (%d)\n", clk_id);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, RT5660_GLB_CLK, RT5660_SCLK_SRC_MASK,
@@ -1041,7 +1041,7 @@ static int rt5660_set_dai_pll(struct snd_soc_dai *dai, int pll_id, int source,
 
 	default:
 		dev_err(component->dev, "Unknown PLL source %d\n", source);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	ret = rl6231_pll_calc(freq_in, freq_out, &pll_code);
@@ -1300,7 +1300,7 @@ static int rt5660_i2c_probe(struct i2c_client *i2c,
 	if (val != RT5660_DEVICE_ID) {
 		dev_err(&i2c->dev,
 			"Device with ID register %#x is not rt5660\n", val);
-		return -ENODEV;
+		return -ERR(ENODEV);
 	}
 
 	regmap_write(rt5660->regmap, RT5660_RESET, 0);

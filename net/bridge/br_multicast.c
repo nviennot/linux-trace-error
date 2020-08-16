@@ -448,7 +448,7 @@ struct net_bridge_mdb_entry *br_multicast_new_group(struct net_bridge *br,
 
 	if (atomic_read(&br->mdb_hash_tbl.nelems) >= br->hash_max) {
 		br_opt_toggle(br, BROPT_MULTICAST_ENABLED, false);
-		return ERR_PTR(-E2BIG);
+		return ERR_PTR(-ERR(E2BIG));
 	}
 
 	mp = kzalloc(sizeof(*mp), GFP_ATOMIC);
@@ -936,7 +936,7 @@ static int br_ip4_multicast_igmp3_report(struct net_bridge *br,
 	for (i = 0; i < num; i++) {
 		len += sizeof(*grec);
 		if (!ip_mc_may_pull(skb, len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		grec = (void *)(skb->data + len - sizeof(*grec));
 		group = grec->grec_mca;
@@ -945,7 +945,7 @@ static int br_ip4_multicast_igmp3_report(struct net_bridge *br,
 
 		len += nsrcs * 4;
 		if (!ip_mc_may_pull(skb, len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* We treat this as an IGMPv2 report for now. */
 		switch (type) {
@@ -994,7 +994,7 @@ static int br_ip6_multicast_mld2_report(struct net_bridge *br,
 	int err = 0;
 
 	if (!ipv6_mc_may_pull(skb, sizeof(*icmp6h)))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	icmp6h = icmp6_hdr(skb);
 	num = ntohs(icmp6h->icmp6_dataun.un_data16[1]);
@@ -1008,18 +1008,18 @@ static int br_ip6_multicast_mld2_report(struct net_bridge *br,
 
 		if (skb_transport_offset(skb) + ipv6_transport_len(skb) <
 		    nsrcs_offset + sizeof(__nsrcs))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		_nsrcs = skb_header_pointer(skb, nsrcs_offset,
 					    sizeof(__nsrcs), &__nsrcs);
 		if (!_nsrcs)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		nsrcs = ntohs(*_nsrcs);
 		grec_len = struct_size(grec, grec_src, nsrcs);
 
 		if (!ipv6_mc_may_pull(skb, len + grec_len))
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		grec = (struct mld2_grec *)(skb->data + len);
 		len += grec_len;
@@ -1315,7 +1315,7 @@ static int br_ip6_multicast_query(struct net_bridge *br,
 
 	if (transport_len == sizeof(*mld)) {
 		if (!pskb_may_pull(skb, offset + sizeof(*mld))) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		mld = (struct mld_msg *) icmp6_hdr(skb);
@@ -1324,7 +1324,7 @@ static int br_ip6_multicast_query(struct net_bridge *br,
 			group = &mld->mld_mca;
 	} else {
 		if (!pskb_may_pull(skb, offset + sizeof(*mld2q))) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto out;
 		}
 		mld2q = (struct mld2_query *)icmp6_hdr(skb);
@@ -1585,7 +1585,7 @@ static int br_ip4_multicast_mrd_rcv(struct net_bridge *br,
 {
 	if (ip_hdr(skb)->protocol != IPPROTO_IGMP ||
 	    igmp_hdr(skb)->type != IGMP_MRDISC_ADV)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	br_multicast_mark_router(br, port);
 
@@ -1654,14 +1654,14 @@ static int br_ip6_multicast_mrd_rcv(struct net_bridge *br,
 	int ret;
 
 	if (ipv6_hdr(skb)->nexthdr != IPPROTO_ICMPV6)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	ret = ipv6_mc_check_icmpv6(skb);
 	if (ret < 0)
 		return ret;
 
 	if (icmp6_hdr(skb)->icmp6_type != ICMPV6_MRDISC_ADV)
-		return -ENOMSG;
+		return -ERR(ENOMSG);
 
 	br_multicast_mark_router(br, port);
 
@@ -1941,7 +1941,7 @@ void br_multicast_dev_del(struct net_bridge *br)
 
 int br_multicast_set_router(struct net_bridge *br, unsigned long val)
 {
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	spin_lock_bh(&br->multicast_lock);
 
@@ -1983,7 +1983,7 @@ int br_multicast_set_port_router(struct net_bridge_port *p, unsigned long val)
 {
 	struct net_bridge *br = p->br;
 	unsigned long now = jiffies;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 
 	spin_lock(&br->multicast_lock);
 	if (p->multicast_router == val) {
@@ -2136,7 +2136,7 @@ int br_multicast_set_igmp_version(struct net_bridge *br, unsigned long val)
 	case 3:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&br->multicast_lock);
@@ -2155,7 +2155,7 @@ int br_multicast_set_mld_version(struct net_bridge *br, unsigned long val)
 	case 2:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	spin_lock_bh(&br->multicast_lock);

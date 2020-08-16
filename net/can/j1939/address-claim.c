@@ -55,23 +55,23 @@ static int j1939_ac_verify_outgoing(struct j1939_priv *priv,
 	if (skb->len != 8) {
 		netdev_notice(priv->ndev, "tx address claim with dlc %i\n",
 			      skb->len);
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (skcb->addr.src_name != j1939_skb_to_name(skb)) {
 		netdev_notice(priv->ndev, "tx address claim with different name\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	if (skcb->addr.sa == J1939_NO_ADDR) {
 		netdev_notice(priv->ndev, "tx address claim with broadcast sa\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 
 	/* ac must always be a broadcast */
 	if (skcb->addr.dst_name || skcb->addr.da != J1939_NO_ADDR) {
 		netdev_notice(priv->ndev, "tx address claim with dest, not broadcast\n");
-		return -EPROTO;
+		return -ERR(EPROTO);
 	}
 	return 0;
 }
@@ -92,7 +92,7 @@ int j1939_ac_fixup(struct j1939_priv *priv, struct sk_buff *skb)
 			return ret;
 		ecu = j1939_ecu_get_by_name(priv, skcb->addr.src_name);
 		if (!ecu)
-			return -ENODEV;
+			return -ERR(ENODEV);
 
 		if (ecu->addr != skcb->addr.sa)
 			/* hold further traffic for ecu, remove from parent */
@@ -105,7 +105,7 @@ int j1939_ac_fixup(struct j1939_priv *priv, struct sk_buff *skb)
 		    !j1939_ac_msg_is_request(skb)) {
 			netdev_notice(priv->ndev, "tx drop: invalid sa for name 0x%016llx\n",
 				      skcb->addr.src_name);
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		}
 		skcb->addr.sa = addr;
 	}
@@ -116,7 +116,7 @@ int j1939_ac_fixup(struct j1939_priv *priv, struct sk_buff *skb)
 		if (!j1939_address_is_unicast(addr)) {
 			netdev_notice(priv->ndev, "tx drop: invalid da for name 0x%016llx\n",
 				      skcb->addr.dst_name);
-			return -EADDRNOTAVAIL;
+			return -ERR(EADDRNOTAVAIL);
 		}
 		skcb->addr.da = addr;
 	}

@@ -434,13 +434,13 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
 		err = 0;
 		if (!reqsk_queue_empty(&icsk->icsk_accept_queue))
 			break;
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		if (sk->sk_state != TCP_LISTEN)
 			break;
 		err = sock_intr_errno(timeo);
 		if (signal_pending(current))
 			break;
-		err = -EAGAIN;
+		err = -ERR(EAGAIN);
 		if (!timeo)
 			break;
 	}
@@ -464,7 +464,7 @@ struct sock *inet_csk_accept(struct sock *sk, int flags, int *err, bool kern)
 	/* We need to make sure that this socket is listening,
 	 * and that it has something pending.
 	 */
-	error = -EINVAL;
+	error = -ERR(EINVAL);
 	if (sk->sk_state != TCP_LISTEN)
 		goto out_err;
 
@@ -473,7 +473,7 @@ struct sock *inet_csk_accept(struct sock *sk, int flags, int *err, bool kern)
 		long timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
 
 		/* If this is a non blocking socket don't sleep */
-		error = -EAGAIN;
+		error = -ERR(EAGAIN);
 		if (!timeo)
 			goto out_err;
 
@@ -910,7 +910,7 @@ int inet_csk_listen_start(struct sock *sk, int backlog)
 {
 	struct inet_connection_sock *icsk = inet_csk(sk);
 	struct inet_sock *inet = inet_sk(sk);
-	int err = -EADDRINUSE;
+	int err = -ERR(EADDRINUSE);
 
 	reqsk_queue_alloc(&icsk->icsk_accept_queue);
 

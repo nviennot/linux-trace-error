@@ -209,7 +209,7 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
 		}
 
 		if (timerfd_canceled(ctx))
-			return -ECANCELED;
+			return -ERR(ECANCELED);
 	}
 
 	ctx->settime_flags = flags & TFD_SETTIME_FLAGS;
@@ -254,10 +254,10 @@ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
 	u64 ticks = 0;
 
 	if (count < sizeof(ticks))
-		return -EINVAL;
+		return -ERR(EINVAL);
 	spin_lock_irq(&ctx->wqh.lock);
 	if (file->f_flags & O_NONBLOCK)
-		res = -EAGAIN;
+		res = -ERR(EAGAIN);
 	else
 		res = wait_event_interruptible_locked_irq(ctx->wqh, ctx->ticks);
 
@@ -269,7 +269,7 @@ static ssize_t timerfd_read(struct file *file, char __user *buf, size_t count,
 	if (timerfd_canceled(ctx)) {
 		ctx->ticks = 0;
 		ctx->expired = 0;
-		res = -ECANCELED;
+		res = -ERR(ECANCELED);
 	}
 
 	if (ctx->ticks) {
@@ -343,19 +343,19 @@ static long timerfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg
 		if (copy_from_user(&ticks, (u64 __user *)arg, sizeof(ticks)))
 			return -EFAULT;
 		if (!ticks)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		spin_lock_irq(&ctx->wqh.lock);
 		if (!timerfd_canceled(ctx)) {
 			ctx->ticks = ticks;
 			wake_up_locked_poll(&ctx->wqh, EPOLLIN);
 		} else
-			ret = -ECANCELED;
+			ret = -ERR(ECANCELED);
 		spin_unlock_irq(&ctx->wqh.lock);
 		break;
 	}
 	default:
-		ret = -ENOTTY;
+		ret = -ERR(ENOTTY);
 		break;
 	}
 
@@ -378,10 +378,10 @@ static int timerfd_fget(int fd, struct fd *p)
 {
 	struct fd f = fdget(fd);
 	if (!f.file)
-		return -EBADF;
+		return -ERR(EBADF);
 	if (f.file->f_op != &timerfd_fops) {
 		fdput(f);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	*p = f;
 	return 0;
@@ -402,12 +402,12 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
 	     clockid != CLOCK_REALTIME_ALARM &&
 	     clockid != CLOCK_BOOTTIME &&
 	     clockid != CLOCK_BOOTTIME_ALARM))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if ((clockid == CLOCK_REALTIME_ALARM ||
 	     clockid == CLOCK_BOOTTIME_ALARM) &&
 	    !capable(CAP_WAKE_ALARM))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
@@ -445,7 +445,7 @@ static int do_timerfd_settime(int ufd, int flags,
 
 	if ((flags & ~TFD_SETTIME_FLAGS) ||
 		 !itimerspec64_valid(new))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	ret = timerfd_fget(ufd, &f);
 	if (ret)
@@ -454,7 +454,7 @@ static int do_timerfd_settime(int ufd, int flags,
 
 	if (isalarm(ctx) && !capable(CAP_WAKE_ALARM)) {
 		fdput(f);
-		return -EPERM;
+		return -ERR(EPERM);
 	}
 
 	timerfd_setup_cancel(ctx, flags);

@@ -190,7 +190,7 @@ static int jz4740_i2s_trigger(struct snd_pcm_substream *substream, int cmd,
 		ctrl &= ~mask;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	jz4740_i2s_write(i2s, JZ_REG_AIC_CTRL, ctrl);
@@ -223,7 +223,7 @@ static int jz4740_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_CBM_CFM:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
@@ -233,14 +233,14 @@ static int jz4740_i2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	case SND_SOC_DAIFMT_I2S:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
 	case SND_SOC_DAIFMT_NB_NF:
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	jz4740_i2s_write(i2s, JZ_REG_AIC_CONF, conf);
@@ -270,7 +270,7 @@ static int jz4740_i2s_hw_params(struct snd_pcm_substream *substream,
 		sample_size = 1;
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
@@ -320,7 +320,7 @@ static int jz4740_i2s_set_sysclk(struct snd_soc_dai *dai, int clk_id,
 		ret = clk_set_rate(i2s->clk_i2s, freq);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	clk_put(parent);
 

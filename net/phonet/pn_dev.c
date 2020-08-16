@@ -142,7 +142,7 @@ int phonet_address_add(struct net_device *dev, u8 addr)
 	if (unlikely(pnd == NULL))
 		err = -ENOMEM;
 	else if (test_and_set_bit(addr >> 2, pnd->addrs))
-		err = -EEXIST;
+		err = -ERR(EEXIST);
 	mutex_unlock(&pndevs->lock);
 	return err;
 }
@@ -156,7 +156,7 @@ int phonet_address_del(struct net_device *dev, u8 addr)
 	mutex_lock(&pndevs->lock);
 	pnd = __phonet_get(dev);
 	if (!pnd || !test_and_clear_bit(addr >> 2, pnd->addrs)) {
-		err = -EADDRNOTAVAIL;
+		err = -ERR(EADDRNOTAVAIL);
 		pnd = NULL;
 	} else if (bitmap_empty(pnd->addrs, 64))
 		list_del_rcu(&pnd->list);
@@ -208,7 +208,7 @@ int phonet_address_lookup(struct net *net, u8 addr)
 {
 	struct phonet_device_list *pndevs = phonet_device_list(net);
 	struct phonet_device *pnd;
-	int err = -EADDRNOTAVAIL;
+	int err = -ERR(EADDRNOTAVAIL);
 
 	rcu_read_lock();
 	list_for_each_entry_rcu(pnd, &pndevs->list, list) {
@@ -234,7 +234,7 @@ static int phonet_device_autoconf(struct net_device *dev)
 	int ret;
 
 	if (!dev->netdev_ops->ndo_do_ioctl)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	ret = dev->netdev_ops->ndo_do_ioctl(dev, (struct ifreq *)&req,
 						SIOCPNGAUTOCONF);
@@ -358,7 +358,7 @@ int phonet_route_add(struct net_device *dev, u8 daddr)
 {
 	struct phonet_net *pnn = phonet_pernet(dev_net(dev));
 	struct phonet_routes *routes = &pnn->routes;
-	int err = -EEXIST;
+	int err = -ERR(EEXIST);
 
 	daddr = daddr >> 2;
 	mutex_lock(&routes->lock);
@@ -385,7 +385,7 @@ int phonet_route_del(struct net_device *dev, u8 daddr)
 	mutex_unlock(&routes->lock);
 
 	if (!dev)
-		return -ENOENT;
+		return -ERR(ENOENT);
 	synchronize_rcu();
 	dev_put(dev);
 	return 0;

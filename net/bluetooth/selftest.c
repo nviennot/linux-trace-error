@@ -147,7 +147,7 @@ static int __init test_ecdh_sample(struct crypto_kpp *tfm, const u8 priv_a[32],
 
 	tmp = kmalloc(64, GFP_KERNEL);
 	if (!tmp)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	dhkey_a = &tmp[0];
 	dhkey_b = &tmp[32];
@@ -161,7 +161,7 @@ static int __init test_ecdh_sample(struct crypto_kpp *tfm, const u8 priv_a[32],
 		goto out;
 
 	if (memcmp(dhkey_a, dhkey, 32)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out;
 	}
 
@@ -174,7 +174,7 @@ static int __init test_ecdh_sample(struct crypto_kpp *tfm, const u8 priv_a[32],
 		goto out;
 
 	if (memcmp(dhkey_b, dhkey, 32))
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	/* fall through*/
 out:
 	kfree(tmp);

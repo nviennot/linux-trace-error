@@ -116,7 +116,7 @@ xfs_nfs_get_inode(
 	 * NFS can sometimes send requests for ino 0.  Fail them gracefully.
 	 */
 	if (ino == 0)
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 
 	/*
 	 * The XFS_IGET_UNTRUSTED means that an invalid inode number is just
@@ -138,7 +138,7 @@ xfs_nfs_get_inode(
 		case -EINVAL:
 		case -ENOENT:
 		case -EFSCORRUPTED:
-			error = -ESTALE;
+			error = -ERR(ESTALE);
 			break;
 		default:
 			break;
@@ -148,7 +148,7 @@ xfs_nfs_get_inode(
 
 	if (VFS_I(ip)->i_generation != generation) {
 		xfs_irele(ip);
-		return ERR_PTR(-ESTALE);
+		return ERR_PTR(-ERR(ESTALE));
 	}
 
 	return VFS_I(ip);

@@ -363,7 +363,7 @@ static int sirf_audio_codec_trigger(struct snd_pcm_substream *substream,
 				substream->runtime->channels);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -419,7 +419,7 @@ static int sirf_audio_codec_probe(struct snd_soc_component *component)
 			ARRAY_SIZE(volume_controls_atlas6));
 	}
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static void sirf_audio_codec_remove(struct snd_soc_component *component)

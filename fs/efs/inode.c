@@ -172,7 +172,7 @@ struct inode *efs_iget(struct super_block *super, unsigned long ino)
 read_inode_error:
 	pr_warn("failed to read inode %lu\n", inode->i_ino);
 	iget_failed(inode);
-	return ERR_PTR(-EIO);
+	return ERR_PTR(-ERR(EIO));
 }
 
 static inline efs_block_t

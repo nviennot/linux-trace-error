@@ -448,7 +448,7 @@ bailout:
 
 static int cramfs_physmem_mmap(struct file *file, struct vm_area_struct *vma)
 {
-	return vma->vm_flags & (VM_SHARED | VM_MAYSHARE) ? 0 : -ENOSYS;
+	return vma->vm_flags & (VM_SHARED | VM_MAYSHARE) ? 0 : -ERR(ENOSYS);
 }
 
 static unsigned long cramfs_physmem_get_unmapped_area(struct file *file,
@@ -463,11 +463,11 @@ static unsigned long cramfs_physmem_get_unmapped_area(struct file *file,
 	pages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	max_pages = (inode->i_size + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	if (pgoff >= max_pages || pages > max_pages - pgoff)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	block_pages = pages;
 	offset = cramfs_get_block_range(inode, pgoff, &block_pages);
 	if (!offset || block_pages != pages)
-		return -ENOSYS;
+		return -ERR(ENOSYS);
 	addr = sbi->linear_phys_addr + offset;
 	pr_debug("get_unmapped for %s ofs %#lx siz %lu at 0x%08lx\n",
 		 file_dentry(file)->d_name.name, pgoff*PAGE_SIZE, len, addr);
@@ -535,7 +535,7 @@ static int cramfs_read_super(struct super_block *sb, struct fs_context *fc,
 		if (super->magic == CRAMFS_MAGIC_WEND) {
 			if (!silent)
 				errorfc(fc, "wrong endianness");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 
 		/* check at 512 byte offset */
@@ -549,20 +549,20 @@ static int cramfs_read_super(struct super_block *sb, struct fs_context *fc,
 				errorfc(fc, "wrong endianness");
 			else if (!silent)
 				errorfc(fc, "wrong magic");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 	}
 
 	/* get feature flags first */
 	if (super->flags & ~CRAMFS_SUPPORTED_FLAGS) {
 		errorfc(fc, "unsupported filesystem features");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* Check that the root inode is in a sane state */
 	if (!S_ISDIR(super->root.mode)) {
 		errorfc(fc, "root is not a directory");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	/* correct strange, hard-coded permissions of mkcramfs */
 	super->root.mode |= 0555;
@@ -586,7 +586,7 @@ static int cramfs_read_super(struct super_block *sb, struct fs_context *fc,
 		  (root_offset != 512 + sizeof(struct cramfs_super))))
 	{
 		errorfc(fc, "bad root offset %lu", root_offset);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	return 0;
@@ -649,7 +649,7 @@ static int cramfs_mtd_fill_super(struct super_block *sb, struct fs_context *fc)
 	if (err || sbi->mtd_point_size != PAGE_SIZE) {
 		pr_err("unable to get direct memory access to mtd:%s\n",
 		       sb->s_mtd->name);
-		return err ? : -ENODATA;
+		return err ? : -ERR(ENODATA);
 	}
 
 	pr_info("checking physical address %pap for linear cramfs image\n",
@@ -667,7 +667,7 @@ static int cramfs_mtd_fill_super(struct super_block *sb, struct fs_context *fc)
 	if (err || sbi->mtd_point_size != sbi->size) {
 		pr_err("unable to get direct memory access to mtd:%s\n",
 		       sb->s_mtd->name);
-		return err ? : -ENODATA;
+		return err ? : -ERR(ENODATA);
 	}
 
 	return cramfs_finalize_super(sb, &super.root);
@@ -712,7 +712,7 @@ static int cramfs_readdir(struct file *file, struct dir_context *ctx)
 	offset = ctx->pos;
 	/* Directory entries are always 4-byte aligned */
 	if (offset & 3)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	buf = kmalloc(CRAMFS_MAXPATHLEN, GFP_KERNEL);
 	if (!buf)
@@ -744,7 +744,7 @@ static int cramfs_readdir(struct file *file, struct dir_context *ctx)
 		for (;;) {
 			if (!namelen) {
 				kfree(buf);
-				return -EIO;
+				return -ERR(EIO);
 			}
 			if (buf[namelen-1])
 				break;
@@ -792,7 +792,7 @@ static struct dentry *cramfs_lookup(struct inode *dir, struct dentry *dentry, un
 
 		for (;;) {
 			if (!namelen) {
-				inode = ERR_PTR(-EIO);
+				inode = ERR_PTR(-ERR(EIO));
 				goto out;
 			}
 			if (name[namelen-1])
@@ -954,7 +954,7 @@ static const struct super_operations cramfs_ops = {
 
 static int cramfs_get_tree(struct fs_context *fc)
 {
-	int ret = -ENOPROTOOPT;
+	int ret = -ERR(ENOPROTOOPT);
 
 	if (IS_ENABLED(CONFIG_CRAMFS_MTD)) {
 		ret = get_tree_mtd(fc, cramfs_mtd_fill_super);

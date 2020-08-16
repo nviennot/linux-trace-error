@@ -411,7 +411,7 @@ static int __init test_string_helpers_init(void)
 	/* Test string_get_size() */
 	test_string_get_size();
 
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 module_init(test_string_helpers_init);
 MODULE_LICENSE("Dual BSD/GPL");

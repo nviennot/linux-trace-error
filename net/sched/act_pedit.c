@@ -40,7 +40,7 @@ static struct tcf_pedit_key_ex *tcf_pedit_keys_ex_parse(struct nlattr *nla,
 	struct tcf_pedit_key_ex *keys_ex;
 	struct tcf_pedit_key_ex *k;
 	const struct nlattr *ka;
-	int err = -EINVAL;
+	int err = -ERR(EINVAL);
 	int rem;
 
 	if (!nla)
@@ -56,13 +56,13 @@ static struct tcf_pedit_key_ex *tcf_pedit_keys_ex_parse(struct nlattr *nla,
 		struct nlattr *tb[TCA_PEDIT_KEY_EX_MAX + 1];
 
 		if (!n) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 		n--;
 
 		if (nla_type(ka) != TCA_PEDIT_KEY_EX) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 
@@ -74,7 +74,7 @@ static struct tcf_pedit_key_ex *tcf_pedit_keys_ex_parse(struct nlattr *nla,
 
 		if (!tb[TCA_PEDIT_KEY_EX_HTYPE] ||
 		    !tb[TCA_PEDIT_KEY_EX_CMD]) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 
@@ -83,7 +83,7 @@ static struct tcf_pedit_key_ex *tcf_pedit_keys_ex_parse(struct nlattr *nla,
 
 		if (k->htype > TCA_PEDIT_HDR_TYPE_MAX ||
 		    k->cmd > TCA_PEDIT_CMD_MAX) {
-			err = -EINVAL;
+			err = -ERR(EINVAL);
 			goto err_out;
 		}
 
@@ -91,7 +91,7 @@ static struct tcf_pedit_key_ex *tcf_pedit_keys_ex_parse(struct nlattr *nla,
 	}
 
 	if (n) {
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto err_out;
 	}
 
@@ -131,7 +131,7 @@ static int tcf_pedit_key_ex_dump(struct sk_buff *skb,
 	return 0;
 nla_failure:
 	nla_nest_cancel(skb, keys_start);
-	return -EINVAL;
+	return -ERR(EINVAL);
 }
 
 static int tcf_pedit_init(struct net *net, struct nlattr *nla,
@@ -154,7 +154,7 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 
 	if (!nla) {
 		NL_SET_ERR_MSG_MOD(extack, "Pedit requires attributes to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	err = nla_parse_nested_deprecated(tb, TCA_PEDIT_MAX, nla,
@@ -167,18 +167,18 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 		pattr = tb[TCA_PEDIT_PARMS_EX];
 	if (!pattr) {
 		NL_SET_ERR_MSG_MOD(extack, "Missing required TCA_PEDIT_PARMS or TCA_PEDIT_PARMS_EX pedit attribute");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	parm = nla_data(pattr);
 	if (!parm->nkeys) {
 		NL_SET_ERR_MSG_MOD(extack, "Pedit requires keys to be passed");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	ksize = parm->nkeys * sizeof(struct tc_pedit_key);
 	if (nla_len(pattr) < sizeof(*parm) + ksize) {
 		NL_SET_ERR_MSG_ATTR(extack, pattr, "Length of TCA_PEDIT_PARMS or TCA_PEDIT_PARMS_EX pedit attribute is invalid");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	keys_ex = tcf_pedit_keys_ex_parse(tb[TCA_PEDIT_KEYS_EX], parm->nkeys);
@@ -199,7 +199,7 @@ static int tcf_pedit_init(struct net *net, struct nlattr *nla,
 		if (bind)
 			goto out_free;
 		if (!ovr) {
-			ret = -EEXIST;
+			ret = -ERR(EEXIST);
 			goto out_release;
 		}
 	} else {
@@ -276,7 +276,7 @@ static bool offset_valid(struct sk_buff *skb, int offset)
 static int pedit_skb_hdr_offset(struct sk_buff *skb,
 				enum pedit_header_type htype, int *hoffset)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 
 	switch (htype) {
 	case TCA_PEDIT_KEY_EX_HDR_TYPE_ETH:
@@ -299,7 +299,7 @@ static int pedit_skb_hdr_offset(struct sk_buff *skb,
 		}
 		break;
 	default:
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		break;
 	}
 
@@ -433,7 +433,7 @@ static int tcf_pedit_dump(struct sk_buff *skb, struct tc_action *a,
 	/* netlink spinlocks held above us - must use ATOMIC */
 	opt = kzalloc(s, GFP_ATOMIC);
 	if (unlikely(!opt))
-		return -ENOBUFS;
+		return -ERR(ENOBUFS);
 
 	spin_lock_bh(&p->tcf_lock);
 	memcpy(opt->keys, p->tcfp_keys,

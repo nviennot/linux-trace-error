@@ -474,7 +474,7 @@ static int alloc_descs(unsigned int start, unsigned int cnt, int node,
 	if (affinity) {
 		for (i = 0; i < cnt; i++) {
 			if (cpumask_empty(&affinity[i].mask))
-				return -EINVAL;
+				return -ERR(EINVAL);
 		}
 	}
 
@@ -641,11 +641,11 @@ int generic_handle_irq(unsigned int irq)
 	struct irq_data *data;
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	data = irq_desc_get_irq_data(desc);
 	if (WARN_ON_ONCE(!in_irq() && handle_enforce_irqctx(data)))
-		return -EPERM;
+		return -ERR(EPERM);
 
 	generic_handle_irq_desc(desc);
 	return 0;
@@ -682,7 +682,7 @@ int __handle_domain_irq(struct irq_domain *domain, unsigned int hwirq,
 	 */
 	if (unlikely(!irq || irq >= nr_irqs)) {
 		ack_bad_irq(irq);
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 	} else {
 		generic_handle_irq(irq);
 	}
@@ -724,7 +724,7 @@ int handle_domain_nmi(struct irq_domain *domain, unsigned int hwirq,
 	if (likely(irq))
 		generic_handle_irq(irq);
 	else
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 
 	set_irq_regs(old_regs);
 	return ret;
@@ -775,11 +775,11 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 	int start, ret;
 
 	if (!cnt)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (irq >= 0) {
 		if (from > irq)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		from = irq;
 	} else {
 		/*
@@ -794,7 +794,7 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 
 	start = bitmap_find_next_zero_area(allocated_irqs, IRQ_BITMAP_BITS,
 					   from, cnt, 0);
-	ret = -EEXIST;
+	ret = -ERR(EEXIST);
 	if (irq >=0 && start != irq)
 		goto unlock;
 
@@ -910,10 +910,10 @@ int irq_set_percpu_devid_partition(unsigned int irq,
 	struct irq_desc *desc = irq_to_desc(irq);
 
 	if (!desc)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (desc->percpu_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	desc->percpu_enabled = kzalloc(sizeof(*desc->percpu_enabled), GFP_KERNEL);
 
@@ -939,7 +939,7 @@ int irq_get_percpu_devid_partition(unsigned int irq, struct cpumask *affinity)
 	struct irq_desc *desc = irq_to_desc(irq);
 
 	if (!desc || !desc->percpu_enabled)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	if (affinity)
 		cpumask_copy(affinity, desc->percpu_affinity);

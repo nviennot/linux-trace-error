@@ -41,7 +41,7 @@ int squashfs_frag_lookup(struct super_block *sb, unsigned int fragment,
 	u64 start_block;
 
 	if (fragment >= msblk->fragments)
-		return -EIO;
+		return -ERR(EIO);
 	block = SQUASHFS_FRAGMENT_INDEX(fragment);
 	offset = SQUASHFS_FRAGMENT_INDEX_OFFSET(fragment);
 
@@ -72,7 +72,7 @@ __le64 *squashfs_read_fragment_index_table(struct super_block *sb,
 	 * incorrectly larger than the next table start
 	 */
 	if (fragment_table_start + length > next_table)
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 
 	table = squashfs_read_table(sb, fragment_table_start, length);
 
@@ -82,7 +82,7 @@ __le64 *squashfs_read_fragment_index_table(struct super_block *sb,
 	 */
 	if (!IS_ERR(table) && le64_to_cpu(table[0]) >= fragment_table_start) {
 		kfree(table);
-		return ERR_PTR(-EINVAL);
+		return ERR_PTR(-ERR(EINVAL));
 	}
 
 	return table;

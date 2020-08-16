@@ -23,13 +23,13 @@ static ssize_t dh_data_from_key(key_serial_t keyid, void **data)
 
 	key_ref = lookup_user_key(keyid, 0, KEY_NEED_READ);
 	if (IS_ERR(key_ref)) {
-		ret = -ENOKEY;
+		ret = -ERR(ENOKEY);
 		goto error;
 	}
 
 	key = key_ref_to_ptr(key_ref);
 
-	ret = -EOPNOTSUPP;
+	ret = -ERR(EOPNOTSUPP);
 	if (key->type == &key_type_user) {
 		down_read(&key->sem);
 		status = key_validate(key);
@@ -98,7 +98,7 @@ static int kdf_alloc(struct kdf_sdesc **sdesc_ret, char *hashname)
 		return PTR_ERR(tfm);
 	}
 
-	err = -EINVAL;
+	err = -ERR(EINVAL);
 	if (crypto_shash_digestsize(tfm) == 0)
 		goto out_free_tfm;
 
@@ -243,7 +243,7 @@ long __keyctl_dh_compute(struct keyctl_dh_params __user *params,
 	struct kdf_sdesc *sdesc = NULL;
 
 	if (!params || (!buffer && buflen)) {
-		ret = -EINVAL;
+		ret = -ERR(EINVAL);
 		goto out1;
 	}
 	if (copy_from_user(&pcopy, params, sizeof(pcopy)) != 0) {
@@ -255,13 +255,13 @@ long __keyctl_dh_compute(struct keyctl_dh_params __user *params,
 		char *hashname;
 
 		if (memchr_inv(kdfcopy->__spare, 0, sizeof(kdfcopy->__spare))) {
-			ret = -EINVAL;
+			ret = -ERR(EINVAL);
 			goto out1;
 		}
 
 		if (buflen > KEYCTL_KDF_MAX_OUTPUT_LEN ||
 		    kdfcopy->otherinfolen > KEYCTL_KDF_MAX_OI_LEN) {
-			ret = -EMSGSIZE;
+			ret = -ERR(EMSGSIZE);
 			goto out1;
 		}
 
@@ -333,7 +333,7 @@ long __keyctl_dh_compute(struct keyctl_dh_params __user *params,
 			ret = outlen;
 			goto out4;
 		} else if (outlen > buflen) {
-			ret = -EOVERFLOW;
+			ret = -ERR(EOVERFLOW);
 			goto out4;
 		}
 	}

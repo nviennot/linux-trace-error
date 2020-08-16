@@ -162,7 +162,7 @@ int cpm_command(u32 command, u8 opcode);
 #else
 static inline int cpm_command(u32 command, u8 opcode)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 #endif /* CONFIG_CPM */
 

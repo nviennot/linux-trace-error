@@ -54,7 +54,7 @@ static inline int hsu_dma_do_irq(struct hsu_dma_chip *chip, unsigned short nr,
 {
 	return 0;
 }
-static inline int hsu_dma_probe(struct hsu_dma_chip *chip) { return -ENODEV; }
+static inline int hsu_dma_probe(struct hsu_dma_chip *chip) { return -ERR(ENODEV); }
 static inline int hsu_dma_remove(struct hsu_dma_chip *chip) { return 0; }
 #endif /* CONFIG_HSU_DMA */
 

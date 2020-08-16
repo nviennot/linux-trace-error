@@ -106,10 +106,10 @@ ssize_t orangefs_inode_getxattr(struct inode *inode, const char *name,
 		     __func__, name, size);
 
 	if (S_ISLNK(inode->i_mode))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	if (strlen(name) >= ORANGEFS_MAX_XATTR_NAMELEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	fsuid = from_kuid(&init_user_ns, current_fsuid());
 	fsgid = from_kgid(&init_user_ns, current_fsgid());
@@ -127,7 +127,7 @@ ssize_t orangefs_inode_getxattr(struct inode *inode, const char *name,
 	cx = find_cached_xattr(inode, name);
 	if (cx && time_before(jiffies, cx->timeout)) {
 		if (cx->length == -1) {
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 			goto out_unlock;
 		} else {
 			if (size == 0) {
@@ -135,7 +135,7 @@ ssize_t orangefs_inode_getxattr(struct inode *inode, const char *name,
 				goto out_unlock;
 			}
 			if (cx->length > size) {
-				ret = -ERANGE;
+				ret = -ERR(ERANGE);
 				goto out_unlock;
 			}
 			memcpy(buffer, cx->val, cx->length);
@@ -163,7 +163,7 @@ ssize_t orangefs_inode_getxattr(struct inode *inode, const char *name,
 				get_interruptible_flag(inode));
 	if (ret != 0) {
 		if (ret == -ENOENT) {
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 			gossip_debug(GOSSIP_XATTR_DEBUG,
 				     "orangefs_inode_getxattr: inode %pU key %s"
 				     " does not exist!\n",
@@ -199,7 +199,7 @@ ssize_t orangefs_inode_getxattr(struct inode *inode, const char *name,
 	 * Check to see if key length is > provided buffer size.
 	 */
 	if (length > size) {
-		ret = -ERANGE;
+		ret = -ERR(ERANGE);
 		goto out_release_op;
 	}
 
@@ -252,7 +252,7 @@ static int orangefs_inode_removexattr(struct inode *inode, const char *name,
 	int ret = -ENOMEM;
 
 	if (strlen(name) >= ORANGEFS_MAX_XATTR_NAMELEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	down_write(&orangefs_inode->xattr_sem);
 	new_op = op_alloc(ORANGEFS_VFS_OP_REMOVEXATTR);
@@ -281,7 +281,7 @@ static int orangefs_inode_removexattr(struct inode *inode, const char *name,
 		 * Request to replace a non-existent attribute is an error.
 		 */
 		if (flags & XATTR_REPLACE)
-			ret = -ENODATA;
+			ret = -ERR(ENODATA);
 		else
 			ret = 0;
 	}
@@ -327,9 +327,9 @@ int orangefs_inode_setxattr(struct inode *inode, const char *name,
 		     __func__, name, size);
 
 	if (size > ORANGEFS_MAX_XATTR_VALUELEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 	if (strlen(name) >= ORANGEFS_MAX_XATTR_NAMELEN)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	internal_flag = convert_to_internal_xattr_flags(flags);
 
@@ -418,7 +418,7 @@ ssize_t orangefs_listxattr(struct dentry *dentry, char *buffer, size_t size)
 
 	if (size > 0 && !buffer) {
 		gossip_err("%s: bogus NULL pointers\n", __func__);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	down_read(&orangefs_inode->xattr_sem);
@@ -457,7 +457,7 @@ try_again:
 		gossip_err("%s: impossible value for returned_count:%d:\n",
 		__func__,
 		returned_count);
-		ret = -EIO;
+		ret = -ERR(EIO);
 		goto done;
 	}
 
@@ -471,7 +471,7 @@ try_again:
 			gossip_err("%s: impossible value for lengths[%d]\n",
 			    __func__,
 			    new_op->downcall.resp.listxattr.lengths[i]);
-			ret = -EIO;
+			ret = -ERR(EIO);
 			goto done;
 		}
 		if (total + new_op->downcall.resp.listxattr.lengths[i] > size)

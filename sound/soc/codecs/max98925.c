@@ -257,7 +257,7 @@ static const struct {
 static inline int max98925_rate_value(struct snd_soc_component *component,
 		int rate, int clock, int *value, int *n, int *m)
 {
-	int ret = -EINVAL;
+	int ret = -ERR(EINVAL);
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(rate_table); i++) {
@@ -321,7 +321,7 @@ static int max98925_dai_set_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_CBM_CFS:
 	default:
 		dev_err(component->dev, "DAI clock mode unsupported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
@@ -338,7 +338,7 @@ static int max98925_dai_set_fmt(struct snd_soc_dai *codec_dai,
 		break;
 	default:
 		dev_err(component->dev, "DAI invert mode unsupported");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	regmap_update_bits(max98925->regmap, MAX98925_FORMAT,
@@ -372,7 +372,7 @@ static int max98925_set_clock(struct max98925_priv *max98925,
 			M98925_DAI_BSEL_MASK, M98925_DAI_BSEL_64);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (max98925->sysclk) {
@@ -395,11 +395,11 @@ static int max98925_set_clock(struct max98925_priv *max98925,
 	default:
 		dev_info(max98925->component->dev, "unsupported sysclk %d\n",
 					max98925->sysclk);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	if (max98925_rate_value(component, rate, clock, &dai_sr, &n, &m))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	/* set DAI_SR to correct LRCLK frequency */
 	regmap_update_bits(max98925->regmap,
@@ -450,7 +450,7 @@ static int max98925_dai_hw_params(struct snd_pcm_substream *substream,
 	default:
 		pr_err("%s: format unsupported %d",
 				__func__, params_format(params));
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	dev_dbg(component->dev, "%s: format supported %d",
 				__func__, params_format(params));
@@ -478,7 +478,7 @@ static int max98925_dai_set_sysclk(struct snd_soc_dai *dai,
 				M98925_DAI_CLK_SOURCE_MASK);
 		break;
 	default:
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 	max98925->sysclk = freq;
 	return 0;
@@ -585,14 +585,14 @@ static int max98925_i2c_probe(struct i2c_client *i2c,
 	if (!of_property_read_u32(i2c->dev.of_node, "vmon-slot-no", &value)) {
 		if (value > M98925_DAI_VMON_SLOT_1E_1F) {
 			dev_err(&i2c->dev, "vmon slot number is wrong:\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		max98925->v_slot = value;
 	}
 	if (!of_property_read_u32(i2c->dev.of_node, "imon-slot-no", &value)) {
 		if (value > M98925_DAI_IMON_SLOT_1E_1F) {
 			dev_err(&i2c->dev, "imon slot number is wrong:\n");
-			return -EINVAL;
+			return -ERR(EINVAL);
 		}
 		max98925->i_slot = value;
 	}
@@ -604,7 +604,7 @@ static int max98925_i2c_probe(struct i2c_client *i2c,
 	}
 
 	if ((reg != MAX98925_VERSION) && (reg != MAX98925_VERSION1)) {
-		ret = -ENODEV;
+		ret = -ERR(ENODEV);
 		dev_err(&i2c->dev, "Invalid revision (%d 0x%02X)\n",
 			ret, reg);
 		return ret;

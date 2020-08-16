@@ -455,7 +455,7 @@ bool tcp_fastopen_defer_connect(struct sock *sk, int *err)
 		if (tp->fastopen_req)
 			tp->fastopen_req->cookie = cookie;
 		else
-			*err = -ENOBUFS;
+			*err = -ERR(ENOBUFS);
 	}
 	return false;
 }

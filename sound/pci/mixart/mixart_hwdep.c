@@ -51,7 +51,7 @@ static int mixart_wait_nice_for_register_value(struct mixart_mgr *mgr,
 		}
 	} while ( time_after_eq(end_time, jiffies) );
 
-	return -EBUSY;
+	return -ERR(EBUSY);
 }
 
 
@@ -95,7 +95,7 @@ static int mixart_load_elf(struct mixart_mgr *mgr, const struct firmware *dsp )
 	elf_header = (struct snd_mixart_elf32_ehdr *)dsp->data;
 	for( i=0; i<4; i++ )
 		if ( elf32_magic_number[i] != elf_header->e_ident[i] )
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 	if( elf_header->e_phoff != 0 ) {
 		struct snd_mixart_elf32_phdr     elf_programheader;
@@ -155,7 +155,7 @@ static int mixart_enum_connectors(struct mixart_mgr *mgr)
 	if((err < 0) || (connector->error_code) || (connector->uid_count > MIXART_MAX_PHYS_CONNECTORS)) {
 		dev_err(&mgr->pci->dev,
 			"error MSG_SYSTEM_ENUM_PLAY_CONNECTOR\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __error;
 	}
 
@@ -199,7 +199,7 @@ static int mixart_enum_connectors(struct mixart_mgr *mgr)
 	if((err < 0) || (connector->error_code) || (connector->uid_count > MIXART_MAX_PHYS_CONNECTORS)) {
 		dev_err(&mgr->pci->dev,
 			"error MSG_SYSTEM_ENUM_RECORD_CONNECTOR\n");
-		err = -EINVAL;
+		err = -ERR(EINVAL);
 		goto __error;
 	}
 
@@ -267,7 +267,7 @@ static int mixart_enum_physio(struct mixart_mgr *mgr)
 		dev_dbg(&mgr->pci->dev,
 			"error MSG_CONSOLE_GET_CLOCK_UID : err=%x\n",
 			console_mgr.error_code);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* used later for clock issues ! */
@@ -283,12 +283,12 @@ static int mixart_enum_physio(struct mixart_mgr *mgr)
 		dev_err(&mgr->pci->dev,
 			"error MSG_SYSTEM_ENUM_PHYSICAL_IO err(%x) error_code(%x)\n",
 			err, phys_io.error_code);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* min 2 phys io per card (analog in + analog out) */
 	if (phys_io.nb_uid < MIXART_MAX_CARDS * 2)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	for(k=0; k<mgr->num_cards; k++) {
 		mgr->chip[k]->uid_in_analog_physio = phys_io.uid[k];
@@ -319,7 +319,7 @@ static int mixart_first_init(struct mixart_mgr *mgr)
 	err = snd_mixart_send_msg(mgr, &request, sizeof(k), &k);
 	if( (err < 0) || (k != 0) ) {
 		dev_err(&mgr->pci->dev, "error MSG_SYSTEM_SEND_SYNCHRO_CMD\n");
-		return err == 0 ? -EINVAL : err;
+		return err == 0 ? -ERR(EINVAL) : err;
 	}
 
 	return 0;
@@ -345,7 +345,7 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 	/* motherboard xilinx status 5 will say that the board is performing a reset */
 	if (status_xilinx == 5) {
 		dev_err(&mgr->pci->dev, "miXart is resetting !\n");
-		return -EAGAIN; /* try again later */
+		return -ERR(EAGAIN); /* try again later */
 	}
 
 	switch (index)   {
@@ -361,14 +361,14 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 			dev_err(&mgr->pci->dev,
 				"xilinx load error ! status = %d\n",
 				   status_xilinx);
-			return -EIO; /* modprob -r may help ? */
+			return -ERR(EIO); /* modprob -r may help ? */
 		}
 
 		/* check xilinx validity */
 		if (((u32*)(dsp->data))[0] == 0xffffffff)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dsp->size % 4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* set xilinx status to copying */
 		writel_be( 1, MIXART_MEM( mgr, MIXART_PSEUDOREG_MXLX_STATUS_OFFSET ));
@@ -399,7 +399,7 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 			dev_err(&mgr->pci->dev,
 				"elf load error ! status = %d\n",
 				   status_elf);
-			return -EIO; /* modprob -r may help ? */
+			return -ERR(EIO); /* modprob -r may help ? */
 		}
 
 		/* wait for xilinx status == 4 */
@@ -443,7 +443,7 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 		if (status_elf != 4 || status_xilinx != 4) {
 			dev_err(&mgr->pci->dev, "xilinx or elf not "
 			       "successfully loaded\n");
-			return -EIO; /* modprob -r may help ? */
+			return -ERR(EIO); /* modprob -r may help ? */
 		}
 
 		/* wait for daughter detection != 0 */
@@ -461,21 +461,21 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 
 		/* only if aesebu daughter board presence (elf code must run)  */ 
 		if (mgr->board_type != MIXART_DAUGHTER_TYPE_AES )
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* daughter should be idle */
 		if (status_daught != 0) {
 			dev_err(&mgr->pci->dev,
 				"daughter load error ! status = %d\n",
 			       status_daught);
-			return -EIO; /* modprob -r may help ? */
+			return -ERR(EIO); /* modprob -r may help ? */
 		}
  
 		/* check daughterboard xilinx validity */
 		if (((u32*)(dsp->data))[0] == 0xffffffff)
-			return -EINVAL;
+			return -ERR(EINVAL);
 		if (dsp->size % 4)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* inform mixart about the size of the file */
 		writel_be( dsp->size, MIXART_MEM( mgr, MIXART_PSEUDOREG_DXLX_SIZE_OFFSET ));
@@ -493,7 +493,7 @@ static int mixart_dsp_load(struct mixart_mgr* mgr, int index, const struct firmw
 		/* get the address where to write the file */
 		val = readl_be( MIXART_MEM( mgr, MIXART_PSEUDOREG_DXLX_BASE_ADDR_OFFSET ));
 		if (!val)
-			return -EINVAL;
+			return -ERR(EINVAL);
 
 		/* copy daughterboard xilinx code */
 		memcpy_toio(  MIXART_MEM( mgr, val),  dsp->data,  dsp->size);
@@ -561,7 +561,7 @@ int snd_mixart_setup_firmware(struct mixart_mgr *mgr)
 		if (request_firmware(&fw_entry, path, &mgr->pci->dev)) {
 			dev_err(&mgr->pci->dev,
 				"miXart: can't load firmware %s\n", path);
-			return -ENOENT;
+			return -ERR(ENOENT);
 		}
 		/* fake hwdep dsp record */
 		err = mixart_dsp_load(mgr, i, fw_entry);

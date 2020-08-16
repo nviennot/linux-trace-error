@@ -87,7 +87,7 @@ hash_ip4_kadt(struct ip_set *set, const struct sk_buff *skb,
 	ip4addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &ip);
 	ip &= ip_set_netmask(h->netmask);
 	if (ip == 0)
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	e.ip = ip;
 	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
@@ -223,7 +223,7 @@ hash_ip6_kadt(struct ip_set *set, const struct sk_buff *skb,
 	ip6addrptr(skb, opt->flags & IPSET_DIM_ONE_SRC, &e.ip.in6);
 	hash_ip6_netmask(&e.ip, h->netmask);
 	if (ipv6_addr_any(&e.ip.in6))
-		return -EINVAL;
+		return -ERR(EINVAL);
 
 	return adtfn(set, &e, &ext, &opt->ext, opt->cmdflags);
 }

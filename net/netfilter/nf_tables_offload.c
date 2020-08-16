@@ -45,7 +45,7 @@ struct nft_flow_rule *nft_flow_rule_create(struct net *net,
 	}
 
 	if (num_actions == 0)
-		return ERR_PTR(-EOPNOTSUPP);
+		return ERR_PTR(-ERR(EOPNOTSUPP));
 
 	flow = nft_flow_rule_alloc(num_actions);
 	if (!flow)
@@ -63,7 +63,7 @@ struct nft_flow_rule *nft_flow_rule_create(struct net *net,
 
 	while (expr->ops && expr != nft_expr_last(rule)) {
 		if (!expr->ops->offload) {
-			err = -EOPNOTSUPP;
+			err = -ERR(EOPNOTSUPP);
 			goto err_out;
 		}
 		err = expr->ops->offload(ctx, flow, expr);
@@ -190,7 +190,7 @@ static int nft_flow_offload_rule(struct nft_chain *chain,
 	struct nft_base_chain *basechain;
 
 	if (!nft_is_base_chain(chain))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	basechain = nft_base_chain(chain);
 	nft_flow_cls_offload_setup(&cls_flow, basechain, rule, flow, &extack,
@@ -247,7 +247,7 @@ static int nft_block_setup(struct nft_base_chain *basechain,
 		break;
 	default:
 		WARN_ON_ONCE(1);
-		err = -EOPNOTSUPP;
+		err = -ERR(EOPNOTSUPP);
 	}
 
 	return err;
@@ -318,7 +318,7 @@ static int nft_indr_block_offload_cmd(struct nft_base_chain *basechain,
 		return err;
 
 	if (list_empty(&bo.cb_list))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return nft_block_setup(basechain, &bo, cmd);
 }
@@ -382,14 +382,14 @@ static int nft_flow_offload_chain(struct nft_chain *chain, u8 *ppolicy,
 	u8 policy;
 
 	if (!nft_is_base_chain(chain))
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	basechain = nft_base_chain(chain);
 	policy = ppolicy ? *ppolicy : basechain->policy;
 
 	/* Only default policy to accept is supported for now. */
 	if (cmd == FLOW_BLOCK_BIND && policy == NF_DROP)
-		return -EOPNOTSUPP;
+		return -ERR(EOPNOTSUPP);
 
 	return nft_flow_block_chain(basechain, NULL, cmd);
 }
@@ -477,7 +477,7 @@ int nft_flow_rule_offload_commit(struct net *net)
 
 			if (trans->ctx.flags & NLM_F_REPLACE ||
 			    !(trans->ctx.flags & NLM_F_APPEND)) {
-				err = -EOPNOTSUPP;
+				err = -ERR(EOPNOTSUPP);
 				break;
 			}
 			err = nft_flow_offload_rule(trans->ctx.chain,

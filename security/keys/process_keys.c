@@ -434,7 +434,7 @@ key_ref_t search_cred_keyrings_rcu(struct keyring_search_context *ctx)
 	 */
 	key_ref = NULL;
 	ret = NULL;
-	err = ERR_PTR(-EAGAIN);
+	err = ERR_PTR(-ERR(EAGAIN));
 
 	/* search the thread keyring first */
 	if (cred->thread_keyring) {
@@ -539,7 +539,7 @@ found:
 key_ref_t search_process_keyrings_rcu(struct keyring_search_context *ctx)
 {
 	struct request_key_auth *rka;
-	key_ref_t key_ref, ret = ERR_PTR(-EACCES), err;
+	key_ref_t key_ref, ret = ERR_PTR(-ERR(EACCES)), err;
 
 	key_ref = search_cred_keyrings_rcu(ctx);
 	if (!IS_ERR(key_ref))
@@ -572,7 +572,7 @@ key_ref_t search_process_keyrings_rcu(struct keyring_search_context *ctx)
 
 	/* no key - decide on the error we're going to go for */
 	if (err == ERR_PTR(-ENOKEY) || ret == ERR_PTR(-ENOKEY))
-		key_ref = ERR_PTR(-ENOKEY);
+		key_ref = ERR_PTR(-ERR(ENOKEY));
 	else if (err == ERR_PTR(-EACCES))
 		key_ref = ret;
 	else
@@ -624,7 +624,7 @@ key_ref_t lookup_user_key(key_serial_t id, unsigned long lflags,
 
 try_again:
 	ctx.cred = get_current_cred();
-	key_ref = ERR_PTR(-ENOKEY);
+	key_ref = ERR_PTR(-ERR(ENOKEY));
 
 	switch (id) {
 	case KEY_SPEC_THREAD_KEYRING:
@@ -709,7 +709,7 @@ try_again:
 
 	case KEY_SPEC_GROUP_KEYRING:
 		/* group keyrings are not yet supported */
-		key_ref = ERR_PTR(-EINVAL);
+		key_ref = ERR_PTR(-ERR(EINVAL));
 		goto error;
 
 	case KEY_SPEC_REQKEY_AUTH_KEY:
@@ -728,7 +728,7 @@ try_again:
 		down_read(&ctx.cred->request_key_auth->sem);
 		if (test_bit(KEY_FLAG_REVOKED,
 			     &ctx.cred->request_key_auth->flags)) {
-			key_ref = ERR_PTR(-EKEYREVOKED);
+			key_ref = ERR_PTR(-ERR(EKEYREVOKED));
 			key = NULL;
 		} else {
 			rka = ctx.cred->request_key_auth->payload.data[0];
@@ -742,7 +742,7 @@ try_again:
 		break;
 
 	default:
-		key_ref = ERR_PTR(-EINVAL);
+		key_ref = ERR_PTR(-ERR(EINVAL));
 		if (id < 1)
 			goto error;
 
@@ -792,7 +792,7 @@ try_again:
 				goto invalid_key;
 		}
 
-		ret = -EIO;
+		ret = -ERR(EIO);
 		if (!(lflags & KEY_LOOKUP_PARTIAL) &&
 		    key_read_state(key) == KEY_IS_UNINSTANTIATED)
 			goto invalid_key;

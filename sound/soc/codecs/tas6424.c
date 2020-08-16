@@ -130,7 +130,7 @@ static int tas6424_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unsupported sample rate: %u\n", rate);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (width) {
@@ -141,7 +141,7 @@ static int tas6424_hw_params(struct snd_pcm_substream *substream,
 		break;
 	default:
 		dev_err(component->dev, "unsupported sample width: %u\n", width);
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, TAS6424_SAP_CTRL,
@@ -165,7 +165,7 @@ static int tas6424_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI master/slave interface\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* signal polarity */
@@ -174,7 +174,7 @@ static int tas6424_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI clock signal polarity\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	/* interface format */
@@ -198,7 +198,7 @@ static int tas6424_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 		break;
 	default:
 		dev_err(component->dev, "Invalid DAI interface format\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, TAS6424_SAP_CTRL,
@@ -231,7 +231,7 @@ static int tas6424_set_dai_tdm_slot(struct snd_soc_dai *dai,
 
 	if (last_slot - first_slot != 4) {
 		dev_err(component->dev, "tdm mask must cover 4 contiguous slots\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	switch (first_slot) {
@@ -243,7 +243,7 @@ static int tas6424_set_dai_tdm_slot(struct snd_soc_dai *dai,
 		break;
 	default:
 		dev_err(component->dev, "tdm mask must start at slot 0 or 4\n");
-		return -EINVAL;
+		return -ERR(EINVAL);
 	}
 
 	snd_soc_component_update_bits(component, TAS6424_SAP_CTRL, TAS6424_SAP_TDM_SLOT_LAST,

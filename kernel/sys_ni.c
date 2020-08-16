@@ -19,7 +19,7 @@ asmlinkage long sys_ni_syscall(void);
  */
 asmlinkage long sys_ni_syscall(void)
 {
-	return -ENOSYS;
+	return -ERR(ENOSYS);
 }
 
 #ifndef COND_SYSCALL
